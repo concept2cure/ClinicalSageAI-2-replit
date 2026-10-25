@@ -20,9 +20,11 @@
  * Scope.
  *   - Module 1 is regional and is not an ICH M4 heading; `isIchHeading` is
  *     false for every 1.x code.
+ *   - Module 2's Quality Overall Summary: 2.3.S.1–7, 2.3.P.1–8 and 2.3.A.1–3
+ *     are here since 2026-10-25 (they were held only in the IND section list).
  *   - Module 3: this file holds the eCTD backbone skeleton and two structural
  *     pharmaceutical-development parents (3.2.P.2.1 and 3.2.P.2.2). Module 3
- *     content and its deeper headings (3.2.A.1–3, 2.3.S.x…) belong to the CMC lane, which
+ *     content and its deeper headings (3.2.A.1–3, 3.2.S.7.x…) belong to the CMC lane, which
  *     appends them here through the same `IchM4Heading` type. There is never a
  *     second Module 3 tree. Append-only shared file (ANA_REGULATORY_RECORD.md R0).
  *   - The tabulated nonclinical summaries (2.6.3, 2.6.5, 2.6.7) are numbered in
@@ -111,6 +113,12 @@ const M4E_BR = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4E(R2) ${section}`),
   note: "number and wording as the record's 2.5.6 brief states them; a web-search answer (a summary, not an extract of the guideline) named the same headings on 2026-10-20; the FDA and ICH copies did not resolve. Verbatim read owed.",
 });
+// The QOS subdivisions (2026-10-25): M4Q(R1) numbers the QOS to parallel Module 3
+// (3.2.S.1–7, 3.2.P.1–8, 3.2.A.1–3); no extract of the guideline showed these rows.
+const M4Q_QOS = (section: string): RegulatoryBasis => ({
+  ...recall(`ICH M4Q(R1) ${section}`),
+  note: "numbered and worded by the guideline's pattern: the QOS parallels Module 3's numbering; no extract of the guideline showed this heading. Verbatim read owed.",
+});
 const M4Q = (section: string): RegulatoryBasis => ({
   ...recall(`ICH M4Q(R1) ${section}`),
   note: 'Module 3 structure only; detailed Module 3 content is in the canonical authoring overlay',
@@ -122,6 +130,29 @@ const ROWS: readonly Row[] = [
   // ── Module 2 ────────────────────────────────────────────────────────────────
   ['2', 'Common Technical Document Summaries', M4_ORG('2')],
   ['2.1', 'Common Technical Document Table of Contents (Modules 2–5)', M4_ORG('2.1')],
+  /* The Quality Overall Summary's own subdivisions, which mirror Module 3. Appended
+     2026-10-25 (D2 cleanup C1, the founder's one-copy order): until then they were held
+     only in services/regulatory/ind-ectd-sections.ts, a second heading list, and the
+     record had none, so no QOS outline could reach them from the record. Headings only;
+     QOS content and its composition stay the CMC lane's (P-28). */
+  ['2.3.S.1', 'General Information', M4Q_QOS('2.3.S.1')],
+  ['2.3.S.2', 'Manufacture', M4Q_QOS('2.3.S.2')],
+  ['2.3.S.3', 'Characterisation', M4Q_QOS('2.3.S.3')],
+  ['2.3.S.4', 'Control of Drug Substance', M4Q_QOS('2.3.S.4')],
+  ['2.3.S.5', 'Reference Standards or Materials', M4Q_QOS('2.3.S.5')],
+  ['2.3.S.6', 'Container Closure System', M4Q_QOS('2.3.S.6')],
+  ['2.3.S.7', 'Stability', M4Q_QOS('2.3.S.7')],
+  ['2.3.P.1', 'Description and Composition of the Drug Product', M4Q_QOS('2.3.P.1')],
+  ['2.3.P.2', 'Pharmaceutical Development', M4Q_QOS('2.3.P.2')],
+  ['2.3.P.3', 'Manufacture', M4Q_QOS('2.3.P.3')],
+  ['2.3.P.4', 'Control of Excipients', M4Q_QOS('2.3.P.4')],
+  ['2.3.P.5', 'Control of Drug Product', M4Q_QOS('2.3.P.5')],
+  ['2.3.P.6', 'Reference Standards or Materials', M4Q_QOS('2.3.P.6')],
+  ['2.3.P.7', 'Container Closure System', M4Q_QOS('2.3.P.7')],
+  ['2.3.P.8', 'Stability', M4Q_QOS('2.3.P.8')],
+  ['2.3.A.1', 'Facilities and Equipment', M4Q_QOS('2.3.A.1')],
+  ['2.3.A.2', 'Adventitious Agents Safety Evaluation', M4Q_QOS('2.3.A.2')],
+  ['2.3.A.3', 'Excipients', M4Q_QOS('2.3.A.3')],
   /* The Nonclinical Overview's own subsections. Found missing on 2026-10-13 by the repo-wide
      Module 1 scan, which reported all six as "not an ICH M4 heading" against
      server/services/market-specs/document-template-library.ts — where they are stated correctly.

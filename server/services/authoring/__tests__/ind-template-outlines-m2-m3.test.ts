@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { getAllINDSections, type INDSection } from '../../../../services/regulatory/ind-ectd-sections';
 import { normalizeCtdCode } from '../../../../shared/regulatory/section-code';
 import { CTD_AUTHORING_GUIDANCE } from '../../ind/ctd/authoring-guidance';
-import { templateForCtdSection } from '../../market-specs/document-template-library';
+import { getDocumentTemplate } from '../../market-specs/document-template-library';
+import { ctdRecordSubtree } from '../../market-specs/ctd-component-outlines';
+import { ichHeadingTitle } from '../../ind/ctd/ich-m4-headings';
 import { buildModule2Or3Outline } from '../ind-template-outlines-m2-m3';
 
 const canonical = getAllINDSections();
@@ -25,8 +27,11 @@ describe('source-derived Module 2 and 3 working outlines', () => {
   it.each(moduleSections)('preserves $code as the exact first section, with empty facts and only its own descendants', selected => {
     const rows = buildModule2Or3Outline(selected);
     const code = normalizeCtdCode(selected.code)!;
-    expect(rows[0]).toMatchObject({ code, title: selected.title, content: '', ordering: 100 });
-    expect(rows.every(row => row.code === code || row.code.startsWith(`${code}.`) || row.code.startsWith(`${code}:work:`))).toBe(true);
+    // One record (2026-10-25): every row, the root included, is a heading of the ICH M2–M5
+    // record, numbered and titled as the record holds it — never a working identifier.
+    expect(rows[0]).toMatchObject({ code, title: ichHeadingTitle(code), content: '', ordering: 100 });
+    expect(rows.map(row => row.code)).toEqual([code, ...ctdRecordSubtree(code).map(h => h.code)]);
+    expect(rows.every(row => row.title === ichHeadingTitle(row.code))).toBe(true);
     expect(new Set(rows.map(row => row.code)).size).toBe(rows.length);
     expect(rows.every(row => row.content === '' && row.guidance.guidance_text.includes('current IND stage'))).toBe(true);
     expect(rows.every(row => row.guidance.regulatory_references.length > 0 && row.guidance.source_reference)).toBe(true);
@@ -41,19 +46,21 @@ describe('source-derived Module 2 and 3 working outlines', () => {
     expect(s5.guidance.source_reference).toContain('ind-ectd-sections.ts#m2.3.S.5');
   });
 
-  it('keeps all six recorded expert-report headings as local working identifiers under the exact 2.4 root', () => {
+  it("holds 2.4's six ICH M4S headings as its own rows, with the outline's own purposes, not as working identifiers", () => {
     const rows = outline('m2.4');
-    const source = templateForCtdSection('2.4')!;
-    expect(rows.map(row => row.code)).toEqual(['2.4', ...source.sections.map((_, index) => `2.4:work:${index + 1}`)]);
+    expect(rows.map(row => row.code)).toEqual(['2.4', '2.4.1', '2.4.2', '2.4.3', '2.4.4', '2.4.5', '2.4.6']);
+    expect(rows.some(row => row.code.includes(':work:'))).toBe(false);
+    const served = getDocumentTemplate('nonclinical_overview')!.sections;
+    for (const s of served) expect(rows.find(row => row.code === s.number)!.guidance.guidance_text, s.number).toContain(s.purpose);
+    expect(rows.find(row => row.code === '2.4.2')!.guidance.source_reference).toContain('ich-m4-headings.ts#2.4.2');
     expect(outline('m2').map(row => row.code)).toEqual(expect.arrayContaining(rows.map(row => row.code)));
-    expect(rows.slice(1).map(row => row.title)).toEqual(source.sections.map(section => section.heading));
-    source.sections.forEach((section, index) => {
-      expect(rows[index + 1].guidance.guidance_text).toContain(section.purpose);
-      expect(rows[index + 1].guidance.guidance_text).toContain('not a CTD filing node');
-      expect(rows[index + 1].guidance.regulatory_references).toContain(source.regulatoryBasis);
-      expect(rows[index + 1].guidance.source_reference).toContain(`document-template-library.ts#${source.id}`);
-    });
     expect(rows.every(row => row.content === '')).toBe(true);
+  });
+
+  it('the QOS holds its substance, product and appendix headings from the record (they were held only in the IND list)', () => {
+    const codes = outline('m2.3').map(row => row.code);
+    for (const c of ['2.3.S.1', '2.3.S.7', '2.3.P.1', '2.3.P.8', '2.3.A.1', '2.3.A.2', '2.3.A.3']) expect(codes, c).toContain(c);
+    expect(outline('m2.3').find(row => row.code === '2.3.P.1')!.title).toBe('Description and Composition of the Drug Product');
   });
 
   it('expands nonclinical written and tabulated scopes without manufacturing their tables or results', () => {
@@ -64,9 +71,12 @@ describe('source-derived Module 2 and 3 working outlines', () => {
     expect(rows.every(row => row.content === '')).toBe(true);
   });
 
-  it.each(['m2.5', 'm2.7'])('includes all six recorded clinical components of %s without importing another summary scope', code => {
+  it.each(['m2.5', 'm2.7'])('%s carries the record to its depth (2.5.6.1–2.5.6.5, 2.7.4.2.1.5), and no other summary scope', code => {
     const root = normalizeCtdCode(code)!;
-    expect(outline(code).map(row => row.code)).toEqual([root, ...Array.from({ length: 6 }, (_, index) => `${root}.${index + 1}`)]);
+    const codes = outline(code).map(row => row.code);
+    expect(codes).toEqual([root, ...ctdRecordSubtree(root).map(h => h.code)]);
+    expect(codes).toContain(root === '2.5' ? '2.5.6.4' : '2.7.4.2.1.5');
+    expect(codes.every(c => c === root || c.startsWith(`${root}.`))).toBe(true);
   });
 
   it('loads detailed substance controls and only the requested drug-product development scope', () => {
@@ -75,7 +85,10 @@ describe('source-derived Module 2 and 3 working outlines', () => {
     expect(development).toEqual(expect.arrayContaining(['3.2.P.2.1.1', '3.2.P.2.1.2', '3.2.P.2.2.3', '3.2.P.2.6']));
     expect(development).not.toContain('3.2.P.3');
     expect(development).not.toContain('3.2.S');
-    expect(development).not.toContain('3.2.P.2.1');
+    // The leaves' structural parents are the record's headings too (added 2026-10-09); before the
+    // projector read the record they were dropped, and 3.2.P.2.1.1 had no parent heading.
+    expect(development.indexOf('3.2.P.2.1')).toBeLessThan(development.indexOf('3.2.P.2.1.1'));
+    expect(development.indexOf('3.2.P.2.2')).toBeLessThan(development.indexOf('3.2.P.2.2.1'));
   });
 
   it('retains complete canonical instructions, evidence requirements, pitfalls and reference provenance', () => {

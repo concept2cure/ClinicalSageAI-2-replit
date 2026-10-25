@@ -46,6 +46,25 @@ const structuralAdditions = [
   ['2.5.6.3', 'Risks', 'ICH M4E(R2)'],
   ['2.5.6.4', 'Benefit-Risk Assessment', 'ICH M4E(R2)'],
   ['2.5.6.5', 'Appendix', 'ICH M4E(R2)'],
+  // The QOS subdivisions, appended 2026-10-25 (D2 cleanup C1): held before only in the IND section list.
+  ['2.3.S.1', 'General Information', 'ICH M4Q(R1)'],
+  ['2.3.S.2', 'Manufacture', 'ICH M4Q(R1)'],
+  ['2.3.S.3', 'Characterisation', 'ICH M4Q(R1)'],
+  ['2.3.S.4', 'Control of Drug Substance', 'ICH M4Q(R1)'],
+  ['2.3.S.5', 'Reference Standards or Materials', 'ICH M4Q(R1)'],
+  ['2.3.S.6', 'Container Closure System', 'ICH M4Q(R1)'],
+  ['2.3.S.7', 'Stability', 'ICH M4Q(R1)'],
+  ['2.3.P.1', 'Description and Composition of the Drug Product', 'ICH M4Q(R1)'],
+  ['2.3.P.2', 'Pharmaceutical Development', 'ICH M4Q(R1)'],
+  ['2.3.P.3', 'Manufacture', 'ICH M4Q(R1)'],
+  ['2.3.P.4', 'Control of Excipients', 'ICH M4Q(R1)'],
+  ['2.3.P.5', 'Control of Drug Product', 'ICH M4Q(R1)'],
+  ['2.3.P.6', 'Reference Standards or Materials', 'ICH M4Q(R1)'],
+  ['2.3.P.7', 'Container Closure System', 'ICH M4Q(R1)'],
+  ['2.3.P.8', 'Stability', 'ICH M4Q(R1)'],
+  ['2.3.A.1', 'Facilities and Equipment', 'ICH M4Q(R1)'],
+  ['2.3.A.2', 'Adventitious Agents Safety Evaluation', 'ICH M4Q(R1)'],
+  ['2.3.A.3', 'Excipients', 'ICH M4Q(R1)'],
 ] as const;
 
 describe('IND pharmacology exact leaf guidance through existing AnA drafting', () => {
@@ -159,12 +178,13 @@ describe('IND pharmacology canonical record and hierarchy fidelity', () => {
     }
     const codes = [...Object.keys(CTD_AUTHORING_GUIDANCE), ...ICH_M4_HEADINGS.map(row => row.code)];
     expect(Object.keys(CTD_AUTHORING_GUIDANCE)).toHaveLength(134);
-    expect(ICH_M4_HEADINGS).toHaveLength(128);
-    expect(new Set(codes).size).toBe(262);
+    // +18 QOS subdivision rows (2026-10-25); 2.3.S, 2.3.P and 2.3.A stop being leaves.
+    expect(ICH_M4_HEADINGS).toHaveLength(146);
+    expect(new Set(codes).size).toBe(280);
     const terminal = codes.filter(code => !codes.some(child => child.startsWith(`${code}.`)));
-    expect(terminal).toHaveLength(213);
-    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(108);
-    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(105);
+    expect(terminal).toHaveLength(228);
+    expect(terminal.filter(code => CTD_AUTHORING_GUIDANCE[code])).toHaveLength(105);
+    expect(terminal.filter(code => !CTD_AUTHORING_GUIDANCE[code])).toHaveLength(123);
   });
 
   it('keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved', () => {
