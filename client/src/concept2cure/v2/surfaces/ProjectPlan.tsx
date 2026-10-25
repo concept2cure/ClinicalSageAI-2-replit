@@ -138,12 +138,12 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
             phaseDoor={phaseId => <IndPhaseDoor phaseId={phaseId} usInd={usInd} cmcComposes={cmcComposes} available={available} onNav={onNav} onStage={onStage} />} />
         </section>
       ) : devicePlan ? (
-        <>
+        <div className="pj-plan-device">
           {assignmentsUnread}
           <ProjectMdxWorkflow project={prog} otherFilings={otherFilings} marketsState={marketsState}
             onNav={onNav} onStage={onStage} onAsk={onAsk} available={available}
             assignmentOf={assignmentOf} assignAction={assignAction} />
-        </>
+        </div>
       ) : (
         <section className="pj-sec" aria-labelledby="pj-plan-h">
           <div className="pj-sec-h">

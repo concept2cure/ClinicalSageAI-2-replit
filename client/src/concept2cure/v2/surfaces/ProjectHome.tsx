@@ -1606,7 +1606,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           additionalFilingsState: markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'read',
           workstreams: workflow.packages.map(item => ({ id: item.id, title: item.title,
             ownerDiscipline: item.ownerDiscipline, applicability: item.applicability, inputsFrom: item.dependsOn })),
-          assignmentNote: 'Discipline expectations, not assigned people or completed work. Document reviews hold approval assignments.',
+          assignmentNote: 'Discipline expectations. A person assigned to a workstream on Plan holds it as a task in this project; document reviews hold approval assignments.',
         } } : {}),
         program: {
           title, product: productName, code: submissionType, description: desc,
@@ -1666,10 +1666,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      early, and there is no loading refusal and no retry.
 
      The start box sits above the tabs, outside the stage switch (FILING_SPINE.md
-     F2), so switching stage no longer unmounts a half-typed message. 'plan' and
-     'lifecycle' name tabs that were removed; they still resolve, to the tab
-     that holds their work (its `aliases` in PJ_LIFECYCLE), and the answer
-     says so. */
+     F2), so switching stage no longer unmounts a half-typed message. 'plan' is
+     a step again (pass 3); 'lifecycle' names a removed tab and still resolves
+     to the step that holds its work (its `aliases` in PJ_LIFECYCLE). */
   useSurfaceActionHandlers('project-home', {
     'project-home.set-stage': (params) => {
       if (noProject)
@@ -1827,8 +1826,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           )}
 
           {/* Submit — one row per market, each with its own server verdict
-              (F9), then what Plan and Lifecycle promised, named as coming
-              later (F2). */}
+              (F9), then what Lifecycle promised, named as coming later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
               <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} usInd={usInd} />

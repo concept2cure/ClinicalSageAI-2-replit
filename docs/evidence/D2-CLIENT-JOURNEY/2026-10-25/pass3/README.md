@@ -94,3 +94,16 @@ Each fix was made to fail first (`review-red/`, run with `TZ=America/Los_Angeles
 
 Not changed: the phase-summary styles repeat the device workstream's disclosure rule in a second stylesheet
 (reviewer's optional note); they are kept as is until the two lists share a component.
+
+## Correctness review (after `a5eee7f69`)
+
+- **Red on the pushed branch, fixed.** `projectHomeStageCss.test.tsx` refuses any class in the project page's
+  stylesheet block that another v2 stylesheet defines. The Plan rules named `.pf-library-entry`, `.btn` and
+  `.pj-mdx-workflow`, and the block's marker comment changed from "five tabs" to "six steps". The rules now reach
+  those elements by element (`>details`, `>button`, `.pj-plan-device>section`), and the test's marker accepts either
+  wording. Made to fail first: `review-red/stage-css-names-another-sheets-class.txt`. The test was missed because the
+  affected set was chosen by import, and this test reads the stylesheet by path; the set now also includes every
+  test that names a changed file by path (20 more files: 235 pass; the one failure, `anaDrivesScreens` Vault search,
+  fails identically at 2246406e4).
+- Stale words: AnA's device-workstream note now says a workstream assigned on Plan is a task in the project; two
+  comments still described Plan as a removed tab.
