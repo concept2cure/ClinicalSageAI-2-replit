@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25T16:27:44.743Z",
+  "generatedAt": "2026-10-25T16:59:10.794Z",
   "git": {
-    "sha": "d9738800520dc4667134c103677ce4fd2b65a43e",
+    "sha": "2246406e4ceee297c5fa86ad65b4ab8635a0951c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2558,7 +2558,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 108529
+        "bytes": 108242
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2799,12 +2799,12 @@
         "lines": 2136
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 2128
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "lines": 2124
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 2123
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2871,12 +2871,12 @@
         "lines": 1939
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1933
-      },
-      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1931
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1927
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
