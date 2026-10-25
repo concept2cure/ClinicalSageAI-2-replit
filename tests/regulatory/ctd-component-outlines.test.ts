@@ -13,7 +13,8 @@
 import { describe, expect, it } from 'vitest';
 import { getDocumentTemplate, getRegistryDocumentTemplate, type TemplateSection } from '../../server/services/market-specs/document-template-library';
 import { ctdRecordSubtree } from '../../server/services/market-specs/ctd-component-outlines';
-import { ichHeadingTitle } from '../../server/services/ind/ctd/ich-m4-headings';
+import { ICH_M4_HEADINGS, ichHeadingTitle } from '../../server/services/ind/ctd/ich-m4-headings';
+import { NONCLINICAL_SUMMARY_SECTION_BLUEPRINT } from '../../server/services/regulatory/registry/blueprints/nonclinicalSummaryBlueprint';
 import { CTD_AUTHORING_GUIDANCE } from '../../server/services/ind/ctd/authoring-guidance';
 import { builtinAuthoringTemplateId, getBuiltinAuthoringTemplate } from '../../server/services/authoring/builtin-authoring-templates';
 import { resolveDraftingRequirements } from '../../server/services/ana/AnaDocumentDraftingService';
@@ -70,8 +71,9 @@ describe('a section’s purpose is the record’s own words, attributed', () => 
   it.each(COMPONENTS)('%s: no purpose is empty, and an attributed line is in the brief it names', async (id) => {
     for (const s of await served(id)) {
       expect(s.purpose.trim(), s.number).not.toBe('');
-      const m = /^From the ([\d.]+) brief: (.*)\.$/.exec(s.purpose);
-      if (m) expect(CTD_AUTHORING_GUIDANCE[m[1]]?.keyContentElements, s.number).toContain(m[2]);
+      const m = /^From the ([\d.]+) brief: (.*?)\.(?: Conditional: .*)?$/.exec(s.purpose);
+      // The whole element, or the clause of it that opens with this heading's number (3a review).
+      if (m) expect(CTD_AUTHORING_GUIDANCE[m[1]]?.keyContentElements.some((k) => k.includes(m[2])), s.number).toBe(true);
     }
   });
 
@@ -124,5 +126,63 @@ describe('AnA drafts every section of a component outline from the record', () =
     const r = resolveDraftingRequirements('ICH_CLIN_SUMMARY', '2.7.4.2.1.2 Efficacy Endpoints');
     expect(r.requirementsSource).toMatch(/\+title-mismatch$/);
     expect(r.requirements).toContain('the record titles 2.7.4.2.1.2 "Deaths"');
+  });
+});
+
+/*
+ * The 3a review (2026-10-25), each finding confirmed by a skeptic before it was fixed.
+ */
+describe('3a review: a flag, a purpose or a basis says only what the record says', () => {
+  it('a heading the record makes conditional is not served as required', async () => {
+    const co = await served('ICH_CLIN_OVERVIEW');
+    const cs = await served('ICH_CLIN_SUMMARY');
+    // M4E(R2): the appendix holds detailed benefit-risk methods "when used"; post-marketing data exist only for a marketed product.
+    expect(co.find((s) => s.number === '2.5.6.5')?.required).toBe(false);
+    expect(cs.find((s) => s.number === '2.7.4.6')?.required).toBe(false);
+    for (const c of ['2.5.6.1', '2.5.6.2', '2.5.6.3', '2.5.6.4']) expect(co.find((s) => s.number === c)?.required, c).toBe(true);
+  });
+
+  it('a line from a brief is attached only to the heading it is about, never to a sibling or a parent', async () => {
+    const cs = await served('ICH_CLIN_SUMMARY');
+    const co = await served('ICH_CLIN_OVERVIEW');
+    const p = (nodes: TemplateSection[], c: string) => nodes.find((s) => s.number === c)?.purpose ?? '';
+    // "…overdose, withdrawal, abuse potential" is 2.7.4.5's list, not 2.7.4.5.5 Overdose's.
+    expect(p(cs, '2.7.4.5.5')).not.toMatch(/organ impairment|pregnancy/);
+    // "Deaths, other serious adverse events, and … discontinuation" names three headings.
+    expect(p(cs, '2.7.4.2.1.2')).not.toMatch(/discontinuation/);
+    expect(p(cs, '2.7.4.2.1.3')).not.toMatch(/discontinuation/);
+    // "Adverse events of special interest" narrows 2.7.4.2's subject; it is not 2.7.4.2's line.
+    expect(p(cs, '2.7.4.2')).not.toMatch(/special interest/);
+    // 2.5.6.1.1 carries its own clause, not its sibling's.
+    expect(p(co, '2.5.6.1.1')).toMatch(/2\.5\.6\.1\.1 Disease or Condition/);
+    expect(p(co, '2.5.6.1.1')).not.toMatch(/Current Therapies/);
+    expect(p(co, '2.5.6.1')).not.toMatch(/2\.5\.6\.1\.2/);
+  });
+
+  it.each(COMPONENTS)('%s: a heading the record holds no brief for never claims a brief states its content', async (id) => {
+    for (const s of await served(id)) expect(s.purpose, s.number).not.toMatch(/brief states its content/);
+  });
+
+  it('the outline basis counts what was matched, and does not claim it for every heading', async () => {
+    const t = await getRegistryDocumentTemplate('ICH_CLIN_SUMMARY');
+    const note = t?.basis?.note ?? '';
+    expect(note).toMatch(/^Headings as the record holds them; each heading's own basis says how it was established\. \d+ of 49 were matched against a search extract; the rest are recall\./);
+    expect(note).not.toMatch(/^Headings and numbers as .* record them, matched against search extracts/);
+  });
+
+  it('the record says which headings a search extract showed, and which are numbered by pattern', () => {
+    // docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ich-m4-headings-facts.md
+    const matched = ['2.1', '2.6.4.2', '2.6.6.2', '2.6.6.10', '3.1', '3.2', '3.3', '4.1', '4.2', '4.2.3.4.1', '4.2.3.5.4', '4.2.3.7.1'];
+    for (const h of ICH_M4_HEADINGS) {
+      const note = h.basis.note ?? '';
+      if (matched.includes(h.code)) expect(note, h.code).toMatch(/matched against a search extract/);
+      else expect(note, h.code).not.toMatch(/wording matched against a search extract/);
+    }
+  });
+
+  it('the 2.6 Tables and Figures leaves carry the type the record gives the same heading', () => {
+    const rows = NONCLINICAL_SUMMARY_SECTION_BLUEPRINT.sections;
+    const typed = rows.find((s) => s.code === '2.6.2.7')!.contentType;
+    for (const c of ['2.6.4.10', '2.6.6.10']) expect(rows.find((s) => s.code === c)?.contentType, c).toBe(typed);
   });
 });

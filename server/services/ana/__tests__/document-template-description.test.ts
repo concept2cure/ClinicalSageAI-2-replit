@@ -78,6 +78,10 @@ const RECORD_PROOFS: Record<string, () => void> = {
     expect(sections.length).toBeGreaterThan(0);
     for (const s of sections) expect(record.get(s.number), `smpc ${s.number}`).toBe(s.heading);
   },
+  // Read from the one ICH M2–M5 record since 2026-10-20 (ctd-component-outlines.ts).
+  nonclinical_overview: () => expect(getDocumentTemplate('nonclinical_overview')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.4' }),
+  clinical_overview: () => expect(getDocumentTemplate('clinical_overview')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.5' }),
+  clinical_summary: () => expect(getDocumentTemplate('clinical_summary')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.7' }),
   dsur: () => {
     expect(getDocumentTemplate('dsur')!.sections.map((s) => s.heading)).toEqual(ICH_E2F_DSUR_SECTIONS.map((s) => s.title));
     expect(getDocumentTemplate('dsur')!.outlineSource).toMatchObject({ kind: 'lifecycle-record', record: 'ICH_E2F_DSUR_SECTIONS' });

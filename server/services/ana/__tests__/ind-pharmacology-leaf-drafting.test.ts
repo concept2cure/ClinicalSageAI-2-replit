@@ -147,10 +147,14 @@ describe('IND pharmacology canonical record and hierarchy fidelity', () => {
     for (const [index, row] of remaining.entries()) {
       expect(fingerprint(originalHeadings[index]), row.code).toBe(row.sha256);
     }
+    // 2026-10-25 (3a review): the additions' notes say what backs them. The 2.4.x rows came
+    // from the template library and are numbered by pattern; the 2.5.6.x rows rest on the
+    // 2.5.6 brief and a web-search answer, not an extract; 2.5.6.5 is conditional.
     for (const [code, title, reference] of structuralAdditions) {
       expect(ICH_M4_HEADINGS.find(row => row.code === code), code).toEqual({
         code, title, parent: code.split('.').slice(0, -1).join('.'), module: 2,
-        basis: { ref: `${reference} ${code}`, confidence: 'recall', note: expect.stringMatching(/search extract.*(?:not read|itself was not read)/) },
+        basis: { ref: `${reference} ${code}`, confidence: 'recall', note: expect.stringMatching(/(?:no extract of the guideline showed this heading|a web-search answer \(a summary, not an extract of the guideline\)).*Verbatim read owed\./) },
+        ...(code === '2.5.6.5' ? { condition: expect.stringMatching(/benefit-risk methods/) } : {}),
       });
     }
     const codes = [...Object.keys(CTD_AUTHORING_GUIDANCE), ...ICH_M4_HEADINGS.map(row => row.code)];

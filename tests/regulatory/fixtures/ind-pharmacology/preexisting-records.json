@@ -1,6 +1,6 @@
 {
   "baselineCommit": "26b187705e0f6cc38ed4c2ec4ceee8eb149ba596",
-  "rehashed": "2026-10-15: the 68 structural rows citing ICH M4(R4), M4S(R2) or M4E(R2) were re-hashed after their basis became recall with a search-extract note (search-extract-bases-are-recall.test.ts); reverting only the basis reproduces the baselineCommit hash of each.",
+  "rehashed": "2026-10-15: the 68 structural rows citing ICH M4(R4), M4S(R2) or M4E(R2) were re-hashed after their basis became recall with a search-extract note (search-extract-bases-are-recall.test.ts); reverting only the basis reproduces the baselineCommit hash of each. 2026-10-25 (D2 increment 3, the 3a review): 39 of those rows were re-hashed after their note was corrected — the facts file (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ich-m4-headings-facts.md) records an extract for twelve M4/M4S rows only, and the rest now say they were numbered by the guideline's pattern — and 2.7.4.6 after it gained its record condition (a marketed product).",
   "guidance": [
     {
       "code": "1.1.1",
@@ -514,7 +514,7 @@
   "structural": [
     {
       "code": "2",
-      "sha256": "cfd0e1252ca29189f5478f1ea0a0b2a55b74092aadfbcacf5eb3ed729639c01b"
+      "sha256": "3220e68df74a57db646731da6d15b3a213c983b4cc51adcb19ca8ca262d10e3e"
     },
     {
       "code": "2.1",
@@ -526,7 +526,7 @@
     },
     {
       "code": "2.6",
-      "sha256": "bbfed2d3021d01195b30ed2d430569f1d14db5cdbd6aed36d920b70a352fbf76"
+      "sha256": "035ad40032bf2ba74d69596de98a74765ac93eb8bfa10060dc866e1517da9895"
     },
     {
       "code": "2.6.2.1",
@@ -558,7 +558,7 @@
     },
     {
       "code": "2.6.4.1",
-      "sha256": "629f544da6a467771e96ce8a1e553fd2748b40f4fa9096ff8e2093df29f06c6e"
+      "sha256": "569d44e09c35cdf57e6fbd77d58a2fad1f6d7870f8bbf0c96b33bd1f7d18bdec"
     },
     {
       "code": "2.6.4.2",
@@ -566,39 +566,39 @@
     },
     {
       "code": "2.6.4.3",
-      "sha256": "bb0657f83a7c12e1208baa4a2bc47b84951cd1fd23de75a716666513a02a3a0d"
+      "sha256": "9e5ee14d938dcb4814274356f39f917c206b6c7de8af1d5279e229fcf2b00178"
     },
     {
       "code": "2.6.4.4",
-      "sha256": "05df36d25982eb997260a6bdac08f9b421cfdd8177c580f0aaca9d9ccc5a5f2e"
+      "sha256": "695a4eeaaa552b6a231c0322266fe0b620b0d0b5bed6a66d5f6fd7d9d0449012"
     },
     {
       "code": "2.6.4.5",
-      "sha256": "5e13ea381ffefad20486fe9649e501eba5435edeb75063cf4b39f1419f5a6d01"
+      "sha256": "0bef981518df03257bebd13ed394912f325b452c102a22175c4549d13cbc068a"
     },
     {
       "code": "2.6.4.6",
-      "sha256": "a992be52903ea1c16e9927128d60a9f49d2224fa64d02595f00033d001b46e2d"
+      "sha256": "8d45d994ba6532032dd7c935aab132c7f397b7f2b470a31ce9d4fce9362b3376"
     },
     {
       "code": "2.6.4.7",
-      "sha256": "c857f0a38358665c02239710c0643726009cb17c611780a5fb1c69717bdaafdd"
+      "sha256": "2a50adc37e34ef1491e9d180900e89d10e063fbc49ac8aa30f2ddb208a53a4a6"
     },
     {
       "code": "2.6.4.8",
-      "sha256": "abab8a88c507d983253c15326c937590ccfa68ba57c31a08c33fabc4b7b54c19"
+      "sha256": "8c400cc3b8a51c1a2f9246dd347f9906295add94e395c1b94899f2a486f16038"
     },
     {
       "code": "2.6.4.9",
-      "sha256": "fba1d266ae8eecb8f659183c871c9683ccebf6d1531eb194889c1aeaf04f06f0"
+      "sha256": "6ac2f31f7f74b9b651433f19de9f2972aae54dc2cd34ee3223fe956fe1686381"
     },
     {
       "code": "2.6.4.10",
-      "sha256": "9627d40d5577f7c310e56006c12a9af21f1f761e7b9c527c7b2f805adae21794"
+      "sha256": "74f5b26d4d56944cc90803f3cdc70565de85ed792bfec551361c8a06286ddedd"
     },
     {
       "code": "2.6.6.1",
-      "sha256": "36b2bcf015470a6adc177dddc8bff2ac007e7b78ddfec646080ebed3cd602c17"
+      "sha256": "1a26dac424d296be6fbc5457dcd30110b393c56d204c04882174f6a05c7a1016"
     },
     {
       "code": "2.6.6.2",
@@ -606,31 +606,31 @@
     },
     {
       "code": "2.6.6.3",
-      "sha256": "d510ed15dae56e145a50c348ec53c6bb81b76f928ead94bfd985e1d2572b412c"
+      "sha256": "5d633084d6bbd7ed6d2ff5256a87c580c5a7215cb1f430bee5cec918e38e94af"
     },
     {
       "code": "2.6.6.4",
-      "sha256": "6f25f5107defb2013ade4d5cdcf474e3bf7c7b1db442c7f3d6aa4ae9b61d6c94"
+      "sha256": "1bf044499fae22f4cebdc5fb575ae7146fc86bb4df96b872736859bfcaae33a8"
     },
     {
       "code": "2.6.6.5",
-      "sha256": "da9cf24f048917404820e9ecf87a1ee47fda0d2626384dc98a9debbeac16b962"
+      "sha256": "13efa0f6e1c6409b8cc53cc4c11da8cfaab06f81717c3529fbdd4520f29b6824"
     },
     {
       "code": "2.6.6.6",
-      "sha256": "4e7baa853883462788e0580920a5a7d701a49a6c7963aaca910db84c5490e054"
+      "sha256": "75ea1cb5e3bdc735bc7c26f56d8a448c71b58e0fab654c2416d65f0e7d2c9c05"
     },
     {
       "code": "2.6.6.7",
-      "sha256": "a9841f0c3a9ad15ce992540e3bccd6e2fdd67695f9c121447bc5f96b8ee61d2a"
+      "sha256": "e7eb001e15ac73f077d63cd696a16576809b1bd98e51349988fd4a301ed967c4"
     },
     {
       "code": "2.6.6.8",
-      "sha256": "a5e93db26f5f635a23a8622c5b99bf2ecc4dc024ab8c9fbe60f95a90b8a6531a"
+      "sha256": "bc460a5c217b6aadf053c9ad609bbe4c369758d141edae0af952cd1f72ec6ef8"
     },
     {
       "code": "2.6.6.9",
-      "sha256": "1e3c97cab66f0b921f0efb6015f8309d621e1558bf417eb64a38c761c22513d6"
+      "sha256": "cd54229b6f196789691428ce43ad6414603786af3edda752115c127039b893b2"
     },
     {
       "code": "2.6.6.10",
@@ -638,7 +638,7 @@
     },
     {
       "code": "2.7",
-      "sha256": "ef84c1e6622575548fac40b7c23d5bd3e801fb9ef96934a4fe27acf30980065e"
+      "sha256": "526de34f179a206c37c8144c8629945284605fa4ed5e995ebd16dcb8dd7f54e6"
     },
     {
       "code": "2.7.1.1",
@@ -806,7 +806,7 @@
     },
     {
       "code": "2.7.4.6",
-      "sha256": "90e41a1e03cf5007c0a413d0d0759f29972d3bf80ee45fb17953cff69e1d569c"
+      "sha256": "f89452860897551d1945fbad80b56e6ee08bd0c9d86abaf218901d57648fdc5a"
     },
     {
       "code": "2.7.4.7",
@@ -814,7 +814,7 @@
     },
     {
       "code": "3",
-      "sha256": "4a564b888762406bb0bd057c453e971637cffc394196f4346cbc5b9e72f280cb"
+      "sha256": "5dad4dd5e588944b1eae4e3eefb19be7ab8f3499493433ef68b65411881e8fad"
     },
     {
       "code": "3.1",
@@ -846,7 +846,7 @@
     },
     {
       "code": "4",
-      "sha256": "872a7a897b15fbaba6b483fede9f4761858674dd20271e124f2318a32b06d15b"
+      "sha256": "bd7fb620fb4125405d0568367e1078f18504a08b7590b0f04504ea45ec0192f7"
     },
     {
       "code": "4.1",
@@ -858,23 +858,23 @@
     },
     {
       "code": "4.2.1",
-      "sha256": "5b42e5e22ddea4e28cd867ab27b4f88197f6a5c3e53b0a25d9992cdd2206a3c6"
+      "sha256": "96390fc2181d8ebe60089bfec5824466ce7e9848b542ae842c480ca38866ec33"
     },
     {
       "code": "4.2.2",
-      "sha256": "1c3c8fbcdd98d5bad9e4d7397c86f30077a57829fc5abedacc3b71d134d5c0b2"
+      "sha256": "d9d298058d89cc5b3b6aeecd4ab0d7fe6cdaef0918e13d4fe40469f2b25ff009"
     },
     {
       "code": "4.2.3",
-      "sha256": "58b9844af28aabe20534fd0552e07048c66171297fc58a240b3c87da0f223b44"
+      "sha256": "b9943049b42845c4af4bc3b8abd812d8d865e9777f90e02ae00f08063d36491f"
     },
     {
       "code": "4.2.3.3.1",
-      "sha256": "57bc2442a60bf36b3e3885737feaf661ae367740d4d9c5157a6e37ce033f7283"
+      "sha256": "9d577a26f12387375228ea0fa74f17a5ce9f8885468b0371b865096d82f87cc3"
     },
     {
       "code": "4.2.3.3.2",
-      "sha256": "482e5804a5cc6afd8e3d36bf0de4684dfec3d8c51bc6ef4dc9a4f845c4e6361b"
+      "sha256": "0111db5ad17c38efc7dca179a8f5f091efb4101ef5323e5724bfc1d6e169bd39"
     },
     {
       "code": "4.2.3.4.1",
@@ -882,23 +882,23 @@
     },
     {
       "code": "4.2.3.4.2",
-      "sha256": "20eb9b3f140aa2719e3cbb8c6799eb234681629ba704ade220835b86b70d1d76"
+      "sha256": "e9c6cab5c542ea7313ab61a5c05d034847d43920592e95e394431ce26301f4ce"
     },
     {
       "code": "4.2.3.4.3",
-      "sha256": "f3b6919500c801bac46378cf0f510781cc1c0f31ab5316dbb6b95aae085b571c"
+      "sha256": "ce7c271856c37f2e2d37f6ac413887e69c2446c325ca68c5ec5ef32507d8f08d"
     },
     {
       "code": "4.2.3.5.1",
-      "sha256": "c2f0f52be4a433319344f01bdbc9e1830c387a0cb6477394e84256311222d89e"
+      "sha256": "91109d0ac8204f858873b8ca8265a46460d838f0b6931255cd7df97eaacc8469"
     },
     {
       "code": "4.2.3.5.2",
-      "sha256": "778e4e382ef0845e0092ff850d08f32c5b4bfea1d10938a6150a7ecf18d0821b"
+      "sha256": "71f82a77d4001f8a826905faddd5f24e62101223036ed2477a11eb1e60fe5ccd"
     },
     {
       "code": "4.2.3.5.3",
-      "sha256": "7688151575f7b87945f04d8fd29f83cdd95b90570b2278035280bcbfb54b827c"
+      "sha256": "1f0e5b8d1901ea1b25498758af0d278ec49732232554ffc9a6e56d9a8dae90d6"
     },
     {
       "code": "4.2.3.5.4",
@@ -910,31 +910,31 @@
     },
     {
       "code": "4.2.3.7.2",
-      "sha256": "91d95ebdb39d1ae3af3018de0bce0d8d45411b9767cdc18d4ea87400f23c219d"
+      "sha256": "5dfb51ee75b220491abf8f7ea6d0c59c5eb676c02fa3e40c4191eed53f2f37be"
     },
     {
       "code": "4.2.3.7.3",
-      "sha256": "7d0e0feb73fa47c2855783e99b9d71199a2bdd437dc837f1c3ccb939b88f40b0"
+      "sha256": "5d2b36cfa2b0aa85bda565914fc4dd278ab6cc801c17f5b56f70a0d06cc60e1e"
     },
     {
       "code": "4.2.3.7.4",
-      "sha256": "cf304ac2ad6831d597a197952d6a5a13a0d9831f6860dec240706252215acf62"
+      "sha256": "a9566a0140de4c0dbdf3575ae7e35dc57f3784886a02f2e56a1e573d4135408a"
     },
     {
       "code": "4.2.3.7.5",
-      "sha256": "e4e9b41b5f7421ce35566c7b70d231f83e0c9671f408dfacdbbe9c614677e649"
+      "sha256": "dee41a897517608bf7ba368539fd799f52c6a8eac2b91ad3ca3ec2f8add92d97"
     },
     {
       "code": "4.2.3.7.6",
-      "sha256": "2b306850179b8e99ef3665e0e71d5b47f2219d380608e2485abebe310b2df1ec"
+      "sha256": "312ae2c62bee2dc150cec9bb7d42c828808799c6601cd228517ecd4e64f4e1ed"
     },
     {
       "code": "4.2.3.7.7",
-      "sha256": "1179f2488455327b6e8e7df0695c3856f14edc7926918ebcfec9c21a18081fd8"
+      "sha256": "5e869dd4e20614ec460b3b86b86148ca11ee51fbcf7a9a60ca5da4c1e338e2ef"
     },
     {
       "code": "5",
-      "sha256": "462028aecd3d52a37af9c84b3d19b5235e72f4eb0ff0a11c8aef249c5aea3ae5"
+      "sha256": "dd17cf2f42c3b285e468dbc4940f82f768efef797b7ccad683a51427d910fd5a"
     },
     {
       "code": "5.3",
