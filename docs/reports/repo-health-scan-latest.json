@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-24T05:37:13.985Z",
+  "generatedAt": "2026-10-25T16:27:44.743Z",
   "git": {
-    "sha": "4bae69d8905fe7cb07b516348c628628acf9c473",
+    "sha": "d9738800520dc4667134c103677ce4fd2b65a43e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -3016,7 +3016,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1572
+        "lines": 1566
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
