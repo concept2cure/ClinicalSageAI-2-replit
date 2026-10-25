@@ -9,7 +9,9 @@ const request = vi.hoisted(() => vi.fn());
 const identity = vi.hoisted(() => ({ user: { id: '7', organizationId: '4' } as { id: string; organizationId: string } | null }));
 const tenant = vi.hoisted(() => ({ currentOrganization: { id: 4 }, currentClientWorkspace: { id: '9', organizationId: '4' } }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => identity.user }));
+/* useDocumentList reads the signed-in session through useAuth (CanvasDocumentList.tsx);
+   with no AuthProvider mounted, the real one throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuthUser: () => identity.user, useAuth: () => ({ user: identity.user }) }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => tenant }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 

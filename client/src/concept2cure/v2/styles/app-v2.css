@@ -695,6 +695,12 @@
 .c2c-v2 .pj-stageband-next-k{display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--accent-200);}
 .c2c-v2 .pj-stageband-next-k svg{width:12px;height:12px;}
 .c2c-v2 .pj-stageband-next-v{font-size:12.5px;color:var(--text-200);}
+/* What to do on the open step, and the next step as a button (ProjectHome StageBand). */
+.c2c-v2 .pj-stageband-now{margin-top:6px;font-size:13px;line-height:1.5;color:var(--text-200);max-width:68ch;}
+.c2c-v2 .pj-stageband-now strong{font-weight:600;color:var(--text-100);}
+.c2c-v2 button.pj-stageband-next{padding:6px 10px;border:1px solid transparent;border-radius:var(--radius-md);background:none;cursor:pointer;transition:background var(--dur),border-color var(--dur);}
+.c2c-v2 button.pj-stageband-next:hover{background:var(--bg-000);border-color:var(--border);}
+@media (max-width:640px){.c2c-v2 button.pj-stageband-next{max-width:100%;text-align:left;}.c2c-v2 .pj-stageband-next-k{justify-content:flex-start;}}
 .c2c-v2 .orch-embed{padding:0;}
 .c2c-v2 .orch-embed .metrics{margin-top:0;}
 .c2c-v2 .orch-views .seg-badge{margin-left:6px;background:var(--warning);color:var(--on-warning);font-size:10px;font-weight:600;border-radius:9px;padding:0 5px;}

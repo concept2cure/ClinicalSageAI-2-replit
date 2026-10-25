@@ -95,18 +95,27 @@ Each change completes or reaches something that exists; nothing new is built bes
 
 Unchanged: entitlements, launch scope, module grants, routes, server code and data.
 
-## Pass 2 — each feature in its project step (next)
+## Pass 2 — each feature in its project step (done, same day)
 
-The founder's model is that features live inside the client's workflow. Project home already scopes each
-step to the program. Pass 2 completes it:
+Project home already scopes each step to the program; pass 2 completes it. Evidence:
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass2/`.
 
-1. Open a project on the first step with work to do, not always Author.
-2. Each step states, in one line, what to do now, from the program's own reads (no inferred status).
-3. Each step lists the existing tools that belong to it (Author: the editor, protocol development, CMC /
-   Module 3 composition; Submit: Submission Center's builder, IND forms and 1571, readiness, gateway; Respond:
-   agency letters), each **opened with this project's context** or not offered — the defect that deleted
-   `PJ_STAGE_TOOLS` on 2026-10-15 was a tool opened without its context.
-4. Plan & features' "when to use / start with / next" guidance moves into those steps.
+1. **Opening step.** A project with no documents opens on Evidence; with documents, or when its list could not be
+   read, on Author. A step chosen by a person, AnA (`project-home.set-stage`), the MDX workflow or a handoff is never
+   overridden (`ProjectHome` `chooseStage`).
+2. **What to do now** on each step (`PJ_LIFECYCLE.now`, `nowDevice`): one sentence of guidance about the step, never
+   a claim about the program. A filing that builds no sequence gets no Submit sentence about sequences; its
+   `NotSequencedState` says what its Submit step is.
+3. **Next step**: the band offers the next step (`StageBand`, reusing the band's unused `pj-stageband-next` styles),
+   so the five steps read as a sequence. Respond has none.
+4. **Tools in their step**, each opened on this project (both screens read the open program) and only where it
+   serves the filing — the lesson of the deleted `PJ_STAGE_TOOLS`:
+   - Author: **CMC / Module 3** for a US IND whose product is recorded as a drug (the composition boundary).
+   - Submit: **IND forms** (1571, cover letter, Letter of Authorization; P-32) for a US IND. They were reached only
+     from inside a Submission Center sequence.
+   The rule "a US IND" is one function, `isUsInd`, moved from `SubmissionCenter.tsx` to `programSequence.ts`.
 
-Pass 2 starts from this file's What already exists, and its slice names the step, the tool and the context
-each tool is opened with.
+Not done, and why: the remaining tools already sit in their step (Evidence: Vault, data room, source tracer;
+Author: editor, protocols; Review: review board, tasks; Submit: Submission Center, readiness, compile; Respond:
+agency letters, Communication). Plan & features keeps its "when to use" guidance for administrators; the client
+reads the step's own sentence instead.

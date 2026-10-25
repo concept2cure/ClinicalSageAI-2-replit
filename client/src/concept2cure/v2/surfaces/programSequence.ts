@@ -199,6 +199,12 @@ export function awaitingOwnReleaseSignature(a: DispatchReadinessAssessment | nul
  *  "Prior Approval Supplement"): the application-type label when one matches,
  *  a filing document class's label when it is one (never its key, "pas"),
  *  otherwise the value as the server gave it ("CER"); null when there is none. */
+/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves.
+ *  One rule for a submission (SubmissionCenter) and a project (ProjectHome). */
+export function isUsInd(s: { applicationType?: string | null; primaryRegion?: string | null }): boolean {
+  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
+}
+
 export function programTypeLabel(t: string | null | undefined): string | null {
   const v = String(t ?? '').trim();
   if (!v) return null;

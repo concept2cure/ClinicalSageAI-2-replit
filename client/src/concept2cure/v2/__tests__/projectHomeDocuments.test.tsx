@@ -27,6 +27,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -291,7 +294,8 @@ describe('Review findings — the row, the handoff and the filing type say what 
     const later = screen.getByTestId('pj-coming-later').textContent ?? '';
     expect(later).not.toMatch(/IND/);
     expect(later).not.toMatch(/variation classifier/);
-    expect(later).toMatch(/Registrations, market access/);
+    // The device line's wording (PJ_LIFECYCLE laterDevice), not the drug line's.
+    expect(later).toMatch(/Registration lifecycle tracking and market access/);
   });
 
   it('a drug project still names IND annual-report tracking as coming later', async () => {

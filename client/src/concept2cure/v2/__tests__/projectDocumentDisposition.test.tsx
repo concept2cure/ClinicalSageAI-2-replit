@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { DocumentDispositionChoice } from '@shared/document-data-disposition';
 const apiRequest = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<Record<string, unknown>>()), apiRequest }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { Vault } from '../surfaces/Vault';

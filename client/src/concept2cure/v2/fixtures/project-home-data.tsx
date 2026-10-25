@@ -264,6 +264,12 @@ export interface LifecycleStage {
   label: string;
   icon: string;
   blurb: string;
+  /** What to do on this step, in one sentence a new client can act on. Static
+   *  guidance about the step, never a claim about the program's state
+   *  (docs/design/CLIENT_JOURNEY_2026-10-25.md, pass 2). */
+  now: string;
+  /** `now` for a device or diagnostic project, when it differs. */
+  nowDevice?: string;
   /** Stage names that no longer have a tab and whose work is on this one.
    *  `project-home.set-stage` still accepts them (shared/navigation/
    *  surface-actions.ts), so an AnA call naming one opens this tab. */
@@ -293,11 +299,23 @@ export interface LifecycleStage {
    are Submit's aliases, since market choice and follow-up sequences belong
    there, and what they promised is named on Submit's coming-later line. */
 export const PJ_LIFECYCLE: LifecycleStage[] = [
-  { id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Project files and the data room the documents are written from' },
-  { id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes' },
-  { id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign' },
+  {
+    id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Project files and the data room the documents are written from',
+    now: 'Add the documents this filing is written from: protocols, study reports, prior correspondence. Each file is read on upload and becomes a source you can trace.',
+  },
+  {
+    id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes',
+    now: 'Draft the filing’s documents from those sources. Ask AnA to draft a section, or open a document and write it yourself.',
+    nowDevice: 'Draft the filing’s documents from the device or diagnostic evidence. Ask AnA to draft a section, or open a document and write it yourself.',
+  },
+  {
+    id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign',
+    now: 'Send each document for review, resolve the comments, and approve it with your signature.',
+  },
   {
     id: 'submit', label: 'Submit', icon: 'rocket', blurb: "Build and validate each market's eCTD sequence",
+    now: 'Place the approved documents in each market’s sequence, check its readiness, then compile the submission.',
+    nowDevice: 'Assemble the eSTAR or technical documentation from the approved documents.',
     aliases: ['plan', 'lifecycle'],
     later:
       'Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; ' +
@@ -307,6 +325,7 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
+    now: 'When the agency writes, add its letter here, draft each answer from it with AnA, and start the response sequence.',
     // Question-by-question tracking left this list on 2026-10-18: each inbox
     // letter now holds its questions and a signed response to each
     // (AgencyResponses.tsx).

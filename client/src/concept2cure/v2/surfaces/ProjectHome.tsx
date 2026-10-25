@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useId, useCallback } from 'react';
 import { useAuthUser } from '@/services/portal/authService';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
@@ -29,7 +29,8 @@ import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/constants/domain/product-types';
-import { useProgramMarkets } from './programSequence';
+import { isUsInd, useProgramMarkets } from './programSequence';
+import { StageBand, StageTracker } from './ProjectStages';
 import { ComingLater } from './ProjectComingLater';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
@@ -194,37 +195,6 @@ function Anchored<T>(props: {
     return <EmptyState icon={I.fileText} title={props.emptyTitle} hint={props.emptyHint} />;
   }
   return <>{props.render(state.data)}</>;
-}
-
-/* ════ Lifecycle (canonical stage catalog — not data) ════
-   The tracker is navigation over the stage catalog, not a progress meter.
-   Every stage before the open tab used to be marked `done` — filled node,
-   filled connector — from the tab's POSITION alone. `stage` defaults to
-   'author', so Plan and Evidence rendered as completed on every project,
-   including with no project loaded at all, and opening Submit "completed"
-   Review. Nothing this surface reads records per-stage completion, so the one
-   state stated is the one that is true: which stage is open. */
-
-/* A nav of five buttons, the open one marked aria-current="step". It was a
-   role="tablist" over plain buttons carrying aria-selected, which is not valid
-   on a button, so a screen reader was told of no open stage at all (design
-   review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
-   panels: each stage renders below the conversations, so a nav is what it is. */
-function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { stage: string; setStage: (s: string) => void; lifecycle?: typeof PJ_LIFECYCLE }) {
-  return (
-    <nav className="pj-lc" aria-label="Project lifecycle">
-      {lifecycle.map((s) => {
-        const status = s.id === stage ? 'active' : undefined;
-        return (
-          <button key={s.id} type="button" className="pj-lc-stage" data-status={status} aria-current={stage === s.id ? 'step' : undefined}
-            onClick={() => setStage(s.id)} title={s.blurb}>
-            <span className="pj-lc-node"><span className="pj-lc-ic">{I[s.icon] || I.grid}</span></span>
-            <span className="pj-lc-l">{s.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
 }
 
 /* ════ Evidence: the project's files ════════════════════════════════════════
@@ -1346,9 +1316,9 @@ function ProjectDocumentsBody({ read, onRetry, onOpen }: {
   );
 }
 
-function ProjectDocuments({ read, onRetry, onOpen, onNav, available }: {
+function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes }: {
   read: ListRead; onRetry: () => void; onOpen: (doc: BuiltDocument) => void;
-  onNav: (id: string) => void; available: (id: string) => boolean;
+  onNav: (id: string) => void; available: (id: string) => boolean; cmcComposes?: boolean;
 }) {
   /* The editor's own view, with no document named: any pending target is
      dropped so an older one cannot ride along (editorTarget.ts). */
@@ -1373,6 +1343,12 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available }: {
               Open in Authoring {I.right}
             </button>
           )}
+          {/* CMC / Module 3 reads the open program; offered where it composes. */}
+          {cmcComposes && available('cmc') && (
+            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('cmc')}>
+              CMC / Module 3 {I.right}
+            </button>
+          )}
         </span>
       </div>
       <ProjectDocumentsBody read={read} onRetry={onRetry} onOpen={onOpen} />
@@ -1381,7 +1357,7 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available }: {
 }
 
 function AuthorWorkspace({
-  pid, dossier, onNav, teamState, sharingProjectId, onRetryTeam, activityState, docs, onRetryDocs, onOpenDoc, onAsk,
+  pid, dossier, onNav, teamState, sharingProjectId, onRetryTeam, activityState, docs, onRetryDocs, onOpenDoc, onAsk, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1398,6 +1374,8 @@ function AuthorWorkspace({
   onOpenDoc: (doc: BuiltDocument) => void;
   /** Hands a prompt to AnA's conversation (the skill studio's "draft it with AnA"). */
   onAsk?: (text: string) => void;
+  /** The project is one CMC / Module 3 composes for (ProjectHome `cmcComposes`). */
+  cmcComposes?: boolean;
 }) {
   const available = useSurfaceAvailable();
   const docRows = rowsOf(docs) ?? [];
@@ -1412,7 +1390,7 @@ function AuthorWorkspace({
   return (
     <div className="pj-grid">
       <div className="pj-main">
-        <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} />
+        <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
         {/* Module completion, from the same dossier read as the card (F23). */}
         <ModuleCompletion read={dossier} docForModule={docForModule} onOpen={onOpenDoc} />
@@ -1528,10 +1506,23 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
   const [workTarget, setWorkTarget] = useState<string | null>(null);
   const [stage, setStage] = useState('author');
+  /* Until a person, AnA or a handoff chooses a step, a project with no
+     documents opens on Evidence, its first step with work to do
+     (CLIENT_JOURNEY_2026-10-25.md, pass 2). A choice is never overridden. */
+  const stageChosen = useRef(false);
+  const chooseStage = useCallback((next: string) => {
+    stageChosen.current = true;
+    setStage(next);
+  }, []);
+  // First: on mount effects run in order, so the handoff below still counts.
+  useEffect(() => { stageChosen.current = false; }, [pid]);
   useEffect(() => {
     const target = consumeNavParams('project-home')?.workId;
-    if (target) { setWorkTarget(target); setStage('review'); }
-  }, []);
+    if (target) { setWorkTarget(target); chooseStage('review'); }
+  }, [chooseStage]);
+  useEffect(() => {
+    if (!stageChosen.current && docsRead.state === 'ready' && docsRead.rows.length === 0) setStage('evidence');
+  }, [docsRead]);
 
   const prog = progState.data;
 
@@ -1580,13 +1571,19 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
   const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
   const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'author'
-    ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence' }
-    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation' } : item) : PJ_LIFECYCLE;
+    ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
+    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item) : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
   const documentClass = filingDocumentClassOf(prog?.program_type);
   const ectdFiling = !!prog && !progState.loading && !progState.error && prog.id === pid && !deviceFiling && !documentClass;
+  /* Tools a step offers, each opened on this project and only where it serves
+     the filing (CLIENT_JOURNEY_2026-10-25.md, pass 2): the IND forms for a US
+     IND; CMC / Module 3 where it composes, a US IND recorded as a drug
+     (server/services/cmc/composition-scope.ts). */
+  const usInd = ectdFiling && isUsInd({ applicationType: prog?.program_type, primaryRegion: prog?.primary_agency });
+  const cmcComposes = usInd && prog?.product_type === 'drug';
   const predicateKs = (prog?.predicate_devices ?? [])
     .map((p) => String(p?.kNumber ?? '').trim())
     .filter(Boolean);
@@ -1726,7 +1723,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       const asked = (params.stage ?? '').trim();
       const meta = PJ_LIFECYCLE.find((s) => s.id === asked || s.aliases?.includes(asked));
       if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
-      setStage(meta.id);
+      chooseStage(meta.id);
       return {
         ok: true,
         detail: meta.id === asked
@@ -1812,7 +1809,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           marketsState={markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'ready'}
           onNav={onNav}
           onStage={nextStage => {
-            setStage(nextStage);
+            chooseStage(nextStage);
             requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
           }}
           onAsk={ask}
@@ -1838,13 +1835,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           human's controls do not offer what hers cannot. */}
       {!noProject && (
         <>
-          <StageTracker stage={stage} setStage={setStage} lifecycle={lifecycle} />
-          <div className="pj-stageband">
-            <div className="pj-stageband-l">
-              <span className="pj-stageband-stage">{(lifecycle.find(s => s.id === stage) ?? { label: '' }).label}</span>
-              <span className="pj-stageband-blurb">{(lifecycle.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
-            </div>
-          </div>
+          <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
+          {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
+          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication} />
         </>
       )}
 
@@ -1878,7 +1871,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} usInd={usInd} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
@@ -1912,6 +1905,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               onRetryDocs={reloadDocs}
               onOpenDoc={openDocument}
               onAsk={onAsk}
+              cmcComposes={cmcComposes}
             />
           )}
         </>

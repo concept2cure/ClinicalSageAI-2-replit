@@ -50,7 +50,7 @@ import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
-import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
+import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
@@ -487,11 +487,6 @@ interface ScopedBuilderNotice extends Notice { builderGeneration?: number; build
 function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation: number, sequenceId: number | undefined): Notice | null {
   if (notice?.builderGeneration === undefined) return notice;
   return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
-}
-
-/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves. */
-export function isUsInd(s: Pick<SubRow, 'applicationType' | 'primaryRegion'>): boolean {
-  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
 }
 
 export function SubmissionCenter({

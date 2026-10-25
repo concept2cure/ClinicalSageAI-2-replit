@@ -368,7 +368,22 @@ export function NotSequencedState({ documentClass, regionalApplication }: {
 /** The Submit tab's market list. "Open Submission Center" opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFiling, canChange, documentClass, regionalApplication }: {
+/** The IND's forms (1571, cover letter, Letter of Authorization), a Submission
+ *  Center feature (P-32), offered on a US IND's Submit step. It was reached only
+ *  from inside a Submission Center sequence; it reads the open program, so it
+ *  opens on this one (docs/design/CLIENT_JOURNEY_2026-10-25.md). */
+function IndFormsDoor({ usInd, onNav, available }: {
+  usInd?: boolean; onNav: (id: string) => void; available: (id: string) => boolean;
+}) {
+  if (!usInd || !available('ind-checklist')) return null;
+  return (
+    <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('ind-checklist')}>
+      IND forms {I.right}
+    </button>
+  );
+}
+
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFiling, canChange, documentClass, regionalApplication, usInd }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
@@ -381,6 +396,8 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
   /** The project is a filing document class (a PAS, a CSR, a meeting package): null for an application. */
   documentClass?: FilingDocumentClass | null;
   regionalApplication?: RegionalDeviceApplicationClass | null;
+  /** The project is a US IND (programSequence isUsInd): its forms are offered here. */
+  usInd?: boolean;
 }) {
   /* A filing document class has no market: it is authored here and this
      platform builds no sequence for it, so Add a market (refused,
@@ -420,6 +437,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               Compile and download {I.right}
             </button>
           )}
+          <IndFormsDoor usInd={usInd} onNav={onNav} available={available} />
           {center && ectdFiling && !deviceFiling && (
             <>
               {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}

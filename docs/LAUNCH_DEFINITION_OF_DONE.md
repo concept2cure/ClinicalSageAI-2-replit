@@ -831,8 +831,9 @@ findings and what already existed are in `docs/design/CLIENT_JOURNEY_2026-10-25.
 - **Home** is where a client starts: their projects, their tasks, Ask AnA, their recent conversations.
 - **Risk-based monitoring and Biostatistics** are work areas by the founder's model and join the rail's *Work
   areas* when each is in the launch catalog. Not before (Rule 2).
-- **Next (pass 2):** each project step states what to do now and offers the existing tools that belong to it,
-  each opened with the project's context.
+- **Inside the project** (pass 2, the same day): a project with no documents opens on Evidence; each step states what
+  to do now and offers the next step; Author offers CMC / Module 3 and Submit the IND forms for a US IND, each opened
+  on the project.
 
 Launch scope, module grants and every route are unchanged by this decision.
 

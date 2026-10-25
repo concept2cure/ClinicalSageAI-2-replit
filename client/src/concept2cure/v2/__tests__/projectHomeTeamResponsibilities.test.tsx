@@ -5,6 +5,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import type { ProjectTeamMember, ProjectTeamResponse } from '@shared/project-team';
 
 const request = vi.hoisted(() => vi.fn());
+/* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
+   no AuthProvider mounted, the real useAuth throws before Project home renders. */
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
