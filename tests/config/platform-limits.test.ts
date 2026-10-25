@@ -59,9 +59,10 @@ describe('platform-limits config values', () => {
   });
 
   // Pinned on purpose: adding a category here is a security decision (2026-10-08
-  // added vault_metadata, the Vault's document reads that carry quoted text).
-  it('RATE_LIMIT_FAIL_CLOSED_CATEGORIES is [auth, documents, vault_metadata]', () => {
-    expect([...RATE_LIMIT_FAIL_CLOSED_CATEGORIES]).toEqual(['auth', 'documents', 'vault_metadata']);
+  // added vault_metadata, the Vault's document reads that carry quoted text;
+  // 2026-10-25 renamed it document_metadata when the editor's reads joined it).
+  it('RATE_LIMIT_FAIL_CLOSED_CATEGORIES is [auth, documents, document_metadata]', () => {
+    expect([...RATE_LIMIT_FAIL_CLOSED_CATEGORIES]).toEqual(['auth', 'documents', 'document_metadata']);
   });
 
   describe('LEGACY_RATE_LIMITS (in-memory limiter)', () => {

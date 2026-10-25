@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, desc, asc, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, desc, asc, isNull, sql } from 'drizzle-orm';
 import {
   unifiedTasks,
   taskTemplates,
@@ -43,7 +43,8 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
-import { requestDb } from '../db/requestDb';
+import { requestDb, type RequestDb } from '../db/requestDb';
+import { readMyWork } from '../services/tasking/my-work';
 import { projectForTaskSource, AUTHORING_DOCUMENT_SOURCE } from '../services/tasking/task-project';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
@@ -1598,8 +1599,9 @@ router.delete('/tasks/:taskId', requireEditorAccess, async (req: Request, res: R
 //
 // One org-scoped answer to "what is assigned to me right now" from the
 // canonical store: open unified tasks for the caller, split into overdue /
-// due-soon / open, plus the approvals awaiting them. The tray previously
-// showed a hardcoded count (assessment D40).
+// due-soon / open, plus the approvals awaiting them, each with its project's
+// name (services/tasking/my-work.ts). The tray previously showed a hardcoded
+// count (assessment D40).
 router.get('/my-work', async (req: Request, res: Response) => {
   try {
     // A read, so not behind requireEditorAccess: the organization comes from
@@ -1609,61 +1611,8 @@ router.get('/my-work', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0 || !actorUserId) {
       return res.status(401).json({ success: false, error: 'Organization and user context required' });
     }
-
-    const rows = await storage.db
-      .select()
-      .from(unifiedTasks)
-      .where(
-        and(
-          eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.assigneeId, actorUserId),
-          inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
-          isNull(unifiedTasks.deletedAt)
-        )
-      )
-      .orderBy(sql`${unifiedTasks.dueDate} asc nulls last`)
-      .limit(200);
-
-    const now = Date.now();
-    const soonCutoff = now + 48 * 60 * 60 * 1000;
-    const items = rows.map(row => {
-      const dueMs = row.dueDate ? new Date(row.dueDate).getTime() : null;
-      return {
-        taskId: row.taskId,
-        title: row.title,
-        projectId: row.projectId ?? null,
-        moduleType: row.moduleType,
-        taskType: row.taskType ?? '',
-        status: row.status,
-        priority: row.priority,
-        dueDate: row.dueDate ? new Date(row.dueDate).toISOString() : null,
-        overdue: dueMs != null && dueMs < now,
-        dueSoon: dueMs != null && dueMs >= now && dueMs <= soonCutoff,
-        blocked: row.status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0),
-        approvalRequired: row.approvalRequired ?? false,
-        approvalStatus: row.approvalStatus ?? 'not_started',
-        criticalPath: row.criticalPath ?? false,
-      };
-    });
-
-    return res.json({
-      success: true,
-      data: {
-        items,
-        total: items.length,
-        overdue: items.filter(i => i.overdue).length,
-        dueSoon: items.filter(i => i.dueSoon).length,
-        blocked: items.filter(i => i.blocked).length,
-        approvalsPending: items.filter(
-          // Mirrors the gate's own definition (task-signoff.ts): anything
-          // approval-gated that is not yet approved still needs a signature.
-          // Testing === 'pending' made this structurally zero — approval_status
-          // is nullable with no default and no write path ever sets 'pending'
-          // (only 'approved'), so the count never left 0.
-          i => i.approvalRequired && i.approvalStatus !== 'approved'
-        ).length,
-      },
-    });
+    const data = await readMyWork(storage.db as unknown as RequestDb, organizationId, actorUserId);
+    return res.json({ success: true, data });
   } catch (error) {
     console.error('Error loading my work:', error);
     return res.status(500).json({ success: false, error: 'Failed to load my work' });

@@ -1,0 +1,35 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left (5.0m)
+
+
+  1) [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left › Send for review: a reviewer is asked, with a reason 
+
+    Test timeout of 300000ms exceeded.
+
+    Error: locator.check: Test ended.
+    Call log:
+      - waiting for getByRole('dialog').getByLabel('Reviewer User')
+
+
+      470 |     await page.getByRole('button', { name: 'Send for review' }).click();
+      471 |     const dialog = page.getByRole('dialog');
+    > 472 |     await dialog.getByLabel('Reviewer User').check();
+          |                                              ^
+      473 |     await dialog.getByLabel(/Reason for the request/).fill('Ready for a first review of the profile.');
+      474 |     await dialog.getByRole('button', { name: 'Send for review' }).click();
+      475 |     await expect(dialog.getByText(/^Review requested\. The server recorded one request on this document/)).toBeVisible({ timeout: 30_000 });
+        at /home/user/ClinicalSageAI-2-replit/tests/e2e/golden-customer-journey.e2e.ts:472:46
+        at /home/user/ClinicalSageAI-2-replit/tests/e2e/golden-customer-journey.e2e.ts:469:3
+
+    attachment #5: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/golden-customer-journey.e2-2c9be-for-review-see-what-is-left-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/golden-customer-journey.e2-2c9be-for-review-see-what-is-left-chromium/error-context.md
+
+  Slow test file: [chromium] › tests/e2e/golden-customer-journey.e2e.ts (5.0m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [chromium] › tests/e2e/golden-customer-journey.e2e.ts:381:1 › first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left 

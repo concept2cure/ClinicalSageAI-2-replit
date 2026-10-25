@@ -41,6 +41,28 @@ Asked three questions after the findings above, the founder chose:
 - **Risk-based monitoring and Biostatistics:** stay off the rail until each is in the launch catalog (Rule 2).
 - **First screen:** Home, as a "start here" page: your projects, your tasks, Ask AnA, your conversations.
 
+## Decisions of the design interview, 2026-10-25 (founder)
+
+Recorded here so later sessions build on them (Rule 2). The founder's direction that followed — "we must not lose
+any of one functionality that is in our apps catalog", every feature placed in the core product and none called an
+app — is recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md` P-47 and supersedes decision 11.
+
+| # | Decision | Status |
+| --- | --- | --- |
+| 1 | The primary user is the regulatory lead at a small biotech filing a first US IND. | Basis of every pass |
+| 2 | A project is one application across its life; a later application (an NDA after the IND) is a linked project. | Open. An unreached store exists: `concept2cure_project_links` and `/api/concept2cure/projects/:id/linked` (kinds `parent_ind`, `child_nda`); on no deploy path, keyed to integer projects, no client. The wizard also still creates stand-alone IND-amendment and annual-report projects. |
+| 3 | Six steps, Plan → Evidence → Author → Review → Submit → Respond: a guide, never a gate. | Done, pass 3 |
+| 4 | Plan holds what the filing needs by module, the team, the target date and the tasks; Assign creates a task in the one task store. | Done, pass 3 |
+| 5 | The steps first; AnA's start box and the project's conversations beside the open step. | Done, pass 4 |
+| 6 | Each new submission is a sequence; Submit lists every sequence; the header names the sequence in progress. | Open |
+| 7 | AnA is an assistant inside every step, never the navigation. | Held by passes 1–5 |
+| 8 | The rail's work areas cover work across all projects; inside a project the same work is scoped to it. | Done for the rail, pass 1; scoping per area open |
+| 9 | Home lists your open items, and a new organisation's three-step setup. | Done, pass 5; the projects named on each item, pass 6 |
+| 10 | Device wording on a device project; a consultancy filters its projects by sponsor client. | Device wording on Plan, Author, Submit; Respond, Evidence and Review open. Sponsor filter open: project admission is pinned to the current client workspace, which v2 cannot switch. |
+| 11 | Unreleased features hidden from everyone. | Superseded by P-47 for released features (each is placed, none lost). Out-of-release names still offered in the "@" menu and the account menu: open. |
+| 12 | "Project" everywhere; "program" leaves the visible text. | Client text in progress; server-supplied text (phase labels such as "Program Planning", error sentences) open |
+| 13 | A scripted first session, run for real. | Done, pass 6 |
+
 ## What already exists
 
 | Path | What it does today | What it does not do |
@@ -190,3 +212,34 @@ needed — tasks assigned to you, approvals you sign, reviews — inside a drawe
 access's Settings and Members tabs and their `admin-console.open-tab` action, and the New project wizard. The groups
 and reads moved to `OpenWork.tsx`, used by the drawer and Home alike; the checklist (`HomeSetup.tsx`) reads each
 step's fact strictly and opens the screen where it is done. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass5/`.
+
+## Pass 6 — the first session, run for real (done, same day)
+
+Decision 13. A scripted first session in a real browser, every step a click or a keystroke: sign in as the
+regulatory lead of a new organisation, create an IND project, add a source on Evidence, assign a document on Plan
+to a person with a due date, start it from its template, ask AnA to draft it, save a revision, send it for review,
+and see what is left on Home, on the project and on the reviewer's Home. It is the second test in
+`tests/e2e/golden-customer-journey.e2e.ts`, which CI already runs on a fresh database (`tier5-browser-smoke.yml`).
+
+What already existed: that file's governed journey (the same records, driven by API calls in a browser session);
+`founder-critical-path.e2e.ts` and `biotech-founder-path.e2e.spec.ts` (neither is in CI; the first skips itself when
+sign-in fails). The first-session test reuses the golden journey's sign-in and identities.
+
+Run for real, it found two defects, both fixed here:
+
+- **A new person's first Send for review offered no reviewer.** The `/api` limiter counts every path with a
+  `document`/`documents` segment in a 20-a-minute bucket meant for generation, export and download. The Vault's
+  metadata reads were moved out of it on 2026-10-08; the project's document list, a document's outline, the editor's
+  review requests, comments and tracked-change decisions, and the source-coverage summary were not. One first session
+  used the bucket up, the review-requests read was refused, and the dialog said who had been asked was unknown, so no
+  one could be chosen. Those reads joined the Vault's in the metadata bucket (600 a minute per person, still
+  fail-closed), renamed `document_metadata` (`server/middleware/redisRateLimiter.ts`,
+  `server/config/platform-limits.ts`). Section text, downloads, exports and every write keep the 20-a-minute ceiling.
+- **Home's open items could not tell projects apart.** The same document assigned in two projects was listed twice,
+  identically. Each item now names its project (`server/services/tasking/my-work.ts`, moved out of the route so it is
+  tested on real SQL; joined within the caller's organisation only), and tasks due the same day come in a fixed
+  order, newest assignment first. The top bar's "Your work" shows the same rows, and a row says the module's words
+  (the existing `clModLabel`), not the identifier a task is stored under (`submission-center`, `cmc`, `mdx`).
+
+Not fixed here, seen on the way: the editor's draft request reads "Draft preparation Target Product Profile …" (the
+section's code is spliced into the sentence). Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/first-session/`.

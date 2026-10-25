@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··x··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > a task stored under an internal module id shows the module's words, never the id
+AssertionError: expected 'Build the sequenceBX-401 — Oncology I…' to contain 'BX-401 — Oncology IND · Submission Ce…'
+
+Expected: "BX-401 — Oncology IND · Submission Center"
+Received: "Build the sequenceBX-401 — Oncology IND · submission-center · due in 19d"
+
+ ❯ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx:80:29
+     78|     const section = await screen.findByTestId('home-open-items');
+     79|     const row = await within(section).findByRole('button', { name: /Bu…
+     80|     expect(row.textContent).toContain('BX-401 — Oncology IND · Submiss…
+       |                             ^
+     81|     expect(row.textContent).not.toContain('submission-center');
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  21:23:49
+   Duration  2.20s (transform 697ms, setup 165ms, import 840ms, tests 466ms, environment 578ms)
+

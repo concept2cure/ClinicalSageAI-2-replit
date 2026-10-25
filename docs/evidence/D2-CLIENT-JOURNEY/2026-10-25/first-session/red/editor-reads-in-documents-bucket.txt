@@ -1,0 +1,40 @@
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > vault metadata reads are document metadata; vault downloads, text and writes stay documents
+AssertionError: versions: expected 'vault_metadata' to be 'document_metadata' // Object.is equality
+
+Expected: "document_metadata"
+Received: "vault_metadata"
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:196:93
+    194|   it('vault metadata reads are document metadata; vault downloads, tex…
+    195|     for (const r of ['versions', 'annotations', 'relationships', 'hist…
+    196|       expect(getCategory(`/c2c/project-vault/${PID}/documents/${docId(…
+       |                                                                                             ^
+    197|       expect(getCategory(`/api/c2c/project-vault/${PID}/documents/${do…
+    198|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > the editor's and a project's record reads are document metadata; section text, the document and writes stay documents
+AssertionError: /api/c2c/documents: expected 'documents' to be 'document_metadata' // Object.is equality
+
+Expected: "document_metadata"
+Received: "documents"
+
+ ❯ server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts:207:46
+    205|   it('the editor\'s and a project\'s record reads are document metadat…
+    206|     for (const path of EDITOR_READS(0)) {
+    207|       expect(getCategory(path, 'GET'), path).toBe('document_metadata');
+       |                                              ^
+    208|       expect(getCategory(path.replace(/^\/api/, ''), 'GET'), path).toB…
+    209|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 9 passed (13)
+   Start at  20:46:20
+   Duration  1.89s (transform 182ms, setup 112ms, import 266ms, tests 1.22s, environment 0ms)
+

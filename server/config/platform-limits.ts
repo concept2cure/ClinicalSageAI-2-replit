@@ -48,8 +48,9 @@
  * not for source attribution, and per-identity keying alone already stops one
  * user's quota from being consumed by a colleague. The upload bucket is the one
  * exception, raised per identity on 2026-10-08 (see RATE_LIMITS.upload), and the
- * Vault's document metadata reads moved out of `documents` into `vault_metadata`
- * the same day (still fail-closed).
+ * Vault's document metadata reads moved out of `documents` into their own bucket
+ * the same day (still fail-closed), named `document_metadata` since 2026-10-25,
+ * when the editor's and a project's document metadata reads joined them.
  *
  * ── Sign-in (D6, 2026-09-29) ─────────────────────────────────────────────────
  * Sign-in was limited per client address at every layer, successes counted:
@@ -140,20 +141,25 @@ export const RATE_LIMITS = {
   },
 
   /** Document generation, export and download endpoints, and the Vault's document
-   *  writes. The Vault's document METADATA reads are in `vault_metadata` instead. */
+   *  writes. Document METADATA reads are in `document_metadata` instead. */
   documents: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 20,
     message: 'Too many document requests. Please wait.',
   },
 
-  /** The Vault's document-scoped METADATA reads: versions, history, annotations
-   *  and relationships. One document open makes four of them, so they cannot
-   *  share the 20-a-minute `documents` bucket (QA 2026-10-08: five opens in a
-   *  minute were refused). Per identity 600, the same ceiling as `api`. They stay
-   *  FAIL-CLOSED on a limiter error, unlike `api`: annotations carry the quoted
-   *  text of a document, which is content, not a navigation read. */
-  vault_metadata: {
+  /** Document-scoped METADATA reads (redisRateLimiter.ts DOCUMENT_METADATA_READS):
+   *  the Vault's versions, history, annotations and relationships (2026-10-08,
+   *  as `vault_metadata`); a project's document list and a document's outline,
+   *  the editor's review requests, comments and tracked-change decisions, and a
+   *  document's source-coverage summary (2026-10-25). One document open makes
+   *  several of them, so they cannot share the 20-a-minute `documents` bucket
+   *  (QA 2026-10-08: five Vault opens in a minute were refused; 2026-10-25: Send
+   *  for review could not read a document's review requests). Per identity 600,
+   *  the same ceiling as `api`. They stay FAIL-CLOSED on a limiter error, unlike
+   *  `api`: annotations and comments carry the quoted text of a document, which
+   *  is content, not a navigation read. */
+  document_metadata: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 100,
     maxRequestsAuthenticated: 600,
@@ -244,9 +250,9 @@ export const PASSWORD_RESET_LIMITS = {
 /**
  * Categories that must FAIL CLOSED when the limiter itself errors. Preserved
  * from redisRateLimiter.ts; see that file's comment for the rationale (auth =
- * brute-force surface, documents and vault_metadata = data-exfiltration surfaces).
+ * brute-force surface, documents and document_metadata = data-exfiltration surfaces).
  */
-export const RATE_LIMIT_FAIL_CLOSED_CATEGORIES = ['auth', 'documents', 'vault_metadata'] as const;
+export const RATE_LIMIT_FAIL_CLOSED_CATEGORIES = ['auth', 'documents', 'document_metadata'] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RATE LIMITS — legacy in-memory limiter (server/middleware/rateLimiter.ts)
@@ -337,7 +343,7 @@ Object.freeze(RATE_LIMITS.auth);
 Object.freeze(RATE_LIMITS.api);
 Object.freeze(RATE_LIMITS.ai);
 Object.freeze(RATE_LIMITS.documents);
-Object.freeze(RATE_LIMITS.vault_metadata);
+Object.freeze(RATE_LIMITS.document_metadata);
 Object.freeze(RATE_LIMITS.concept2cure);
 Object.freeze(RATE_LIMITS.validation);
 Object.freeze(RATE_LIMITS.upload);
