@@ -62,6 +62,8 @@ beforeAll(async () => {
   // Every migration re-runs on every deploy (CLAUDE.md RULE 1): twice.
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
+  // 2026-10-25: a run records the leaves it covered and what it read.
+  await h.pglite.exec(migration('migrations/20261025_shadow_review_run_coverage.sql'));
   await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
       VALUES (1,'A','ind','biotech','fda',${ORG},${USER});

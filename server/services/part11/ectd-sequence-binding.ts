@@ -24,9 +24,16 @@ async function sequenceLeaves(client: SignatureDbClient, id: string, organizatio
     study_id == null && stf_file_tag == null ? leaf : { ...leaf, study_id: study_id ?? null, stf_file_tag: stf_file_tag ?? null });
 }
 
-export async function deriveEctdSequenceBinding(
-  client: SignatureDbClient, id: string, organizationId: number, context: BindingContext,
-): Promise<GovernedBinding> {
+/**
+ * The sequence's content as a binding covers it: its identity row and its
+ * ordered leaves, without the package identity. Null when the sequence is not
+ * readable. The one reading of "what the sequence holds", used by the binding
+ * below (its `sequenceContentDigest`) and by Shadow Review's coverage record
+ * (shadow-review-coverage.ts), which needs the content half only.
+ */
+export async function readEctdSequenceContent(
+  client: SignatureDbClient, id: string, organizationId: number,
+): Promise<{ sequence: Record<string, any>; leaves: Record<string, unknown>[] } | null> {
   // Workflow status/frozen_at/dispatch_status/updated_at are deliberately not
   // signed: dispatch must not invalidate the signature that authorized it.
   // This preserves the 2026-09-21/22 recipe and its source-pin correction.
@@ -36,10 +43,18 @@ export async function deriveEctdSequenceBinding(
       WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
       LIMIT 1`, [id, organizationId],
   )).rows[0];
-  if (!sequence) return context.ledgerFallback('sequence row not readable at signing time');
+  if (!sequence) return null;
+  return { sequence, leaves: await sequenceLeaves(client, id, organizationId) };
+}
+
+export async function deriveEctdSequenceBinding(
+  client: SignatureDbClient, id: string, organizationId: number, context: BindingContext,
+): Promise<GovernedBinding> {
+  const content = await readEctdSequenceContent(client, id, organizationId);
+  if (!content) return context.ledgerFallback('sequence row not readable at signing time');
+  const { sequence, leaves } = content;
   const region = canonicalRegionOf(sequence.region);
   if (!region) return context.ledgerFallback('sequence region is not recognized at signing time');
-  const leaves = await sequenceLeaves(client, id, organizationId);
   const legacyDigest = context.hashPayload({ sequence, leaves });
   const recordedPackageIdentity = recordedPackageIdentitySnapshot(
     await readSubmissionPackageIdentity(client, organizationId, Number(sequence.submission_id), { region: sequence.region }),
