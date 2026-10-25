@@ -20,6 +20,7 @@ import { useAuth } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
+import { isOrgAdminRole } from './orgAdmin';
 import { TaskTray } from './TaskTray';
 import { useShellProject } from './shellProject';
 
@@ -53,26 +54,6 @@ export interface ShellSurfaceRef {
   readiness?: string;
 }
 
-/**
- * Does this viewer hold an organization-administrator role?
- *
- * One implementation, because two entry points now consume it. It began inline
- * in `Rail` — the account menu offers Admin and Access requests only to admins — and
- * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
- * destination, and that panel's copy branches on it (an admin is offered the
- * Plan & features or workspace setup; a member is told to ask an administrator).
- * A second copy of this role list would let one customer get two different next
- * steps for one lock depending on whether they came from the rail or the
- * palette, which is exactly the inconsistency the panel exists to prevent.
- *
- * `String(r)` rather than trusting the declared `string[]`: roles arrive from a
- * JWT claim, and a numeric or null entry there must not throw inside the shell.
- */
-function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
-  return (roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
-  );
-}
 
 /** Where "Get help" goes, from the account menu and the header alike: AnA, which answers
  *  questions about the product in the governed conversation. */

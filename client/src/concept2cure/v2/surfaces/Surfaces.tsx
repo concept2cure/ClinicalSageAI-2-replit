@@ -27,7 +27,9 @@ import '../styles/surfaces-v2.css';
 import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import type { OnboardingWelcome } from '../onboardingWelcome';
-import { HomeConversations, HomeProjects, HomeTasks } from './HomeSections';
+import { HomeConversations, HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
+import { HomeSetup } from './HomeSetup';
+import { useLiveRows } from '../dataConnect';
 
 /* ════════════ Home — where a client starts ════════════
    docs/design/CLIENT_JOURNEY_2026-10-25.md. Its sections, in the order a
@@ -63,6 +65,10 @@ export function Home({
   onDismissWelcome?: () => void;
 } & HomeModeBinding) {
   const { user } = useAuth();
+  /* One read of the person's projects: "Your projects" lists them and the setup checklist's "first project" step
+     reads the same rows (CLIENT_JOURNEY pass 5). */
+  const [projectsEpoch, setProjectsEpoch] = React.useState(0);
+  const projects = useLiveRows<HomeProgram>('/api/c2c/projects', [projectsEpoch]);
   const [draft, setDraft] = React.useState('');
   const [modeOpen, setModeOpen] = React.useState(false);
   /* The engine pill used to live here alone — `useState('standard')`, never
@@ -176,7 +182,9 @@ export function Home({
           </h1>
           {ctx && <span className="landing-segctx-cat">{ctx.label}</span>}
         </div>
-        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome} />
+        <HomeSetup onNav={onNav} onNewProject={newProject} projects={projects} />
+        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
+          read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
         <HomeTasks onNav={onNav} />
         <section className="home-sec" aria-labelledby="home-ask-h">
           <h2 id="home-ask-h" className="home-sec-h">Ask AnA</h2>

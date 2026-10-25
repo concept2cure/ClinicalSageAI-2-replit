@@ -181,3 +181,12 @@ so a half-typed message survives a change of step as before; Author's readiness 
 column. What already existed: `.pj-grid/.pj-main/.pj-side` (app-v2.css), used only by Author; `StartConversation` and
 `ProjectConversations` (ProjectHome.tsx); `ProjectSide.tsx`. Nothing new was built; the three composers (Home, project,
 thread) are still three, and converging them is its own change. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass4/`.
+
+## Pass 5 — Home lists your open items; a new organisation's setup (done, same day)
+
+Decision 9. What already existed: the top bar's "Your work" (`TaskTray.tsx`) read and grouped exactly what Home
+needed — tasks assigned to you, approvals you sign, reviews — inside a drawer; the company-documents profile
+(`/api/client-branding/company-documents`), the organisation read (`/api/organizations/:id`, `activeUsers`), Admin &
+access's Settings and Members tabs and their `admin-console.open-tab` action, and the New project wizard. The groups
+and reads moved to `OpenWork.tsx`, used by the drawer and Home alike; the checklist (`HomeSetup.tsx`) reads each
+step's fact strictly and opens the screen where it is done. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass5/`.

@@ -63,7 +63,7 @@ describe('Home, in the order a client reads it', () => {
     render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biopharma" />);
     await screen.findByTestId('home-projects');
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Your projects', 'Your tasks', 'Ask AnA', 'Recent conversations']);
+    expect(headings).toEqual(['Your projects', 'Your open items', 'Ask AnA', 'Recent conversations']);
   });
 
   it('lists five projects and names how many there are in all', async () => {

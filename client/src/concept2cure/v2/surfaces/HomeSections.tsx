@@ -4,12 +4,15 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { hasKeys, useLiveData, useLiveRows } from '../dataConnect';
+import { hasKeys, useLiveData, type ListState } from '../dataConnect';
 import type { OnboardingWelcome } from '../onboardingWelcome';
 import { openProjectHome } from '../shellProject';
 import { applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { OpenWorkGroups, useOpenWorkReads } from '../OpenWork';
+import { taskActorScope, taskTargetLocation } from '../taskTarget';
+import { useAuth } from '@/services/portal/authService';
 
 /* ════════════ Home — where a client starts ════════════
    docs/design/CLIENT_JOURNEY_2026-10-25.md. Home was a chat page: a greeting,
@@ -20,7 +23,7 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
    leads with the work itself, in this order:
      1. Your projects, each opening its Project home; with none, what a
         project is, its six steps, and one way to start one.
-     2. Your tasks, one step away.
+     2. Your open items, listed: assigned to you, approvals you sign, reviews.
      3. Ask AnA: the same composer, its run controls behind "AnA settings".
      4. Your recent conversations: the conversation in progress is reached
         here now that the rail's Conversation entry is gone. */
@@ -32,7 +35,7 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
  * card. Declared here rather than imported so Home does not pull the whole
  * Projects module (and its New-Project wizard) into the landing chunk.
  */
-interface HomeProgram {
+export interface HomeProgram {
   id: string;
   title: string;
   code: string;
@@ -66,14 +69,18 @@ export function HomeProjects({
   onNewProject,
   welcome,
   onDismissWelcome,
+  read,
+  onRetry,
 }: {
   onNav: (id: string) => void;
   onNewProject: () => void;
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /** GET /api/c2c/projects, read once by Home: the setup checklist's "first project" reads the same rows. */
+  read: ListState<HomeProgram>;
+  onRetry: () => void;
 }) {
-  const [reload, setReload] = React.useState(0);
-  const { rows, loading, error, empty } = useLiveRows<HomeProgram>('/api/c2c/projects', [reload]);
+  const { rows, loading, error, empty } = read;
   const newProjectButton = (label: string) => (
     <button type="button" className="landing-newproj" onClick={onNewProject}>
       <span className="ico">{I.plus}</span>{label}
@@ -91,7 +98,7 @@ export function HomeProjects({
         <div role="alert" className="home-note" data-tone="error">
           <span className="ico">{I.alertTriangle}</span>
           Couldn&rsquo;t load your projects. This is a failed read, not an empty list.{' '}
-          <button type="button" className="home-link" onClick={() => setReload((n) => n + 1)}>Try again</button>
+          <button type="button" className="home-link" onClick={onRetry}>Try again</button>
         </div>
       ) : empty ? (
         <div className="home-first" data-testid="home-first-project">
@@ -176,21 +183,38 @@ function HomeWelcome({ welcome, onNav, onDismiss }: {
   );
 }
 
-/** Your tasks: the task board on the signed-in person's own tasks, asked of
- *  the board through the same validated action bus the rail and Project home's
- *  "Open My work" use. */
+/**
+ * Your open items (decision 9, CLIENT_JOURNEY pass 5): what is waiting for you
+ * across every project, listed — the sections and deliverables assigned to
+ * you, the approvals you sign, the reviews you were asked for. The same reads
+ * and the same groups as the top bar's "Your work" (OpenWork.tsx), so Home and
+ * the bell never disagree. Each item opens where it is worked; the board is
+ * one link away, on your own tasks, asked through the same validated action
+ * bus the rail uses.
+ */
 export function HomeTasks({ onNav }: { onNav: (id: string) => void }) {
+  const { user } = useAuth();
+  const scope = taskActorScope(user);
+  const { myWork, queue, approvals, assigned, approvalRows } = useOpenWorkReads(true, 0);
   const openMine = () => {
     const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
     if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
     else onNav('tasks');
   };
+  const openTask = (taskId: string) => onNav(taskTargetLocation(taskId, scope) ?? 'tasks');
   return (
-    <section className="home-sec home-sec-inline" aria-labelledby="home-tasks-h">
-      <h2 id="home-tasks-h" className="home-sec-h">Your tasks</h2>
-      <button type="button" className="home-link" onClick={openMine}>
-        Open the tasks assigned to you {I.right}
-      </button>
+    <section className="home-sec" aria-labelledby="home-tasks-h" data-testid="home-open-items">
+      <div className="home-sec-head">
+        <h2 id="home-tasks-h" className="home-sec-h">Your open items</h2>
+        <button type="button" className="home-link" onClick={openMine}>
+          Open the tasks assigned to you {I.right}
+        </button>
+      </div>
+      <div className="home-open">
+        <OpenWorkGroups workLoading={myWork.loading} workError={myWork.error} assigned={assigned}
+          queue={queue.data} queueError={queue.error} approvalRows={approvalRows} approvalsError={approvals.error}
+          go={onNav} openTask={openTask} />
+      </div>
     </section>
   );
 }
