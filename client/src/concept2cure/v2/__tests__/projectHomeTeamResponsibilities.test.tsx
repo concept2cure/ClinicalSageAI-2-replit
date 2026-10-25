@@ -12,6 +12,9 @@ vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof impor
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
+/* The team, the project's tasks and My work are on the Plan step (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
+const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const props = { surface: { id: 'project-home' } as never, segment: 'biopharma', onNav: vi.fn(), onAsk: vi.fn() };
@@ -46,6 +49,7 @@ describe('ProjectHome sourced responsibility integration', () => {
     serve(data);
     const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    openPlan();
     await screen.findByText('Alex Chen · Account #7');
     expect(screen.getByText('Alex Chen · Account #8')).toBeTruthy();
     expect(screen.getByText('Project lead', { exact: true })).toBeTruthy();
@@ -71,6 +75,7 @@ describe('ProjectHome sourced responsibility integration', () => {
   ])('states $label as unavailable, never an empty roster or identity facts', async ({ body }) => {
     serve(body); const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    openPlan();
     await screen.findByText("Couldn't load the project team");
     expect(screen.queryByText('No recorded team members')).toBeNull();
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
@@ -80,6 +85,7 @@ describe('ProjectHome sourced responsibility integration', () => {
 
   it('distinguishes a verified empty roster from a failed read', async () => {
     serve(roster(A, [])); render(<ProjectHome {...props} />);
+    openPlan();
     await screen.findByText('No recorded team members');
     expect(screen.queryByText("Couldn't load the project team")).toBeNull();
   });
@@ -92,6 +98,7 @@ describe('ProjectHome team program-switch isolation', () => {
     request.mockImplementation((method, path) => path === `/api/c2c/projects/${B}/team` ? pending.promise : original(method, path));
     const seen = { ctx: null as SurfaceContext | null };
     const view = render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    openPlan();
     await screen.findByText('Alex Chen · Account #7');
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<><ProjectHome {...props} /><Probe seen={seen} /></>);
@@ -109,6 +116,7 @@ describe('ProjectHome team program-switch isolation', () => {
     const original = request.getMockImplementation()!;
     request.mockImplementation((method, path) => path === `/api/c2c/projects/${A}/team` ? pending.promise : original(method, path));
     const view = render(<ProjectHome {...props} />);
+    openPlan();
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<ProjectHome {...props} />);
     await screen.findByText('Alex Chen · Account #9');
@@ -127,6 +135,7 @@ describe('ProjectHome team summary and recovery', () => {
     serve(roster(A, [current, legacy]));
     const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    openPlan();
     await screen.findByText('Alex (account@example.test)');
     expect(screen.getByText('legacy@example.test', { exact: true })).toBeTruthy();
     await waitFor(() => expect(seen.ctx?.facts?.team).toHaveLength(2));
@@ -142,6 +151,7 @@ describe('ProjectHome team summary and recovery', () => {
       responsibilities: [], sources: ['project_member'] } as ProjectTeamMember));
     serve(roster(A, team)); const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    openPlan();
     await screen.findByText('Alex Chen · Account #13');
     await waitFor(() => expect(seen.ctx?.facts?.teamTotal).toBe(13));
     expect(seen.ctx?.facts?.teamTruncated).toBe(true);
@@ -154,6 +164,7 @@ describe('ProjectHome team summary and recovery', () => {
     request.mockImplementation((method, path) => path.endsWith('/team') && ++reads === 1
       ? Promise.resolve({ ...ok({}), ok: false, status: 503 }) : original(method, path));
     render(<ProjectHome {...props} />);
+    openPlan();
     const error = await screen.findByText("Couldn't load the project team");
     fireEvent.click(within(error.closest('[role="alert"]') as HTMLElement).getByRole('button', { name: 'Retry team' }));
     await screen.findByText('Alex Chen · Account #7');

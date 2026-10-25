@@ -15,6 +15,9 @@ vi.mock('@/services/portal/authService', async original => ({ ...await original<
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => tenant }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 
+/* The team, the project's tasks and My work are on the Plan step (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
+const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+
 const PID = '11111111-1111-4111-8111-111111111111';
 const TEAM = { program_id: PID, project_id: 51, team: [{ entry_id: 'user:7', user_id: 7, role: null,
   name: 'Coordinator', email: null, label: 'Coordinator', identity: 'active_member',
@@ -54,6 +57,7 @@ describe('team anchors belong to the current authenticated scope', () => {
     { change: 'organization', actor: 7, org: 5, workspace: 10, anchor: 61 },
   ])('waits for a fresh team anchor after $change changes on the same selected UUID', async ({ actor, org, workspace, anchor }) => {
     serve(); const view = render(<ProjectHome {...props} />);
+    openPlan();
     await screen.findByLabelText('Organization member');
     let finish!: (response: Response) => void;
     const pending = new Promise<Response>(resolve => { finish = resolve; });
@@ -85,6 +89,7 @@ afterEach(() => { cleanup(); clearAuthToken(); request.mockReset(); delete windo
 describe('ProjectHome reaches its existing sharing controls', () => {
   it('uses the admitted numeric anchor and offers only human Use/Edit choices', async () => {
     serve(); render(<ProjectHome {...props} />);
+    openPlan();
     await screen.findByRole('heading', { name: 'Project sharing' });
     expect(await screen.findByLabelText('Organization member')).toBeTruthy();
     const role = screen.getByLabelText('New sharing role');
@@ -105,6 +110,7 @@ describe('ProjectHome reaches its existing sharing controls', () => {
     let finish!: (response: Response) => void;
     serve(new Promise(resolve => { finish = resolve; }), { ...ok({}), ok: false, status: 503 });
     render(<ProjectHome {...props} />);
+    openPlan();
     expect(request.mock.calls.some(([, path]) => path.includes('/sharing'))).toBe(false);
     await act(async () => finish(ok(TEAM)));
     await screen.findByText("Couldn't load project sharing");
@@ -116,6 +122,7 @@ describe('ProjectHome reaches its existing sharing controls', () => {
     const denied = sharing(); denied.canManage = false; denied.candidates = [];
     denied.members = denied.members.map(member => ({ ...member, canSetRole: false, canRevoke: false }));
     serve(ok(TEAM), ok(denied)); render(<ProjectHome {...props} />);
+    openPlan();
     await screen.findByText(/Organization-visible project: organization members may have access/);
     expect(screen.queryByRole('button', { name: 'Grant sharing' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Revoke explicit share/ })).toBeNull();

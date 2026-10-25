@@ -19,7 +19,7 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
    client testing it could not tell how to start or what came next. It now
    leads with the work itself, in this order:
      1. Your projects, each opening its Project home; with none, what a
-        project is, its five steps, and one way to start one.
+        project is, its six steps, and one way to start one.
      2. Your tasks, one step away.
      3. Ask AnA: the same composer, its run controls behind "AnA settings".
      4. Your recent conversations: the conversation in progress is reached
@@ -55,7 +55,7 @@ interface HomeThread { id: string; title: string | null }
  * Four honest states, no fixture (the rule HomeLeadProgram set on 2026-09-07,
  * when a constant named a programme the organization had never created):
  * loading, a failed read said plainly with a retry, no projects, or the
- * projects themselves. With none, it says what a project is and the five steps
+ * projects themselves. With none, it says what a project is and the six steps
  * it is worked through (PJ_LIFECYCLE, the steps Project home shows), and offers
  * one way to start. The first-run welcome's other ways to start (AnA set-up,
  * workspace discovery, starting from a document) are offered there and only
@@ -97,7 +97,7 @@ export function HomeProjects({
         <div className="home-first" data-testid="home-first-project">
           <p className="home-first-lead">
             A project holds one regulatory filing, for example an IND, and everything that goes into it. You work
-            through it in five steps:
+            through it in six steps:
           </p>
           <ol className="home-steps">
             {PJ_LIFECYCLE.map((step) => (

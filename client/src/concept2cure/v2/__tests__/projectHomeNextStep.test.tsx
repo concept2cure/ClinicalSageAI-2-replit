@@ -10,8 +10,9 @@
  * or from inside a Submission Center sequence, never from the project.
  *
  * This pins:
- *   - a project with no documents opens on Evidence; one with documents, and
- *     one whose list could not be read, on Author (a failure decides nothing);
+ *   - a project with no documents opens on Plan (pass 3; Evidence in pass 2);
+ *     one with documents, and one whose list could not be read, on Author (a
+ *     failure decides nothing);
  *   - a step a person chose is never overridden by a read landing later;
  *   - the open step says what to do now, and offers the next step;
  *   - a US drug IND offers CMC / Module 3 on Author and the IND forms on Submit,
@@ -88,10 +89,10 @@ afterEach(() => {
 });
 
 describe('a project opens on its first step with work to do', () => {
-  it('with no documents yet, on Evidence', async () => {
+  it('with no documents yet, on Plan: what the filing needs', async () => {
     serve(US_DRUG_IND, []);
     mount();
-    await waitFor(() => expect(activeLabel()).toBe('Evidence'));
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
   });
 
   it('with documents, on Author', async () => {
@@ -122,10 +123,20 @@ describe('a project opens on its first step with work to do', () => {
 });
 
 describe('each step says what to do now, and leads to the next', () => {
+  it('Plan says to start and assign each document, and its next step is Evidence', async () => {
+    serve(US_DRUG_IND, []);
+    mount();
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
+    expect(band().textContent).toMatch(/What to do now: See every document this filing needs/);
+    fireEvent.click(within(band()).getByRole('button', { name: /Next step.*Evidence/ }));
+    expect(activeLabel()).toBe('Evidence');
+  });
+
   it('Evidence says what to add, and its next step is Author', async () => {
     serve(US_DRUG_IND, []);
     mount();
-    await waitFor(() => expect(activeLabel()).toBe('Evidence'));
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
+    fireEvent.click(tab('Evidence'));
     expect(band().textContent).toMatch(/What to do now: Add the documents this filing is written from/);
     fireEvent.click(within(band()).getByRole('button', { name: /Next step.*Author/ }));
     expect(activeLabel()).toBe('Author');
@@ -135,8 +146,8 @@ describe('each step says what to do now, and leads to the next', () => {
   it('the steps follow in order to Respond, which has no next step', async () => {
     serve(US_DRUG_IND, []);
     mount();
-    await waitFor(() => expect(activeLabel()).toBe('Evidence'));
-    for (const next of ['Author', 'Review', 'Submit', 'Respond']) {
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
+    for (const next of ['Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
       fireEvent.click(within(band()).getByRole('button', { name: new RegExp(`Next step.*${next}`) }));
       expect(activeLabel()).toBe(next);
     }

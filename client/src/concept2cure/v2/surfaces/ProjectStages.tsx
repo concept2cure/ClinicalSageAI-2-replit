@@ -1,5 +1,5 @@
 /**
- * Project home's five steps: the tracker that opens one, and the band that says
+ * Project home's six steps: the tracker that opens one, and the band that says
  * what the open step is, what to do on it, and which step comes next.
  * Moved out of ProjectHome.tsx on 2026-10-25 with the band's second line.
  */
@@ -16,7 +16,7 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
    Review. Nothing this surface reads records per-stage completion, so the one
    state stated is the one that is true: which stage is open. */
 
-/* A nav of five buttons, the open one marked aria-current="step". It was a
+/* A nav of one button per step, the open one marked aria-current="step". It was a
    role="tablist" over plain buttons carrying aria-selected, which is not valid
    on a button, so a screen reader was told of no open stage at all (design
    review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
@@ -43,7 +43,7 @@ export function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { st
    described it; a new client still could not tell what to do on it or what came
    after. It now says what to do, in one sentence that is guidance about the
    step and never a claim about the program, and offers the next step, so the
-   five steps read as a sequence. Respond is the last, and has no next. */
+   steps read as a sequence. Respond is the last, and has no next. */
 export function StageBand({ stage, lifecycle = PJ_LIFECYCLE, onStage, sequenced }: {
   stage: string; lifecycle?: typeof PJ_LIFECYCLE; onStage: (s: string) => void; sequenced: boolean;
 }) {

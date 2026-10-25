@@ -1,0 +1,21 @@
+Affected set after pass 3 (78 files touching Project home, the editor library, the task create and the step definitions):
+ Test Files  4 failed | 74 passed (78)
+      Tests  10 failed | 763 passed (773)
+
+Failing files (all four fail identically at 2246406e4, the unchanged source; see preexisting-at-HEAD.txt):
+server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts > POST /api/c2c/projects — the create answers with the same serializer > 201 carries `program` from serializeProgramDetail, so the read returns what the write stored
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > renders the paperclip as a real button, not a span
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > opens a file picker when clicked
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > hands a chosen file to the upload transport
+client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > accepts more than one file, because regulatory sources come in sets
+client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it
+client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface
+client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface
+client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects
+client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state
+
+Causes, not this change's:
+- composerAttachWorks (4): ConversationThread reads the session through useDocumentList -> useAuth with no AuthProvider and no mock (the pass-2 Project home defect, in a file pass 2 did not touch).
+- filingPathNoDeadEnds (4): asserts device-510k is outside the launch scope; it joined the Projects app's surfaces on 2026-10-23.
+- projectDocumentDisposition (1): 'Review removal of Retained search record' not found.
+- projects-detail-taxonomy (1, server): POST /api/c2c/projects answers 500 in this environment; no server code changed in pass 3.

@@ -119,3 +119,56 @@ Not done, and why: the remaining tools already sit in their step (Evidence: Vaul
 Author: editor, protocols; Review: review board, tasks; Submit: Submission Center, readiness, compile; Respond:
 agency letters, Communication). Plan & features keeps its "when to use" guidance for administrators; the client
 reads the step's own sentence instead.
+
+## Pass 3 — Plan: what the filing needs, who does it, by when (done, same day)
+
+The founder's next finding was the deeper one: "I didn't know how to flow into an actual document build." A new
+project's Author step said "No documents in this project yet. Ask AnA in the box above to draft one" and offered the
+editor with nothing open. The founder decided (decisions 3 and 4 of the design interview) that a project has six
+steps, Plan first, and that Plan shows what the filing needs, the team, the target date and the tasks, with "Assign"
+on a deliverable creating a task in the existing task store. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass3/`.
+
+### What already exists (for Plan)
+
+| Path | What it does today | What it does not do |
+| --- | --- | --- |
+| `services/regulatory/pyramids/*.ts` (IND, IND amendment, annual report, safety supplement, NDA, BLA, MAA, JNDA, 510(k), De Novo, PMA) | The plan of work per filing type: phases → tasks → deliverables bound to CTD sections. | Shown only on the out-of-scope Pyramid screen; its progress (`/api/v1/pyramids/:type/progress`) is per organisation and type, not per project. |
+| `server/services/authoring/ind-document-catalog*.ts`, `GET /api/authoring/ind-document-catalog` | The IND pyramid projected as 8 phases and 93 deliverables, each with a built-in template (`builtin-authoring-templates.ts`, 21 document templates plus 200 IND templates). | — |
+| `client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx` | Lists those deliverables, sections and module outlines with search and filters; per entry: open this project's working copy, create one from the template, find a source, work with AnA. | Reached only from a lane of the editor's and Evidence's project-files panel. No assignment. |
+| `client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx` | A device project's workstreams (`shared/regulatory/work-packages.ts`), each opening its existing feature. | Sat above the steps; no assignment. |
+| `client/src/concept2cure/v2/editor/AssignReviewDialog.tsx` `createReviewTask`, `useAssigneeRoster` | The one task create for a person (POST `/api/tasks/tasks`), confirmed only on the server's own task id; the roster read. | Review-specific wording. |
+| `client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx` `useProjectTeam` | The verified team and the numeric `projects.id` behind the program (`verifiedProjectId`), the key the project's work view reads tasks by. | Rendered on Author. |
+| `ProjectHome.tsx` `ProjectWorkPanel`, `MyWorkLine` | The project's tasks from every store; a line to the person's own tasks. | Rendered on Author. |
+| `regulatory_programs.target_submission_date` | Read by the project record. | No route writes it; Plan shows it read-only. |
+| Deleted: the 2026-10-08 Plan tab (`58876cf3a`, slice F2) | Held nothing that could be opened. | — |
+
+Searched: plan, pyramid, deliverable, work package, workstream, document catalog, template, assign, task create,
+roster, target date, by component, route, table and surface id; `git log --all --diff-filter=D` on ProjectPlan,
+PlanStep, Pyramid, Deliverable and ProjectSchedule. Deleted predecessors, none of them a project step: a pyramid
+template picker, `components/ectd/ECTDPyramidTemplateSelector.jsx`, and its `ectdPyramidService.js` (removed with
+the pre-v2 UI on 2026-05-01 and 2026-04-01); `concept2cure/hooks/useDeliverable.ts` (a disconnected island, 2026-06-02);
+`services/regulatory/globalPyramids.ts` (dead code, 2026-08-02). The picker's job, starting a deliverable from its
+template, is what `IndDocumentLibrary` already does; Plan reaches it.
+
+### What changed
+
+- **Six steps.** `PJ_LIFECYCLE` gains Plan first (with device wording); "plan" stops being Submit's alias, and AnA's
+  `project-home.set-stage` names it. A project with no documents opens on Plan.
+- **What this IND needs** (`ProjectPlan.tsx`, `IndFilingPlan` in `IndDocumentLibrary.tsx`): the same catalogue read,
+  entries and template copies as the library, grouped by phase with "n documents · m started". Each phase a feature
+  composes opens it on this project: Module 3 → CMC / Module 3 within its composition boundary (not for a biologic),
+  Module 1 → IND forms, QA Review & Submission → Submit. The library stays in the editor's project files.
+- **A device project's Plan** is its workstreams (`ProjectMdxWorkflow`, moved from above the steps).
+- **Any other filing** is told the list is available for US INDs and device filings in this release, and where its
+  documents are. No list is invented.
+- **Assign** (`PlanAssign.tsx`): one task for one person with a due date, through `createAssignedTask` (the review
+  create, generalised; `createReviewTask` keeps its words). The task carries `projectId` = the verified `projects.id`
+  (never a `Number()` of the program UUID), `moduleType` Plan, and its origin `filing_deliverable` /
+  `<program uuid>:<deliverable id>`; the assignment is read back from `/api/tasks/tasks/by-module/Plan` by those
+  columns, never by title. Not offered to a viewer, nor while the project id is unverified. The project's task list
+  is read again after each Assign.
+- **Team and tasks** moved from Author to Plan; Author keeps documents, module completion, records and activity.
+
+Not done, and why: the per-project progress of NDA, BLA and MAA plans (their pyramids exist, but progress is stored per
+organisation and type, so two projects would share it; a per-project store is a server change of its own); editing the
+target date (no route writes it).

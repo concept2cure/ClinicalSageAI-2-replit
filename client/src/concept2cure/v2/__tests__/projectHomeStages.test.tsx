@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The project is the filing: five tabs, and the start box above them.
+ * The project is the filing: six steps, and the start box above them.
  *
  * docs/design/FILING_SPINE.md §1, §2 and slice F2. The project page had seven
  * tabs. Two of them, Plan and Lifecycle, held nothing this release can open:
@@ -9,12 +9,15 @@
  * from Projects. The start box sat inside Author, so leaving Author unmounted
  * a half-typed message.
  *
+ * Plan returned on 2026-10-25 (CLIENT_JOURNEY_2026-10-25.md, pass 3) with
+ * something to open: what the filing needs, the team and the tasks.
+ *
  * Now:
- *   - the tabs are exactly Evidence, Author, Review, Submit and Respond;
- *   - no tab says "Not in this release"; what Plan and Lifecycle promised is
- *     one line of words on Submit, with no button;
- *   - AnA's `project-home.set-stage` still accepts 'plan' and 'lifecycle', and
- *     both open Submit, which holds market choice and follow-up sequences;
+ *   - the steps are exactly Plan, Evidence, Author, Review, Submit and Respond;
+ *   - no step says "Not in this release"; what Lifecycle promised is one line
+ *     of words on Submit, with no button;
+ *   - AnA's `project-home.set-stage` opens Plan by name, and still accepts
+ *     'lifecycle', which opens Submit (follow-up sequences);
  *   - the start box and the Conversations list sit above the tabs, outside
  *     the tab switch, so what is typed survives a change of tab.
  */
@@ -87,11 +90,11 @@ afterEach(() => {
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
-describe('Project home — five tabs follow the work', () => {
-  it('the tabs are exactly Evidence, Author, Review, Submit and Respond, in that order', async () => {
+describe('Project home — six steps follow the work', () => {
+  it('the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tabs().length).toBeGreaterThan(0));
-    expect(tabs().map((b) => b.textContent?.trim())).toEqual(['Evidence', 'Author', 'Review', 'Submit', 'Respond']);
+    expect(tabs().map((b) => b.textContent?.trim())).toEqual(['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']);
   });
 
   it('no tab says "Not in this release"', async () => {
@@ -118,14 +121,14 @@ describe('Project home — five tabs follow the work', () => {
   });
 });
 
-describe('Project home — AnA can still name the removed tabs', () => {
-  it('set-stage "plan" opens Submit, and says so', async () => {
+describe('Project home — AnA names each step, and the removed one', () => {
+  it('set-stage "plan" opens Plan, a step again', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(registeredSurfaceId()).toBe('project-home'));
     const out = setStage('plan');
     expect(out.status).toBe('applied');
-    await waitFor(() => expect(activeLabel()).toBe('Submit'));
-    expect(out.detail).toMatch(/submit/i);
+    await waitFor(() => expect(activeLabel()).toBe('Plan'));
+    expect(out.detail).toMatch(/plan/i);
   });
 
   it('set-stage "lifecycle" opens Submit too', async () => {

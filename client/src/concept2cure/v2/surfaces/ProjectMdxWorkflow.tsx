@@ -80,7 +80,13 @@ function packageDestination(item: WorkPackage, primary: string | null): WorkDest
   return WORK_DESTINATIONS[id] ?? EVIDENCE_DESTINATION;
 }
 
-function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName }: {
+/** What the Plan step adds to each workstream: who it is assigned to, and Assign. */
+export interface WorkstreamPlanSlots {
+  assignmentOf?: (packageId: string) => React.ReactNode;
+  assignAction?: (deliverable: { id: string; title: string; group: string }) => React.ReactNode;
+}
+
+function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName, assignmentOf, assignAction }: {
   item: WorkPackage;
   plan: NonNullable<ReturnType<typeof mdxProjectPlan>>;
   onNav: (id: string) => void;
@@ -88,12 +94,12 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName 
   onAsk: (text: string) => void;
   available: (id: string) => boolean;
   projectName: string;
-}) {
+} & WorkstreamPlanSlots) {
   const destination = packageDestination(item, plan.primary);
   const canOpen = !destination.surface || available(destination.surface);
   return (
     <details className="pj-mdx-workstream" data-work-package={item.id}>
-      <summary><span>{item.title}</span><span className="pj-mdx-owner">{item.ownerDiscipline}</span></summary>
+      <summary><span>{item.title}</span>{assignmentOf?.(item.id)}<span className="pj-mdx-owner">{item.ownerDiscipline}</span></summary>
       <div className="pj-mdx-detail">
         <p>{item.regulatoryPurpose}</p>
         <dl className="pj-mdx-facts">
@@ -111,6 +117,7 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName 
             if (destination.surface && canOpen) onNav(destination.surface);
             else onStage(destination.stage ?? 'evidence');
           }}>{canOpen ? destination.label : 'Open project evidence'}</button>
+          {assignAction?.({ id: item.id, title: item.title, group: item.ownerDiscipline })}
           <button type="button" className="btn" onClick={() => onAsk(
             `For the open project ${projectName}, prepare the ${item.title.toLowerCase()} work with ${item.ownerDiscipline}. ` +
             `Use the project's recorded evidence to identify inputs, gaps, deliverables and review handoffs. ` +
@@ -122,7 +129,7 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName 
   );
 }
 
-export function ProjectMdxWorkflow({ project, otherFilings, marketsState, onNav, onStage, onAsk, available }: {
+export function ProjectMdxWorkflow({ project, otherFilings, marketsState, onNav, onStage, onAsk, available, assignmentOf, assignAction }: {
   project: MdxWorkflowProject;
   otherFilings: string[];
   marketsState: 'loading' | 'unavailable' | 'ready';
@@ -130,7 +137,7 @@ export function ProjectMdxWorkflow({ project, otherFilings, marketsState, onNav,
   onStage: (id: string) => void;
   onAsk: (text: string) => void;
   available: (id: string) => boolean;
-}) {
+} & WorkstreamPlanSlots) {
   const plan = mdxProjectPlan(project, otherFilings);
   if (!plan) return null;
   return (
@@ -141,9 +148,12 @@ export function ProjectMdxWorkflow({ project, otherFilings, marketsState, onNav,
       {marketsState !== 'ready' && <p role="status">{marketsState === 'loading'
         ? 'Reading additional project filings. The plan currently reflects the primary filing.'
         : 'Additional project filings could not be read. The plan reflects the primary filing only.'}</p>}
-      <p className="pj-mdx-note">Shared evidence appears once and feeds each applicable filing. Discipline owners below describe responsibilities; named assignments and approvals remain in the project team and document reviews.</p>
+      <p className="pj-mdx-note">Shared evidence appears once and feeds each applicable filing. Discipline owners below describe responsibilities; {assignAction
+        ? 'Assign a workstream to name the person who does it. Approvals remain in document reviews.'
+        : 'named assignments and approvals remain in the project team and document reviews.'}</p>
       <div className="pj-mdx-workstreams" aria-label="Project workstreams">
-        {plan.packages.map(item => <Workstream key={item.id} item={item} plan={plan} onNav={onNav} onStage={onStage} onAsk={onAsk} available={available} projectName={project.name || 'in context'} />)}
+        {plan.packages.map(item => <Workstream key={item.id} item={item} plan={plan} onNav={onNav} onStage={onStage} onAsk={onAsk} available={available} projectName={project.name || 'in context'}
+          assignmentOf={assignmentOf} assignAction={assignAction} />)}
       </div>
     </section>
   );

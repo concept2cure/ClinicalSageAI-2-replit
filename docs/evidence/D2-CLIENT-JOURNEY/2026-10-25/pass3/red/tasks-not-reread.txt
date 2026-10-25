@@ -1,0 +1,3 @@
+# Mutation: tasks-not-reread
+ × Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 216ms
+      Tests  1 failed | 12 passed (13)

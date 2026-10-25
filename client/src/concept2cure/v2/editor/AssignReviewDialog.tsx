@@ -199,9 +199,9 @@ export function buildReviewTaskBody(form: {
  * function because a refusal has two honest forms — unauthenticated, and
  * declined — without inferring a rollback from an unconfirmed response.
  */
-function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
+function refusalMessage(status: number, json: CreatedTaskEnvelope, noun: string): string {
   if (status === 401) return 'Not assigned — your session isn’t authenticated. Sign in and retry.';
-  return 'The review task was not confirmed — ' + (serverMessage(json) ?? `the server returned HTTP ${status}`) + '. Reload the task list before retrying.';
+  return `The ${noun} was not confirmed — ` + (serverMessage(json) ?? `the server returned HTTP ${status}`) + '. Reload the task list before retrying.';
 }
 
 /**
@@ -209,15 +209,15 @@ function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
  * server reads the same however it failed, and no internal text escapes into
  * the UI.
  */
-function unreachableMessage(e: unknown): string {
-  return 'The review task outcome is unknown — ' + redactInternals(e instanceof Error ? e.message : '', 'no confirmed response was received') + '. Reload the task list before retrying.';
+function unreachableMessage(e: unknown, noun: string): string {
+  return `The ${noun} outcome is unknown — ` + redactInternals(e instanceof Error ? e.message : '', 'no confirmed response was received') + '. Reload the task list before retrying.';
 }
 
-function assignmentFailure(error: unknown): AssignOutcome {
+function assignmentFailure(error: unknown, noun: string): AssignOutcome {
   if (error instanceof ApiRequestError && (error.code === 'AUDIT_WRITE_FAILED' || [400, 401, 403, 422].includes(error.status))) {
-    return { ok: false, unconfirmed: false, message: 'The review task was refused — ' + redactInternals(error.message, 'the request was not accepted') };
+    return { ok: false, unconfirmed: false, message: `The ${noun} was refused — ` + redactInternals(error.message, 'the request was not accepted') };
   }
-  return { ok: false, message: unreachableMessage(error), unconfirmed: true };
+  return { ok: false, message: unreachableMessage(error, noun), unconfirmed: true };
 }
 
 function matchesAssignment(data: NonNullable<CreatedTaskEnvelope>['data'], body: Record<string, unknown>): boolean {
@@ -225,25 +225,39 @@ function matchesAssignment(data: NonNullable<CreatedTaskEnvelope>['data'], body:
     data?.assigneeId === body.assigneeId;
 }
 
+/** How a create names its task in what it says: a review, or a planned deliverable. */
+export interface AssignedTaskWords { noun: string; unmatched: string }
+const REVIEW_TASK_WORDS: AssignedTaskWords = {
+  noun: 'review task',
+  unmatched: 'The response did not confirm this document’s review assignment. Reload the task list before retrying.',
+};
+
 /**
  * Sends the create and maps its answer onto the two outcomes the dialog acts
- * on. Nothing is treated as created without the server's own task id.
+ * on. Nothing is treated as created without the server's own task id, echoing
+ * the origin and the assignee that were asked for. The one task create for a
+ * person: review requests and the Plan step's Assign both use it.
  */
-export async function createReviewTask(body: Record<string, unknown>): Promise<AssignOutcome> {
+export async function createAssignedTask(body: Record<string, unknown>, words: AssignedTaskWords): Promise<AssignOutcome> {
   try {
     const res = await apiRequest('POST', '/api/tasks/tasks', body);
     const json = (await res.json().catch(() => null)) as CreatedTaskEnvelope;
     const taskId = json?.data?.taskId;
     if (!res.ok) {
-      return { ok: false, message: refusalMessage(res.status, json), unconfirmed: res.status >= 500 && json?.error !== 'AUDIT_WRITE_FAILED' || res.status === 408 };
+      return { ok: false, message: refusalMessage(res.status, json, words.noun), unconfirmed: res.status >= 500 && json?.error !== 'AUDIT_WRITE_FAILED' || res.status === 408 };
     }
     if (!json?.success || typeof taskId !== 'string' || !taskId.trim() || !matchesAssignment(json.data, body)) {
-      return { ok: false, message: 'The response did not confirm this document’s review assignment. Reload the task list before retrying.', unconfirmed: true };
+      return { ok: false, message: words.unmatched, unconfirmed: true };
     }
     return { ok: true, taskId, assigneeName: json.data?.assigneeName ?? null };
   } catch (e) {
-    return assignmentFailure(e);
+    return assignmentFailure(e, words.noun);
   }
+}
+
+/** A reviewer's task, said as one. */
+export function createReviewTask(body: Record<string, unknown>): Promise<AssignOutcome> {
+  return createAssignedTask(body, REVIEW_TASK_WORDS);
 }
 
 const DATE = { year: 'numeric', month: 'short', day: 'numeric' } as const;

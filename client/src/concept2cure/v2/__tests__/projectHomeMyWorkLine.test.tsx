@@ -27,6 +27,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../surfaceActions';
 
+/* The team, the project's tasks and My work are on the Plan step (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
+const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+
 const PID = '7a1d2c3b-4e5f-4061-8a7b-9c0d1e2f3a4b';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
 
@@ -49,6 +52,7 @@ afterEach(() => {
 describe('Project home — My work', () => {
   it('says in one line that the work is not filtered to this project, and no longer claims readiness is unwired', async () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
+    openPlan();
     const section = (await screen.findByRole('heading', { name: 'My work' })).closest('section') as HTMLElement;
     expect(section.textContent).toContain('Your work is not filtered to this project yet. My work lists it for every project.');
     expect(document.body.textContent).not.toMatch(/submission readiness aren.t wired/);
@@ -57,6 +61,7 @@ describe('Project home — My work', () => {
   it('"Open My work" opens the task board on the person\'s own tasks, as the nav does', async () => {
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
+    openPlan();
     fireEvent.click(await screen.findByRole('button', { name: /Open My work/ }));
     expect(onNav).toHaveBeenCalledWith('tasks');
     // The board, once mounted, is asked for the signed-in person's tasks.

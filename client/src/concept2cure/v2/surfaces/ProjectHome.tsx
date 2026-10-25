@@ -37,11 +37,11 @@ import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
 import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState } from './ProjectDossier';
 import { sourceReadView } from '@shared/data-room-processing-status';
-import type { ProjectTeamResponse } from '@shared/project-team';
 import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
 import { ProjectSide } from './ProjectSide';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
-import { ProjectMdxWorkflow, mdxProjectPlan } from './ProjectMdxWorkflow';
+import { mdxProjectPlan } from './ProjectMdxWorkflow';
+import { ProjectPlan } from './ProjectPlan';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1357,16 +1357,13 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
 }
 
 function AuthorWorkspace({
-  pid, dossier, onNav, teamState, sharingProjectId, onRetryTeam, activityState, docs, onRetryDocs, onOpenDoc, onAsk, cmcComposes,
+  pid, dossier, onNav, activityState, docs, onRetryDocs, onOpenDoc, onAsk, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
   /** The project's dossier (GET /:id/dossier), read once for the card and the module rows. */
   dossier: DossierState;
   onNav: (id: string) => void;
-  teamState: DataState<ProjectTeamResponse>;
-  sharingProjectId: number | null;
-  onRetryTeam: () => void;
   activityState: DataState<{ activity: ActivityRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
   docs: ListRead;
@@ -1395,13 +1392,6 @@ function AuthorWorkspace({
         {/* Module completion, from the same dossier read as the card (F23). */}
         <ModuleCompletion read={dossier} docForModule={docForModule} onOpen={onOpenDoc} />
 
-        {/* Tasks — the program's outstanding work, the same panel the Review
-            stage shows (one read, one component). It said "aren't wired" for
-            every program until the work view took the program's UUID. */}
-        <ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />
-
-        <MyWorkLine onNav={onNav} available={available} />
-
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}
         {pid && (
@@ -1411,13 +1401,10 @@ function AuthorWorkspace({
           </section>
         )}
 
-        {/* Sourced responsibility/sharing facts and the existing audit read. */}
+        {/* The project's audit read. Its team and tasks are on Plan (CLIENT_JOURNEY pass 3). */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
-          <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={onRetryTeam} />
-          {pid && sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
-            suspended={teamState.loading || Boolean(teamState.error)} onChanged={onRetryTeam} />}
-          <div style={{ marginTop: 12 }}>
+          <div className="pj-sec-h"><h2>Activity</h2></div>
+          <div>
             <Anchored
               state={activityState}
               loadingText="Loading activity…"
@@ -1507,8 +1494,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const [workTarget, setWorkTarget] = useState<string | null>(null);
   const [stage, setStage] = useState('author');
   /* Until a person, AnA or a handoff chooses a step, a project with no
-     documents opens on Evidence, its first step with work to do
-     (CLIENT_JOURNEY_2026-10-25.md, pass 2). A choice is never overridden. */
+     documents opens on Plan, what the filing needs (CLIENT_JOURNEY_2026-10-25.md,
+     passes 2 and 3). A choice is never overridden. */
   const stageChosen = useRef(false);
   const chooseStage = useCallback((next: string) => {
     stageChosen.current = true;
@@ -1521,7 +1508,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
     if (target) { setWorkTarget(target); chooseStage('review'); }
   }, [chooseStage]);
   useEffect(() => {
-    if (!stageChosen.current && docsRead.state === 'ready' && docsRead.rows.length === 0) setStage('evidence');
+    if (!stageChosen.current && docsRead.state === 'ready' && docsRead.rows.length === 0) setStage('plan');
   }, [docsRead]);
 
   const prog = progState.data;
@@ -1570,7 +1557,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
      segment). Only a project that is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
   const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
-  const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'author'
+  const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'plan' ? { ...item, now: item.nowDevice ?? item.now } : item.id === 'author'
     ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
     : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item) : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
@@ -1800,22 +1787,6 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }} />
       )}
 
-      {pid && prog?.id === pid && !progState.loading && !progState.error && (
-        <ProjectMdxWorkflow
-          key={pid}
-          project={prog}
-          otherFilings={!markets.list.loading && !markets.list.error
-            ? markets.markets.map(market => market.submission.applicationType) : []}
-          marketsState={markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'ready'}
-          onNav={onNav}
-          onStage={nextStage => {
-            chooseStage(nextStage);
-            requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
-          }}
-          onAsk={ask}
-          available={available}
-        />
-      )}
 
       {/* Before the tabs (FILING_SPINE.md §2): the start box and the
           conversations held on this project. They are outside the stage
@@ -1856,6 +1827,27 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         />
       ) : (
         <>
+          {/* Plan — what the filing needs, who does it and by when, then the
+              team and the project's tasks, moved from Author (pass 3). */}
+          {stage === 'plan' && pid && (
+            <ProjectPlan pid={pid} prog={prog?.id === pid ? prog : null} usInd={usInd} cmcComposes={cmcComposes} deviceFiling={deviceFiling}
+              otherFilings={!markets.list.loading && !markets.list.error ? markets.markets.map(market => market.submission.applicationType) : []}
+              marketsState={markets.list.loading ? 'loading' : markets.list.error ? 'unavailable' : 'ready'}
+              projectId={sharingProjectId} available={available} onNav={onNav} onAsk={ask}
+              onStage={nextStage => {
+                chooseStage(nextStage);
+                requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
+              }}
+              onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
+              team={<section className="pj-sec">
+                <div className="pj-sec-h"><h2>Team</h2></div>
+                <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={reloadTeam} />
+                {sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
+                  suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />}
+              </section>}
+              tasks={<><ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} /><MyWorkLine onNav={onNav} available={available} /></>} />
+          )}
+
           {/* Evidence — the project's files, then its data room: every way a
               source comes into the project (FILING_SPINE.md F3). The data
               room sat under Author. */}
@@ -1897,9 +1889,6 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               pid={pid}
               dossier={dossier}
               onNav={onNav}
-              teamState={teamState}
-              sharingProjectId={sharingProjectId}
-              onRetryTeam={reloadTeam}
               activityState={activityState}
               docs={docsRead}
               onRetryDocs={reloadDocs}

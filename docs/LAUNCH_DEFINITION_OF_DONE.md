@@ -834,6 +834,11 @@ findings and what already existed are in `docs/design/CLIENT_JOURNEY_2026-10-25.
 - **Inside the project** (pass 2, the same day): a project with no documents opens on Evidence; each step states what
   to do now and offers the next step; Author offers CMC / Module 3 and Submit the IND forms for a US IND, each opened
   on the project.
+- **Plan** (pass 3, the same day; founder decisions 3 and 4): the project's first step, and where a new project opens.
+  It holds what the filing needs — for a US IND every deliverable of the IND plan of work by phase, each started from
+  its template, the phases that a feature composes opening it (Module 3 → CMC / Module 3, Module 1 → IND forms); for a
+  device filing its workstreams — with **Assign** writing one task for one person with a due date to the one task
+  store, then the team and the project's tasks, moved from Author. No new store, catalogue or route.
 
 Launch scope, module grants and every route are unchanged by this decision.
 

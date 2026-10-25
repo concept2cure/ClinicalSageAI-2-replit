@@ -85,7 +85,7 @@ describe('Project home and the launch scope', () => {
   it.each(['Respond', 'Submit'])('the %s stage offers no locked tool, and names what comes later in words', async (label) => {
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(6));
     fireEvent.click(stage(label));
     await waitFor(() => expect(stage(label).getAttribute('data-status')).toBe('active'));
     const ids = toolIds(onNav);
@@ -102,7 +102,7 @@ describe('Project home and the launch scope', () => {
 
   it('never offers the source tracer, which this release does not carry', async () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
-    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(5));
+    await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(6));
     // The data room, which carried the link, is on Evidence (FILING_SPINE.md F3).
     fireEvent.click(stage('Evidence'));
     expect(await screen.findByRole('heading', { name: 'Data room' })).toBeTruthy();
