@@ -148,7 +148,7 @@ export function NavUnlockPanel({
           <div className="nav-unlock-req">
             {mine.loading && (
               <p className="nav-unlock-req-note" role="status" aria-live="polite">
-                Checking whether you have already asked for this app.
+                Checking whether you have already asked for this feature.
               </p>
             )}
 
@@ -184,7 +184,7 @@ export function NavUnlockPanel({
                   value={note}
                   maxLength={2000}
                   disabled={sending}
-                  placeholder="The work this app is needed for, and by when."
+                  placeholder="The work this feature is needed for, and by when."
                   onChange={(e) => setNote(e.target.value)}
                 />
                 {writeError && (

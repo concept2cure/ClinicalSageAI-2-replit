@@ -46,15 +46,20 @@ The experience a client has:
 > the sequence, the forms are filled, and readiness says what is left. When the FDA writes back, **Respond** holds
 > the letter and the answer.
 
-The catalogue remains only as what it truly is: an administrator's view of the plan and its licences.
+The catalogue remains only as what it truly is: an administrator's view of the plan and its licences. The word
+"app" leaves the product's vocabulary for these capabilities: a client sees a step, a document's tools, a place,
+or AnA doing something; an administrator sees "features" in Plan & features.
 
 ## Experience Principles
 
 1. **The work is the navigation** — a feature is found where the work needs it: the project's step, the
    document's build, AnA's suggestion. Never a list of apps. (Resolves *discoverability vs. focus*: the plan of
    work is the map, so nothing needs a catalogue to be found.)
-2. **One canonical place per job** — duplicates converge onto the one that works before anything is shown to a
-   client; a job is never offered twice under two names. (Resolves *breadth vs. trust*.)
+2. **Nothing is lost, nothing is doubled** — every capability in the catalogue gets a home in the product, and a
+   duplicate is folded into its canonical capability only after each of its functions is shown to exist there or is
+   carried over. A job is never offered twice under two names, and never dropped. (Resolves *breadth vs. trust*;
+   the founder, 2026-10-25: "we must not lose any functionality that is in our apps catalog, but take all that and
+   place it in the core product, and get away from calling the needed functionality and features apps.")
 3. **Honest over impressive** — a feature that does not work on the client's real data is not offered in their
    journey; empty, failed and not-yet-available are said in plain words. (Resolves *"bring every feature to life"
    vs. what works today*: a feature comes to life by working, then by being placed.)
@@ -155,9 +160,12 @@ not a dot. Status changes are announced (`role="status"`), failures as alerts.
    - Investigator's Brochure readiness, Nonclinical / Module 4, Safety narratives, CSR section map, Prescribing
      information — document tools (each partial; see the IA for what each lacks).
    - Consistency check across documents (Review), FDA objection precedent (CSR/protocol check).
-2. **Four retirements**: AnA Authoring Engine (demo data), Intelligence catalog (sample data), Codebase coverage
-   (an internal tool), Submission Twin (a simulation). Each is unreachable by clients today.
-3. **Convergence of the 67 duplicates** onto the canonical item named in the IA, before any of them is shown.
+2. **No retirements.** The four items the inventory first marked for retirement — AnA Authoring Engine (demo
+   data), Intelligence catalog (sample data), Codebase coverage (an internal tool), Submission Twin (a simulation)
+   — are folded in instead: each function each one has is placed where it belongs (the IA names where), and only
+   the empty shell is removed, with its replacement named by path.
+3. **Convergence of the 67 duplicates** onto the canonical capability named in the IA, each with a function-by-
+   function check that nothing is lost (`FUNCTION_PARITY.md`).
 4. **Biostatistics screen and CMC adequacy** — the founder has said both will be addressed later.
 
 ## Out of Scope

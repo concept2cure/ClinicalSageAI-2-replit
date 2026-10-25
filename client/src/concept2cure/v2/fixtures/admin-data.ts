@@ -139,14 +139,14 @@ export const AUDIT_KINDS: AuditKind[] = [
 /* ---- Apps catalog ---- */
 
 export const PLATFORM_SERVICES: PlatformService[] = [
-  { name: 'RIM -- Regulatory Intelligence Model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers every app\'s recommendations.' },
+  { name: 'RIM -- Regulatory Intelligence Model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers the product\'s recommendations.' },
   { name: 'Evidence retrieval (RAG)', icon: 'search', desc: 'Grounds answers and drafts in the corpus and returns cited source chunks. Runs inside authoring, evidence and chat.' },
   { name: 'AnA gateway & model routing', icon: 'workflow', desc: 'Risk-tiered routing of every AI call to the right model, with human-review gates on high-impact actions.' },
   { name: 'Precedent engine', icon: 'scale', desc: 'Deterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.' },
   { name: 'Deterministic tool registry', icon: 'shieldCheck', desc: '142 pure-function regulatory tools (TTC, estimand, causality...) that AnA calls for submission-defensible output.' },
-  { name: 'Deep-research orchestrator', icon: 'telescope', desc: 'Multi-connector fan-out and grounded synthesis that drives the Deep research app.' },
+  { name: 'Deep-research orchestrator', icon: 'telescope', desc: 'Multi-connector fan-out and grounded synthesis that drives Deep research.' },
   { name: 'Template & rendering', icon: 'template', desc: 'Generates DOCX and PDF from governed templates -- produces the files in Artifacts Center and the editor.' },
-  { name: 'E-signature (21 CFR Part 11)', icon: 'lock', desc: 'Reason-for-change + identity re-assertion on governed actions across every app.' },
+  { name: 'E-signature (21 CFR Part 11)', icon: 'lock', desc: 'Reason-for-change + identity re-assertion on governed actions across the product.' },
   { name: 'Audit hash-chain', icon: 'scroll', desc: 'Tamper-evident ss11.10(e) ledger written by every governed mutation.' },
   { name: 'Connectors', icon: 'network', desc: 'ClinicalTrials.gov, FAERS/MAUDE, EUDAMED, EHR/FHIR, DMS -- feed evidence and deep research.' },
 ];

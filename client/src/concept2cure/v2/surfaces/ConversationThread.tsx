@@ -2160,7 +2160,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
               <textarea ref={draftRef} rows={1}
                 disabled={adminFollowing || undefined}
                 aria-label={steering ? (manualHold ? 'Tell AnA what to do instead' : 'Steer this run') : 'Reply to AnA'}
-                placeholder={adminFollowing ? FOLLOW_LINES.adminCannotSteer : steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name an app...'}
+                placeholder={adminFollowing ? FOLLOW_LINES.adminCannotSteer : steering ? (manualHold ? 'Or tell AnA what to do instead' : 'Steer this run — AnA takes it at her next step') : 'Reply to AnA — ask, request a draft, or type @ to name a feature…'}
                 aria-invalid={(steering && steerRefused) || undefined}
                 aria-describedby={steering ? [steerRefused ? 'ct-steer-err' : '', steerHelp ? 'ct-steer-help' : ''].filter(Boolean).join(' ') || undefined : undefined}
                 value={draft}

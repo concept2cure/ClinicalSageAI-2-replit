@@ -165,7 +165,7 @@ router.post('/', async (req: Request, res: Response) => {
     if (denial) return refuse(res, denial);
 
     const moduleId = normalizeModuleId((req.body ?? {}).moduleId);
-    if (!moduleId) return res.status(400).json({ error: 'Choose the app you need.' });
+    if (!moduleId) return res.status(400).json({ error: 'Choose the feature you need.' });
 
     const note = normalizeNote((req.body ?? {}).note);
     if ('tooLong' in note) {

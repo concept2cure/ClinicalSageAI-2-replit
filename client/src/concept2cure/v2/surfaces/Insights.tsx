@@ -2036,7 +2036,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     return withoutProgram(
           <div className="rc-empty" data-testid="rc-program-picker">
             <h2 className="rc-empty-h">Which program is the report for?</h2>
-            <p className="rc-empty-s">Governed reports and the readiness digest run over one program. Choose it here; it opens across the app, as it does from Projects.</p>
+            <p className="rc-empty-s">Governed reports and the readiness digest run over one project. Choose it here; it stays open everywhere, as it does from Projects.</p>
             <div className="rc-empty-presets" role="group" aria-label="Programs">
               {choices.map((pr) => (
                 <button

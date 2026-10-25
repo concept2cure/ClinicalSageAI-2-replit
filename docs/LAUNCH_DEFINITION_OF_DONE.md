@@ -839,6 +839,13 @@ findings and what already existed are in `docs/design/CLIENT_JOURNEY_2026-10-25.
   its template, the phases that a feature composes opening it (Module 3 → CMC / Module 3, Module 1 → IND forms); for a
   device filing its workstreams — with **Assign** writing one task for one person with a due date to the one task
   store, then the team and the project's tasks, moved from Author. No new store, catalogue or route.
+- **Nothing in the catalogue is lost** (the founder, later the same day): "we must not lose any functionality that
+  is in our apps catalog, but take all that and place it in the core product, and get away from calling the needed
+  functionality and features apps." Every capability of every catalogue entry gets a home in the product — a place,
+  a project step, a document's build, AnA, or administration — and a duplicate is folded into its canonical
+  capability only after each of its functions is shown to exist there or is carried over (no retirement by
+  deletion). "App" leaves the product's words for these capabilities. A capability is shown to a client in its home
+  when it works on the client's real data; until then its home says it is coming, in words (fail closed).
 
 Launch scope, module grants and every route are unchanged by this decision.
 
