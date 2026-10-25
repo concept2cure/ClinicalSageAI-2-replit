@@ -1,0 +1,3 @@
+# Mutation: never-hides
+ × Home: set up your organisation > with all three done, the checklist is gone 73ms
+      Tests  1 failed | 5 passed (6)
