@@ -1,0 +1,200 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·····x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/homeSetup.test.tsx > Home: set up your organisation > is not offered to an administrator role the server refuses the steps to
+AssertionError: expected <section class="home-sec" …(2)>…(2)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-labelledby="home-setup-h"
+  class="home-sec"
+  data-testid="home-setup"
+>
+  <div
+    class="home-sec-head"
+  >
+    <h2
+      class="home-sec-h"
+      id="home-setup-h"
+    >
+      Set up your organisation
+    </h2>
+    <span
+      class="home-row-m"
+    >
+      0
+       of 
+      3
+       done
+    </span>
+  </div>
+  <ol
+    class="home-list home-setup"
+  >
+    <li
+      data-state="todo"
+      data-step="company"
+    >
+      <button
+        class="home-row"
+        type="button"
+      >
+        <span
+          class="home-row-t"
+        >
+          Record your company details
+          <span
+            class="home-setup-hint"
+          >
+            Name, address and contact, used on your documents and letters.
+          </span>
+        </span>
+        <span
+          class="home-row-m"
+        >
+          To do
+        </span>
+        <span
+          class="home-row-go"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-chevron-right"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m9 18 6-6-6-6"
+            />
+          </svg>
+        </span>
+      </button>
+    </li>
+    <li
+      data-state="todo"
+      data-step="team"
+    >
+      <button
+        class="home-row"
+        type="button"
+      >
+        <span
+          class="home-row-t"
+        >
+          Invite your team
+          <span
+            class="home-setup-hint"
+          >
+            The people who write, review and sign with you.
+          </span>
+        </span>
+        <span
+          class="home-row-m"
+        >
+          To do
+        </span>
+        <span
+          class="home-row-go"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-chevron-right"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m9 18 6-6-6-6"
+            />
+          </svg>
+        </span>
+      </button>
+    </li>
+    <li
+      data-state="todo"
+      data-step="project"
+    >
+      <button
+        class="home-row"
+        type="button"
+      >
+        <span
+          class="home-row-t"
+        >
+          Create your first project
+          <span
+            class="home-setup-hint"
+          >
+            One regulatory filing, for example an IND, from plan to submission.
+          </span>
+        </span>
+        <span
+          class="home-row-m"
+        >
+          To do
+        </span>
+        <span
+          class="home-row-go"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-chevron-right"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m9 18 6-6-6-6"
+            />
+          </svg>
+        </span>
+      </button>
+    </li>
+  </ol>
+</section>
+
+ ❯ client/src/concept2cure/v2/__tests__/homeSetup.test.tsx:103:48
+    101|     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET',…
+    102|     await new Promise((r) => setTimeout(r, 30));
+    103|     expect(screen.queryByTestId('home-setup')).toBeNull();
+       |                                                ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  21:41:54
+   Duration  2.56s (transform 897ms, setup 172ms, import 1.10s, tests 551ms, environment 569ms)
+

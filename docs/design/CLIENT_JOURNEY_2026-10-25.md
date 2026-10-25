@@ -241,5 +241,8 @@ Run for real, it found two defects, both fixed here:
   order, newest assignment first. The top bar's "Your work" shows the same rows, and a row says the module's words
   (the existing `clModLabel`), not the identifier a task is stored under (`submission-center`, `cmc`, `mdx`).
 
+The what-exists critic also found Home's setup checklist offered to administrator roles the server refuses
+(`business_admin`, `platform_admin`); it now follows the company read's own `canManage`.
+
 Not fixed here, seen on the way: the editor's draft request reads "Draft preparation Target Product Profile …" (the
 section's code is spliced into the sentence). Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/first-session/`.

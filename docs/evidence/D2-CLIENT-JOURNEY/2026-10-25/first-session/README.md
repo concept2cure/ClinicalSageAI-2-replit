@@ -57,6 +57,11 @@ No model key is configured where this runs, so the AnA step asserts the hand-off
 3. **The row printed the module identifier as stored** (`submission-center`, `cmc`, `mdx` — found by the
    what-exists critic, checked against the code). The row now says the module's words through the existing label map
    (`clModLabel`, `fixtures/collab-data.ts`, extended with the stored spellings), not a second map.
+4. **Home's setup checklist was offered to roles the server refuses** (critic finding, checked): the client's
+   administrator list admits `business_admin` and `platform_admin`, but company details and invitations need the
+   organisation role owner or admin. The checklist now follows the company read's own answer (`canManage`): a viewer
+   it says cannot manage is not offered the steps (`HomeSetup.tsx`). In the browser, the e2e admin
+   (`canManage: true`) sees it and the author (`false`) does not.
 
 ## Tests, and each made to fail (`red/`)
 
@@ -70,6 +75,7 @@ No model key is configured where this runs, so the AnA step asserts the hand-off
 | Home row names the project | `homeOpenItems.test.tsx` (1 new) | the source before the change | `open-items-without-project-name.txt` |
 | Home row names the project, in the browser | first-session e2e | the name dropped from the row | `e2e-open-items-without-project-name.txt` |
 | Home row shows the module's words, not its id | `homeOpenItems.test.tsx` (1 new) | the source before the change | `open-items-raw-module-id.txt` |
+| Setup not offered to a role the server refuses | `homeSetup.test.tsx` (1 new) | the source before the change | `setup-offered-to-refused-role.txt` |
 
 Section text keeping the 20-a-minute ceiling is pinned by a test that passes before and after (it is a guard
 against widening the carve-out, not a change).
