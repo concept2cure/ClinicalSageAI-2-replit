@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The project is the filing: six steps, and the start box above them.
+ * The project is the filing: six steps, and the start box beside them.
  *
  * docs/design/FILING_SPINE.md §1, §2 and slice F2. The project page had seven
  * tabs. Two of them, Plan and Lifecycle, held nothing this release can open:
@@ -18,8 +18,9 @@
  *     of words on Submit, with no button;
  *   - AnA's `project-home.set-stage` opens Plan by name, and still accepts
  *     'lifecycle', which opens Submit (follow-up sequences);
- *   - the start box and the Conversations list sit above the tabs, outside
- *     the tab switch, so what is typed survives a change of tab.
+ *   - the steps come first; the start box and the Conversations list sit in
+ *     the side column beside every step (CLIENT_JOURNEY pass 4), outside the
+ *     step switch, so what is typed survives a change of step.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -141,13 +142,13 @@ describe('Project home — AnA names each step, and the removed one', () => {
   });
 });
 
-describe('Project home — the start box sits above the tabs', () => {
+describe('Project home — the start box sits beside every step', () => {
   it('a message typed in the start box survives switching tabs', async () => {
     render(<ProjectHome {...props()} />);
     const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
     fireEvent.change(box, { target: { value: 'Draft the 2.5 clinical overview from the CSR' } });
 
-    for (const label of ['Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
+    for (const label of ['Plan', 'Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
       fireEvent.click(tab(label)!);
       await waitFor(() => expect(activeLabel()).toBe(label));
       const now = screen.getByRole('textbox', { name: /Start a conversation in/ }) as HTMLTextAreaElement;
@@ -155,7 +156,7 @@ describe('Project home — the start box sits above the tabs', () => {
     }
   });
 
-  it('the start box and the conversations come before the tabs and stay on every tab', async () => {
+  it('the steps come first; the start box and the conversations sit beside the step and stay on every step', async () => {
     render(<ProjectHome {...props()} />);
     const region = await screen.findByRole('region', { name: /Start a conversation in/ });
     await screen.findByText(THREAD.title);
@@ -163,9 +164,11 @@ describe('Project home — the start box sits above the tabs', () => {
     // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
     expect(within(tablist).getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(1);
     expect(tablist.querySelector('[aria-selected]')).toBeNull();
-    expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box above the tabs').toBeTruthy();
+    /* CLIENT_JOURNEY pass 4 (decision 5): the steps first, then the open step, AnA beside it. */
+    expect(tablist.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING, 'steps before the start box').toBeTruthy();
+    expect(region.closest('aside'), 'start box in the side column').toBeTruthy();
     const threads = screen.getByTestId('pj-threads');
-    expect(threads.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations above the tabs').toBeTruthy();
+    expect(threads.closest('aside'), 'conversations in the side column').toBeTruthy();
 
     fireEvent.click(tab('Submit')!);
     await waitFor(() => expect(activeLabel()).toBe('Submit'));

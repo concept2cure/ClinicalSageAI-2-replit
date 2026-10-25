@@ -4,11 +4,12 @@ import { EmptyState } from '../dataConnect';
 import { ProjectSkills } from '../ProjectSkills';
 import { DossierReadinessCard, type DossierState } from './ProjectDossier';
 
-/* The project page's side column: the dossier's readiness, the skills AnA
-   follows here, and the cards the numeric project-home read-model serves. */
+/* Author's cards in the project page's side column (ProjectHome renders the
+   column beside every step): the dossier's readiness, the skills AnA follows
+   here, and the cards the numeric project-home read-model serves. */
 export function ProjectSide({ pid, dossier, onAsk }: { pid: string | null; dossier: DossierState; onAsk?: (text: string) => void }) {
   return (
-    <aside className="pj-side">
+    <>
       {/* Dossier readiness — a status figure, so it lives with the other
           status cards in the aside rather than between the conversation and
           the work (the constitution's no-KPI-hero rule for project landing).
@@ -40,6 +41,6 @@ export function ProjectSide({ pid, dossier, onAsk }: { pid: string | null; dossi
         />
       </section>
 
-    </aside>
+    </>
   );
 }

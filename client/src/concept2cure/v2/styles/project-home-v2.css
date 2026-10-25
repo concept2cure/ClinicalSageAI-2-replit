@@ -425,9 +425,11 @@
 }
 
 /* ── Project home: the filing's six steps (FILING_SPINE.md F2; Plan, CLIENT_JOURNEY pass 3) ──
-   The start box and the project's conversations sit above the steps, outside
-   the stage switch, so a half-typed message survives a change of step. */
-.c2c-v2 .pj-start{display:flex;flex-direction:column;gap:14px;margin:0 0 20px;}
+   The steps come first. AnA's start box and the project's conversations sit
+   beside every step (pass 4), outside the step switch, so a half-typed message
+   survives a change of step. The column can be taller than the window, so it
+   scrolls with the page instead of sticking. */
+.c2c-v2 aside.pj-step-side{position:static;}
 /* What a tab does not do in this release: one line of words, no button. */
 .c2c-v2 .pj-later{margin:12px 0 0;max-width:none;}
 /* A tab whose body is more than one section (Evidence: files and data room;

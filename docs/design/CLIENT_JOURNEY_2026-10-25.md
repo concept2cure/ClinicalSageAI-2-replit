@@ -172,3 +172,12 @@ template, is what `IndDocumentLibrary` already does; Plan reaches it.
 Not done, and why: the per-project progress of NDA, BLA and MAA plans (their pyramids exist, but progress is stored per
 organisation and type, so two projects would share it; a per-project store is a server change of its own); editing the
 target date (no route writes it).
+
+## Pass 4 — the steps first, AnA beside the open step (done, same day)
+
+Decision 5. The start box and the project's conversations sat above the steps (FILING_SPINE.md §2), so on a first
+screen the steps began about 690 px down. They now sit in a side column beside every step, outside the step switch,
+so a half-typed message survives a change of step as before; Author's readiness and skills cards join the same
+column. What already existed: `.pj-grid/.pj-main/.pj-side` (app-v2.css), used only by Author; `StartConversation` and
+`ProjectConversations` (ProjectHome.tsx); `ProjectSide.tsx`. Nothing new was built; the three composers (Home, project,
+thread) are still three, and converging them is its own change. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass4/`.

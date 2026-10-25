@@ -1,0 +1,9 @@
+Affected set (101 files: Project home, Plan, editor library, task create, step definitions, and every test naming a changed file by path):
+ Test Files  5 failed | 96 passed (101)
+      Tests  11 failed | 1055 passed (1066)
+Failing files, each failing identically at 2246406e4:
+      1  FAIL  client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+      4  FAIL  client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx
+      4  FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+      1  FAIL  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+      1  FAIL  server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts

@@ -1324,7 +1324,7 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
 }
 
 function AuthorWorkspace({
-  pid, dossier, onNav, activityState, docs, onRetryDocs, onOpenDoc, onAsk, cmcComposes,
+  pid, dossier, onNav, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1336,8 +1336,6 @@ function AuthorWorkspace({
   docs: ListRead;
   onRetryDocs: () => void;
   onOpenDoc: (doc: BuiltDocument) => void;
-  /** Hands a prompt to AnA's conversation (the skill studio's "draft it with AnA"). */
-  onAsk?: (text: string) => void;
   /** The project is one CMC / Module 3 composes for (ProjectHome `cmcComposes`). */
   cmcComposes?: boolean;
 }) {
@@ -1352,8 +1350,7 @@ function AuthorWorkspace({
     return inModule.length ? { doc: inModule[0], count: inModule.length, n } : null;
   };
   return (
-    <div className="pj-grid">
-      <div className="pj-main">
+    <>
         <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
         {/* Module completion, from the same dossier read as the card (F23). */}
@@ -1398,10 +1395,7 @@ function AuthorWorkspace({
             />
           </div>
         </section>
-      </div>
-
-      <ProjectSide pid={pid} dossier={dossier} onAsk={onAsk} />
-    </div>
+    </>
   );
 }
 
@@ -1754,18 +1748,6 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       )}
 
 
-      {/* Before the tabs (FILING_SPINE.md §2): the start box and the
-          conversations held on this project. They are outside the stage
-          switch, so a half-typed message survives a change of tab; they sat
-          inside Author, and leaving Author unmounted the message. Shown, as
-          before, once the project record has not failed. */}
-      {pid && !progState.error && (
-        <div className="pj-start">
-          <StartConversation productName={productName} onNav={onNav} />
-          <ProjectConversations pid={pid} onNav={onNav} />
-        </div>
-      )}
-
       {/* A lifecycle belongs to a project. With none selected the tabs
           switched nothing — the body below is "No project selected" whichever
           is open — and AnA's set-stage already refuses in this state, so the
@@ -1793,7 +1775,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           hint="The project record didn't respond (it may not exist for your organization, or the service is unreachable). Return to All projects and try again."
         />
       ) : (
-        <>
+        <div className="pj-grid">
+          <div className="pj-main">
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -1859,11 +1842,20 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               docs={docsRead}
               onRetryDocs={reloadDocs}
               onOpenDoc={openDocument}
-              onAsk={onAsk}
               cmcComposes={cmcComposes}
             />
           )}
-        </>
+          </div>
+
+          {/* Beside every step (CLIENT_JOURNEY pass 4, decision 5): AnA's start box and the conversations held on
+              this project. The steps come first; this column is outside the step switch, so a half-typed message
+              survives a change of step (FILING_SPINE.md §2). Author adds its readiness and skills cards. */}
+          <aside className="pj-side pj-step-side" aria-label="AnA and this project’s conversations">
+            {pid && <StartConversation productName={productName} onNav={onNav} />}
+            {pid && <ProjectConversations pid={pid} onNav={onNav} />}
+            {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} onAsk={onAsk} />}
+          </aside>
+        </div>
       )}
     </div>
   );
