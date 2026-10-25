@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25T19:20:21.521Z",
+  "generatedAt": "2026-10-25T19:37:20.379Z",
   "git": {
-    "sha": "c693a7260630d98e5b00feea8970fcf5c9486c80",
+    "sha": "a5eee7f696988fd3e66c4463d4b7e7f518a5696d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2875,16 +2875,16 @@
         "lines": 1931
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1916
-      },
-      {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
         "lines": 1908
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1884
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
