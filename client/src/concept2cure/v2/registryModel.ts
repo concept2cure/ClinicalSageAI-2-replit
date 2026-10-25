@@ -109,9 +109,9 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    features of Project home and clinical operations; the CRL library's
  *    precedents reach AnA in the conversation.
  *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
- *    scrap / later); Workflows is on the rail and in the account menu; Artifacts Center's
+ *    scrap / later); the module catalog is in the account menu; Artifacts Center's
  *    list moves to the conversation's canvas (slice 25) and stays reachable
- *    meanwhile from ⌘K, the Workflows, and Live Drive, which opens it when
+ *    meanwhile from ⌘K, Plan & features, and Live Drive, which opens it when
  *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
  *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
  *    opens the conversation in progress. "New conversation" opens Home, which
@@ -138,27 +138,39 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    Reports, Compliance and Integrity as its tabs) rename and regroup
  *    surfaces, which is the surface registry's change, not this list's.
  *  - "Search ⌘K" is the top bar's search button, not a row here.
- *  - My work has no count yet (GET /api/task-management/my-work, §5 item 9).
+ *
+ * What changed, 2026-10-25, by the founder's decision after testing the product
+ * as a client (docs/design/CLIENT_JOURNEY_2026-10-25.md): twelve entries in no
+ * order of work, one of them a catalog of 87 features presented as apps, left a
+ * client unable to tell where to start. The rail is now the five places every
+ * client works in, then the durable work areas, under their own heading. Each
+ * entry that left is still reached, from where its work happens:
+ *  - Workflows (the module catalog) is "Plan & features" in the account menu,
+ *    for organization administrators. Features open from inside a project.
+ *  - Submission Center opens from a project's Submit step.
+ *  - Tasking and My work are one entry, Tasks; the board's own "My tasks"
+ *    filter, and Home's "Your tasks", give the person's own.
+ *  - Conversation: Home lists the person's recent conversations, and each
+ *    project lists its own.
+ * Risk-based monitoring and Biostatistics are work areas by the founder's model
+ * but stay off the rail until each is in the launch catalog (Rule 2).
  *
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
- * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): My
- * work opens the task board on the signed-in person's own tasks, which is what
- * its name says (the board alone opens on everyone's).
+ * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): Tasks
+ * opens the board on everyone's tasks, whatever filter it was last left on.
+ * `group` puts an entry under a heading; entries without one are the places.
  */
+export const RAIL_WORK_AREAS_LABEL = 'Work areas';
 export const RAIL_CORE = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'apps', label: 'Workflows', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
-  { id: 'tasking', label: 'Tasking', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
+  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
-  { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
-  { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
-  { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
-  { id: 'tasks', label: 'My work', icon: 'checkSquare', applies: { actionId: 'tasking.filter', params: { mine: 'true' } } },
-  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare' },
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
+  { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
@@ -854,7 +866,10 @@ export const SEGMENT_MODULES = {
 
 /**
  * Per-client-category REFERENCE CONFIG: the category label, its regulatory
- * pathway vocabulary, AnA's framing sentence and the quick-action targets.
+ * pathway vocabulary and AnA's framing sentence. The quick-action targets Home
+ * rendered as shortcuts left on 2026-10-25: one opened an empty Program
+ * journey, and Home now leads with the client's projects instead
+ * (docs/design/CLIENT_JOURNEY_2026-10-25.md).
  *
  * Each entry also used to carry a `program` string — biotech's was
  * 'BX-301 — BLA · 351(a)' — which the Home surface rendered under a branch icon
@@ -875,56 +890,30 @@ export const SEGMENT_CONTEXT = {
     tagline: '510(k) · De Novo · PMA · EU MDR',
     pathways: ['510(k)', 'De Novo', 'PMA', 'EU MDR / CER'],
     ana: 'Predicate & substantial-equivalence reasoning, eSTAR, ISO 14971 risk, EU MDR / CER.',
-    actions: [
-      { id: 'project', label: 'Open a device project', icon: 'folder', surface: 'projects' },
-    ],
   },
   biopharma: {
     label: 'Biotech & Pharma',
     tagline: 'IND · NDA · BLA · MAA · Lifecycle',
     pathways: ['IND', 'NDA', '505(b)(2)', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
     ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
-    actions: [
-      { id: 'journey', label: 'Program journey', icon: 'workflow', surface: 'program-journey' },
-      { id: 'author', label: 'Draft Clinical Overview', icon: 'penLine', surface: 'document-authoring' },
-      { id: 'cmc', label: 'CMC Module 3', icon: 'beaker', surface: 'cmc' },
-      /* 'BLA readiness' assumed the biologic; the merged lane says what the
-         control is, and the pathway comes from the program's modality. */
-      { id: 'submit', label: 'Submission readiness', icon: 'rocket', surface: 'submission-center' },
-    ],
   },
   diagnostics: {
     label: 'Diagnostics',
     tagline: '510(k) · EU IVDR · CLIA · CDx',
     pathways: ['510(k)', 'EU IVDR', 'CLIA', 'CDx'],
     ana: 'IVD analytical & clinical performance, IVDR Annex, companion-diagnostic linkage.',
-    actions: [
-      { id: 'project', label: 'Open a diagnostic project', icon: 'folder', surface: 'projects' },
-    ],
   },
   cro: {
     label: 'CRO / Research',
     tagline: 'Multi-sponsor · protocol-led · org-isolated',
     pathways: ['Protocol development', 'Cross-sponsor', 'IND', '510(k)'],
     ana: 'Multi-sponsor portfolio. Protocol authoring + committee governance, org-isolated across sponsors.',
-    actions: [
-      { id: 'protocol', label: 'Protocol development', icon: 'clipboardList', surface: 'protocol-dev' },
-      { id: 'research', label: 'Research administration', icon: 'network', surface: 'research-admin' },
-      { id: 'portfolio', label: 'Sponsor portfolio', icon: 'folder', surface: 'cro-portfolio' },
-      { id: 'tasks', label: 'Cross-sponsor tasks', icon: 'checkSquare', surface: 'tasks' },
-    ],
   },
   health: {
     label: 'Health Systems',
     tagline: 'IIT · IRB · Investigator IND',
     pathways: ['IIT', 'IRB', 'Investigator IND'],
     ana: 'Investigator-initiated trials. IRB, investigator INDs, site governance.',
-    actions: [
-      { id: 'author', label: 'Draft protocol', icon: 'clipboardList', surface: 'protocol-dev' },
-      { id: 'research', label: 'Research administration', icon: 'network', surface: 'research-admin' },
-      { id: 'submit', label: 'IRB submission', icon: 'rocket', surface: 'submission-center' },
-      { id: 'tasks', label: 'Site governance', icon: 'checkSquare', surface: 'tasks' },
-    ],
   },
 };
 export const getSegmentContext = (id: string) =>

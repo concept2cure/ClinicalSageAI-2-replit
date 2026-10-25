@@ -169,13 +169,35 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     return pool;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matches` reads only `term`
   }, [term, segEntries, registry, regionFilter, agencyFilter]);
-  const grouped = useMemo(() => {
+  /* What a client starts with first: the filings the platform builds,
+     validates and sequences end to end. The tab listed them among every
+     documents-only filing in one wall of identical cards (43 in Pharma &
+     Biotech), and a client testing the product read the documents-only ones as
+     disabled (docs/design/CLIENT_JOURNEY_2026-10-25.md). The rest follow one
+     press away; a search lists everything it matches, as before. The rest are
+     not all documents-only: a filing that creates an application without
+     being it (a Pre-IND meeting) has no tier stated, so the heading claims
+     nothing the server did not. The split is the server's offer, so nothing
+     here decides what is built. */
+  const isFull = (e: RegistryEntry) => {
+    const o = offerOf.get(e.id);
+    return o?.kind === 'offer' && o.offer.tier === 'build_and_sequence';
+  };
+  const [showRest, setShowRest] = useState(false);
+  const groupOf = (entries: RegistryEntry[]) => {
     const byCat: Record<string, RegistryEntry[]> = {};
-    filtered.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
-    return Object.entries(byCat).map(([catId, entries]) => ({
-      catId, label: cats[catId]?.label || catId, entries,
+    entries.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
+    return Object.entries(byCat).map(([catId, list]) => ({
+      catId, label: cats[catId]?.label || catId, entries: list,
     }));
-  }, [filtered, cats]);
+  };
+  const full = term ? filtered : filtered.filter(isFull);
+  const rest = term ? [] : filtered.filter((e) => !isFull(e));
+  /* A tab with nothing built end to end, or a chosen filing among the rest,
+     opens the rest: the choice is never hidden behind a press. */
+  const restOpen = showRest || full.length === 0 || rest.some((e) => e.id === value);
+  const grouped = groupOf(full);
+  const restGrouped = restOpen ? groupOf(rest) : [];
   /* A search that matches filings the platform does not offer lists them, each
      with the server's reason, rather than "no match". */
   const notOfferedMatches = useMemo(
@@ -195,6 +217,24 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     if (retried.current && !offers.loading && !offers.error) { retried.current = false; searchRef.current?.focus(); }
   }, [offers.loading, offers.error]);
   const clearFilters = () => { setRegionFilter(null); setAgencyFilter(null); };
+  const card = (e: RegistryEntry) => (
+    <button key={e.id} className="rpk-type" data-on={value === e.id || undefined}
+      onClick={() => onChange(e.id)} title={e.description || e.displayName}>
+      <div className="rpk-type-n">{e.displayName}</div>
+      <div className="rpk-type-meta">
+        {(() => {
+          const o = offerOf.get(e.id);
+          return o?.kind === 'offer' && o.offer.tier === 'author_only'
+            ? <span className="rpk-chip">{o.offer.label}</span>
+            : null;
+        })()}
+        <span className="rpk-chip rpk-chip-agency">{e.agency}</span>
+        <span className="rpk-chip rpk-chip-region">{e.region}</span>
+        {e.dossierStandard !== '—' && <span className="rpk-chip rpk-chip-dossier">{e.dossierStandard}</span>}
+        {e.ctdModule && e.ctdModule !== '—' && <span className="rpk-chip rpk-chip-ctd">{e.ctdModule}</span>}
+      </div>
+    </button>
+  );
   /* No filing is offered before the server has said what it offers: a pending
      read lists nothing, and a failed read says so and offers Retry. */
   if (offers.loading || offers.error) {
@@ -226,7 +266,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
         <div className="rpk-tabs">
           {segKeys.map(k => (
             <button key={k} className="rpk-tab" data-on={seg === k || undefined}
-              onClick={() => { setSeg(k); clearFilters(); }}>
+              onClick={() => { setSeg(k); clearFilters(); setShowRest(false); }}>
               <span className="ico">{I[SEG_ICONS[k]] || '◇'}</span>
               <span>{segs[k].label}</span>
               <span className="rpk-tab-n">{registry.filter(e => e.segment === k).length}</span>
@@ -282,31 +322,39 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
         </div>
       )}
       <div className="rpk-body">
+        {!term && full.length > 0 && (
+          <div className="rpk-tier-h" data-testid="rpk-full-heading">
+            Built and validated here
+            <span className="rpk-tier-s">The platform assembles and validates the electronic submission (eCTD sequence) for these filings.</span>
+          </div>
+        )}
         {grouped.map(g => (
           <div key={g.catId} className="rpk-cat">
             <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
-            <div className="rpk-cat-grid">
-              {g.entries.map(e => (
-                <button key={e.id} className="rpk-type" data-on={value === e.id || undefined}
-                  onClick={() => onChange(e.id)} title={e.description || e.displayName}>
-                  <div className="rpk-type-n">{e.displayName}</div>
-                  <div className="rpk-type-meta">
-                    {(() => {
-                      const o = offerOf.get(e.id);
-                      return o?.kind === 'offer' && o.offer.tier === 'author_only'
-                        ? <span className="rpk-chip">{o.offer.label}</span>
-                        : null;
-                    })()}
-                    <span className="rpk-chip rpk-chip-agency">{e.agency}</span>
-                    <span className="rpk-chip rpk-chip-region">{e.region}</span>
-                    {e.dossierStandard !== '—' && <span className="rpk-chip rpk-chip-dossier">{e.dossierStandard}</span>}
-                    {e.ctdModule && e.ctdModule !== '—' && <span className="rpk-chip rpk-chip-ctd">{e.ctdModule}</span>}
-                  </div>
-                </button>
-              ))}
-            </div>
+            <div className="rpk-cat-grid">{g.entries.map(card)}</div>
           </div>
         ))}
+        {rest.length > 0 && (
+          <div className="rpk-rest" data-testid="rpk-rest">
+            <div className="rpk-tier-h">
+              More filing types
+              <span className="rpk-tier-s">
+                Those marked “Author documents for this market” are written and approved here and filed elsewhere.
+                Choose a filing to see what the platform does for it.
+              </span>
+            </div>
+            {!restOpen ? (
+              <button type="button" className="btn ghost" onClick={() => setShowRest(true)} aria-expanded={false}>
+                Show {rest.length} more filing type{rest.length === 1 ? '' : 's'}
+              </button>
+            ) : restGrouped.map(g => (
+              <div key={g.catId} className="rpk-cat">
+                <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
+                <div className="rpk-cat-grid">{g.entries.map(card)}</div>
+              </div>
+            ))}
+          </div>
+        )}
         {notOfferedCount > 0 && (
           <div className="rpk-cat" data-testid="rpk-not-offered">
             <div className="rpk-cat-h">Not offered <span className="rpk-cat-n">{notOfferedCount}</span></div>
@@ -317,7 +365,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
             ))}
           </div>
         )}
-        {!grouped.length && !notOfferedCount && (
+        {!grouped.length && !rest.length && !notOfferedCount && (
           <div className="rpk-empty">
             <span className="ico">{I.search}</span>
             <p>No filing types match{term ? ' "' + q + '"' : ' these filters'}. {term ? 'Try an agency (FDA, EMA) or a pathway (510(k), BLA).' : 'Clear filters to browse.'}</p>

@@ -11,7 +11,7 @@ vi.mock('@/lib/queryClient', async (original) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext } from '../surfaceContext';
 
-const surface = { id: 'apps', label: 'Workflows' } as UiSurface;
+const surface = { id: 'apps', label: 'Plan & features' } as UiSurface;
 const license = {
   tier: 'professional', industryMode: 'medtech', enabledModules: [],
   usage: { projects: { currentCount: 1, maxAllowed: 10 }, users: { currentCount: 2, maxAllowed: 20 } },
@@ -86,7 +86,7 @@ describe('Apps catalog reaches MDX through Projects', () => {
     ]);
     mount();
     await screen.findByTestId('mdx-catalog-solution');
-    const search = screen.getByRole('searchbox', { name: 'Find a workflow or feature' });
+    const search = screen.getByRole('searchbox', { name: 'Find a feature' });
     fireEvent.change(search, { target: { value: 'Clinical evaluation' } });
     const solution = screen.getByTestId('mdx-catalog-solution');
     expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');

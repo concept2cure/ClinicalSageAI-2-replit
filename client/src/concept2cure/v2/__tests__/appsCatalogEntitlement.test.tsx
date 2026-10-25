@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Workflows — entitlement honesty.
+ * Plan & features — entitlement honesty.
  *
  * appsLive.test.tsx locks the WIRING (the surface reads the real endpoints and
  * renders no fixture). This file locks what the surface then SAYS, because the
@@ -42,7 +42,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Workflows', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Plan & features', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -125,7 +125,7 @@ afterEach(() => {
   apiRequest.mockReset();
 });
 
-describe('Workflows — the five entitlement states are five different cards', () => {
+describe('Plan & features — the five entitlement states are five different cards', () => {
   it('above the plan: names the plan that includes it and routes to plans, with no switch', async () => {
     mockCatalog([
       row({
@@ -250,7 +250,7 @@ describe('Workflows — the five entitlement states are five different cards', (
   });
 });
 
-describe('Workflows — writes the UI offers are writes the server accepts', () => {
+describe('Plan & features — writes the UI offers are writes the server accepts', () => {
   it('an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it)', async () => {
     /* The downgrade case: the org dropped to a lower tier, so isAvailable is
        false, but the subscription row is still enabled. canAccessModule returns
@@ -293,7 +293,7 @@ describe('Workflows — writes the UI offers are writes the server accepts', () 
   });
 });
 
-describe('Workflows — no verdict is not a verdict', () => {
+describe('Plan & features — no verdict is not a verdict', () => {
   it('a 200 that is not the catalog contract is an error, never "no apps"', async () => {
     /* The failure this pins: a proxy login page, an envelope change, `{data:[]}`
        — all arrive as HTTP 200. The surface used to map any of them to null and

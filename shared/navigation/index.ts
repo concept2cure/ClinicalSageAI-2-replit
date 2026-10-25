@@ -91,7 +91,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'biopharma', label: 'Biopharma', description: 'The biopharma module (IND, pathway, lifecycle, meetings).', scope: 'global', group: 'global' },
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
-  { id: 'apps', label: 'Workflows', description: 'A guide to when and how to use the existing work areas and their features, with workspace access details.', scope: 'global', group: 'global' },
+  { id: 'apps', label: 'Plan & features', description: 'What the organization\'s plan includes, with the reason any feature is unavailable; administrators turn features on and off here. Features themselves open from inside a project.', scope: 'global', group: 'global' },
   // The two Part 11 surfaces the catalog never gates (21 CFR §11.10(e)) —
   // shell surfaces in shared/constants/launch-scope.ts. Registered here so a
   // demonstration can end where a regulator would start: at the record of

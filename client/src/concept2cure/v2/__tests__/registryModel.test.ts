@@ -30,21 +30,25 @@ import {
 } from '../registryModel';
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
-  it('starts device and diagnostic quick actions and capability discovery in Projects', () => {
+  it('starts device and diagnostic capability discovery in Projects', () => {
     for (const segment of ['medtech', 'diagnostics']) {
-      expect(getSegmentContext(segment)?.actions).toHaveLength(1);
-      expect(getSegmentContext(segment)?.actions[0].surface).toBe('projects');
       expect(getSegmentModules(segment)[0]).toEqual({ label: 'MDX project workflows', items: ['projects'] });
     }
   });
+  it('carries no per-segment Home shortcuts: Home leads with the client\'s projects', () => {
+    // Biopharma's four opened an empty Program journey, the editor with no
+    // document, CMC and Submission Center (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+    for (const segment of ['medtech', 'diagnostics', 'biopharma', 'cro', 'health']) {
+      expect(getSegmentContext(segment), segment).not.toHaveProperty('actions');
+    }
+  });
   it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
-    // My work asks the task board for the person's own tasks as it opens it,
-    // and Tasking (on the rail by founder request, 2026-10-16) asks it for
-    // everyone's (Shell.tsx Rail). An action that no longer resolves, or that
-    // lands on another screen, would open the board under a label that says
-    // otherwise.
+    // Tasks (one entry since 2026-10-25, where Tasking and My work were two)
+    // asks the board for everyone's tasks as it opens it (Shell.tsx Rail). An
+    // action that no longer resolves, or that lands on another screen, would
+    // open the board under a label that says otherwise.
     const applying = RAIL_CORE.filter((s) => 'applies' in s && s.applies);
-    expect(applying.map((s) => s.id)).toEqual(['tasking', 'tasks']);
+    expect(applying.map((s) => s.id)).toEqual(['tasking']);
     for (const s of applying) {
       const a = (s as { applies: { actionId: string; params: Record<string, string> } }).applies;
       const res = resolveSurfaceAction(a.actionId, a.params);

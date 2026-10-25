@@ -64,9 +64,12 @@ function payload(over: Partial<NavEntitlementsPayload> = {}): NavEntitlementsPay
   };
 }
 
-const LOCKED_SUBMISSION = {
-  id: 'submission-center',
-  label: 'Submission Center',
+/* Reporting & analytics, a work area, stands for any licensable rail entry.
+   It was Submission Center, which left the rail on 2026-10-25: it opens from a
+   project's Submit step (docs/design/CLIENT_JOURNEY_2026-10-25.md). */
+const LOCKED_REPORTING = {
+  id: 'insights',
+  label: 'Reporting & analytics',
   entitled: false,
   source: 'tier' as const,
   requiredTier: 'professional',
@@ -118,24 +121,24 @@ describe('Rail licence gating', () => {
     const { onNav } = await mountRail();
 
     expect(lockedButtons()).toHaveLength(0);
-    // Submission Center would be locked under contract 2's payload; with no
+    // Reporting & analytics would be locked under contract 2's payload; with no
     // answer it is an ordinary destination that navigates.
-    const btn = screen.getByRole('button', { name: 'Submission Center' });
+    const btn = screen.getByRole('button', { name: 'Reporting & analytics' });
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);
-    expect(onNav).toHaveBeenCalledWith('submission-center');
+    expect(onNav).toHaveBeenCalledWith('insights');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('renders no lock when the server answers resolved:false', async () => {
     // resolved:false is the server saying "I computed no verdicts" — carrying a
     // surfaces array with it must not tempt the rail into reading it.
-    mockNav(async () => ok(payload({ resolved: false, surfaces: [LOCKED_SUBMISSION] })));
+    mockNav(async () => ok(payload({ resolved: false, surfaces: [LOCKED_REPORTING] })));
     const { onNav } = await mountRail();
 
     expect(lockedButtons()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Submission Center' }));
-    expect(onNav).toHaveBeenCalledWith('submission-center');
+    fireEvent.click(screen.getByRole('button', { name: 'Reporting & analytics' }));
+    expect(onNav).toHaveBeenCalledWith('insights');
   });
 
   /* CONTRACT 2 — A LOCKED MODULE RENDERS LOCKED.
@@ -146,11 +149,11 @@ describe('Rail licence gating', () => {
      panel must name the real reason and the step that resolves THAT reason: an
      org told to upgrade when the block is a tier gap can act on it. */
   it('locks a tier-gated module, keeps it activatable, and routes to plans', async () => {
-    mockNav(async () => ok(payload({ surfaces: [LOCKED_SUBMISSION] })));
+    mockNav(async () => ok(payload({ surfaces: [LOCKED_REPORTING] })));
     const { onNav } = await mountRail();
 
     const btn = await screen.findByRole('button', {
-      name: /Submission Center — not included in your plan$/,
+      name: /Reporting & analytics — not included in your plan$/,
     });
     expect(btn.getAttribute('data-locked')).toBe('true');
     // Exactly one destination is locked — the verdict is not smeared onto siblings.
@@ -162,7 +165,7 @@ describe('Rail licence gating', () => {
     expect(onNav).not.toHaveBeenCalled();
 
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Submission Center')).toBeTruthy();
+    expect(within(dialog).getByText('Reporting & analytics')).toBeTruthy();
     // The minimum tier is named, and it is the tier the SERVER returned.
     expect(within(dialog).getByText('Included from Professional')).toBeTruthy();
     expect(dialog.textContent).toMatch(/Professional plan/);
@@ -181,17 +184,17 @@ describe('Rail licence gating', () => {
       ok(
         payload({
           tier: 'professional',
-          surfaces: [{ ...LOCKED_SUBMISSION, entitled: true, source: 'included' }],
+          surfaces: [{ ...LOCKED_REPORTING, entitled: true, source: 'included' }],
         }),
       ),
     );
     const { onNav } = await mountRail();
 
-    const btn = screen.getByRole('button', { name: 'Submission Center' });
+    const btn = screen.getByRole('button', { name: 'Reporting & analytics' });
     expect(btn.getAttribute('data-locked')).toBeNull();
     expect(lockedButtons()).toHaveLength(0);
     fireEvent.click(btn);
-    expect(onNav).toHaveBeenCalledWith('submission-center');
+    expect(onNav).toHaveBeenCalledWith('insights');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
@@ -207,7 +210,7 @@ describe('Rail licence gating', () => {
           masterAdmin: true,
           tier: 'enterprise',
           surfaces: [
-            { id: 'submission-center', label: 'Submission Center', entitled: true, source: 'master_admin', requiredTier: 'professional' },
+            { id: 'insights', label: 'Reporting & analytics', entitled: true, source: 'master_admin', requiredTier: 'professional' },
             { id: 'quality', label: 'Quality', entitled: true, source: 'master_admin', requiredTier: 'enterprise' },
             { id: 'insights', label: 'Reporting & analytics', entitled: true, source: 'master_admin', requiredTier: 'professional' },
           ],
@@ -232,7 +235,7 @@ describe('Rail licence gating', () => {
      admin can switch off — are absent from it. Absent must mean unconditionally
      available; "not in the payload" is not evidence of a licence gap. */
   it('never locks a destination the catalog has no row for', async () => {
-    mockNav(async () => ok(payload({ surfaces: [LOCKED_SUBMISSION] })));
+    mockNav(async () => ok(payload({ surfaces: [LOCKED_REPORTING] })));
     const { onNav } = await mountRail();
 
     // Same payload as contract 2, so the lock machinery is demonstrably live.
@@ -261,16 +264,16 @@ describe('Rail licence gating', () => {
     ['industry' as const, 'not offered for this workspace'],
   ])('states the real reason for a %s lock in the accessible name', async (source, reason) => {
     mockNav(async () =>
-      ok(payload({ surfaces: [{ ...LOCKED_SUBMISSION, source }] })),
+      ok(payload({ surfaces: [{ ...LOCKED_REPORTING, source }] })),
     );
     await mountRail();
 
     expect(lockedButtons()).toHaveLength(1);
     const btn = screen.getByRole('button', {
-      name: new RegExp(`^Submission Center — ${reason}$`),
+      name: new RegExp(`^Reporting & analytics — ${reason}$`),
     });
     // The tooltip is the same sentence — a sighted hover and a screen reader
     // must not be told two different things about one button.
-    expect(btn.getAttribute('title')).toBe(`Submission Center — ${reason}`);
+    expect(btn.getAttribute('title')).toBe(`Reporting & analytics — ${reason}`);
   });
 });

@@ -6,12 +6,14 @@
  * things nothing else did: the first-run welcome, and the engine picker for the
  * conversation's turns. Before the rail was unmounted they moved: the welcome
  * to Home, where a new client starts, and the engine picker to the
- * conversation's own composer. Home's quick actions also stop offering
- * destinations this release does not carry.
+ * conversation's own composer. Since 2026-10-25 Home offers the welcome while
+ * the organization has no project, beside the first-project explanation, and
+ * every destination Home offers is in this release
+ * (docs/design/CLIENT_JOURNEY_2026-10-25.md).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { isLaunchSurface } from '../../../../../shared/constants/launch-scope';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -68,30 +70,44 @@ afterEach(() => {
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
-describe('the first-run welcome is on Home', () => {
-  it('shows the client-type welcome, and a starter starts a conversation with it', () => {
+describe('the first-run welcome is on Home while there is no project', () => {
+  it('shows the client-type welcome, and a starter starts a conversation with it', async () => {
     const onNav = vi.fn();
     const welcome = welcomeFor('biotech', 'Dana');
     render(<Home onNav={onNav} onAsk={vi.fn()} segment="biotech" welcome={welcome} onDismissWelcome={vi.fn()} />);
-    expect(screen.getByTestId('home-welcome')).toBeTruthy();
+    expect(await screen.findByTestId('home-welcome')).toBeTruthy();
     const starter = welcome.starters.find((s) => !s.navTo)!;
     fireEvent.click(screen.getByRole('button', { name: starter.label }));
     expect((window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO).toEqual({ id: 'new', seed: starter.prompt });
     expect(onNav).toHaveBeenCalledWith('conversation-thread');
   });
 
-  it('is not shown once dismissed', () => {
+  it('is not shown once dismissed', async () => {
     render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biotech" welcome={null} />);
+    await screen.findByTestId('home-first-project');
+    expect(screen.queryByTestId('home-welcome')).toBeNull();
+  });
+
+  it('is not shown once the organization has a project: the project is the next step', async () => {
+    apiRequest.mockResolvedValue({
+      ok: true, status: 200,
+      json: async () => ({ data: [{ id: 'p-1', title: 'ZX-9 IND', code: 'ZX-9', status: 'active', ws: 'Biotech' }] }),
+    } as Response);
+    render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biotech" welcome={welcomeFor('biotech', 'Dana')} />);
+    await screen.findByTestId('home-projects');
     expect(screen.queryByTestId('home-welcome')).toBeNull();
   });
 });
 
-describe("Home's quick actions", () => {
-  it('offer no destination this release does not carry', () => {
+describe('Home', () => {
+  it('offers no destination this release does not carry', async () => {
     const onNav = vi.fn();
-    render(<Home onNav={onNav} onAsk={vi.fn()} segment="biotech" />);
-    for (const b of Array.from(document.querySelectorAll('.landing-action'))) fireEvent.click(b);
+    render(<Home onNav={onNav} onAsk={vi.fn()} segment="biotech" welcome={welcomeFor('biotech', 'Dana')} />);
+    await screen.findByTestId('home-first-project');
+    await waitFor(() => expect(screen.queryByText('Loading your conversations…')).toBeNull());
+    for (const b of screen.queryAllByRole('button')) fireEvent.click(b);
     const opened = onNav.mock.calls.map((c) => c[0] as string);
+    expect(opened.length).toBeGreaterThan(0);
     expect(opened.filter((id) => !isLaunchSurface(id))).toEqual([]);
   });
 });

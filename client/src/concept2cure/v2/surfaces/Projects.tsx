@@ -22,7 +22,7 @@ import {
   productTypeFixedByFiling,
 } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { publishShellProject } from '../shellProject';
+import { openProjectHome, publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
@@ -505,8 +505,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
           <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title" id="new-project-title">New project</h1>
           <p className="ph-sub">
-            Choose the filing type, describe the product, then review what will be recorded.
-            The filing type decides the dossier outline this programme is built against.
+            What are you filing? Choose the filing, describe the product, then review what will be recorded.
+            The filing decides the dossier outline the project is built against.
           </p>
         </div>
       </header>
@@ -555,7 +555,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                 <span className="ico" aria-hidden="true">{I.sparkles}</span>
                 <div>
                   <div className="npw-seg-t">Tailored for {segLabel}</div>
-                  <div className="npw-seg-s">Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
+                  <div className="npw-seg-s">The filings for your client type come first. Use the tabs for other kinds of product, or search by name.</div>
                 </div>
               </div>
               {/* No inner scroll pane. The picker was capped at 440px inside an
@@ -1281,13 +1281,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   const openProj = (
     pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
-  ) => {
-    try {
-      publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
-      if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch { /* noop */ }
-    onNav('project-home');
-  };
+  ) => openProjectHome({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status }, onNav);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
      projects.*). Every handler drives the SAME state the human's own controls

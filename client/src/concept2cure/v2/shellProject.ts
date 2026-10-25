@@ -107,6 +107,18 @@ export function publishShellProject(project: ShellProject): void {
   notify();
 }
 
+/**
+ * Open a program's Project home: publish it as the open program, then go there.
+ * The Projects portfolio and Home's project list open a project this one way.
+ */
+export function openProjectHome(project: ShellProject & { title: string }, onNav: (id: string) => void): void {
+  try {
+    publishShellProject(project);
+    if (window.C2C?.setSurface) window.C2C.setSurface('project-home', project.title);
+  } catch { /* noop */ }
+  onNav('project-home');
+}
+
 /** A tenant-boundary switch retires all pending handoffs and the previous selection. */
 export function clearShellProject(): void {
   projectRevision += 1;

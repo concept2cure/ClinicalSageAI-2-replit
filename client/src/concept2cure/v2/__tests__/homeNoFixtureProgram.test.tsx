@@ -9,8 +9,10 @@
  * correctly reported none. An independent readiness assessment called this out
  * as a data-integrity defect, which on a regulated platform is what it is.
  *
- * These tests pin the four honest states of that line — loading, the REAL lead
- * programme, "No programs yet", a failed read said plainly — and assert that no
+ * Since 2026-10-25 Home leads with the client's projects as a list
+ * (docs/design/CLIENT_JOURNEY_2026-10-25.md), so these tests pin the honest
+ * states of that list — the REAL projects, the first-project explanation when
+ * there are none, a failed read said plainly — and assert that no
  * retired sample programme string can render on Home in ANY of them, for any
  * segment. They also pin the pathway list as reference config that legitimately
  * stays: '510(k)' and 'BLA' are what a client category files under, for every
@@ -25,7 +27,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -78,55 +80,59 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-describe('Home — the lead programme is real or absent, never invented', () => {
-  it('renders the org’s REAL lead programme (not a constant)', async () => {
-    apiRequest.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: PROGRAMS }),
-    } as Response);
+/** The portfolio answers `body`; the conversation list answers an empty list. */
+function portfolio(body: unknown) {
+  apiRequest.mockImplementation(async (_m: string, url: string) => ({
+    ok: true,
+    status: 200,
+    json: async () => (url.startsWith('/api/chat/threads') ? { threads: [] } : body),
+  }) as Response);
+}
 
-    render(<Home {...props()} />);
+describe('Home — your projects are real or absent, never invented', () => {
+  it('lists the org’s REAL projects (not a constant), each opening its Project home', async () => {
+    portfolio({ data: PROGRAMS });
+    const onNav = vi.fn();
+    render(<Home {...props()} onNav={onNav} />);
 
-    // The ACTIVE programme leads — "what am I working on" — and the rest are
-    // counted, not listed.
-    expect(await screen.findByText(/ZX-9 — First-in-Human, ZX-9/)).toBeTruthy();
-    expect(document.body.textContent).toContain('+1 more');
+    const list = await screen.findByTestId('home-projects');
+    expect(list.textContent).toContain('ZX-9 — First-in-Human, ZX-9');
+    expect(list.textContent).toContain('CA-2 — Companion assay');
+    fireEvent.click(screen.getByRole('button', { name: /ZX-9 — First-in-Human, ZX-9/ }));
+    expect(onNav).toHaveBeenCalledWith('project-home');
+    expect((window.C2C_PROJECT as unknown as { id: string } | undefined)?.id).toBe('p-1');
+    expectNoRetiredProgram();
+    delete window.C2C_PROJECT;
+  });
+
+  it('with no projects, says what a project is and offers one way to start — never a fixture', async () => {
+    portfolio({ data: [] });
+    const onNav = vi.fn();
+    render(<Home {...props()} onNav={onNav} />);
+
+    const first = await screen.findByTestId('home-first-project');
+    for (const step of ['Evidence', 'Author', 'Review', 'Submit', 'Respond']) expect(first.textContent).toContain(step);
+    fireEvent.click(screen.getByRole('button', { name: 'Create your first project' }));
+    expect(onNav).toHaveBeenCalledWith('projects');
     expectNoRetiredProgram();
   });
 
-  it('shows an honest empty state — never a fixture — when the org has no programs', async () => {
-    apiRequest.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [] }),
-    } as Response);
-
-    render(<Home {...props()} />);
-
-    expect(await screen.findByText('No programs yet')).toBeTruthy();
-    expectNoRetiredProgram();
-  });
-
-  it('says the read failed rather than falling back to a sample programme', async () => {
+  it('says the read failed rather than falling back to a sample programme or an empty portfolio', async () => {
     apiRequest.mockRejectedValue(Object.assign(new Error('Forbidden'), { status: 403 }));
 
     render(<Home {...props()} />);
 
-    expect(await screen.findByText(/Couldn’t load your programs/)).toBeTruthy();
+    expect(await screen.findByText(/Couldn’t load your projects/)).toBeTruthy();
+    expect(screen.queryByTestId('home-first-project')).toBeNull();
     expectNoRetiredProgram();
   });
 
   it('renders no sample programme for ANY segment', async () => {
-    apiRequest.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [] }),
-    } as Response);
+    portfolio({ data: [] });
 
     for (const segment of Object.keys(SEGMENT_CONTEXT)) {
       render(<Home {...props()} segment={segment} />);
-      await waitFor(() => expect(screen.getAllByText('No programs yet').length).toBeGreaterThan(0));
+      await waitFor(() => expect(screen.getAllByTestId('home-first-project').length).toBeGreaterThan(0));
       expectNoRetiredProgram();
       cleanup();
     }

@@ -1,4 +1,5 @@
-// Existing live module catalog, reached as Workflows; ids and write contracts stay stable.
+// Existing live module catalog, reached as Plan & features (an administrator's view since
+// 2026-10-25; docs/design/CLIENT_JOURNEY_2026-10-25.md); ids and write contracts stay stable.
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
@@ -326,7 +327,7 @@ function usagePhrase(u: LicenceUsage, noun: string): string {
   return u.limit === null ? `${u.current} ${noun} (no recorded limit)` : `${u.current} of ${u.limit} ${noun}`;
 }
 
-export function Apps({ onNav, segment }: SurfaceViewProps) {
+export function Apps({ onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
@@ -476,12 +477,12 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
      confidently-wrong answer this channel exists to prevent. */
   const anaContext = useMemo(() => {
     if (catState.loading || licState.loading) {
-      return { summary: 'Workflows and licence details are still loading; nothing on screen is final yet.' };
+      return { summary: 'Plan & features and licence details are still loading; nothing on screen is final yet.' };
     }
     if (catState.error) {
       return {
         summary:
-          'Workflows could not be read, so this screen is showing no features because of a ' +
+          'Plan & features could not be read, so this screen is showing no features because of a ' +
           'failure, not because none are entitled.',
         availableActions: ['Retry the catalog read'],
       };
@@ -489,7 +490,8 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
     const all = groups.flatMap((g) => g.apps);
     return {
       summary:
-        'Workflows support the project journey: Evidence → Author → Review → Submit → Respond' +
+        'Plan & features lists what the organisation\'s plan includes. Each feature is used inside a project, ' +
+        'along the project journey: Evidence → Author → Review → Submit → Respond' +
         (lic
           ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
             `${usagePhrase(pj, 'projects')} and ${usagePhrase(us, 'users')} used`
@@ -534,7 +536,7 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
         })),
       },
       availableActions: [
-        'Find a workflow or feature and open an available feature',
+        'Find a feature and open an available feature',
         'Open Projects to work with MDX features inside a device or diagnostic project',
         'Show the admin controls and enable or disable a module for this organisation (admin only; takes a reason for change and is written to the audit trail)',
         'Read the plan tier and the project / user usage against their limits',
@@ -551,8 +553,8 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
       if (want !== 'on' && want !== 'off') {
         return { ok: false, reason: `"${params.state}" is not a state for the admin controls — choose on or off.` };
       }
-      if (catState.loading) return { ok: false, reason: 'Workflows are still loading.', retry: true };
-      if (catState.error) return { ok: false, reason: 'Workflows could not be read, so the admin controls are not on screen.' };
+      if (catState.loading) return { ok: false, reason: 'Plan & features is still loading.', retry: true };
+      if (catState.error) return { ok: false, reason: 'Plan & features could not be read, so the admin controls are not on screen.' };
       const next = want === 'on';
       if (admin === next) return { ok: true, detail: `The admin controls are already ${want}` };
       setAdmin(next);
@@ -661,12 +663,12 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
     <div className="page-inner workflow-page">
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Work areas and shared project steps</div>
-          <h1 className="ph-title">Workflows</h1>
-          <p className="ph-sub">Start with a project so evidence, documents and filing work stay with the right program. Inside a project, follow Evidence → Author → Review → Submit → Respond. Use this guide to find the features for each part of the work.</p>
-          {['biopharma', 'biotech', 'pharma'].includes(segment ?? '') && (
-            <p className="ph-sub">For an IND, regulatory, medical writing, CMC, quality, nonclinical, clinical and safety teams contribute to the same project. One person or an external partner may cover several responsibilities.</p>
-          )}
+          <div className="ph-eyebrow">Administration</div>
+          <h1 className="ph-title">Plan &amp; features</h1>
+          {/* Not a place a client works from (docs/design/CLIENT_JOURNEY_2026-10-25.md):
+              each feature is used inside a project, and this page says what the
+              plan includes and why a feature is unavailable. */}
+          <p className="ph-sub">What your organization’s plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.</p>
         </div>
         <button className="btn ghost" data-on={admin || undefined}
           onClick={() => setAdmin(v => !v)} title="Toggle admin controls">
@@ -674,7 +676,7 @@ export function Apps({ onNav, segment }: SurfaceViewProps) {
         </button>
       </div>
       <div className="workflow-search">
-        <label htmlFor="workflow-search">Find a workflow or feature</label>
+        <label htmlFor="workflow-search">Find a feature</label>
         <input id="workflow-search" type="search" value={query}
           placeholder="Search by task, document or feature"
           onChange={event => setQuery(event.target.value)} />

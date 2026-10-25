@@ -29,7 +29,7 @@ import { ApiRequestError } from '@/lib/queryClient';
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Workflows', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Plan & features', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;

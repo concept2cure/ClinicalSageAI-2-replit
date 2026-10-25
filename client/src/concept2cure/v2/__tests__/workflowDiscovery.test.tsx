@@ -18,7 +18,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE = {
-  id: 'apps', label: 'Workflows', navTier: 'global', layoutMode: 'apps',
+  id: 'apps', label: 'Plan & features', navTier: 'global', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -105,7 +105,7 @@ function card(container: HTMLElement, name: string): HTMLElement {
 }
 
 function search(value: string) {
-  fireEvent.change(screen.getByRole('searchbox', { name: 'Find a workflow or feature' }), { target: { value } });
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Find a feature' }), { target: { value } });
 }
 
 function confirmReason(reason: string) {
@@ -128,7 +128,7 @@ describe('workflow discovery extends the live catalog', () => {
     live();
     const { container } = mount();
     await screen.findByText('Document editor & authoring', { selector: '.launch-title' });
-    expect(screen.getByRole('heading', { name: 'Workflows' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Plan & features' })).toBeTruthy();
 
     const memberships = [
       ['projects', 'Projects', ['Projects']],

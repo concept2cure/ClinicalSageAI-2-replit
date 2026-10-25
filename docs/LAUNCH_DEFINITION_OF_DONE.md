@@ -811,6 +811,31 @@ close the gap between what we have and what Veeva offers here"). That direction 
 - Filters and facet counts on the one Vault search landed the same day (`docs/evidence/D2-VAULT-SEARCH/2026-10-22/`,
   `…-find-view/`, `…-facets/`).
 
+## Product decisions, 2026-10-25 (founder)
+
+### P-47 — A client starts at their projects; features live in the project, not in an app list
+
+Decided by the founder on 2026-10-25, after testing the product as a client and finding they could not tell how
+to use it: "I have no idea what we're doing with apps, what the apps do, how to use them, when to use them."
+What was built are features within a client's regulatory project, not separate applications. The design, the
+findings and what already existed are in `docs/design/CLIENT_JOURNEY_2026-10-25.md`; evidence in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/`.
+
+- **The left rail** is the five places a client works in (Home, Projects, Tasks, Communication, Vault), then a
+  *Work areas* group: CMC / Module 3, Quality, Reporting & analytics. This replaces the rail the founder kept on
+  2026-10-16 and 2026-10-17 (P-36's last sentence). Tasking and My work are one entry. Submission Center opens
+  from a project's Submit step. The rail starts open, with labels.
+- **The module catalog** ("Workflows", formerly "Apps") is **Plan & features**: an organisation administrator's
+  licensing view, in the account menu. Its entitlement logic and governed writes are unchanged; Home no longer
+  links to it.
+- **Home** is where a client starts: their projects, their tasks, Ask AnA, their recent conversations.
+- **Risk-based monitoring and Biostatistics** are work areas by the founder's model and join the rail's *Work
+  areas* when each is in the launch catalog. Not before (Rule 2).
+- **Next (pass 2):** each project step states what to do now and offers the existing tools that belong to it,
+  each opened with the project's context.
+
+Launch scope, module grants and every route are unchanged by this decision.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

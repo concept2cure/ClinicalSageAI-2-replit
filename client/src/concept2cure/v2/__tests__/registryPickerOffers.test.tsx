@@ -80,6 +80,14 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     let seen = 0;
     for (const seg of Object.keys(REG_SEGMENTS)) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp(REG_SEGMENTS[seg].label) }));
+      /* A tab leads with what the platform builds end to end; the rest are
+         one press away (CLIENT_JOURNEY_2026-10-25). */
+      const first = tiles();
+      const reveal = screen.queryByRole('button', { name: /^Show \d+ more filing type/ });
+      if (reveal) {
+        expect(first.filter((t) => t.authorOnly), `${seg} leads with what is built here`).toEqual([]);
+        fireEvent.click(reveal);
+      }
       const shown = tiles();
       const want = GLOBAL_REGISTRY.filter((e) => e.segment === seg).map((e) => ({
         e, offer: marketSupport({ applicationType: typeOf(e), market: e.agency }, packs, ASOF).offer,
@@ -136,6 +144,47 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     apiRequest.mockImplementation(serverAnswer);
     fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+  });
+});
+
+// ── Added 2026-10-25 (docs/design/CLIENT_JOURNEY_2026-10-25.md) ─────────────
+describe('RegistryPicker leads with what is built here', () => {
+  /* Pharma & Biotech listed 43 filings in one wall of identical grey cards,
+     and a client testing the wizard read the documents-only ones as disabled. */
+  it('a tab shows the filings built and validated here first; the rest are one press away', async () => {
+    renderPicker();
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    // "Built and validated", not "submitted": transmission is not proven (D7).
+    expect(screen.getByTestId('rpk-full-heading').textContent).toMatch(/^Built and validated here/);
+    expect(screen.getByTestId('rpk-full-heading').textContent).not.toMatch(/submitted/i);
+    const first = tiles();
+    expect(first.some((t) => t.name === 'Investigational New Drug Application')).toBe(true);
+    expect(first.filter((t) => t.authorOnly)).toEqual([]);
+    // A Pre-IND meeting creates the IND it is about without being it: no tier
+    // is stated for it, so it is not presented as built here.
+    expect(first.some((t) => t.name === 'Pre-IND Meeting Request')).toBe(false);
+    const reveal = screen.getByRole('button', { name: /^Show \d+ more filing types?$/ });
+    expect(reveal.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(reveal);
+    const all = tiles();
+    expect(all.length).toBeGreaterThan(first.length);
+    expect(all.some((t) => t.authorOnly)).toBe(true);
+    expect(all.some((t) => t.name === 'Pre-IND Meeting Request')).toBe(true);
+  });
+
+  it('a chosen filing among the rest is never hidden behind the press', async () => {
+    renderPicker(vi.fn(), 'eu_maa');
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    expect(document.querySelector('button.rpk-type[data-on]')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /^Show \d+ more filing/ })).toBeNull();
+  });
+
+  it('a search lists everything it matches, built here or not, with no press', async () => {
+    renderPicker();
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Drug Master File' } });
+    expect(tiles().some((t) => t.name === 'Drug Master File' && t.authorOnly)).toBe(true);
+    expect(screen.queryByRole('button', { name: /^Show \d+ more filing/ })).toBeNull();
   });
 });
 

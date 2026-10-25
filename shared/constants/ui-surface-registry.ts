@@ -176,7 +176,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'apps',
-    label: 'Workflows',
+    label: 'Plan & features',
     navTier: 'global',
     layoutMode: 'apps',
     icon: 'grid',

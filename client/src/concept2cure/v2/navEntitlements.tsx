@@ -23,7 +23,7 @@
  *      catalog, and deliberately `audit-trail` / `part11-console`, which under
  *      21 CFR §11.10(e) may not be something an org can be sold or an admin can
  *      switch off — are absent, and absent means unconditionally available.
- *      That is load-bearing in the other direction too: the Workflows and
+ *      That is load-bearing in the other direction too: Plan & features and
  *      AnA carry no catalog row, so they can never lock — which is what keeps
  *      the step that RESOLVES a lock reachable from a locked rail.
  *   3. THE REASON IS THE REAL ONE. A locked destination says which of the four
@@ -187,7 +187,7 @@ export interface LockNotice {
    * True when the step left for THIS viewer is to ask an administrator.
    *
    * Separate from `ctaLabel`, and it has to be. `ctaLabel` is the step the
-   * viewer can take THEMSELVES — open the plans page, open the Workflows —
+   * viewer can take THEMSELVES — open the plans page, open Plan & features —
    * and for a member who cannot buy it is correctly null on two of the three
    * lock reasons. That honesty was also a dead end: the panel named the reason,
    * refused to offer a button that would be refused, and left the person who
@@ -320,7 +320,7 @@ const TIER_LABEL: Record<string, string> = {
  * Honest copy for a locked destination.
  *
  * Each branch names the reason the server actually returned and routes to the
- * place that resolves THAT reason — plans for a tier gap, the Workflows for
+ * place that resolves THAT reason — plans for a tier gap, Plan & features for
  * a module an admin switched off, workspace setup for an industry-mode
  * mismatch. Nothing here invents a price, a tier, or a renewal date.
  */
@@ -343,9 +343,9 @@ export function lockNotice(
       return {
         status: 'Turned off for this workspace',
         body: opts.isOrgAdmin
-          ? 'An administrator disabled this feature for your organization. You can turn it back on in Workflows.'
+          ? 'An administrator disabled this feature for your organization. You can turn it back on in Plan & features.'
           : 'An administrator disabled this feature for your organization. Ask them to turn it back on.',
-        ctaLabel: opts.isOrgAdmin ? 'Open Workflows' : null,
+        ctaLabel: opts.isOrgAdmin ? 'Open Plan & features' : null,
         ctaTarget: opts.isOrgAdmin ? 'apps' : null,
         requestable: !opts.isOrgAdmin,
       };

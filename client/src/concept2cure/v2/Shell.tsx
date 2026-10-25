@@ -1,6 +1,6 @@
 /**
  * ui-v2 shell chrome, first ported from kit app/Shell.jsx:
- * Rail (the places · account menu with Apps and the client type)
+ * Rail (the places, then the work areas · account menu with the client type)
  * · TopBar (breadcrumb · the open project · org · ⌘K · task/collab/bell/help)
  * · CmdK palette. The rail's list is decided in docs/design/ONE_ANA_ONE_CANVAS.md
  * §5, not ported from the kit (registryModel.ts, RAIL_CORE).
@@ -22,12 +22,12 @@ import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import { useShellProject } from './shellProject';
-import { useActiveSurfaceContext } from './surfaceContext';
 
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
   RAIL_CORE,
+  RAIL_WORK_AREAS_LABEL,
   breadcrumbTierOf,
   resolveSegmentId,
 } from './registryModel';
@@ -46,12 +46,6 @@ import { applySurfaceAction } from './surfaceActions';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
-function currentRailItem(activeId: string, target: string, sectionId: string, myWork: boolean): boolean {
-  if (activeId !== target) return false;
-  if (target !== 'tasks') return true;
-  return sectionId === (myWork ? 'tasks' : 'tasking');
-}
-
 export interface ShellSurfaceRef {
   id: string;
   label: string;
@@ -66,7 +60,7 @@ export interface ShellSurfaceRef {
  * in `Rail` — the account menu offers Admin and Access requests only to admins — and
  * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
  * destination, and that panel's copy branches on it (an admin is offered the
- * Workflows or workspace setup; a member is told to ask an administrator).
+ * Plan & features or workspace setup; a member is told to ask an administrator).
  * A second copy of this role list would let one customer get two different next
  * steps for one lock depending on whether they came from the rail or the
  * palette, which is exactly the inconsistency the panel exists to prevent.
@@ -93,6 +87,7 @@ type RailEntry = {
   icon: string;
   target?: string;
   applies?: { actionId: string; params: Record<string, string> };
+  group?: 'work-areas';
 };
 
 export function Rail({
@@ -111,7 +106,6 @@ export function Rail({
   setSegment: (id: string) => void;
 }) {
   const { user, logout } = useAuth();
-  const taskView = useActiveSurfaceContext(activeId);
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -141,15 +135,19 @@ export function Rail({
   /* Launch scope is a release boundary, not a licence: a greyed rail entry
      for an app nobody can enable is a dead affordance. Every place is in the
      launch scope today (shellNav.test.tsx); this keeps an entry out if a
-     deployment's verdicts say otherwise. The Workflows still lists the app
-     with the reason. A feature flag that is off hides its entry as well: the
+     deployment's verdicts say otherwise. Plan & features still lists the
+     feature with the reason. A feature flag that is off hides its entry as well: the
      one predicate every list of destinations reads (flagAllowsSurface, QA
      2026-10-08 j1), so the rail and Project home's grids never disagree. */
   const railVisible = (s: { id: string; target?: string }) =>
     flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+  const visible: RailEntry[] = RAIL_CORE.filter(railVisible);
+  const places = visible.filter((s) => !s.group);
+  const workAreas = visible.filter((s) => s.group === 'work-areas');
+  const workAreasId = React.useId();
   /* An entry that `applies` a screen action asks it of the screen as it opens
-     it, through the validated bus AnA's moves use: My work opens the task
-     board on the signed-in person's tasks (registryModel.ts RAIL_CORE). The
+     it, through the validated bus AnA's moves use: Tasks opens the task
+     board on everyone's tasks (registryModel.ts RAIL_CORE). The
      bus stashes the action, opens the screen, and the screen performs it once
      its read has landed. */
   const open = (s: RailEntry, target: string) => {
@@ -166,7 +164,7 @@ export function Rail({
        looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
-    const current = currentRailItem(activeId, target, s.id, taskView?.facts?.mine === true);
+    const current = activeId === target;
     return (
       <button
         key={s.id}
@@ -234,11 +232,18 @@ export function Rail({
         </button>
         {!collapsed && collapseToggle}
       </div>
-      {/* The places (docs/design/ONE_ANA_ONE_CANVAS.md §5). One list, the same
-          for every client type; Apps and the client type are in the account
-          menu below. */}
+      {/* The places, then the work areas under their heading
+          (registryModel.ts RAIL_CORE). One list, the same for every client
+          type; the client type is in the account menu below. Collapsed, the
+          heading is a rule, so the two groups still read as two. */}
       <div className="rail-scroll">
-        <div className="rail-nav">{RAIL_CORE.filter(railVisible).map(navItem)}</div>
+        <div className="rail-nav">{places.map(navItem)}</div>
+        {workAreas.length > 0 && (
+          <div className="rail-nav rail-group" role="group" aria-labelledby={workAreasId}>
+            <div className="rail-group-h" id={workAreasId}>{RAIL_WORK_AREAS_LABEL}</div>
+            {workAreas.map(navItem)}
+          </div>
+        )}
       </div>
       <div className="rail-foot">
         {collapsed && collapseToggle}
@@ -314,8 +319,9 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
 
 /**
  * The account menu: settings, the client type, help and sign-out
- * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The Workflows and
- * the client type moved here from the rail's list on 2026-10-08.
+ * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The client type
+ * moved here from the rail's list on 2026-10-08; the module catalog is here as
+ * "Plan & features", for organization administrators, since 2026-10-25.
  *
  * It is a menu by the WAI-ARIA menu pattern, since the button says it opens
  * one: focus moves to the first item when it opens; ArrowUp and ArrowDown (and
@@ -360,6 +366,13 @@ function AccountMenu({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
+    /* What the organization's plan includes, and the switches for it. It was
+       "Workflows" (before that the Apps catalog), on the rail and in this menu
+       for everyone, and it read as dozens of separate applications: a client
+       testing the product could not tell what to use or when
+       (docs/design/CLIENT_JOURNEY_2026-10-25.md). Features open from inside a
+       project; this page is the administrator's licensing view of them. */
+    ...(isOrgAdmin ? [{ label: 'Plan & features', ic: 'grid', to: 'apps' }] : []),
     // Licensing is the PLATFORM operator's console, not the customer's plan
     // page (that is "View all plans" below). It is offered only when the server
     // says its guard admits this viewer — `platformAdmin` is that guard's own
@@ -375,9 +388,6 @@ function AccountMenu({
     ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
-    /* Every app, with the reason a locked one is locked. It was an entry in
-       the rail's "Explore" section. */
-    { label: 'Workflows', ic: 'grid', to: 'apps' },
     { sep: true },
     { clientType: true },
     { sep: true },

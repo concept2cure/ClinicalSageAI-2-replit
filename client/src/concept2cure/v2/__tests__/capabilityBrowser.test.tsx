@@ -1,14 +1,17 @@
 // @vitest-environment jsdom
 /**
- * Home's capability discovery converges on the existing Workflows surface.
+ * Home does not send a client to the feature catalog.
  *
  * The former overlay rendered every segment module, including deferred and
- * duplicate destinations, without the live catalog's access explanations.
- * The replacement is Home -> apps -> the existing live catalog. Discovery
- * remains available before a project exists and when the portfolio read fails;
- * opening it must not create a project, seed a conversation or run a workflow.
- * Feature reachability and access decisions belong to the catalog's component
- * tests, rather than a second segment-wide list with a different policy.
+ * duplicate destinations, without the live catalog's access explanations; on
+ * 2026-10-23 it was replaced by Home -> apps ("Explore workflows"). On
+ * 2026-10-25 the founder tested the product as a client and found that catalog
+ * read as dozens of separate apps (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+ * Home now leads with the client's projects, and the catalog is "Plan &
+ * features", an administrator's licensing view reached from the account menu
+ * (shellNav.test.tsx). Nothing on Home opens it, in any client type, whether
+ * the portfolio read is pending or failed; and Home opening must not create a
+ * project or seed a conversation.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,60 +54,50 @@ afterEach(() => {
   delete window.C2C_CONVO;
 });
 
-function openDiscovery(segment: string) {
+/** Press every button Home renders and return every destination it asked for. */
+function pressEverything(segment: string) {
   const onNav = vi.fn();
   const onAsk = vi.fn();
   render(<Home segment={segment} onNav={onNav} onAsk={onAsk} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Explore workflows' }));
+  for (const b of screen.queryAllByRole('button')) fireEvent.click(b);
   return { onNav, onAsk };
 }
 
-describe('Home reaches the existing Workflows destination', () => {
-  it.each(SEGMENT_IDS)('%s uses the same live discovery path without inventing project context', (segment) => {
-    const { onNav, onAsk } = openDiscovery(segment);
-
-    expect(onNav).toHaveBeenCalledTimes(1);
-    expect(onNav).toHaveBeenCalledWith('apps');
+describe('Home does not open the feature catalog', () => {
+  it.each(SEGMENT_IDS)('%s: no control on Home leads to the catalog, and Home invents no project or conversation', async (segment) => {
+    const { onNav, onAsk } = pressEverything(segment);
+    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features|Workflows/ })).toBeNull();
+    expect(onNav).not.toHaveBeenCalledWith('apps');
     expect(onAsk).not.toHaveBeenCalled();
     expect(window.C2C_PROJECT).toBeUndefined();
     expect(window.C2C_CONVO).toBeUndefined();
     expect(screen.queryByRole('dialog', { name: /Browse all capabilities/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Browse all capabilities' })).toBeNull();
   });
 
-  it('an unknown client type reaches the same destination instead of a biopharma module fallback', () => {
-    const { onNav } = openDiscovery('__unrecognized-client-type__');
-    expect(onNav).toHaveBeenCalledWith('apps');
-    expect(document.querySelector('.capbrowser')).toBeNull();
-    expect(window.C2C_PROJECT).toBeUndefined();
-  });
-
-  it('remains reachable while the portfolio read is pending', () => {
+  it('nor while the portfolio read is pending', () => {
     apiRequest.mockImplementation(() => new Promise<Response>(() => {}));
-    const { onNav } = openDiscovery('biotech');
-    expect(screen.getByText('Loading your programs…')).toBeTruthy();
-    expect(onNav).toHaveBeenCalledWith('apps');
-    expect(window.C2C_PROJECT).toBeUndefined();
+    const { onNav } = pressEverything('biotech');
+    expect(screen.getByText('Loading your projects…')).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalledWith('apps');
   });
 
-  it('remains reachable when the portfolio read fails without turning the failure into an empty portfolio', async () => {
+  it('nor when the portfolio read fails, which is said and not shown as an empty portfolio', async () => {
     apiRequest.mockRejectedValue(new Error('Portfolio unavailable'));
-    const { onNav } = openDiscovery('diagnostics');
-    expect(await screen.findByText(/Couldn.t load your programs/)).toBeTruthy();
-    expect(screen.queryByText('No programs yet')).toBeNull();
-    expect(onNav).toHaveBeenCalledWith('apps');
-    expect(window.C2C_PROJECT).toBeUndefined();
+    render(<Home segment="diagnostics" onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect(await screen.findByText(/Couldn.t load your projects/)).toBeTruthy();
+    expect(screen.queryByTestId('home-first-project')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features/ })).toBeNull();
   });
 
-  it('uses the canonical Workflows label without changing the routable surface id', () => {
-    expect(getSurfaceMeta('apps').label).toBe('Workflows');
+  it('the catalog is named Plan & features, at its unchanged routable id', () => {
+    expect(getSurfaceMeta('apps').label).toBe('Plan & features');
     const views = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaceViews.ts'), 'utf8');
     expect(views).toMatch(/\bapps:\s*\{\s*component:\s*Apps\s*\}/);
   });
 });
 
 describe('the duplicate discovery presentation is retired', () => {
-  it('removes the overlay implementation and its Home integration after converging on Workflows', () => {
+  it('removes the overlay implementation and its Home integration', () => {
     const home = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/Surfaces.tsx'), 'utf8');
     expect(home).not.toMatch(/\bCapabilityBrowser\b|\bbrowseOpen\b|\bsetBrowseOpen\b/);
     expect(fs.existsSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx'))).toBe(false);

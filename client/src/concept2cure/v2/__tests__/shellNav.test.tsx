@@ -15,13 +15,17 @@
  * opened a "Not in this release" panel
  * (docs/evidence/D2-ONE-ANA/2026-10-08/0-inventory/founder-questions-verified.json).
  *
- * Now the rail is the places, in order: New conversation, Projects, Vault,
- * Submission Center, Quality, Reporting & analytics, My work, and Conversation
- * (the conversation in progress, standing in for Recents until slice 3). My
- * work opens the task board on the person's own tasks. Workflows and the
- * client type are in the account menu, which the collapsed rail does not clip
- * and which a keyboard can work. Every client type's default screen is in the
- * launch scope.
+ * On 2026-10-25 the founder tested the product as a client and could not tell
+ * where to start: twelve entries in no order of work, one of them a catalog of
+ * 87 features presented as apps (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+ * Now the rail is the five places every client works in (Home, Projects, Tasks,
+ * Communication, Vault), then the work areas under their own heading (CMC /
+ * Module 3, Quality, Reporting & analytics). The catalog is "Plan & features"
+ * in the account menu, for organization administrators; Submission Center opens
+ * from a project's Submit step; Tasking and My work are one entry; Home lists
+ * the person's conversations. The client type is in the account menu, which the
+ * collapsed rail does not clip and which a keyboard can work. Every client
+ * type's default screen is in the launch scope.
  */
 import React from 'react';
 import { readFileSync } from 'node:fs';
@@ -117,48 +121,58 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
   return onNav.mock.calls.map((c) => c[0] as string);
 }
 
-const PLACES = [
-  'Home',
-  'Workflows',
-  'Projects',
-  'Tasking',
-  'Communication',
-  'Vault',
-  'Submission Center',
-  'CMC / Module 3',
-  'Quality',
-  'Reporting & analytics',
-  'My work',
-  'Conversation',
-];
+const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault'];
+const WORK_AREAS = ['CMC / Module 3', 'Quality', 'Reporting & analytics'];
 
-describe('the rail lists the places', () => {
-  it('exactly the places, in order', async () => {
+describe('the rail lists the places, then the work areas', () => {
+  it('exactly the places, then the work areas, in order', async () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
-    expect(labels).toEqual(PLACES);
+    expect(labels).toEqual([...PLACES, ...WORK_AREAS]);
+  });
+
+  it('the work areas are a named group under their own heading', async () => {
+    const { scroll } = await mountRail();
+    const group = within(scroll).getByRole('group', { name: 'Work areas' });
+    expect(Array.from(group.querySelectorAll('button .lbl')).map((l) => l.textContent)).toEqual(WORK_AREAS);
+  });
+
+  it('the feature catalog, Submission Center, Conversation and a second task entry are not on the rail', async () => {
+    const { scroll } = await mountRail();
+    const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
+    for (const gone of ['Workflows', 'Plan & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
+      expect(labels, gone).not.toContain(gone);
+    }
+  });
+
+  it('no two entries share an icon', async () => {
+    const { scroll } = await mountRail();
+    const icons = Array.from(scroll.querySelectorAll('button .ico svg')).map((svg) => svg.getAttribute('class'));
+    expect(new Set(icons).size).toBe(icons.length);
   });
 
   it.each([false, true])('keeps the client destinations reachable for a member (collapsed=%s)', async collapsed => {
     authRoles.current = ['member'];
     const { rail, scroll, onNav } = await mountRail('biopharma', collapsed);
-    for (const name of ['Workflows', 'Tasking', 'Communication']) {
+    for (const name of ['Tasks', 'Communication']) {
       const button = within(scroll).getByRole('button', { name });
       expect(button.getAttribute('disabled')).toBeNull();
       expect(button.tabIndex).toBe(0);
       fireEvent.click(button);
     }
-    expect(onNav.mock.calls.map(call => call[0])).toEqual(['apps', 'tasks', 'communication-center']);
+    expect(onNav.mock.calls.map(call => call[0])).toEqual(['tasks', 'communication-center']);
     fireEvent.click(within(rail).getByTitle('Ada Rowe'));
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
+    // The catalog is an administrator's licensing view, not a member's place.
+    expect(within(menu).queryByRole('menuitem', { name: /Plan & features/ })).toBeNull();
   });
 
   it('every entry opens a screen in this release', async () => {
     const { scroll, onNav } = await mountRail();
     const to = destinations(scroll, onNav).map(resolveSurfaceIdForTarget);
-    expect(to).toHaveLength(PLACES.length);
+    expect(to).toHaveLength(PLACES.length + WORK_AREAS.length);
     expect(to.filter((id) => !isLaunchSurface(id)), 'rail entries outside the launch scope').toEqual([]);
   });
 
@@ -200,25 +214,10 @@ describe('the rail lists the places', () => {
   });
 });
 
-describe('the conversation in progress is one step away', () => {
-  /* "New conversation" opens Home, and typing there starts a new conversation:
-     it does not lead back to the one in progress. Until Recents is built
-     (design slice 3), the rail's last entry opens it. */
-  it('the rail’s Conversation entry opens the conversation screen, and is marked when it is open', async () => {
-    const { scroll, onNav } = await mountRail();
-    fireEvent.click(within(scroll).getByRole('button', { name: 'Conversation' }));
-    expect(onNav).toHaveBeenCalledWith('conversation-thread');
-    cleanup();
-    render(
-      <NavEntitlementsProvider>
-        <Rail activeId="conversation-thread" onNav={vi.fn()} collapsed={false} setCollapsed={() => {}} segment="biopharma" setSegment={vi.fn()} />
-      </NavEntitlementsProvider>,
-    );
-    await settle();
-    const current = screen.getByRole('navigation', { name: 'Primary' }).querySelectorAll('[aria-current="page"]');
-    expect(Array.from(current).map((el) => el.textContent?.trim())).toEqual(['Conversation']);
-  });
-
+describe('the conversation in progress is reached without a rail entry', () => {
+  /* The rail's Conversation entry stood in for Recents. It left on 2026-10-25:
+     Home lists the person's recent conversations (homeStartHere.test.tsx), a
+     project lists its own, and ⌘K still opens the conversation screen. */
   it('⌘K finds Conversation and opens the conversation screen', async () => {
     const onNav = vi.fn();
     render(
@@ -237,10 +236,12 @@ describe('the conversation in progress is one step away', () => {
 
 const BOARD_PROPS = { surface: { id: 'tasks', label: 'Tasks' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
 
-describe('My work is the person’s own work', () => {
-  /* The board alone opens on everyone's tasks (TaskBoard `mine` starts
-     false). The entry asks it for "My tasks" as it opens it, through the
-     same validated screen-action bus AnA's moves use. */
+describe('Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s', () => {
+  /* Tasking and My work were two rail entries over one board, with one icon.
+     Tasks opens the board on everyone's tasks, whatever filter it was last
+     left on, through the same validated screen-action bus AnA's moves use;
+     the board's "My tasks" gives the person's own, and the entry stays
+     marked either way. */
   function Harness() {
     const [on, setOn] = React.useState<string | null>(null);
     return (
@@ -253,35 +254,33 @@ describe('My work is the person’s own work', () => {
     );
   }
 
-  it('opens the task board filtered to the signed-in person’s tasks', async () => {
+  it('opens the task board on everyone’s tasks', async () => {
     render(<Harness />);
     await settle();
-    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'My work' }));
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Tasks' }));
     await screen.findByText('Draft stability summary');
-    await waitFor(() => expect(screen.queryByText('Review predicate table'), 'a colleague’s task under "My work"').toBeNull());
+    await screen.findByText('Review predicate table');
     const mine = screen.getAllByRole('button').find((b) => b.textContent?.trim() === 'My tasks');
-    expect(mine?.className).toMatch(/\bon\b/);
+    expect(mine?.className).not.toMatch(/\bon\b/);
   });
 
-  it('marks only the task view actually displayed, including the board’s own filter', async () => {
+  it('the board’s My tasks gives the person’s own, and Tasks stays the marked entry', async () => {
     render(<Harness />);
     await settle();
     const rail = screen.getByRole('navigation', { name: 'Primary' });
     const current = () => Array.from(rail.querySelectorAll('[aria-current="page"]')).map(el => el.textContent?.trim());
-    fireEvent.click(within(rail).getByRole('button', { name: 'My work' }));
-    await screen.findByText('Draft stability summary');
-    await waitFor(() => expect(current()).toEqual(['My work']));
-    fireEvent.click(within(rail).getByRole('button', { name: 'Tasking' }));
+    fireEvent.click(within(rail).getByRole('button', { name: 'Tasks' }));
     await screen.findByText('Review predicate table');
-    await waitFor(() => expect(current()).toEqual(['Tasking']));
+    await waitFor(() => expect(current()).toEqual(['Tasks']));
     fireEvent.click(screen.getByRole('button', { name: 'My tasks' }));
-    await waitFor(() => expect(current()).toEqual(['My work']));
     await waitFor(() => expect(screen.queryByText('Review predicate table')).toBeNull());
+    expect(screen.getByText('Draft stability summary')).toBeTruthy();
+    expect(current()).toEqual(['Tasks']);
   });
 
   it('opens the board at its own address, not the action’s alias', async () => {
     const { scroll, onNav } = await mountRail();
-    fireEvent.click(within(scroll).getByRole('button', { name: 'My work' }));
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
     expect(onNav).toHaveBeenCalledWith('tasks');
   });
 });
@@ -310,7 +309,7 @@ describe('Artifacts center, no longer a rail entry, is reached from ⌘K', () =>
   });
 });
 
-describe('the account menu holds Workflows and the client type', () => {
+describe('the account menu holds Plan & features and the client type', () => {
   async function openMenu(segment = 'biopharma') {
     const m = await mountRail(segment);
     const button = screen.getByTitle('Ada Rowe');
@@ -318,9 +317,10 @@ describe('the account menu holds Workflows and the client type', () => {
     return { ...m, button, menu: screen.getByRole('menu') };
   }
 
-  it('offers Workflows', async () => {
+  it('offers an organization administrator Plan & features, which opens the catalog', async () => {
     const { menu, onNav } = await openMenu();
-    fireEvent.click(within(menu).getByRole('menuitem', { name: /Workflows/ }));
+    expect(within(menu).queryByRole('menuitem', { name: /Workflows/ })).toBeNull();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: /Plan & features/ }));
     expect(onNav).toHaveBeenCalledWith('apps');
   });
 
@@ -430,7 +430,7 @@ describe('the collapsed rail does not clip its account menu', () => {
     await mountRail('biopharma', true);
     fireEvent.click(screen.getByTitle('Ada Rowe'));
     const menu = screen.getByRole('menu');
-    expect(within(menu).getByRole('menuitem', { name: /Workflows/ })).toBeTruthy();
+    expect(within(menu).getByRole('menuitem', { name: /Plan & features/ })).toBeTruthy();
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CLIENT_CATEGORIES.length);
   });
 });

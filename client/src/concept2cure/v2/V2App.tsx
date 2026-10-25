@@ -161,6 +161,25 @@ interface Prefs {
    * switched AnA's hands off. See `loadPrefs`.
    */
   liveDriveDefault?: 2;
+  /**
+   * Which rail default this stored pref was written under. Absent on prefs
+   * saved while the rail started collapsed: those carry `railCollapsed: true`
+   * because every pref write persisted the whole object. See `loadPrefs`.
+   */
+  railDefault?: 2;
+}
+
+/* The rail starts open, with its labels, wherever there is room for it. It
+   started as a 56px strip of twelve unlabelled icons, two pairs of them the
+   same glyph, and a client testing the product could not tell the places apart
+   (docs/design/CLIENT_JOURNEY_2026-10-25.md). At phone width the open rail
+   paints over the page, so there it still starts collapsed. */
+function railStartsCollapsed(): boolean {
+  try {
+    return window.matchMedia('(max-width: 640px)').matches;
+  } catch {
+    return false;
+  }
 }
 
 /* Live Drive is ON by default. Asking AnA to take you somewhere, open a
@@ -173,13 +192,14 @@ interface Prefs {
    sign/approve/submit/lock outright, and those stay a person's signature. */
 const DEFAULT_PREFS: Prefs = {
   dark: false,
-  railCollapsed: true,
+  railCollapsed: false,
   anaMode: 'standard',
   anaRunPolicy: 'auto',
   segment: 'biopharma',
   welcomeDismissed: false,
   liveDrive: true,
   liveDriveDefault: 2,
+  railDefault: 2,
 };
 
 function loadPrefs(): Prefs {
@@ -203,12 +223,19 @@ function loadPrefs(): Prefs {
       /* A policy this build does not know (an older or hand-edited pref) is
          not sent as-is; it reads as the default. */
       if (!isAnaRunPolicy(stored.anaRunPolicy)) delete stored.anaRunPolicy;
+      /* The same for the rail: a pref written while it started collapsed is
+         re-read under the open default once. A collapse made after this point
+         is kept. */
+      if (stored.railDefault !== 2) {
+        stored.railCollapsed = railStartsCollapsed();
+        stored.railDefault = 2;
+      }
       return { ...DEFAULT_PREFS, ...stored };
     }
   } catch {
     /* default */
   }
-  return DEFAULT_PREFS;
+  return { ...DEFAULT_PREFS, railCollapsed: railStartsCollapsed() };
 }
 
 /**

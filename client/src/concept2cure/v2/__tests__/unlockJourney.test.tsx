@@ -59,7 +59,7 @@ describe('unlock intent', () => {
 
 describe('only a tier lock is sent to the plans page at all', () => {
   /* The routing decision that makes the banner honest. lockNotice sends a tier
-     gap to `licensing`; an admin disable goes to Workflows and an
+     gap to `licensing`; an admin disable goes to Plan & features and an
      industry mismatch to workspace setup, because NEITHER is fixed by buying a
      plan. If those ever started routing to `licensing`, the banner would be
      offering a remedy that changes nothing. */

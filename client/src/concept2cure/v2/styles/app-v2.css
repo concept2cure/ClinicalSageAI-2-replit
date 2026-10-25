@@ -1361,6 +1361,12 @@
 .c2c-v2 .risk-br-cta:hover{background:var(--accent-000);}
 .c2c-v2 .risk-br-cta svg{width:13px;height:13px;}
 .c2c-v2 .rail-nav{display:flex;flex-direction:column;gap:1px;padding:0 8px;}
+/* The work areas, under their own heading below the places (registryModel.ts
+   RAIL_CORE). Collapsed, the heading gives way to a rule between the groups. */
+.c2c-v2 .rail-group{margin-top:14px;}
+.c2c-v2 .rail-group-h{padding:0 8px 4px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2.shell[data-collapsed="true"] .rail-group{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.c2c-v2.shell[data-collapsed="true"] .rail-group-h{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .c2c-v2 .nav-item{display:flex;align-items:center;gap:10px;min-height:30px;padding:5px 8px;border-radius:var(--radius-md);color:var(--text-200);font-size:13px;transition:background var(--dur) var(--ease);white-space:nowrap;overflow:hidden;width:100%;position:relative;}
 .c2c-v2 .nav-item .ico{width:16px;height:16px;font-size:16px;flex-shrink:0;color:var(--text-400);display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .nav-item .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;}
@@ -3322,11 +3328,17 @@
 .c2c-v2 .rpk-cat-h{font-size:11px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
 .c2c-v2 .rpk-cat-n{font-size:10px;color:var(--text-500);font-weight:400;}
 .c2c-v2 .rpk-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.c2c-v2 .rpk-type{padding:8px 10px;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--bg-100);cursor:pointer;text-align:left;transition:border var(--dur),background var(--dur);}
+/* White, like any other choice on the page: on --bg-100 the cards read as
+   disabled to a client testing the wizard (docs/design/CLIENT_JOURNEY_2026-10-25.md). */
+.c2c-v2 .rpk-type{padding:8px 10px;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--bg-000);cursor:pointer;text-align:left;transition:border var(--dur),background var(--dur);}
 .c2c-v2 .rpk-type:hover{border-color:var(--text-500);}
 .c2c-v2 .rpk-type[data-on]{border-color:var(--accent-200);background:var(--accent-000);}
 .c2c-v2 .rpk-type-n{font-size:11.5px;font-weight:500;color:var(--text-100);line-height:1.35;margin-bottom:4px;}
 .c2c-v2 .rpk-type-meta{display:flex;gap:4px;flex-wrap:wrap;}
+/* The picker's two tiers: built here, then documents only (AnaVerbs RegistryPicker). */
+.c2c-v2 .rpk-tier-h{display:flex;flex-direction:column;gap:2px;margin:6px 0 10px;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .rpk-tier-s{font-size:12px;font-weight:400;color:var(--text-300);}
+.c2c-v2 .rpk-rest{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
 .c2c-v2 .rpk-chip{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--bg-300);color:var(--text-400);}
 
 /* ════ Registry Context Header ════ */

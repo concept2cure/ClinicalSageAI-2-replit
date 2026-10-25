@@ -208,10 +208,18 @@ describe('the words', () => {
 });
 
 describe('the same switch where people type', () => {
-  it('Home, beside AnA drives', async () => {
+  it('Home, beside AnA drives, behind AnA settings', async () => {
+    /* On Home the run controls are settings, not the first thing a new client
+       reads (docs/design/CLIENT_JOURNEY_2026-10-25.md): one button shows them,
+       and they work as before. */
     const { Home } = await import('../surfaces/Surfaces');
     const { wrap, setRunPolicy } = provider('auto');
     render(wrap(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biotech" mode="standard" setMode={vi.fn()} />));
+    expect(screen.queryByRole('radio', { name: /^Manual/ })).toBeNull();
+    const settings = screen.getByRole('button', { name: 'AnA settings' });
+    expect(settings.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(settings);
+    expect(settings.getAttribute('aria-expanded')).toBe('true');
     fireEvent.click(screen.getByRole('radio', { name: /^Manual/ }));
     expect(setRunPolicy).toHaveBeenCalledWith('manual');
   });
