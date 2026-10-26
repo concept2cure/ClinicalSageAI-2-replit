@@ -1,0 +1,34 @@
+Red run against EngineeringSurface.tsx as slice 0's first pass left it in the working tree (before the audit fixes), filtered with -t to this item's tests.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+--------x·-----
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's
+AssertionError: expected '5' not to match /5/
+
+- Expected:
+/5/
+
++ Received:
+"5"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:257:63
+    255|     const ecr = card(container, 'Open change requests');
+    256|     const dhfCard = card(container, 'DHF completion');
+    257|     expect(ecr.querySelector('.metric-val')?.textContent).not.toMatch(…
+       |                                                               ^
+    258|     expect(dhfCard.querySelector('.metric-val')?.textContent).not.toMa…
+    259|     expect(ecr.textContent ?? '').toMatch(NOT_KEYED);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 13 skipped (15)
+   Start at  03:13:04
+   Duration  1.95s (transform 421ms, setup 221ms, import 574ms, tests 106ms, environment 764ms)
+

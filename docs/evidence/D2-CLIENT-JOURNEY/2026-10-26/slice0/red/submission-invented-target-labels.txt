@@ -1,0 +1,90 @@
+# red on 928b70996 (working tree, before the fix), 2026-10-26T02:45:48Z
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > no row and no detail names an invented receiving authority
+AssertionError: expected 'pkg-1activeInfusion pump 510(k)FDA · …' not to match /TÜV|FDA · ESG|NB · /
+
+- Expected:
+/TÜV|FDA · ESG|NB · /
+
++ Received:
+"pkg-1activeInfusion pump 510(k)FDA · ESG·0 files · —000Target · No target"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:61:45
+     59|     const rows = Array.from(container.querySelectorAll('.sub-row')).ma…
+     60|     expect(rows).toHaveLength(2);
+     61|     for (const row of rows) expect(row).not.toMatch(INVENTED);
+       |                                             ^
+     62|     const detail = container.querySelector('.sub-detail')?.textContent…
+     63|     expect(detail).toContain('Infusion pump 510(k)');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > the Transmit and View receipt prompts name no invented authority
+AssertionError: expected 'Transmit pkg-1 · Infusion pump 510(k)…' not to match /TÜV|FDA · ESG|NB · /
+
+- Expected:
+/TÜV|FDA · ESG|NB · /
+
++ Received:
+"Transmit pkg-1 · Infusion pump 510(k) to FDA · ESG. Re-run the gate (validation, cover letter, e-signature, package), confirm the package hash, then hand off to the ESG/NB transmitter and log the audit entry."
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:79:52
+     77|     fireEvent.click(screen.getByRole('button', { name: /view receipt/i…
+     78|     expect(asked).toHaveLength(2);
+     79|     for (const prompt of asked) expect(prompt).not.toMatch(INVENTED);
+       |                                                    ^
+     80|   });
+     81| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:45:39
+   Duration  2.43s (transform 470ms, setup 180ms, import 580ms, tests 848ms, environment 609ms)
+
+
+# ---- second red, 2026-10-26T02:47:22Z ----
+# The first case above failed on the rows before it reached the detail. After the test was made to wait for the
+# detail (it is selected by an effect after the list renders), only the detail's 'Target · {sel.target}' line was
+# put back into Workbench.tsx, to show the case still catches the detail on its own:
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no target the record does not carry (slice 0) > no row and no detail names an invented receiving authority
+AssertionError: expected 'pkg-1 · 510(k)Infusion pump 510(k)Tar…' not to match /TÜV|FDA · ESG|NB · /
+
+- Expected:
+/TÜV|FDA · ESG|NB · /
+
++ Received:
+"pkg-1 · 510(k)Infusion pump 510(k)Target · FDA · ESG TransmitSubmission gateValidation0 err · 0 warn · 0 passCover letterdraftE-signatureSignedPackage0 files · —Activity"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:65:24
+     63|     await waitFor(() => expect(container.querySelector('.sub-detail-ti…
+     64|     const detail = container.querySelector('.sub-detail')?.textContent…
+     65|     expect(detail).not.toMatch(INVENTED);
+       |                        ^
+     66|     expect(container.querySelector('.sub-detail-target')).toBeNull();
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  02:47:12
+   Duration  2.18s (transform 445ms, setup 211ms, import 518ms, tests 665ms, environment 600ms)
+

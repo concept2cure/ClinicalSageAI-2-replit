@@ -1,0 +1,72 @@
+RED (audit2 engineering-human-factors #0): the "What's blocking your documents" sub-head prints "0 review-pending" (and, with every source keyed, "0 hard blockers") above "Could not load blocker sources" and while the sources are still loading, because `blockers` is built through readyRows, which yields [] for a failed or loading read.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+······xxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no review-pending count over a risk file it could not read
+AssertionError: expected 'Hard blockers not counted: DHF sectio…' not to match /\d+ review-pending/
+
+- Expected:
+/\d+ review-pending/
+
++ Received:
+"Hard blockers not counted: DHF sections and non-conformances are left out · 0 review-pending · pulled from risk"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx:166:21
+    164|
+    165|     const sub = blockerSub(container);
+    166|     expect(sub).not.toMatch(/\d+ review-pending/);
+       |                     ^
+    167|     expect(sub).not.toMatch(/\d+ hard blockers/);
+    168|     expect(sub).toMatch(/Not counted until the risk file is read/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no hard-blocker count over sources it could not read, once every source is keyed
+AssertionError: expected '0 hard blockers · 0 review-pending · …' not to match /\d+ hard blockers/
+
+- Expected:
+/\d+ hard blockers/
+
++ Received:
+"0 hard blockers · 0 review-pending · pulled from DHF · risk · change requests · non-conformance"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx:177:21
+    175|
+    176|     const sub = blockerSub(container);
+    177|     expect(sub).not.toMatch(/\d+ hard blockers/);
+       |                     ^
+    178|     expect(sub).not.toMatch(/\d+ review-pending/);
+    179|     expect(sub).toMatch(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no counts while the sources are still loading
+AssertionError: expected 'Hard blockers not counted: DHF sectio…' not to match /\d+ review-pending/
+
+- Expected:
+/\d+ review-pending/
+
++ Received:
+"Hard blockers not counted: DHF sections and non-conformances are left out · 0 review-pending · pulled from risk"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx:190:21
+    188|
+    189|     const sub = blockerSub(container);
+    190|     expect(sub).not.toMatch(/\d+ review-pending/);
+       |                     ^
+    191|     expect(sub).not.toMatch(/\d+ hard blockers/);
+    192|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  07:53:17
+   Duration  1.83s (transform 391ms, setup 158ms, import 510ms, tests 402ms, environment 557ms)
+

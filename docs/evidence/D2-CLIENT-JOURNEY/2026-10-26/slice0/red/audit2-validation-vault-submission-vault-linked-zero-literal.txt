@@ -1,0 +1,36 @@
+# What this shows: Audit 2 [6]: every file in the vault drawer reads 'Linked 0 artifacts', a hard-coded literal (useVault selectVaultFiles linked: 0) that no read backs.
+# 2026-10-26T05:13:16Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx -t 'states no link count'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+----x------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault states no figure it did not read (audit 2) > the drawer states no link count
+AssertionError: expected 'working-files · reportReal Test Repor…' not to match /Linked/
+
+- Expected:
+/Linked/
+
++ Received:
+"working-files · reportReal Test ReportVersionv2Size—StatusreviewLinked0 artifactsAuthorUser #12SHA-256— Ask AnA about this file PreviewVersion historyNo versions recorded for this artifact.Recent auditLoading audit trail…"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:175:24
+    173|     await waitFor(() => expect(container.querySelector('.drawer-title'…
+    174|     const drawer = container.querySelector('.vault-drawer')?.textConte…
+    175|     expect(drawer).not.toMatch(/Linked/);
+       |                        ^
+    176|     expect(drawer).not.toMatch(/0 artifacts/);
+    177|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  05:13:17
+   Duration  1.91s (transform 626ms, setup 180ms, import 793ms, tests 133ms, environment 636ms)
+

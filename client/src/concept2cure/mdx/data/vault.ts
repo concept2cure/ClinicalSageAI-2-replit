@@ -66,13 +66,24 @@ export interface VaultFile {
   status: VaultFileStatus;
   updated: string;
   author: string;
-  linked: number;
+  /** How many artifacts link to this one, or null when not read. Slice 0
+   *  (map row `device-vault`): the list reads no links, so it is null and
+   *  the drawer shows no Linked cell until a read supplies a count. */
+  linked: number | null;
   esig: boolean;
   hash: string;
   blocker?: boolean;
   /** Records-retention policy, e.g. '15 years', 'product life + 10y'. */
   retention?: string;
   distribution?: VaultDistribution;
+  /** Slice 0 (map row `device-vault`): which half of the vault the row came
+   *  from. 'upload' (vault.documents) has no versions or audit under
+   *  /api/mdx/vault/:id, which reads concept2cure_artifacts only, so the
+   *  surface must not promise or request them for it. */
+  source?: 'authored' | 'upload';
+  /** The vault.documents uuid of an uploaded file: what the project vault's
+   *  audited download route takes. Absent for an authored artifact. */
+  documentId?: string;
 }
 
 export interface VaultVersion {
@@ -148,6 +159,14 @@ export function vaultKpisForFiles(files: VaultFile[]): VaultKpi[] {
     { label: 'Retention review',   metric: '—', meta: 'Not assessed — no retention date is recorded on these artifacts' },
     { label: 'Vault size',         metric: mb.toFixed(1), unit: 'MB', meta: 'Across all folders' },
   ];
+}
+
+/** The same strip before the list has answered, or when it could not be
+ *  read. Slice 0 (map row `device-vault`): it was vaultKpisForFiles([]), so a
+ *  read in flight or a failed one said the vault held 0 artifacts and 0.0 MB.
+ *  '—' is a figure not read; 0 is kept for a read that answered empty. */
+export function vaultKpisNotRead(meta: string): VaultKpi[] {
+  return vaultKpisForFiles([]).map(k => ({ label: k.label, metric: '—', meta }));
 }
 
 /** Framework filter row for the artifact list (kit DocumentsPanel shape),

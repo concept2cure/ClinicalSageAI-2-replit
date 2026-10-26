@@ -1,0 +1,49 @@
+# What this shows: Audit 2 [7]: every non-completed package is counted under '01 Package' and every completed one under 'Decision · Cleared · approved'; locked reads 'active' and cancelled reads 'blocked' with 'Ask Claude'.
+# 2026-10-26T05:08:50Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx -t 'names no stage|names a stage|locked package'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-----------------------x·x-
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no stage or status the record does not carry (audit 2 [7]) > a package whose record names no stage is placed in none
+AssertionError: expected '1' to be '0' // Object.is equality
+
+Expected: "0"
+Received: "1"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:332:46
+    330|     const { container } = render(<SubmissionsSurface onAskAna={() => {…
+    331|     await waitFor(() => expect(screen.getByText('Infusion pump EU MDR'…
+    332|     expect(stageCount(container, 'Package')).toBe('0');
+       |                                              ^
+    333|     expect(stageCount(container, 'Decision')).toBe('0');
+    334|     expect(container.querySelector('.sub-pipeline')?.textContent ?? ''…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission states no stage or status the record does not carry (audit 2 [7]) > a locked package reads "locked", and a cancelled one "cancelled" with no "what is blocking"
+AssertionError: expected 'active' to be 'locked' // Object.is equality
+
+Expected: "locked"
+Received: "active"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:356:78
+    354|         (r) => r.querySelector('.sub-row-title')?.textContent === titl…
+    355|       ) as HTMLElement;
+    356|     expect(row('Locked package').querySelector('.status-pill')?.textCo…
+       |                                                                              ^
+    357|     expect(row('Cancelled package').querySelector('.status-pill')?.tex…
+    358|     fireEvent.click(row('Cancelled package'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 24 skipped (27)
+   Start at  05:08:51
+   Duration  1.96s (transform 520ms, setup 178ms, import 666ms, tests 189ms, environment 678ms)
+

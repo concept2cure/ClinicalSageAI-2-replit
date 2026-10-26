@@ -1,0 +1,7 @@
+PostmarketSurface.reportingClocks.test.tsx with the Overdue card's empty line pinned to the server's overdue predicate, against the card saying 'No reporting deadline missed' (verifier finding on the audit-2 fix).
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > says only what the server's overdue means, beside an MDR filed after its date
+AssertionError: expected 'WorkstreamPost-market vigilance21 CFR…' not to match /No reporting deadline (passed|missed)/
+- Expected:
++ Received:
+      Tests  1 failed | 5 passed (6)

@@ -127,13 +127,26 @@ function errText(json: unknown, status: number): string {
   return clause(extractApiError(json, status).message);
 }
 
-export function Labeling({ onAsk }: SurfaceViewProps) {
+/* Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, the `labeling`
+   row): GET /api/mdx/labeling was read with no project key. The route returns
+   every labeling document in the organization ordered by device name
+   (server/routes/mdx-labeling.ts:82-101), and the first row drove the header,
+   symbols, UDI-DI, translations and the add-translation write, so they may be
+   another project's. The route already filters on `program_id`, so the read is
+   made only with the project the screen is given, and there is no unscoped
+   read to fall back to. No shell caller passes `programId` yet (slice 20), so
+   until then no record is read or shown here. */
+export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: string }) {
   const EN = LABEL_ENUMS;
 
-  // Root of this surface's real data: the org's labeling document(s). REAL —
-  // GET /api/mdx/labeling queries labeling_documents (org-scoped). The first
-  // row drives the header + is the parent id for translations / symbols.
-  const docsLive = useLiveRows<LabelDocRow>('/api/mdx/labeling');
+  // Root of this surface's real data: this project's labeling document(s).
+  // REAL — GET /api/mdx/labeling?program_id= queries labeling_documents (org-
+  // and project-scoped). The first row drives the header + is the parent id
+  // for translations / symbols.
+  const docsLive = useLiveRows<LabelDocRow>(
+    programId ? '/api/mdx/labeling?program_id=' + encodeURIComponent(programId) : null,
+    [programId],
+  );
   const docRow = docsLive.rows.length ? docsLive.rows[0] : null;
   const docId = docRow ? docRow.id : null;
 
@@ -263,6 +276,17 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
      Reported as an empty translation board it would read to AnA as a label with
      nothing left to translate, which is the opposite claim. */
   const anaContext = useMemo(() => {
+    // Slice 0: AnA is told why nothing is shown, not given another project's label.
+    // The reason is the screen's, not the service's: there is no unscoped read
+    // left, and the labeling route does filter by project.
+    if (!programId) {
+      return {
+        summary:
+          "Labeling: this project's labeling records are not shown on this screen yet. This screen is not " +
+          "given the open project yet, so it reads none of the organization's labeling documents. Nothing is " +
+          "claimed here about this project's label.",
+      };
+    }
     if (docsLive.loading) {
       return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
     }
@@ -334,7 +358,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
         'Read the symbol set and what each symbol is required by',
       ],
     };
-  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  }, [programId, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
@@ -373,6 +397,52 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     ],
   };
 
+  /* Slice 0, the same row: there is no warnings store or route (mdx-labeling
+     serves documents, translations, symbols and coverage only), so "No label
+     warnings yet" was a permanent empty that read as "this label has no
+     warnings". It says the panel is not available yet, and its sub-heading no
+     longer says the warnings are "traced to the risk file". */
+  const warningsPanel = (
+    <div className="sec">
+      <div className="sec-hdr">
+        <div className="sec-title">Warnings and precautions</div>
+      </div>
+      <EmptyState
+        icon={I.info}
+        title="Warnings and precautions are not available yet"
+        hint="This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet."
+      />
+    </div>
+  );
+
+  /* These two hold no record, so slice 0 keeps them on screen while the
+     record panels wait for a project-keyed read. */
+  const complianceChecksPanel = (
+    <div className="sec">
+      <div className="sec-hdr"><div className="sec-title">Compliance checks</div></div>
+      {/* Backend gap: no compliance-checks endpoint (reading level,
+          symbol-legend conformance, eIFU-URL resolution). Honest empty,
+          not a fixture. */}
+      <EmptyState
+        icon={I.info}
+        title="No automated compliance checks yet"
+        hint="Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet."
+      />
+    </div>
+  );
+  const sectionsPanel = (
+    <div className="sec">
+      <div className="sec-hdr"><div className="sec-title">Label and IFU sections</div></div>
+      {/* Backend gap: no per-section authoring-status model is persisted on
+          the labeling document. Honest empty, not a fixture. */}
+      <EmptyState
+        icon={I.fileText}
+        title="No section breakdown yet"
+        hint="Per-section authoring status for this label isn't captured by the labeling service yet."
+      />
+    </div>
+  );
+
   return (
     <div className="page-inner">
       <div className="ph">
@@ -381,8 +451,12 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
             {docRow ? 'Specialist / device / ' + kindLabel + ' v' + docRow.version : 'Specialist / device / Labeling'}
           </div>
           <h1 className="ph-title">Labeling and IFU</h1>
+          {/* Slice 0 (the map's `labeling` row): this said "Organization-wide
+              labeling register" and "warnings traced to the ISO 14971 risk
+              file". The screen reads this project's records only, and reads no
+              warning, so it says what it holds. */}
           <div className="ph-sub">
-            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+            The label and IFU for this project: ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), and translations with back-translation QC.
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -390,7 +464,25 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
-      {docsLive.loading ? (
+      {!programId ? (
+        /* Slice 0: the record panels (coverage, symbols, UDI placement,
+           translations) wait for a project-keyed read, with a line saying why.
+           The line names them, so it is not read as describing the three
+           panels still shown beneath it. Its reason is the one the code has:
+           no project is passed in, so no labeling read is made at all. */
+        <>
+          <p className="scaf-note" data-testid="labeling-not-keyed" style={{ padding: '18px 10px' }}>
+            Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are shown once this
+            screen reads this project&apos;s records. This screen is not given the open project yet, so it reads
+            none of the organization&apos;s labeling documents.
+          </p>
+          <div className="split2">
+            {warningsPanel}
+            {complianceChecksPanel}
+          </div>
+          {sectionsPanel}
+        </>
+      ) : docsLive.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
       ) : docsLive.error ? (
         <EmptyState
@@ -477,20 +569,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
                 </div>
               )}
             </div>
-            <div className="sec">
-              <div className="sec-hdr">
-                <div className="sec-title">Warnings and precautions</div>
-                <div className="sec-sub">traced to the risk file (ISO 14971)</div>
-              </div>
-              {/* Backend gap: mdx-labeling exposes documents / translations /
-                  symbols / coverage only — there is no warnings endpoint and no
-                  persisted risk-file trace. Honest empty, not a fixture. */}
-              <EmptyState
-                icon={I.alertTriangle}
-                title="No label warnings yet"
-                hint="Warnings and their ISO 14971 hazard trace aren't captured by the labeling service yet."
-              />
-            </div>
+            {warningsPanel}
           </div>
 
           <div className="split2">
@@ -512,29 +591,10 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
                   : 'No UDI-DI is set on this labeling document, and carrier / PI / placement tracking isn’t captured yet.'}
               />
             </div>
-            <div className="sec">
-              <div className="sec-hdr"><div className="sec-title">Compliance checks</div></div>
-              {/* Backend gap: no compliance-checks endpoint (reading level,
-                  symbol-legend conformance, eIFU-URL resolution). Honest empty,
-                  not a fixture. */}
-              <EmptyState
-                icon={I.info}
-                title="No automated compliance checks yet"
-                hint="Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet."
-              />
-            </div>
+            {complianceChecksPanel}
           </div>
 
-          <div className="sec">
-            <div className="sec-hdr"><div className="sec-title">Label and IFU sections</div></div>
-            {/* Backend gap: no per-section authoring-status model is persisted on
-                the labeling document. Honest empty, not a fixture. */}
-            <EmptyState
-              icon={I.fileText}
-              title="No section breakdown yet"
-              hint="Per-section authoring status for this label isn't captured by the labeling service yet."
-            />
-          </div>
+          {sectionsPanel}
 
           <div className="sec">
             <div className="sec-hdr">

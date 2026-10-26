@@ -1,0 +1,667 @@
+# What this shows: Audit 2 [2]: a failed or pending packages read renders seven '0' pipeline stages and '0 total · 0 active · 0 blocked' with no error or loading state, and offers no retry.
+# 2026-10-26T05:08:42Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx -t 'FAILED packages read says so|packages read in flight|retry re-reads'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-------------xxx-----------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission renders an unread list as unread, never as zero (audit 2) > a FAILED packages read says so, and states no count
+AssertionError: expected '0' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "0"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:237:58
+    235|     await act(async () => {});
+    236|     expect(pipelineCounts(container)).toHaveLength(7);
+    237|     for (const n of pipelineCounts(container)) expect(n).toBe('—');
+       |                                                          ^
+    238|     expect(container.textContent).not.toMatch(/0 total/);
+    239|     await waitFor(() => expect(screen.getByTestId('workbench-submissio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission renders an unread list as unread, never as zero (audit 2) > a packages read in flight is "Loading…", and states no count
+AssertionError: expected '0' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "0"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:248:58
+    246|     const { container } = render(<SubmissionsSurface onAskAna={() => {…
+    247|     await act(async () => {});
+    248|     for (const n of pipelineCounts(container)) expect(n).toBe('—');
+       |                                                          ^
+    249|     expect(container.textContent).not.toMatch(/0 total/);
+    250|     expect(screen.getByTestId('workbench-submissions-loading').textCon…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx > device-submission renders an unread list as unread, never as zero (audit 2) > retry re-reads the package list
+TestingLibraryElementError: Unable to find an element by: [data-testid="workbench-submissions-error"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Submission center
+        </h1>
+        <div
+          class="page-sub"
+        >
+          Submission packages and their status.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+          title="Filter submissions"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M22 3H2l8 9.46V19l4 2v-8.54z"
+            />
+          </svg>
+           
+          Filter
+        </button>
+        <button
+          class="btn primary small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+            />
+            <path
+              d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+            />
+            <path
+              d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+            />
+            <path
+              d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+            />
+          </svg>
+           New submission
+        </button>
+      </div>
+    </div>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Pipeline
+        </h2>
+        <span
+          class="section-sub"
+        >
+          7 stages from package to decision
+        </span>
+      </div>
+      <div
+        class="sub-pipeline"
+      >
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            01
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Package
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            eSTAR export · attachments
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            02
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Validate
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Required-field · claims
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            03
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Cover + sign
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Cover letter · e-signature
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            04
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Transmit
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Gateway transmittal
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            05
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Acknowledgement
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Receipt · review clock
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            06
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Review
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Substantive · deficiency
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+        <div
+          class="sub-stage"
+        >
+          <div
+            class="sub-stage-num"
+          >
+            07
+          </div>
+          <div
+            class="sub-stage-label"
+          >
+            Decision
+          </div>
+          <div
+            class="sub-stage-desc"
+          >
+            Cleared · approved
+          </div>
+          <div
+            class="sub-stage-n"
+          >
+            0
+          </div>
+        </div>
+      </div>
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Active submissions
+        </h2>
+        <span
+          class="section-sub"
+        >
+          0
+           total ·
+           
+          0
+           active ·
+           
+          0
+           blocked
+        </span>
+      </div>
+      <div
+        class="sub-layout"
+      >
+        <div
+          class="sub-list"
+        />
+        <div
+          class="sub-detail"
+        />
+      </div>
+    </section>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Submission center
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Submission packages and their status.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <button
+            class="btn ghost small"
+            title="Filter submissions"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M22 3H2l8 9.46V19l4 2v-8.54z"
+              />
+            </svg>
+             
+            Filter
+          </button>
+          <button
+            class="btn primary small"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"
+              />
+              <path
+                d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"
+              />
+              <path
+                d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"
+              />
+              <path
+                d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"
+              />
+            </svg>
+             New submission
+          </button>
+        </div>
+      </div>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Pipeline
+          </h2>
+          <span
+            class="section-sub"
+          >
+            7 stages from package to decision
+          </span>
+        </div>
+        <div
+          class="sub-pipeline"
+        >
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              01
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Package
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              eSTAR export · attachments
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              02
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Validate
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Required-field · claims
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              03
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Cover + sign
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Cover letter · e-signature
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              04
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Transmit
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Gateway transmittal
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              05
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Acknowledgement
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Receipt · review clock
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              06
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Review
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Substantive · deficiency
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+          <div
+            class="sub-stage"
+          >
+            <div
+              class="sub-stage-num"
+            >
+              07
+            </div>
+            <div
+              class="sub-stage-label"
+            >
+              Decision
+            </div>
+            <div
+              class="sub-stage-desc"
+            >
+              Cleared · approved
+            </div>
+            <div
+              class="sub-stage-n"
+            >
+              0
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Active submissions
+          </h2>
+          <span
+            class="section-sub"
+          >
+            0
+             total ·
+             
+            0
+             active ·
+             
+            0
+             blocked
+          </span>
+        </div>
+        <div
+          class="sub-layout"
+        >
+          <div
+            class="sub-list"
+          />
+          <div
+            class="sub-detail"
+          />
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/SubmissionsSurface.noInventedTarget.test.tsx:256:11
+    254|     serve('fail');
+    255|     render(<SubmissionsSurface onAskAna={() => {}} />);
+    256|     await waitFor(() => expect(screen.getByTestId('workbench-submissio…
+       |           ^
+    257|     serve();
+    258|     fireEvent.click(within(screen.getByTestId('workbench-submissions-e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 24 skipped (27)
+   Start at  05:08:43
+   Duration  6.95s (transform 483ms, setup 182ms, import 608ms, tests 5.14s, environment 695ms)
+

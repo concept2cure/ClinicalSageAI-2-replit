@@ -36,13 +36,18 @@ export interface TrialMetric {
  * the only thing this constant is.
  *
  * It used to carry a position as well: 100/100/100/85/61/40/25/0/0/0, with
- * 'Module assembly' marked blocked. `derivePhases` in PmaSurface overwrites
+ * 'Module assembly' marked blocked. `derivePhases` in PmaSurface then overwrote
  * every row's pct and status from the active program, so those numbers were
  * reachable through exactly one path — the no-program branch, which returned
  * this array verbatim — and on that path the grid drew one specific invented
  * programme's progress for a user who had selected nothing.
  *
- * Taxonomy carries no position. `derivePhases` supplies it, from the program.
+ * Taxonomy carries no position, and nothing supplies one. Slice 0 (audit 2):
+ * `derivePhases` and its kit-stage-to-PMA-phase table were deleted as the
+ * defect (they stated an approximated PMA phase as the project's). A project
+ * records a generic project phase (PROGRAM_PHASES), never a PMA phase, so
+ * PmaSurface states that phase in its header and draws this grid with no cell
+ * lit. No mapping from a project onto this grid exists; do not add one.
  */
 export const PMA_PHASES: PmaPhase[] = [
   { id: 'presub',   label: 'Pre-submission',           pct: 0, status: 'idle' },

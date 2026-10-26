@@ -1,0 +1,34 @@
+RED (audit2 presub-software #4): 'Ask AnA to start a Q-Sub' still asks AnA to 'seed the question list', which create_q_sub cannot record and this screen cannot show, and does not name the project in context.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx > PreSubManager — the Q-Sub button says it asks AnA > asks only for what create_q_sub records, for the project in context
+AssertionError: expected 'Start a new Q-Submission — pick the t…' not to match /question/i
+
+- Expected:
+/question/i
+
++ Received:
+"Start a new Q-Submission — pick the type (Pre-Sub / SIR / SRD / Agreement / Informational), set the FDA team and target meeting date, and seed the question list."
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx:62:24
+     60|     fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to sta…
+     61|     const prompt = onAskAna.mock.calls[0][0] as string;
+     62|     expect(prompt).not.toMatch(/question/i);
+       |                        ^
+     63|     expect(prompt).not.toMatch(/\bseed\b/i);
+     64|     expect(prompt).toMatch(/for this project/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:39:37
+   Duration  2.16s (transform 385ms, setup 190ms, import 542ms, tests 590ms, environment 662ms)
+

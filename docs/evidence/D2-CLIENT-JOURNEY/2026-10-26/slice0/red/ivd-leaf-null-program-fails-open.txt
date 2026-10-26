@@ -1,0 +1,76 @@
+# device-diagnostics, audit [4]: IvdSurface mounted with program=null fabricates its own state (default stage 3, 'IVD device',
+# 'Notified body review') and reads the whole organisation. IvdSurface.tsx unchanged (HEAD). The committed file, whole:
+# tests 1-2 (host, no project) pass because the host guards; test 3 (positive control) fails because it now asserts the
+# recorded phase (audit [2]); test 4 (leaf, no project) fails on the leaf's own null branch.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+··stderr | client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > IvdSurface mounted with no project > fails closed by itself: no stage, no subject, no read
+xx
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > device-diagnostics with no project open > positive control: with the project open the leaf mounts, states its recorded phase and reads
+AssertionError: expected 'Return to project workflowDx-1 AssayW…' to match /Project phase: Evidence collection · …/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/Project phase: Evidence collection · No target set/
++ Received:
+"Return to project workflowDx-1 AssayWorkspaceClass · validation · GSPRAudit trail021 CFR Part 11NB / GSPR0Agency / NB queriesApprovals0Pending e-signFilesFull filesystemIVDR pathway · Dx-1 AssayStage 3 of 7 — Analytical validation · No target setAssemble technical file IntakeBiomarker · intended purposeClassificationAnnex VIII rule engine3Analytical validationLoD · LoQ · precision4Clinical evidence2×2 · sensitivity · specificity5GSPR complianceAnnex I · 20 requirements6Assemble dossierTechnical file · declaration7SubmitEUDAMED · NB reviewClassification · Annex VIII0 devices · class A–D risk rulesNo device classifications yetClassify this device under Annex VIII to populate the table.Check againServes the IVDR Annex VIII classification recordClinical performance · 2×2 contingency0 studies · sensitivity · specificity · PPV · NPVNo clinical performance studies yetRecord a clinical performance study to populate the contingency table.Check againServes the IVDR Annex XIII performance evaluationAnalytical validationLoD · LoQ · precision (CV) · pass/failNo analytical validations yetLog an analytical performance study (LoD, precision, interference) to populate this table.Check againServes the IVDR Annex XIII analytical performance recordGSPR compliance · Annex INot yet assessedNo GSPR chapters requestedThe GSPR matrix is held per program.Choose or create a projectServes the IVDR Annex I general safety and performance requirementsCompanion diagnosticsDrug–diagnostic pairings · FDA/EMA approval · biomarkerNo companion diagnostic pairings yetPair this diagnostic with a drug programme to coordinate CDx co-development.Check againCLIA categorizationComplexity · CLIA waiver lifecycle · CMS letterNo CLIA categorizations yetCategorize this test's CLIA complexity to plan a waiver strategy.Check againServes the CLIA complexity categorizationOfficial eSTAR · 510(k) · IVD eSTARThe field list could not be loadedGenerate official eSTAR (PDF) Not yet producible The official template or its field map is not availableOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.No Vault attachments selected.Add Vault attachmentFields the template carriesGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.Could not load the field listThe field list could not be readTry againeSTAR filing readinessNot yet registered — toggle the prerequisites you holdFDA ESG accountMark heldCDRH Portal accountMark heldOrg identity (DUNS/FEI)Mark heldMDUFA fee accountMark heldCorrespondent and declarationHeld on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.Correspondent company nameCorrespondent contact emailCorrespondent telephoneDeclaration of Conformity company nameDeclaration of Conformity company addressSaveAssess a submissionFiling-readiness against your authored contentDevice (nIVD)IVDSelect a submission…Start trackingTracked submissionsNo tracked filings yetNo tracked filings yetSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx:122:61
+    120|     const { container } = mount();
+    121|     expect(container.querySelector('.stage-strip')).not.toBeNull();
+    122|     await waitFor(() => expect(container.textContent ?? '').toMatch(/P…
+       |                                                             ^
+    123|     // The matcher the two cases above rely on sees the real hooks' UR…
+    124|     expect(ivdReads().length).toBeGreaterThan(0);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx > IvdSurface mounted with no project > fails closed by itself: no stage, no subject, no read
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-project-required"]
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx:139:19
+    137|       </QueryClientProvider>,
+    138|     );
+    139|     expect(screen.getByTestId('ivd-project-required')).toBeTruthy();
+       |                   ^
+    140|     expect(screen.getByText('No project is selected')).toBeTruthy();
+    141|     expectNoInventedStage(container);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  03:33:34
+   Duration  8.54s (transform 2.05s, setup 196ms, import 2.40s, tests 5.21s, environment 559ms)
+
+------------------------------------------------------------------------ the leaf case with the read and stage assertions first (a temporary copy, deleted after this run)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.readsFirst.tmp.test.tsx > IvdSurface mounted with no project > fails closed by itself: no stage, no subject, no read
+---x
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.readsFirst.tmp.test.tsx > IvdSurface mounted with no project > fails closed by itself: no stage, no subject, no read
+AssertionError: expected [ …(5) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "/api/mdx/ivdr/classifications",
++   "/api/ivdr/validations",
++   "/api/ivdr/clinical-evidence",
++   "/api/mdx/cdx/pairings",
++   "/api/mdx/clia",
++ ]
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.readsFirst.tmp.test.tsx:139:24
+    137|       </QueryClientProvider>,
+    138|     );
+    139|     expect(ivdReads()).toEqual([]);
+       |                        ^
+    140|     expectNoInventedStage(container);
+    141|     expect(container.textContent ?? '').not.toMatch(/IVD device/);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  03:33:54
+   Duration  2.87s (transform 1.68s, setup 157ms, import 1.99s, tests 121ms, environment 464ms)

@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··xx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — nothing assessed is not assessed and clear > a project with no lifecycle items: no score, no green card, and the server says why
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Approved/Required deliverables signed off",
++ ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx:148:7
+    146|     expect(
+    147|       Array.from(container.querySelectorAll('.metric-card[data-tone="o…
+    148|     ).toEqual([]);
+       |       ^
+    149|     // The reason the route gives is what the reader is owed.
+    150|     expect(screen.getByText(EMPTY_PROJECT_REASON)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx > SoftwareSurface — nothing assessed is not assessed and clear > a level recorded but cyber-device status not: counts are shown, the score is not, and nothing is green
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "Approved2/2Required deliverables signed off",
++ ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/SoftwareSurface.emptyAskAna.test.tsx:177:7
+    175|     expect(
+    176|       Array.from(container.querySelectorAll('.metric-card[data-tone="o…
+    177|     ).toEqual([]);
+       |       ^
+    178|     expect(screen.getByText(CYBER_UNRECORDED_REASON)).toBeTruthy();
+    179|     expect(metricCard(container, 'Completeness')!.querySelector('.metr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  03:00:38
+   Duration  1.65s (transform 353ms, setup 168ms, import 452ms, tests 342ms, environment 516ms)
+

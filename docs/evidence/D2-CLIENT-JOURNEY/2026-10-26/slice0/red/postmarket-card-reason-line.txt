@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·x···
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no organisation-wide count as this project’s
+AssertionError: expected 'Not yet read' to match /Not read for this project yet/
+
+- Expected:
+/Not read for this project yet/
+
++ Received:
+"Not yet read"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:121:32
+    119|     // The line saying why: not read for this project, not a read in f…
+    120|     const meta = (id: string) => getByTestId(id).parentElement?.queryS…
+    121|     expect(meta('pm-signals')).toMatch(/Not read for this project yet/…
+       |                                ^
+    122|     expect(meta('pm-pms')).toMatch(/Not read for this project yet/);
+    123|     expect(text(container)).not.toMatch(/1 critical · awaiting MDR rol…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  03:11:40
+   Duration  1.41s (transform 360ms, setup 145ms, import 461ms, tests 196ms, environment 469ms)
+

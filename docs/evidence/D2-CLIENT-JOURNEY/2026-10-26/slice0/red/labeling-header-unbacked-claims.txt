@@ -1,0 +1,54 @@
+Slice 0, labeling, audit item 1: the page header said 'Organization-wide labeling register … warnings traced to the ISO 14971 risk file' and the warnings panel's sub-heading 'traced to the risk file (ISO 14971)', over a screen that shows no register and reads no warning.
+Run against Labeling.tsx with the item 0 fix in place and the header copy unchanged.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+··xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx > Labeling — warnings and precautions > claims no register and no warnings-to-risk-file trace (without the project)
+AssertionError: expected 'Specialist / device / LabelingLabelin…' not to match /Organization-wide labeling register/
+
+- Expected:
+/Organization-wide labeling register/
+
++ Received:
+"Specialist / device / LabelingLabeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnAShown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.Warnings and precautionstraced to the risk file (ISO 14971)Warnings and precautions are not available yetThis screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx:67:26
+     65|       mount(programId);
+     66|       await waitFor(() => expect(text()).toMatch(/Warnings and precaut…
+     67|       expect(text()).not.toMatch(/Organization-wide labeling register/…
+       |                          ^
+     68|       expect(text()).not.toMatch(/traced to the (ISO 14971 )?risk file…
+     69|       expect(document.body.querySelector('.ph-sub')?.textContent ?? ''…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx > Labeling — warnings and precautions > claims no register and no warnings-to-risk-file trace (with the project)
+AssertionError: expected 'Specialist / device / Instructions fo…' not to match /Organization-wide labeling register/
+
+- Expected:
+/Organization-wide labeling register/
+
++ Received:
+"Specialist / device / Instructions for use v3Labeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnA Where the label package stands right nowNo translations are recorded for this label yet.Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage. I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one. Add a translationOr work the symbols and translations below.ISO 15223-1 symbolssymbol glossaryNo symbols in the glossary yetAdd the ISO 15223-1 symbols that appear on this label — each carries its standard reference and where it's required.Warnings and precautionstraced to the risk file (ISO 14971)Warnings and precautions are not available yetThis screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.UDI placement21 CFR 801.45 / GUDIDUDI placement not captured yetNo UDI-DI is set on this labeling document, and carrier / PI / placement tracking isn’t captured yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet.Translations and coverage0/0 approved / 0 back-translation verified Add translationNo translations yetAdd a target-language IFU/label translation to start tracking back-translation QC and approval."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx:67:26
+     65|       mount(programId);
+     66|       await waitFor(() => expect(text()).toMatch(/Warnings and precaut…
+     67|       expect(text()).not.toMatch(/Organization-wide labeling register/…
+       |                          ^
+     68|       expect(text()).not.toMatch(/traced to the (ISO 14971 )?risk file…
+     69|       expect(document.body.querySelector('.ph-sub')?.textContent ?? ''…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  03:18:26
+   Duration  1.32s (transform 327ms, setup 161ms, import 425ms, tests 114ms, environment 481ms)
+

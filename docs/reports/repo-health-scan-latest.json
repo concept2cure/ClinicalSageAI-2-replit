@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T08:19:45.046Z",
+  "generatedAt": "2026-10-26T08:40:04.442Z",
   "git": {
-    "sha": "a7e58c38e0a88caa452c585a9669c0e4f24e82d4",
+    "sha": "94d960fffb22d62248dc16a86bc7f9767c748091",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2730,12 +2730,12 @@
         "lines": 2327
       },
       {
-        "file": "services/regulatory/ind-ectd-sections.ts",
-        "lines": 2324
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2319
+      },
+      {
+        "file": "services/regulatory/ind-ectd-sections.ts",
+        "lines": 2294
       },
       {
         "file": "server/routes/c2c/reviews.ts",

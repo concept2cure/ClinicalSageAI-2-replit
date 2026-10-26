@@ -74,7 +74,10 @@ const NO_SCENARIOS = {
     present: { useSpecification: true, userProfiles: true },
     scenarios: [],
   },
-  meta: { count: 0, source: 'hf_engineering_files' },
+  // Slice 0: the screen shows the file only when the route reports the read keyed
+  // to the project. The route cannot send `scope: 'program'` today (slice 19 keys
+  // hf_engineering_files); humanFactorsProjectKeyed.test.tsx covers today's response.
+  meta: { count: 0, source: 'hf_engineering_files', scope: 'program' },
 };
 
 /**
@@ -102,7 +105,7 @@ const ANALYSED_AND_MITIGATED = {
       },
     ],
   },
-  meta: { count: 2, source: 'hf_engineering_files' },
+  meta: { count: 2, source: 'hf_engineering_files', scope: 'program' },
 };
 
 /** The same file analysed and NOT controlled — the blocked state, for contrast. */
@@ -111,7 +114,7 @@ const ANALYSED_UNMITIGATED = {
     ...NO_SCENARIOS.data,
     scenarios: [{ ...ANALYSED_AND_MITIGATED.data.scenarios[0], mitigated: false }],
   },
-  meta: { count: 1, source: 'hf_engineering_files' },
+  meta: { count: 1, source: 'hf_engineering_files', scope: 'program' },
 };
 
 function mount() {

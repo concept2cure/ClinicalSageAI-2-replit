@@ -1,0 +1,491 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx > PreSubManager — the Q-Sub button says it asks AnA > is labelled as a request to AnA, not as a form
+AssertionError: expected <button …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn primary small"
+>
+  <svg
+    fill="none"
+    height="16"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="16"
+  >
+    <path
+      d="M12 5v14M5 12h14"
+    />
+  </svg>
+   New Q-Sub
+</button>
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx:35:67
+     33|     render(<PreSubManager onAskAna={() => {}} />);
+     34|     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBe…
+     35|     expect(screen.queryByRole('button', { name: /^New Q-Sub$/ })).toBe…
+       |                                                                   ^
+     36|     expect(screen.getByRole('button', { name: 'Ask AnA to start a Q-Su…
+     37|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx > PreSubManager — the Q-Sub button says it asks AnA > sends AnA a request to start a Q-Sub, not to file one
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Ask AnA to start a Q-Sub"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Pre-Sub manager":
+  <h1
+    class="page-title"
+  />
+
+  Name "Q-Submissions in flight":
+  <h2 />
+
+  --------------------------------------------------
+  button:
+
+  Name "Export":
+  <button
+    class="btn ghost small"
+  />
+
+  Name "New Q-Sub":
+  <button
+    class="btn primary small"
+  />
+
+  Name "All":
+  <button
+    class="seg-btn"
+    data-on="true"
+  />
+
+  Name "Mine":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Pre-Sub":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Submission Issue":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Study Risk Det.":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Agreement":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Informational":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Any stage":
+  <button
+    class="seg-btn"
+    data-on="true"
+  />
+
+  Name "Planning":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Package":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Filed":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Awaiting FDA":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Feedback":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  Name "Integrate":
+  <button
+    class="seg-btn"
+    data-on="false"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Pre-Sub manager
+        </h1>
+        <div
+          class="page-sub"
+        >
+          FDA Q-Submission program — Pre-Sub, SIR, Study Risk, Agreement. Track questions, FDA responses, and commitments back to the live dossier.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="7 10 12 15 17 10"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="15"
+              y2="3"
+            />
+          </svg>
+           Export
+        </button>
+        <button
+          class="btn primary small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M12 5v14M5 12h14"
+            />
+          </svg>
+           New Q-Sub
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row"
+    >
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Q-Subs in flight
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          0 awaiting · 0 feedback
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="err"
+      >
+        <div
+          class="metric-label"
+        >
+          Commitments rolled
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+          <span
+            class="unit"
+          >
+            %
+          </span>
+        </div>
+        <div
+          class="metric-meta"
+        >
+          0 of 0
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="ok"
+      >
+        <div
+          class="metric-label"
+        >
+          Pending rollin
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          All integrated
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Avg days in feedback
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+          <span
+            class="unit"
+          >
+            d
+          </span>
+        </div>
+        <div
+          class="metric-meta"
+        >
+          No active feedback
+        </div>
+      </div>
+    </div>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Q-Submissions in flight
+        </h2>
+        <span
+          class="section-sub"
+        >
+          0
+           total · 
+          0
+           awaiting FDA · 
+          0
+           feedback received
+        </span>
+      </div>
+      <div
+        class="ps-filter-row"
+      >
+        <div
+          class="seg small"
+        >
+          <button
+            class="seg-btn"
+            data-on="true"
+          >
+            All
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Mine
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Pre-Sub
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Submission Issue
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Study Risk Det.
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Agreement
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Informational
+          </button>
+        </div>
+        <div
+          class="ps-filter-spacer"
+        />
+        <div
+          class="seg small"
+        >
+          <button
+            class="seg-btn"
+            data-on="true"
+          >
+            Any stage
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Planning
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Package
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Filed
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Awaiting FDA
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Feedback
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Integrate
+          </button>
+        </div>
+      </div>
+      <div
+        class="ps-layout"
+      >
+        <div
+          class="ps-list"
+        >
+          <div
+            class="ps-empty"
+          >
+            <div
+              class="ps-empty-t"
+            >
+              No Q-Subs yet
+            </div>
+            <div
+              class="ps-empty-s"
+            >
+              Pre-submissions, SIRs and informational meetings appear here once filed.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.newQSubAsksAna.test.tsx:43:28
+     41|     render(<PreSubManager onAskAna={onAskAna} />);
+     42|     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBe…
+     43|     fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to sta…
+       |                            ^
+     44|     expect(onAskAna).toHaveBeenCalledTimes(1);
+     45|     const prompt = onAskAna.mock.calls[0][0] as string;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:16:54
+   Duration  2.98s (transform 627ms, setup 274ms, import 752ms, tests 738ms, environment 1.01s)
+

@@ -1,0 +1,73 @@
+# Superseded after audit [0] and [1] (2026-10-26, second pass). This is the first pass's red, run from an earlier
+# PmaSurface.recordedPhase.test.tsx that mounted the leaf with stageIdx 3 and stageIdx -1 by hand and pinned the mapped
+# 'Phase 4 of 10 — Manufacturing validation'. The file was rewritten to mount the real host and the real useMdxPrograms
+# and to assert the recorded project phase; its red is pma-approximated-phase-stated-as-recorded.txt and
+# pma-no-phase-reads-progress-band-stage.txt.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states only the phase the project carries > lights the recorded phase and ticks no phase before it
+AssertionError: expected [ { …(3) }, …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "cls": "phase complete",
++     "label": "1. Pre-submission",
++     "pct": "100%",
++   },
++   {
++     "cls": "phase complete",
++     "label": "2. Preclinical",
++     "pct": "100%",
++   },
++   {
++     "cls": "phase complete",
++     "label": "3. IDE approval",
++     "pct": "100%",
++   },
++ ]
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:79:60
+     77|     expect(rows.filter((r) => /\bactive\b/.test(r.cls)).map((r) => r.l…
+     78|     // Nothing records that pre-submission, preclinical or the IDE are…
+     79|     expect(rows.filter((r) => /\bcomplete\b/.test(r.cls))).toEqual([]);
+       |                                                            ^
+     80|     for (const r of rows.slice(0, 3)) {
+     81|       expect(r.pct).not.toMatch(/100%/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states only the phase the project carries > states no phase when the project carries no stage it can place
+AssertionError: expected 'Phase 5 of 10 — Pivotal trial · No ta…' not to match /Phase \d+ of/
+
+- Expected:
+/Phase \d+ of/
+
++ Received:
+"Phase 5 of 10 — Pivotal trial · No target set"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:92:21
+     90|
+     91|     const sub = container.querySelector('.section-sub')?.textContent ?…
+     92|     expect(sub).not.toMatch(/Phase \d+ of/);
+       |                     ^
+     93|     expect(sub).not.toMatch(/Pivotal trial/);
+     94|     expect(sub).toMatch(/^No PMA phase recorded · No target set$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:38:58
+   Duration  2.60s (transform 1.04s, setup 166ms, import 1.27s, tests 217ms, environment 712ms)
+

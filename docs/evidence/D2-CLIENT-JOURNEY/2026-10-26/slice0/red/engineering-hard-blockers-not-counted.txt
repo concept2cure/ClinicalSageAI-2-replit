@@ -1,0 +1,34 @@
+Red run against EngineeringSurface.tsx as slice 0's first pass left it in the working tree (before the audit fixes), filtered with -t to this item's tests.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+--x----·-------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel
+AssertionError: expected '0 hard blockers · 1 review-pending · …' not to match /\d+ hard blockers/
+
+- Expected:
+/\d+ hard blockers/
+
++ Received:
+"0 hard blockers · 1 review-pending · pulled from risk"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx:178:39
+    176|     // not printed while the only sources that can raise one are left …
+    177|     expect(blockerSub(container)).toMatch(/1 review-pending/);
+    178|     expect(blockerSub(container)).not.toMatch(/\d+ hard blockers/);
+       |                                       ^
+    179|     expect(blockerSub(container)).toMatch(/hard blockers not counted: …
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 13 skipped (15)
+   Start at  03:13:07
+   Duration  1.65s (transform 449ms, setup 198ms, import 542ms, tests 127ms, environment 597ms)
+

@@ -1,0 +1,339 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·····x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed
+AssertionError: expected '—' to be '0' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workstream
+          </div>
+          <h1
+            class="page-title"
+          >
+            Post-market vigilance
+          </h1>
+          <div
+            class="page-sub"
+          >
+            21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
+          </div>
+          <div
+            class="page-sub"
+            data-testid="postmarket-scope"
+          >
+            Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.
+             
+            They are not shown until this screen reads this project's records. 
+            Reporting clocks and the MDR/CAPA deadline metrics cover all projects.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <button
+            class="btn ghost small"
+            type="button"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+              />
+              <path
+                d="M5 3v4M19 17v4M3 5h4M17 19h4"
+              />
+            </svg>
+             Triage signals
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row metrics-compact"
+      >
+        <div
+          class="metric-card"
+          data-tone="err"
+        >
+          <div
+            class="metric-label"
+          >
+            MDRs due ≤72h
+          </div>
+          <div
+            class="metric-val"
+            data-testid="pm-mdr-due"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            FDA 5-day · 30-day · EU 15-day clocks
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="warn"
+        >
+          <div
+            class="metric-label"
+          >
+            CAPAs open
+          </div>
+          <div
+            class="metric-val"
+            data-testid="pm-capas"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Not yet read
+          </div>
+        </div>
+        <div
+          class="metric-card"
+        >
+          <div
+            class="metric-label"
+          >
+            PMS plan entries
+          </div>
+          <div
+            class="metric-val"
+            data-testid="pm-pms"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Not read for this project yet
+          </div>
+        </div>
+        <div
+          class="metric-card"
+        >
+          <div
+            class="metric-label"
+          >
+            Open signals
+          </div>
+          <div
+            class="metric-val"
+            data-testid="pm-signals"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Not read for this project yet
+          </div>
+        </div>
+      </div>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Regulatory submissions in flight
+          </h2>
+        </div>
+        <p
+          class="eng-trace-summary"
+          data-testid="pm-docs-not-read"
+        >
+          This project's post-market documents are not read here yet.
+        </p>
+      </section>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Reporting clocks
+          </h2>
+          <span
+            class="section-sub"
+          >
+            All programs
+             · complaints · MDR events · CAPAs — overdue first, then soonest due. FDA 5-day and 30-day, EU MDR Article 87 15-day.
+          </span>
+        </div>
+        <div
+          class="data-gate"
+        >
+          <div
+            aria-live="assertive"
+            class="c2c-error-state variant-panel"
+            data-testid="data-gate-error"
+            role="alert"
+          >
+            <span
+              aria-hidden="true"
+              class="c2c-error-ic"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-triangle-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+                />
+                <path
+                  d="M12 9v4"
+                />
+                <path
+                  d="M12 17h.01"
+                />
+              </svg>
+            </span>
+            <div
+              class="c2c-error-body"
+            >
+              <div
+                class="c2c-error-t"
+              >
+                Could not load reportable items
+              </div>
+            </div>
+            <div
+              class="c2c-error-actions"
+            >
+              <button
+                class="c2c-error-retry"
+                type="button"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Signal triage queue
+          </h2>
+          <span
+            class="section-sub"
+          >
+            Critical
+             or under-review signals not yet wrapped in an MDR or CAPA · oldest first
+          </span>
+        </div>
+        <p
+          class="eng-trace-summary"
+          data-testid="pm-not-keyed-signals"
+        >
+          Shown once this screen reads this project's records; 
+          today it reads every project's signals in this organization
+          .
+        </p>
+      </section>
+      <section
+        class="section eng-awareness"
+        data-open="false"
+      >
+        <button
+          aria-expanded="false"
+          class="eng-awareness-head"
+          type="button"
+        >
+          <span
+            class="eng-awareness-chev"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M9 6l6 6-6 6"
+              />
+            </svg>
+          </span>
+          <h2>
+            Situational awareness
+          </h2>
+          <span
+            class="section-sub"
+          >
+            Full signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution
+          </span>
+        </button>
+      </section>
+    </div>
+  </body>
+</html>
+
+Expected: "0"
+Received: "—"
+
+ ❯ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx:110:71
+    108|     serve((u) => (u.includes('/api/capa-mdr/triage') ? null : { data: …
+    109|     const { getByTestId } = mount();
+    110|     await waitFor(() => expect(getByTestId('pm-signals').textContent).…
+       |                                                                       ^
+    111|     expect(getByTestId('pm-mdr-due').textContent).toBe('—');
+    112|     expect(getByTestId('pm-capas').textContent).toBe('—');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  03:07:53
+   Duration  6.75s (transform 461ms, setup 157ms, import 591ms, tests 5.28s, environment 513ms)
+

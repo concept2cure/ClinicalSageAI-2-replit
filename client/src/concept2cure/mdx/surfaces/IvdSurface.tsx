@@ -22,6 +22,8 @@ import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
+import { useRecordedPhaseLine } from './PmaSurface';
+import { EmptyState } from '../../v2/dataConnect';
 import { readyRows, toDataState } from '../lib/dataState';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
@@ -44,10 +46,36 @@ function pct(v: number | null): string {
   return v === null ? '—' : `${(v * 100).toFixed(1)}%`;
 }
 
-export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps) {
-  const activeStageIdx = program ? Math.min(program.stageIdx, IVD_STAGES.length - 1) : 3;
-  const programStatus = program ? program.status : 'active';
+export function IvdSurface(props: IvdSurfaceProps) {
+  /* Slice 0, the map's `device-diagnostics` row ("with no project open … it says
+     no project is selected"), second pass after audit. With `program` null this
+     leaf used to state a default stage 3 ("Stage 4 of 7 — Clinical evidence ·
+     Notified body review", three stages ticked), name "IVD device", and read
+     IVDR, CDx and CLIA records for the whole organisation. Only MdxSurfaceHost's
+     guard kept a client from it. The leaf now refuses by itself, before any hook
+     can read. */
+  if (!props.program) {
+    return (
+      <EmptyState
+        title="No project is selected"
+        hint="Open an IVD project from Projects to see its IVDR evidence."
+        testId="ivd-project-required"
+      />
+    );
+  }
+  return <IvdProjectSurface {...props} program={props.program} />;
+}
+
+function IvdProjectSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps & { program: Program }) {
   const programId = program?.id ?? null;
+  /* Slice 0, the same row: the project's recorded phase, read from its own row.
+     The strip used to re-label the kit stageIdx useMdxPrograms derives (from
+     progress bands when no phase is recorded) as an IVDR stage and tick every
+     stage before it: a recorded `authoring` read "Stage 4 of 7 — Clinical
+     evidence" with Intake, Classification and Analytical validation done, and
+     an approved IVD was clamped to "Stage 7 of 7 — Submit". A project records
+     no IVDR stage, so no stage is lit, ticked or named. */
+  const phaseLine = useRecordedPhaseLine(String(program.id));
 
   /* Live IVDR data — org-scoped lists + program-scoped GSPR matrix. Each
      falls back to the kit fixture on load/error so the surface is usable
@@ -120,7 +148,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
     gspr.overallPercent ??
     (gsprTotals.total > 0 ? Math.round((gsprTotals.compliant / gsprTotals.total) * 100) : null);
 
-  const subjectName = program ? program.title : sourceClass[0]?.device ?? 'IVD device';
+  const subjectName = program.title;
 
   const workspace = (
     <>
@@ -130,8 +158,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
             IVDR pathway · {subjectName}
           </div>
           <div className="section-sub">
-            Stage {activeStageIdx + 1} of {IVD_STAGES.length} — {IVD_STAGES[activeStageIdx]?.label} ·{' '}
-            {program ? program.dueLabel : 'Notified body review'}
+            {phaseLine} · {program.dueLabel}
           </div>
         </div>
         <button
@@ -149,23 +176,18 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       </div>
 
       <div className="stage-strip">
-        {IVD_STAGES.map((s, i) => {
-          const stateClass =
-            i < activeStageIdx
-              ? 'complete'
-              : i === activeStageIdx
-              ? programStatus === 'blocked'
-                ? 'blocked'
-                : 'active'
-              : 'idle';
-          return (
-            <div key={s.id} className={`stage-node ${stateClass}`}>
-              <div className="stage-dot">{i < activeStageIdx ? I.check : i + 1}</div>
-              <div className="stage-label">{s.label}</div>
-              <div className="stage-meta">{s.meta}</div>
-            </div>
-          );
-        })}
+        {IVD_STAGES.map((s, i) => (
+          <div key={s.id} className="stage-node idle">
+            <div className="stage-dot">{i + 1}</div>
+            <div className="stage-label">{s.label}</div>
+            <div className="stage-meta">{s.meta}</div>
+          </div>
+        ))}
+      </div>
+      {/* Slice 0: say why no stage is lit, so an unlit strip is not read as "nothing started". */}
+      <div className="section-sub" data-testid="ivd-stage-note">
+        The IVDR pathway's {IVD_STAGES.length} stages. None is marked: a project records its project phase, stated
+        above, not an IVDR stage.
       </div>
 
       <div className="col2">
@@ -234,10 +256,18 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                         </td>
                         <td style={{ color: 'var(--text-300)' }}>
                           {c.rule ?? '—'}
+                          {/* Slice 0 (audit 2): a row with no class asked AnA to explain the
+                              rule that puts the device "in Class null". It asks to classify it. */}
                           {onAskAna && (
                             <AskAnaChip
-                              onAsk={() => onAskAna(`Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`)}
-                              label={`Ask AnA about ${c.device}`}
+                              onAsk={() =>
+                                onAskAna(
+                                  c.classification === null
+                                    ? `Classify ${c.device} under IVDR Annex VIII and state the rule that applies.`
+                                    : `Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`,
+                                )
+                              }
+                              label={c.classification === null ? `Ask AnA to classify ${c.device}` : `Ask AnA about ${c.device}`}
                             />
                           )}
                         </td>

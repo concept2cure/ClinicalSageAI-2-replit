@@ -16,11 +16,12 @@
  *   PMA_PHASES           Carried a hand-written position (100/100/100/85/61/40/
  *                        25/0/0/0, 'Module assembly' blocked) alongside the ten
  *                        canonical phase labels. PmaSurface's derivePhases
- *                        overwrites pct and status for every row from the active
+ *                        overwrote pct and status for every row from the active
  *                        program, so those numbers were reachable through one
  *                        path only — no program selected — where the grid drew
  *                        an invented programme's progress for a user who had
- *                        chosen nothing.
+ *                        chosen nothing. (Slice 0 deleted derivePhases too: no
+ *                        position reaches the grid from anywhere now.)
  *
  * The first test is a property rather than an assertion about the literal 3:
  * hand two genuinely different file sets to the KPI builder and every numeric
@@ -96,7 +97,9 @@ describe('the PMA phase list is a taxonomy, not a programme', () => {
     expect(PMA_PHASES.every((p) => p.label.length > 0)).toBe(true);
   });
 
-  it('carries no position — that comes from the active program', () => {
+  // Slice 0 (audit 2): this name said the position "comes from the active
+  // program". Nothing supplies one now — a project records no PMA phase.
+  it('carries no position, and nothing supplies one', () => {
     // Reachable verbatim whenever no program is selected.
     expect(PMA_PHASES.every((p) => p.pct === 0)).toBe(true);
     expect(PMA_PHASES.every((p) => p.status === 'idle')).toBe(true);
@@ -144,6 +147,7 @@ describe('the PMA surface names nothing the program did not supply', () => {
 
   it('does not claim a current phase when no program is selected', () => {
     // The phase line must be reached only on the program branch.
-    expect(code).toMatch(/program\s*\n?\s*\?\s*`Phase \$\{/);
+    // Slice 0: the line is now the recorded phase (useRecordedPhaseLine), still only on the program branch.
+    expect(code).toMatch(/program\s*\n?\s*\?\s*`\$\{phaseLine\}/);
   });
 });

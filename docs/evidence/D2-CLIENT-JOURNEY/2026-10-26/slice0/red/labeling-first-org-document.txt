@@ -1,0 +1,238 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xstderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+AssertionError: expected 'Specialist / device / Instructions fo…' not to match /00812345000017/
+
+- Expected:
+/00812345000017/
+
++ Received:
+"Specialist / device / Instructions for use v7Labeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnA Where the label package stands right nowAll 1 translation are approved.Translation coverage is 1/1 approved (100%), 1 back-translation verified. Each warning should trace to the ISO 14971 hazard it controls. I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one. Add a translationOr work the symbols and translations below.ISO 15223-1 symbolssymbol glossaryISO-OTHER-5.1.1Other project manufacturerEU MDRWarnings and precautionstraced to the risk file (ISO 14971)No label warnings yetWarnings and their ISO 14971 hazard trace aren't captured by the labeling service yet.UDI placement21 CFR 801.45 / GUDIDUDI placement not captured yetThe document records UDI-DI 00812345000017, but the carrier, PI qualifiers and per-location placement checklist aren't backed by the labeling service yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet.Translations and coverage1/1 approved / 1 back-translation verified Add translationSwedish svHumanback-trans verifiedApproved"
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:78:24
+     76|
+     77|     expect(text()).not.toMatch(/Other project infusion pump/);
+     78|     expect(text()).not.toMatch(/00812345000017/);
+       |                        ^
+     79|     expect(text()).not.toMatch(/ISO-OTHER-5\.1\.1|Other project manufa…
+     80|     expect(text()).not.toMatch(/Swedish/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+AssertionError: expected [ '/api/mdx/labeling', …(2) ] to not include '/api/mdx/labeling'
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:94:23
+     92|     await waitFor(() => expect(text()).toMatch(/Labeling and IFU/));
+     93|     await settle();
+     94|     expect(paths).not.toContain('/api/mdx/labeling');
+       |                       ^
+     95|     expect(paths.filter((p) => p.startsWith('/api/mdx/labeling/'))).to…
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+AssertionError: expected { id: 91, …(5) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "device": "Other project infusion pump",
+  "id": 91,
+  "kind": "Instructions for use",
+  "status": "approved",
+  "udiDi": "00812345000017",
+  "version": "7",
+}
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:103:48
+    101|     await settle();
+    102|     expect(published.current).not.toBeNull();
+    103|     expect(published.current?.facts?.document).toBeUndefined();
+       |                                                ^
+    104|     expect(published.current?.summary ?? '').not.toMatch(/Other projec…
+    105|     expect(published.current?.summary ?? '').toMatch(/not shown/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:35:52
+   Duration  1.61s (transform 443ms, setup 205ms, import 569ms, tests 161ms, environment 519ms)
+
