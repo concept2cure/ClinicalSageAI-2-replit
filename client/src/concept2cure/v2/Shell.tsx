@@ -663,6 +663,27 @@ interface CmdKItem {
   applies?: { actionId: string; params: Record<string, string> };
 }
 
+/**
+ * Administration pages, by who the account menu offers them to (AccountMenu). The
+ * palette reads the same rule, so a search never offers a page the menu withholds:
+ * the slice 0 launch walk found it offering Platform licensing to a customer's
+ * administrator and the Admin console to members. The server still guards each.
+ */
+export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-admin'>> = {
+  'admin-console': 'org-admin',
+  apps: 'org-admin',
+  'access-requests': 'org-admin',
+  'master-licensing': 'platform-admin',
+  coverage: 'platform-admin',
+};
+
+function offeredTo(id: string, viewer: { isOrgAdmin: boolean; platformAdmin: boolean }): boolean {
+  const audience = ADMIN_AUDIENCE[id];
+  if (audience === 'org-admin') return viewer.isOrgAdmin;
+  if (audience === 'platform-admin') return viewer.platformAdmin;
+  return true;
+}
+
 export function CmdK({
   open,
   onClose,
@@ -686,7 +707,7 @@ export function CmdK({
      and the palette would then describe one contract two ways. Until it answers
      — and permanently if it cannot — `verdictFor` returns null for everything
      and the palette behaves exactly as it did before this gate existed. */
-  const { verdictFor } = useNavEntitlements();
+  const { verdictFor, platformAdmin } = useNavEntitlements();
   const isOrgAdmin = isOrgAdminRole(user?.roles);
   /** The open project, whose steps the palette lists. */
   const project = useShellProject();
@@ -803,6 +824,7 @@ export function CmdK({
          release" lock nobody can open (slice 0). A licence lock still is: its
          unlock panel says what to do. */
       if (isLaunchScopeLocked(verdictFor(s.id))) return false;
+      if (!offeredTo(s.id, { isOrgAdmin, platformAdmin })) return false;
       const haystack = [
         s.label,
         s.notes ?? '',
@@ -844,7 +866,7 @@ export function CmdK({
     return results;
     /* `verdictFor` is memoised by the provider on the payload, so this list
        rebuilds once — when the verdicts land — and not on every render. */
-  }, [q, term, isCmd, verdictFor, project]);
+  }, [q, term, isCmd, verdictFor, project, isOrgAdmin, platformAdmin]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
 
