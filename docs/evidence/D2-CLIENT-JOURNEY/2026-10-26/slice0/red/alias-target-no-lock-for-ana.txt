@@ -1,0 +1,13 @@
+Mutation: registryModel.ts DEEP_LINK_ALIASES safety: 'pv-cockpit' -> 'task-board' (a view with no registry row, so the launch overlay can give it no lock for AnA). Restored after the run (cmp).
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > every target opens in the release, or resolves to a surface the launch scope can lock for AnA
+- Expected
++ Received
+- []
++ [
++   "safety → task-board",
++ ]
+ FAIL  client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > "biopharma" opens Projects, where a project is opened and created, not a screen outside the release
+Expected: "projects"
+Received: "program-journey"
+      Tests  2 failed | 2 passed (4)

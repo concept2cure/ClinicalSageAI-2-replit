@@ -117,9 +117,10 @@ describe('second factor — one answer on one screen', () => {
 
     const policy = await screen.findByText('Skipped on this development server');
     expect(policy.closest('button')).toBeNull();
-    // An ordinary setting is still offered for a governed change.
-    fireEvent.click(screen.getByText('Single sign-on').closest('button') as Element);
-    expect(p.onAsk).toHaveBeenCalledTimes(1);
+    /* An ordinary setting used to be a button that asked AnA to change it. No AnA tool changes an
+       organization setting, so it is shown the same way now (slice 0, adminAccessNoDeadActions.test.tsx). */
+    expect(screen.getByText('Single sign-on').closest('button')).toBeNull();
+    expect(p.onAsk).not.toHaveBeenCalled();
   });
 });
 

@@ -1,0 +1,13 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRefChipsNoLock.test.ts > conversation reference chips > every chip kind opens a screen in the release
+- Expected
++ Received
+- []
++ [
++   "module → dossier-map",
++   "evidence → evidence-search",
++ ]
+ FAIL  client/src/concept2cure/v2/__tests__/conversationRefChipsNoLock.test.ts > conversation reference chips > evidence opens the Vault and a module opens the project
+Expected: "vault"
+Received: "evidence-search"
+      Tests  2 failed (2)
