@@ -6,7 +6,8 @@
  * FDA Patient-Focused Drug Development (PFDD) guidance series (Guidance 1–4),
  * the FDA COA qualification program, ISPOR good-research-practices, and ISOQOL.
  * NO LLM estimation, NO network calls — results are deterministic and
- * submission-defensible. The four COA types are PRO, ClinRO, ObsRO, PerfO.
+ * worksheets over stated inputs. They do not read program source records.
+ * The four COA types are PRO, ClinRO, ObsRO, PerfO.
  *
  * Tools:
  *   select_coa_type             — pick the appropriate COA type for a concept
@@ -28,6 +29,8 @@ const DETERMINISTIC_NOTE =
   'Deterministic — identical input always yields identical output. No LLM, no network. ' +
   'Report the returned data and regulatory citations verbatim — do NOT reinterpret ' +
   'citations, invent additional guidance, or substitute your own recommendations. ' +
+  'Unanswered boolean evidence remains not_stated; a conclusion depending on it is not_assessed. ' +
+  'Ask for those facts without inferring true or false. ' +
   'If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.';
 
 const COA_TYPE_ENUM = ['PRO', 'ClinRO', 'ObsRO', 'PerfO'];
@@ -145,8 +148,9 @@ export const DETERMINE_MEANINGFUL_CHANGE: AnaTool = {
     'Determine the meaningful within-patient change threshold (responder ' +
     'definition) for a COA score using the FDA-preferred anchor-based method as ' +
     'primary, with distribution-based estimates as supportive only. Computes a ' +
-    'recommended threshold from anchor-group mean change (requiring an anchor ' +
-    'correlation of roughly ≥ 0.30–0.37 to be usable) and contextualizes it with ' +
+    'recommended threshold from anchor-group mean change (requiring a stated ' +
+    'anchor correlation of roughly ≥ 0.30–0.37 to be usable; unstated correlation ' +
+    'does not contribute to a threshold) and contextualizes it with ' +
     'distribution-based heuristics (0.5 SD, 1 SEM). Flags when evidence is ' +
     'insufficient and a single distribution-based value is being over-relied on. ' +
     'Cites FDA PFDD Guidance 3 and ISPOR responder-definition practice. ' +
@@ -167,7 +171,7 @@ export const DETERMINE_MEANINGFUL_CHANGE: AnaTool = {
           properties: {
             anchorLabel: { type: 'string', description: 'Label for the anchor, e.g. "PGIC minimally improved".' },
             meanChangeInImprovedGroup: { type: 'number', description: 'Mean within-patient change in COA score in the "meaningfully improved" anchor group.' },
-            anchorCorrelation: { type: 'number', description: 'Correlation of the anchor with the COA change score (should be ≥ ~0.30–0.37 to be usable).' },
+            anchorCorrelation: { type: 'number', description: 'Stated correlation of the anchor with the COA change score (absolute value ≥ ~0.30–0.37 to be usable). If omitted, usability is not_stated and this anchor cannot contribute to a threshold.' },
           },
           required: ['anchorLabel', 'meanChangeInImprovedGroup'],
         },

@@ -9,7 +9,8 @@
 > | S3 | done, with review fixes | `s3-invented-defaults/review/` |
 > | S4 | independent safeguards implemented; R-2/F2 policy pending | `s4-nonclinical-engines/` |
 > | S5-0 | done; stated-input labels are independent of R-2 availability | `s5-0-stated-basis/` |
-> | S5a–S5d, S6–S14 | queued | — |
+> | S5a COA/PRO | done; five other clinical families remain queued | `s5a-coa-pro/` |
+> | S5a remaining, S5b–S5d, S6–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -487,6 +488,22 @@ This mechanism applies under either F2 option; availability remains undecided.
 - Red: a table-driven test over a sample from each wrapper asserts `basis: 'stated'`; it is absent on trunk.
 
 **S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (the GCP engine already does this). Red: each family's "omitted means not stated" case.
+
+**S5a COA/PRO — What already exists (execution audit):** the six functions in
+`clinical-outcome-assessment/coa-knowledge.ts` are already reached by `coaProTools.ts`
+and the executor's shared stated-input wrapper. Extend those functions and their existing
+result types; keep the separate `ana/coa-selection.ts` reference advisor. Reuse the
+exported strict `statedBoolean` reader and recognized computation refusal. No deleted
+COA implementation was found by the family-name history search. Details and red/green
+evidence are filed under `s5a-coa-pro/`.
+
+**COA/PRO execution result:** all 19 optional booleans report their stated value or
+`not_stated`; dependent validation, fit, positioning and strategy conclusions remain
+`not_assessed`. Decisive explicit evidence still determines an answer. Unassessed anchors
+cannot supply a responder threshold. Required context/decision enums and malformed numeric
+evidence use the existing parameter-refusal mechanism. The other five S5a families are
+still queued; their read-only inventory is in `s5a-coa-pro/queued-clinical-families.md`.
+
 - **S5a (clinical):** `coaProTools`, `doseOptimizationTools`, `pediatricTools`, `vaccineTools`, `rweMethodologyTools`, `pharmacovigilanceTools`.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
