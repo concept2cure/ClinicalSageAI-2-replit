@@ -86,3 +86,25 @@ repeats exit zero with no unhandled errors. The sixteen cases are counted once.
 The existing catalogue SQL test also rechecks exact retired metadata/tier
 preservation on the final assertion set (`merged/catalog-final.log.gz`); this
 is a stricter affected-suite rerun, not an extra test count.
+
+
+## Final Account integration on 56325f625
+
+The later disjoint organization-access/session-rotation update `12417dac0`
+merged cleanly. All 45 filing-source/test/config hashes still match the filing
+merge proof. Six incoming implementation files match their published revision;
+the independent compatibility review finds no actor, scope or filing regression.
+
+| Latest combined qualification | Observed result |
+| --- | --- |
+| D2 + Account regression union | **930 passed, 73 disjoint suites, 139.22 seconds**; exact union `merged/account-integration-test-files.txt`, log `merged/account-integration-qualified.log.gz` |
+| Real authenticated browser rerun | **4 passed, 56.7 seconds**, including both complementary filing journeys, recorded Plan/reload/mobile, Ask AnA without send and no premature write; `merged/account-integration-native/` and browser log |
+| Production build rerun | Client **22.07 seconds**, server/audit verifier complete; `merged/account-integration-build.log.gz` |
+| Native SQL | The same 16 unique cases remain qualified on unchanged backend/test source; clean teardown runs and byte-identical functional-body proof are recorded above |
+
+This latest union supersedes the earlier 671/48 combined qualification for the
+final source; counts from earlier snapshots/reruns are not added together.
+`merged/account-integration-source-proof.json` pins source and results;
+`merged/account-integration-review.md` records the bounded compatibility review.
+Normal push acceptance and TypeScript/lint gates are still pending at this
+README revision; the receipt will name the actually accepted source.
