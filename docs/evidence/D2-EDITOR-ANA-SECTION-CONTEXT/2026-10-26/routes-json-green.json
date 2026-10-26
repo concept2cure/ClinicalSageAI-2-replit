@@ -1,0 +1,50 @@
+{
+  "startedAt": "2026-10-26T20:56:46.947366+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 15.295,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "routes-json-green-freeze.json",
+  "sourcesBefore": {
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts": "e8c03d630330f0f025f6c480204aae1d2d99c28d17b78d5fdb7ab19795fbd561",
+    "server/routes/chat/open-document-context.ts": "9403b23a37645106c7ba041fd2fc2d41fc41a6ee3aeb8f5f4fbae3103ba80075",
+    "server/routes/chat/send-message.ts": "d4f5573a307f5b86e62f2534af50c47743c7ab457f3b7f2a4f82433b1919bdaf",
+    "server/routes/ana-ri/stream.ts": "add31b206eebb76d3f471cb5df87e51c12fe6401e788b28f8a243cd3950d906f",
+    "server/services/ana-ri/chat-context-builder.ts": "5cbc40aeaf04422a25c366f5aede3dbbba15e11e7cf88ee07f0a113c581e4005",
+    "server/services/ana-ri/context-blocks.ts": "bde1d8949cb82e655552f4fb75a563310c795720452dde22c5ad522ee5c786c2",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts": "06cb40ddeb265381ee23039b85d659ae35467bd10af03a3e1c294c497a12f23e"
+  },
+  "sourcesAfter": {
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts": "e8c03d630330f0f025f6c480204aae1d2d99c28d17b78d5fdb7ab19795fbd561",
+    "server/routes/chat/open-document-context.ts": "9403b23a37645106c7ba041fd2fc2d41fc41a6ee3aeb8f5f4fbae3103ba80075",
+    "server/routes/chat/send-message.ts": "d4f5573a307f5b86e62f2534af50c47743c7ab457f3b7f2a4f82433b1919bdaf",
+    "server/routes/ana-ri/stream.ts": "add31b206eebb76d3f471cb5df87e51c12fe6401e788b28f8a243cd3950d906f",
+    "server/services/ana-ri/chat-context-builder.ts": "5cbc40aeaf04422a25c366f5aede3dbbba15e11e7cf88ee07f0a113c581e4005",
+    "server/services/ana-ri/context-blocks.ts": "bde1d8949cb82e655552f4fb75a563310c795720452dde22c5ad522ee5c786c2",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts": "06cb40ddeb265381ee23039b85d659ae35467bd10af03a3e1c294c497a12f23e"
+  },
+  "sourceDrift": [],
+  "rawOutput": "routes-json-green.log.gz",
+  "rawGzipSha256": "355197282f5fa31c6e1cb63b2c0db642c2caf28d75e4bb0871bd8a02206c243f",
+  "testSummary": [
+    "Test Files  2 passed (2)",
+    "Tests  9 passed (9)",
+    "Duration  14.06s (transform 7.01s, setup 150ms, import 11.01s, tests 2.41s, environment 0ms)"
+  ]
+}

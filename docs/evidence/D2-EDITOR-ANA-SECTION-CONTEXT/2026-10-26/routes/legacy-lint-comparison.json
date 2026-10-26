@@ -1,0 +1,502 @@
+{
+  "results": [
+    {
+      "file": "server/routes/ana-ri/stream.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 25,
+      "afterWarnings": 25,
+      "beforeMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'streamTurn' has too many lines (#). Maximum allowed is #.",
+          "value": 2321
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'streamTurn' has a complexity of #. Maximum allowed is #.",
+          "value": 342
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 2882
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 7
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 7
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 116
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 470
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 95
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 16
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 21
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 16
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 24
+        }
+      ],
+      "afterMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'streamTurn' has too many lines (#). Maximum allowed is #.",
+          "value": 2317
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'streamTurn' has a complexity of #. Maximum allowed is #.",
+          "value": 337
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 2880
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 7
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 7
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 116
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 470
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 95
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 16
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 21
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 16
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 24
+        }
+      ],
+      "metricGrowth": []
+    },
+    {
+      "file": "server/routes/chat/send-message.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 18,
+      "afterWarnings": 18,
+      "beforeMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 1006
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 237
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 1083
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        }
+      ],
+      "afterMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async arrow function has too many lines (#). Maximum allowed is #.",
+          "value": 1001
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async arrow function has a complexity of #. Maximum allowed is #.",
+          "value": 234
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 1079
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 6
+        },
+        {
+          "rule": "max-depth",
+          "kind": "Blocks are nested too deeply (#). Maximum allowed is #.",
+          "value": 5
+        }
+      ],
+      "metricGrowth": []
+    },
+    {
+      "file": "server/services/ana-ri/chat-context-builder.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 5,
+      "afterWarnings": 5,
+      "beforeMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'prefetchRouteIntelligenceContext' has too many lines (#). Maximum allowed is #.",
+          "value": 176
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'prefetchRouteIntelligenceContext' has a complexity of #. Maximum allowed is #.",
+          "value": 45
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'buildChatContext' has too many lines (#). Maximum allowed is #.",
+          "value": 217
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'buildChatContext' has a complexity of #. Maximum allowed is #.",
+          "value": 74
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 528
+        }
+      ],
+      "afterMetrics": [
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'prefetchRouteIntelligenceContext' has too many lines (#). Maximum allowed is #.",
+          "value": 175
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'prefetchRouteIntelligenceContext' has a complexity of #. Maximum allowed is #.",
+          "value": 45
+        },
+        {
+          "rule": "max-lines-per-function",
+          "kind": "Async function 'buildChatContext' has too many lines (#). Maximum allowed is #.",
+          "value": 217
+        },
+        {
+          "rule": "complexity",
+          "kind": "Async function 'buildChatContext' has a complexity of #. Maximum allowed is #.",
+          "value": 74
+        },
+        {
+          "rule": "max-lines",
+          "kind": "File has too many lines (#). Maximum allowed is #.",
+          "value": 527
+        }
+      ],
+      "metricGrowth": []
+    },
+    {
+      "file": "server/services/ana-ri/context-blocks.ts",
+      "beforeErrors": 0,
+      "afterErrors": 0,
+      "beforeWarnings": 1,
+      "afterWarnings": 1,
+      "beforeMetrics": [
+        {
+          "rule": "complexity",
+          "kind": "Function 'buildAuthoringContextBlock' has a complexity of #. Maximum allowed is #.",
+          "value": 35
+        }
+      ],
+      "afterMetrics": [
+        {
+          "rule": "complexity",
+          "kind": "Function 'buildAuthoringContextBlock' has a complexity of #. Maximum allowed is #.",
+          "value": 35
+        }
+      ],
+      "metricGrowth": []
+    }
+  ]
+}

@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   feedback: vi.fn(), profile: vi.fn(), rim: vi.fn(), relational: vi.fn(), external: vi.fn(),
-  briefing: vi.fn(), deadline: vi.fn(), contradictions: vi.fn(), query: vi.fn(),
+  briefing: vi.fn(), deadline: vi.fn(), contradictions: vi.fn(), query: vi.fn(), savedQuery: vi.fn(),
 }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
 vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
@@ -38,9 +38,10 @@ vi.mock('../../decision-lifecycle-service.js', () => ({ decisionLifecycleService
 import { prefetchRouteIntelligenceContext } from '../chat-context-builder';
 import { orchestrate } from '../orchestrator';
 import { withStatedDocumentType } from '../open-document';
+import { pg, DOCUMENT, PROGRAM } from '../../ana/__tests__/_saved-document-critique-fixture';
 
 const src = readFileSync(resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
-const DOC = '6a1f0e2b-9c4d-4e1a-8b7f-1d2c3e4f5a6b';
+const DOC = DOCUMENT;
 const TEMPLATE = '0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e';
 const ibProvenance = {
   templateSource: {
@@ -50,14 +51,14 @@ const ibProvenance = {
   },
 };
 
-function savedRow(provenance: unknown) {
-  h.query.mockImplementation(async (sql: string) =>
-    /authoring_documents/.test(sql) ? { rows: [{ template_id: TEMPLATE, provenance }] } : { rows: [] });
+async function savedRow(provenance: unknown) {
+  await pg.query('UPDATE authoring_documents SET template_id=$1,provenance=$2 WHERE id=$3', [TEMPLATE, provenance, DOC]);
 }
 
 beforeEach(() => {
   for (const mock of Object.values(h)) mock.mockReset();
   h.query.mockResolvedValue({ rows: [] });
+  h.savedQuery.mockImplementation((sql, params) => pg.query(sql, params));
   h.feedback.mockResolvedValue({ totalFeedback: 0 });
   h.profile.mockResolvedValue(null);
   h.rim.mockResolvedValue('');
@@ -69,32 +70,35 @@ beforeEach(() => {
 });
 
 const prefetch = (authoringContext: Record<string, unknown>) =>
-  prefetchRouteIntelligenceContext({ organizationId: 7, authoringContext });
+  prefetchRouteIntelligenceContext({ organizationId: 7, authoringContext,
+    openDocumentAccess: { getClient: () => ({ query: h.savedQuery }), userId: 7,
+      project: { programId: PROGRAM, projectRef: PROGRAM, projectId: 11 } } });
 
 describe('the saved document names its own type', () => {
   it("an open Investigator's Brochure reaches the turn with its outline and basis", async () => {
-    savedRow(ibProvenance);
+    await savedRow(ibProvenance);
     const pre = await prefetch({ artifactId: DOC, sectionCode: '1.14.4.1' });
     const block = String(pre.openDocumentBlock ?? '');
     expect(block).toMatch(/Investigator's Brochure/);
     expect(block).toMatch(/registry ICH_IB/);
     expect(block).toMatch(/ICH E6\(R3\) Appendix A/);
     expect(block).toMatch(/recorded template/);
-    const call = h.query.mock.calls.find(([sql]) => /authoring_documents/.test(String(sql)));
-    expect(call?.[1], 'read for this tenant only').toEqual([DOC, 7]);
+    const call = h.savedQuery.mock.calls.find(([sql]) => /template_id/.test(String(sql)));
+    expect(call?.[1], 'read for this tenant and admitted project only').toEqual([DOC, 7, PROGRAM]);
+    expect(h.query.mock.calls.some(([sql]) => /authoring_documents/.test(String(sql)))).toBe(false);
   });
 
   it('a recorded template that does not verify is said to be unverified, never read as a type', async () => {
-    savedRow({ templateSource: { ...ibProvenance.templateSource, sha256: 'not-a-hash' } });
+    await savedRow({ templateSource: { ...ibProvenance.templateSource, sha256: 'not-a-hash' } });
     const pre = await prefetch({ artifactId: DOC });
     expect(String(pre.openDocumentBlock)).toMatch(/could not be verified/);
     expect(String(pre.openDocumentBlock)).not.toMatch(/registry ICH_IB/);
   });
 
   it('a failed read is stated, and listed among the unavailable context', async () => {
-    h.query.mockImplementation(async (sql: string) => {
+    h.savedQuery.mockImplementation(async (sql: string, params: unknown[]) => {
       if (/authoring_documents/.test(sql)) throw new Error('connection reset');
-      return { rows: [] };
+      return pg.query(sql, params);
     });
     const pre = await prefetch({ artifactId: DOC });
     expect(String(pre.openDocumentBlock)).toMatch(/could not be read/);
@@ -157,8 +161,7 @@ describe('found by the security review (2026-10-15)', () => {
   });
 
   it('once the saved record is found, a type the surface states is never used', async () => {
-    h.query.mockImplementation(async (sql: string) =>
-      /authoring_documents/.test(sql) ? { rows: [{ template_id: null, provenance: {} }] } : { rows: [] });
+    await pg.query('UPDATE authoring_documents SET template_id=NULL,provenance=NULL WHERE id=$1', [DOC]);
     const pre = await prefetch({ artifactId: DOC, documentType: 'US_IND' });
     expect(String(pre.openDocumentBlock)).toMatch(/no recorded template/);
     expect(String(pre.openDocumentBlock)).not.toMatch(/registry US_IND/);

@@ -96,9 +96,9 @@ export interface PrefetchedRouteIntelligenceContext extends OpenDocumentTurnFiel
 }
 
 // The route and authoring context blocks live in context-blocks.ts.
-export { buildRouteContextBlock, buildAuthoringContextBlock } from './context-blocks.js';
+export { buildRouteContextBlock, buildAuthoringContextBlock, openDocumentPromptContexts, selectAuthoringContext } from './context-blocks.js';
 import { buildAuthoringContextBlock } from './context-blocks.js';
-import { openDocumentFields, openDocumentForTurn, type OpenDocumentTurnFields } from './open-document.js';
+import { openDocumentFields, openDocumentForTurn, type OpenDocumentAccess, type OpenDocumentTurnFields } from './open-document.js';
 
 export function resolveProjectIdFromBody(body: any): string | number | undefined {
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
@@ -177,6 +177,8 @@ export async function prefetchRouteIntelligenceContext(params: {
   projectIdNumber?: number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
+  /** Caller-pinned current actor/project access; saved selectors confer no authority. */
+  openDocumentAccess?: OpenDocumentAccess;
   /** Numeric user id — enables AnA's per-user relational personality overlay. */
   userId?: number | null;
   /** Target agency of the active program — scopes the external intel block. */
@@ -279,7 +281,7 @@ export async function prefetchRouteIntelligenceContext(params: {
             PROACTIVE_PREFETCH_TIMEOUT_MS
           )
         : Promise.resolve(''),
-      openDocumentForTurn(authoringContext, organizationId, bounded),
+      openDocumentForTurn(authoringContext, organizationId, bounded, params.openDocumentAccess),
     ]),
     projectContextPromise,
   ]);
@@ -349,9 +351,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     if (decisionContext.length > 0) {
       orchestratorAuthoringContext._decisionContext = decisionContext;
     }
-    if (rimContext) {
-      orchestratorAuthoringContext._rimContext = rimContext;
-    }
+    if (rimContext) orchestratorAuthoringContext._rimContext = rimContext;
   }
 
   const unavailableSources = [...unavailable].sort();

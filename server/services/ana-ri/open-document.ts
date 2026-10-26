@@ -9,17 +9,16 @@
  * and `orchestrate()` chose a template from the words of the message alone.
  *
  * The type comes from, in order:
- *   1. the saved document's recorded template — `authoring_documents.template_id`
- *      and `provenance.templateSource`, read for the tenant only and parsed by
- *      the one recorded-template parser, so the server never trusts a client
- *      label for a saved record;
+ *   1. the exact saved section's retained reference, or its saved document's
+ *      recorded template when no section is selected. Current actor, project
+ *      and VIEW admission precede these reads on the request's executor;
  *   2. a `documentType` the surface states (Protocol Development, QMS, IB …),
  *      accepted only when it resolves to a registry id.
- * Anything else is no type, never a guess. The requirements are the registry
+ * A section's validated assembly reference overrides its parent. Anything else
+ * is no type, never a guess. Whole-document requirements are the registry
  * outline the platform already holds (`getRegistryDocumentTemplate`), with its
  * basis label, so a recall or platform-convention outline reads as such.
  */
-import { pool } from '../../db.js';
 import { parseRecordedTemplateSource } from '../../../shared/authoring/recorded-template-source.js';
 import { getApplicationType, GLOBAL_REGISTRY } from '../../../shared/regulatory/global-document-registry.js';
 import { resolveToRegistryId } from '../../../shared/regulatory/submission-type-bridge.js';
@@ -30,6 +29,8 @@ import {
 } from '../market-specs/document-template-library.js';
 import { sanitizeLine } from './surface-context-block.js';
 import { builtinTemplateSnapshot, getBuiltinAuthoringTemplate } from '../authoring/builtin-authoring-templates.js';
+import { readSavedOpenTemplate, type OpenDocumentAccess, type SavedOpenSectionReference } from './saved-open-template';
+export type { OpenDocumentAccess } from './saved-open-template';
 
 /** The most the open-document brief may weigh, in characters (it rides the cached system prefix). */
 export const OPEN_DOCUMENT_BRIEF_CHARS = 3200;
@@ -59,26 +60,22 @@ export const OPEN_DOCUMENT_UNREAD: OpenDocumentResult = {
 
 export interface OpenDocumentResult {
   document: OpenDocument | null;
+  /** Actual persisted state observed by the admitted VIEW policy. */
+  documentStatus?: string;
+  /** Exact section reference replaces the parent-only current outline. */
+  sectionReference?: { block: string; registryId: string | null; label: string; sectionCode: string | null };
   /** Set when a stated or recorded type could not be read; said to the model, never hidden. */
   problem?: string;
 }
 
-/** Reads a saved document's recorded template identity, for one tenant. */
-export type SavedTemplateReader = (
-  documentId: string,
-  organizationId: number,
-) => Promise<{ templateId: unknown; provenance: unknown } | null>;
-
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export const readSavedTemplate: SavedTemplateReader = async (documentId, organizationId) => {
-  const r = await pool.query(
-    `SELECT to_jsonb(d)->>'template_id' AS template_id, to_jsonb(d)->'provenance' AS provenance
-       FROM authoring_documents d WHERE d.id = $1 AND d.tenant_id = $2`,
-    [documentId, organizationId],
-  );
-  return r.rows.length === 1 ? { templateId: r.rows[0].template_id, provenance: r.rows[0].provenance } : null;
-};
+/** Only these identities select saved authoring context; codes alone are advisory surface data. */
+export function hasSavedAuthoringSelector(context?: Record<string, unknown> | null): boolean {
+  if (!context) return false;
+  return (typeof context.artifactId === 'string' && UUID.test(context.artifactId)) ||
+    context.workflowStage === 'section-workspace' || Object.hasOwn(context, 'sectionId');
+}
 
 /** The registry id a recorded template entry names: `registry:<id>`, or a component outline's registry. */
 export function registryIdForTemplateEntry(entryId: string, filingRegistryId: string | null | undefined): string | null {
@@ -111,19 +108,15 @@ export function statedTypeLine(value: unknown): string | undefined {
 }
 
 async function fromSavedRecord(
-  documentId: string,
-  organizationId: number,
-  read: SavedTemplateReader,
+  row: { template_id: unknown; provenance: unknown },
 ): Promise<OpenDocumentResult | null> {
-  const row = await read(documentId, organizationId);
-  if (!row) return null;
   // The record exists, so it — not a client label — decides the type.
   const noRegistryType: OpenDocumentResult = { document: null, problem: "the saved document's recorded template is not a platform registry document type" };
-  if (row.templateId == null) return { document: null, problem: 'the saved document has no recorded template' };
+  if (row.template_id == null) return { document: null, problem: 'the saved document has no recorded template' };
   const provenance = row.provenance && typeof row.provenance === 'object' ? (row.provenance as Record<string, unknown>) : {};
   let source;
   try {
-    source = parseRecordedTemplateSource(provenance.templateSource, row.templateId);
+    source = parseRecordedTemplateSource(provenance.templateSource, row.template_id);
   } catch {
     return { document: null, problem: "the saved document's recorded template could not be verified" };
   }
@@ -156,26 +149,42 @@ async function describe(registryId: string, source: OpenDocumentSource): Promise
   return { registryId, label: entry.displayName, source, outline: (await getRegistryDocumentTemplate(registryId)) ?? null };
 }
 
-/**
- * The open document's type. A saved record decides it: once the record is
- * found, a surface-stated type is never used, and a record with no registry
- * template is a stated problem, not a type. A failed read throws.
- */
-export async function resolveOpenDocument(params: {
+interface OpenDocumentParams {
   authoringContext?: Record<string, unknown> | null;
   documentContext?: Record<string, unknown> | null;
   organizationId?: number | null;
-  read?: SavedTemplateReader;
-}): Promise<OpenDocumentResult> {
-  const { authoringContext, documentContext, organizationId } = params;
-  const read = params.read ?? readSavedTemplate;
+  access?: OpenDocumentAccess;
+}
+
+function savedSectionId(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string' || !UUID.test(value)) throw new Error('Invalid saved section selector');
+  return value.toLowerCase();
+}
+
+function sectionResult(section: SavedOpenSectionReference): OpenDocumentResult {
+  const source = section.source;
+  const registryId = typeof source?.entryId === 'string'
+    ? registryIdForTemplateEntry(source.entryId, (source.filingContext as { registryId?: string | null } | undefined)?.registryId) : null;
+  const label = registryId ? getApplicationType(registryId)!.displayName : String(source?.entryId ?? 'saved section with unverified template identity');
+  return { document: null, sectionReference: { block: section.block, registryId, label, sectionCode: section.code } };
+}
+
+async function savedResult(params: OpenDocumentParams, artifactId: string): Promise<OpenDocumentResult> {
+  const { organizationId } = params;
+  if (!organizationId || !Number.isSafeInteger(organizationId) || organizationId < 1) throw new Error('Saved authoring organization could not be verified');
+  const saved = await readSavedOpenTemplate({ artifactId: artifactId.toLowerCase(), organizationId,
+    sectionId: savedSectionId(params.authoringContext?.sectionId), access: params.access });
+  const result = saved.section ? sectionResult(saved.section) : (await fromSavedRecord(saved.header)) ?? { document: null };
+  return { ...result, documentStatus: saved.documentStatus };
+}
+
+/** Saved selectors require current admission; only a surface-only type can use its stated classification. */
+export async function resolveOpenDocument(params: OpenDocumentParams): Promise<OpenDocumentResult> {
+  const { authoringContext, documentContext } = params;
   const artifactId = authoringContext?.artifactId;
-  if (typeof artifactId === 'string' && UUID.test(artifactId) && organizationId && Number.isFinite(organizationId)) {
-    // A read failure propagates: the prefetch lists it as unavailable context
-    // and says so (OPEN_DOCUMENT_UNREAD), rather than this turn having no type.
-    const saved = await fromSavedRecord(artifactId, organizationId, read);
-    if (saved) return saved;
-  }
+  if (typeof artifactId === 'string' && UUID.test(artifactId)) return savedResult(params, artifactId);
+  if (hasSavedAuthoringSelector(authoringContext)) throw new Error('Saved authoring identity could not be verified');
   const stated = authoringContext?.documentType ?? documentContext?.documentType;
   if (stated === undefined || stated === null || stated === '') return { document: null };
   const registryId = registryIdForStatedType(stated);
@@ -194,6 +203,7 @@ function sectionLine(s: DocumentTemplateStructure['sections'][number]): string {
  * records, never from the client.
  */
 export function renderOpenDocumentBlock(result: OpenDocumentResult): string {
+  if (result.sectionReference) return result.sectionReference.block;
   const { document, problem } = result;
   if (!document) {
     return problem ? `## OPEN DOCUMENT\nThe type of the document open in front of you is not known: ${problem}. Ask, or read it, before relying on a type.` : '';
@@ -253,6 +263,10 @@ export interface OpenDocumentTurnFields {
   openDocumentRegistryId?: string | null;
   /** Its registry name, for the tool-selection signal. */
   openDocumentLabel?: string | null;
+  /** Actual admitted saved section code; never its mutable client copy. */
+  openDocumentSectionCode?: string | null;
+  /** Actual state read for current VIEW; unknown when saved context is unavailable. */
+  openDocumentStatus?: string | null;
 }
 
 type Bounded = <T>(source: string, load: () => Promise<T>) => Promise<T>;
@@ -262,9 +276,10 @@ export function openDocumentForTurn(
   authoringContext: Record<string, unknown> | null | undefined,
   organizationId: number | null | undefined,
   bounded: Bounded,
+  access?: OpenDocumentAccess,
 ): Promise<OpenDocumentResult> {
   if (!authoringContext) return Promise.resolve({ document: null });
-  return bounded('open document type', () => resolveOpenDocument({ authoringContext, organizationId }));
+  return bounded('open document type', () => resolveOpenDocument({ authoringContext, organizationId, access }));
 }
 
 /** The settled read as turn fields: a failed read is said to be unread, never a turn with no type. */
@@ -272,7 +287,9 @@ export function openDocumentFields(settled: PromiseSettledResult<OpenDocumentRes
   const result = settled.status === 'fulfilled' ? settled.value : OPEN_DOCUMENT_UNREAD;
   return {
     openDocumentBlock: renderOpenDocumentBlock(result),
-    openDocumentRegistryId: result.document?.registryId ?? null,
-    openDocumentLabel: result.document?.label ?? null,
+    openDocumentRegistryId: result.sectionReference ? result.sectionReference.registryId : result.document?.registryId ?? null,
+    openDocumentLabel: result.sectionReference?.label ?? result.document?.label ?? null,
+    openDocumentSectionCode: result.sectionReference?.sectionCode ?? null,
+    openDocumentStatus: result.documentStatus ?? null,
   };
 }
