@@ -278,7 +278,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
         })()}
         <span className="rpk-chip rpk-chip-agency">{e.agency}</span>
         <span className="rpk-chip rpk-chip-region">{e.region}</span>
-        {term && <span className="rpk-chip rpk-chip-segment">{segs[e.segment]?.label ?? e.segment}</span>}
+        {term && <span className="rpk-chip">{segs[e.segment]?.label ?? e.segment}</span>}
         {e.dossierStandard !== '—' && <span className="rpk-chip rpk-chip-dossier">{e.dossierStandard}</span>}
         {e.ctdModule && e.ctdModule !== '—' && <span className="rpk-chip rpk-chip-ctd">{e.ctdModule}</span>}
       </div>

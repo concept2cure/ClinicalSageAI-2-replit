@@ -126,3 +126,10 @@ Formal validation remains limited: 117 requirements, 69 historical passes,
 two partial and 46 uncovered using the explicitly selected historical evidence.
 URS-PROJ-007a has no executed steps. Updating a runner or traceability citation
 is not an executed or signed protocol and does not establish release readiness.
+
+The first normal publication attempt stopped on an undefined, redundant
+`rpk-chip-segment` class. It was removed; the existing styled `rpk-chip` remains.
+The removed name had no stylesheet rule or consumer, so rendered styling and
+behavior are unchanged. `accepted/source-sha256.json` identifies the tested
+pre-cleanup snapshot; final publication hashes and the repeated picker/CSS
+checks identify this narrow follow-up. No gate or baseline was bypassed.

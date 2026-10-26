@@ -58,7 +58,7 @@
     "baseline": 0,
     "log": "accepted/typecheck.log.gz"
   },
-  "publication": "pending normal commit/push hooks",
+  "publication": "First normal push stopped at undefined CSS class; redundant marker removed, existing styled rpk-chip retained; retry pending",
   "formalQualification": {
     "status": "unexecuted and unsigned",
     "newRequirement": "URS-PROJ-007a",
@@ -75,5 +75,12 @@
     "device-workstream",
     "program-journey"
   ],
-  "sourceManifest": "accepted/source-sha256.json"
+  "sourceManifest": "accepted/source-sha256.json",
+  "postQualificationChange": {
+    "path": "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+    "change": "Removed undefined rpk-chip-segment class; retained existing rpk-chip. The removed class has no stylesheet rule or consumer. Rendered text, styling and behavior unchanged.",
+    "qualifiedSnapshotCommit": "b9975a914c5893f67a4d24abdeb937bf2f148997",
+    "pickerTestsPassed": 27,
+    "undefinedCssCheck": "passed"
+  }
 }
