@@ -138,6 +138,12 @@ The combined dossier/routing and SCIM UI/refusal/atomicity suites pass:
 passes (Vite **23.99 seconds**). Mandatory publication hooks check the final
 combined tree again. No SCIM credential value is included in these records.
 
+The branch then advanced through `65214946e` with CSR/CRF authoring completion.
+That merge is clean. Directly interacting project/routing/source-import/CRF
+checks pass: **73 tests in 6 suites**. The resulting production build passes
+again (Vite **23.84 seconds**). These checks qualify the final code combination;
+the native browser records above belong to the preceding A2.7 implementation.
+
 ## Known baseline and qualification limits
 
 The broader middleware launch-scope suite still has five MDX policy/expectation
