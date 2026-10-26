@@ -237,7 +237,7 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
                 className="anl-blocker"
                 onClick={() =>
                   onAskAna(
-                    `Pull every program currently blocked on "${b.cause}". Show me the owner, age, and proposed unblock action for each.`,
+                    `Pull every project currently blocked on "${b.cause}". Show me the owner, age, and proposed unblock action for each.`,
                   )
                 }
                 type="button"

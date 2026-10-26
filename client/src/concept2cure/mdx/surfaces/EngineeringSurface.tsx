@@ -274,7 +274,7 @@ export function EngineeringSurface({
         state={gatedOn(live.summary, live.documents)}
         label="engineering metrics"
         onRetry={live.refresh}
-        emptyHint="Metrics appear once this program has design, risk or change records."
+        emptyHint="Metrics appear once this project has design, risk or change records."
       >
         {(s) => (
           <div className="metrics-row metrics-compact">
@@ -599,7 +599,7 @@ export function EngineeringSurface({
                   label="risk records"
                   onRetry={live.refresh}
                   dense
-                  emptyHint="Add hazards to this program's ISO 14971 risk file to populate the matrix."
+                  emptyHint="Add hazards to this project's ISO 14971 risk file to populate the matrix."
               regulation="Serves the ISO 14971 risk management file"
                 >
                   {() => (

@@ -412,7 +412,7 @@ function refusedExport(json: Record<string, unknown> | null, official: boolean, 
   const code = errorCodeOf(json);
   const unconfirmed = hasAttachments && mutationUnconfirmed(status, code);
   const sentence = serverMessage(json);
-  const recovery = 'The export result was not confirmed. No file was downloaded. Review the program’s Vault and retained exports before trying again.';
+  const recovery = 'The export result was not confirmed. No file was downloaded. Review the project’s Vault and retained exports before trying again.';
   const error = unconfirmed
     ? code === 'OUTCOME_UNKNOWN' && sentence ? sentence : [sentence, recovery].filter(Boolean).join(' ')
     : sentence ?? `the server gave no reason (HTTP ${status})`;
@@ -441,10 +441,10 @@ async function postExport(url: string, body: unknown, official: boolean, current
 
     if (!res.ok) return refusedExport(json, official, res.status, expected.length > 0);
 
-    if (!current()) return failedExport(official, 'The export context changed before delivery. Check the original program’s retained exports.', true);
+    if (!current()) return failedExport(official, 'The export context changed before delivery. Check the original project’s retained exports.', true);
     const attachments = expected.length ? confirmedAttachmentReceipts(json?.attachmentReport, expected) : undefined;
     if (expected.length && (!attachments || json?.officialEstarPdf !== true || !isOfficialDownload(json?.downloadable_output_ref))) {
-      return { ...failedExport(official, 'The attachment result was not confirmed. No file was downloaded; check the program’s retained exports before trying again.', true),
+      return { ...failedExport(official, 'The attachment result was not confirmed. No file was downloaded; check the project’s retained exports before trying again.', true),
         attachmentRefusals: attachmentRefusals(json?.attachmentReport) };
     }
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
@@ -484,7 +484,7 @@ async function postExport(url: string, body: unknown, official: boolean, current
     // native message is "Failed to fetch" / "Load failed", so the hook's own
     // wording is the only thing worth showing.
     return expected.length
-      ? failedExport(official, 'The attachment export result was not confirmed. Check the program’s retained exports before trying again.', true)
+      ? failedExport(official, 'The attachment export result was not confirmed. Check the project’s retained exports before trying again.', true)
       : failedExport(official, 'Export request failed');
   }
 }

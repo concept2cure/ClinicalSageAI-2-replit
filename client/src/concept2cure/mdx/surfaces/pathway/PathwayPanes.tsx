@@ -1156,7 +1156,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.correspondence}
             label="correspondence"
             onRetry={data.refresh.correspondence}
-            emptyHint="Agency and notified-body letters appear here once received for this program."
+            emptyHint="Agency and notified-body letters appear here once received for this project."
           >
             {(items) => {
               /* Every live letter opens the drafter now. It used to open only
@@ -1222,8 +1222,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                   it. The copy names who can fix it instead. */
               <ErrorState
                 variant="panel"
-                title="You don't have access to this program's dossier files"
-                message="Ask a program administrator to grant you access."
+                title="You don't have access to this project's dossier files"
+                message="Ask an administrator of this project to grant you access."
                 testId="dossier-forbidden"
               />
             )}
@@ -1231,7 +1231,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
               <EmptyState
                 icon={I.folder}
                 title="No dossier sections yet"
-                hint="Sections appear here once the submission outline is scaffolded for this program."
+                hint="Sections appear here once the submission outline is scaffolded for this project."
                 action={{ label: 'Check again', onAct: dossier.refresh }}
                 testId="dossier-empty"
               />

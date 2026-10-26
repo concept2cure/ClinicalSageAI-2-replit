@@ -205,7 +205,7 @@ export function PostmarketSurface({
               className="btn ghost small"
               onClick={() =>
                 onAskAna(
-                  `Triage the open complaints, MDR events and CAPAs for ${program.title} (program ${program.id}) and tell me which cross a 5-day or 30-day MDR clock today.`,
+                  `Triage the open complaints, MDR events and CAPAs for ${program.title} (project ${program.id}) and tell me which cross a 5-day or 30-day MDR clock today.`,
                 )
               }
               type="button"
@@ -286,7 +286,7 @@ export function PostmarketSurface({
           <h2>Reporting clocks</h2>
           <span className="section-sub">
             {/* Slice 0: the project by its title, and what the MDR rows include. */}
-            {program ? `${program.title} only` : 'All programs'} · complaints · MDR
+            {program ? `${program.title} only` : 'All projects'} · complaints · MDR
             events · CAPAs — overdue first, then soonest due. FDA 5-day and
             30-day, EU MDR Article 87 15-day. MDR events are listed in every
             state, filed and closed included.

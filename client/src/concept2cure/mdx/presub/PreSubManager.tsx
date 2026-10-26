@@ -436,7 +436,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
           <button
             className="btn ghost small"
             onClick={() => {
-              const headers = ['Q-number', 'Program', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
+              const headers = ['Q-number', 'Project', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
               const rows = sourceList.map(r => [
                 r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
                 String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),

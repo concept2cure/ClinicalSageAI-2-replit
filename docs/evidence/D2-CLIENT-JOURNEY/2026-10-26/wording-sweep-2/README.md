@@ -51,14 +51,38 @@ when its slice places it.
   - `typecheck-no-regression`: 0 errors.
   - `eslint` on the changed files: 0 errors.
 
+## Part 2: the device lane
+
+The device lane's slice 0 changes landed in `62a46933f`, so this part could follow. It covers 102 strings in 37
+files under `client/src/concept2cure/mdx/` and `pdev/surfaces/Contradictions.tsx`, and every one of them is visible
+or read by AnA:
+- the host's surface blurbs, and its AnA summaries for loading, failed and no-project states;
+- every "held per program" idle reason;
+- the 510(k), PMA, CER, IVD, eSTAR, Software, Vault, Engineering, Post-market and Overview headers and empty states;
+- the CER tabs' AnA prompts;
+- the eSTAR export recovery lines;
+- Validation's "Projects blocked" card (blockers are recorded on tracking records, not linked to projects);
+- the Pre-Sub CSV header;
+- the device AnA tool palette's group label.
+
+A few strings stay as they are:
+- "Pair this diagnostic with a drug programme" (CDx co-development pairs with a drug's whole development programme,
+  the domain sense);
+- server sentences rendered verbatim (Software's undetermined reason is the server's own; see the server sweep);
+- identifiers and ids, as before.
+
+- **Red: `red/device-lane-pins-against-head-source.txt`.** The 9 edited test files, run against `62a46933f`'s source:
+  14 tests fail on the old wording. They pin the 404 sentence, "No project selected", "Active projects", "held per
+  project", the host's load failure, "select a CER project", "Open a project first", and the triage prompt's
+  project id. The 15th failure, PathwayPanes(k510) roots, also fails at HEAD.
+- **Affected set.** 103 test files: every device-lane test, plus every test importing a changed file. 1,007 tests
+  against `62a46933f`. With the pins updated, 3 failures remain, the same 3 at HEAD:
+  - `authoringDraftTermination`;
+  - the two PathwayPanes smoke cases.
+- **Gates.** typecheck: 0 errors. eslint on the 46 changed files: 0 errors, and no file gained a warning.
+
 ## Still to come
 
-- **Device lane (`mdx/`).** These go in the next part:
-  - `MdxSurfaceHost.tsx`'s surface blurbs (the same device descriptions);
-  - `useCerPmsFeeds`, `useEstarExport`, `Workbench`, `Overview`, `K510Surface`, `PmaSurface`, `IvdSurface`,
-    `CerSurface`, `OfficialEstarPanel`, `DeviceProfilePanel`, `EngineeringSurface`, `VaultSurface`, `PathwayPanes`,
-    `PostmarketSurface`, `AnalyticsSurface`, `cer/PmsPmcfTab`;
-  - `pdev/surfaces/Contradictions`.
-
-  It waits for the device slice 0 changes in those files to land.
-- **Server text.** It is listed in `../wording-sweep/README.md`.
+- **Server text.** It is listed in `../wording-sweep/README.md`. A full inventory is running.
+  `server/routes/ectd-compile.ts` is out of scope here: the RIM session owns it and changes its own strings in its
+  eCTD rewrite.

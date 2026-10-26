@@ -117,10 +117,10 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
      from idle. The two fixtures were deleted with sample mode on 2026-10-14. */
   const extras = useProgramExtras(program?.id ?? null);
   const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
-    idleReason: 'PMA module assembly is held per program.',
+    idleReason: 'PMA module assembly is held per project.',
   });
   const trialState = toDataState(extras.pmaTrialMetrics, extras.loading, extras.error, {
-    idleReason: 'Pivotal-trial figures are held per program.',
+    idleReason: 'Pivotal-trial figures are held per project.',
   });
 
   /* Real export action — POST /api/510k/estar/build with the program's ident
@@ -174,7 +174,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
               lockedTitle ??
               (program
                 ? 'Assemble a draft ZIP of your authored 21 CFR 814.20 sections (one PDF per section plus the combined PDF/DOCX) — NOT the official FDA eSTAR that CDRH ingests'
-                : 'Select a PMA program first')
+                : 'Select a PMA project first')
             }
             onClick={() => {
               if (!program) return;
@@ -228,7 +228,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <DataGate
         state={trialState}
         label="pivotal-trial figures"
-        emptyHint="Enrolment, sites and endpoint figures appear here once this program has a registered study."
+        emptyHint="Enrolment, sites and endpoint figures appear here once this project has a registered study."
       >
         {(metrics) => (
       <div className="health">
@@ -257,7 +257,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <DataGate
         state={modulesState}
         label="PMA modules"
-        emptyHint="Modules appear here once 21 CFR 814.20 sections are authored for this program."
+        emptyHint="Modules appear here once 21 CFR 814.20 sections are authored for this project."
       >
         {(mods) => (
       <>

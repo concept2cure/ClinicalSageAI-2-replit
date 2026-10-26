@@ -143,7 +143,7 @@ export function generateDisabledReason(input: {
   fieldsError: string | null;
 }): string | null {
   if (input.lockedTitle) return input.lockedTitle;
-  if (!input.hasProgram) return 'Open a program first — the administrative data is read from it';
+  if (!input.hasProgram) return 'Open a project first — the administrative data is read from it';
   if (input.readinessLoading) return 'Checking official eSTAR availability…';
   if (input.busy) return 'Exporting…';
   if (!input.ready) {
@@ -235,7 +235,7 @@ function OfficialEstarPanelForContext({ program, variant, type = '510k', current
   }) ?? attachments.problem;
 
   const headerLine = !program
-    ? 'The administrative data is read from the open program'
+    ? 'The administrative data is read from the open project'
     : official.loading
       ? 'Loading the field list…'
       : fieldsError
@@ -271,7 +271,7 @@ function OfficialEstarPanelForContext({ program, variant, type = '510k', current
           disabled={disabledReason !== null}
           title={
             disabledReason ??
-            'Produce the official FDA eSTAR PDF from the program’s governed records and the values entered below'
+            'Produce the official FDA eSTAR PDF from the project’s governed records and the values entered below'
           }
           onClick={onGenerate}
         >
@@ -392,8 +392,8 @@ function OfficialEstarPanelForContext({ program, variant, type = '510k', current
         {!program ? (
           <EmptyState
             icon={I.circle}
-            title="No program open"
-            hint="The field list is held per program."
+            title="No project open"
+            hint="The field list is held per project."
             regulation="Serves the FDA eSTAR administrative record (21 CFR 807)"
             testId="official-estar-idle"
           />

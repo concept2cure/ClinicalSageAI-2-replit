@@ -105,16 +105,16 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps 
      partial case goes with the fixtures, and each panel now states its own
      reading through DataGate. */
   const classState = toDataState(classifications.rows, classifications.loading, classifications.error, {
-    idleReason: 'Classifications are held per program.',
+    idleReason: 'Classifications are held per project.',
   });
   const validState = toDataState(validations.rows, validations.loading, validations.error, {
-    idleReason: 'Analytical performance is held per program.',
+    idleReason: 'Analytical performance is held per project.',
   });
   const clinicalState = toDataState(clinical.rows, clinical.loading, clinical.error, {
-    idleReason: 'Clinical performance is held per program.',
+    idleReason: 'Clinical performance is held per project.',
   });
   const gsprState = toDataState(gspr.rows, gspr.loading, gspr.error, {
-    idleReason: 'The GSPR matrix is held per program.',
+    idleReason: 'The GSPR matrix is held per project.',
   });
 
   const sourceClass = readyRows(classState);

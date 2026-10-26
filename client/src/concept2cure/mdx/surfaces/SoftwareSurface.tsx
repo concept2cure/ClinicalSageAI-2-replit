@@ -51,7 +51,7 @@ export function SoftwareSurface({ onAskAna, program }: SoftwareSurfaceProps) {
           <h1 className="page-title">Software lifecycle</h1>
           <div className="page-sub">
             IEC 62304 · FDA 2023 software &amp; cybersecurity guidance · AAMI TIR57.
-            {program ? ` · ${program.code}` : ' · No program open'}
+            {program ? ` · ${program.code}` : ' · No project open'}
           </div>
         </div>
         <div className="page-actions">

@@ -637,7 +637,7 @@ export function EstarFilingPanel({ programId }: { programId: string | null }) {
       /* No programme, no assessment. Assessing without one reads every device
          in the organisation and reports the result under this device's header. */
       setReadiness(null);
-      setAssessRefusal('Filing readiness needs the device programme, which has not loaded yet.');
+      setAssessRefusal('Filing readiness needs the device project, which has not loaded yet.');
       return;
     }
     setAssessRefusal(null);

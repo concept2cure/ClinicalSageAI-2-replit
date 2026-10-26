@@ -195,7 +195,7 @@ describe('PostmarketSurface — panels that read across projects are not shown (
     fireEvent.click(button as HTMLElement);
     expect(asked).toHaveLength(1);
     expect(asked[0]).not.toMatch(/portfolio|vigilance signals/i);
-    expect(asked[0]).toContain('Own infusion pump (program project-own)');
+    expect(asked[0]).toContain('Own infusion pump (project project-own)');
     expect(asked[0]).toMatch(/complaints, MDR events and CAPAs/);
     // Nor does its label offer to triage signals, which no tool reads.
     expect(button?.textContent ?? '').not.toMatch(/signals/i);
