@@ -15806,7 +15806,6 @@ async function readProgramArtifacts(
 registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   const productName = input.product_name as string;
   const indication = input.indication as string;
-  const projectId = typeof input.project_id === 'number' ? input.project_id : undefined;
   if (!productName || !indication) {
     return JSON.stringify({
       error: 'draft_clinical_overview_m2_5 requires product_name and indication',
@@ -15817,9 +15816,11 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   // Clinical Overview from them through the deterministic engine the
   // submission package uses. Rule 2: never from figures in the tool input,
   // which the model writes (ana/module2-csr-inputs.ts).
-  const { loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
+  const { answersBeforeOutline, loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
   const sourced = await loadModule2CsrInputs(input, ctx, '2.5');
-  if (!sourced.ok && sourced.ignoredSuppliedFigures) return JSON.stringify(sourced);
+  // Supplied figures, or a project the person may not read (the outline below
+  // would read that project's artifacts; 3b Slice 1), are answered as they are.
+  if (answersBeforeOutline(sourced)) return JSON.stringify(sourced);
   if (sourced.ok) {
     try {
       const { buildM25ClinicalOverview } = await import('../m2-summary-builders.js');
@@ -15850,7 +15851,8 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   // Pull the program's artifacts to suggest citations. A failed read is
   // reported as one, never as a program with no artifacts.
   const { rows: projectArtifacts, unavailable: artifactsUnavailable } = await readProgramArtifacts(
-    projectId,
+    // The resolved project, never one the model names (3b Slice 1).
+    sourced.projectId,
     ctx?.organizationId,
   );
 

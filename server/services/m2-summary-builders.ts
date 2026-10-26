@@ -742,10 +742,13 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   // 2026-10-15: 2.5.2 used to count as "always summarized" (no biopharmaceutic
   // input exists) and 2.5.4 as present whenever a Phase 3 CSR existed. Each
   // subsection now counts only when the records it is written from are present.
+  // 2026-10-26 (3b Slice 1): 2.5.1 counted whenever the caller passed a
+  // rationale, which AnA writes, so a model could raise the figure with prose.
+  // It is printed, but no record backs it, so it does not count.
   const efficacyRecorded = pivotal.length > 0 && outcomes.unrecorded === 0;
   const safetyRecorded = safetyDataRecorded(csrs, totalSubjects, safety.gap);
   const subsections = [
-    Boolean(ctx.developmentRationale), // 2.5.1
+    false, // 2.5.1 — the rationale is caller text, not a record
     false, // 2.5.2 — no biopharmaceutic input exists
     clinPharm.length > 0, // 2.5.3
     efficacyRecorded, // 2.5.4 — every pivotal outcome recorded

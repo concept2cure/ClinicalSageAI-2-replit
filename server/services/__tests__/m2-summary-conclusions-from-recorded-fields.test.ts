@@ -130,7 +130,7 @@ describe('2.5 states efficacy only from a recorded primary-endpoint outcome', ()
       investigationalProduct: 'X',
       developmentRationale: 'Unmet need.',
     });
-    expect(r.completeness).toBe(83); // 5 of 6: 2.5.2 has no recorded input
+    expect(r.completeness).toBe(67); // 4 of 6: 2.5.2 has no recorded input, and 2.5.1 is caller text (3b Slice 1)
     expect(r.gaps).toContain('biopharmaceutics (2.5.2): no biopharmaceutic data recorded');
   });
 });

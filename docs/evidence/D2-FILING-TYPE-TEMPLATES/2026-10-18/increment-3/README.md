@@ -163,3 +163,63 @@ pattern, and a test pins the twelve.
   - **Two from this change**, the two pins above, now green:
     - `ind-pharmacology-leaf-drafting`: 18/18;
     - `cross-sector-builtin-authoring-templates`: 22/22.
+
+## g. 3b Slice 1 — AnA's 2.5 and 2.7 composers read the open project as the person asking
+
+**The plan.** 3b was designed by workflow `wf_016de3ea-3b7`, read at `79d9913f1` and refreshed at `0c69304aa`. Three
+readers covered the class mechanism, routing and offers, and authoring inside a class project. A planner followed,
+then an adversarial critic who re-derived the claims and wrote the corrected plan. It is filed beside this README as
+`3b-plan.md`, with its own "What already exists" table (E1–E37, N1–N4). Slices 1–4 need no migration. Slices 5–7
+reach 2.5/2.4, then 2.7, then 2.6 as author-only classes.
+
+**What already exists (Rule 3):**
+- `server/services/ana/module2-csr-inputs.ts`, the precedent: figures come from completed CSR builds, never from the
+  tool input.
+- `csr/load-csr-inputs-for-project.ts` and `csr/project-scope.ts` `resolveCsrScope`, which the CSR workflow uses.
+- `lib/project-id.ts` `looksLikeProgramUuid`.
+
+**The defect.** `loadModule2CsrInputs` failed for every real project, in one of two ways:
+- **A numeric project threw.** It passed no actor to `loadCsrInputsForProject`, and the CSR scope refuses a read it
+  cannot attribute (`readCsrProjectActor`, 403). The 2.5 handler did not catch the throw, and the 2.7 handler answered
+  "M2.7 summary drafting failed".
+- **A v2 project was never seen.** The module read only the integer `ctx.projectId`. The v2 shell leaves that null and
+  sends the open project as a regulatory_programs uuid in `ctx.projectRef`, so the answer was "Open the program".
+
+So AnA's data-driven Module 2.5 and 2.7 never composed. The suites stayed green because they mocked the loader.
+
+**What changed:**
+- **`module2-csr-inputs.ts`:**
+  - The open project is resolved through `resolveCsrScope`, with the actor: a uuid `projectRef`, else
+    `ctx.projectId`. A project named in the input is read only when none is open.
+  - Another project named while one is open is refused (`cross_project`, P-14).
+  - A scope refusal is answered as one (`access_denied` for 403), never thrown.
+  - Every arm carries the resolved project.
+  - The messages say "project" (decision 12).
+- **The 2.5 handler:**
+  - It reads the program's artifacts for citation from the resolved project, never from the `project_id` the model
+    passes.
+  - An `access_denied` or `cross_project` answer is returned as it is (`answersBeforeOutline`). The outline mode
+    would otherwise read that project's artifacts.
+- **`m2-summary-builders.ts`:** 2.5.1 no longer counts toward completeness because the caller passed a rationale.
+  AnA writes that text, so a model could raise the figure with prose (Rule 2). The text is still printed.
+
+**Red first:** `3b-s1-csr-inputs-red.txt`.
+- The new `module2-csr-inputs.pglite.test.ts`, run against a database with neither the loader nor the scope mocked:
+  5 of 6 red (the uuid project read as `needs_project`; four cases threw `CSR_PROJECT_ACCESS_DENIED`).
+- The completeness case: 83, expected 67.
+
+All pass after.
+
+**Pins moved on purpose:**
+- `nonclinical-clinpharm-tools.test.ts` also mocks `resolveCsrScope` to resolve the named project. Each expectation
+  keeps its meaning; the new pglite test runs both for real.
+- The two 2.5 completeness pins (`m2-summary-builders.test.ts`, `m2-summary-conclusions-from-recorded-fields.test.ts`)
+  go from 83 to 67 (4 of 6).
+
+**Gates:**
+- the 23 test files that reach the change: 400 pass;
+- typecheck: 0 errors;
+- ESLint ratchet: no file changed its warning count. The loader was split into `readScopedCsrs` to keep it there.
+
+**What a person sees:** in a project with completed CSR builds, AnA's 2.5 and 2.7 composers compose. In one with none,
+they say so. A person who may not read the project is told so, and no outline is built from it.
