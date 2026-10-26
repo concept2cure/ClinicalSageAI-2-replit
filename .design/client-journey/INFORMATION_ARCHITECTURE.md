@@ -1,7 +1,7 @@
 # Information architecture: the client journey
 
 Date 2026-10-25, revised the same day for the founder's rule on the catalogue and again after a code check of the
-draft. Launch row D2. Owner: the founder. Companion to `DESIGN_BRIEF.md` (this folder) and
+draft; direction clarified on 2026-10-26 below. Launch row D2. Owner: the founder. Companion to `DESIGN_BRIEF.md` (this folder) and
 `docs/design/CLIENT_JOURNEY_2026-10-25.md` (passes 1–5, committed through `f8e0d3210`). Evidence:
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/`.
 
@@ -25,15 +25,67 @@ features apps." This document applies it as follows:
   reachable replacement by path and the gate that proves it (working agreement). No shell is removed until the
   function-parity audit (`FUNCTION_PARITY.md`, this folder) confirms its row. A function that cannot be carried as it
   is goes on the founder's list (section 5.9) with its reason; it is never dropped inside a table cell.
-- **No capability is called an app.** A client sees a place, a step, a document's tools, or AnA doing something. An
+- **Specialized capabilities are features, not standalone apps.** A client sees a place, a step, a document's tools,
+  or AnA doing something. An
   administrator sees *features* in Subscription & features (today labelled "Plan & features"; renamed so that "Plan"
-  means only the project's first step, section 9).
+  means only the project's first step, section 9). The central-service exception clarified below governs standalone identities.
 - **Shown when it works.** A capability is shown to a client in its home once it works on the client's real data.
   Until then its home names it in words on the step's *Coming later* line, with no button (P-47;
   `ProjectComingLater.tsx`). A fixture, demo or screenless capability is placed now and shown later.
 - **Launch scope is a sequencing fact** (Rule 2). An item outside `LAUNCH_SURFACE_IDS` is placed now and admitted to
   clients by the founder's decision once it works. Section 8 gives the order, and names a slice for every item that is
   not live now.
+
+### Accepted direction and implementation boundary (2026-10-26)
+
+**Accepted founder direction:** move specialized former "apps" into the core product's project workflow screens.
+Reserve standalone app identities for standardized central services, with **Projects, Submission Center, Tasking,
+Vault, CMC, RBM, and Study and Protocol Design** named as examples. A therapeutic specialty, device discipline,
+filing pathway or calculation does not acquire a separate app identity because it has an existing surface or
+catalogue row. Its functions are reached in the relevant project step or document, using the shared service owner.
+This extends P-47; it does not replace this placement map or section 8's order with another architecture plan.
+
+**Recommendations, not additional founder approvals:** retain shared homes for **Authoring with Review/Approval**,
+**Reporting & analytics**, and **organisation administration, access and audit**. These functions already exist;
+the recommendation is to use their existing owners across workflows. It does not authorize new apps, rail entries,
+commercial grants or scope expansion. Reporting and Authoring retain their earlier recorded launch decisions.
+Communication and Quality also retain their existing homes and safeguards; their absence from the latest examples
+does not retire them. The founder's examples identify a central-service boundary, not an exhaustive replacement menu.
+
+#### Existing central-service owners
+
+Paths below are under `client/src/concept2cure/v2/` unless qualified. This is an ownership map, not a claim that
+every service is admitted, complete, entitled or shown on the rail.
+
+| Founder-named central service | Existing owner | How a project uses it / current limit |
+| --- | --- | --- |
+| Projects | `surfaces/Projects.tsx`, `surfaces/ProjectHome.tsx`, `surfaces/ProjectPlan.tsx`, `surfaces/ProjectStages.tsx` | The canonical project and its six steps; extend the filing plan and work packages here. |
+| Submission Center | `surfaces/SubmissionCenter.tsx`, `surfaces/ProjectMarkets.tsx`; `shared/constants/launch-scope.ts` | Submit and Respond carry the project, market and sequence into the existing filing workflow; validation, approval and dispatch gates stay with it. |
+| Tasking (currently labelled Tasks) | `surfaces/TaskBoard.tsx`, `surfaces/PlanAssign.tsx`, `OpenWork.tsx` | Assigned work and source-linked deliverables use the same tasks. This direction does not create a second task service or change the current label by itself. |
+| Vault | `surfaces/Vault.tsx`, `editor/ProjectFilesPanel.tsx` | Evidence and document versions use the same governed records; project context and access checks travel with each hand-off. |
+| CMC | `surfaces/CmcModule.tsx`, `surfaces/CmcModule3Build.tsx`; `server/services/cmc/composition-scope.ts` | Plan/Author reach the existing service. Its small-molecule US IND composition boundary and commercial verdict remain in force. |
+| RBM | `surfaces/Rbm.tsx`, `surfaces/RbmSurfaces.tsx` | Evidence/study conduct reaches the existing study-linked monitoring work when ready and admitted; section 5.1 and slice 25 still name its record-linking and readiness gaps. |
+| Study and Protocol Design | `surfaces/ProtocolDev.tsx`, `surfaces/ProtocolDevDesign.tsx`, `surfaces/ProtocolDevWorkspace.tsx` | Plan/Author use the existing protocol and study-design workspace. Its current `protocol-dev` ownership under Authoring does not require a parallel app, study store or editor; section 7's protocol convergence still applies. |
+
+#### Tailoring inside a project
+
+The same workflow screens reveal the work that applies to the selected project, using:
+
+- **Product type:** the recorded drug, biologic, device, IVD or other supported product context; a tenant's industry
+  preference alone does not establish the product's facts.
+- **Pathway and stage:** the recorded filing/application type, pathway and current lifecycle or document stage;
+  reuse the existing filing catalogue, pyramids and work-package compiler.
+- **Jurisdiction:** the project's selected markets and supported pathway/version. A reference rule or market option
+  is not evidence that a product meets it or that a service supports it.
+- **Role and records:** the person's actual permissions and assigned work, and the accessible project, study,
+  document and sequence records. A workstream's discipline label does not grant access. Missing facts and failed
+  reads remain explicit; they do not become default eligibility, readiness or a zero count.
+
+Tailoring changes placement and context, not authorization. Keep server scope, organisation/project isolation,
+commercial entitlements, governed lifecycle, provenance, review/signature and export/dispatch safeguards. AnA calls
+the same canonical engines and records; a relocated calculator keeps its stated-input basis and unknown inputs.
+Before removing a former screen, route or identity, prove every function in its reachable replacement, preserve
+bookmarks and `@` handles through the existing routing contracts, and name the parity/reachability test by path.
 
 There are two kinds of thing, and only two:
 
@@ -91,6 +143,10 @@ outside the catalog while its tools are not.
 | `server/services/ana/ana-launch-scope.inventory.json`; `ana-launch-scope.ts` | Which AnA tools and commands run in this release: 619 tools and 74 commands listed in scope; 172 tools and 41 commands listed under `hiddenApp`. A tool listed there still runs when any surface it serves is in `LAUNCH_SURFACE_IDS` (`anaCapabilityInLaunchScope`, `:59-67`), so the device tools of `device-presub`, `device-postmarket`, `device-software`, `device-clinical-studies`, `device-udi`, `device-diagnostics`, `device-510k`, `device-cer`, `labeling` and `risk` run in production today. | — |
 | `shared/constants/launch-scope.ts`; `useSurfaceAvailable`; `LaunchScopeGate` | Which surfaces a client may open; the lock panel for the rest. Communication's module keeps its tier ("no new organisation grant"); CMC / Module 3 lists no module ("pricing is the founder's call"). | A self-serve organisation, created at the free tier, sees Communication and CMC / Module 3 on its rail and meets a lock on both. |
 | `client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx` (surface id `apps`) | Plan & features, administrators only (pass 1). | Non-device cards still carry an Open button. |
+| `client/src/concept2cure/v2/catalogWorkflows.ts`; `client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx`; `shared/constants/launch-scope.ts` | Groups subscription feature rows under existing `LAUNCH_APPS` owners, with when/start/next guidance; preserves the original group indices for governed switches. | Catalogue regrouping is presentation, not completed placement inside project workflows, and makes no access or admission decision. |
+| `shared/navigation/callable-apps.ts`; `client/src/concept2cure/v2/appMentions.tsx`; `server/services/ana-ri/message-intent.ts`, `server/services/ana-ri/invoked-apps-block.ts` | One shared `@` capability vocabulary, labels and legacy aliases drive composer suggestions, server intent/context and tool selection. | The internal `app` name is not approval for a standalone product destination. Removing or renaming handles without migrating both consumers would lose callable functionality. |
+| `client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx`; `client/src/concept2cure/v2/surfaces/ProjectPlan.tsx`; `client/src/concept2cure/v2/shellProject.ts` | Existing recorded product/pathway work packages, feature-availability checks and project/step continuity are the integration spine. | The MDX compiler currently receives `markets: []`; discipline labels are not role/access predicates. Non-IND/non-device Plan coverage and jurisdiction/record tailoring are incomplete. |
+| `docs/design/FEATURE_AND_SERVICE_INVENTORY.md`; `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/inventory-plan.md` | Existing function/service inventory and ordered convergence/parity work, including the client-journey hand-offs. | Neither replaces this canonical placement map, proves all function carry-over complete, nor authorizes deletion without a reachable replacement. |
 | `shared/constants/deferred-capability-inventory.ts`; `docs/SURFACE_DECISIONS_2026-10-08.md` | Earlier converge decisions, kept here. | — |
 | `parity-batches.json` (a working file of this session, not in the repository) | The input of the function-parity audit. | Batched against the pre-correction canonicals (section 5.8); `FUNCTION_PARITY.md` does not exist yet. |
 
@@ -111,6 +167,17 @@ editor's per-section guidance (`TemplateGuidance`) is the surviving successor of
 restores one of the others is a reach, not a build. Nothing found already chooses tools by document type. "CMC
 adequacy", named by the founder for later, has no catalogue item and no code by that name; it is placed in CMC /
 Module 3 (section 5.1) and listed last (section 8).
+
+**2026-10-26 continuation check** (code snapshot `7eec0035`): re-read the placement/handoff, filing cleanup plan,
+feature/service inventory, launch owners, project workflow composition, catalogue grouping and shared mention
+consumers. `git log --all --diff-filter=D` on the client-journey, placement-map, callable-apps, catalogWorkflows and
+inventory names returned no matching deletions in this checkout. It is shallow, so this check does not establish
+full-history absence; the earlier historical deletion references above are retained as reported.
+
+**Current placement gaps:** subscription grouping still leaves specialized functions to reach from their real
+project step; Evidence has files/Vault but not its planned device clinical-study door; Plan coverage outside US IND
+and device packages needs extension; and market/role/record tailoring is not complete merely because product/pathway
+work packages exist. These are completions of the named owners, not reasons for another catalogue or app shell.
 
 ## Corrections to the inventory
 
@@ -1214,6 +1281,14 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 
 ## 8. Order of work
 
+**2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
+The smallest next UI change remains **A2.5**, already specified in `SLICE_A2_PLAN.md`: complete the existing
+RegistryPicker chosen-filing note with the market-support build line and reuse the catalogue's Ask AnA prompt from
+`shared/regulatory/filing-catalog.ts`. A2.1–A2.4 are complete; no former screen is removed by this next change.
+After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
+Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
+path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.
+
 Vertical slices, each one a session can build and prove on its own, most client value first. Every item that is not
 LIVE NOW in section 5 is named under "Rows" in the slice that shows, places or folds it; a slice 0 fix on the way is
 named in slice 0 as well. Each slice names the rows it moves, the work (each a completion of something that
@@ -1526,7 +1601,7 @@ Standing: each item of section 5.9, decided before the slice in its last column.
   "Not read here yet", never "No … yet".
 - **Not yet shown** is the step's or the document's *Coming later* line, in words, with no button. A locked screen
   reached by a bookmark says it is not in this release. Never "Coming soon", never a disabled button.
-- **Not in client copy**: app, apps, workflow (for a feature), suite, cockpit, workbench, engine, hub, twin,
+- **Not in client copy**: app/apps for a specialized feature, workflow (for a feature), suite, cockpit, workbench, engine, hub, twin,
   intelligence (as a product name), module (except a CTD module and CMC / Module 3), program (use project), plan (for
   the subscription). Sentence case throughout. Internal ids (`apps`, `LAUNCH_APPS`) are not words a person reads and
   keep their names; where an id would show in the address bar, an alias shows a word instead (section 12).
@@ -1654,7 +1729,9 @@ No new visual component. Every placement reuses one of these.
   section 5: its words leave the *Coming later* line, its door appears and ⌘K lists it by its placed name, in the same
   change, with its status re-earned on real data. Admission adds a door, never a rail entry, except a work area the
   founder names.
-- **The rail** grows only by a founder-named work area: at most two more (Biostatistics, Risk-based monitoring).
+- **The rail** grows only through an explicit placement/admission decision for a standardized central service.
+  The previously queued additions are Biostatistics and Risk-based monitoring. The 2026-10-26 service examples do
+  not automatically add or duplicate rail entries; specialized features stay inside their mapped workflow homes.
 - **A duplicate found later** goes into section 5.8 with its canonical and its functions before anything else is built.
 - **A function found later** in a folded item (by the parity audit or a client) is added to its fold row and carried
   before the shell is removed; one that cannot be carried as it is goes on the founder's list (section 5.9).
