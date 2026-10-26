@@ -239,6 +239,18 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     job.studyInfoSnapshot
   );
   const persistedSubset = job.sectionsToGenerate ?? null;
+  const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+  const canonicalSections = flattenICHE3Sections(fresh);
+  const canonicalNumbers = new Set(canonicalSections.map(section => section.number));
+  // Empty arrays retain the existing full-build meaning. An unusable retained
+  // selection must never become a vacuously complete job or discard unknown slots.
+  if (!canonicalSections.length || (persistedSubset != null && (!Array.isArray(persistedSubset)
+    || persistedSubset.some(number => !canonicalNumbers.has(number))))) {
+    await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
+      error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
+    }).where(eq(csrBuildJobs.id, jobId));
+    return;
+  }
   const subsetFilter =
     persistedSubset && persistedSubset.length > 0
       ? new Set(persistedSubset)
@@ -260,26 +272,25 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     userId: job.requestedBy ?? undefined,
   };
 
-  // 5. Build the work list: flatten the ICH-E3 tree, apply subset filter,
-  // then subtract sections that were already persisted on a previous attempt
-  // (resume support — avoids re-billing the AI for sections already drafted).
-  const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
-  const allTargets = flattenICHE3Sections(fresh).filter(s =>
+  // 5. Resume only missing/blank targets; preserve every nonblank saved target.
+  const allTargets = canonicalSections.filter(s =>
     subsetFilter ? subsetFilter.has(s.number) : true
   );
+  const targetNumbers = new Set(allTargets.map(section => section.number));
 
   const alreadyPersisted = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber })
+    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content })
     .from(csrSectionOutputs)
     .where(eq(csrSectionOutputs.jobId, job.id));
-  const persistedSet = new Set(alreadyPersisted.map(r => r.sectionNumber));
+  const persistedSet = new Set(alreadyPersisted.filter(row => targetNumbers.has(row.sectionNumber)
+    && row.content.trim()).map(row => row.sectionNumber));
 
   const totalSections = allTargets.length;
   let sectionsCompleted = persistedSet.size;
   const currentSection = { number: '' as string };
 
   // Seed initial progress so a resumed run reports the right number
-  if (totalSections > 0 && sectionsCompleted > 0) {
+  if (totalSections > 0) {
     const initialProgress = Math.floor(
       (sectionsCompleted / totalSections) * 100
     );
@@ -305,10 +316,8 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         aiCtx
       );
 
-      // Skip empty drafts (both AI and template returned nothing) rather
-      // than write a NOT-NULL-violating row. This matches the prior
-      // iterDraftedSections behavior which skipped empty leaves.
-      if (!drafted.content || drafted.content.length === 0) {
+      // Missing output remains retryable work; never persist whitespace as a draft.
+      if (!drafted.content?.trim()) {
         continue;
       }
 
@@ -354,16 +363,8 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         .where(eq(csrBuildJobs.id, jobId));
     }
 
-    // 6. Placeholder gate (resume-safe). A section whose AI draft threw falls
-    // back to bracketed template prose that still contains unresolved fields —
-    // e.g. §13's "the benefit-risk profile … is considered [favorable/
-    // unfavorable]". Marking the job 'complete' would let the submission
-    // orchestrator assemble that literal placeholder into the filing package as
-    // a finished CSR section. The legacy synchronous path already gates on this
-    // via computeBuildCompleteness/hasUnresolvedPlaceholders; the async runner
-    // (the path production actually uses) did not. Re-read EVERY persisted
-    // section for this job — not just the ones drafted this attempt — so a
-    // placeholder left by a prior run is caught on resume too.
+    // 6. Re-read saved target coverage, including prior attempts. Missing rows
+    // cannot pass a placeholder-only check; unrelated rows do not cover targets.
     const persistedOutputs = await d
       .select({
         sectionNumber: csrSectionOutputs.sectionNumber,
@@ -371,16 +372,24 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       })
       .from(csrSectionOutputs)
       .where(eq(csrSectionOutputs.jobId, job.id));
-    const placeholderSections = persistedOutputs
+    const savedTargets = persistedOutputs.filter(row => targetNumbers.has(row.sectionNumber) && row.content.trim());
+    const savedNumbers = new Set(savedTargets.map(row => row.sectionNumber));
+    const missingSections = allTargets.filter(section => !savedNumbers.has(section.number)).map(section => section.number);
+    const finalProgress = Math.floor((savedNumbers.size / totalSections) * 100);
+    if (missingSections.length) {
+      await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
+        error: { reason: 'missing_section_outputs', sections: missingSections,
+          message: 'Requested CSR sections have no nonblank saved output; retained sections are preserved for resume.' },
+      }).where(eq(csrBuildJobs.id, jobId));
+      return;
+    }
+    const placeholderSections = savedTargets
       .filter(r => hasUnresolvedPlaceholders(r.content))
       .map(r => r.sectionNumber)
       .sort();
 
     if (placeholderSections.length > 0) {
-      // Fail closed — a CSR with unresolved template placeholders is NOT
-      // submission-ready. Surface it as failed with the exact sections so the
-      // orchestrator holds the package and a reviewer can re-draft them, rather
-      // than shipping placeholder prose under a 'complete' status.
+      // Retain the existing placeholder refusal and its exact target codes.
       console.warn(
         `[csr-job-runner] Job ${jobId} has unresolved placeholders in section(s) ${placeholderSections.join(
           ', ',
@@ -404,7 +413,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       return;
     }
 
-    // 6b. Success — every persisted section is placeholder-free.
+    // 6b. Success — every requested section is saved, nonblank and placeholder-free.
     await d
       .update(csrBuildJobs)
       .set({

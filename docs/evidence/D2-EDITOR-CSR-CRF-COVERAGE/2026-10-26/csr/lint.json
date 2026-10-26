@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-10-26T22:18:50.760300+00:00",
+  "argv": [
+    "python3",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.809,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "csr/final-inputs.json",
+  "sourcesBefore": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "a9adb57ee50cba7460b68b9ca488462f706e68933831293768250204dd90b095"
+  },
+  "sourcesAfter": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "a9adb57ee50cba7460b68b9ca488462f706e68933831293768250204dd90b095"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "7b0e40becb2519772414ed8e0fd5b198ed05d36785c91a2b568fa54fd91dea6c",
+  "testSummary": []
+}

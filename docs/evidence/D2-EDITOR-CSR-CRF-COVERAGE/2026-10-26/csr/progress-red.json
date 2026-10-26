@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-26T22:17:55.466301+00:00",
+  "argv": [
+    "/workspace/scratch/editor-toolchain/node_modules/.bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+    "-t",
+    "resets stale progress"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.228,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "csr/progress-red-inputs.json",
+  "sourcesBefore": {
+    "server/services/csr/csr-job-runner.ts": "e68496bd8a4d3575e9ae1150252f875ec49990aa6a8ff2c557594e80df1515ca",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab"
+  },
+  "sourcesAfter": {
+    "server/services/csr/csr-job-runner.ts": "e68496bd8a4d3575e9ae1150252f875ec49990aa6a8ff2c557594e80df1515ca",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "f745a4b5df653b075ad9d60e0f2b571f9da178c850ca15a9579c4e49060c1eab"
+  },
+  "sourceDrift": [],
+  "rawOutput": "progress-red.log.gz",
+  "rawGzipSha256": "6c6d87f758240b86b07c61984783638a6955488aa8d9fa49d1e57484baa187a9",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 13 skipped (14)",
+    "Duration  1.77s (transform 979ms, setup 70ms, import 1.44s, tests 14ms, environment 0ms)"
+  ]
+}

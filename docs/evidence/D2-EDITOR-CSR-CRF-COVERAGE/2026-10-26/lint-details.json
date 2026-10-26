@@ -1,0 +1,196 @@
+{
+  "baseline": "a54e56337c0028c53d20276b5441681feddf67b4",
+  "results": [
+    {
+      "file": "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/csr-draft-source-honesty.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr-builder.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 4,
+      "warnings": 4,
+      "previous": {
+        "1:no-undef": 1,
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:no-undef": 1,
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 1,
+          "message": "'setImmediate' is not defined.",
+          "line": 365,
+          "column": 3,
+          "messageId": "undef",
+          "endLine": 365,
+          "endColumn": 15
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'generateCSRSections' has a complexity of 18. Maximum allowed is 15.",
+          "line": 402,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 402,
+          "endColumn": 42
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (610). Maximum allowed is 500.",
+          "line": 784,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 930,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'generateSectionTemplate' has a complexity of 19. Maximum allowed is 15.",
+          "line": 860,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 860,
+          "endColumn": 33
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/csr/csr-job-runner.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has too many lines (226). Maximum allowed is 100.",
+          "line": 190,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 190,
+          "endColumn": 37
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'runCSRBuildJob' has a complexity of 38. Maximum allowed is 15.",
+          "line": 190,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 190,
+          "endColumn": 37
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/study-design/__tests__/crf-shell.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/study-design/crf-shell.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'projectCrfShell' has too many lines (127). Maximum allowed is 100.",
+          "line": 230,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 230,
+          "endColumn": 32
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'projectCrfShell' has a complexity of 35. Maximum allowed is 15.",
+          "line": 230,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 230,
+          "endColumn": 32
+        }
+      ],
+      "growth": []
+    }
+  ]
+}

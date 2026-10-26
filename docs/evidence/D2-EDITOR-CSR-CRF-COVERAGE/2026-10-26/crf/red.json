@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-26T22:14:47.611353+00:00",
+  "argv": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "server/services/study-design/__tests__/crf-shell.test.ts",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts",
+    "--config",
+    "vitest.config.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 10.125,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "crf/prepatch-source.json",
+  "sourcesBefore": {
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "5012e4656a45670cc247d5469342150d45de3080e2d581ed5bb02e31d06f23a9",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "3549bff2b24ca9a586a2fe4bc190c4858354bd0da328d88b6785f01167d79cf8"
+  },
+  "sourcesAfter": {
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "5012e4656a45670cc247d5469342150d45de3080e2d581ed5bb02e31d06f23a9",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "3549bff2b24ca9a586a2fe4bc190c4858354bd0da328d88b6785f01167d79cf8"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "0594e8d68ed9f1b24fde759f1f2134ee2866ef11353d1ba8b0d338b1b3a8507d",
+  "testSummary": [
+    "Test Files  2 failed (2)",
+    "Tests  4 failed | 41 passed (45)",
+    "Duration  9.63s (transform 3.48s, setup 78ms, import 1.98s, tests 7.19s, environment 0ms)"
+  ]
+}

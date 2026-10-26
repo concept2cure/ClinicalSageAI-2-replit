@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-26T22:20:24.035910+00:00",
+  "argv": [
+    "/workspace/scratch/editor-toolchain/node_modules/.bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts",
+    "server/services/csr/__tests__/csr-project-scope.pglite.test.ts",
+    "server/services/csr/__tests__/csr-builder-scope-quota.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 8.748,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "csr/qualified-inputs.json",
+  "sourcesBefore": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "520d93164a8619301276edc4229f06efbe4c32be0c07f65a2f917bd7f63d000a",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts": "390564db969f5e287a635224b82c46bda391c442812e48b517d9fe72cd8c781e",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "aa929e9cbcc58e1941dea9322946385d6bdd2d04036e052175abbe74b2e3892d"
+  },
+  "sourcesAfter": {
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "520d93164a8619301276edc4229f06efbe4c32be0c07f65a2f917bd7f63d000a",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts": "390564db969f5e287a635224b82c46bda391c442812e48b517d9fe72cd8c781e",
+    "docs/evidence/D2-EDITOR-CSR-CRF-COVERAGE/2026-10-26/csr/check-lint.py": "aa929e9cbcc58e1941dea9322946385d6bdd2d04036e052175abbe74b2e3892d"
+  },
+  "sourceDrift": [],
+  "rawOutput": "qualified.log.gz",
+  "rawGzipSha256": "3c0a6d526e16ebb6dc7a45b76facc1e5483534e6e2f083b233275277f9ae4d14",
+  "testSummary": [
+    "Test Files  4 passed (4)",
+    "Tests  37 passed (37)",
+    "Duration  8.25s (transform 998ms, setup 104ms, import 3.19s, tests 4.34s, environment 0ms)"
+  ]
+}

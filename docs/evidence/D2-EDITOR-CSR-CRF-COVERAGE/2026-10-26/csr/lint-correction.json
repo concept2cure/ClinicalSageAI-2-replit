@@ -1,0 +1,5 @@
+{
+  "receipt": "lint.json",
+  "cause": "The first helper assumed ESLint preserves input order; map results by filePath. The enlarged coverage describe callback also crossed the100-line warning threshold, so split its cases by coverage and retained selections. No warning allowance or baseline change.",
+  "productionChangedForCorrection": false
+}

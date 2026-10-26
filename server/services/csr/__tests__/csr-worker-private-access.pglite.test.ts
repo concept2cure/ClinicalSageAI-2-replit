@@ -9,8 +9,10 @@ const state = vi.hoisted(() => ({
   database: null as unknown,
   queries: [] as string[],
   draft: vi.fn(),
+  continuation: vi.fn(),
 }));
 vi.mock('../../../db', () => ({ get db() { return state.database; } }));
+vi.mock('../../submission-orchestrator-continuation.js', () => ({ continueOrchestratorRunsForCsrJob: state.continuation }));
 vi.mock('../../csr-builder', async () => {
   const actual = await vi.importActual<typeof import('../../csr-builder')>('../../csr-builder');
   return { ...actual, draftCSRSectionWithProvenance: state.draft };
@@ -91,6 +93,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   state.draft.mockReset();
+  state.continuation.mockReset().mockResolvedValue([]);
   state.draft.mockResolvedValue({ number: '13', content: 'Recorded discussion awaiting scientific review.',
     source: 'ai', model: 'test-drafter', tokenCost: 0, lineage: null });
   await database.exec(`
@@ -105,6 +108,39 @@ beforeEach(async () => {
   state.queries.length = 0;
 });
 afterAll(async () => { await database?.close(); });
+
+it('persists exact partial coverage and resumes only the missing section without changing retained output', async () => {
+  const { jobId } = await enqueueCSRBuildJob({ ...request(7), sectionsToGenerate: ['1', '6', '13'] },
+    { organizationId: 7, projectId: 11, requestedBy: 7 });
+  state.draft.mockImplementation(async (section: { number: string }) => ({ number: section.number,
+    content: section.number === '6' ? ' \n\t ' : `Recorded working text for section ${section.number}.`,
+    source: 'ai', model: 'synthetic-test-drafter', tokenCost: 2, lineage: { fixtureSource: section.number } }));
+
+  await runCSRBuildJob(jobId);
+
+  expect(await readJob(jobId)).toMatchObject({ status: 'failed', progress: 66,
+    error: { reason: 'missing_section_outputs', sections: ['6'] } });
+  expect(state.continuation).not.toHaveBeenCalled();
+  const retained = (await database.query<{ section_number: string; content: string; content_hash: string }>(
+    'SELECT * FROM csr_section_outputs WHERE job_id=$1 ORDER BY section_number', [jobId])).rows;
+  expect(retained.map(row => row.section_number)).toEqual(['1', '13']);
+  expect(retained.map(row => row.content)).toEqual(['Recorded working text for section 1.', 'Recorded working text for section 13.']);
+  expect(retained.every(row => /^[a-f0-9]{64}$/.test(row.content_hash))).toBe(true);
+
+  state.draft.mockClear().mockResolvedValue({ number: '6', content: 'Recorded investigator and administrative source details.',
+    source: 'template', model: null, tokenCost: 0, lineage: { fixtureSource: '6' } });
+  await runCSRBuildJob(jobId);
+
+  expect(await readJob(jobId)).toMatchObject({ status: 'complete', progress: 100, error: null });
+  expect(state.draft).toHaveBeenCalledOnce();
+  expect(state.draft.mock.calls[0][0]).toMatchObject({ number: '6' });
+  const completed = (await database.query<{ section_number: string }>(
+    'SELECT * FROM csr_section_outputs WHERE job_id=$1 ORDER BY section_number', [jobId])).rows;
+  // Compare entire saved rows, including IDs, hashes, lineage and generation metadata.
+  expect(completed.filter(row => row.section_number !== '6')).toEqual(retained);
+  expect(completed.map(row => row.section_number)).toEqual(['1', '13', '6']);
+  expect(state.continuation).toHaveBeenCalledExactlyOnceWith(jobId, 7);
+});
 
 describe('CSR job HTTP reads and cancellation enforce current private-project permission', () => {
   it.each(['', '/sections'])('refuses unrelated organization member access to retained jobs%s before any section read', async suffix => {

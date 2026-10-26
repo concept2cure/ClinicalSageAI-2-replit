@@ -76,7 +76,10 @@ export interface CrfShell {
 
 // ─── Activity categories handled by a standard domain rather than their own form ──
 
-const COVERED_BY_STANDARD_FORM = new Set(['safety', 'eligibility', 'administrative']);
+// The generic AE scaffold does not collect a recorded ECG, laboratory or other
+// safety assessment. Keep each safety activity's identity and endpoint fields;
+// its category or name cannot establish equivalence with the AE form.
+const COVERED_BY_STANDARD_FORM = new Set(['eligibility', 'administrative']);
 
 const CATEGORY_ORDER: Record<string, number> = {
   administrative: 0,
@@ -261,7 +264,7 @@ export function projectCrfShell(design: StudyDesign): CrfShell {
       (a, b) => (CATEGORY_ORDER[a.category] ?? 99) - (CATEGORY_ORDER[b.category] ?? 99) || a.order - b.order,
     );
     for (const activity of activities) {
-      if (COVERED_BY_STANDARD_FORM.has(activity.category)) continue; // IE / AE / DM cover these
+      if (COVERED_BY_STANDARD_FORM.has(activity.category)) continue; // IE / DM cover these
       const visitIds = visitsForActivity(soa, activity.id);
       const linked = (activity.endpointNames ?? []).map(n => endpointsByName.get(n)).filter((e): e is Endpoint => Boolean(e));
       let items: CrfItem[];

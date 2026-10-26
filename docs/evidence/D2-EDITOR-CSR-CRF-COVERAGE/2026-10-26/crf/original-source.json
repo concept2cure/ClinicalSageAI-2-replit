@@ -1,0 +1,7 @@
+{
+  "files": {
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "cca85ebc842b4707ee7d54c72b8f685a589ef1dd6ba88893c16ba4a157bed713",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "db37bcd07249b27afd06378bacb3db37468d80dea5c7b2f3b07b520a5b19cf12"
+  }
+}

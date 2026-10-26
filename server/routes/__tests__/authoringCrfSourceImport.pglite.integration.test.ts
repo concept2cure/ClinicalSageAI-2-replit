@@ -399,3 +399,92 @@ describe('exact saved CRF selector and source identity', () => {
     } })).toThrow('Invalid saved import identity or version');
   });
 });
+
+describe('recorded safety assessments reach the existing editor working copy', () => {
+  it('previews, creates and reopens exact safety fields and rejects changed safety source before writing', async () => {
+    const id = 'recorded-safety-crf-study';
+    const saved: StudyDesign = { ...design, id, safety: { aeDefinitions: 'Recorded independent event review' },
+      endpoints: [...design.endpoints, { name: 'Recorded QTc change', role: 'safety', type: 'continuous',
+        definition: 'Change in corrected QT interval', measurementMethod: 'Recorded central ECG reading', timepoint: 'Week 4' }],
+      scheduleOfActivities: { ...design.scheduleOfActivities!, activities: [...design.scheduleOfActivities!.activities,
+        { id: 'S_ECG', name: 'Recorded ECG safety assessment', category: 'safety', endpointNames: ['Recorded QTc change'], order: 2 },
+        { id: 'S_LABS', name: 'Recorded laboratory safety assessment', category: 'safety', order: 3 },
+        { id: 'S_VITALS', name: 'Recorded vital-sign safety assessment', category: 'safety', order: 4 }],
+      cells: [...design.scheduleOfActivities!.cells, { activityId: 'S_ECG', visitId: 'V2', state: 'performed' },
+        { activityId: 'S_LABS', visitId: 'V1', state: 'performed' }, { activityId: 'S_VITALS', visitId: 'V2', state: 'conditional' }] } };
+    await seedStudy(id, PROGRAM, ORG, saved);
+    const original = await sourceRows();
+    const beforePreview = await counts();
+    const p = await checkedPreview(id);
+    const expected = [
+      { title: 'Recorded ECG safety assessment', activityId: 'S_ECG', visit: 'V2 (Week 4)',
+        prompt: 'Recorded QTc change: value (Recorded central ECG reading)', type: 'number', derivedFrom: 'endpoint:Recorded QTc change' },
+      { title: 'Recorded laboratory safety assessment', activityId: 'S_LABS', visit: 'V1 (Screening)',
+        prompt: 'Recorded laboratory safety assessment: result', type: 'text', derivedFrom: 'activity:S_LABS' },
+      { title: 'Recorded vital-sign safety assessment', activityId: 'S_VITALS', visit: 'V2 (Week 4)',
+        prompt: 'Recorded vital-sign safety assessment: result', type: 'text', derivedFrom: 'activity:S_VITALS' },
+    ];
+    type WorkingSection = { id?: string; title: string; content: string };
+    const assertSafety = (sections: WorkingSection[]) => {
+      for (const target of expected) {
+        const section = sections.find(row => row.title === target.title);
+        expect(section, `Missing recorded safety form ${target.activityId}`).toBeDefined();
+        expect(section!.content).toContain(`Source activity: ${target.activityId}`);
+        expect(section!.content).toContain(`Visit IDs: ${target.visit}`);
+        expect(section!.content).toContain(target.prompt);
+        expect(section!.content).toContain(`Type: ${target.type}`);
+        expect(section!.content).toContain(`Derived from: ${target.derivedFrom}`);
+        if (target.activityId !== 'S_ECG') expect(section!.content).toContain('yes — complete from supported design evidence');
+      }
+      const events = sections.filter(row => row.title === 'Adverse events');
+      expect(events).toHaveLength(1);
+      expect(events[0].content).toContain('CDASH domain hint: AE');
+      expect(events[0].content).toContain('Adverse event term');
+      expect(events[0].content).not.toContain('Source activity: S_');
+      const gaps = sections.find(row => row.title === 'Recorded CRF gaps and specification review')!;
+      expect(gaps.content).toContain('Recorded laboratory safety assessment');
+      expect(gaps.content).toContain('Recorded vital-sign safety assessment');
+      expect(gaps.content).toContain('placeholder');
+    };
+    for (const target of expected) {
+      const previewed = p.sections.find((section: { title: string }) => section.title === target.title);
+      expect(previewed, `Missing recorded safety preview ${target.activityId}`).toMatchObject({ title: target.title });
+      expect(previewed.contentSha256).toMatch(/^[0-9a-f]{64}$/);
+    }
+    expect(p.gaps.join(' ')).toContain('Recorded laboratory safety assessment');
+    expect(p.gaps.join(' ')).toContain('Recorded vital-sign safety assessment');
+    expect(await counts()).toEqual(beforePreview);
+    const created = await post(body(id, { expectedFingerprint: p.fingerprint }));
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    assertSafety(created.body.data.sections);
+    const docId = created.body.data.doc.id;
+    const reopened = await author(request(app).get(`/api/authoring/docs/${docId}/sections`));
+    expect(reopened.status, JSON.stringify(reopened.body)).toBe(200);
+    assertSafety(reopened.body.sections);
+    for (const target of expected) {
+      const section = reopened.body.sections.find((row: WorkingSection) => row.title === target.title);
+      const revision = (await db.pglite.query<Revision>('SELECT content_sha256,inputs FROM doc_revisions WHERE section_id=$1', [section.id])).rows[0];
+      expect(revision.content_sha256).toBe(hash(section.content));
+      expect(p.sections.find((row: { title: string }) => row.title === target.title).contentSha256).toBe(hash(section.content));
+      expect(revision.inputs.importSource.fingerprint).toBe(p.fingerprint);
+    }
+    expect(await sourceRows()).toEqual(original);
+    const before = await counts();
+    const changed: StudyDesign = JSON.parse(JSON.stringify(saved));
+    changed.endpoints.find(endpoint => endpoint.name === 'Recorded QTc change')!.measurementMethod = 'Changed central ECG reading';
+    await db.pool.query('UPDATE cdisc_prm_studies SET metadata=$1 WHERE study_id=$2 AND tenant_id=$3',
+      [{ kind: 'c2c.studyDesign.v1', design: changed }, id, ORG]);
+    try {
+      const refused = await post(body(id, { expectedFingerprint: p.fingerprint }));
+      expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+      expect(refused.body.error).toBe('SOURCE_CHANGED');
+      expect(await counts()).toEqual(before);
+      const retained = await author(request(app).get(`/api/authoring/docs/${docId}/sections`));
+      expect(retained.status, JSON.stringify(retained.body)).toBe(200);
+      assertSafety(retained.body.sections);
+    } finally {
+      const row = original.find(source => source.row.study_id === id)!.row;
+      await db.pool.query('UPDATE cdisc_prm_studies SET metadata=$1,updated_at=$2 WHERE study_id=$3', [row.metadata, row.updated_at, id]);
+    }
+  });
+});
