@@ -15,8 +15,10 @@
 
 **Implementation status:** A2.1–A2.6 complete. A2.6 evidence is under
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.6/README.md`.
-Next is A2.7, beginning with the legacy artifact-rollup parity reconciliation
-recorded in that evidence; the inventory below describes discovery-time behavior.
+Next is A2.7. Its A2.7a artifact-rollup carryover is complete; the separate
+`project_sections` tracking-map carryover remains before step aliases and the fold.
+Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`.
+The inventory below describes discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 
@@ -580,6 +582,18 @@ reconciliation before A2.7 can remove a screen. No deletion is authorized by A2.
   - A ProjectDossier test: AnA facts list sections, `lastUpdated` renders, and the card shows in-review. **Red.**
 
 ### A2.7 Complete `DEEP_LINK_ALIASES` with a step and the no-project rule, and fold `dossier` and `dossier-map` onto Author
+
+**Completed prerequisite (A2.7a):** carry the existing artifact section counts,
+per-state counts, weakest-artifact status and per-section artifact dates into
+Author through the admitted canonical dossier read. Reuse the artifact rollup
+behind `dossier-readiness.ts`, preserving its source separately from governed
+document-section figures. Unknown statuses remain unassessed; approved plus
+locked has approved as its weakest state. Evidence and the existing-owner
+inventory: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`.
+The old map's `project_sections` tracking records are a separate source, not
+artifact-derived completion. Preserve their functions before removing that map.
+No alias, screen/route/catalog deletion or validation-inventory retirement is
+authorized by completion of the artifact-only prerequisite.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.

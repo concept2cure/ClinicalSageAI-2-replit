@@ -56,6 +56,9 @@ it('retires local and handoff pins on programme change before the new source rea
   view.rerender(<ProjectHome {...props} onAsk={onAsk} />);
   expect(screen.queryByRole('button', { name: 'Draft with 1 pinned source' })).toBeNull();
   expect(window.C2C_SOURCE_PINS).toEqual([]);
+  // A different project opens at its own step (A2.1), so visit its Evidence
+  // workflow before asking to draft from that project's sources.
+  fireEvent.click(screen.getByRole('button', { name: 'Evidence', exact: true }));
   await act(async () => pending.resolve(ok({ sources: [row(2)] })));
   fireEvent.click(await screen.findByRole('button', { name: 'Write from these sources' }));
   expect(window.C2C_SOURCE_PINS).toEqual(['2']);

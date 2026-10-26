@@ -1,0 +1,21 @@
+{
+  "base": "df1a3cc250a90e3cd69bde4e27af32d50579c665",
+  "regression": {
+    "passed": 124,
+    "files": 14
+  },
+  "browser": {
+    "passed": 1,
+    "database": "PostgreSQL 16 + pgvector",
+    "runtimeRole": "app_service",
+    "rls": true,
+    "developmentAuth": true,
+    "widths": [
+      1440,
+      390
+    ]
+  },
+  "build": "client, server, audit verifier passed",
+  "independentReview": "passed",
+  "legacyScreensAndTrackingSource": "retained"
+}

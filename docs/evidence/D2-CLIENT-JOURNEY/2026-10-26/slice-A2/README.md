@@ -72,7 +72,7 @@ limits and native browser checks are in [A2.5/README.md](A2.5/README.md).
 
 ## Remaining sequence
 
-A2.6 is complete: counted section details and regulatory order extend the existing read; Author shows read-only status and module dates, home review/draft totals, and the critical-path AnA handoff. Evidence is in [A2.6/README.md](A2.6/README.md). A2.7 is next and begins with legacy artifact-rollup, artifact-count and per-section-date parity reconciliation before any screen removal. Later folds retain founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
+A2.6 is complete: counted section details and regulatory order extend the existing read; Author shows read-only status and module dates, home review/draft totals, and the critical-path AnA handoff. Evidence is in [A2.6/README.md](A2.6/README.md). [A2.7a/README.md](A2.7a/README.md) records the completed artifact-rollup/count/date carryover into Author. A2.7 still requires the old map's separate `project_sections` tracking-record carryover before aliases and coordinated retirement. Later folds retain founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
 
 ## Final integration
 

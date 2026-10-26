@@ -23,6 +23,7 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
 import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
+import { readDossierArtifactReadiness } from '../../services/c2c/dossier-artifact-read.js';
 import { requestPgClient } from '../../db/requestDb';
 import type { PoolClient } from 'pg';
 import {
@@ -1149,9 +1150,27 @@ router.get('/:id/dossier', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
-    return res.json(await readDossier(pool, orgId, String(req.params.id)));
+    const q = requestPgClient(req);
+    const identity = { organizationId: orgId, userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    const anchors = verifiedProgramAnchors(q, identity, scope);
+    const anchor = anchors[0];
+    const admitted = res.locals.currentProgramAccess;
+    // The param middleware already admitted one exact tracking relationship.
+    // A fresh scope must still name that relationship before either source is
+    // read; it cannot silently select a replacement anchor or client.
+    if (!admitted || anchors.length !== 1 || !anchor ||
+        anchor.programId !== admitted.programId || anchor.projectId !== admitted.projectId ||
+        anchor.clientWorkspaceId !== admitted.clientWorkspaceId ||
+        scope.actor.userId !== admitted.actor.userId || scope.actor.role !== admitted.actor.role) {
+      throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+    }
+    const dossier = await readDossier(q, orgId, identity.programId);
+    const artifactReadiness = await readDossierArtifactReadiness(q, orgId, anchor.projectId);
+    await requireProgramScopeStillCurrent(q, identity, scope);
+    return res.json({ ...dossier, artifactReadiness });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });

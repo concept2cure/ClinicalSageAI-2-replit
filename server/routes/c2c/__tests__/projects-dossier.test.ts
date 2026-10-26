@@ -121,3 +121,67 @@ describe('GET /api/c2c/projects/:id/dossier', () => {
     expect(queryMock.mock.calls.some(([sql]) => /c2c_documents/.test(String(sql)))).toBe(false);
   });
 });
+
+describe('GET dossier artifact stages beside governed document readiness', () => {
+  it('adds artifact stages from the exact admitted anchor and keeps governed figures separate', async () => {
+    seatProgram(7, P1, { projectId: 41, clientWorkspaceId: 9 });
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      if (/FROM concept2cure_artifacts/.test(sql)) return { rows: [
+        { ctd_section: '2.5', status: 'review', count: 2, last_updated: '2026-10-21T10:00:00.000Z' },
+      ] };
+      return { rows: [] };
+    });
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(res.status).toBe(200);
+    expect(res.body.home).toEqual({ state: 'no_sections', pct: null });
+    expect(res.body.artifactReadiness).toMatchObject({
+      basis: 'governed_artifacts', state: 'measured',
+      sections: [{ ctdSection: '2.5', artifactCount: 2, reviewCount: 2, status: 'review', lastUpdated: '2026-10-21T10:00:00.000Z' }],
+      summary: { totalSections: 1, inProgressSections: 1, readySections: 0 },
+    });
+    const artifactCalls = queryMock.mock.calls.filter(([sql]) => /FROM concept2cure_artifacts/.test(String(sql)));
+    expect(artifactCalls).toHaveLength(1);
+    expect(artifactCalls[0][1]).toEqual([41, 7]);
+  });
+
+  it('does not reuse a sibling project anchor or disclose another tenant’s artifact stages', async () => {
+    seatProgram(7, P1, { projectId: 41, clientWorkspaceId: null });
+    seatProgram(7, OTHER, { projectId: 73, clientWorkspaceId: null });
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      return { rows: [] };
+    });
+    for (const [id, expected] of [[P1, 41], [OTHER, 73]] as const) {
+      const res = await request(app(7)).get(`/api/c2c/projects/${id}/dossier`);
+      expect(res.status).toBe(200);
+      expect(res.body.artifactReadiness).toMatchObject({ state: 'no_artifacts', sections: [], summary: { totalSections: 0 } });
+      expect(queryMock.mock.calls.filter(([sql]) => /FROM concept2cure_artifacts/.test(String(sql))).at(-1)?.[1]).toEqual([expected, 7]);
+    }
+    queryMock.mockClear();
+    seatMember(8, USER, 'member');
+    const foreign = await request(app(8)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(foreign.status).toBe(404);
+    expect(queryMock.mock.calls.some(([sql]) => /FROM concept2cure_artifacts/.test(String(sql)))).toBe(false);
+  });
+
+  it('reports an unprovisioned artifact store separately and throws real artifact read failures', async () => {
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      if (/FROM concept2cure_artifacts/.test(sql)) throw Object.assign(new Error('missing'), { code: '42P01' });
+      return { rows: [] };
+    });
+    const missing = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(missing.status).toBe(200);
+    expect(missing.body.artifactReadiness).toMatchObject({ basis: 'governed_artifacts', state: 'unavailable', sections: null, summary: null });
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      if (/FROM concept2cure_artifacts/.test(sql)) throw Object.assign(new Error('connection reset'), { code: '08006' });
+      return { rows: [] };
+    });
+    const failed = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(failed.status).toBe(500);
+    expect(failed.body.artifactReadiness).toBeUndefined();
+  });
+
+});
