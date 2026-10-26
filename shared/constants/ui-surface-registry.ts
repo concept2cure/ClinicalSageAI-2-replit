@@ -536,8 +536,11 @@ export const UI_SURFACES: UiSurface[] = [
     // CMC screens call, and the dead '/api/cmc/stability' mount dropped.
     // Attribution is by longest prefix, so the bare claim made every handler
     // under it answer as launch at the flip, called or not. Everything else
-    // under /api/cmc is unmapped, which production refuses: deliberately so
-    // for /projects/:id/process-capability until a launch screen calls it.
+    // under /api/cmc is unmapped, which production refuses.
+    // 2026-10-25: /projects/:id/process-capability was unmapped "until a launch
+    // screen calls it". The Batch records tab calls it now (CmProcessCapability
+    // in CmcModule.tsx), so it is claimed — and claimed at '/api/cmc/projects',
+    // which is the whole of what this router serves under that segment.
     // The deferred /variations/classify caller is claimed narrowly below,
     // with its own launch-scope refusal in the route. Each prefix needs a caller in the CMC
     // screens (server/middleware/__tests__/launch-scope-api-gate.test.ts;
@@ -566,6 +569,10 @@ export const UI_SURFACES: UiSurface[] = [
          prefix can claim, and the only prefix that would have covered it is the
          bare '/api/cmc' that P-28 deliberately does not claim. */
       '/api/cmc/register-history',
+      /* Pp/Ppk/Cp/Cpk over a program's recorded batch results, read by the
+         Batch records tab. The one route this router serves under
+         '/api/cmc/projects'. */
+      '/api/cmc/projects',
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',

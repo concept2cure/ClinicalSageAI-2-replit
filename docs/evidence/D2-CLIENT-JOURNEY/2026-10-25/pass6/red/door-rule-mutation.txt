@@ -1,0 +1,2 @@
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a program is given a way to open one > offers the door on every CMC empty state that asks for a program
+      Tests  1 failed | 15 passed (16)

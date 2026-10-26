@@ -1,0 +1,7 @@
+CALLS:
+GET /api/cmc/specifications/585ae9b6-d8f7-474e-bd99-797f7551df4e -> 200
+GET /api/cmc/specifications/585ae9b6-d8f7-474e-bd99-797f7551df4e -> 200
+PUT /api/cmc/specifications/NaN -> 500
+TOAST: [
+  'No analytical methods yet\n' +
+    'Validated analytical procedures (HPLC, GC, UV-VIS, …) appear here as your organization records them. A specification cannot be approved until its method is validated (ICH Q2) — use Add method to record the first one.',

@@ -241,11 +241,32 @@ describe('quality_specifications is scoped to the caller tenant, and only to it'
     expect(row.approval_status).toBe('draft');
   }, 60_000);
 
+  /* ── Two expectations changed on 2026-10-25, and why ─────────────────────
+     The history route was reached from the product for the first time
+     (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass6/) and now answers the
+     same envelope as GET /api/cmc/register-history/:register/:id, so one panel
+     reads every register's history and no second one exists to drift. Two
+     things this file asserted therefore moved:
+
+       • `data` is the envelope `{ register, recordId, store, entries, … }`,
+         not a bare array. The cases below read `data.entries`.
+       • A specification this tenant does not own is **404**, not 200 with an
+         empty list — the convention the register-history route already keeps:
+         that a record exists at all is not a foreign caller's to learn.
+
+     The INTENT is unchanged and is what these cases still hold: a foreign
+     tenant receives none of another tenant's — or an orphan's — history, and
+     the owning tenant receives its own. The second is the positive control, so
+     "scope everything to nothing" cannot pass as a repair. */
   it('does not return the audit history of a NULL-tenant row to a foreign tenant', async () => {
     currentTenant = 2;
     const res = await request(app).get(`/api/cmc/specifications/${orphanId}/history`);
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
+    /* 404, and NOT 403: the stronger answer, because a 403 would confirm the
+       row exists. A NULL-tenant row belongs to nobody, so it is nobody's. */
+    expect(res.status).toBe(404);
+    /* Whatever the status, no act may appear in the body. */
+    expect(JSON.stringify(res.body)).not.toContain('"entries":[{');
+    expect(res.body?.data?.entries ?? []).toEqual([]);
   }, 60_000);
 
   // ── Positive controls: the fix must not be "scope everything to nothing" ──
@@ -286,7 +307,13 @@ describe('quality_specifications is scoped to the caller tenant, and only to it'
     );
     const res = await request(app).get(`/api/cmc/specifications/${ownedId}/history`);
     expect(res.status).toBe(200);
-    expect(res.body.data.length).toBe(1);
+    expect(res.body.data.entries.length).toBe(1);
+    /* The store is named, because a reader must not have to infer whether an
+       unsealed row predates the chain or was never on it. */
+    expect(res.body.data.store).toBe('specification_revision_log');
+    /* And the act is readable: an envelope that arrived with no act in it
+       would satisfy a length check against a fixture and nothing else. */
+    expect(res.body.data.entries[0].act).toBe('created');
   }, 60_000);
 });
 

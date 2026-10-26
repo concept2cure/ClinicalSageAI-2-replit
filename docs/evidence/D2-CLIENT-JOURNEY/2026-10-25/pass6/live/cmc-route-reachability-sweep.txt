@@ -1,0 +1,100 @@
+OK   GET    /api/cmc/analytical-methods  <- cmcRegisters.tsx
+OK   POST   /api/cmc/analytical-methods  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/analytical-methods/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/analytical-methods/:id/validate  <- cmcRegisters.tsx
+OK   GET    /api/cmc/process-validation  <- cmcRegisters.tsx
+OK   POST   /api/cmc/process-validation  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/process-validation/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/process-validation/:id/approve  <- cmcRegisters.tsx
+OK   GET    /api/cmc/stability-studies  <- CmcModule.tsx, cmcRegisters.tsx
+OK   POST   /api/cmc/stability-studies  <- CmcModule.tsx, cmcRegisters.tsx
+OK   PUT    /api/cmc/stability-studies/:id  <- CmcModule.tsx, cmcRegisters.tsx
+OK   POST   /api/cmc/stability-studies/:id/close-out  <- CmcModule.tsx
+OK   GET    /api/cmc/qc-testing  <- cmcRegisters.tsx
+OK   POST   /api/cmc/qc-testing  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/qc-testing/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/change-control  <- cmcRegisters.tsx
+OK   POST   /api/cmc/change-control  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/change-control/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/drug-substances  <- cmcRegisters.tsx
+OK   POST   /api/cmc/drug-substances  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/drug-substances/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/drug-products  <- cmcRegisters.tsx
+OK   POST   /api/cmc/drug-products  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/drug-products/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/container-closures  <- cmcRegisters.tsx
+OK   POST   /api/cmc/container-closures  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/container-closures/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/container-closures/:id/qualify  <- cmcRegisters.tsx
+OK   GET    /api/cmc/reference-standards  <- cmcRegisters.tsx
+OK   POST   /api/cmc/reference-standards  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/reference-standards/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/reference-standards/:id/qualify  <- cmcRegisters.tsx
+OK   GET    /api/cmc/impurity-profiles  <- cmcRegisters.tsx
+OK   POST   /api/cmc/impurity-profiles  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/impurity-profiles/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/impurity-profiles/:id/qualify  <- cmcRegisters.tsx
+OK   GET    /api/cmc/dissolution-profiles  <- cmcRegisters.tsx
+OK   POST   /api/cmc/dissolution-profiles  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/dissolution-profiles/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/material-specs  <- cmcRegisters.tsx
+OK   POST   /api/cmc/material-specs  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/material-specs/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/formulation-records  <- cmcRegisters.tsx
+OK   POST   /api/cmc/formulation-records  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/formulation-records/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/manufacturing-processes  <- cmcRegisters.tsx
+OK   POST   /api/cmc/manufacturing-processes  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/manufacturing-processes/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/manufacturing-processes/:id/validate  <- cmcRegisters.tsx
+OK   GET    /api/cmc/characterization-studies  <- cmcRegisters.tsx
+OK   POST   /api/cmc/characterization-studies  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/characterization-studies/:id  <- cmcRegisters.tsx
+OK   POST   /api/cmc/characterization-studies/:id/qualify  <- cmcRegisters.tsx
+OK   GET    /api/cmc/comparability-studies  <- cmcRegisters.tsx
+OK   POST   /api/cmc/comparability-studies  <- cmcRegisters.tsx
+OK   POST   /api/cmc/comparability-studies/:id/approve  <- cmcRegisters.tsx
+OK   PUT    /api/cmc/comparability-studies/:id  <- cmcRegisters.tsx
+OK   GET    /api/cmc/quality/qbd/:projectId  <- CmcQuality.tsx
+OK   POST   /api/cmc/ich-compliance  <- CmcQuality.tsx
+OK   POST   /api/cmc/variations/classify  <- CmcVariationAssessment.tsx
+OK   POST   /api/cmc/control-strategy  <- CmcQuality.tsx
+OK   POST   /api/cmc/stability-studies/:id/shelf-life  <- CmcModule.tsx
+OK   POST   /api/cmc/stability-studies/:id/trending  <- CmcModule.tsx
+OK   GET    /api/cmc/projects/:projectId/process-capability  <- CmcModule.tsx
+OK   POST   /api/cmc/stability-studies/poolability  <- CmcModule.tsx
+OK   GET    /api/cmc/register-history/:register/:id  <- cmcRecordHistory.tsx
+OK   GET    /api/cmc/specifications/:projectId  <- CmcModule.tsx, cmcRecordHistory.tsx
+OK   POST   /api/cmc/specifications  <- CmcModule.tsx, cmcRecordHistory.tsx
+OK   PUT    /api/cmc/specifications/:id  <- CmcModule.tsx, cmcRecordHistory.tsx
+OK   POST   /api/cmc/specifications/:id/approve  <- CmcModule.tsx
+OK   GET    /api/cmc/specifications/:id/history  <- cmcRecordHistory.tsx
+OK   GET    /api/cmc/batch-records/:projectId  <- CmcModule.tsx
+OK   POST   /api/cmc/batch-records  <- CmcModule.tsx
+OK   PUT    /api/cmc/batch-records/:id  <- CmcModule.tsx
+OK   POST   /api/cmc/batch-records/:id/release  <- CmcModule.tsx
+OK   GET    /api/cmc/module3-os/sections/:projectId  <- CmcModule.tsx
+OK   POST   /api/cmc/module3-os/compile/:projectId  <- CmcModule3Build.tsx
+OK   POST   /api/cmc/module3-os/contradictions/:projectId  <- CmcModule.tsx, CmcModule3Build.tsx
+OK   GET    /api/cmc/module3-os/contradictions/:projectId  <- CmcModule.tsx, CmcModule3Build.tsx
+OK   PATCH  /api/cmc/module3-os/contradictions/:id/resolve  <- CmcModule3Build.tsx
+OK   GET    /api/cmc/module3-os/readiness/:projectId  <- CmcModule.tsx, CmcModule3Build.tsx
+OK   GET    /api/cmc/module3-os/sections/:projectId/:sectionKey  <- CmcModule.tsx
+OK   GET    /api/cmc/module3-os/provenance/:projectId/:sectionKey  <- CmcModule.tsx, CmcModule3Build.tsx
+NONE POST   /api/cmc/module3-os/sections/:projectId/:sectionKey/approve  
+NONE POST   /api/cmc/module3-os/sections/:projectId/:sectionKey/refresh  
+OK   POST   /api/cmc/module3-os/guard/final-export/:projectId  <- CmcModule3Build.tsx
+OK   POST   /api/cmc/module3-os/place-into-submission/:projectId  <- CmcPlaceIntoSubmission.tsx
+OK   GET    /api/cmc/module3-os/build-state/:projectId  <- CmcModule3Build.tsx
+OK   POST   /api/cmc/module3-os/build-section/:projectId/:sectionKey  <- CmcModule3Build.tsx
+OK   GET    /api/cmc/module3-os/register-links/:projectId  <- CmcRegisterLinks.tsx
+NONE POST   /api/cmc/module3-os/register-links/:projectId/:register/:recordId/retry  
+OK   GET    /api/cmc/module3-os/source-evidence/:projectId  <- CmcSectionEvidence.tsx
+NONE GET    /api/cmc/module3-os/source-evidence/:projectId/documents  
+OK   POST   /api/cmc/module3-os/source-evidence/:projectId  <- CmcSectionEvidence.tsx
+NONE POST   /api/cmc/module3-os/source-evidence/:projectId/:linkId/unlink  
+OK   GET    /api/cmc/module3-board  <- CmcModule.tsx
+OK   GET    /api/cmc/agency-questions  <- cmcAgencyQuestions.tsx
+OK   POST   /api/cmc/agency-questions  <- cmcAgencyQuestions.tsx
+OK   PATCH  /api/cmc/agency-questions/:id  <- cmcAgencyQuestions.tsx
+TOTAL 99

@@ -23,7 +23,24 @@
 
 /** The display row the specifications table renders. */
 export interface CmcSpecRow {
-  id: number;
+  /**
+   * `quality_specifications.id` is a **uuid**, and this was `number`.
+   *
+   * `specRowFromApi` coerced it with `Number(row.id)`, so every display row
+   * carried `NaN` and every path that used it was broken in the product:
+   * `PUT /api/cmc/specifications/NaN`,
+   * `POST /api/cmc/specifications/NaN/approve`,
+   * `GET /api/cmc/specifications/NaN/history` — and the optimistic update
+   * `rows.map(x => x.id === id ? … : x)` matched nothing, because `NaN === NaN`
+   * is false. The register read and created fine, which is why it looked like a
+   * working screen: only editing, approving and reading one row's history were
+   * affected, and each failed with a 500 the user saw as "Operation failed".
+   *
+   * Found 2026-10-25 by pressing History in the running app
+   * (`invalid input syntax for type uuid: "NaN"`), not by reading the code —
+   * `Number()` of a uuid type-checks perfectly.
+   */
+  id: string;
   attr: string;
   material: string;
   method: string;
@@ -92,21 +109,58 @@ function str(o: Record<string, unknown>, key: string): string {
   return typeof val === 'string' ? val : val == null ? '' : String(val);
 }
 
+/**
+ * A jsonb column that holds a bare value rather than the `{release, shelf}` /
+ * `{method}` / `{ich}` object this register writes.
+ *
+ * It happens: the create stringifies whatever it is given, so a caller that is
+ * not the form — an AnA tool, a script, an import — can persist
+ * `"95.0 - 105.0 %"` as a jsonb string, and the four fields the display row
+ * reads off an object are then all absent. That rendered as `--`, which reads
+ * as "no limit recorded" for a specification that records one. A limit shown
+ * as absent is the one mistake this column must not make: it is what a batch
+ * is released against.
+ *
+ * So a scalar is READ, as the single value it is. Where the register writes two
+ * limits it keeps two; where a row holds one value, that value is the release
+ * limit and the shelf-life limit is honestly empty.
+ */
+function scalar(v: unknown): string {
+  if (typeof v === 'string') {
+    const t = v.trim();
+    if (!t) return '';
+    /* A JSON-encoded scalar arrives as text from an older writer. */
+    try {
+      const parsed = JSON.parse(t);
+      if (parsed === null) return '';
+      if (typeof parsed === 'object') return '';
+      return String(parsed);
+    } catch {
+      return t;
+    }
+  }
+  return typeof v === 'number' || typeof v === 'boolean' ? String(v) : '';
+}
+
 /** quality_specifications row → the display row. Absent columns map to '' — an
  *  empty limit or method is rendered honestly, never invented. */
 export function specRowFromApi(row: QualitySpecApiRow): CmcSpecRow {
   const criteria = asObject(row.acceptance_criteria);
   const methods = asObject(row.test_methods);
   const basis = asObject(row.regulatory_basis);
-  const method = str(methods, 'method');
+  /* The object's own field first; a bare value only where there is no object,
+     so a row this register wrote is read exactly as before. */
+  const method = str(methods, 'method') || scalar(row.test_methods);
   return {
-    id: typeof row.id === 'number' ? row.id : Number(row.id),
+    /* The id as the server states it. Never parsed: this column is a uuid, and
+       a parse of one is NaN. */
+    id: String(row.id),
     attr: row.material_name ?? '',
     material: row.material_type ?? '',
     method,
-    release: str(criteria, 'release'),
+    release: str(criteria, 'release') || scalar(row.acceptance_criteria),
     shelf: str(criteria, 'shelf'),
-    ich: str(basis, 'ich'),
+    ich: str(basis, 'ich') || scalar(row.regulatory_basis),
     st: row.approval_status ?? 'draft',
     noMethod: !method,
   };

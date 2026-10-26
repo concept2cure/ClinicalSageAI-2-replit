@@ -74,6 +74,9 @@ import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
 import { useNavEntitlements } from '../navEntitlements';
 import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
+/* The project steps' band, over this work area's destinations: one idiom
+   for "what is open, what to do on it, what comes next" across the product. */
+import { StageBand } from './ProjectStages';
 import { CmcVariationAssessment } from './CmcVariationAssessment';
 import { RecordHistoryPanel } from './cmcRecordHistory';
 /* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
@@ -139,7 +142,21 @@ import '../styles/project-home-v2.css';
 
 /* ── Types ── */
 
-interface CmcNavItem { id: string; label: string; icon: string; }
+/**
+ * One destination in the CMC module's own navigation.
+ *
+ * `blurb` and `now` are the two fields the project's steps carry
+ * (`LifecycleStage`, fixtures/project-home-data.tsx): what the destination is,
+ * and what to do on it in one sentence a new client can act on. Both are
+ * static guidance about the destination and never a claim about this program's
+ * state — the same rule the project steps keep, for the same reason: a
+ * sentence that reads as a measurement is one nobody measured.
+ *
+ * The shape is a superset of `LifecycleStage`'s required fields, so
+ * `StageBand` renders these destinations with no second band
+ * (surfaces/ProjectStages.tsx).
+ */
+interface CmcNavItem { id: string; label: string; icon: string; blurb: string; now: string; }
 interface CmcPortfolio {
   sub: string; product: string; region: string; type: string;
   rpi: number | null; ir: number | null;
@@ -205,16 +222,61 @@ interface CmcBoardData {
    • Postapproval variation assessment remains deferred. The launch Change
      control tab records evidence and dispositions; a deployment permitting
      deferred work reaches the canonical classifier with its real inputs. */
+/* Each destination says what it is and what to do on it (2026-10-25, the
+   client journey's pass 2 applied to this work area:
+   docs/design/CLIENT_JOURNEY_2026-10-25.md). Nine labels were nine nouns, and
+   the only sentence beside them was each screen's own `CmHead meta`, which
+   describes what the screen HOLDS. A client who opened CMC could not tell
+   which destination the work in front of them belonged to, nor what to do
+   once there — the founder's recorded complaint about the catalog, inside one
+   work area. The order is the order the work is done, so the band's "Next"
+   reads as the path through Module 3. */
 const CMC_NAV: CmcNavItem[] = [
-  { id: 'overview', label: 'Overview', icon: 'beaker' },
-  { id: 'materials', label: 'Substance & product', icon: 'atom' },
-  { id: 'specs', label: 'Specifications', icon: 'clipboardList' },
-  { id: 'stability', label: 'Stability', icon: 'barChart' },
-  { id: 'batch', label: 'Batch records', icon: 'grid' },
-  { id: 'change', label: 'Change control', icon: 'gitBranch' },
-  { id: 'quality', label: 'Quality by design', icon: 'sigma' },
-  { id: 'build', label: 'Module 3 build', icon: 'layers' },
-  { id: 'pathway', label: 'Program records', icon: 'scroll' },
+  {
+    id: 'overview', label: 'Overview', icon: 'beaker',
+    blurb: 'How far Module 3 has got, and what is blocking it',
+    now: 'Start here. See how far Module 3 has got, what the export gate still refuses, and which agency questions on Module 3 are open — then open the destination that holds the work.',
+  },
+  {
+    id: 'materials', label: 'Substance & product', icon: 'atom',
+    blurb: 'CTD §3.2.S and §3.2.P — the active substance and the finished product',
+    now: 'Record the substance and the product: how each is manufactured, the materials and reference standards it is made with, the impurities found in it, and the container it is packaged in.',
+  },
+  {
+    id: 'specs', label: 'Specifications', icon: 'clipboardList',
+    blurb: 'Release and shelf-life limits, and the methods behind them',
+    now: 'Record each attribute’s release and shelf-life limits with the analytical method that measures it, then approve the specification under your signature. A limit whose method is not validated cannot be approved.',
+  },
+  {
+    id: 'stability', label: 'Stability', icon: 'barChart',
+    blurb: 'ICH Q1A(R2) studies and the shelf life they support',
+    now: 'Register each study with its storage condition and batches, enter the results as the timepoints are read, then close the study out with the shelf life those results support.',
+  },
+  {
+    id: 'batch', label: 'Batch records', icon: 'grid',
+    blurb: 'Manufacture, yield, deviations and disposition',
+    now: 'Log each batch as it is manufactured, with its yield and any deviation, then release it under your signature once its testing is complete.',
+  },
+  {
+    id: 'change', label: 'Change control', icon: 'gitBranch',
+    blurb: 'Changes to the substance, product or process, and what they affect',
+    now: 'Record each change with its justification and disposition, and see which Module 3 sections read the evidence it touches, so those sections are rebuilt before the next approval.',
+  },
+  {
+    id: 'quality', label: 'Quality by design', icon: 'sigma',
+    blurb: 'The control strategy and the ICH check over these records',
+    now: 'Derive this program’s critical attributes and process parameters from the records above, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
+  },
+  {
+    id: 'build', label: 'Module 3 build', icon: 'layers',
+    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
+    now: 'Compile §3.2 from these records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
+  },
+  {
+    id: 'pathway', label: 'Program records', icon: 'scroll',
+    blurb: 'Who did what, and the agency’s questions about it',
+    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
+  },
 ];
 
 const CMC_SUGGEST: Record<string, string[]> = {
@@ -1075,6 +1137,9 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   }, [mapped]);
   const [edit, setEdit] = useState<CmcSpecRow | 'new' | null>(null);
   const [sign, setSign] = useState<CmcSpecRow | null>(null);
+  /* One specification's recorded changes, open at a time — the same panel the
+     other sixteen registers use, over this register's own revision log. */
+  const [historyFor, setHistoryFor] = useState<{ id: string | number; subject: string } | null>(null);
   const [toast, fireToast] = useToast();
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : s === 'reject' ? 'err' : 'dim';
   const FORM = (row: CmcSpecRow | null): C2CFormConfig => ({
@@ -1172,7 +1237,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
               {!projectId ? (
-                <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." />
+                <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." action={openProgramAction(nav)} />
               ) : live.loading ? (
                 <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
@@ -1192,12 +1257,31 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
                   {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
+                  {/* The limits an inspector asks about first were the one
+                      register whose changes could not be read in the product:
+                      the route existed and nothing called it. */}
+                  <button
+                    className="nda-open"
+                    style={{ marginLeft: 6 }}
+                    onClick={() => setHistoryFor(historyFor?.id === r.id ? null : { id: r.id, subject: `${r.attr} — ${r.material}` })}
+                    title="Every recorded change to this specification, with both values"
+                  >
+                    {I.history} History
+                  </button>
                 </td>
               </tr>))}</tbody></table>
           )}
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
+      {historyFor && (
+        <RecordHistoryPanel
+          registerPath="specifications"
+          recordId={historyFor.id}
+          subject={historyFor.subject}
+          onClose={() => setHistoryFor(null)}
+        />
+      )}
       {/* specification (the limit) -> method (how it is measured) -> QC test
           (the measurement actually performed against it) -> reference standard
           (what the measurement is reported against). */}
@@ -1311,6 +1395,82 @@ interface Q1eEstimate {
   regression?: { slope: number; intercept: number; r2: number; residualSd: number; n: number; df: number };
   notes?: string[];
 }
+/**
+ * `POST /api/cmc/stability-studies/:id/trending` — out-of-trend results, the
+ * fitted slope and the projected crossing of the recorded criterion, per
+ * attribute and storage condition.
+ *
+ * ── Why this is here now (2026-10-25) ───────────────────────────────────────
+ * The engine (`services/cmc/stability-trending.ts`) and the route were written
+ * and had NO caller in the product, while THIS tab's own AnA starter has said
+ * "Show every study trending toward a limit" the whole time: the question was
+ * offered, the deterministic answer existed, and the only way to it was chat
+ * (`assess_recorded_stability_trend`). Measured by a reachability sweep over
+ * all 99 CMC routes against every client source file.
+ *
+ * Every figure and every refusal below is the server's. A series the engine
+ * would not fit is shown WITH its reason, never omitted — a trend table that
+ * silently drops the attributes it could not judge reads as a study with no
+ * drift in them.
+ */
+export interface TrendSeriesRow {
+  parameter: string;
+  condition: string;
+  pointsRecorded: number;
+  pointsUsable: number;
+  criterionRecordedAs: string | null;
+  outcome:
+    | { ok: false; reason: string; detail: string; pointsUsable: number }
+    | {
+        ok: true; method: string; alpha: number; pointsUsed: number; distinctTimePoints: number;
+        evaluated: number; observedPeriod: number;
+        outOfTrend: Array<{ time: number; value: number; predicted: number; interval: { lower: number; upper: number } }>;
+        slope: { estimate: number; ci: [number, number]; significant: boolean };
+        projection: { bound: 'lower' | 'upper'; limit: number; time: number } | null;
+      };
+}
+/**
+ * What a fitted series may be said to be doing.
+ *
+ * The SAME three branches `stabilityTrendSentence` uses to write §3.2.S.7
+ * (`server/services/module3Composer.ts`): a slope whose confidence interval
+ * includes zero establishes NO trend, whatever the projection arithmetic says,
+ * and the projection is only a statement about the limit when the slope is
+ * significantly non-zero.
+ *
+ * Written down here because the first version of this panel showed "heading
+ * toward: upper limit 1 at 23.37 mo" for a series the engine had measured as
+ * `significant: false` — the screen telling a CMC lead the opposite of what the
+ * dossier text, over the same engine output, would say about the same study.
+ * A projection is arithmetic; whether it means anything is a statistical
+ * question, and only one of the two is a claim the product may make.
+ */
+export function trendClaim(o: TrendSeriesRow['outcome']): { tone: 'warn' | 'dim'; text: string } {
+  if (!o.ok) return { tone: 'dim', text: '--' };
+  if (!o.slope.significant) {
+    return { tone: 'dim', text: 'no trend established (slope not significant)' };
+  }
+  if (!o.projection) return { tone: 'dim', text: 'heads away from the limit' };
+  return {
+    tone: 'warn',
+    text: `${o.projection.bound} limit ${o.projection.limit} at ${o.projection.time} mo`,
+  };
+}
+
+/** A series whose trend toward its limit IS established. The figure the panel
+ *  reports and the toast counts are the same one, by construction. */
+export function headingToward(report: TrendReport): TrendSeriesRow[] {
+  return report.series.filter((x) => trendClaim(x.outcome).tone === 'warn');
+}
+
+export interface TrendReport {
+  studyId: number | string;
+  basis: string;
+  alpha: number;
+  unassignedObservations: Array<{ parameter?: string; detail?: string }>;
+  series: TrendSeriesRow[];
+}
+
 interface Q1eReport {
   basis: string;
   scopeLimit: string;
@@ -1417,6 +1577,10 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
      because the estimate belongs to the batch and condition it was fitted from —
      a shelf life is not a property of the programme. */
   const [q1e, setQ1e] = useState<Record<number, Q1eReport>>({});
+  /* One trend report per study, keyed by study id — the same shape the Q1E fit
+     beside it uses, so a study can carry both and neither replaces the other. */
+  const [trend, setTrend] = useState<Record<number, TrendReport>>({});
+  const [trending, setTrending] = useState<number | null>(null);
   const [estimating, setEstimating] = useState<number | null>(null);
   /* Poolability is a property of a SET of batches, so unlike the per-study fit
      there is one selection and one result at a time. */
@@ -1524,6 +1688,58 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       fireToast(cmcAssessmentThrew('estimate the shelf life', e), 'error');
     } finally {
       setEstimating(null);
+    }
+  };
+
+  /**
+   * Assess this study's recorded series for drift.
+   *
+   * EVIDENCE, not a verdict on the study: an out-of-trend point is a signal to
+   * investigate, and a projected crossing says where the fitted line meets the
+   * limit IF the trend continues. Neither sets a shelf life — the close-out
+   * does, under signature — and the panel says so rather than letting a
+   * projection read as a claim.
+   */
+  const assessTrending = async (study: StabilityStudyApiRow) => {
+    if (trending != null) return;
+    setTrending(study.id);
+    try {
+      const res = await apiRequest('POST', '/api/cmc/stability-studies/' + study.id + '/trending', {});
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        /* A 409 is the engine refusing the WHOLE study for a stated reason (no
+           usable series at all). Shown as that reason, never as "no drift". */
+        fireToast(cmcWriteError(json, res.status), 'error');
+        return;
+      }
+      const report = (json as { data?: TrendReport })?.data;
+      if (!report || !Array.isArray(report.series)) {
+        fireToast('The trend assessment returned an unexpected shape — reload and retry.', 'error');
+        return;
+      }
+      setTrend((m) => ({ ...m, [study.id]: report }));
+      const heading = headingToward(report).length;
+      const oot = report.series.reduce((n, x) => n + (x.outcome.ok ? x.outcome.outOfTrend.length : 0), 0);
+      const notAssessed = report.series.filter((x) => !x.outcome.ok).length;
+      const assessed = report.series.length - notAssessed;
+      fireToast(
+        /* Three cases, not two. A study whose results open NO series at all is
+           not "0 series could not be assessed, see the reason against each of
+           the 0 below" — there is nothing below, and pointing a reader at an
+           empty table is how an unanswered question reads as an answered one. */
+        report.series.length === 0
+          ? 'This study’s recorded results open no attribute/condition series, so nothing was assessed for drift. ' +
+            'A series needs results recorded against the same parameter at the same storage condition.'
+          : assessed === 0
+            ? `No series on this study could be assessed — see the reason against each of the ${notAssessed} below.`
+            : `${assessed} series assessed · ${oot} out-of-trend result(s) · ${heading} heading toward a limit` +
+              (notAssessed ? ` · ${notAssessed} not assessed` : '') + '.',
+        report.series.length === 0 || assessed === 0 || oot > 0 || heading > 0 ? 'error' : 'ok',
+      );
+    } catch (e) {
+      fireToast(cmcAssessmentThrew('assess the stability trend', e), 'error');
+    } finally {
+      setTrending(null);
     }
   };
 
@@ -1711,27 +1927,13 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                         </td>
                         <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
                         <td><span className={'rd-chip tone-' + stabStatusTone(r.status)}>{r.status || 'draft'}</span></td>
-                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                          <button className="nda-open" onClick={() => setRecording(r)}>{I.plus} Result</button>
-                          <button
-                            className="nda-open"
-                            style={{ marginLeft: 6 }}
-                            onClick={() => void estimateQ1e(r)}
-                            disabled={estimating != null || results.length === 0}
-                            title={results.length === 0 ? 'Record pull-point results first — there is nothing to fit' : 'Fit ICH Q1E over this study’s recorded results'}
-                          >
-                            {I.sigma} {estimating === r.id ? 'Fitting…' : 'Estimate Q1E'}
-                          </button>
-                          <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setClosing(r)}>{I.checkCircle} Shelf life</button>
-                          <button
-                            className="nda-open"
-                            style={{ marginLeft: 6 }}
-                            title="Who recorded this study, who changed it, and what each change moved"
-                            onClick={() => setHistoryFor(historyFor?.id === r.id ? null : r)}
-                          >
-                            {I.history} History
-                          </button>
-                        </td>
+                        <StabilityRowActions
+                          study={r}
+                          hasResults={results.length > 0}
+                          busy={{ estimating, trending }}
+                          historyOpenFor={historyFor?.id ?? null}
+                          on={{ record: setRecording, estimate: estimateQ1e, trend: assessTrending, closeOut: setClosing, history: setHistoryFor }}
+                        />
                       </tr>
                       {isOpen && results.length > 0 && (
                         <tr>
@@ -1884,6 +2086,94 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                 );
               })}
 
+              {/* ── Out-of-trend and drift, per study ──
+                  Beside the Q1E fits because they answer different questions
+                  about the same series: Q1E asks how long the data support,
+                  trending asks whether the series is moving and where it is
+                  heading. A series the engine would not fit is listed with its
+                  reason, not dropped. */}
+              {rows.filter((r) => trend[r.id]).map((r) => {
+                const report = trend[r.id];
+                if (report.series.length === 0) {
+                  /* A citation and a header row over no rows reads as a study
+                     that was assessed and found clean. It was not assessed. */
+                  return (
+                    <div key={`trend-${r.id}`} style={{ marginTop: 14 }} data-testid={`cmc-trend-${r.id}`}>
+                      <div className="cm-sub-head">
+                        Out-of-trend and drift — {r.studyTitle || r.productName} · batch {r.batchNumber || '--'}
+                      </div>
+                      <EmptyState
+                        icon={I.barChart}
+                        title="Nothing on this study could be assessed for drift"
+                        hint="A series needs results recorded against the same parameter at the same storage condition. No such series is recorded here, so no trend is being claimed either way."
+                        testId={`cmc-trend-none-${r.id}`}
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div key={`trend-${r.id}`} style={{ marginTop: 14 }} data-testid={`cmc-trend-${r.id}`}>
+                    <div className="cm-sub-head">
+                      Out-of-trend and drift — {r.studyTitle || r.productName} · batch {r.batchNumber || '--'}
+                    </div>
+                    <table className="reg-tbl cm-subtable">
+                      <thead>
+                        <tr><th>Parameter</th><th>Condition</th><th>Points</th><th>Slope (per month)</th><th>Out of trend</th><th>Heading toward</th><th>Detail</th></tr>
+                      </thead>
+                      <tbody>
+                        {report.series.map((x, i) => (
+                          <tr key={i}>
+                            <td style={{ fontWeight: 600 }}>{x.parameter}</td>
+                            <td>{x.condition || '--'}</td>
+                            <td>{x.outcome.ok ? `${x.outcome.pointsUsed}/${x.pointsRecorded}` : `${x.pointsUsable}/${x.pointsRecorded}`}</td>
+                            <td className="mono">
+                              {x.outcome.ok
+                                ? <>{x.outcome.slope.estimate}{x.outcome.slope.significant ? '' : <span className="cm-meta"> (not significant)</span>}</>
+                                : '--'}
+                            </td>
+                            <td>
+                              {x.outcome.ok
+                                ? x.outcome.outOfTrend.length === 0
+                                  ? <span className="rd-chip tone-ok">none</span>
+                                  : <span className="rd-chip tone-err">{x.outcome.outOfTrend.length} at {x.outcome.outOfTrend.map((o) => o.time).join(', ')} mo</span>
+                                : <span className="cm-meta">not assessed</span>}
+                            </td>
+                            <td>
+                              {(() => {
+                                const claim = trendClaim(x.outcome);
+                                return <span className={claim.tone === 'warn' ? 'sp-tone-warn' : 'cm-meta'}>{claim.text}</span>;
+                              })()}
+                            </td>
+                            {/* The engine's own words for a refusal; for an
+                                assessed series, what the figures were produced
+                                over — so a slope is never read as covering
+                                more of the study than it does. */}
+                            <td className="cm-meta">
+                              {x.outcome.ok
+                                ? `${x.outcome.evaluated} of ${x.outcome.distinctTimePoints} pull point(s) judged over ${x.outcome.observedPeriod} months` +
+                                  (x.criterionRecordedAs ? ` · against ${x.criterionRecordedAs}` : ' · no criterion recorded on these results')
+                                : x.outcome.detail}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="cm-meta">
+                      {report.basis} A projected crossing is where the fitted line meets the limit if the trend
+                      continues; it is evidence for an investigation, not a shelf life. The shelf life is claimed
+                      on the study’s close-out, under signature.
+                    </div>
+                    {report.unassignedObservations.length > 0 && (
+                      /* Never silently dropped: a result the engine could not
+                         place in a series is part of the study's data. */
+                      <div role="status" className="sp-tone-warn" style={{ fontSize: 11.5, marginTop: 4 }}>
+                        {report.unassignedObservations.length} recorded observation(s) could not be placed in any series and were not assessed.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
               {/* ── Batch poolability ──
                   Sits under the same table its selection is made in, because
                   the decision to pool is made while reading the per-study fits,
@@ -2017,7 +2307,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 
 /* ═══════════ Batch records -- release eligibility ═══════════ */
 
-function CmBatch({ ask }: { ask: (text: string) => void }) {
+function CmBatch({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: bound to the governed cmc_batch_records table
      (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
      Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
@@ -2115,7 +2405,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
               {!projectId ? (
-                <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." />
+                <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." action={openProgramAction(nav)} />
               ) : live.loading ? (
                 <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
@@ -2139,7 +2429,10 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         </div>
       </div>
       {/* Batch records are the process as run; process validation is the
-          evidence that the process is capable of running that way. */}
+          evidence that the process is capable of running that way — and the
+          capability indices are what the batches as run actually show against
+          the specification, which is a different question from either. */}
+      <CmProcessCapability projectId={projectId} />
       <CmProcessValidation />
       {form && <C2CForm config={{ eyebrow: 'Batch — new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
@@ -2154,6 +2447,242 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
       ] }} onCancel={() => setReleasing(null)} onSubmit={doRelease} />}
       <C2CToast msg={toast} />
+    </div>
+  );
+}
+
+/**
+ * One stability study's governed actions.
+ *
+ * Extracted when the Trend action took the register row's render arrow past the
+ * complexity cap. Each button's disabled state and title come from ONE fact —
+ * whether the study has recorded results — because every one of these acts
+ * reads that series, and a button that is live over no data is an action that
+ * can only fail.
+ */
+function StabilityRowActions({ study, hasResults, busy, historyOpenFor, on }: {
+  study: StabilityStudyApiRow;
+  hasResults: boolean;
+  busy: { estimating: number | null; trending: number | null };
+  historyOpenFor: number | null;
+  on: {
+    record: (s: StabilityStudyApiRow) => void;
+    estimate: (s: StabilityStudyApiRow) => void | Promise<void>;
+    trend: (s: StabilityStudyApiRow) => void | Promise<void>;
+    closeOut: (s: StabilityStudyApiRow) => void;
+    history: (s: StabilityStudyApiRow | null) => void;
+  };
+}) {
+  const noSeries = 'Record pull-point results first — there is nothing to ';
+  return (
+    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+      <button className="nda-open" onClick={() => on.record(study)}>{I.plus} Result</button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        onClick={() => void on.estimate(study)}
+        disabled={busy.estimating != null || !hasResults}
+        title={hasResults ? 'Fit ICH Q1E over this study’s recorded results' : noSeries + 'fit'}
+      >
+        {I.sigma} {busy.estimating === study.id ? 'Fitting…' : 'Estimate Q1E'}
+      </button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        onClick={() => void on.trend(study)}
+        disabled={busy.trending != null || !hasResults}
+        title={hasResults ? 'Assess this study’s recorded series for drift toward its limits' : noSeries + 'trend'}
+      >
+        {I.barChart} {busy.trending === study.id ? 'Assessing…' : 'Trend'}
+      </button>
+      <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => on.closeOut(study)}>{I.checkCircle} Shelf life</button>
+      <button
+        className="nda-open"
+        style={{ marginLeft: 6 }}
+        title="Who recorded this study, who changed it, and what each change moved"
+        onClick={() => on.history(historyOpenFor === study.id ? null : study)}
+      >
+        {I.history} History
+      </button>
+    </td>
+  );
+}
+
+/* ═══════════ Process capability over the recorded batch results ═══════════ */
+
+/**
+ * `GET /api/cmc/projects/:projectId/process-capability`, on the screen where
+ * the batches are.
+ *
+ * ── Why this is here now (2026-10-25) ───────────────────────────────────────
+ * The route, its engine (`services/cmc/process-capability.ts`, ISO 22514-2
+ * indices with the moving-range sigma) and the source reader
+ * (`recorded-capability.ts`) were all written and had NO caller in the product:
+ * a reachability sweep over all 99 CMC routes found three in that state, and
+ * this was the one a CMC lead asks for by name. "Is this process capable
+ * against the specification we set" could be answered by AnA in chat
+ * (`assess_recorded_process_capability`) or by compiling §3.2.S.4.4 and reading
+ * the section — and nowhere on the screen that holds the batches.
+ *
+ * ── What it may claim ───────────────────────────────────────────────────────
+ * Nothing it did not read. Every number and every refusal is the server's: the
+ * indices, the verdict, the batches excluded for a non-numeric result, the
+ * batches outside the specification, and `statement` — the server's own
+ * sentence for a project whose results open no series. A failed read is the
+ * failure, never "not capable" and never an empty report: a capability report
+ * that silently names no test reads as a set of tests that passed.
+ */
+interface CapabilitySeriesRow {
+  test: string;
+  resultsOnFile: number;
+  criterion: string | null;
+  outcome:
+    | { ok: true; n: number; mean: number; sdOverall: number; cp: number | null; cpk: number; pp: number | null; ppk: number;
+        batchesOutOfSpecification: string[]; excludedBatches: string[]; preliminary: boolean; verdict: string; notes: string[]; citation: string }
+    | { ok: false; code: string; message: string; excludedBatches: string[] };
+}
+interface CapabilityRead {
+  projectId: string;
+  resultsOnFile: number;
+  assessed: boolean;
+  statement: string | null;
+  sides: Record<'drug_substance' | 'drug_product', { series: CapabilitySeriesRow[]; statements: string[] }>;
+}
+
+/** A 200 that is not this shape is a mismatch, not a project with no capability. */
+function isCapabilityRead(value: unknown): value is CapabilityRead {
+  const v = value as CapabilityRead | null;
+  return Boolean(v && typeof v === 'object' && typeof v.assessed === 'boolean' && v.sides && typeof v.sides === 'object');
+}
+
+const CAPABILITY_SIDES: Array<{ key: 'drug_substance' | 'drug_product'; label: string; section: string }> = [
+  { key: 'drug_substance', label: 'Drug substance', section: '§3.2.S.4.4' },
+  { key: 'drug_product', label: 'Drug product', section: '§3.2.P.5.4' },
+];
+
+/** The citation of the first series the engine assessed; none if it assessed none. */
+function citationOf(series: CapabilitySeriesRow[]): string | null {
+  for (const s of series) if (s.outcome.ok) return s.outcome.citation;
+  return null;
+}
+
+function capabilityTone(outcome: CapabilitySeriesRow['outcome']): string {
+  if (!outcome.ok) return 'dim';
+  return outcome.verdict === 'capable' ? 'ok' : outcome.verdict === 'marginal' ? 'warn' : 'err';
+}
+
+function CapabilityRow({ row, side }: { row: CapabilitySeriesRow; side: { label: string; section: string } }) {
+  const o = row.outcome;
+  const num = (v: number | null) => (v === null ? '—' : String(v));
+  return (
+    <tr>
+      <td>
+        {/* The material the series belongs to, named on the row. The two sides
+            were flattened into one unlabelled table, so a test run on BOTH the
+            substance and the product showed two rows of the same name with two
+            different indices and nothing to tell them apart — and an index
+            attributed to the wrong material is a false statement about a
+            specification. The §3.2 section each side composes into is named
+            too, because that is what a reader is about to go and check. */}
+        <div style={{ fontWeight: 600 }}>{row.test}</div>
+        <div className="cm-meta">{side.label} · {side.section}</div>
+      </td>
+      <td style={{ fontSize: 11.5, color: 'var(--text-300)' }}>{row.criterion ?? 'none recorded'}</td>
+      <td className="mono">{o.ok ? o.n : '—'}</td>
+      <td className="mono">{o.ok ? num(o.ppk) : '—'}</td>
+      <td className="mono">{o.ok ? num(o.cpk) : '—'}</td>
+      <td><span className={'rd-chip tone-' + capabilityTone(o)}>{o.ok ? o.verdict : 'not assessed'}</span></td>
+      <td style={{ fontSize: 11.5, color: 'var(--text-300)' }}>
+        {/* The server's own words, in both directions: its refusal, or the
+            caveats it attached to an index it did produce. A batch excluded or
+            out of specification is NAMED, because a capability index that
+            quietly absorbed it is the number this panel exists to not show. */}
+        {o.ok
+          ? [
+              /* `preliminary` is NOT restated here: the server's own notes
+                 already carry "Preliminary: n batches…" in full, and saying it
+                 twice read as two separate caveats. The flag stays on the
+                 payload for a caller that needs the fact without the prose. */
+              o.batchesOutOfSpecification.length ? `out of specification: ${o.batchesOutOfSpecification.join(', ')}` : null,
+              o.excludedBatches.length ? `no numeric result: ${o.excludedBatches.join(', ')}` : null,
+              ...o.notes,
+            ].filter(Boolean).join(' · ') || '—'
+          : o.message}
+      </td>
+    </tr>
+  );
+}
+
+function CmProcessCapability({ projectId }: { projectId?: string }) {
+  const read = useLiveData<CapabilityRead>(
+    projectId ? '/api/cmc/projects/' + encodeURIComponent(projectId) + '/process-capability' : null,
+    [projectId],
+    isCapabilityRead,
+  );
+  if (!projectId) return null;
+  const data = read.loading || read.error ? null : read.data;
+  /* Each series carries the side it came from: the key must be unique (two
+     sides can hold the same test method, and React silently keeps one row for
+     a duplicate key) and the row must say which material it is about. */
+  const series = data
+    ? CAPABILITY_SIDES.flatMap((s) => (data.sides[s.key]?.series ?? []).map((row) => ({ row, side: s })))
+    : [];
+  return (
+    <div className="pj-card" data-testid="cmc-process-capability">
+      <div className="pj-card-h">
+        <span className="t">Process capability</span>
+        <span className="s">
+          Pp / Ppk / Cp / Cpk over this program’s recorded batch results, against the criterion each was judged
+          against — the same assessment the compiled §3.2.S.4.4 and §3.2.P.5.4 carry
+        </span>
+      </div>
+      <div className="pj-card-b" style={{ padding: 0 }}>
+        {read.loading ? (
+          <div style={{ padding: 12 }}>
+            <EmptyState icon={I.sigma} title="Assessing the recorded batch results…" busy testId="cmc-capability-loading" />
+          </div>
+        ) : read.error ? (
+          <div style={{ padding: 12 }}>
+            {/* Never rendered as "not capable" and never as an empty report. */}
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Process capability was not assessed"
+              hint={`The assessment could not be read (${read.status ?? 'no status'}). Nothing is being claimed about this process’s capability.`}
+              testId="cmc-capability-error"
+            />
+          </div>
+        ) : !data?.assessed ? (
+          <div style={{ padding: 12 }}>
+            <EmptyState
+              icon={I.sigma}
+              title="Process capability is not assessed for this program"
+              hint={data?.statement ?? undefined}
+              testId="cmc-capability-none"
+            />
+          </div>
+        ) : (
+          <>
+            <table className="reg-tbl">
+              <thead>
+                <tr><th>Test</th><th>Criterion</th><th>Batches</th><th>Ppk</th><th>Cpk</th><th>Verdict</th><th>Note</th></tr>
+              </thead>
+              <tbody>
+                {series.map(({ row, side }) => (
+                  <CapabilityRow key={`${side.key}:${row.test}`} row={row} side={side} />
+                ))}
+              </tbody>
+            </table>
+            <div style={{ padding: '8px 12px', fontSize: 11, color: 'var(--text-400)' }}>
+              {/* The engine's own citation, from a series it actually assessed.
+                  Read with a guard rather than a non-null assertion: a report
+                  where every series was refused has no citation to print, and
+                  asserting one there is a crash on the honest case. */}
+              {citationOf(series.map((s) => s.row))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -2593,7 +3122,14 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
     <CmcQuestionsContextProvider value={questionsRead}>
       <div className="cm">
         <div className="cm-sub">
-          {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)}>{I[n.icon] || I.grid}{n.label}</button>))}
+          {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)} title={n.blurb}>{I[n.icon] || I.grid}{n.label}</button>))}
+        </div>
+        {/* `sequenced` suppresses the project lifecycle's Submit sentence when a
+            program has no sequence. No destination here is that step, so the
+            flag cannot apply; it is passed because the band is the project's
+            and keeps the project's signature. */}
+        <div style={{ margin: '12px 24px 0' }}>
+          <StageBand stage={tab} lifecycle={CMC_NAV} onStage={setTab} sequenced />
         </div>
         <CmConnectBar nav={onNav} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />

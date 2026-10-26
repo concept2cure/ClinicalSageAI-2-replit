@@ -202,10 +202,29 @@ export interface RegisterHistoryEntry {
   /** The chain's own order key, and whether the row is sealed into it. */
   seq: number | null;
   sealed: boolean;
+  /**
+   * Where this act's reason is recorded, when it is recorded somewhere this
+   * store cannot see. Null when the reason is in `reason`, or when the act
+   * captures none. Never a reason — a pointer to one, so a reader is told
+   * "look here" rather than shown a blank that reads as "none was given".
+   */
+  reasonElsewhere?: string | null;
 }
+
+/**
+ * Which store answered. A payload comes from exactly one, and the two attest
+ * differently: `audit_logs` is the tenant's sealed hash chain, while a
+ * specification's own revision log is an ordinary table holding each limit
+ * change with its values. A row's `sealed: false` means "no chain position" in
+ * both — but only in the first case does it mean the row PREDATES the chain,
+ * so the reader is told which store it is reading rather than being left to
+ * infer it from a marker that means two things.
+ */
+export type RegisterHistoryStore = 'audit_chain' | 'specification_revision_log';
 
 /** One record's history, and whether it is all of it. */
 export interface RegisterHistory {
+  store: RegisterHistoryStore;
   entries: RegisterHistoryEntry[];
   /**
    * True when the record has more acts than one read returns. What is missing
@@ -381,6 +400,7 @@ export async function readRegisterHistory(
     ]);
     const rows = result.rows.slice(0, HISTORY_LIMIT);
     return {
+      store: 'audit_chain',
       /* Read newest-first by the chain's order; presented oldest-first, which
          is how a history is read. */
       entries: rows.map(entryOf).reverse(),
@@ -390,6 +410,221 @@ export async function readRegisterHistory(
     const code = typeof error === 'object' && error !== null ? String((error as { code?: unknown }).code ?? '') : '';
     // 42P01 undefined_table, 42703 undefined_column, 42883 undefined_function
     // (public.actor_name is provisioned by migrations/20260929_actor_names.sql).
+    if (code === '42P01' || code === '42703' || code === '42883') throw new MissingAuditStore(code);
+    throw error;
+  }
+}
+
+/* ── The specification register's own revision log ─────────────────────────
+ *
+ * Specifications are deliberately absent from REGISTER_HISTORY_PATHS, for the
+ * reason this file's header gives: `specification_audit_log` already answers
+ * "what happened to this specification", and holding the register in both
+ * places would give a reader two different answers to one question.
+ *
+ * What it did NOT have was a reader. `GET /api/cmc/specifications/:id/history`
+ * has existed since the register was written and no screen in the product ever
+ * called it, so the one register whose limits an inspector asks about first was
+ * the one register whose changes could not be read — while the other sixteen
+ * gained the panel on 2026-10-18. This reads that store into the SAME shape the
+ * chain reader returns, so the product has one history panel and not two: the
+ * route is reached, nothing is rebuilt, and no second UI exists to drift.
+ *
+ * The three writers are in `server/api/cmc/specificationRoutes.ts`: the create
+ * (`new_values` only), the update and the approval withdrawal, and the governed
+ * approval. The approval and the withdrawal ALSO write the sealed chain — the
+ * signature is what an approval is attested by — so those rows appear in both
+ * stores and this one is read for the field values the chain does not carry.
+ */
+
+/** A reader's name for each action `specification_audit_log` records. */
+const SPEC_ACT_LABELS: Record<string, string> = {
+  created: 'Specification recorded',
+  updated: 'Specification edited',
+  approved: 'Specification approved',
+  approval_withdrawn: 'Approval withdrawn',
+};
+
+/** The acts this register performs under a signature, which captures a reason. */
+const SIGNED_SPEC_ACTS = new Set(['approved', 'approval_withdrawn']);
+
+/** Columns every row carries and no reader is asking about. */
+const SPEC_DIFF_SKIP = new Set(['updated_at', 'updatedAt', 'created_at', 'createdAt']);
+
+/** A snapshot pair, as the two JSONB columns hold it. */
+function snapshot(value: unknown): Record<string, unknown> | null {
+  const parsed = typeof value === 'string' ? safeJson(value) : value;
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+}
+
+/**
+ * What moved between two whole-row snapshots.
+ *
+ * Compared by JSON shape, as `diffRows` does for the chain writer: two reads of
+ * a `json` or `numeric` column are never `===`, and a diff that trusted
+ * identity would report every field on every edit. A create (no previous
+ * snapshot) reports NO changed field, which is what the chain's history does
+ * for a create too — the values are the record, not a change to it.
+ */
+function specChanges(previous: unknown, next: unknown): Record<string, { from: unknown; to: unknown }> {
+  const before = snapshot(previous);
+  const after = snapshot(next);
+  if (!before || !after) return {};
+  const out: Record<string, { from: unknown; to: unknown }> = {};
+  for (const field of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if (SPEC_DIFF_SKIP.has(field)) continue;
+    const from = before[field] ?? null;
+    const to = after[field] ?? null;
+    if (JSON.stringify(from) !== JSON.stringify(to)) out[field] = { from, to };
+  }
+  return out;
+}
+
+/** `changed_by` is TEXT and holds a user id; anything else is not an id. */
+function specActorId(value: unknown): number | null {
+  const text = typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : '';
+  return /^[0-9]+$/.test(text) ? Number(text) : null;
+}
+
+function specEntryOf(
+  row: Record<string, unknown>,
+  named?: { name: string | null; email: string | null },
+): RegisterHistoryEntry {
+  const changed = specChanges(row.previous_values, row.new_values);
+  const actorId = specActorId(row.changed_by);
+  const act = String(row.action ?? '');
+  return {
+    at: instantOf(row.created_at),
+    act,
+    label: SPEC_ACT_LABELS[act] ?? act,
+    actorId,
+    /* The row itself may carry the name (a caller that joined it), else the
+       optional second read, else nobody — never a guess. */
+    actor: nonEmpty(row.actor_name) ?? nonEmpty(row.actor_email) ?? named?.name ?? named?.email ?? null,
+    /* The id as recorded, even when it is not a user id, so a reader traces
+       what the row actually says rather than a tidied version of it. */
+    actorRef: actorId == null ? nonEmpty(row.changed_by) : `user:${actorId}`,
+    /* This store has no reason column, and the acts that carry one — an
+       approval and a withdrawal — record it on the chain row and the §11.50
+       signature beside it. So the reason is not read here, and it must not be
+       shown as "—" either: a blank beside "Specification approved" reads as an
+       approval given with no reason, which would be a §11 finding about a
+       signature that in fact captured one. `reasonElsewhere` says where it is,
+       and the panel prints that instead of a dash. */
+    reason: null,
+    reasonElsewhere: SIGNED_SPEC_ACTS.has(act)
+      ? 'recorded with the signature for this act (governed actions)'
+      : null,
+    changed,
+    changedFields: Object.keys(changed),
+    signatureRef: null,
+    signatureMeaning: null,
+    seq: null,
+    /* Not a chain position. The panel reads `store` to say so in this store's
+       own terms rather than calling the row "unsealed", which would assert it
+       predates the ledger. */
+    sealed: false,
+  };
+}
+
+/**
+ * Newest-first, capped one past the limit so a longer history is known to be
+ * longer. The tenant predicate is on `quality_specifications`, joined —
+ * `specification_audit_log` carries no tenant column of its own, so the row's
+ * ownership is its specification's.
+ *
+ * `id` is read too, and it is the tie-break after `created_at`: three of these
+ * rows can share a timestamp to the microsecond (a create and its linkage, an
+ * approval and its withdrawal in one script), and an unstable order makes the
+ * 500-row cap drop a different row on each read.
+ *
+ * The actor's NAME is deliberately not joined here — see `namesFor` below.
+ */
+const SPEC_HISTORY_SQL = `
+    SELECT sal.id,
+           sal.action,
+           sal.changed_by,
+           sal.previous_values,
+           sal.new_values,
+           sal.created_at
+      FROM specification_audit_log sal
+      JOIN quality_specifications qs ON qs.id = sal.specification_id
+     WHERE sal.specification_id = $1
+       AND qs.tenant_id = $2
+     ORDER BY sal.created_at DESC, sal.id DESC
+     LIMIT $3`;
+
+/**
+ * The names of the accounts that acted, resolved SEPARATELY and optionally.
+ *
+ * `public.actor_name` is a helper (migrations/20260929_actor_names.sql), and
+ * the chain reader calls it inside its one statement — so where the function is
+ * absent the whole read raises 42883 and the history answers 503. That is the
+ * right failure for a missing audit STORE and the wrong one for a missing
+ * display name: it turns a cosmetic dependency into an outage, and the contract
+ * test caught exactly that (503 where the owning tenant must get its history).
+ *
+ * So the substance is read without it, and the names are a second query that is
+ * allowed to fail. When it does, every act still carries `actorRef` —
+ * `user:<id>`, the reference an inspector traces by — and the panel says
+ * "unnamed account" rather than inventing one. What is never affected is WHAT
+ * changed, WHEN, and by WHICH account.
+ */
+async function namesFor(
+  client: HistoryQueryable,
+  ids: number[],
+): Promise<Map<number, { name: string | null; email: string | null }>> {
+  const out = new Map<number, { name: string | null; email: string | null }>();
+  if (ids.length === 0) return out;
+  try {
+    const { rows } = await client.query(
+      `SELECT i AS id, u.name, u.email
+         FROM unnest($1::int[]) AS i
+         LEFT JOIN LATERAL public.actor_name(i) u ON TRUE`,
+      [ids],
+    );
+    for (const r of rows) {
+      const id = Number(r.id);
+      if (Number.isInteger(id)) out.set(id, { name: nonEmpty(r.name), email: nonEmpty(r.email) });
+    }
+  } catch {
+    /* No names available. The history is unchanged; only the display name is
+       missing, and the panel has an honest word for that. */
+  }
+  return out;
+}
+
+/**
+ * Every recorded change to one specification, oldest first.
+ *
+ * Fails closed exactly as the chain reader does: a missing table, column or
+ * `public.actor_name` is carried up as `MissingAuditStore` so the route answers
+ * 503, because "no changes recorded" and "the store could not be read" are
+ * indistinguishable to an inspector and only one of them is a claim this module
+ * may make.
+ */
+export async function readSpecificationHistory(
+  client: HistoryQueryable,
+  params: { orgId: number; specificationId: string },
+): Promise<RegisterHistory> {
+  try {
+    const result = await client.query(SPEC_HISTORY_SQL, [
+      params.specificationId,
+      params.orgId,
+      HISTORY_LIMIT + 1,
+    ]);
+    const rows = result.rows.slice(0, HISTORY_LIMIT);
+    const names = await namesFor(
+      client,
+      [...new Set(rows.map((r) => specActorId(r.changed_by)).filter((id): id is number => id !== null))],
+    );
+    return {
+      store: 'specification_revision_log',
+      entries: rows.map((r) => specEntryOf(r, names.get(specActorId(r.changed_by) ?? -1))).reverse(),
+      earlierActsNotShown: result.rows.length > HISTORY_LIMIT,
+    };
+  } catch (error) {
+    const code = typeof error === 'object' && error !== null ? String((error as { code?: unknown }).code ?? '') : '';
     if (code === '42P01' || code === '42703' || code === '42883') throw new MissingAuditStore(code);
     throw error;
   }

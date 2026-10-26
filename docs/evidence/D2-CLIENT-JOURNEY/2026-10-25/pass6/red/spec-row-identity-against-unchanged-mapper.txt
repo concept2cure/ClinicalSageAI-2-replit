@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/cmcSpecRowIdentity.test.ts > a specification row carries the id the server gave it > keeps a uuid whole 8ms
+ × client/src/concept2cure/v2/__tests__/cmcSpecRowIdentity.test.ts > a specification row carries the id the server gave it > never produces NaN, whatever the id looks like 1ms
+ × client/src/concept2cure/v2/__tests__/cmcSpecRowIdentity.test.ts > a specification row carries the id the server gave it > builds the route paths the tab uses, with no NaN in them 5ms
+ × client/src/concept2cure/v2/__tests__/cmcSpecRowIdentity.test.ts > a specification row carries the id the server gave it > compares equal to itself, so an optimistic update finds its own row 2ms
+ × client/src/concept2cure/v2/__tests__/cmcSpecRowIdentity.test.ts > a specification row carries the id the server gave it > keeps two different specifications distinct 1ms
+      Tests  5 failed (5)

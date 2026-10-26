@@ -1,0 +1,51 @@
+{
+    "success": true,
+    "data": {
+        "projectId": "585ae9b6-d8f7-474e-bd99-797f7551df4e",
+        "resultsOnFile": 7,
+        "assessed": true,
+        "statement": null,
+        "sides": {
+            "drug_substance": {
+                "series": [
+                    {
+                        "test": "Assay by HPLC-UV (AM-114)",
+                        "resultsOnFile": 7,
+                        "criterion": "95.0 - 105.0 %",
+                        "outcome": {
+                            "ok": true,
+                            "n": 7,
+                            "mean": 99.545714,
+                            "sdOverall": 0.832003,
+                            "sdWithin": 1.134752,
+                            "limits": {
+                                "lower": 95,
+                                "upper": 105
+                            },
+                            "cp": 1.4687,
+                            "cpk": 1.3353,
+                            "pp": 2.0032,
+                            "ppk": 1.8212,
+                            "batchesOutOfSpecification": [],
+                            "excludedBatches": [],
+                            "preliminary": true,
+                            "verdict": "capable",
+                            "notes": [
+                                "Preliminary: 7 batches. A capability index from fewer than 25 batches carries wide sampling error and is not a demonstrated capability.",
+                                "Cpk and Ppk differ by more than 0.25: batch-to-batch variation exceeds the within-process estimate, which points to a drifting or shifting process rather than random scatter."
+                            ],
+                            "citation": "ICH Q6A (specifications); capability indices per ISO 22514-2 and the individuals/moving-range convention (Montgomery, Introduction to Statistical Quality Control)"
+                        }
+                    }
+                ],
+                "statements": [
+                    "Assay by HPLC-UV (AM-114): over 7 batches the mean is 99.545714 (sd 0.832003); Ppk 1.8212, Cpk 1.3353, Pp 2.0032 \u2014 capable (Preliminary: 7 batches. A capability index from fewer than 25 batches carries wide sampling error and is not a demonstrated capability. Cpk and Ppk differ by more than 0.25: batch-to-batch variation exceeds the within-process estimate, which points to a drifting or shifting process rather than random scatter.)."
+                ]
+            },
+            "drug_product": {
+                "series": [],
+                "statements": []
+            }
+        }
+    }
+}

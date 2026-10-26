@@ -1,0 +1,12 @@
+       |                           ^
+    194|     expect(history.earlierActsNotShown).toBe(false);
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed (18)
+   Start at  21:38:16
+   Duration  1.87s (transform 824ms, setup 78ms, import 1.47s, tests 19ms, environment 0ms)
+
