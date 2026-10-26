@@ -70,6 +70,21 @@ function checkedTemplateRows(template: AssemblyTemplate): TemplateSectionSeed[] 
   return rows.sort((a, b) => a.ordering - b.ordering || a.index - b.index);
 }
 
+function chosenTemplateRows(template: AssemblyTemplate, selection: AssemblySelection): TemplateSectionSeed[] {
+  const rows = checkedTemplateRows(template);
+  const key = selection.target === 'section' ? assemblyCodeKey(selection.code) : null;
+  const chosen = key === null ? rows : rows.filter(row => assemblyCodeKey(row.code) === key);
+  if (!chosen.length) throw new AssemblyError(404, 'ASSEMBLY_SECTION_NOT_FOUND', 'The selected section is not in this template. Nothing was changed.');
+  return chosen;
+}
+
+/** Reference terms choose an excerpt; they do not establish source support. */
+export function assemblySourceQuery(module: string | null, template: AssemblyTemplate, selection: AssemblySelection): string {
+  if (selection.target === 'document') return `${module ?? ''} ${template.name} `;
+  const [row] = chosenTemplateRows(template, selection);
+  return `${row.title} ${template.guidanceFor(row.code) ?? ''}`;
+}
+
 function currentSections(rows: AssemblyStoredSection[]): Map<string, AssemblyStoredSection> {
   const map = new Map<string, AssemblyStoredSection>();
   for (const row of rows) {
@@ -93,9 +108,7 @@ function plannedRow(row: TemplateSectionSeed, saved: AssemblyStoredSection | und
 
 export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStoredSection[], template: AssemblyTemplate, input: AssemblyPreviewInput, sources?: AssemblySourceManifest): AssemblyPlan {
   const current = currentSections(existing);
-  const templateRows = checkedTemplateRows(template);
-  const chosen = input.selection.target === 'document' ? templateRows : templateRows.filter(row => assemblyCodeKey(row.code) === assemblyCodeKey(input.selection.target === 'section' ? input.selection.code : ''));
-  if (!chosen.length) throw new AssemblyError(404, 'ASSEMBLY_SECTION_NOT_FOUND', 'The selected section is not in this template. Nothing was changed.');
+  const chosen = chosenTemplateRows(template, input.selection);
   let next = existing.length ? Math.max(...existing.map(row => row.order_index)) + 1 : 0;
   const rows = chosen.map(row => {
     const saved = current.get(assemblyCodeKey(row.code));

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/authoring/__tests__/assembly-source-query.test.ts"
+  ],
+  "environment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NO_COLOR": "1"
+  },
+  "startedUtc": "2026-10-26T17:37:59.053861+00:00",
+  "elapsedSeconds": 0.759,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}

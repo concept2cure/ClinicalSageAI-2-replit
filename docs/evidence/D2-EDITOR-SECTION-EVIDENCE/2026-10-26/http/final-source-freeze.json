@@ -1,0 +1,31 @@
+{
+  "createdAt": "2026-10-26T17:41:44.787270+00:00",
+  "sources": {
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "1d4451ec600622f542f0ae179f50c50fa6a7c5151d86ef070b1b811862b8ea88",
+    "server/routes/__tests__/_authoring-assembly-section-source-cases.ts": "4e883f681aeb1a72444e382928a30e2c5653619b17493e2969e9c4f2d0aedcce",
+    "server/routes/__tests__/_authoring-assembly-filing-cases.ts": "6cf38d8b7630b80e342c4c4ed44234ede888d20ff84a6db828fcae276d3faf00",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "server/services/authoring/authoring-assembly.ts": "5163454329eaf80cd28947db8dd89a830cbf08e3f281bd78c1853cfb906ff44b",
+    "server/services/authoring/authoring-assembly-plan.ts": "0f5360ec15d93ce19a114540c623176b3ba87618544a3b3f0eb66d23d0e3a8f5",
+    "server/services/authoring/authoring-assembly-source.ts": "9b88fa8db2a9868506a0f549bba81dcabc13349b602bd31e01cbe2e3df4c5bf2",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "3c786da1ae4d1c2be040880ca85ad2a4dab44dd5970118196caa42a2ba6a9579",
+    "server/services/ana/draft-source-window.ts": "ec41c5b08809da08699e7f12a42751361671a7ba7d852435d2d8e77716fc4fdb",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "shared/authoring/assembly.ts": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "server/routes/authoring.router.ts": "ca424b13d150408d659190418dfb35c24a664e59021d590a40c1642f2e262e43",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "greenMetadata": "settled-green.json",
+  "strictLintMetadata": "settled-strict-lint.json",
+  "greenSourceDrift": [],
+  "lintSourceDrift": [],
+  "differsFromGreen": [],
+  "differsFromLint": []
+}

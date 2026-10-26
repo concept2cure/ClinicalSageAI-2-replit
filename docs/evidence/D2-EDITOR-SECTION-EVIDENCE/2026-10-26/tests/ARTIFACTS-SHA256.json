@@ -1,0 +1,155 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "GREEN-result.json",
+      "bytes": 419,
+      "sha256": "34ab8baaf9edc8715ef31e8ef6017d23ddf62204fb0cde96ac5a8b8fc5c18464"
+    },
+    {
+      "path": "GREEN.txt",
+      "bytes": 3923,
+      "sha256": "077cb873f353d86fd139c8682c2e19dcff879867320fea33f1e7a89feb6585be"
+    },
+    {
+      "path": "LINT-result.json",
+      "bytes": 395,
+      "sha256": "a735da74d6e8925f60de166bee5d2dc5a38f42852a67409b488a36a8e4dbc199"
+    },
+    {
+      "path": "LINT.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3533,
+      "sha256": "12895ce4beece5d99e249da00ac471c9cfb54c25fb6a712aea3c67135806a941"
+    },
+    {
+      "path": "final-inputs.json",
+      "bytes": 2084,
+      "sha256": "ef6f1826196a1326aed292539d3cb917b528b665244a5680674384a8ad212bed"
+    },
+    {
+      "path": "green-inputs.json",
+      "bytes": 2567,
+      "sha256": "f424e6f41d25d7be14e006c84fb0e09738a574cf51fdaf48cd612a5c921c574a"
+    },
+    {
+      "path": "green-source-EDITOR_SECTION_EVIDENCE_2026-10-26.md.txt.gz",
+      "bytes": 3249,
+      "sha256": "62c8b8fa5b6dbac908e6be34d5cae779a7a31039907ea2377e3e9d1288150591"
+    },
+    {
+      "path": "green-source-assembly-source-query.test.ts.txt.gz",
+      "bytes": 3090,
+      "sha256": "6c2f14cc1318d999c723689e17737ec1398beeb8a54979b48cfdc7ecaa305fad"
+    },
+    {
+      "path": "green-source-assembly-sources.ts.txt.gz",
+      "bytes": 1575,
+      "sha256": "88df13c6eb4a8fa5606b28c59eea954673c26c879de9a5a14ba2d3091d93bc30"
+    },
+    {
+      "path": "green-source-assembly.ts.txt.gz",
+      "bytes": 604,
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337"
+    },
+    {
+      "path": "green-source-authoring-assembly-plan.ts.txt.gz",
+      "bytes": 2764,
+      "sha256": "90fee88906ca66f97c7f9697dfa6a8680a09bd0238f40f173798808e1445d3ce"
+    },
+    {
+      "path": "green-source-authoring-assembly-sources.ts.txt.gz",
+      "bytes": 3949,
+      "sha256": "dbffa0411e22c30cec44c41313832b6c0250ab2ab608bf3d55d697fbf6900f41"
+    },
+    {
+      "path": "green-source-authoring-assembly.ts.txt.gz",
+      "bytes": 4021,
+      "sha256": "2312d50f268355028dd3e91cc2c5b557e5c19ff37a1fefb5c71385bc6b2bd096"
+    },
+    {
+      "path": "green-source-draft-source-window.ts.txt.gz",
+      "bytes": 4312,
+      "sha256": "0eef9083ef59e062c3aa4c0afa1a7a8604e071289b2adf5eddca4235d9bd633a"
+    },
+    {
+      "path": "green-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "green-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "green-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "prepared-inputs.json",
+      "bytes": 2724,
+      "sha256": "a5ca47d8e90461cf7e4715385d3c6f11a2c97adb0c24c9db5b3f672008b6ce38"
+    },
+    {
+      "path": "prepared-source-EDITOR_SECTION_EVIDENCE_2026-10-26.md.txt.gz",
+      "bytes": 3249,
+      "sha256": "62c8b8fa5b6dbac908e6be34d5cae779a7a31039907ea2377e3e9d1288150591"
+    },
+    {
+      "path": "prepared-source-assembly-source-query.test.ts.txt.gz",
+      "bytes": 3090,
+      "sha256": "6c2f14cc1318d999c723689e17737ec1398beeb8a54979b48cfdc7ecaa305fad"
+    },
+    {
+      "path": "prepared-source-assembly-sources.ts.txt.gz",
+      "bytes": 1575,
+      "sha256": "88df13c6eb4a8fa5606b28c59eea954673c26c879de9a5a14ba2d3091d93bc30"
+    },
+    {
+      "path": "prepared-source-assembly.ts.txt.gz",
+      "bytes": 604,
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337"
+    },
+    {
+      "path": "prepared-source-authoring-assembly-plan.ts.txt.gz",
+      "bytes": 2618,
+      "sha256": "25259a4c3e6978ccaf658cd1edbc5e51df4e107fa8b33c0e27b1cc8092d93a5d"
+    },
+    {
+      "path": "prepared-source-authoring-assembly-sources.ts.txt.gz",
+      "bytes": 3949,
+      "sha256": "dbffa0411e22c30cec44c41313832b6c0250ab2ab608bf3d55d697fbf6900f41"
+    },
+    {
+      "path": "prepared-source-authoring-assembly.ts.txt.gz",
+      "bytes": 4021,
+      "sha256": "b313effcdf0f56dd1829c99f571e0e6b27c5ab3d53fa77ca5317e9509658b483"
+    },
+    {
+      "path": "prepared-source-draft-source-window.ts.txt.gz",
+      "bytes": 4312,
+      "sha256": "0eef9083ef59e062c3aa4c0afa1a7a8604e071289b2adf5eddca4235d9bd633a"
+    },
+    {
+      "path": "prepared-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "prepared-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "prepared-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    }
+  ]
+}

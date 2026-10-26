@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/authoring/__tests__/assembly-source-query.test.ts"
+  ],
+  "environment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NO_COLOR": "1"
+  },
+  "startedUtc": "2026-10-26T17:37:59.054393+00:00",
+  "elapsedSeconds": 1.058,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}
