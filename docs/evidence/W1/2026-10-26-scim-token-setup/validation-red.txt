@@ -1,0 +1,105 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403)
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids a tenant membership role of super_admin with no platform grant (403)
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > creates a tenant, returns the token ONCE, stores only a SHA-256 hash
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > 400 when organizationId is missing
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > rotate issues a fresh token (200)
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > disables a tenant via PATCH
+ ↓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > deletes a tenant (204), 404 when missing
+ × server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before create changes a credential 73ms
+   → expected 201 to be 400 // Object.is equality
+ × server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before rotate changes a credential 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before update changes a credential 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before delete changes a credential 3ms
+   → expected 204 to be 400 // Object.is equality
+ × server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > refuses fractional organization ids before generating a credential 4ms
+   → expected 201 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before create changes a credential
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/__tests__/security/scim-tenants-admin.test.ts:142:24
+    140|         : kind === 'update' ? await endpoint.patch('/api/admin/scim-te…
+    141|           : await endpoint.delete('/api/admin/scim-tenants/5').send({}…
+    142|     expect(res.status).toBe(400);
+       |                        ^
+    143|     expect(queryMock).not.toHaveBeenCalled();
+    144|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before rotate changes a credential
+ FAIL  server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before update changes a credential
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/__tests__/security/scim-tenants-admin.test.ts:142:24
+    140|         : kind === 'update' ? await endpoint.patch('/api/admin/scim-te…
+    141|           : await endpoint.delete('/api/admin/scim-tenants/5').send({}…
+    142|     expect(res.status).toBe(400);
+       |                        ^
+    143|     expect(queryMock).not.toHaveBeenCalled();
+    144|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before delete changes a credential
+AssertionError: expected 204 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 204
+
+ ❯ server/__tests__/security/scim-tenants-admin.test.ts:142:24
+    140|         : kind === 'update' ? await endpoint.patch('/api/admin/scim-te…
+    141|           : await endpoint.delete('/api/admin/scim-tenants/5').send({}…
+    142|     expect(res.status).toBe(400);
+       |                        ^
+    143|     expect(queryMock).not.toHaveBeenCalled();
+    144|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > refuses fractional organization ids before generating a credential
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/__tests__/security/scim-tenants-admin.test.ts:149:24
+    147|     queryMock.mockResolvedValue({ rows: [{ id: 5, organization_id: 7.5…
+    148|     const res = await request(app).post('/api/admin/scim-tenants').sen…
+    149|     expect(res.status).toBe(400);
+       |                        ^
+    150|     expect(queryMock).not.toHaveBeenCalled();
+    151|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 skipped (12)
+   Start at  19:56:01
+   Duration  708ms (transform 152ms, setup 94ms, import 157ms, tests 91ms, environment 0ms)

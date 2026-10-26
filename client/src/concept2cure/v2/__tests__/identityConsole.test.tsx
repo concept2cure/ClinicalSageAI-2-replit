@@ -16,7 +16,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 vi.mock('../C2CForm', () => ({
   C2CForm: ({ config, onSubmit }: any) => (
-    <button data-testid="form-submit" onClick={() => onSubmit({ organizationId: '101', label: 'Okta prod', cidr: '203.0.113.0/24' })}>{config.submitLabel}</button>
+    <button data-testid="form-submit" onClick={() => onSubmit({ organizationId: '101', label: 'Okta prod', cidr: '203.0.113.0/24', reason: 'Approved identity provider change.' })}>{config.submitLabel}</button>
   ),
 }));
 
@@ -36,8 +36,8 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (method === 'GET' && url === '/api/admin/scim-tenants') return raw(TENANTS);
     if (method === 'GET' && url === '/api/admin/scim-ip-allowlist') return raw(RULES);
-    if (method === 'POST' && url === '/api/admin/scim-tenants') return raw({ id: 4, organizationId: body.organizationId, label: body.label, enabled: true, token: 'scim_ONE_TIME_SECRET' }, 201);
-    if (method === 'POST' && url === '/api/admin/scim-tenants/3/rotate') return raw({ id: 3, organizationId: 101, label: 'Okta prod', enabled: true, token: 'scim_ROTATED_SECRET' });
+    if (method === 'POST' && url === '/api/admin/scim-tenants') return raw({ id: 4, organizationId: body.organizationId, label: body.label, enabled: true, auditTrail: { persisted: true, chained: true }, token: 'scim_ONE_TIME_SECRET' }, 201);
+    if (method === 'POST' && url === '/api/admin/scim-tenants/3/rotate') return raw({ id: 3, organizationId: 101, label: 'Okta prod', enabled: true, auditTrail: { persisted: true, chained: true }, token: 'scim_ROTATED_SECRET' });
     return raw({});
   });
 });
@@ -67,6 +67,7 @@ describe('IdentityConsole — real SCIM/SSO admin wiring', () => {
     render(<IdentityConsole {...props()} />);
     await screen.findByText('Okta prod');
     fireEvent.click(screen.getByRole('button', { name: /Rotate/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/admin/scim-tenants/3/rotate')).toBe(true));
     expect(await screen.findByText('scim_ROTATED_SECRET')).toBeTruthy();
   });

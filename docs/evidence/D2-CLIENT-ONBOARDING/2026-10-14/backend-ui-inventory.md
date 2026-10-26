@@ -76,3 +76,15 @@ runtime requests, or that production credentials/infrastructure are configured.
 The previous runtime measurement is
 `docs/evidence/D2-API-SCOPE/2026-09-25/stage3-route-inventory.json`; its counts
 are historical and were not presented as today's deployed count.
+
+## Subsequent completion — 2026-10-26
+
+The SCIM provisioning-token audit gap noted above is completed by
+`server/services/scim-token-policy.ts` and the existing `IdentityConsole`.
+Create, rotate, enable/disable and revoke now require a reason and commit with
+the chained audit row; rotation/revocation use the existing governed forms.
+Unconfirmed outcomes require directory readback, and the administrative-changes
+report includes these events. See the [token setup evidence](../../W1/2026-10-26-scim-token-setup/README.md)
+for verification and hosted-release limits. This follow-up does not change the
+historical scope of the October 14 inventory or imply that deployment-managed
+SAML settings and inert personal preferences have acquired working controls.

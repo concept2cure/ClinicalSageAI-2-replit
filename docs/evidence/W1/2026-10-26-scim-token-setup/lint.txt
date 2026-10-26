@@ -1,0 +1,5 @@
+
+/workspace/ClinicalSageAI/client/src/concept2cure/v2/surfaces/IdentityConsole.tsx
+  159:8  warning  Function 'IdentityConsole' has too many lines (259). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
