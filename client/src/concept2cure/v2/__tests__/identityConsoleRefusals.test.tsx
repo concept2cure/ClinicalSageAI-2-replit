@@ -21,7 +21,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 vi.mock('../C2CForm', () => ({
   C2CForm: ({ config, onSubmit }: { config: { submitLabel: string }; onSubmit: (v: Record<string, string>) => void }) => (
-    <button data-testid="form-submit" onClick={() => onSubmit({ organizationId: '1', label: 'x', cidr: '203.0.113.0/24' })}>{config.submitLabel}</button>
+    <button data-testid="form-submit" onClick={() => onSubmit({ organizationId: '1', label: 'x', cidr: '203.0.113.0/24', reason: 'Approved identity provider change.' })}>{config.submitLabel}</button>
   ),
 }));
 
@@ -91,6 +91,7 @@ describe('a refused write says why, never "HTTP 0"', () => {
     render(<IdentityConsole {...props()} />);
     await screen.findByText('Okta prod');
     fireEvent.click(screen.getByRole('button', { name: /Rotate/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
     await waitFor(() => expect(screen.getByText(/not a platform administrator/i)).toBeTruthy());
     expect(screen.queryByText(/HTTP 0/)).toBeNull();
   });
