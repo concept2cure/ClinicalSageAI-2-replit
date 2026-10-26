@@ -14,5 +14,5 @@ for(const file of files){
  results.push({file,beforeErrors:before.errorCount,afterErrors:after.errorCount,beforeWarnings:before.warningCount,afterWarnings:after.warningCount,beforeMetrics:oldMetrics,afterMetrics:newMetrics,metricGrowth:growth});
 }
 writeFileSync(new URL('./legacy-lint-comparison.json',import.meta.url),JSON.stringify({results},null,2)+'\n');
-console.log(JSON.stringify(results.map(({file,beforeWarnings,afterWarnings,metricGrowth})=>({file,beforeWarnings,afterWarnings,metricGrowth}))));
+console.info(JSON.stringify(results.map(({file,beforeWarnings,afterWarnings,metricGrowth})=>({file,beforeWarnings,afterWarnings,metricGrowth}))));
 process.exitCode=results.some(r=>r.afterErrors||r.afterWarnings>r.beforeWarnings||r.metricGrowth.length)?1:0;
