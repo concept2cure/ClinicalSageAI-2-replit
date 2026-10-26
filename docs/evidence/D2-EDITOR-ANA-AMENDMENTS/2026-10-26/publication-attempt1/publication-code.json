@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-10-26T18:25:21.624860+00:00",
+  "elapsedSeconds": 253.502,
+  "argv": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "exitCode": 1,
+  "head": "05c736c4cb74b3425e1d3876a9114f2d3fea91da",
+  "hooks": "normal; no bypass variables",
+  "rawOutput": "publication-code.log.gz",
+  "rawGzipSha256": "a47e5ec4f2dbca7bac2e6fbdd10f8f1d3e607ec65e36e8842fa984a29a653279"
+}

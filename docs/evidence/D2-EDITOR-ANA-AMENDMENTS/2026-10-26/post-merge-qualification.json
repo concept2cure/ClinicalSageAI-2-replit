@@ -1,0 +1,31 @@
+{
+  "atUtc": "2026-10-26T18:23:07.081242+00:00",
+  "head": "05c736c4cb74b3425e1d3876a9114f2d3fea91da",
+  "incomingRevision": "7eec003559e08fdca17f67b3a7e10bc58d17aebf",
+  "original54InputsUnchanged": true,
+  "incomingRuntimeInputs": [
+    "client/src/concept2cure/mdx/MdxSurfaceHost.tsx",
+    "client/src/concept2cure/mdx/surfaces/Overview.tsx",
+    "client/src/concept2cure/v2/surfaceActions.ts",
+    "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
+    "scripts/generate-ana-capability-manifest.ts",
+    "server/services/ana-ri/command-executor.ts",
+    "server/services/ana-ri/command-rbac.ts",
+    "server/services/ana-ri/index.ts",
+    "server/services/ana-ri/onboarding-tour.ts",
+    "server/services/ana/agentic-workflow-tools.ts",
+    "server/services/ana/ana-launch-scope.inventory.json",
+    "server/services/ana/client-journey.ts",
+    "server/services/ana/pediatricTools.ts",
+    "server/services/ana/skills/library/clinical.ts",
+    "server/services/ana/skills/library/regulatory-strategy.ts",
+    "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+    "server/services/immunogenicity/immunogenicity-reference.ts",
+    "server/services/pediatric/pediatric-knowledge.ts",
+    "shared/navigation/surface-actions.ts"
+  ],
+  "distinctQualifiedInputs": 75,
+  "reasonToRepeat": "incoming live AnA index, shared actions and client callers affect runtime integration"
+}
