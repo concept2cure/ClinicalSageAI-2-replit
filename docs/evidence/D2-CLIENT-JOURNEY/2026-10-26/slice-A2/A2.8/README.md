@@ -81,3 +81,8 @@ Next is A2.9, retiring uncalled project creators with canonical intake preserved
 
 Mandatory publication gates are enforced by `.husky/pre-push`, including the
 TypeScript zero-error and no-new-lint-warning checks. No bypass is authorized.
+The first push was correctly refused for one new `max-lines-per-function`
+warning in the expanded shell test group (`push-lint-red.log.gz`). Splitting
+MDX and dossier cases into separate describe groups removed the warning,
+retaining all 30 assertions/tests (`routing-green.log.gz` and
+`lint-correction.log.gz`). No lint baseline or rule changed.

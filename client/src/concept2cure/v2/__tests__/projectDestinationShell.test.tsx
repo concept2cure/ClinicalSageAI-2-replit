@@ -79,7 +79,7 @@ afterEach(() => {
   vi.unstubAllGlobals(); window.history.replaceState({}, '', '/');
 });
 
-describe('project destination in the real shell', () => {
+describe('MDX destination in the real shell', () => {
   it.each([false, true])('a copied MDX URL applies its filter once with an open project=%s', async projectOpen => {
     mount(`/concept2cure/mdx?view=compact${projectOpen ? `&program=${PROGRAM}` : ''}#portfolio`, true);
     expect(await screen.findByRole('heading', { name: 'Projects destination' })).toBeTruthy();
@@ -122,7 +122,9 @@ describe('project destination in the real shell', () => {
     expect(observed.calls).toBe(0);
     expect(readShellProject()?.step).toBe('review');
   });
+});
 
+describe('project destination in the real shell', () => {
   it('replaces a no-project dossier URL with Projects and no pending Author action', async () => {
     mount('/concept2cure/dossier-map?view=compact#section');
     expect(await screen.findByRole('heading', { name: 'Projects destination' })).toBeTruthy();
