@@ -1,0 +1,7 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/vaccine-unstated-inputs.test.ts --reporter=verbose
+Initial engine baseline: unchanged from7eec0035; documentation-only301ca385 before test run.
+
+Test Files  1 failed (1)
+Tests  53 failed | 13 passed (66)
+Start at  18:23:10
+Duration  12.11s (transform 7.77s, setup 79ms, import 11.54s, tests 108ms, environment 0ms)
