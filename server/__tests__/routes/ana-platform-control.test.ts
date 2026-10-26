@@ -73,21 +73,18 @@ describe('AnA platform control route org binding', () => {
 /**
  * IAM-20 (2026-10-01): every write in this router changes organisation-wide
  * configuration (settings, AI configuration, compliance defaults, module
- * toggles, onboarding) or creates a project outside the Projects app, and
- * /execute dispatches any of them. Behind the session gate alone, any member
- * of the organisation could do all of it. Writes now need the owner or admin
+ * toggles). Behind the session gate alone, any member of the organisation
+ * could do all of it. A2.9 retires the separate create/onboard/execute routes;
+ * the direct configuration endpoints retain their safeguards. Writes now need the owner or admin
  * role, the same as tenant-config's settings writes; reads are unchanged.
  */
 describe('AnA platform control: writes need the owner or admin role', () => {
   const WRITES: Array<[method: 'patch' | 'post', path: string, controller: keyof typeof mockController]> = [
     ['patch', '/settings', 'updateSettings'],
     ['post', '/modules/toggle', 'toggleModule'],
-    ['post', '/projects', 'createProject'],
     ['patch', '/projects/7', 'updateProject'],
     ['patch', '/ai-config', 'configureAI'],
     ['patch', '/compliance', 'setComplianceDefaults'],
-    ['post', '/onboard', 'onboardOrganization'],
-    ['post', '/execute', 'executeAction'],
   ];
 
   async function appAs(role: string) {
@@ -151,8 +148,6 @@ describe('AnA platform control: a settings write that is refused is not reported
     ['post', '/modules/toggle', 'toggleModule', { moduleId: 'm', enabled: true }],
     ['patch', '/ai-config', 'configureAI', { defaultModel: 'm' }],
     ['patch', '/compliance', 'setComplianceDefaults', { frameworks: ['FDA'] }],
-    ['post', '/onboard', 'onboardOrganization', { therapeuticArea: 'a', primaryAgency: 'FDA', submissionType: 'NDA' }],
-    ['post', '/execute', 'executeAction', { category: 'settings', action: 'x', parameters: {} }],
   ];
 
   async function adminApp() {

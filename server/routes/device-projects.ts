@@ -6,7 +6,6 @@
  *
  * Routes:
  *   GET    /api/device-projects      — list (org-scoped)
- *   POST   /api/device-projects      — create   (editor+, audited)
  *   PUT    /api/device-projects/:id  — update   (editor+, audited)
  *   DELETE /api/device-projects/:id  — delete   (editor+, audited)
  *
@@ -120,124 +119,6 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-/** POST /api/device-projects — create a new device project */
-router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
-  try {
-    const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
-    if (!organization_id) {
-      return res.status(403).json({ error: 'Organization context required' });
-    }
-    /* Refused rather than audited against an invented actor. */
-    const actorId = governedActorId(req);
-    if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
-
-    const {
-      deviceName,
-      deviceType = 'medical-device',
-      manufacturer = '',
-      /* NO DEFAULT. This read `deviceClass = 'II'`, so a create that did not
-         state a class produced a device project whose record ASSERTED Class II
-         — the class that decides the premarket route, the evidence burden and,
-         in Europe, whether a notified body is involved at all. A risk class is
-         a verdict, and this repository's second rule is that verdicts come
-         from deterministic engines; inventing one in a request default is the
-         same defect as asking a model for it. An unstated class is now stored
-         as unstated, which the surfaces that read it already render honestly
-         ("device class not set"). */
-      deviceClass,
-      intendedUse = '',
-      state = {},
-      attachedDocuments = [],
-      clientWorkspaceId: bodyWsId,
-    } = req.body || {};
-
-    const trimmedName = String(deviceName || '').trim();
-    if (!trimmedName || trimmedName.length === 0) {
-      return res.status(400).json({ error: 'deviceName is required' });
-    }
-    if (trimmedName.length > MAX_NAME_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` });
-    }
-    /* A class that was given must be one of the two vocabularies; a class that
-       was not given is not a validation failure. A device project is created
-       before the classification is determined more often than not, and
-       demanding one here would only move the invention from this file to the
-       caller. */
-    const statedClass = deviceClass === undefined || deviceClass === null ? '' : String(deviceClass).trim();
-    if (statedClass !== '' && !VALID_DEVICE_CLASSES.includes(statedClass)) {
-      return res
-        .status(400)
-        .json({ error: `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` });
-    }
-    if (String(manufacturer).length > MAX_TEXT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` });
-    }
-    if (String(intendedUse).length > MAX_TEXT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer` });
-    }
-    if (!Array.isArray(attachedDocuments)) {
-      return res.status(400).json({ error: 'attachedDocuments must be an array' });
-    }
-    if (typeof state !== 'object' || state === null || Array.isArray(state)) {
-      return res.status(400).json({ error: 'state must be a JSON object' });
-    }
-
-    const client_workspace_id = Number(bodyWsId);
-    if (!client_workspace_id) {
-      return res.status(400).json({ error: 'clientWorkspaceId is required' });
-    }
-
-    const [row] = await db
-      .insert(projects)
-      .values({
-        organizationId: organization_id,
-        clientWorkspaceId: client_workspace_id,
-        name: trimmedName,
-        type: 'medical-device',
-        status: 'draft',
-        progress: 0,
-        metadata: {
-          manufacturer: String(manufacturer).trim(),
-          /* Explicitly null rather than absent: "nobody has stated a class" and
-             "the writer forgot the field" must not read the same. */
-          deviceClass: statedClass === '' ? null : statedClass,
-          intendedUse: String(intendedUse).trim(),
-          deviceType: String(deviceType).trim(),
-          attachedDocuments,
-          state,
-        },
-      })
-      .returning();
-
-    /* WO-16C #133. The project row is already committed by the insert directly
-       above — `row` is what that insert returned — so this is the §11.10(e) log
-       BESIDE a completed action, not the action itself: a lost audit row is not a
-       reason to delete a device project the tenant can already list. The create
-       stands and the caller is told, in headers rather than in the row body (see
-       `setAuditRowHeaders`). */
-    const auditTrail = await recordAuditRow({
-      organizationId: organization_id,
-      userId: actorId,
-      action: 'DEVICE_PROJECT_CREATED',
-      resourceType: 'device_project',
-      resourceId: String(row.id),
-      details: { name: row.name ?? null },
-    });
-    setAuditRowHeaders(res, auditTrail);
-
-    console.log('✅ Created device project:', row.id, `(org=${organization_id})`);
-    res.status(201).json(row);
-  } catch (error: any) {
-    console.error('Failed to create device project:', error);
-    res.status(500).json({ error: 'Failed to create device project' });
-  }
-});
 
 /**
  * The PUT's field rules, one per field, in the order the handler reports them.

@@ -18,7 +18,6 @@ import { createScopedLogger } from '../utils/logger.js';
 const logger = createScopedLogger('ctd-onboarding');
 
 import {
-  createCTDProject,
   listCTDProjects,
   getCTDProjectStatus,
   uploadCTDDocument,
@@ -58,51 +57,6 @@ const upload = multer({
 
 // All routes require auth
 router.use(authMiddleware);
-
-// ============================================================================
-// POST /api/ctd/projects — Create CTD project
-// ============================================================================
-
-router.post('/projects', async (req: Request, res: Response) => {
-  try {
-    const organizationId = Number(req.tenantId);
-    if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required' });
-    }
-    const userId = Number(req.userId);
-    if (!userId) {
-      return res.status(401).json({ error: 'User context required' });
-    }
-    const { name, regulatoryRegion, submissionType, productName, productType, therapeuticArea, indication } = req.body;
-
-    if (!name || !regulatoryRegion || !submissionType || !productName || !productType) {
-      return res.status(400).json({
-        error: 'Missing required fields: name, regulatoryRegion, submissionType, productName, productType',
-      });
-    }
-
-    const result = await createCTDProject(organizationId, {
-      name,
-      regulatoryRegion,
-      submissionType,
-      productName,
-      productType,
-      therapeuticArea,
-      indication,
-      createdBy: userId,
-    });
-
-    return res.status(201).json({
-      message: 'CTD project created successfully',
-      projectId: result.projectId,
-      initialGaps: result.gaps.length,
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Create project error', { err: message });
-    return res.status(500).json({ error: 'Failed to create CTD project' });
-  }
-});
 
 // ============================================================================
 // GET /api/ctd/projects — List CTD projects

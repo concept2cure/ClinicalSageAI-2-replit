@@ -1,0 +1,111 @@
+{
+  "discoveryBase": "1f6a8bf7c65017749aae7f685f07918f2a75aa7f",
+  "sourceContract": {
+    "redFailed": 13,
+    "redPassed": 10,
+    "greenPassed": 40,
+    "removedPostRegistrations": 12,
+    "retainedRegistrations": 17
+  },
+  "secondaryRouteRed": {
+    "failed": 6,
+    "passed": 2
+  },
+  "regression": {
+    "passed": 427,
+    "files": 25,
+    "durationSeconds": 60.48
+  },
+  "nativeDatabaseAudit": {
+    "initialFailed": 2,
+    "initialPassed": 18,
+    "finalPassed": 20,
+    "files": 1,
+    "durationSeconds": 2.94,
+    "runtimeRole": "app_service",
+    "rls": true,
+    "superuser": false,
+    "bypassRls": false,
+    "reasonForTestCorrection": "New tests must count exactly one added chained audit row across append-only history, rather than require an empty prior audit history."
+  },
+  "nativeBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 21.7,
+    "canonicalWizardCreateStatus": 201,
+    "retiredWriteStatuses": [
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404
+    ],
+    "portfolioUnchangedAfterRetiredWrites": true,
+    "runtimeRole": "app_service",
+    "rls": true,
+    "developmentAuth": true
+  },
+  "build": "client, server and audit verifier passed; Vite24.52seconds",
+  "independentReview": "Clean: exactly12POSTremovals; retained handlers, services and middleware unchanged; canonical flow and deferred owners untouched.",
+  "typecheck": {
+    "passed": true,
+    "errors": 0,
+    "baseline": 0,
+    "wholeProgram": true,
+    "initialIssue": "Named import of an untyped JS mock in a new retirement test; replaced with a directly typed hoisted spy."
+  },
+  "noSchemaRetirement": true,
+  "deferredInternalOwners": [
+    "server/services/rules-engine/actions/index.ts:create_child_project",
+    "server/services/atomicQuotaService.js:atomicCreateProject"
+  ],
+  "staleTestCorrection": "The unchanged pre-slice suggested-actions service had already retired /dossier in A2.7; the old bootstrap test was corrected to current protocol suggestion and explicit absence of retired command.",
+  "initialQualifiedBase": "a54e56337c0028c53d20276b5441681feddf67b4",
+  "qualifiedBase": "98987035fb8a2e86ec019d474c9a44f90eaeb164",
+  "accountIntegration": {
+    "passed": 99,
+    "files": 7,
+    "durationSeconds": 19.8
+  },
+  "acceptedNativeBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 9.5,
+    "scaffoldReadStatus": 200,
+    "explicitAuthorNavigation": true,
+    "retiredWriteStatuses": [
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404,
+      404
+    ],
+    "canonicalCreateStatus": 201
+  },
+  "acceptedBuild": "client, server and audit verifier passed; Vite21.25seconds",
+  "implementationCommit": "ce8cae23",
+  "accountPublicationReceipt": "5c24914f06e21a93e542b333cdd8985229fb8fcc",
+  "publicationReceiptSourceChanges": false,
+  "sqlRatchetReduction": {
+    "file": "server/services/program-journey/program-journey-service.ts",
+    "before": 2,
+    "after": 1,
+    "reason": "Retired unused journey writer removes one existing interpolation; hook requires allowance to shrink."
+  }
+}

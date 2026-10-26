@@ -126,7 +126,8 @@ describe('Project Bootstrap Integration', () => {
     it('returns actions for IND', () => {
       const actions = getSuggestedActions('IND');
       expect(actions.length).toBeGreaterThan(3);
-      expect(actions.some(a => a.command === '/dossier')).toBe(true);
+      expect(actions.some(a => a.command === '/protocol')).toBe(true);
+      expect(actions.some(a => a.command === '/dossier')).toBe(false);
     });
 
     it('returns device-specific actions for 510K', () => {

@@ -1,12 +1,4 @@
-/**
- * program-journey-service — END-TO-END against in-process PGlite.
- *
- * Proves the GA write+read path: a journey recorded through the service persists as a
- * real parent row + one REAL row per lifecycle stage; the read assembles the overlay
- * from those stage rows; updateJourneyStage advances a stage in place; validation
- * rejects unknown segments/stages/statuses and malformed display payloads; tenant
- * scope + soft-delete hold (stage rows die with their parent).
- */
+/** A2.9: existing stored journeys retain their tenant-scoped read and stage overlay. */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
@@ -20,8 +12,7 @@ const pool = {
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
 import {
-  createProgramJourney, listProgramJourneys, updateJourneyStage, deleteProgramJourney,
-  ProgramJourneyValidationError, JOURNEY_STAGES,
+  listProgramJourneys, deleteProgramJourney, JOURNEY_STAGES,
 } from '../program-journey-service';
 
 const ORG = 7;
@@ -52,69 +43,54 @@ beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => { await pglite.exec(`DELETE FROM program_journey_stages; DELETE FROM program_journeys;`); });
 
-describe('program-journey-service', () => {
-  it('records a journey with all 9 REAL stage rows and reads the overlay back from them', async () => {
-    const created = await createProgramJourney(ORG, {
-      seg: 'pharma', code: 'BX-204', app: 'NDA 212345', readiness: 88, currentStage: 'review',
-      target: { label: 'PDUFA target action', v: '04 Apr 2027', agency: 'FDA · 41 days out' },
-      overlay: { discovery: ['done', 100], review: ['active', 60] },
-      modules: [{ m: '5', label: 'Clinical reports', pct: 74, risk: true }],
-      blockers: [{ sev: 'high', t: 'DS stability', m: 'M3', who: 'AR', due: 'Day 9 of 14' }],
-    });
-    expect(created.current).toBe('review');
-    expect(created.target).toMatchObject({ label: 'PDUFA target action', v: '04 Apr 2027' });
+async function historicalJourney(org: number, code: string, seq = 0) {
+  const { rows } = await pglite.query<{ id: string }>(`INSERT INTO program_journeys
+    (organization_id, seg, code, seq, app, readiness, current_stage, target_label, target_value, target_agency, modules, blockers)
+    VALUES ($1,'pharma',$2,$3,'NDA 212345',88,'review','PDUFA target action','04 Apr 2027','FDA',
+      '[{"m":"5","risk":true}]','[{"t":"Recorded blocker"}]') RETURNING id`, [org, code, seq]);
+  const id = rows[0].id;
+  await pglite.query(`INSERT INTO program_journey_stages (organization_id, journey_id, stage_id, status, pct)
+    SELECT $1,$2,stage_id,CASE WHEN stage_id='review' THEN 'active' ELSE 'upcoming' END,
+      CASE WHEN stage_id='review' THEN 60 ELSE 0 END
+    FROM unnest($3::text[]) AS stage_id`, [org, id, [...JOURNEY_STAGES]]);
+  return id;
+}
 
-    const [j] = await listProgramJourneys(ORG);
-    expect(j.code).toBe('BX-204');
-    expect(j.readiness).toBe(88);
-    // All 9 stages present as real rows; named ones carry their state, others default.
-    expect(Object.keys(j.overlay).sort()).toEqual([...JOURNEY_STAGES].sort());
-    expect(j.overlay.discovery).toEqual(['done', 100]);
-    expect(j.overlay.review).toEqual(['active', 60]);
-    expect(j.overlay.approval).toEqual(['upcoming', 0]);
-    expect(j.modules[0]).toMatchObject({ m: '5', risk: true });
-    const stageCount = await pglite.query(`SELECT count(*)::int AS n FROM program_journey_stages`);
-    expect((stageCount.rows[0] as { n: number }).n).toBe(9);
+describe('program-journey-service reads retained records', () => {
+  it('assembles a recorded parent and its nine stored stage rows without creating anything', async () => {
+    await historicalJourney(ORG, 'BX-204');
+    const [journey] = await listProgramJourneys(ORG);
+    expect(journey).toMatchObject({ code: 'BX-204', app: 'NDA 212345', readiness: 88, current: 'review' });
+    expect(journey.target).toMatchObject({ label: 'PDUFA target action', v: '04 Apr 2027', agency: 'FDA' });
+    expect(Object.keys(journey.overlay).sort()).toEqual([...JOURNEY_STAGES].sort());
+    expect(journey.overlay.review).toEqual(['active', 60]);
+    expect(journey.overlay.approval).toEqual(['upcoming', 0]);
+    expect(journey.modules[0]).toMatchObject({ m: '5', risk: true });
+    expect(journey.blockers).toEqual([{ t: 'Recorded blocker' }]);
+    const counted = await pglite.query<{ n: number }>('SELECT count(*)::int AS n FROM program_journeys');
+    expect(counted.rows[0].n).toBe(1);
   });
 
-  it('advances a stage in place (upsert on the real stage row)', async () => {
-    const j = await createProgramJourney(ORG, { seg: 'biotech', code: 'BX-301', currentStage: 'assemble' });
-    await updateJourneyStage(ORG, j.id, 'assemble', 'done', 100);
-    await updateJourneyStage(ORG, j.id, 'review', 'active', 25);
-    const [view] = await listProgramJourneys(ORG);
-    expect(view.overlay.assemble).toEqual(['done', 100]);
-    expect(view.overlay.review).toEqual(['active', 25]);
-    const stageCount = await pglite.query(`SELECT count(*)::int AS n FROM program_journey_stages`);
-    expect((stageCount.rows[0] as { n: number }).n).toBe(9);   // updated in place, not duplicated
+  it('returns an honest empty list for an organization without recorded journeys', async () => {
+    expect(await listProgramJourneys(ORG)).toEqual([]);
   });
 
-  it('rejects unknown segment/stage/status and malformed payloads', async () => {
-    await expect(createProgramJourney(ORG, { seg: 'devices', code: 'X', currentStage: 'review' }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(createProgramJourney(ORG, { seg: 'pharma', code: '', currentStage: 'review' }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(createProgramJourney(ORG, { seg: 'pharma', code: 'X', currentStage: 'filing' }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(createProgramJourney(ORG, { seg: 'pharma', code: 'X', currentStage: 'review', overlay: { warp: ['done', 100] } }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(createProgramJourney(ORG, { seg: 'pharma', code: 'X', currentStage: 'review', overlay: { review: ['sideways', 10] } }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(createProgramJourney(ORG, { seg: 'pharma', code: 'X', currentStage: 'review', modules: 'not-an-array' }))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    const j = await createProgramJourney(ORG, { seg: 'pharma', code: 'OK', currentStage: 'review' });
-    await expect(updateJourneyStage(ORG, j.id, 'review', 'later', 10)).rejects.toBeInstanceOf(ProgramJourneyValidationError);
-    await expect(updateJourneyStage(ORG, j.id, 'warp', 'done', 10)).rejects.toBeInstanceOf(ProgramJourneyValidationError);
+  it('does not expose foreign parents or foreign stage rows and preserves soft deletion', async () => {
+    const mine = await historicalJourney(ORG, 'Mine');
+    const theirs = await historicalJourney(OTHER, 'Theirs');
+    await pglite.query(`INSERT INTO program_journey_stages (organization_id, journey_id, stage_id, status, pct)
+      VALUES ($1,$2,'foreign-stage','done',100)`, [OTHER, mine]);
+    expect((await listProgramJourneys(ORG)).map(j => j.code)).toEqual(['Mine']);
+    expect((await listProgramJourneys(ORG))[0].overlay['foreign-stage']).toBeUndefined();
+    expect(await deleteProgramJourney(OTHER, mine)).toBe(false);
+    expect(await deleteProgramJourney(ORG, mine)).toBe(true);
+    expect(await listProgramJourneys(ORG)).toEqual([]);
+    expect((await listProgramJourneys(OTHER)).map(j => j.id)).toEqual([theirs]);
   });
 
-  it('is strictly tenant-scoped and soft-delete aware (stages die with the parent)', async () => {
-    const mine = await createProgramJourney(ORG, { seg: 'pharma', code: 'Mine', currentStage: 'review' });
-    await createProgramJourney(OTHER, { seg: 'pharma', code: 'Theirs', currentStage: 'ind' });
-
-    expect((await listProgramJourneys(ORG)).map((j) => j.code)).toEqual(['Mine']);
-    await expect(updateJourneyStage(OTHER, mine.id, 'review', 'done', 100))
-      .rejects.toBeInstanceOf(ProgramJourneyValidationError);   // no cross-tenant stage writes
-
-    expect(await deleteProgramJourney(ORG, mine.id)).toBe(true);
-    expect(await listProgramJourneys(ORG)).toEqual([]);          // parent soft-deleted → journey gone
+  it('retains recorded ordering before returning the stored journeys', async () => {
+    await historicalJourney(ORG, 'Later', 2);
+    await historicalJourney(ORG, 'Earlier', 1);
+    expect((await listProgramJourneys(ORG)).map(j => j.code)).toEqual(['Earlier', 'Later']);
   });
 });
