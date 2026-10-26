@@ -6721,12 +6721,20 @@ function ivdComputed(result: unknown, instruction: string): string {
   return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction });
 }
 
-function ivdError(name: string, err: any): string {
+function ivdError(name: string, err: any, input: Record<string, unknown>): string {
+  const missing = getRequiredInputKeys(name).filter(key => input[key] == null);
+  if (missing.length > 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      tool: name,
+      message: `Required inputs not stated: ${missing.join(', ')}.`,
+    });
+  }
   const message = err?.message || 'unknown error';
-  // Only a message isStatsParamError reads as a parameter problem (the stats
-  // tools' test) asks the user for more. Anything else, such as a fault in the
-  // engine or a failed import, is the tool failing and says so.
-  if (isStatsParamError(message)) {
+  // Missing inputs are determined from the schema and stated values. With
+  // those present, a TypeError is an engine fault even if its message mentions
+  // a word like "length" that the stats parameter-message heuristic accepts.
+  if (!(err instanceof TypeError) && isStatsParamError(message)) {
     return JSON.stringify({ status: 'needs_parameters', tool: name, message });
   }
   return JSON.stringify({ error: `${name} failed: ${message}` });
@@ -6740,7 +6748,7 @@ registerToolHandler('screen_signal_panel', async (input: Record<string, unknown>
     });
     return ivdComputed(result, 'Report each disproportionality metric with its bound and the consolidated signal tier.');
   } catch (err: any) {
-    return ivdError('screen_signal_panel', err);
+    return ivdError('screen_signal_panel', err, input);
   }
 });
 
@@ -6749,7 +6757,7 @@ registerToolHandler('assess_iso17511_traceability', async (input: Record<string,
     const { assessTraceability } = await import('../regulatory/iso-17511-traceability.js');
     return ivdComputed(assessTraceability(input as any), 'Report validity, the gaps, and the recommendation for the traceability chain.');
   } catch (err: any) {
-    return ivdError('assess_iso17511_traceability', err);
+    return ivdError('assess_iso17511_traceability', err, input);
   }
 });
 
@@ -6758,7 +6766,7 @@ registerToolHandler('assess_scientific_validity', async (input: Record<string, u
     const { assessScientificValidity } = await import('../regulatory/scientific-validity.js');
     return ivdComputed(assessScientificValidity(input as any), 'Report the verdict (established/supported/insufficient) and the evidence gaps.');
   } catch (err: any) {
-    return ivdError('assess_scientific_validity', err);
+    return ivdError('assess_scientific_validity', err, input);
   }
 });
 
@@ -6768,7 +6776,7 @@ registerToolHandler('determine_assay_cutoff', async (input: Record<string, unkno
     // The engine takes the bare observations array (the route wraps it).
     return ivdComputed(determineCutoff(input.observations as any), 'Report the cutoff with its sensitivity, specificity, and Youden J.');
   } catch (err: any) {
-    return ivdError('determine_assay_cutoff', err);
+    return ivdError('determine_assay_cutoff', err, input);
   }
 });
 
@@ -6777,7 +6785,7 @@ registerToolHandler('assess_shelf_life_stability', async (input: Record<string, 
     const { assessRealTimeStability } = await import('../stats/analytical-performance-extensions.js');
     return ivdComputed(assessRealTimeStability(input as any), 'Report the supportable shelf-life and whether the claim holds against the allowed change.');
   } catch (err: any) {
-    return ivdError('assess_shelf_life_stability', err);
+    return ivdError('assess_shelf_life_stability', err, input);
   }
 });
 
@@ -6786,7 +6794,7 @@ registerToolHandler('assess_accelerated_stability', async (input: Record<string,
     const { assessAcceleratedStability } = await import('../stats/analytical-performance-extensions.js');
     return ivdComputed(assessAcceleratedStability(input as any), 'Report the projected shelf-life at the storage temperature.');
   } catch (err: any) {
-    return ivdError('assess_accelerated_stability', err);
+    return ivdError('assess_accelerated_stability', err, input);
   }
 });
 
@@ -6796,7 +6804,7 @@ registerToolHandler('generate_declaration_of_conformity', async (input: Record<s
     const result = generateDeclarationOfConformity(input as any);
     return ivdComputed(result, 'If valid, present the declaration; if not, list exactly the missing[] fields to collect.');
   } catch (err: any) {
-    return ivdError('generate_declaration_of_conformity', err);
+    return ivdError('generate_declaration_of_conformity', err, input);
   }
 });
 
@@ -6830,7 +6838,7 @@ registerToolHandler('build_postmarket_report', async (input: Record<string, unkn
     const result = build(fields);
     return ivdComputed(result, 'If valid, present the report payload; if not, list exactly the missing[] required fields.');
   } catch (err: any) {
-    return ivdError('build_postmarket_report', err);
+    return ivdError('build_postmarket_report', err, input);
   }
 });
 

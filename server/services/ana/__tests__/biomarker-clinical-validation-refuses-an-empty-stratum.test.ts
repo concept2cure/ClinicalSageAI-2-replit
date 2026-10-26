@@ -37,6 +37,13 @@ async function call(input: Record<string, unknown>): Promise<Record<string, any>
 }
 
 describe('assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0%', () => {
+  it('does not establish validity or presume a cutoff when prespecification is unstated', () => {
+    const out = assessBiomarkerClinicalValidation({ ...COMPLETE, cutoffPrespecified: undefined });
+    expect(out.validityEstablished).toBe(false);
+    expect(out.cutoffNote).toMatch(/not stated/i);
+    expect(out.findings.some(f => /cutoff.*not stated/i.test(f.message))).toBe(true);
+  });
+
   it('refuses a table with no diseased subjects instead of returning sensitivity 0', () => {
     expect(() => assessBiomarkerClinicalValidation(NO_DISEASED)).toThrow(
       /reference-positive and reference-negative cases are required/,

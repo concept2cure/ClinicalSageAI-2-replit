@@ -42,7 +42,7 @@ describe('classify refuses a harm nobody assessed', () => {
   });
 
   it('an explicit "none" is still classified as not reportable', () => {
-    const result = classify({ patientHarm: 'none' });
+    const result = classify({ patientHarm: 'none', isMalfunction: false });
     expect(result.fdaReportable).toBe(false);
     expect(result.rationale ?? JSON.stringify(result)).toMatch(/No harm reported/);
   });

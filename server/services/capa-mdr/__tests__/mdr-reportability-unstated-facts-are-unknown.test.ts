@@ -81,6 +81,25 @@ beforeEach(() => {
 });
 
 describe('classify: an unstated fact is unknown, never false', () => {
+  it.each(['none', 'injury'] as const)('%s does not suppress an FDA-reportable malfunction', (patientHarm) => {
+    const result = classify({ patientHarm, ...STATED, isMalfunction: true });
+    expect(result).toMatchObject({ fdaReportable: true, suggestedFdaReportType: 'initial_30day' });
+    expect(result.rationale).toMatch(/Malfunction/);
+    expect(result.rationale).not.toMatch(/no FDA MDR|no MDR/);
+  });
+
+  it.each(['none', 'injury'] as const)('%s leaves FDA reportability unknown when malfunction risk was not stated', (patientHarm) => {
+    const result = classify({ patientHarm, ...STATED, isMalfunction: undefined });
+    expect(result).toMatchObject({ fdaReportable: null, determinationComplete: false });
+    expect(factNames(result.missingFacts)).toContain('isMalfunction');
+  });
+
+  it('no actual harm does not settle an EU malfunction serious-incident determination', () => {
+    const result = classify({ patientHarm: 'none', ...STATED, isMalfunction: true, eventLocationCountry: 'FR' });
+    expect(result).toMatchObject({ fdaReportable: true, mdrEuReportable: null, determinationComplete: false });
+    expect(result.rationale).toMatch(/not assessed/);
+  });
+
   it('a serious injury with nothing else stated is FDA reportable, and the rest is not determined', () => {
     const result = classify({ patientHarm: 'serious_injury' });
     expect(result).toMatchObject({
@@ -140,8 +159,8 @@ describe('classify: an unstated fact is unknown, never false', () => {
       missingFacts: [],
       determinationComplete: true,
     });
-    // No fact decides a harm of 'none'.
-    expect(classify({ patientHarm: 'none' })).toMatchObject({
+    // No actual harm and a stated absence of a reportable malfunction.
+    expect(classify({ patientHarm: 'none', ...STATED })).toMatchObject({
       fdaReportable: false,
       mdrEuReportable: false,
       determinationComplete: true,
@@ -150,6 +169,15 @@ describe('classify: an unstated fact is unknown, never false', () => {
 });
 
 describe('createComplaint stores no classification computed from an unstated fact', () => {
+  it.each([
+    ['       de       ', 'DE'],
+    ['  UnKnOwN  ', 'unknown'],
+  ])('stores the normalized country for %j, within the varchar(8) limit', async (eventLocationCountry, storedCountry) => {
+    await createComplaint(3, { ...INTAKE, ...STATED, eventLocationCountry } as never, CALLER);
+    const stored = H.inserted.find((row) => 'preliminaryClassification' in row);
+    expect(stored?.eventLocationCountry).toBe(storedCountry);
+  });
+
   it('refuses a complaint without anticipatesCorrection, and stores nothing', async () => {
     const outcome = await createComplaint(3, { ...INTAKE, ...without('anticipatesCorrection') } as never, CALLER).then(
       () => 'stored',

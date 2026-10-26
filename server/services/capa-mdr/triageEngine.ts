@@ -39,7 +39,7 @@ import { HARM_LEVELS } from '@shared/schema/capa-mdr';
  */
 export interface TriageInput {
   patientHarm: HarmLevel;
-  /** Whether the device behaved outside its specifications. */
+  /** Whether a malfunction would likely cause death or serious injury if it recurred. */
   isMalfunction?: boolean | null;
   /** Country of event (ISO 3166-1 alpha-2, or 'unknown') — drives EU MDR applicability. */
   eventLocationCountry?: string | null;
@@ -162,13 +162,13 @@ function statedFacts(input: TriageInput): TriageFacts {
  *   - Serious injury      → FDA reportable (initial_30day; escalate to
  *                           5-day if anticipatesCorrection).
  *                           EU 10-day class baseline; 2-day if trend.
- *   - Injury (non-serious) → not FDA-reportable by default; EU 15-day if
+ *   - Injury (non-serious) → assess FDA malfunction reportability; EU 15-day if
  *                            the regulator considers it a serious incident.
  *   - Malfunction         → FDA-reportable IF "would be likely to cause
  *                            or contribute to a death or serious injury
  *                            were it to recur" — caller signals this via
  *                            isMalfunction; unstated, it is not determined.
- *   - None / minor        → not reportable.
+ *   - No harm             → still assess malfunction reportability.
  *
  * 21 CFR 806 trigger: anticipatesCorrection AND patientHarm in
  *   { injury, serious_injury, death }.
@@ -192,6 +192,34 @@ export function classify(input: TriageInput): PreliminaryClassification {
   const missing = new Set<TriageFact>();
   /** A part this engine does not model, which no stated fact would decide. */
   let euNotAssessed = false;
+
+  // A reportable malfunction need not have caused actual harm (803.50(a)(2)).
+  // Evaluate the recurrence-risk signal for every harm that does not itself
+  // establish FDA reportability, including 'none' and non-serious injury.
+  const assessFdaMalfunction = () => {
+    if (isMalfunction === null) {
+      fdaReportable = null;
+      missing.add('isMalfunction');
+      reasons.push('Malfunction recurrence risk not stated → FDA reportability not determined');
+    } else if (isMalfunction) {
+      fdaReportable = true;
+      suggestedFdaReportType = 'initial_30day';
+      reasons.push('Malfunction likely to cause death or serious injury on recurrence → FDA 30-day per 21 CFR 803.50(a)(2)');
+    }
+  };
+
+  const assessEuMalfunction = () => {
+    // EU serious-incident status (Article 2(65), 87) is not modeled here.
+    // Only a stated non-EU country settles this part of a malfunction's result.
+    if (inEU === null) {
+      mdrEuReportable = null;
+      missing.add('eventLocationCountry');
+    } else if (inEU) {
+      mdrEuReportable = null;
+      euNotAssessed = true;
+      reasons.push('Malfunction in the EU → whether it is a serious incident (EU MDR Article 2(65), 87) is not assessed here');
+    }
+  };
 
   switch (patientHarm) {
     case 'death':
@@ -240,48 +268,34 @@ export function classify(input: TriageInput): PreliminaryClassification {
       // Not FDA-reportable on its own per 803.3 definition of serious
       // injury, but EU MDR may still require Article 87 reporting as
       // "other serious incident" depending on regulator interpretation.
+      assessFdaMalfunction();
       if (inEU === null) {
         mdrEuReportable = null;
         missing.add('eventLocationCountry');
-        reasons.push('Injury but non-serious — no FDA MDR; EU MDR not determined');
+        reasons.push('Injury but non-serious — EU MDR not determined');
       } else if (inEU) {
         mdrEuReportable = true;
         suggestedEuSeverity = 'other_serious_15day';
         reasons.push('Injury in EU → EU MDR Article 87(3) 15-day (other serious)');
       } else {
-        reasons.push('Injury but non-serious — no FDA MDR; document under 820.198 only');
+        reasons.push('Injury but non-serious — document under 820.198');
       }
       break;
 
     case 'malfunction':
-      if (isMalfunction === null) {
-        fdaReportable = null;
-        missing.add('isMalfunction');
-        reasons.push('Malfunction → FDA reportability not determined');
-      } else if (isMalfunction) {
-        // Malfunction reportability depends on whether recurrence would
-        // likely cause death or serious injury. Default to flagging.
-        fdaReportable = true;
-        suggestedFdaReportType = 'initial_30day';
-        reasons.push('Malfunction likely to cause harm on recurrence → FDA 30-day');
-      } else {
+      assessFdaMalfunction();
+      if (isMalfunction === false) {
         reasons.push('Malfunction without harm-likelihood signal — review for trend only');
       }
-      // EU MDR: a malfunction is a serious incident when it might have led to
-      // death or a serious deterioration (Article 2(65), 87). This engine does
-      // not model that, so only a stated non-EU country settles the EU half.
-      if (inEU === null) {
-        mdrEuReportable = null;
-        missing.add('eventLocationCountry');
-      } else if (inEU) {
-        mdrEuReportable = null;
-        euNotAssessed = true;
-        reasons.push('Malfunction in the EU → whether it is a serious incident (EU MDR Article 2(65), 87) is not assessed here');
-      }
+      assessEuMalfunction();
       break;
 
     case 'none':
-      reasons.push('No harm reported — log under 820.198, no MDR');
+      assessFdaMalfunction();
+      if (isMalfunction !== false) assessEuMalfunction();
+      reasons.push(isMalfunction === false
+        ? 'No harm reported and no reportable malfunction — log under 820.198, no MDR'
+        : 'No harm reported — malfunction reportability assessed separately');
       break;
 
     default:

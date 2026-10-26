@@ -113,6 +113,36 @@ describe('assessBRUncertainty — no source stated', () => {
   });
 });
 
+describe('S3 review: an unstated affected side', () => {
+  it('does not invent both benefit and risk or side-specific conclusions', () => {
+    const r = assessBRUncertainty({
+      ...base,
+      netBalanceEstimate: 0.4,
+      sources: [{ type: 'data_quality', level: 'low' }],
+    });
+    expect(r.sources[0].affects).toBe('not_stated');
+    expect(r.sources[0].impactOnBalance).toMatch(/side.*not stated/i);
+    expect(r.sources[0].impactOnBalance).not.toContain('both benefit and risk');
+    expect(r.whatWouldChangeTheConclusion).toEqual([
+      'No stated source names a recognised side of the balance (benefit, risk or both), so what would change the conclusion was not assessed.',
+    ]);
+  });
+
+  it('keeps explicitly stated directions', () => {
+    for (const affects of ['benefit', 'risk', 'both'] as const) {
+      const r = assessBRUncertainty({ ...base, sources: [{ type: 'data_quality', level: 'low', affects }] });
+      expect(r.sources[0].affects).toBe(affects);
+      expect(r.whatWouldChangeTheConclusion.join(' ')).not.toContain('not assessed');
+    }
+  });
+
+  it('does not advertise a default affected side', () => {
+    const props = (ASSESS_BR_UNCERTAINTY.input_schema as any).properties;
+    expect(props.sources.items.properties.affects.description).not.toMatch(/default/i);
+    expect(props.sources.items.properties.affects.description).toContain('not stated');
+  });
+});
+
 describe('assess_br_uncertainty handler', () => {
   it('returns not_assessed through the tool envelope when no margin is stated', async () => {
     const out = JSON.parse(

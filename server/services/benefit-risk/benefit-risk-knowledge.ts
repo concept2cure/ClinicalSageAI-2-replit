@@ -1586,7 +1586,8 @@ export interface ResolvedUncertaintySource {
   readonly type: UncertaintySourceType;
   readonly label: string;
   readonly description: string;
-  readonly affects: 'benefit' | 'risk' | 'both';
+  /** 'not_stated' when no affected side was supplied. */
+  readonly affects: 'benefit' | 'risk' | 'both' | 'not_stated';
   /** 'not_stated' when the source gave no level: none is assumed. */
   readonly level: UncertaintyLevel | 'not_stated';
   readonly impactOnBalance: string;
@@ -1691,9 +1692,12 @@ function uncertaintyMitigation(type: UncertaintySourceType): string {
 }
 
 function uncertaintyImpactProse(
-  affects: 'benefit' | 'risk' | 'both',
+  affects: ResolvedUncertaintySource['affects'],
   level: UncertaintyLevel | 'not_stated',
 ): string {
+  if (affects === 'not_stated') {
+    return 'The affected side of the balance was not stated, so the impact on benefit or risk was not assessed.';
+  }
   const side =
     affects === 'benefit'
       ? 'reduces confidence in the demonstrated benefit'
@@ -1733,7 +1737,8 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
     // An omitted (or unrecognised) level is not stated, never 'moderate'.
     const level: UncertaintyLevel | 'not_stated' =
       s.level === 'low' || s.level === 'moderate' || s.level === 'high' ? s.level : 'not_stated';
-    const affects = s.affects ?? 'both';
+    const affects: ResolvedUncertaintySource['affects'] =
+      s.affects === 'benefit' || s.affects === 'risk' || s.affects === 'both' ? s.affects : 'not_stated';
     if (level === 'high') highCount += 1;
     if (level === 'moderate') moderateCount += 1;
     if (level === 'not_stated') {
