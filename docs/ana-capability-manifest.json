@@ -758,7 +758,7 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. Editor UUIDs retain exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent; drug_substance; drug_product. Kept by hand: quality_overall_summary; nonclinical_overview; clinical_overview; clinical_summary; cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); protocol.",
+      "description": "Paged authoring outlines; not drafted prose, verified evidence or readiness. Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list medicinal/device/IVD outlines and gaps. `offset`/`limit` page results. UUIDs keep exact outline, scope and source checks. `market`+`prepare` adds a regional route and at most 3 focused questions. `discussed_topics` only prevents re-asking. Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. Record-derived: quality_overall_summary, nonclinical_overview, clinical_overview, clinical_summary, drug_substance, drug_product (M4); smpc (QRD SmPC); clinical_study_report (ICH E3); dsur (corrected ICH E2F). Blueprint scaffolds: statistical_analysis_plan; informed_consent. Kept by hand: cover_letter (platform headings); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim E2C(R2)); protocol.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -3456,7 +3456,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the six-subsection outline with drafting guidance and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
+      "description": "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.7 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the Clinical Overview outline the template library serves (2.5.1–2.5.7, with the 2.5.6 benefit-risk subdivisions), each section's guidance, the outline's limits and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
       "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
@@ -10944,23 +10944,17 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer. Maps ingest-shaped studies (single/repeat-dose tox, genotox, DART, carcinogenicity, safety pharm, PK/ADME) into the ICH M4S structure, flags the gaps against ICH M3(R2)/S2(R1)/S7A, and — when target-organ findings are supplied — appends the adversity profile (adverse vs adaptive vs monitor) from the toxicologic-pathology classifier. Returns a draft M2.4 (a starting point the author promotes through the governed authoring flow), its completeness score, and the gap list. Use this for Module 2.4 / nonclinical-overview authoring requests. Report the gaps and completeness honestly; do not assert a study exists that was not supplied.",
-      "scope": "global",
-      "governed": true,
+      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (2.4.1 to 2.4.6: overview of the nonclinical testing strategy, pharmacology, pharmacokinetics, toxicology, integrated overview and conclusions, list of literature references; each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.4 / nonclinical-overview requests. Report what it returns as it is: never fill a heading with a study, NOAEL or finding it did not return.",
+      "scope": "project",
+      "governed": false,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
-          "name": "studies",
-          "type": "array",
-          "required": true,
-          "description": "Nonclinical studies feeding the overview."
-        },
-        {
-          "name": "findings",
-          "type": "array",
+          "name": "project_id",
+          "type": "number",
           "required": false,
-          "description": "Target-organ findings to classify for the overview (optional)."
+          "description": "The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused."
         },
         {
           "name": "drugSubstanceName",
@@ -10975,9 +10969,7 @@
           "description": ""
         }
       ],
-      "requiredInputs": [
-        "studies"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -10986,23 +10978,17 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer — the 2.6.1 introduction, 2.6.2/2.6.4/2.6.6 written summaries (pharmacology, PK, toxicology) and the 2.6.3/2.6.5/2.6.7 tabulated summaries — weaving in the target-organ adversity profile when findings are supplied. Returns a draft, per-discipline tables, the gap list, and a completeness score. Use this for Module 2.6 authoring; report gaps and completeness honestly.",
-      "scope": "global",
+      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology, each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.6 requests. Report what it returns as it is: never fill a heading or a table with a figure it did not return.",
+      "scope": "project",
       "governed": false,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
-          "name": "studies",
-          "type": "array",
-          "required": true,
-          "description": "Nonclinical studies feeding the summaries."
-        },
-        {
-          "name": "findings",
-          "type": "array",
+          "name": "project_id",
+          "type": "number",
           "required": false,
-          "description": "Target-organ findings for the 2.6.6 adversity profile (optional)."
+          "description": "The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused."
         },
         {
           "name": "drugSubstanceName",
@@ -11017,9 +11003,7 @@
           "description": ""
         }
       ],
-      "requiredInputs": [
-        "studies"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -11028,7 +11012,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested studies, prefer the draft_* composer tools, which fill the content from data.",
+      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -11050,7 +11034,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: study inputs for draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, present-studies for assess_nonclinical_program, and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the overview drafted, the gap analysis run, or the FIH dose computed from the program's real data — then pass the returned arrays into the relevant tool. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -29564,7 +29548,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Read the full extracted text of a vault document by document id (from list_project_documents), one window at a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document's content, so read it, do not treat the file as an opaque image. Each window is sized so the whole response fits 5000 characters. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be read at once, a read comes back as {\"delivered\": false, \"readAgainFrom\": N} instead: nothing of it was recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; report that honestly rather than guessing at the content.",
+      "description": "Read the full extracted text of a vault document by document id (from list_project_documents), one window at a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document's content, so read it, do not treat the file as an opaque image. Windows shrink toward a 5000-character response budget; minimal metadata-heavy results still face host-budget admission. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be read at once, a read comes back as {\"delivered\": false, \"readAgainFrom\": N} instead: nothing of it was recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; report that honestly rather than guessing at the content.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
@@ -29580,13 +29564,13 @@
           "name": "max_chars",
           "type": "number",
           "required": false,
-          "description": "Maximum characters of text in this window (default and max 5000; the window is shrunk further so the whole response fits)."
+          "description": "Maximum UTF-16 code units of text in this window (default and max 5000; shrunk further for the response budget). One complete supplementary character may require 2 units when max_chars is 1. Returned window.start/end are the actual intact b"
         },
         {
           "name": "offset",
           "type": "number",
           "required": false,
-          "description": "Character offset to start from (default 0; advance it to page through the whole document)."
+          "description": "UTF-16 code-unit offset to start from (default 0). A start inside a supplementary character moves back to its beginning. Use returned window bounds and coverage continuation to page through the document."
         }
       ],
       "requiredInputs": [
@@ -35721,6 +35705,12 @@
           "type": "string",
           "required": false,
           "description": "Optional key from the Quality SOP template library; seeds editable canonical sections."
+        },
+        {
+          "name": "next_review_date",
+          "type": "string",
+          "required": false,
+          "description": "Optional YYYY-MM-DD the user named for the periodic review. Once effective, the document is listed for review from this date. Never choose one yourself."
         },
         {
           "name": "reason",

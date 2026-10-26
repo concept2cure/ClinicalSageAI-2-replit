@@ -418,47 +418,15 @@ export const SELECT_EXPOSURE_RESPONSE_DOSE: AnaTool = {
 export const DRAFT_NONCLINICAL_OVERVIEW_M2_4: AnaTool = {
   name: 'draft_nonclinical_overview_m2_4',
   description:
-    "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer. Maps ingest-shaped studies (single/repeat-dose tox, genotox, DART, carcinogenicity, safety pharm, PK/ADME) into the ICH M4S structure, flags the gaps against ICH M3(R2)/S2(R1)/S7A, and — when target-organ findings are supplied — appends the adversity profile (adverse vs adaptive vs monitor) from the toxicologic-pathology classifier. Returns a draft M2.4 (a starting point the author promotes through the governed authoring flow), its completeness score, and the gap list. Use this for Module 2.4 / nonclinical-overview authoring requests. Report the gaps and completeness honestly; do not assert a study exists that was not supplied.",
+    "Draft the Module 2.4 Nonclinical Overview (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (2.4.1 to 2.4.6: overview of the nonclinical testing strategy, pharmacology, pharmacokinetics, toxicology, integrated overview and conclusions, list of literature references; each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.4 / nonclinical-overview requests. Report what it returns as it is: never fill a heading with a study, NOAEL or finding it did not return.",
   input_schema: {
     type: 'object',
     properties: {
-      studies: {
-        type: 'array',
-        description: 'Nonclinical studies feeding the overview.',
-        items: {
-          type: 'object',
-          properties: {
-            studyType: { type: 'string', description: 'Study type (ingest enum e.g. repeat_dose_tox, genotox, dart, safety_pharm, pk — or a builder category).' },
-            studyTitle: { type: 'string' },
-            species: { type: 'string' },
-            durationWeeks: { type: 'number' },
-            glpCompliant: { type: 'boolean' },
-            noael: { type: 'string', description: 'NOAEL (e.g. "50 mg/kg/day").' },
-            keyFindings: { type: 'string', description: 'Primary finding / summary.' },
-            doseLevels: { type: 'array', items: { type: 'string' } },
-            reportSection: { type: 'string', description: 'Module 4 section (e.g. "4.2.3.2").' },
-          },
-          required: ['studyType'],
-        },
-      },
-      findings: {
-        type: 'array',
-        description: 'Target-organ findings to classify for the overview (optional).',
-        items: {
-          type: 'object',
-          properties: {
-            organ: { type: 'string' },
-            finding: { type: 'string' },
-            severity: { type: 'string' },
-            correlates: { type: 'array', items: { type: 'string' } },
-          },
-          required: ['organ', 'finding'],
-        },
-      },
+      project_id: { type: 'number', description: 'The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused.' },
       drugSubstanceName: { type: 'string' },
       indication: { type: 'string' },
     },
-    required: ['studies'],
+    required: [],
   },
 };
 
@@ -614,54 +582,22 @@ export const CHARACTERIZE_PK: AnaTool = {
 export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
   name: 'draft_nonclinical_summaries_m2_6',
   description:
-    "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the program's nonclinical study set using the platform's deterministic composer — the 2.6.1 introduction, 2.6.2/2.6.4/2.6.6 written summaries (pharmacology, PK, toxicology) and the 2.6.3/2.6.5/2.6.7 tabulated summaries — weaving in the target-organ adversity profile when findings are supplied. Returns a draft, per-discipline tables, the gap list, and a completeness score. Use this for Module 2.6 authoring; report gaps and completeness honestly.",
+    "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology, each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.6 requests. Report what it returns as it is: never fill a heading or a table with a figure it did not return.",
   input_schema: {
     type: 'object',
     properties: {
-      studies: {
-        type: 'array',
-        description: 'Nonclinical studies feeding the summaries.',
-        items: {
-          type: 'object',
-          properties: {
-            studyType: { type: 'string', description: 'Study type (ingest enum or builder category).' },
-            studyId: { type: 'string' },
-            studyTitle: { type: 'string' },
-            species: { type: 'string' },
-            durationWeeks: { type: 'number' },
-            glpCompliant: { type: 'boolean' },
-            noael: { type: 'string' },
-            keyFindings: { type: 'string' },
-            reportSection: { type: 'string' },
-          },
-          required: ['studyType'],
-        },
-      },
-      findings: {
-        type: 'array',
-        description: 'Target-organ findings for the 2.6.6 adversity profile (optional).',
-        items: {
-          type: 'object',
-          properties: {
-            organ: { type: 'string' },
-            finding: { type: 'string' },
-            severity: { type: 'string' },
-            correlates: { type: 'array', items: { type: 'string' } },
-          },
-          required: ['organ', 'finding'],
-        },
-      },
+      project_id: { type: 'number', description: 'The project whose recorded studies to read, when none is open. A project open in the workspace is used as it is; another project is refused.' },
       drugSubstanceName: { type: 'string' },
       indication: { type: 'string' },
     },
-    required: ['studies'],
+    required: [],
   },
 };
 
 export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
   name: 'load_nonclinical_program',
   description:
-    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: study inputs for draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, present-studies for assess_nonclinical_program, and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the overview drafted, the gap analysis run, or the FIH dose computed from the program's real data — then pass the returned arrays into the relevant tool. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
   input_schema: {
     type: 'object',
     properties: {
@@ -674,7 +610,7 @@ export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
 export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
   name: 'get_nonclinical_template',
   description:
-    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested studies, prefer the draft_* composer tools, which fill the content from data.",
+    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
   input_schema: {
     type: 'object',
     properties: {

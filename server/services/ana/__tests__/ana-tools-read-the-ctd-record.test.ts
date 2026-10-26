@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { IND_MODULE_TEMPLATES, buildIndModuleAuthoringPlan } from '../ind-module-authoring';
-import { clinicalOverviewLimits, clinicalOverviewOutline } from '../clinical-overview-outline';
+import { clinicalOverviewLimits, clinicalOverviewOutline } from '../ctd-component-outline';
 import { DRAFT_CLINICAL_OVERVIEW_M2_5 } from '../legacy-import-tool-defs';
 import { ctdRecordSubtree } from '../../market-specs/ctd-component-outlines';
 import { ichHeadingTitle } from '../../ind/ctd/ich-m4-headings';

@@ -5564,45 +5564,11 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
 });
 
 // Draft M2.4 Nonclinical Overview — deterministic composer + adversity profile
-registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<string, unknown>) => {
-  try {
-    const studies = input.studies;
-    if (!Array.isArray(studies) || studies.length === 0) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.4 overview.' });
-    }
-    const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
-    const { summary, toxProfile } = buildEnrichedM24({
-
-      studies: studies as any,
-
-      findings: input.findings as any,
-      drugSubstanceName: input.drugSubstanceName as string | undefined,
-      indication: input.indication as string | undefined,
-    });
-    return JSON.stringify({
-      status: 'drafted',
-      engine: 'deterministic',
-      sectionKey: summary.sectionKey,
-      title: summary.title,
-      content: summary.narrative,
-      // The builder's tables, which the narrative refers to (2026-10-15: dropped).
-      tables: summary.tables,
-      completeness: summary.completeness,
-      gaps: summary.gaps,
-      toxProfile: toxProfile
-        ? {
-            adverse: toxProfile.adverseFindings.map(f => f.finding),
-            adaptive: toxProfile.adaptiveFindings.map(f => f.finding),
-            monitor: toxProfile.monitorFindings.map(f => f.finding),
-            overviewParagraph: toxProfile.overviewParagraph,
-          }
-        : null,
-      instruction:
-        'This is a draft the author promotes through the governed authoring flow. State the completeness score and gaps honestly; do not assert a study that was not supplied.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `M2.4 overview drafting failed: ${err?.message || 'unknown error'}` });
-  }
+registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<string, unknown>, ctx) => {
+  // Rule 2 (audit S2, 2026-10-26): the studies come from the project's records,
+  // never from the tool input the model writes (ana/module2-nonclinical-inputs.ts).
+  const { draftNonclinicalFromRecords } = await import('./module2-nonclinical-inputs.js');
+  return draftNonclinicalFromRecords(input, ctx, '2.4');
 });
 
 // Fetch a blank nonclinical/clin-pharm document template (form)
@@ -5623,7 +5589,7 @@ registerToolHandler('get_nonclinical_template', async (input: Record<string, unk
       sectionCode: tmpl.sectionCode,
       title: tmpl.title,
       content: tmpl.content,
-      instruction: 'Fill the [PLACEHOLDER] tokens. If the program has ingested studies, prefer the draft_* composer tools, which fill content from data.',
+      instruction: 'Fill the [PLACEHOLDER] tokens from the cited study reports, and state a section with no data as such. The Module 2.4 and 2.6 draft tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Fetching nonclinical template failed: ${err?.message || 'unknown error'}` });
@@ -5684,7 +5650,7 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
       presentStudies: loaded.presentStudies,
       speciesNoaels: loaded.speciesNoaels,
       instruction:
-        'Pass studies into draft_nonclinical_overview_m2_4 / draft_nonclinical_summaries_m2_6, presentStudies into assess_nonclinical_program, and speciesNoaels into compute_fih_dose. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+        'Pass presentStudies into assess_nonclinical_program and speciesNoaels into compute_fih_dose. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
     // 2026-10-22: a program outside the organization read as a failed load.
@@ -5767,30 +5733,10 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
 // draft_quality_overall_summary_m2_3 is registered from cmc-quality-summary-tool.ts:
 // it composes the open program's recorded CMC data and refuses data supplied in the call.
 
-registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>) => {
-  try {
-    const studies = input.studies;
-    if (!Array.isArray(studies) || studies.length === 0) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
-    }
-    const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
-
-    const r = buildM26NonclinicalSummaries(input as any);
-    return JSON.stringify({
-      status: 'drafted',
-      engine: 'deterministic',
-      sectionKey: r.sectionKey,
-      title: r.title,
-      content: r.narrative,
-      tables: r.tables,
-      completeness: r.completeness,
-      gaps: r.gaps,
-      instruction:
-        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `M2.6 summaries drafting failed: ${err?.message || 'unknown error'}` });
-  }
+registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<string, unknown>, ctx) => {
+  // Rule 2 (audit S2): as draft_nonclinical_overview_m2_4.
+  const { draftNonclinicalFromRecords } = await import('./module2-nonclinical-inputs.js');
+  return draftNonclinicalFromRecords(input, ctx, '2.6');
 });
 
 // Integrated nonclinical safety assessment — composes the engines
@@ -15857,7 +15803,7 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   );
 
   // The served Clinical Overview, read from the ICH M2–M5 record (D2 cleanup C4a).
-  const { clinicalOverviewLimits, clinicalOverviewOutline } = await import('./clinical-overview-outline.js');
+  const { clinicalOverviewLimits, clinicalOverviewOutline } = await import('./ctd-component-outline.js');
   return JSON.stringify({
     structure: {
       title: `Clinical Overview (Module 2.5) — ${productName} for ${indication}`,
