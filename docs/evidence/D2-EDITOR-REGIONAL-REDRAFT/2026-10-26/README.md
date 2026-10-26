@@ -5,7 +5,7 @@
 | Existing queue/review/panel input retention | Root | Completed; final inputs frozen |
 | Focused panel input regression | ana_drafting_usecase | 20/20 passed; settled byte qualification |
 | Actual source-first editor regeneration | next_authoring_usecase | 13/13 passed; settled byte qualification |
-| Git, checks and human handoff | Root | Claimed |
+| Git, checks and human handoff | Root | Code published; normal gates passed; 114 human cases Not run |
 
 Contract: docs/design/EDITOR_REGIONAL_REDRAFT_2026-10-26.md.
 
@@ -57,3 +57,11 @@ Both worker RED epochs use existing exports and real panel/Workbench requests, n
 The first production strict lint attempt exposed the two pre-existing panel warnings. Root's first patch kept warning counts but raised the existing complexity metric43→44. Root changed only its fallback/input merge expression to spread defaults and retained values, keeping complexity43 and shortening the function. `lint-qualification.md`, initial snapshots/receipts and the final numeric-metric comparator retain this distinction. Both workers captured separate settled epochs and root reran the143-case integration after that final expression. Earlier green/gate receipts are historical, not summed or presented as the final source freeze.
 
 Independent final read-only reviews found no blocking issue: generation inputs are copied before provider awaits, existing controls merge against the latest review state, optional metadata cannot infer a region, and source/owner/unknown-acceptance guards stay authoritative. The valid selected-section source-window query improvement remains a separate documented follow-up; it was not implemented in this slice.
+
+## Accepted canonical publication
+
+Source commit **424ca42d805802cec5e79dbb39aea6838e348048** was merged normally with incoming Rule2 commit33694a45a, producing **785b9fbb5b551ff11021d80873d04f305e7d2707**. All55 declared qualified inputs matched actual post-merge Git blobs. The incoming calculator/record-read work has no declared input overlap; root reran all seven whole-tree editor/UI/size gates and the production build after that merge, both passing without input drift (`gates-post-merge.json`, `build-post-merge.json`). The editor test source/config bytes remained unchanged; those test totals are not multiplied by merges.
+
+`publication-code.json` / `publication-code.log.gz` retain the successful normal direct push, with every pre-push gate and the full TypeScript check: **zero errors against baseline zero**. The pushed-file ESLint warning ratchet also passed. A fresh authenticated fetch observed canonical origin at785b9fbb5b551ff11021d80873d04f305e7d2707 with local/remote0ahead/0behind. `accepted-code-verification.json` independently verifies the55 accepted source/config/test blobs and source-commit ancestry. No bypass, baseline increase, force, alternate branch, PR, provider call or deployment.
+
+This documentation follow-up publishes the remaining receipts and artifact manifest. The final read-only check is `verify-publication.py --revision origin/concept2cure-v2 --require-artifacts`: it compares actual accepted Git blobs with every final qualified input and packet artifact, confirms filesystem equality and tracked coverage, and checks source-commit ancestry. Its final console result avoids recursively creating another receipt/commit.
