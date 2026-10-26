@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T16:32:24.458Z",
+  "generatedAt": "2026-10-26T18:45:25.274Z",
   "git": {
-    "sha": "133de1428c67cf3946095b2f2978fa97485fea9d",
+    "sha": "449baa69debf1cc5928123f0f7fe66e670e45334",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2342,7 +2342,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1168735
+        "bytes": 1170054
       },
       {
         "file": "shared/schema.ts",
@@ -2365,12 +2365,12 @@
         "bytes": 332531
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 232593
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 230141
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 230093
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 228974
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2538,7 +2538,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 111465
+        "bytes": 110409
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2568,7 +2568,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22210
+        "lines": 22215
       },
       {
         "file": "shared/schema.ts",
@@ -2588,7 +2588,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5760
+        "lines": 5676
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2779,10 +2779,6 @@
         "lines": 2166
       },
       {
-        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 2162
-      },
-      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
@@ -2803,12 +2799,12 @@
         "lines": 2122
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2115
-      },
-      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2101
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2099
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2829,6 +2825,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 2064
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
+        "lines": 2047
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2875,12 +2875,12 @@
         "lines": 1908
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1901
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1883
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2955,24 +2955,28 @@
         "lines": 1775
       },
       {
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1756
+      },
+      {
+        "file": "server/services/pediatric/pediatric-knowledge.ts",
+        "lines": 1715
+      },
+      {
         "file": "tests/services/ana-biostats.test.ts",
         "lines": 1712
+      },
+      {
+        "file": "shared/navigation/surface-actions.ts",
+        "lines": 1709
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1700
       },
       {
-        "file": "shared/navigation/surface-actions.ts",
-        "lines": 1690
-      },
-      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1663
-      },
-      {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
-        "lines": 1650
       },
       {
         "file": "server/services/module3-extensions.ts",
@@ -2995,16 +2999,12 @@
         "lines": 1608
       },
       {
-        "file": "server/services/pediatric/pediatric-knowledge.ts",
-        "lines": 1606
-      },
-      {
         "file": "server/routes/mdx-rbm.ts",
         "lines": 1605
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1567
+        "lines": 1591
       },
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
