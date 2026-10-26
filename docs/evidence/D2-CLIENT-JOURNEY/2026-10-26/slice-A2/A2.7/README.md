@@ -122,6 +122,15 @@ The following are overlapping checks, not a summed unique test count.
   with the existing chunk-size warning. Context, CSS, alias and retirement checks pass.
 - Full TypeScript zero-baseline check and all mandatory pre-push gates are
   required for publication; no bypass or type/lint baseline expansion is used.
+  The full pre-integration TypeScript run passed with **zero errors**.
+
+## Concurrent integration
+
+Merged SCIM setup/audit changes through `4334c3fc0` without source conflicts.
+The combined dossier/routing and SCIM UI/refusal/atomicity suites pass:
+**56 tests in 7 suites**. The merged client/server/audit-verifier build also
+passes (Vite **23.99 seconds**). Mandatory publication hooks check the final
+combined tree again. No SCIM credential value is included in these records.
 
 ## Known baseline and qualification limits
 
