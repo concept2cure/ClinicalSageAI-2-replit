@@ -295,6 +295,11 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 101 | For an identified uncertain source copy, check the exact recovery UUID through current scoped inventory, header and sections. Whole-document access, original actor/project/organisation and saved import provenance must match before Open is offered. Foreign/malformed identities, section-only projections, unavailable source metadata and failed reads remain held. An edited recovered workflow uses its actual saved section choices. | Not run | |
 | 102 | After a confirmed/recovered receipt, change the editor’s dirty-work/ceremony hold and then choose Open. The latest host guard must prevail while preserving the copy. If closing the intake changes account/project, do not navigate with the earlier receipt. Verify keyboard Close/Escape, focus return and small viewport scrolling using existing dialog styles. | Not run | |
 
+| 103 | In the project’s Evidence step, select current Data Room and Vault sources and choose Build in editor. Open an exact current whole working document, then repeat with New document. Both paths preserve the selected IDs/hashes and use the existing editor/form. Before explicit creation/build, only scoped inventory reads occur. | Not run | |
+| 104 | With the operator’s controlled Close callback fixture, change account/session, project A→B→A or the current source predicate, or open a governed ceremony during Close. Neither Open nor New document may publish/navigate with the earlier selection. Ordinary Close/unmount must still allow a valid explicit handoff. | Not run | |
+| 105 | Refresh the session normally during an inventory response/body read. Preserve the selected document/sources and accept the valid reply; each GET retains its dispatched actor headers, and the next GET uses the adopted bearer. Raw storage-only replacement, anonymous launch and stale retained callbacks must refuse, mask private choices and explain the original-context refusal. | Not run | |
+| 106 | Return explicit section-only, missing/unknown readScope, duplicate UUID or foreign-project inventory rows through the controlled fixture. Section-only targets are unavailable; malformed/foreign lists show a read error and may retry. After a genuine handoff is consumed, changing its original sender or selected sources must retire it; copied/raw commands must not acquire ownership. Check keyboard Close/Escape and footer access at desktop/phone widths in both themes. | Not run | |
+
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
@@ -318,6 +323,8 @@ For cases 84–91, use the [selected-source document-start contract](../design/S
 For cases 92–95, use the [assembly template discovery contract](../design/ASSEMBLY_TEMPLATE_SEARCH_2026-10-23.md). Search filters loaded display metadata; the explicit current preview remains the authority for source and filing scope.
 
 For cases 96–102, use the [source intake ownership and recovery contract](../design/SOURCE_INTAKE_OWNERSHIP_2026-10-23.md). Conditional source-version reuse is not durable request idempotency. An exact recovered working copy does not establish current source eligibility, filing approval or submission readiness.
+
+For cases 103–106, use the [selected-source handoff ownership contract](../design/SELECTED_SOURCE_HANDOFF_OWNERSHIP_2026-10-26.md). Automated component/browser results use synthetic HTTP and remain separate from these human observations. The current project journey is Plan → Evidence → Author → Review → Submit → Respond.
 
 For cases 34–37, use the [saved-reference contract](../design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md). The last recorded source selection is historical build intent. Its successful read does not select it or establish current citation support; reuse requires a fresh check and another explicit preview.
 

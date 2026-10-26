@@ -22,18 +22,19 @@ const HASH = 'ab'.repeat(32);
 const source: VaultDoc = { id: `up-${VAULT}`, docId: VAULT, src: 'upload', title: 'Retained Vault report', num: '',
   type: 'Report', status: 'unfiled', pct: null, owner: '', ver: 'v2', updated: '', preview: '', hash: HASH,
   originalFileAvailable: false, disposition: 'keep_data' };
-const working = { id: DOC, title: 'Existing working document', program_id: PROGRAM, status: 'DRAFT' };
+const working = { id: DOC, title: 'Existing working document', program_id: PROGRAM, status: 'DRAFT', readScope: 'document' };
 const user = { id: '481', organizationId: '48', organizationName: null, email: 'files@example.test', firstName: 'Files',
   lastName: 'Author', displayName: 'Files author', roles: ['author'], permissions: [], mfaEnabled: false,
   mfaMethods: [], mustChangePassword: false };
 const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+const bearer = (visit = 'initial', id = 481) => `fixture.${btoa(JSON.stringify({ userId: id, organizationId: 48, visit }))}.synthetic`;
 let tree: VaultDoc[];
 let documents: () => Response | Promise<Response>;
 let search: (path: string) => Response;
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user })));
-  await authService.adoptSession('synthetic-project-files-session'); publishShellProject({ id: PROGRAM });
+  await authService.adoptSession(bearer()); publishShellProject({ id: PROGRAM });
   tree = [source]; documents = () => ok({ success: true, documents: [working] });
   search = () => ok({ success: true, data: { results: [], total: 0 } });
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
@@ -160,7 +161,7 @@ describe('source launch eligibility ownership', () => {
     if (mode === 'project visit') act(() => { publishShellProject({ id: OTHER }); publishShellProject({ id: PROGRAM }); });
     if (mode === 'account session') {
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: { ...user, id: '482' } })));
-      await act(async () => { await authService.adoptSession('changed-project-files-session'); });
+      await act(async () => { await authService.adoptSession(bearer('replacement', 482)); });
     }
     if (mode === 'selected source') view.rerender(<SourceAssemblyAction {...props} sources={[{ kind: 'vault', documentId: DOC }]} />);
     await act(async () => { pending.resolve(ok({ success: true, documents: [working] })); await pending.promise; });
