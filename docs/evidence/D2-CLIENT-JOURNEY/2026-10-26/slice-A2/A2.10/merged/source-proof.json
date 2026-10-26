@@ -1,0 +1,69 @@
+{
+  "base": "f033cc722be329cd50c0bdac2e0bfce816f8eafd",
+  "mergeParents": [
+    "37f2ed240fdabdf0b17d14f0b67f44c8a6d084a5",
+    "c7f320403bc93328b3b9a364c4927b3873e5a95d"
+  ],
+  "qualification": {
+    "focusedTests": 671,
+    "disjointSuites": 48,
+    "nativeDatabaseUniqueCases": 16,
+    "nativeBrowserFlows": 4,
+    "build": "client/server/audit verifier passed"
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/__tests__/croPortfolioCompanyType.test.tsx": "10065a5e3808715fede250718d28aa3c3a12fd0eba8528796f58b846e07481e9",
+    "client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx": "3f2292802c0c2aa4bb94dc5d3e5a55c3d1d5dd80ec4142c435047fbe49f51704",
+    "client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx": "212d00f695e1fd73e0cd6c4ddf3f25cbfc23283e2e57d4a986e9d120195b0401",
+    "client/src/concept2cure/v2/__tests__/filingLifecyclePlan.test.tsx": "629cae8b0a90f1f9c3648ee44ddcc04e1827f0ad51d50a1fa27cbac96b77a31a",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx": "2d4b4f0094928debf9fdb4f2fae292529993a1021293bc4e40c160ca671217e9",
+    "client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts": "d65ca141e3c4b162c4dafb49fe4e99d6dcd2a2ac95f1ae1a728e2b5428b40d6b",
+    "client/src/concept2cure/v2/__tests__/projectDestination.test.ts": "30416b46c3c52603b09251cac2857d6acbb91a90df4572c21d9f6ba559c3ef2c",
+    "client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx": "a3b7ed6c42dabb0cfd54060843b0f579180ee5292bf40a48f74797c98102e1a3",
+    "client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx": "2a804d2c777cba849435c466ffb8cc64da2a09ab5ac6f7cffbf23aaecc6d2f3e",
+    "client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx": "377a8e77df1eebcb7e2e7d8a0c4627ce937df4575f06a18d0bf7846070f4ee64",
+    "client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx": "f4e413b8ffdb1ed7c769eea03b73b4686825181952c7a671542aa037ef0daddb",
+    "client/src/concept2cure/v2/fixtures/collab-data.ts": "587463f0a2b29d1dfda43396f1454a4533dab5fa23726d8bf4ca64c227141983",
+    "client/src/concept2cure/v2/registryModel.ts": "2ab71b8c8b9de2f3b78fc865fd1bdedb4fdcf0b83b91cc445847bd1d1ec3044e",
+    "client/src/concept2cure/v2/styles/app-v2.css": "d6ab42ad197a29e92d9c752b71833ab2e417de102b90abfa41ef97054e35cc6b",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d3e22b96944d449e53c43812322754168c9fc822e9c0737876fe92e3cb226bb7",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "ce54947b2719ec40ecef2d39150f30a4ed94414e88b9825f9fecb0223c1400e2",
+    "client/src/concept2cure/v2/surfaceViews.ts": "df64b1f3b164e97653007e2d4c5c2adee216dc2e76858ee8da28ade2223ae761",
+    "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx": "be11c29c64b321af918a4106a89d79a600c680cd4cf28db313cdad75b7dd67e4",
+    "client/src/concept2cure/v2/surfaces/CroPortfolio.tsx": "67ef81437824c469f4ac8086a8962969efb50d19a02b9dbb21283c9e7781affb",
+    "client/src/concept2cure/v2/surfaces/FilingLifecycleReference.tsx": "f5c21cc28749aaaccbfd35730805070a76bb3c9f959a3a0a00983a2d25c383c3",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "0b4823845af534e798b5322b3cc6489acfbd6071808acfa5ee3f00762339f171",
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "46fcd5194c47c2229b71b09a1df5c5b1fc8022b94d64863462c15b0b6851e7dd",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx": "ee950d346c04d6eb95e52a4aa9935db27ddd135d9dc1ffce2d45660948cf9853",
+    "db/migrations/20260810_reconcile_module_catalog.sql": "d74ddeae7aaa53771b48ec9b10eb523baa4c236399e8e3c923e41d63d3ebbd61",
+    "db/migrations/20260823_module_catalog_commercial_packaging.sql": "e32024c019953058692e34c37baab9e170bb9f831b47057a5400ab9e26a968e2",
+    "scripts/ci/check-ana-surface-context.mjs": "42917b75569d20e4c1e07d06130ffebf209c6bb279ce561398d62feb779bb9eb",
+    "scripts/ci/launch-scope-fixture-allowlist.json": "e31ed44c74bfbb3e8ce9e5aa48e0c16020e75af92fa43e22d2c58834b8f05735",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "d86e7424344f01bbf1a2adf8bfcab41ba4d51d144166cf4ae40e5bd55e589946",
+    "server/routes/c2c/projects.ts": "ab0731103d9a8cf19e24a98a102e8e589bb2995e154d24a3b57646db5e12b8c6",
+    "server/services/ana-ri/mdx-command-handlers-phase2.ts": "da1db21fea6606fba2ec829968556eb9711151e6becdcdf7179431bb9dac5dce",
+    "server/services/ana/__tests__/ana-launch-scope.test.ts": "f2afd5eeeeeb83ce33b0322dbf7c0d84af3694075cef5a8e4e3d20d20e94c716",
+    "server/services/ana/ana-launch-scope.inventory.json": "849dd99b2d4b5fcc6fdcb7eca97c8cd39ede49146c257cd0c0f654d777d160b1",
+    "server/services/entitlements/__tests__/launch-scope.test.ts": "b7c1945d26460394b473154cb1b3afd9c15d0c8a94246550d42d369f4df0072d",
+    "shared/constants/__tests__/deferred-capability-inventory.test.ts": "e3f1985004764d3b3f8c4cdb019e6ec01ebad297258e327b7cabe5457ebbcbfd",
+    "shared/constants/deferred-capability-inventory.ts": "179f7da03677c0a8020b84b46bc934e17abe95361d360fe69a8e7e0c653b2c72",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "2c1de750a221762bc98e78964d900f8be3834ed440da18e3ef8d0af198dddd79",
+    "shared/regulatory/__tests__/filing-lifecycle-reference.test.ts": "9572141e5fc79d52eb34b7b6a76d9055c87b2635707475026ae1efa20d613387",
+    "shared/regulatory/filing-lifecycle-reference.ts": "d6647725394e09e99a59194dcdc22a04969b2f7d341e3c153e4723a52550e3a1",
+    "tests/db/project-client-workspace-intake.dbtest.ts": "3db724171575eb96e44f636e1ec256656464b73523cbca4106363db8c58631ee",
+    "tests/e2e/filing-catalog-core-workflow.e2e.ts": "28f4ea68916a5f6f3646cb322438e5656ca973de2da3afe42c642977757eb352",
+    "tests/e2e/filing-catalog-fold.e2e.ts": "97ee20dee3f1e29a3e7b0cef8be3e4ebb21db01ca9412ecc4dc7645335f584de",
+    "tests/schema-contract/catalog-module-claims.contract.test.ts": "3301467f09f1923c117b2fdea3cd8c7fe837445810e4f37fb4031834ee37440f",
+    "tests/schema-contract/filings-catalog-retirement.contract.test.ts": "cfd2343fc1b8f2c0fad182125c6c24c0b157423032d573afbff65e0d977a4c42",
+    "tests/validation/oq/projects/filing-reference.mjs": "d01574de0c1c41f013b61af45992da8376d0feb8756619ac972f83a9044b8128",
+    "tests/validation/oq/projects/run.mjs": "a11907ff566d0322f3c89bab8d3e3fa216fadaca52dc947ac95329f37fee6f54"
+  },
+  "retiredFiles": [
+    "client/src/concept2cure/v2/fixtures/filings-catalog-data.ts",
+    "client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx"
+  ],
+  "removedDuringConvergence": [
+    "client/src/concept2cure/v2/FilingReference.tsx",
+    "tests/schema-contract/filing-catalog-fold-replay.pglite.test.ts"
+  ]
+}

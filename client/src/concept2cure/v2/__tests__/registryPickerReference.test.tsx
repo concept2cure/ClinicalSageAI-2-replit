@@ -10,6 +10,11 @@ import { FILING_CATALOG, FILING_CATEGORY_METADATA, filingWfCode, filingAskPrompt
 const typeOf = (entry: { id: string }) => entry.id === 'eu_maa' ? 'blocked' : 'ind';
 const props = { value: '', onChange: vi.fn(), applicationTypeOf: typeOf, initialSegment: 'pharma_biotech' };
 async function ready() { return screen.findByRole('textbox', { name: 'Search filing types' }); }
+function openUnavailable() {
+  const group = screen.getByTestId('rpk-not-offered');
+  if (!(group as unknown as { open: boolean }).open) fireEvent.click(within(group).getByText(/Not offered/, { selector: 'summary' }));
+  return group;
+}
 beforeEach(() => {
   props.onChange.mockClear();
   request.mockReset().mockImplementation(async (_method: string, raw: string) => {
@@ -43,7 +48,8 @@ describe('filing catalogue functions reached in the canonical picker', () => {
     expect(note.textContent).toContain('M1–M5');
     expect(note.textContent).toContain('FDA');
     const lifecycle = within(note).getByTestId('filing-lifecycle-reference');
-    expect(lifecycle.textContent).toContain('Authored lifecycle reference');
+    expect(lifecycle.textContent).toContain('Authored filing-family guidance');
+    expect(lifecycle.querySelector('details')!.open).toBe(false);
     expect(lifecycle.textContent).toContain('IND: 30-day default review');
     expect(lifecycle.textContent).toContain('Pre-IND meeting');
     expect(lifecycle.textContent).toContain('Clinical Hold');
@@ -52,7 +58,7 @@ describe('filing catalogue functions reached in the canonical picker', () => {
   });
   it('lets every unavailable filing be inspected without selecting or starting it', async () => {
     const onAsk = vi.fn(); render(<RegistryPicker {...props} onAsk={onAsk} />); await ready();
-    const refused = screen.getByTestId('rpk-not-offered');
+    const refused = openUnavailable();
     expect(refused.textContent).toContain('Recorded server refusal');
     const entry = GLOBAL_REGISTRY.find(e => e.id === 'eu_maa')!;
     fireEvent.click(within(refused).getByText(`Reference details for ${entry.displayName}`));
@@ -72,10 +78,12 @@ describe('filing catalogue functions reached in the canonical picker', () => {
   });
   it('publishes the opened unavailable reference separately and clears it when closed', async () => {
     const browse = vi.fn(); render(<RegistryPicker {...props} onBrowseChange={browse} />); await ready();
+    openUnavailable();
     const entry = GLOBAL_REGISTRY.find(e => e.id === 'eu_maa')!;
     const summary = screen.getByText(`Reference details for ${entry.displayName}`);
     fireEvent.click(summary);
     await waitFor(() => expect(browse).toHaveBeenLastCalledWith(expect.objectContaining({ inspectedReference: expect.objectContaining({ id: entry.id, name: entry.displayName, agency: entry.agency }) })));
+    expect(browse.mock.calls.at(-1)?.[0].inspectedReference.lifecycleReference).toMatchObject({ basis: 'authored_reference', scope: 'filing_family' });
     expect(props.onChange).not.toHaveBeenCalled();
     fireEvent.click(summary);
     await waitFor(() => expect(browse).toHaveBeenLastCalledWith(expect.objectContaining({ inspectedReference: null })));
@@ -83,12 +91,14 @@ describe('filing catalogue functions reached in the canonical picker', () => {
   });
   it('retires an inspected reference when search or segment removes its detail', async () => {
     const browse = vi.fn(); render(<RegistryPicker {...props} onBrowseChange={browse} />); await ready();
+    openUnavailable();
     const entry = GLOBAL_REGISTRY.find(e => e.id === 'eu_maa')!;
     fireEvent.click(screen.getByText(`Reference details for ${entry.displayName}`));
     await waitFor(() => expect(browse.mock.calls.at(-1)?.[0].inspectedReference?.id).toBe(entry.id));
     fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Investigational New Drug Application' } });
     await waitFor(() => expect(browse).toHaveBeenLastCalledWith(expect.objectContaining({ inspectedReference: null })));
     fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: '' } });
+    openUnavailable();
     const summary = screen.getByText(`Reference details for ${entry.displayName}`);
     expect(summary.closest('details')!.open).toBe(false);
     fireEvent.click(summary);

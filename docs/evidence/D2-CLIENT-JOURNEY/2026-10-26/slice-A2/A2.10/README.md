@@ -1,112 +1,88 @@
-# A2.10: filing discovery/reference fold and expanded parity review
+# A2.10: merged filing-reference fold and expanded parity review
 
-Launch row D2, 2026-10-26, canonical branch `concept2cure-v2`.
-Base: `f033cc722be329cd50c0bdac2e0bfce816f8eafd` (incoming Account work retained).
-Design: `.design/client-journey/A2_10_REMAINING_FOLDS.md`.
-Current four-fold audit: `.design/client-journey/A2_10_REMAINING_PARITY_REVIEW.md`.
+Launch row D2, `concept2cure-v2`, 2026-10-26. Convergence of continuation `37f2ed240` and published A2.10a `c7f320403`.
 
 ## What already exists
 
-- `client/src/concept2cure/v2/surfaces/Projects.tsx` and
-  `surfaces/AnaVerbs.tsx::RegistryPicker` already own canonical intake, real
-  server offers/refusals, filing search, selected build facts and Ask AnA.
-  `shared/regulatory/filing-catalog.ts` owns filing identities and categories.
-  Complete these owners; no second picker, writer or offer policy is added.
-- The former `surfaces/FilingsCatalog.tsx` separately rendered those filings
-  and authored lifecycle tables in `fixtures/filings-catalog-data.ts`. Its Start
-  opened an editor without retaining the choice through intake. The tables are
-  reference content, not assessed readiness, project deadlines or support grants.
-- `surfaces/ProjectPlan.tsx` already composes IND/device plans, assignments and
-  Tasks. Intake already stores the exact filing in metadata.submissionTypeId;
-  its scoped detail serializer previously withheld that individual field along
-  with all internal metadata. Extend that serializer and Plan, not the store.
-- The shared alias/action resolver already supports one-time destination
-  actions. Catalogue creator 20260810 and packaging 20260823 both replay on
-  deploy. Amend both owners in place; retain retired rows and subscriptions.
-- MissionControl, CroPortfolio, BiopharmaJourney, MDX Overview and
-  ClientReviewZone still own distinct functions or legacy records. The audit
-  traces routes/services/tables, AnA claims, current replacements and gaps.
-  `server/services/cro/cro-portfolio-view-assembler.ts` reads cro_* engagements;
-  those are not equivalent to canonical client_workspaces. No production
-  tenant inventory is available to prove absence of mission-control records.
-- Deleted-history search found the old DeviceWorkstream shell (`2895218b8`),
-  useMissionControl (`440071600`) and MissionControl page family (`77034aa5f`).
-  Searches/callers and limits are recorded in the design and audit. Existing
-  implementations are reached or corrected; none is rebuilt beside itself.
+Both changes extend the same RegistryPicker/Projects/ProjectPlan, filing catalogue,
+alias action and catalogue seed owners. They are converged into one shared
+`shared/regulatory/filing-lifecycle-reference.ts` with the incoming exact
+admission and recorded type/agency checks, and one
+`surfaces/FilingLifecycleReference.tsx` projection. No parallel reference widget,
+project creator, grant or filing store is retained. Existing unavailable-file
+inspection and its distinct AnA context are carried alongside the stronger
+reference safeguards. Server detail exposes only a normalized exact active
+catalogue identity, withholding unknown/broad aliases and private metadata.
 
-## Delivered behavior
+The existing catalogue-claims PGlite suite owns actual subscription/FK replay
+proof; this merge reaches its fresh-install check there and removes the smaller
+parallel fixture test after carrying its assertion. Both catalogue migration
+writers remain amended in place; existing subscriptions/metadata stay intact.
 
-The filing catalogue's ten parity functions now live in the existing wizard
-and recorded Plan: description/workflow search, cross-segment labels, category
-copy, every offered/refused filing, visible descriptions, authority/format/CTD
-metadata, build facts, authored lifecycle and the shared Ask AnA question.
-`FilingReference.tsx` is one read-only projection; shared
-`filing-lifecycle-reference.ts` is the single migrated owner. Its workflow label,
-loop mapping and nine archetypes are byte-identical to the original tables
-(`filing-content-proof.json`); no missing archetype is invented.
+## Source attribution
 
-Unavailable filings have inspectable reference details, with no select/Start
-act. AnA receives actual segment/search plus distinct inspected-reference facts
-and the selected offered filing; account retirement clears the context and typed
-configuration remains excluded. Independent review caught this inspected-detail
-parity gap and the follow-up demonstrated red before green (`fold-review.md`).
-Plan uses only recorded `submission_type_id`; malformed/missing metadata and an
-unknown identity never infer a filing from tenant or application type. Internal
-metadata stays private. Reference clocks/stages explicitly say they are general
-catalogue reference, not current status, deadlines or agency commitments.
+- [Continuation snapshot](pre-merge-37f2ed240/README.md): 378 focused tests,
+  16 native database cases, three browser flows and build qualified its source.
+  These are historical, not claims about the merged implementation.
+- [Published A2.10a](../A2.10a/README.md) retains its own accepted checks and
+  source hashes. No accepted evidence is discarded or relabelled as merged.
+- `merged/` will record the final combined source, tests, native browser/build
+  proof and normal publication receipt after qualification.
 
-Legacy `/concept2cure/filings-catalog` reaches Projects with the existing
-`projects.new-project` action once, preserving query/fragment and the selected
-project step. Repeated navigation preserves an already open typed intake.
-The old component, fixture, view/registry/nav/collaboration rows and five fixture
-exceptions are removed only after FUNCTION_PARITY confirms their replacements.
-No separate AnA target existed. Seed replay deprecates old catalogue rows while
-preserving metadata/subscriptions, and fresh installs need no retired identity.
+The four other folds retain their documented data/function/admission gaps;
+see `.design/client-journey/A2_10_REMAINING_PARITY_REVIEW.md`. CRO label fixes and
+existing project-command metadata clarification are preserved. Formal revised
+OQ remains unexecuted/unsigned, with historical executions retained.
 
-The expanded review also corrects CRO medical_device/diagnostic labels, preserving
-unknown literal values and explicit missing values. Two device project commands
-were already independently in scope: only their descriptions/historical note
-are clarified. Executable scope arrays, handlers, access policy, confirmation and
-audit transactions remain unchanged (`commands-source-proof.json`). Their current
-ownership regressions are not a claim of newly added PM-anchor checks.
 
-## Qualification on the final source
+## Current combined result
 
-| Check | Observed result | Evidence |
+The two filing implementations now share the stricter existing exact-reference
+API and one collapsed `surfaces/FilingLifecycleReference.tsx` projection. The
+incoming admission map and recorded agency/type matcher are byte-identical;
+metadata stays inspectable even where no clock/guide applies. Broad/legacy
+filing aliases and unknown IDs are withheld by the public detail projection.
+Unavailable inspection remains a distinct, cleared AnA fact and never selects
+or creates a filing. Shared catalogue metadata and server offer/build facts
+retain their separate bases. Project guard/handler/dispatch/audit behavior and
+commercial admission are unchanged.
+
+| Combined check | Observed result | Evidence |
 | --- | --- | --- |
-| Focused combined regression | 378 tests, 33 suites, 79.77 seconds | `final-qualified.log.gz`, exact union `test-files.txt` |
-| Native PostgreSQL intake/client/anchor SQL | 16 passed, 11.80 seconds; disposable restricted role/FORCE RLS, synthetic auth/quota as declared by the suite | `native-db.log.gz`; `tests/db/project-client-workspace-intake.dbtest.ts` |
-| Native application/browser | 3 passed, 34.4 seconds: IND and 510(k) legacy→wizard→canonical Create→recorded Plan→reload/mobile, plus existing action/no-premature-write flow | `browser-qualified.log.gz`, `native/results.json`, safe result JSON/PNGs |
-| Creator + packaging replay | 3 passed; old subscription/metadata survive two applications, fresh replay creates no retired row | included in combined batch; separate `filing-catalog-replay-green.log.gz` |
-| Production build | Client 21.96 seconds; server and audit verifier complete | `build.log.gz` |
-| Formal protocol syntax and matrix | Runner syntax valid; historical set regenerates 117 requirements, 69 pass / 2 partial / 46 uncovered | `traceability.log.gz`; updated validation package |
-| Mandatory publication gates | Pending the normal push at this README revision | Acceptance receipt will be added after publication |
+| Focused regression union | 671 passed, 48 disjoint suites, 100.43 seconds | `merged/qualified.log.gz`, `merged/test-files.txt` |
+| Native authenticated browser | 4 passed, 47.0 seconds: both complementary filing workflows, IND and 510(k) Plan/reload/mobile, no premature Create and no model send | `merged/browser.log.gz`, `merged/native/` |
+| Production build | Client 21.21 seconds; server and audit verifier complete | `merged/build.log.gz` |
+| Canonical serializer + real catalogue replay | 46 passed, 2 suites; included in the combined union | `merged/server-catalog.log.gz` |
+| Strict reference/picker/Plan context integration | 144 passed, 8 suites; included in the combined union | `merged/filing-focused.log.gz` |
+| Native PostgreSQL intake SQL | 16 unique native cases passed cleanly; 6.88 seconds, confirmed in 7.31 seconds after teardown repair | `merged/native-cleanup-review.md`, `merged/native-cleanup-green.log.gz`, `merged/native-cleanup-confirm.log.gz` |
+| Surface context, CSS classes and text ramp | Passed | `merged/context-gate.log.gz`, `merged/css.log.gz`, `merged/ramp.log.gz` |
+| Formal traceability | 117 parent requirement IDs preserved; 69 historical pass, 2 partial, 46 uncovered; revised 007a has no executed step | `merged-formal-review.md` and its proof/logs |
+| Normal publication gates | Pending normal accepted push | Receipt will be filed after acceptance |
 
-Red evidence: exact filing projection (8 failures), alias/action destination
-(5 failures), reference carryovers (5 failures), Plan reference (2 failures with
-negative cases already passing), inspected-reference context (2 failures), old
-catalogue recreation and later packaging mutations. Safe compressed logs are
-filed beside their green results. Earlier 107-test filing and 100-test command/CRO
-batches overlap the combined union and are not added to its count. The initial
-browser attempts exposed harness name/label selectors, then were corrected;
-no product access, limiter, offer or grant was relaxed to make them pass.
-The final mobile screenshots close the existing navigation rail and show the
-reference itself, with no document horizontal overflow.
+The smaller parallel catalogue replay test is removed after its fresh-install
+assertions are carried into the existing actual-schema
+`tests/schema-contract/catalog-module-claims.contract.test.ts`, alongside its
+real subscription/cascading-FK replay checks. Historical red/green proof remains
+in the pre-merge snapshot. One duplicate reference widget is likewise removed
+after all metadata/context/refusal functions and tests move to the sole owner.
+`merged/source-review.md` independently compares admission declarations, exact
+projection, command handler bodies, scope arrays and six guard/service owners.
 
-`source-proof.json` pins 33 changed source/test/config hashes and deleted files.
-All browser identities and data are synthetic. No credentials, tokens, traces,
-model requests or real tenant data are archived.
+The native SQL rerun exposed a pool teardown race after all assertions: pool.end
+could finish before client TCP end acknowledgements, so DROP DATABASE WITH FORCE
+terminated two still-closing owner connections. The final cleanup awaits
+real client end acknowledgements and drops the disposable database without FORCE;
+no production behavior or assertion is relaxed. The failing execution is kept
+and is not represented as a clean native pass.
 
-## Remaining folds and formal validation
+The revised formal requirement/protocol is v0.10 and remains unexecuted/unsigned.
+No historical result is promoted to a merged formal pass. A2.10's four other
+folds remain open, with their stores/screens preserved. Continue A3's existing
+prompt-key convergence while tracking those concrete prerequisites.
 
-Mission control, device-workstream, CRO portfolio and project journey retain
-shells, stores and existing entitlement verdicts. Their production-record,
-engagement mapping, reliable fact-source, sharing/error/scope and reference/
-review parity gaps are enumerated in the audit. A2.10 is not blanket-complete.
-Continue A3's existing AnA prompt-key convergence while tracking those prerequisites.
 
-URS-PROJ-007a and OQ-PROJ-12 v0.8 describe the revised filing path. The formal
-protocol is not executed or signed at this revision; historical step-12 results
-qualify the former screen only. TM-001 uses the same selected 2026-09-27 historical
-execution set and marks the new requirement uncovered. Supplemental checks here
-do not establish whole-product qualification or a completed commercial launch.
+Final native cleanup preserves the functional test body byte-for-byte and both
+repeats exit zero with no unhandled errors. The sixteen cases are counted once.
+The existing catalogue SQL test also rechecks exact retired metadata/tier
+preservation on the final assertion set (`merged/catalog-final.log.gz`); this
+is a stricter affected-suite rerun, not an extra test count.

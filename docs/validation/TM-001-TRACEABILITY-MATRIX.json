@@ -1,6 +1,6 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-26T23:23:53.883Z",
+  "generatedAt": "2026-10-26T23:35:03.591Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
@@ -357,7 +357,7 @@
       "id": "URS-PROJ-007",
       "app": "Projects",
       "doc": "URS-001-PROJECTS.md",
-      "requirement": "The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500).",
+      "requirement": "The Program Journey read model answers honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). The earlier standalone Filings Catalog clause and its OQ-PROJ-12 results are historical, superseded by URS-PROJ-007a.",
       "part11": "none",
       "risk": "low",
       "steps": [
@@ -377,10 +377,10 @@
         }
       ],
       "ra": {
-        "intendedUse": "Honest empty/unavailable states for journey and catalog",
+        "intendedUse": "Honest empty/unavailable states for Journey; historical standalone catalog clause retained",
         "risk": "low — informational",
         "assurance": "ad-hoc",
-        "rationale": "render and record; no fixture data may appear"
+        "rationale": "render and record; no fixture data may appear; earlier catalog results do not qualify URS-PROJ-007a"
       },
       "verdict": "pass"
     },
@@ -388,15 +388,15 @@
       "id": "URS-PROJ-007a",
       "app": "Projects",
       "doc": "URS-001-PROJECTS.md",
-      "requirement": "Filing discovery lives in the New project wizard. Legacy catalogue links open that wizard without creating a project. Search and reference details retain the filing identity, segment, authority, format, CTD mapping, description and authored lifecycle; unavailable filings remain read-only and a failed offer read is an explicit failure. Reference clocks/stages are labelled as general reference, never the project's progress, deadline or an agency commitment. Project Plan uses only the recorded filing identity; missing or unknown identity does not infer a reference from the tenant or application type.",
+      "requirement": "The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash without creating a project. Filing browsing/search and selected description, segment, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure; unavailable filings remain read-only. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available.",
       "part11": "none",
       "risk": "medium",
       "steps": [],
       "ra": {
-        "intendedUse": "Canonical filing discovery, exact recorded identity and explicitly authored lifecycle reference",
-        "risk": "medium",
+        "intendedUse": "Reach filing reference in Projects intake and the exact recorded project's Plan",
+        "risk": "medium — incorrect identity, support or clock presentation can misdirect recoverable filing work",
         "assurance": "scripted",
-        "rationale": "Legacy route/action and no-write checks, server refusal/error tests, exact identity projection, reference preservation and Plan/browser regression evidence; revised formal OQ-PROJ-12 unexecuted."
+        "rationale": "assert legacy-bookmark destination, retained query/hash, no browser project creation, selected facts, collapsed authored guide and missing-identity state beside the existing plan; actual offer-read failures remain explicit. OQ-PROJ-12 v0.10 awaits formal execution and review; focused automated/browser proof is supplemental"
       },
       "verdict": "uncovered"
     },

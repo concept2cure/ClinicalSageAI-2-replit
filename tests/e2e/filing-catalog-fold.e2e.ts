@@ -38,6 +38,7 @@ for (const example of [
     await page.getByLabel('Search filing types').fill(entry.displayName);
     await page.getByRole('button', { name: entry.displayName }).first().click();
     const reference = page.getByTestId('filing-lifecycle-reference');
+    await reference.getByText('Reference guide', { exact: true }).click();
     await expect(reference).toContainText(example.archetype);
     await expect(reference).toContainText(example.clock);
     await expect(reference).toContainText('not this project’s status, deadline or agency commitment');
@@ -72,9 +73,11 @@ for (const example of [
     expect(recorded.submission_type_id.toLowerCase()).toBe(example.filingId);
     expect(recorded).not.toHaveProperty('metadata');
     await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: 'Plan', exact: true }).click();
+    await page.getByTestId('filing-lifecycle-reference').getByText('Reference guide', { exact: true }).click();
     await expect(page.getByTestId('filing-lifecycle-reference')).toContainText(example.archetype);
     await expect(page.getByTestId('filing-lifecycle-reference')).toContainText(example.clock);
     await page.reload();
+    await page.getByTestId('filing-lifecycle-reference').getByText('Reference guide', { exact: true }).click();
     await expect(page.getByTestId('filing-lifecycle-reference')).toContainText(example.archetype);
     expect(writes).toHaveLength(1);
     await testInfo.attach(`${example.filingId}-plan-reference.png`, { body: await page.screenshot(), contentType: 'image/png' });

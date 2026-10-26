@@ -95,7 +95,7 @@ the medtech alias, displays unknown recorded types literally, and says Not recor
 for missing types. Own-property lookup prevents prototype names becoming labels.
 Ten behavior cases check both roster and selected detail; existing content,
 action and PII/context tests remain green. This does not close the fold or merge
-stores. Evidence: `A2.10/commands-and-cro.md`.
+stores. Evidence: `A2.10/pre-merge-37f2ed240/commands-and-cro.md`.
 
 ## Mission control: tenant inventory and characterization missing
 
@@ -137,7 +137,7 @@ with device-workstream absent from the supplied launch-surface set. Two metadata
 description assertions were shown red, then pass after project wording is
 clarified. The inventory executable arrays, handler bodies, dispatch, launch
 function, policy, ownership guard and backing services are unchanged; hashes
-and comparisons are recorded in `A2.10/commands-source-proof.json`.
+and comparisons are recorded in `A2.10/pre-merge-37f2ed240/commands-source-proof.json`.
 
 Seven command suites pass 83 cases, including cross-organization ownership,
 unverifiable ownership, confirmation/reason gates, CTD-program organization,

@@ -1,3 +1,9 @@
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
+-- Filing discovery, selected reference and supported build facts now reach the
+-- existing Projects wizard and project Plan. Remove the old keep-list/upsert
+-- identity so replay deprecates existing catalogue rows. Retain those rows,
+-- their metadata, subscription FKs and stored records; do not DELETE them.
+-- Evidence: docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10a/README.md.
 -- =============================================================================
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.10 filing catalogue fold (Rule 1).
 -- RegistryPicker, FilingReference and ProjectPlan now carry every filing

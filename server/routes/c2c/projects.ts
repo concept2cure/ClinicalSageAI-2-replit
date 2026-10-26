@@ -493,11 +493,14 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
     : {};
   const predicates = jsonColumn(rawPredicates);
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  // Only the exact recorded catalogue identity is public. A broad program type
+  // or a legacy alias cannot identify which filing the person selected.
+  const statedFiling = str(meta.submissionTypeId)?.trim() ?? null;
+  const exactFiling = statedFiling ? resolveFilingCatalogEntry(statedFiling) : null;
+  const submissionTypeId = exactFiling && statedFiling?.toLowerCase() === exactFiling.id ? exactFiling.id : null;
   return {
     ...rest,
-    // Reference placement uses the exact intake choice, never a guessed filing
-    // from program_type. Internal provenance stays inside metadata.
-    submission_type_id: str(meta.submissionTypeId),
+    submission_type_id: submissionTypeId,
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),

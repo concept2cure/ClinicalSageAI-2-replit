@@ -21,6 +21,7 @@ describe('Plan reaches the same authored filing lifecycle reference', () => {
   it.each([undefined, null, 'unknown_stored_filing'])('does not infer a lifecycle from IND when exact filing is %s', id => {
     render(<ProjectPlan {...props} prog={{ ...program, submission_type_id: id }} />);
     expect(screen.queryByTestId('filing-lifecycle-reference')).toBeNull();
+    expect(screen.getByText('No filing lifecycle guide is available for this recorded filing.')).toBeTruthy();
     expect(screen.getByText('Existing IND plan')).toBeTruthy();
   });
   it('does not let an unknown prior project reference survive a changed project read', () => {

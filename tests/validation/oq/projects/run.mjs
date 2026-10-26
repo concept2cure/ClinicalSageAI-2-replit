@@ -8,6 +8,7 @@
 import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
 import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
 import { INACTIVITY_TEXT, inactivityStep } from './inactivity.mjs';
+import { filingReferenceStep } from './filing-reference.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -320,31 +321,13 @@ await step(
     id: 'OQ-PROJ-12',
     kind: 'scripted',
     urs: ['URS-PROJ-007a'],
-    title: 'Legacy filing discovery reaches canonical intake and authored reference',
-    action: 'Open /concept2cure/filings-catalog',
-    expected: 'Projects URL, New project wizard, selected IND metadata and authored reference; no project creation',
+    title: 'Former filing catalog reaches Projects intake and recorded Plan reference',
+    action: 'Open the former catalog bookmark with query/hash; browse/search the Projects wizard and select the offered US IND. Inspect its facts, offer/build limits and authored reference; cancel and verify no browser project creation request. Create an exact US_IND/FDA record through the public API and inspect Plan, then inspect the OQ-PROJ-04 program without an exact filing id',
+    expected: 'Canonical Projects wizard retains query/hash. Selected facts and collapsed authored stages/timing/return guidance remain reachable, separate from server support. Exact recorded US IND/FDA Plan shows the guide beside the existing plan; missing exact identity explicitly withholds it. A real offer-read failure stays explicit and the unreached positive path is a deviation. Screenshots, URLs and text are retained for reviewer judgement',
+    dependsOn: ['OQ-PROJ-04'],
+    note: 'v0.10 replaces the historical standalone catalog-render observation. This scripted step checks the declared filing-reference behavior; it is not a computed regulatory verdict and has not been formally executed. The runner neither injects an offer failure nor edits stored identity to manufacture negative cases.',
   },
-  async (ctx) => {
-    await ctx.newPage({ id: state.programId, name: state.programName });
-    const writes = [];
-    const recordCreation = request => {
-      if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/c2c/projects') writes.push(request.url());
-    };
-    ctx.page.on('request', recordCreation);
-    await ctx.goto('/concept2cure/filings-catalog');
-    await ctx.page.getByRole('heading', { name: 'New project', exact: true }).waitFor({ state: 'visible', timeout: 30_000 });
-    ctx.expect(new URL(ctx.page.url()).pathname === '/concept2cure/projects', 'legacy catalogue did not reach Projects');
-    await ctx.page.getByLabel('Search filing types').fill('Investigational New Drug Application');
-    await ctx.page.getByRole('button', { name: /^Investigational New Drug Application/ }).first().click();
-    const reference = ctx.page.getByTestId('filing-lifecycle-reference');
-    await reference.waitFor({ state: 'visible' });
-    ctx.expect((await reference.innerText()).includes('not this project’s status, deadline or agency commitment'), 'reference clock presented without its basis');
-    ctx.expect((await ctx.page.getByTestId('filing-reference-metadata').innerText()).includes('FDA'), 'selected filing metadata missing');
-    ctx.expect(writes.length === 0, 'reference discovery created a project');
-    ctx.page.off('request', recordCreation);
-    await ctx.screenshot();
-    return 'legacy catalogue reaches canonical intake and authored reference without a project write';
-  },
+  async (ctx) => filingReferenceStep(ctx, stamp),
 );
 
 await step(

@@ -3,8 +3,8 @@ import { I } from '../icons';
 import { hasKeys, liveGetOrNull } from '../dataConnect';
 import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
 import { filingAskPrompt, FILING_CATEGORY_METADATA } from '@shared/regulatory/filing-catalog';
-import { filingLifecycleReference } from '@shared/regulatory/filing-lifecycle-reference';
-import { FilingReferenceDetails } from '../FilingReference';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { FilingReferenceDetails } from './FilingLifecycleReference';
 
 const SEG_ICONS: Record<string, string> = {
   pharma_biotech: 'beaker', medical_devices: 'stethoscope',
@@ -91,7 +91,7 @@ export interface FilingBrowseState {
   segment: string;
   searchTerm: string;
   /** A read-only inspected reference is never the selected creation choice. */
-  inspectedReference: { id: string; name: string; agency: string; region: string; format: string; ctdModule: string; workflow: string; description: string } | null;
+  inspectedReference: { id: string; name: string; agency: string; region: string; format: string; ctdModule: string; workflow: string; description: string; lifecycleReference: ReturnType<typeof filingLifecycleReferenceFor> } | null;
 }
 
 interface RegistryPickerProps {
@@ -200,7 +200,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     e.region.toLowerCase().includes(term) || (e.dossierStandard || '').toLowerCase().includes(term) ||
     (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term) ||
     (e.description || '').toLowerCase().includes(term) ||
-    (filingLifecycleReference(e.id)?.workflowLabel ?? '').toLowerCase().includes(term);
+    (filingReferenceFactsFor(e.id)?.workflowLabel ?? '').toLowerCase().includes(term);
   const filtered = useMemo(() => {
     let pool = term ? registry : segEntries;
     if (term) pool = pool.filter(matches);
@@ -241,18 +241,19 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   /* Browse every unavailable filing in the current segment, or search across
      segments. Reference details never call onChange or create a project. */
   const notOfferedMatches = useMemo(
-    () => notOffered.filter(({ entry: e }) => term ? matches(e) : e.segment === seg),
+    () => notOffered.filter(({ entry: e }) => (term ? matches(e) : e.segment === seg)
+      && (!regionFilter || e.region === regionFilter) && (!agencyFilter || e.agency === agencyFilter)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matches` reads only `term`
-    [term, notOffered, seg],
+    [term, notOffered, seg, regionFilter, agencyFilter],
   );
   const inspected = inspectedReferenceId && !offers.loading && !offers.error && notOfferedMatches.some(({ entry }) => entry.id === inspectedReferenceId)
-    ? filingLifecycleReference(inspectedReferenceId) : null;
+    ? filingReferenceFactsFor(inspectedReferenceId) : null;
   const inspectedEntry = inspected?.entry ?? null;
   const inspectedWorkflow = inspected?.workflowLabel ?? '';
   const inspectedReference = useMemo<FilingBrowseState['inspectedReference']>(() => inspectedEntry ? {
     id: inspectedEntry.id, name: inspectedEntry.displayName, agency: inspectedEntry.agency, region: inspectedEntry.region,
     format: inspectedEntry.submissionFormat, ctdModule: inspectedEntry.ctdModule,
-    workflow: inspectedWorkflow, description: inspectedEntry.description,
+    workflow: inspectedWorkflow, description: inspectedEntry.description, lifecycleReference: filingLifecycleReferenceFor(inspectedEntry.id),
   } : null, [inspectedEntry, inspectedWorkflow]);
   React.useEffect(() => {
     if (inspectedReferenceId && !inspectedReference) setInspectedReferenceId(null);
@@ -402,23 +403,25 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
           </div>
         )}
         {notOfferedCount > 0 && (
-          <div className="rpk-cat" data-testid="rpk-not-offered">
-            <div className="rpk-cat-h">Not offered <span className="rpk-cat-n">{notOfferedCount}</span></div>
+          <details className="rpk-cat" data-testid="rpk-not-offered" open={term ? true : undefined}
+            onToggle={event => { if (event.target === event.currentTarget && !event.currentTarget.open) setInspectedReferenceId(null); }}>
+            <summary className="rpk-cat-h">Not offered <span className="rpk-cat-n">{notOfferedCount}</span></summary>
             {notOfferedMatches.map(({ entry: e, reason }) => (
               <div key={e.id} className="rpk-result-note">
                 <strong>{e.displayName} · {e.agency}.</strong> {reason}
                 {term && <p>{segs[e.segment]?.label ?? e.segment}</p>}
                 <details open={inspectedReferenceId === e.id} onToggle={event => {
+                  if (event.target !== event.currentTarget) return;
                   const opened = event.currentTarget.open;
                   setInspectedReferenceId(current => opened ? e.id : current === e.id ? null : current);
                 }}>
                   <summary>Reference details for {e.displayName}</summary>
                   {e.description && <p><strong>Catalog reference.</strong> {e.description}</p>}
-                  <FilingReferenceDetails filingId={e.id} onAsk={onAsk} />
+                  <FilingReferenceDetails filingId={e.id} onAsk={onAsk} label={`Filing reference for ${e.displayName}`} />
                 </details>
               </div>
             ))}
-          </div>
+          </details>
         )}
         {!grouped.length && !rest.length && !notOfferedCount && (
           <div className="rpk-empty">

@@ -1,3 +1,7 @@
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
+-- The discovery functions now live in Projects. Remove the retired identity's
+-- packaging reference too: a fresh database need not hold its old row, while
+-- replayed databases retain deprecated rows and subscriptions unchanged.
 -- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: 'ectd-publishing' is assigned 'standard', beside ectd-compile,
 -- ectd-coauthor and dossier-map — the same eCTD publishing group.

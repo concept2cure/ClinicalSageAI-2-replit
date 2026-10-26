@@ -13,7 +13,7 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.9 are implemented. Incoming A2.7's alias,
+**Implementation status:** A2.1–A2.9 and A2.10a's filing-catalog fold are implemented. Incoming A2.7's alias,
 parity and retirement qualification is in
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md` and
 `A2_7_PARITY_RECONCILIATION.md`. Concurrent A2.7b adds stronger recorded-tracking
@@ -352,7 +352,7 @@ This section is mandatory under CLAUDE.md Rule 3. The evidence README carries it
   - Locked → `not_available` (:18336); unknown → `unknown_target` (:18344); no project → `needs_project` (:18371-18384).
   - `screenActions` is filtered by the raw target id (:18387).
 - **The lock.** `LaunchScopeGate.tsx:19-53` shows "not in this release" with "Back to Projects". `applyLaunchScope` is at `navigation-entitlements.ts:194-247`.
-- **Per folded id:**
+- **Per folded id (historical discovery inventory; current A2.7/A2.10a completion is recorded above and below):**
 
 | id | Registered | Launch scope | AnA target | Alias today | Parity (FUNCTION_PARITY.md) |
 | --- | --- | --- | --- | --- | --- |
@@ -619,7 +619,7 @@ observations, null dependent figures and unmapped rows, alongside one canonical
 states with safe fixed reasons/codes; failed scope currentness refuses the whole
 response. Both pre-merge snapshots remain historical. The combined tree passed
 294 tests across 27 files, two native flows and the production build; proof is in
-`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 and A2.9 are recorded below; A2.10 is next.
+`A2.7b/merged/`. Mandatory publication gates still apply. A2.8, A2.9 and A2.10a's filing-catalog completion are recorded below; the other four A2.10 folds remain pending.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.
@@ -834,15 +834,48 @@ Each fold, when its row is confirmed, does the same things in one change:
 1. Alias the id to its canonical through A2.7's resolver.
 2. Remove its registry, view and nav rows.
 3. Remove its AnA target, or keep the target as an alias.
-4. Retire the catalogue row by amending 20260810 in place.
+4. Retire the catalogue identity through its existing in-place reconciliation, preserving stored rows/subscriptions; add no redundant migration when the keep-list retirement already does it.
 5. Name the replacement in the commit.
 
 Per id:
-- **mission-control** → `projects`. First confirm that no tenant holds programs in the `mission_control` store (FUNCTION_PARITY.md:332). Its catalogue row is already deprecated on every deploy (INFERRED from set order 1544 and 1772).
-- **device-workstream** → `projects` with the MDX filter. Its "Real today" functions carry first (FUNCTION_PARITY.md:299-313): the health strip's in-flight and blocker figures, the Client Review Room, and the two AnA commands' claim on the device project. The demo stops (`demo-scripts.ts:286`, :356) and `MDX_PROJECT_FEATURE_SURFACE_IDS` (pinned by `launch-scope.test.ts:69-78`) move with it.
-- **cro-portfolio** → `projects` with the client filter. Onboarding a client → Admin, by reaching `POST /api/clients` (`clients-routes.ts:293`) in the administration session.
-- **filings-catalog** → `projects` (the wizard). The loop tables move to shared with Rule 2 labelling, or go to the founder's list. `launch-scope-fixture-allowlist.json:22-26`'s reason is corrected in the same change.
-- **program-journey** → `project-home` on Plan. Retiring `program_journeys` amends `db/migrations/20260801_program_journey_store.sql` and `20260717_program_journey_store.sql` in place (both in the set, `migration-set.mjs:735`, :751).
+- **mission-control — pending** → `projects`. Check actual tenant records in `project_memory_entries` under category `mission_control`, plus its recorded product/modality facts and readers. A fresh local database is not evidence that no tenant holds records. Its catalogue row's prior deprecation does not complete function/store parity.
+- **device-workstream — pending** → `projects` with the MDX filter. Its "Real today" functions carry first (FUNCTION_PARITY.md:299-313): the health strip's in-flight and blocker figures, the Client Review Room, and the two AnA commands' claim on the device project. The current derived in-flight count is not silently promoted to a canonical submission count; the client-review record mapping needs its own accepted project relationship. The demo stops (`demo-scripts.ts:286`, :356) and `MDX_PROJECT_FEATURE_SURFACE_IDS` (pinned by `launch-scope.test.ts:69-78`) move only with completed parity.
+- **cro-portfolio — pending** → `projects` with sponsor context. Reconcile the actual `cro_clients` engagement/SOW, study and submission relationships and `POST /api/cro/clients` onboarding owner before reaching them in Projects/Admin. The existing accepted `client_workspaces` filter and `/api/clients` route alone do not carry that record model.
+- **filings-catalog — complete (A2.10a)** → Projects' existing New-project wizard and the exact recorded project's Plan. All nine original authored loop tables and workflow labels move unchanged to `shared/regulatory/filing-lifecycle-reference.ts`; strict display guards remain separate from the raw reference data. The old fixture exemption is removed with the fixture; no standalone catalog screen remains.
+- **program-journey — pending** → `project-home` on Plan. A2.9 retires only its alternate creation/stage writes; its actual journey/stage readers, store, nine-stage reference and recorded display fields remain. Carry and qualify them before any shell or store retirement; the filing-family guide is not a replacement for recorded journey data.
+
+#### A2.10a — filing-catalog function parity and retirement (2026-10-26)
+
+The thirteen audited functions now have reachable homes in the existing core
+workflow. RegistryPicker carries category descriptions, description/workflow
+search and cross-segment labels, visible selected filing facts and reference
+workflow family, server offer/build limits and explicit failure/Retry states.
+Not offered filings remain readable as nonselectable reference. The shared
+Ask AnA question is preserved, and the wizard's public context carries actual
+browse/selection/reference state without private configuration.
+
+The shared owner retains all nine authored stage/clock/return tables unchanged.
+The wizard and Plan label them authored filing-family guidance, not computed
+deadlines or eligibility. Plan uses only the program's own exact canonical
+`submission_type_id` plus matching recorded type and agency; missing, generic,
+malformed, conflicting or excluded identity explicitly withholds a guide.
+Existing deliverables, tasks, team, submission and correspondence work stays
+with the project's canonical steps. No new store or service is introduced.
+
+The old `filings-catalog` URL now dispatches `projects.new-project` through the
+shared alias/action bus, preserving query/hash and working with or without an
+open project. The old screen, fixture, registry/view/navigation and deferred
+identity are removed. Existing catalogue keep-list reconciliation retires
+historical rows without deleting them or their subscriptions; replay proof
+preserves metadata. No redundant SQL retirement is needed.
+
+Evidence: `A2_10_FILING_CATALOG_PARITY.md` and
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10a/README.md`.
+Red/green engineering, native browser, regression and build qualification are
+recorded there; mandatory publication gates still apply. URS-PROJ-007a and
+revised OQ-PROJ-12 v0.10 remain unexecuted/unsigned; historical catalog-render
+OQ passes are not transferred to the revised workflow. A2.10 is still open for
+mission-control, CRO, device-workstream and program-journey.
 
 ---
 
@@ -886,7 +919,7 @@ Per id:
 | 7 | A2.7 Step alias and no-project rule; fold dossier and dossier-map | 1, 6; A.1's 20260810 commit | Evidence 3 |
 | 8 | A2.8 `mdx` → Projects (MDX) | 3, 7 | Map work: `mdx` |
 | 9 | A2.9 Uncalled creators retired, plus the creator gate | 4 | Evidence 2 (store) |
-| 10 | A2.10 Remaining folds, each on its parity row | 2, 3, 5, 7 | The map's rows |
+| 10 | A2.10a filing catalog complete; four remaining folds on their own parity/store rows | 2, 3, 5, 7 | Only the filing-catalog row is closed by A2.10a |
 
 Each of 1–6 verifies independently and lands as its own commit on `concept2cure-v2`.
 

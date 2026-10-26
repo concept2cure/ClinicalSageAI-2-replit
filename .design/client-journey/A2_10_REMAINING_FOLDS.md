@@ -83,9 +83,29 @@ zero-error baseline. Record exact source and residual gaps in evidence.
 ## Observed disposition
 
 The qualified filing shell is folded, with all ten function rows confirmed.
-Final combined qualification: 378 tests/33 suites, 16 native database checks,
+Continuation snapshot 37f2ed240 qualified 378 tests/33 suites, 16 native database checks,
 three native browser flows and production build. The current four-fold audit
 also supplies CRO type-label corrections and proves the two project commands
 were already independently in scope; their metadata clarification changes no
 handler/guard/admission. Those four shells/stores remain. Formal revised OQ is
 owed; normal publication acceptance is recorded in the evidence README.
+
+
+## What already exists at convergence
+
+Published A2.10a c7f320403 independently folds the same filing shell. Its shared
+reference owner adds explicit active exact-identity admissions plus recorded
+project-type/agency agreement, preventing coarse US/NB guide substitution.
+Its surfaces/FilingLifecycleReference.tsx is the canonical collapsed reference
+projection; the continuation’s v2/FilingReference.tsx has converged onto it and is removed.
+Its existing catalogue-claims SQL harness uses actual schema/FK definitions,
+and the continuation’s fresh-install proof belongs there. Its OQ helper also
+covers exact identity and recorded Plan. Preserve these stricter owners while
+carrying the continuation’s unavailable inspection/context and CRO corrections.
+Both pre-merge proofs remain attributed; final combined checks are separate.
+
+
+The combined 37f2ed240/c7f320403 source now passes 671 tests in 48 disjoint suites,
+four native browser flows and the production build. Native SQL teardown and
+normal publication acceptance are recorded separately in A2.10 evidence; no
+pre-merge result is relabelled as a combined or formal execution.

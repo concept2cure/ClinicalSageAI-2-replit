@@ -842,7 +842,7 @@ row. A function not carried as it is goes on the founder's list (section 5.9).
 
 | id | After the fold, the client sees | Realness | In launch scope | Canonical | Functions, and where each goes | Status | Carry-over |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `program-journey` | A project's six steps | fixture-or-demo | no | `project-home` | Stage map from candidate to lifecycle → the six steps. What each stage needs → each step's "what to do now" and Plan's deliverables. Its stage-to-feature map → this document's placements. Stage 9's post-approval list → Submit's rows and *Coming later* line. AnA's `biopharma` alias → `projects` (slice 0). | FOLD IN | Carried (unverified), except the alias |
+| `program-journey` | A project's six steps | partial; recorded/reference parity unqualified | no | `project-home` | Stage map, gates and deliverables → the six steps and Plan reference; stage-to-feature map → these placements. Actual journey/stage readers and recorded identity, target, clock, HAQ and contradiction fields retain their own carry-over checks. Stage 9's post-approval list → Submit's rows and *Coming later* line. The `biopharma` alias already reaches Projects; A2.9 retires only alternate writes. | FOLD IN | Pending stored-record and nine-stage/reference parity; A2.10a's filing-family guide does not close this row |
 | `dossier` | Module completion on Author | partial | no | `project-home` | CTD section status (ready, in review, draft) → `ProjectDossier` (`ModuleCompletion`, readiness card). Its out-of-scope callers (Nonclinical's Module 4 rows, the NDA cockpit, Agency meetings) → repointed to the project. | FOLD IN | Carried (unverified); callers to repoint |
 | `dossier-map` | Module completion on Author | partial | no | `project-home` | Module grid M1–M5 → `ModuleCompletion`; anything the grid shows that `ModuleCompletion` lacks moves into `ProjectDossier.tsx` first; then `/api/dossier-map`, the screen and the row go together, and `Dossier.tsx`'s link points at Author. | FOLD IN | To carry |
 | `haq-manager` | *Awaiting a response* on Respond | works | no | `project-home` | Letters still needing an answer → Respond's inbox (has). A response per question, Part 11 signed → `AgencyResponses` (has). The `responseRequired` filter → added to Respond's inbox. The stale P-32 note in `launch-scope.ts` corrected. The alias lands on the open project's Respond step, or on Projects when no project is open (section 12). | FOLD IN | To carry (one filter) |
@@ -1282,7 +1282,7 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-A2.1–A2.9 are implemented. Project Author preserves governed section detail, artifact counts/states/section
+A2.1–A2.9 and A2.10a's filing-catalog fold are implemented. Project Author preserves governed section detail, artifact counts/states/section
 dates and the old map's recorded tracking modules on their own bases. Incoming A2.7 folds dossier bookmarks
 through the shared step-aware resolver onto Author, or Projects without a selection; standalone screens,
 HTTP routes and identities are retired while stored data/subscriptions remain. Its native/retirement proof

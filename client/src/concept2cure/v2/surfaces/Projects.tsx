@@ -51,6 +51,7 @@ import {
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
 import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
 
@@ -194,11 +195,14 @@ function wizardScreenContext(step: number, filing: SelTpl | null, applicationTyp
     summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
     facts: { wizardState: 'unavailable', selectedFiling: null },
   };
+  const catalog = filing ? filingReferenceFactsFor(filing.id) : null;
   return {
     summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
       (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
-    facts: { wizardState: 'open', filingBrowser: { ...browser, inspectedReference: browser.inspectedReference ?? null }, wizardStep: { number: step + 1, label: STEP_LABELS[step] },
-      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null } : null },
+    facts: { wizardState: 'open', filingLifecycleReference: filingLifecycleReferenceFor(filing?.id), filingBrowser: { ...browser, inspectedReference: browser.inspectedReference ?? null }, wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null,
+        ...(catalog ? { description: catalog.entry.description, submissionFormat: catalog.entry.submissionFormat, ctdModule: catalog.entry.ctdModule,
+          workflowLabel: catalog.workflowLabel } : {}) } : null },
     availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
   };
 }

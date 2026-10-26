@@ -28,7 +28,7 @@ import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from './P
 import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
 import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
-import { FilingLifecycleReference } from '../FilingReference';
+import { FilingLifecycleReference } from './FilingLifecycleReference';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -161,7 +161,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
           <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>{STEP_DOORS.filingDocuments} {I.right}</button></div>
         </section>
       )}
-      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} />}
+      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
       {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>

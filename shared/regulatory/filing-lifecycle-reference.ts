@@ -1,9 +1,6 @@
-/** Authored lifecycle reference migrated from the former filing catalogue.
- * These descriptions and clocks are reference text, never a project verdict,
- * current status, due date, agency commitment or platform support decision.
- * No project progress is inferred from a filing's reference archetype.
- */
-import { filingWfCode, resolveFilingCatalogEntry } from './filing-catalog';
+/** Existing authored filing-family guides, relocated from the catalogue owner.
+ * These static examples are reference prose, never project clocks or verdicts. */
+import { AGENCY_LABEL, filingWfCode, resolveFilingCatalogEntry, type FilingCatalogEntry } from './filing-catalog';
 
 export interface FilingLoopReturn {
   label: string;
@@ -82,14 +79,104 @@ export const FILING_LOOP: Record<string, FilingLoop> = {
     ret: { label: 'Reviewer questions (in the parent application)', desc: 'Clinical documents are assessed inside the marketing application; questions arrive as part of the CRL / LoQ for the parent filing.' } },
 };
 
-/** Resolve only a recorded/chosen catalogue identity, including its established
- * aliases. Unknown identities have no reference; application/tenant defaults
- * are deliberately not accepted here. */
-export function filingLifecycleReference(filingId: string | null | undefined) {
-  const entry = resolveFilingCatalogEntry(filingId);
-  if (!entry || typeof entry.registryId !== 'string') return null;
+export interface RecordedFilingContext { programType: unknown; primaryAgency: unknown }
+export interface FilingLifecycleReference {
+  basis: 'authored_reference';
+  state: 'matched';
+  scope: 'filing_family';
+  filing: Pick<FilingCatalogEntry, 'id' | 'registryId' | 'displayName' | 'agency' | 'region'>;
+  archetype: string;
+  loop: FilingLoop;
+}
+
+interface LifecycleAdmission { archetype: string; programTypes: readonly string[] }
+
+/** Exact selections whose existing prose covers this filing family. This is
+ * reference admission only: it grants no market/build/clinical eligibility.
+ * An empty type list preserves intake reference without blessing an unmodeled
+ * project type (or one of the historical generic intake fallbacks). */
+const ADMISSIONS: ReadonlyMap<string, LifecycleAdmission> = new Map([
+  ['US_IND', { archetype: 'clinical', programTypes: ['ind'] }],
+  ['US_IDE', { archetype: 'clinical', programTypes: ['ide'] }],
+  ['US_NDA', { archetype: 'marketing', programTypes: ['nda'] }],
+  ['US_BLA', { archetype: 'marketing', programTypes: ['bla'] }],
+  ['US_ANDA', { archetype: 'marketing', programTypes: ['anda'] }],
+  ['US_505B2', { archetype: 'marketing', programTypes: ['nda'] }],
+  ['US_351K', { archetype: 'marketing', programTypes: ['bla'] }],
+  ['EU_MAA', { archetype: 'marketing', programTypes: ['maa'] }],
+  ['EU_BIOSIMILAR_MAA', { archetype: 'marketing', programTypes: ['maa'] }],
+  ['US_510K', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_PMA', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_DE_NOVO', { archetype: 'device', programTypes: ['de_novo'] }],
+  ['US_510K_IVD', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_PMA_IVD', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_DE_NOVO_IVD', { archetype: 'device', programTypes: ['de_novo'] }],
+  ['US_CDX_PMA', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_CDX_510K', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_QSUB', { archetype: 'presub', programTypes: ['device'] }],
+  ['US_IVD_QSUB', { archetype: 'presub', programTypes: ['ivd'] }],
+  ['US_SAMD_PRESUB', { archetype: 'presub', programTypes: ['device'] }],
+  ['EU_SCIENTIFIC_ADVICE', { archetype: 'presub', programTypes: [] }],
+  ['US_BTD', { archetype: 'designation', programTypes: ['designation'] }],
+  ['US_FAST_TRACK', { archetype: 'designation', programTypes: ['fast_track'] }],
+  ['US_ORPHAN', { archetype: 'designation', programTypes: ['orphan'] }],
+  ['EU_PRIME', { archetype: 'designation', programTypes: [] }],
+  ['EU_ORPHAN', { archetype: 'designation', programTypes: [] }],
+  ['EU_MDR_CLASS_IIA', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_MDR_CLASS_IIB', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_MDR_CLASS_III', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_IVDR_CLASS_B', { archetype: 'euconformity', programTypes: ['ivdr'] }],
+  ['EU_IVDR_CLASS_CD', { archetype: 'euconformity', programTypes: ['ivdr'] }],
+  ['US_NDA_SUPP', { archetype: 'postmarket', programTypes: ['pas'] }],
+  ['US_BLA_SUPP', { archetype: 'postmarket', programTypes: ['pas'] }],
+  ['US_CBE', { archetype: 'postmarket', programTypes: ['cbe'] }],
+  ['EU_VARIATION_II', { archetype: 'postmarket', programTypes: [] }],
+  ['US_DMF', { archetype: 'cmc', programTypes: ['dmf'] }],
+  ['EU_ASMF', { archetype: 'cmc', programTypes: ['dmf'] }],
+  ['ICH_CSR', { archetype: 'clindoc', programTypes: ['csr'] }],
+  ['ICH_PROTOCOL', { archetype: 'clindoc', programTypes: ['protocol'] }],
+  ['ICH_IB', { archetype: 'clindoc', programTypes: ['ib'] }],
+  ['ICH_SAP', { archetype: 'clindoc', programTypes: ['sap'] }],
+  ['ICH_ICF', { archetype: 'clindoc', programTypes: ['icf'] }],
+]);
+
+const words = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+/** Only established storage keys and display labels are spelling aliases. */
+function knownAgency(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const key = words(value);
+  return Object.entries(AGENCY_LABEL).find(([code, label]) => words(code) === key || words(label) === key)?.[0] ?? null;
+}
+
+function contextMatches(entry: FilingCatalogEntry, admission: LifecycleAdmission, recorded: RecordedFilingContext): boolean {
+  if (recorded === null || typeof recorded !== 'object' || typeof recorded.programType !== 'string') return false;
+  const programType = recorded.programType.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const agency = knownAgency(recorded.primaryAgency);
+  return admission.programTypes.includes(programType) && agency !== null && agency === knownAgency(entry.agency);
+}
+
+/** A known exact catalogue id selects authored family prose. Project callers
+ * must additionally match their recorded type AND agency; missing or disputed
+ * identity never falls through to a US application or another guide. */
+export function filingLifecycleReferenceFor(id: string | null | undefined, recorded?: RecordedFilingContext): FilingLifecycleReference | null {
+  if (typeof id !== 'string' || !id.trim()) return null;
+  const entry = resolveFilingCatalogEntry(id.trim());
+  if (!entry || id.trim().toLowerCase() !== entry.id) return null;
+  const admission = ADMISSIONS.get(entry.registryId);
+  if (!admission || (recorded !== undefined && !contextMatches(entry, admission, recorded))) return null;
+  const loop = FILING_LOOP[admission.archetype];
+  if (!loop) return null;
+  const { registryId, displayName, agency, region } = entry;
+  return { basis: 'authored_reference', state: 'matched', scope: 'filing_family',
+    filing: { id: entry.id, registryId, displayName, agency, region }, archetype: admission.archetype, loop };
+}
+
+/** Exact catalogue facts for metadata and workflow-label search. Resolving
+ * these facts never admits a lifecycle guide or a project/build capability. */
+export function filingReferenceFactsFor(id: string | null | undefined) {
+  if (typeof id !== 'string' || !id.trim()) return null;
+  const entry = resolveFilingCatalogEntry(id.trim());
+  if (!entry || id.trim().toLowerCase() !== entry.id) return null;
   const workflow = filingWfCode(entry);
-  const archetype = FILING_LOOP_ARCHETYPE[workflow];
-  return { entry, workflowLabel: FILING_WF_LABEL[workflow] ?? workflow,
-    loop: archetype ? FILING_LOOP[archetype] ?? null : null };
+  return { entry, workflowLabel: FILING_WF_LABEL[workflow] ?? workflow };
 }
