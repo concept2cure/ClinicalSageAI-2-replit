@@ -84,6 +84,8 @@ remain callable; this slice does not authorize their removal.
 - Independent read-only review confirms unchanged scope, counting rules,
   server figures, home/market separation and editor handoffs after the unknown
   status correction.
+- Concurrent onboarding changes through `ddbdfb938` merged cleanly. The merged
+  dossier/readiness and onboarding suites pass: **47 tests in 4 suites**.
 - Required pre-push gates, including the zero-baseline TypeScript check, run
   during publication; no bypass is used.
 
