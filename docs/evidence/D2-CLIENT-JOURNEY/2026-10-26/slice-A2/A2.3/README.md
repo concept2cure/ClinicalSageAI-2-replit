@@ -85,3 +85,8 @@ Concurrent work through `33694a45a` merged without source conflicts. A later
 upstream merge at `785b9fbb5` retains regional draft inputs in the existing editor;
 it changes no A2.3 source file. Browser/build results above precede that second
 merge; publishing gates run on the final combined tree.
+
+After the second merge, four directly interacting pathway, project-step, regional
+draft-input and source-first assembly suites pass **45/45** (`merged-related.txt.gz`).
+The existing surface-action bus/commit-boundary suites also pass **26/26**
+(`actions.txt.gz`). These targeted runs overlap earlier evidence.
