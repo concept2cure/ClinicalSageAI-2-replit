@@ -5,14 +5,19 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 packet = Path(__file__).resolve().parent
 root = packet.parents[3]
 os.chdir(root)
-tests = json.loads((packet / 'regression-tests.json').read_text())
-changed = subprocess.check_output(['git', 'diff', '--name-only', '--', 'server', 'client', 'shared'], text=True).splitlines()
+freeze_name = sys.argv[1] if len(sys.argv) > 1 else 'source-freeze.json'
+selection = sys.argv[2] if len(sys.argv) > 2 else 'regression-tests.json'
+tests = json.loads((packet / selection).read_text())
+baseline = json.loads((packet / 'prepatch-source.json').read_text())['head']
+changed = subprocess.check_output(['git', 'diff', baseline, '--name-only', '--', 'server', 'client', 'shared'], text=True).splitlines()
 lint = [name for name in changed if name.endswith(('.ts', '.tsx', '.js', '.jsx'))]
-(packet / 'lint-targets.json').write_text(json.dumps(lint, indent=2) + '\n')
+lint_name = 'lint-targets.json' if freeze_name == 'source-freeze.json' else Path(freeze_name).stem + '-lint-targets.json'
+(packet / lint_name).write_text(json.dumps(lint, indent=2) + '\n')
 queue = tests + changed + [
     'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx',
     'client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx',
@@ -56,7 +61,7 @@ while queue:
     queue += [str(target) for value in pattern.findall(source) if (target := resolve(path, value))]
     queue += [value for value in re.findall(r"""['"]((?:db/)?migrations/[^'"\s]+\.sql)['"]""", source) if Path(value).is_file()]
 
-(packet / 'source-freeze.json').write_text(json.dumps({
+(packet / freeze_name).write_text(json.dumps({
     'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
     'scope': 'Selected tests and implementation, static local imports/direct SQL and named build inputs; not full dynamic dependency enumeration.',
     'files': {name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in sorted(seen)},

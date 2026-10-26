@@ -39,3 +39,17 @@ The shared CSR section5 fallback requests ethics-source records rather than inve
 ## Practical limits
 
 The worker unit fixture scripts Drizzle persistence; the private-project PGlite test separately proves actual durable SQL state, preserved whole rows and missing-section-only resume. Drafter and dependent continuation are scripted. The CRF route fixture uses real HTTP/JWT/current-access/import and canonical authoring writes over isolated PGlite. No browser, provider, deployment, external study records or agency endpoint was exercised. Safety field specifications, schedule-rule rendering, codelists, standards validation, clinical completeness and human acceptance need their own evidence; none follows from retaining an activity.
+
+## Canonical integration and final qualification
+
+The first source-push attempt ran normal hooks/TypeScript0 after a fetch had exposed a newer canonical tip, then correctly failed non-fast-forward. That needless attempt is retained in `source-push.json`; the publication sequence was corrected with a normal merge and explicit ancestry checks. `canonical-merge.json` records the incoming Account actor-ownership work and identical own8source/test hashes. `merged-regression.json` passes328/28, with matching build/gates.
+
+`source-push-merged.json` again passes every normal hook and TypeScript0 but encounters another canonical update during the push's atomic ref update. `creator-merge.json` records normal integration of duplicate project-creator retirement and a narrowed SQL allowance; no own8source/test bytes changed. A preparation assertion initially encountered two intentionally retired tests. `creator-selection-correction.json` identifies that setup issue, the current replacement tests and the refusal to restore duplicate creators. No suite ran under that failed selection.
+
+Final `creator-regression.json`:492/492 across40 suites, no drift. `creator-gates.json`:all seven editor/UI/size gates pass. `creator-build.json`:build passes, no drift. These counts include the earlier283/25 and328/28 runs and focused worker supplements; do not sum overlapping counts. `creator-qualified-inputs.json` retains the final2885 static local inputs. Type and warning baselines were not increased; incoming canonical SQL allowance was narrowed.
+
+Final normal source publication is recorded separately in `source-publication.json`. The publication helper itself checks fetched canonical ancestry before calling ordinary git push; normal hooks and atomic remote-ref protection remain. The final artifact manifest and read-only verifier prove actual canonical Git blob hashes and complete tracked evidence.
+
+The resume proof invokes the existing worker entry point under an operator fixture. This increment does not add a client retry control. Human cases143–146 explicitly require the operator's isolated fixture; all146 cases remain Not run.
+
+Accepted source publication: `b8469209948e569efbeb841bb8a6d6a6d5d0090c`, original correction `b92136fddaba8e29b9915a1e5d9cb4e233728fd6`. `source-push-final.json` records successful normal canonical push, all hooks and full-program incremental TypeScript0, no source drift. Final evidence publication follows; read-only verification checks actual Git blobs and tracked artifacts, not only local hashes.

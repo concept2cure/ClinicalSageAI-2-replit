@@ -1,8 +1,8 @@
 {
   "regression": {
-    "receipt": "regression.json",
-    "passed": 283,
-    "suites": 25,
+    "receipt": "creator-regression.json",
+    "passed": 492,
+    "suites": 40,
     "sourceDrift": []
   },
   "lint": {
@@ -44,13 +44,26 @@
       "exitCode": 0
     }
   ],
-  "build": "build.json",
-  "qualifiedInputs": "source-freeze.json",
-  "typeScript": "pending normal source pre-push",
+  "build": "creator-build.json",
+  "qualifiedInputs": "creator-qualified-inputs.json",
+  "typeScript": {
+    "errors": 0,
+    "receipt": "source-push-final.json",
+    "normalHooks": true
+  },
   "humanTesting": {
     "cases": 146,
     "status": "Not run",
     "checklist": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
   },
-  "limits": "Automated local fixtures, not human acceptance, clinical/statistical/regulatory validation, live model factual accuracy or filing readiness."
+  "limits": "Automated local fixtures, not human acceptance, clinical/statistical/regulatory validation, live model factual accuracy or filing readiness.",
+  "earlierEpochs": [
+    "regression.json (283/25)",
+    "merged-regression.json (328/28)"
+  ],
+  "counting": "Final492 includes earlier epochs and worker supplements; do not add overlapping counts.",
+  "gateReceipt": "creator-gates.json",
+  "incomingCanonicalChanges": "Account actor ownership and project-creator retirement normally merged; own8source/test inputs unchanged.",
+  "baselineScope": "No type/lint baseline increase; incoming canonical SQL allowance narrowed.",
+  "sourcePublication": "source-publication.json"
 }

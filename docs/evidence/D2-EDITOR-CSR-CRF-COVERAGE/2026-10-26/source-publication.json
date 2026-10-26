@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "b92136fddaba8e29b9915a1e5d9cb4e233728fd6",
+  "sourceCommits": [
+    "b92136fddaba8e29b9915a1e5d9cb4e233728fd6"
+  ],
+  "acceptedSourceHead": "b8469209948e569efbeb841bb8a6d6a6d5d0090c",
+  "branch": "concept2cure-v2",
+  "qualifiedInputs": "creator-qualified-inputs.json",
+  "pushReceipt": "source-push-final.json",
+  "pushExitCode": 0,
+  "normalHooks": true,
+  "typeScriptErrors": 0,
+  "typeAndLintBaselineIncreased": false,
+  "incomingSqlAllowance": "Narrowed by accepted canonical creator retirement",
+  "priorAttempts": [
+    "source-push.json",
+    "source-push-merged.json"
+  ],
+  "atUtc": "2026-10-26T22:41:14.684842+00:00"
+}

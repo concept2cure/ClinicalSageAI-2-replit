@@ -11,7 +11,9 @@ e.update(GIT_ASKPASS=path,GIT_TERMINAL_PROMPT='0')
 try:
  mode=sys.argv[1]
  if mode=='fetch':argv=['git','fetch','origin','concept2cure-v2']
- elif mode=='push':argv=['git','push','origin','concept2cure-v2']
+ elif mode=='push':
+  subprocess.run(['git','merge-base','--is-ancestor','origin/concept2cure-v2','HEAD'],env=e,check=True)
+  argv=['git','push','origin','concept2cure-v2']
  elif mode=='commit':argv=['git','commit','-m',sys.argv[2]]
  else:raise ValueError('Unknown publication mode')
  result=subprocess.run(argv,env=e)

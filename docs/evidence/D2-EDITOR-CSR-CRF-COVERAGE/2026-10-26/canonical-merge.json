@@ -1,0 +1,39 @@
+{
+  "before": "b92136fddaba8e29b9915a1e5d9cb4e233728fd6",
+  "remote": "5c24914f06e21a93e542b333cdd8985229fb8fcc",
+  "after": "86a309ad7998484ee7d8adb080444748c4ee016e",
+  "exitCode": 0,
+  "incomingPaths": [
+    "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+    "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx",
+    "docs/architecture/CLIENT_DISCOVERY_ONBOARDING.md",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/README.md",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/account-selfservice-1440-dark.png",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/account-selfservice-1440-light.png",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/account-selfservice-390-dark.png",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/account-selfservice-390-light.png",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/browser-check.json",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/build.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/cleanup-tests.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/invitation-catalog.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/lint.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/prepush.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/regressions.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/safety-red.txt",
+    "docs/evidence/W1/2026-10-26-account-self-service-ownership/safety-red.txt.gz"
+  ],
+  "ownedSourceFiles": {
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "99bad04e14674acb2eb3944bb62380769d12654c4fa89a7113403dcfc2670c6f",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "0cd1e749dfd38ed063e4090c1dc9b010b843343e34ad05c18ad2bd44e970580f",
+    "server/services/csr-builder.ts": "9c41f640cbf34dd06f47adedd14878868a13a2f4b3dc00e00bc97fad21cdb1b9",
+    "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts": "520d93164a8619301276edc4229f06efbe4c32be0c07f65a2f917bd7f63d000a",
+    "server/services/csr/__tests__/csr-worker-private-access.pglite.test.ts": "390564db969f5e287a635224b82c46bda391c442812e48b517d9fe72cd8c781e",
+    "server/services/csr/csr-job-runner.ts": "61dfec4a95719a988ab1b1491c4f7019545982136a5ebf0da68693b02f6f6066",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "1cf364b7ca38230b1b9c51d4493a279f9c103c753e88b7f6cd644ec6c1f2524e",
+    "server/services/study-design/crf-shell.ts": "8d8004eddbbe6f623fec145665b308ec2a9841354ccdf8cbb570c4835e2370ea"
+  },
+  "ownedSourceChanged": [],
+  "normalMerge": true
+}
