@@ -1,0 +1,9 @@
+{
+  "scope": "Two evidence comparison scripts use allowed console.info instead of console.log; stdout behavior and comparison assertions preserved.",
+  "firstPush": "source-push.json",
+  "firstPushOutcome": "Application/source gates passed; pre-push stopped on2new no-console warnings in .mjs evidence helpers before TypeScript. Baseline unchanged.",
+  "snapshots": [
+    "pre-lint-fix-compare-lint.mjs.gz",
+    "pre-lint-fix-compare-legacy-lint.mjs.gz"
+  ]
+}
