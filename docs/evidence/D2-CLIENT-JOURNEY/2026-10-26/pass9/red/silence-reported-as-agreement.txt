@@ -1,0 +1,4 @@
+ × server/services/truth-engine/__tests__/figure-consistency-silence.test.ts > a claim with no recognised figure is not a clean check > reports that nothing was compared, instead of an empty all-clear
+ × server/services/truth-engine/__tests__/figure-consistency-silence.test.ts > a claim with no recognised figure is not a clean check > says it against every source the claim was to be checked against
+ × server/services/truth-engine/__tests__/figure-consistency-silence.test.ts > a claim with no recognised figure is not a clean check > names the absence rather than inventing a label for it
+      Tests  3 failed | 4 passed (7)

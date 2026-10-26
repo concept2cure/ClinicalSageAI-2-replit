@@ -87,8 +87,17 @@ export const SUBMISSION_WORKSPACES: WorkspaceDef[] = [
     id: 'validation',
     label: 'Validation',
     routePattern: '/submissions/:id/validation',
-    endpoints: ['POST /api/submissions/:id/validation/explain'],
-    anaTools: ['validate_ectd_package', 'explain_validation_findings'],
+    endpoints: [
+      'POST /api/submissions/:id/validation/explain',
+      /* The Truth Engine's recorded cross-document checks. Reachable only
+         through AnA's check_consistency until 2026-10-26: the route's own
+         comment said no browser client called it, so a reviewer could be told
+         in chat that a claim disagrees with its source and find nothing about
+         it in Submission Center. Validation asks whether the package is well
+         formed; this asks whether it agrees with itself. */
+      'GET /api/submissions/:id/consistency',
+    ],
+    anaTools: ['validate_ectd_package', 'explain_validation_findings', 'check_consistency'],
   },
   {
     id: 'shadow-review',
