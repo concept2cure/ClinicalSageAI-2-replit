@@ -83,7 +83,7 @@ describe('membership', () => {
     // AnA still drafts the task or the edit, a person clicks once, and the
     // action runs under the person's name through the one route that stamps
     // humanConfirmed. The capability stays; the unaided execution does not.
-    for (const c of ['create_task', 'update_task', 'create_project', 'update_project', 'create_artifact']) {
+    for (const c of ['create_task', 'update_task', 'update_project', 'create_artifact']) {
       expect(isProposeOnlyCommand(c), `${c} must be a proposal`).toBe(true);
       expect(governedTierOf(c), `${c} is an ordinary write`).toBe('confirm');
     }

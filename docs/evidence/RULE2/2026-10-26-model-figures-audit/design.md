@@ -9,7 +9,8 @@
 > | S3 | done, with review fixes | `s3-invented-defaults/review/` |
 > | S4 | independent safeguards implemented; R-2/F2 policy pending | `s4-nonclinical-engines/` |
 > | S5-0 | done; stated-input labels are independent of R-2 availability | `s5-0-stated-basis/` |
-> | S5a COA/PRO | done; five other clinical families remain queued | `s5a-coa-pro/` |
+> | S5a COA/PRO | done | `s5a-coa-pro/` |
+> | S5a pediatric | done; four other clinical families remain queued | `s5a-pediatric/` |
 > | S5a remaining, S5b–S5d, S6–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -501,10 +502,28 @@ evidence are filed under `s5a-coa-pro/`.
 `not_stated`; dependent validation, fit, positioning and strategy conclusions remain
 `not_assessed`. Decisive explicit evidence still determines an answer. Unassessed anchors
 cannot supply a responder threshold. Required context/decision enums and malformed numeric
-evidence use the existing parameter-refusal mechanism. The other five S5a families are
-still queued; their read-only inventory is in `s5a-coa-pro/queued-clinical-families.md`.
+evidence use the existing parameter-refusal mechanism. Pediatric is completed below;
+the four other S5a families remain queued. Their read-only inventory is in
+`s5a-coa-pro/queued-clinical-families.md`.
 
 - **S5a (clinical):** `coaProTools`, `doseOptimizationTools`, `pediatricTools`, `vaccineTools`, `rweMethodologyTools`, `pharmacovigilanceTools`.
+
+**S5a pediatric — What already exists (execution audit):** the six canonical functions
+in `pediatric/pediatric-knowledge.ts` are already reached through `pediatricTools.ts`
+and the shared stated-input wrapper. Extend them; keep the separate global-RI plan
+service and its policy catalog. Reuse the strict input readers, canonical refusal,
+and COA's existing boolean-state adapter (moved beside the readers for both callers).
+No other direct function/result consumers or local deletion matches were found;
+the history is shallow. The dose tool supplies method/formula guidance, not a numeric
+patient dose. Details and red/green evidence go under `s5a-pediatric/`.
+
+**Pediatric execution result:** all ten boolean input occurrences preserve explicit
+answers and expose absence as `not_stated`. Unresolved extrapolation, dose method,
+monitoring, waiver/trigger and reward conclusions remain unassessed/null. Adult efficacy
+false cannot permit adult borrowing; condition and exact class-list matches remain
+reference context. Required context, units, age bands and numerical quantities use the
+existing refusal mechanism. Neonatal birth gestation cannot be inferred. No numerical
+patient-dose calculator or source reader was added; R-2/F2 availability stays open.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.

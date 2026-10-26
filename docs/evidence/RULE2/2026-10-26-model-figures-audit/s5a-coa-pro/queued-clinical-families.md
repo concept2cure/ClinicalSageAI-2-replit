@@ -1,5 +1,9 @@
 # S5a queued clinical families — read-only inventory
 
+> Subsequent execution: pediatric is now completed in `../s5a-pediatric/`. Dose
+> optimization, vaccine, RWE and pharmacovigilance remain queued. The inventory
+> below records what the initial read-only audit found before the pediatric fixes.
+
 Audited 2026-10-26 for the Rule 2 model-figures workstream. This increment fixes
 only the COA/PRO family. **All five families below remain queued; none is fixed
 or verified by this inventory.** R-2/F2 calculator availability remains open.

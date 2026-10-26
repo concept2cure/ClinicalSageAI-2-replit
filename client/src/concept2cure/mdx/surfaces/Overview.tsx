@@ -18,6 +18,7 @@ export interface OverviewProps {
   programs: Program[];
   onOpenProgram: (p: Program) => void;
   onAskAna: (text: string) => void;
+  onNewProject: () => void;
 }
 
 /**
@@ -54,7 +55,7 @@ function deriveLiveHealth(programs: Program[]): HealthKpi[] {
   ];
 }
 
-export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: OverviewProps) {
+export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna, onNewProject }: OverviewProps) {
   /* Health KPI strip is derived from the SAME source as the cards so the
      two never disagree — including for an empty tenant, whose honest strip
      is "0 programs". The kit's MDX_HEALTH ("Active programs 14 · Down 3 pts vs
@@ -150,11 +151,9 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
         </div>
         <button
           className="section-more"
-          onClick={() =>
-            onAskAna('Walk me through creating a new device project (510(k), PMA, or CER).')
-          }
+          onClick={onNewProject}
         >
-          New program {I.right}
+          New project {I.right}
         </button>
       </div>
 
@@ -228,18 +227,16 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
           className="empty-state"
         >
           <div className="empty-state-t">
-            No programs yet
+            No projects yet
           </div>
           <div className="empty-state-s">
-            Programs you create appear here. Start a 510(k), PMA, or CER program from the workflow above.
+            Projects you create appear here. Choose the filing and client workspace in New project.
           </div>
           <button
             className="btn primary small"
-            onClick={() =>
-              onAskAna('Walk me through creating a new device project (510(k), PMA, or CER).')
-            }
+            onClick={onNewProject}
           >
-            {I.plus} Create your first program
+            {I.plus} Create your first project
           </button>
         </div>
       ) : view === 'grid' ? (

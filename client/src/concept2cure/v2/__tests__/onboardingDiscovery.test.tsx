@@ -6,6 +6,7 @@ import { completeDiscovery } from './onboardingDiscoveryFixtures';
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { OnboardingDiscoveryAnswers } from '@shared/types/onboarding-discovery';
+import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../surfaceActions';
 
 const { request, publish, identity } = vi.hoisted(() => ({ request: vi.fn(), publish: vi.fn(), identity: { orgId: 7 } }));
 vi.mock('@/lib/queryClient', () => ({ apiRequest: request, redactInternals: (message: string) => message, probeAuditRowOutcome: vi.fn(), serverMessage: () => null }));
@@ -52,7 +53,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', mutation);
   localStorage.clear(); sessionStorage.clear();
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); __resetSurfaceActionBus(); vi.unstubAllGlobals(); });
 
 async function next() {
   const oldHeading = document.querySelector('.pj-card-b > h2')?.textContent;
@@ -68,6 +69,22 @@ async function reviewWithInvite(role = 'member') {
   fireEvent.change(screen.getByLabelText('Role for invitee 1'), { target: { value: role } });
   await next(); await next(); await next(); await next();
 }
+
+describe('onboarding reaches canonical project creation', () => {
+  it('opens the canonical project wizard after activation without creating a project', async () => {
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    const create = await screen.findByRole('button', { name: 'Create your first project' });
+    const mutationCount = mutation.mock.calls.length;
+    fireEvent.click(create);
+    expect(props.onNav).toHaveBeenCalledWith('projects');
+    const openWizard = vi.fn(() => ({ ok: true as const }));
+    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
+    expect(openWizard).toHaveBeenCalledOnce();
+    expect(mutation).toHaveBeenCalledTimes(mutationCount);
+    expect(request.mock.calls.some(([, path]) => path === '/api/c2c/projects')).toBe(false);
+  });
+});
 
 describe('intelligent discovery wizard', () => {
   it('asks drug and device follow-ups for combination products and service questions for service providers', async () => {

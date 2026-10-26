@@ -1,6 +1,6 @@
 /**
- * AnA's list_projects, create_project and update_project work against the real
- * `projects` table, in the caller's organization only.
+ * AnA's list_projects and update_project use the real projects schema.
+ * The retired create_project path cannot write a standalone PM-spine project.
  *
  * Before (to 2026-10-15): all three named projects.submission_type, and
  * update_project a projects.phase, neither of which exists — a project records
@@ -19,11 +19,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import { clientWorkspaces, projects } from '../../../../shared/schema';
+import { regulatoryPrograms } from '../../../../shared/schema/programs';
 
 const h = vi.hoisted(() => ({ pool: null as unknown }));
 vi.mock('../../../db', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
 
-import { createProject, listProjects, updateProject } from '../command-executor';
+vi.mock('../../roleBasedAccess', () => ({ default: { hasRole: async () => true, getUserRoles: async () => [] } }));
+
+import { COMMAND_HANDLERS, COMMAND_REGISTRY, executeCommands, processCommandsInResponse, listProjects, updateProject } from '../command-executor';
+import { COMMAND_AUTHORIZATION, PROPOSE_ONLY_COMMANDS } from '../command-rbac';
 
 const ALPHA = 1;
 const BETA = 2;
@@ -50,6 +54,7 @@ beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(ddlOf(clientWorkspaces as PgTable));
   await pg.exec(ddlOf(projects as PgTable));
+  await pg.exec(ddlOf(regulatoryPrograms as PgTable));
   await pg.exec(`
     INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES
       (11, ${ALPHA}, 'Alpha', 'alpha'), (21, ${BETA}, 'Beta', 'beta'),
@@ -99,22 +104,39 @@ describe('list_projects', () => {
   });
 });
 
-describe('create_project', () => {
-  it("creates the project in the organization's workspace, with the submission type in metadata", async () => {
-    const r = await createProject(ctx(ALPHA), { name: 'Alpha NDA 2', submissionType: 'NDA', targetAgency: 'FDA' });
-    expect(r.success, `create_project failed: ${r.message}`).toBe(true);
-    const id = (r.data as { projectId: number }).projectId;
-    const row = (await pg.query<any>('SELECT * FROM projects WHERE id = $1', [id])).rows[0];
-    expect(row).toMatchObject({ organization_id: ALPHA, client_workspace_id: 11, created_by_id: 9 });
-    expect(row.metadata).toMatchObject({ submissionType: 'NDA', targetAgency: 'FDA' });
+describe('the retired create_project writer', () => {
+  const stale = { command: 'create_project', params: { name: 'Unanchored project', submissionType: 'NDA' } };
+  async function holdings() {
+    return (await pg.query<{ projects: number; programs: number }>(
+      'SELECT (SELECT count(*)::int FROM projects) AS projects, (SELECT count(*)::int FROM regulatory_programs) AS programs',
+    )).rows[0];
+  }
+
+  it.each([false, true])('writes no standalone project or proposal, even with human confirmation %s', async (humanConfirmed) => {
+    const before = await holdings();
+    const result = await executeCommands([stale] as never, {
+      userId: 9, organizationId: ALPHA, anaToolPolicy: {}, part11Enforce: false, humanConfirmed,
+    });
+    expect(await holdings(), 'the retired writer created a PM-spine row without a regulatory program').toEqual(before);
+    expect(result).toMatchObject([{ success: false, action: 'create_project', error: 'COMMAND_NOT_REGISTERED' }]);
+    expect(result[0].data).toBeUndefined();
   });
 
-  it('refuses, writing nothing, when the workspace is ambiguous', async () => {
-    const before = (await pg.query<any>('SELECT count(*)::int AS n FROM projects')).rows[0].n;
-    const r = await createProject(ctx(GAMMA), { name: 'Gamma project' });
-    expect(r.success).toBe(false);
-    expect(r.message).toMatch(/workspace/i);
-    expect((await pg.query<any>('SELECT count(*)::int AS n FROM projects')).rows[0].n).toBe(before);
+  it('is absent from dispatch, authorization, proposal partition and discovery', () => {
+    expect(Object.hasOwn(COMMAND_HANDLERS, 'create_project')).toBe(false);
+    expect(Object.hasOwn(COMMAND_AUTHORIZATION, 'create_project')).toBe(false);
+    expect(PROPOSE_ONLY_COMMANDS.has('create_project')).toBe(false);
+    expect(COMMAND_REGISTRY.some(command => command.name === 'create_project')).toBe(false);
+  });
+
+  it('answers an old chat command block honestly without a project write or proposal', async () => {
+    const before = await holdings();
+    const result = await processCommandsInResponse('Here is the requested action.\n```command\n' + JSON.stringify(stale) + '\n```', {
+      userId: 9, organizationId: ALPHA, anaToolPolicy: {}, part11Enforce: false,
+    });
+    expect(result.executedCommands).toMatchObject([{ success: false, error: 'COMMAND_NOT_REGISTERED' }]);
+    expect(await holdings()).toEqual(before);
+    expect(result.cleanedText).toBe('Here is the requested action.');
   });
 });
 

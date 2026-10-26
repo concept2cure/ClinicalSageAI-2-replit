@@ -11,7 +11,7 @@ const row = (id: string, pathway = 'k510', readiness: number | null = null) => (
   status: 'idle', lead: '', owners: [], nextBlocker: null, dueLabel: 'No target set',
   dueTone: 'ok', lastActivity: 'Now', meta: '',
 }) as Program;
-const mount = (programs: Program[]) => render(<Overview programs={programs} onOpenProgram={vi.fn()} onAskAna={vi.fn()} />);
+const mount = (programs: Program[]) => render(<Overview programs={programs} onOpenProgram={vi.fn()} onAskAna={vi.fn()} onNewProject={vi.fn()} />);
 const average = () => document.querySelectorAll('.health-card')[1];
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);

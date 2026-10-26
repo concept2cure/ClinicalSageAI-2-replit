@@ -38,6 +38,8 @@ interface Override {
 
 /** Precise metadata for the capabilities added in this work-stream (exact, not derived). */
 const OVERRIDES: Record<string, Override> = {
+  // Its guidance names navigation tools, but its result is journey facts.
+  get_client_journey: { scope: 'project', governed: false, renderer: 'result-card', example: 'Where do I start?', outputs: 'journey stage, next milestone and supported next action' },
   assemble_device_submission: { scope: 'project', governed: false, renderer: 'readiness-panel', example: 'Can we produce a submittable eSTAR for this 510(k)?', outputs: 'artifactKind + section readiness + blockers' },
   score_predicate_adequacy: { scope: 'global', governed: false, renderer: 'ranked-cards', example: 'Which of these predicates is strongest for our SE argument?', outputs: 'ranked predicates w/ score + factors' },
   code_drug: { scope: 'global', governed: false, renderer: 'result-card', example: "Code 'atorvastatin 20 mg tablet' to RxNorm", outputs: 'RxNorm concept matches' },

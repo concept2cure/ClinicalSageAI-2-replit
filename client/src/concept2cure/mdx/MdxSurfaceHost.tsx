@@ -76,6 +76,7 @@ import './drafter.css';
 import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
+import { openNewProject } from '../v2/surfaceActions';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -439,7 +440,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
           testId="mdx-programs-error"
         />
       ) : (
-        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />
+        <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} onNewProject={() => openNewProject(onNav)} />
       );
       break;
   }

@@ -74,7 +74,6 @@ export {
   type GovernedArtifactContract,
 } from './enforcement.js';
 export {
-  createProject,
   listProjects,
   updateProject,
   createArtifact,

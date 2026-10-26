@@ -16069,7 +16069,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the feasibility of extrapolating adult efficacy data to a pediatric population using the FDA/EMA extrapolation decision framework (FDA Guidance 2016, EMA Reflection Paper EMA/199678/2016). Evaluates two axes: (1) disease progression similarity between adults and children, and (2) drug response (exposure-response) similarity. Returns: extrapolation level (full extrapolation, partial with PK+PD, partial with PK+efficacy, or no extrapolation/full program), detailed rationale citing regulatory precedents, specific study requirements, Bayesian borrowing feasibility and approach (informative prior, commensurate prior, power prior per Gamalo-Siebers et al. 2017), evidence package needed, and precedent examples from FDA/EMA approvals. Use when planning a pediatric clinical program to determine the minimum necessary studies. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess the feasibility of extrapolating adult efficacy data to a pediatric population using the FDA/EMA extrapolation decision framework (FDA Guidance 2016, EMA Reflection Paper EMA/199678/2016). Evaluates two axes: (1) disease progression similarity between adults and children, and (2) drug response (exposure-response) similarity. Returns: extrapolation level (full extrapolation, partial with PK+PD, partial with PK+efficacy, or no extrapolation/full program), detailed rationale citing regulatory precedents, specific study requirements, Bayesian borrowing feasibility and approach (informative prior, commensurate prior, power prior per Gamalo-Siebers et al. 2017), evidence package needed, and precedent examples from FDA/EMA approvals. Use when planning a pediatric clinical program to determine the minimum necessary studies. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -16100,7 +16100,7 @@
             "null"
           ],
           "required": false,
-          "description": "Whether disease progression is similar between adults and the target pediatric population. true = similar, false = different, null = uncertain/unknown. The engine has built-in knowledge for common conditions; set null to use the internal as"
+          "description": "Stated product-specific disease-progression similarity between adults and the target pediatric population: true = similar, false = different, null or omitted = not_stated. Condition references do not fill this fact."
         },
         {
           "name": "drugResponseSimilar",
@@ -16109,7 +16109,7 @@
             "null"
           ],
           "required": false,
-          "description": "Whether the exposure-response relationship is similar. true = similar, false = different, null = uncertain/unknown. Set null to use the engine's internal assessment based on the condition and therapeutic area."
+          "description": "Stated product-specific exposure-response similarity: true = similar, false = different, null or omitted = not_stated. A missing assessment cannot select a PK/PD bridge or a full program."
         },
         {
           "name": "mechanismOfAction",
@@ -16133,7 +16133,7 @@
           "name": "condition",
           "type": "string",
           "required": false,
-          "description": "Specific condition name for matching against the internal extrapolation knowledge base (e.g., \"hypertension\", \"asthma\", \"crohn_disease\", \"hiv\")."
+          "description": "Condition name for reference context only (e.g., hypertension, asthma, crohn_disease, hiv). A reference profile cannot establish product similarity or adult efficacy."
         }
       ],
       "requiredInputs": [
@@ -16150,7 +16150,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess comprehensive regulatory obligations, ethical requirements, and development timelines for a pediatric drug program. Returns: FDA PREA obligations (21 USC §355c — mandatory pediatric studies for NMEs/new indications) with Written Request and Pediatric Exclusivity details (6-month patent extension per 21 USC §355a), EMA PDCO obligations (EC No 1901/2006 — PIP requirement, PUMA rewards, SPC extension, orphan +2 years market exclusivity), ethical requirements (informed consent model by age per 21 CFR 50 Subpart D and EU CTR Article 32, assent age thresholds, minimal risk definitions, IRB/EC pediatric expertise requirements, blood volume limits, additional safeguards), orphan drug incentive calculations (FDA 7+0.5 years, EMA 10+2 years), and detailed timelines for PIP/PSP submission, study completion, and data submission. Use when planning regulatory strategy, preparing ethics submissions, or assessing incentive value for pediatric development. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Assess comprehensive regulatory obligations, ethical requirements, and development timelines for a pediatric drug program. Returns: FDA PREA obligations (21 USC §355c — mandatory pediatric studies for NMEs/new indications) with Written Request and Pediatric Exclusivity details (6-month patent extension per 21 USC §355a), EMA PDCO obligations (EC No 1901/2006 — PIP requirement, PUMA rewards, SPC extension, orphan +2 years market exclusivity), ethical requirements (informed consent model by age per 21 CFR 50 Subpart D and EU CTR Article 32, assent age thresholds, minimal risk definitions, IRB/EC pediatric expertise requirements, blood volume limits, additional safeguards), orphan drug incentive calculations (FDA 7+0.5 years, EMA 10+2 years), and detailed timelines for PIP/PSP submission, study completion, and data submission. Use when planning regulatory strategy, preparing ethics submissions, or assessing incentive value for pediatric development. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18744,7 +18744,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify a patient into the correct ICH E11(R1) pediatric age band (preterm neonate, term neonate 0-27 days, infant 28 days-23 months, child 2-11 years, adolescent 12-17 years) and return comprehensive developmental pharmacology considerations for that age band. Returns: age band classification, developmental considerations (organ maturation, CNS development), pharmacokinetic implications (renal GFR maturation per Rhodin et al., hepatic CYP ontogeny — CYP3A4/CYP3A7/CYP1A2/CYP2D6/CYP2C9/CYP2C19/CYP2E1/UGT per Hines 2008, body composition water-to-fat ratios per Friis-Hansen), age-appropriate formulation preferences, and consent/assent requirements. Use this tool whenever a user asks about pediatric age classification, developmental pharmacology, or PK considerations for a specific pediatric age. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Classify a patient into the correct ICH E11(R1) pediatric age band (preterm neonate, term neonate 0-27 days, infant 28 days-23 months, child 2-11 years, adolescent 12-17 years) and return comprehensive developmental pharmacology considerations for that age band. Returns: age band classification, developmental considerations (organ maturation, CNS development), pharmacokinetic implications (renal GFR maturation per Rhodin et al., hepatic CYP ontogeny — CYP3A4/CYP3A7/CYP1A2/CYP2D6/CYP2C9/CYP2C19/CYP2E1/UGT per Hines 2008, body composition water-to-fat ratios per Friis-Hansen), age-appropriate formulation preferences, and consent/assent requirements. Use this tool whenever a user asks about pediatric age classification, developmental pharmacology, or PK considerations for a specific pediatric age. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18766,7 +18766,7 @@
           "name": "gestationalAge",
           "type": "number",
           "required": false,
-          "description": "Gestational age in weeks at birth. Required for neonates (ageUnit = days) to distinguish preterm (<37 weeks) from term (≥37 weeks) neonates. Optional for other age units."
+          "description": "Stated gestational weeks at birth. Required whenever postnatal age converts to 0–27 days, including fractional months/years; no term birth is assumed. Optional for older children."
         }
       ],
       "requiredInputs": [
@@ -23152,7 +23152,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a Pediatric Investigation Plan (PIP, EMA/PDCO) or Pediatric Study Plan (PSP, FDA) for a drug in development. Returns: complete regulatory framework (FDA PREA requirements per 21 USC §355c, EMA Paediatric Regulation EC No 1901/2006), PIP/PSP structure (quality/formulation, nonclinical/juvenile animal studies per ICH S11, clinical studies), list of required studies per age band with design recommendations (population PK, efficacy, safety), deferral/waiver assessment (full waiver, partial waiver, class waiver per EMA Commission Decision C(2015) 6600, deferral), and submission timing relative to adult development milestones. Use when planning pediatric development strategy, preparing a PIP/PSP submission, or assessing deferral/waiver eligibility. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Design a Pediatric Investigation Plan (PIP, EMA/PDCO) or Pediatric Study Plan (PSP, FDA) for a drug in development. Returns: complete regulatory framework (FDA PREA requirements per 21 USC §355c, EMA Paediatric Regulation EC No 1901/2006), PIP/PSP structure (quality/formulation, nonclinical/juvenile animal studies per ICH S11, clinical studies), list of required studies per age band with design recommendations (population PK, efficacy, safety), deferral/waiver assessment (full waiver, partial waiver, class waiver per EMA Commission Decision C(2015) 6600, deferral), and submission timing relative to adult development milestones. Use when planning pediatric development strategy, preparing a PIP/PSP submission, or assessing deferral/waiver eligibility. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -25663,11 +25663,12 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to set up their first project via the onboarding questionnaire (start_intelligence_flow with project_setup). Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
+      "description": "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to open the New project wizard using navigate_to (projects) then act_on_screen (projects.new-project), where the person reviews and presses Create project. The project_setup intelligence flow configures an existing project; it does not create the first project. Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
-      "example": "",
+      "example": "Where do I start?",
+      "outputs": "journey stage, next milestone and supported next action",
       "inputs": [
         {
           "name": "segment",
@@ -25677,7 +25678,7 @@
         }
       ],
       "requiredInputs": [],
-      "derived": true
+      "derived": false
     },
     {
       "name": "get_ctd_module_home",
@@ -33147,7 +33148,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select an appropriate pediatric dose scaling method and provide dosing recommendations based on the drug characteristics, target age band, and elimination pathway. Evaluates: linear weight-based scaling, allometric scaling (exponent 0.75, West et al. 1997), maturation-adjusted allometric scaling (Anderson & Holford 2008 — MF from CYP ontogeny or GFR maturation), BSA-based scaling, PBPK-predicted dosing (FDA PBPK Guidance 2018), age-based dosing, and therapeutic drug monitoring (TDM). Returns: recommended scaling method with rationale, dose formula with adjustment factors (CYP maturation status, GFR percentage of adult, body composition effects), dose banding recommendations for practical administration, safety considerations (maximum dose caps, neonatal extended intervals, growth monitoring), and TDM guidance. Use when determining starting doses for pediatric PK studies, designing dose-finding studies, or preparing dosing sections of pediatric labeling. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select an appropriate pediatric dose scaling method and provide dosing recommendations based on the drug characteristics, target age band, and elimination pathway. Evaluates: linear weight-based scaling, allometric scaling (exponent 0.75, West et al. 1997), maturation-adjusted allometric scaling (Anderson & Holford 2008 — MF from CYP ontogeny or GFR maturation), BSA-based scaling, PBPK-predicted dosing (FDA PBPK Guidance 2018), age-based dosing, and therapeutic drug monitoring (TDM). Returns: recommended scaling method with rationale, dose formula with adjustment factors (CYP maturation status, GFR percentage of adult, body composition effects), dose banding recommendations for practical administration, safety considerations (maximum dose caps, neonatal extended intervals, growth monitoring), and TDM guidance. Use when determining starting doses for pediatric PK studies, designing dose-finding studies, or preparing dosing sections of pediatric labeling. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -33163,7 +33164,7 @@
           "name": "adultDose",
           "type": "number",
           "required": true,
-          "description": "Approved or anticipated adult dose (numeric value)."
+          "description": "Stated adult dose for context. This tool supplies method/formula guidance and does not calculate a numeric pediatric dose from it."
         },
         {
           "name": "adultDoseUnit",
@@ -33181,19 +33182,19 @@
           "name": "childWeight",
           "type": "number",
           "required": false,
-          "description": "Target child weight in kg. Used for weight-based and allometric calculations."
+          "description": "Optional stated child weight in kg for context; current output is a reference formula, not a numerical dose calculation."
         },
         {
           "name": "childAge",
           "type": "number",
           "required": false,
-          "description": "Child age in years (or fraction of years). Used for maturation factor estimation."
+          "description": "Optional stated pediatric age in years, below 18. The current tool does not calculate an individual maturation factor from this value."
         },
         {
           "name": "childBSA",
           "type": "number",
           "required": false,
-          "description": "Child body surface area in m². Used for BSA-based scaling. Standard adult BSA = 1.73 m²."
+          "description": "Optional stated child BSA in m². The current tool returns BSA formula guidance without numerically evaluating it; the reference adult BSA is 1.73 m²."
         },
         {
           "name": "primaryEliminationRoute",
@@ -33242,7 +33243,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select age-appropriate formulations for a pediatric drug product per EMA Reflection Paper (EMA/CHMP/QWP/805880/2012 Rev. 2) and assess excipient safety. Returns: ranked formulation recommendations by age band (oral solution, oral suspension, mini-tablet, orodispersible tablet/film, granules/sprinkle, chewable tablet, conventional tablet, capsule, injectable, inhaled, etc.) with suitability rating and acceptability evidence (e.g., Klingmann 2015 mini-tablet swallowability data), excipient safety assessment against EMA/STEP database limits (ethanol, benzyl alcohol, propylene glycol, parabens, polysorbate 80, cyclodextrins, sorbitol, aspartame, saccharin), palatability requirements, and dosing device specifications. Use when developing a pediatric formulation strategy, assessing excipient safety, or preparing the quality/pharmaceutical section of a PIP. Deterministic — identical input always yields identical output. No LLM, no network.",
+      "description": "Select age-appropriate formulations for a pediatric drug product per EMA Reflection Paper (EMA/CHMP/QWP/805880/2012 Rev. 2) and assess excipient safety. Returns: ranked formulation recommendations by age band (oral solution, oral suspension, mini-tablet, orodispersible tablet/film, granules/sprinkle, chewable tablet, conventional tablet, capsule, injectable, inhaled, etc.) with suitability rating and acceptability evidence (e.g., Klingmann 2015 mini-tablet swallowability data), excipient safety assessment against EMA/STEP database limits (ethanol, benzyl alcohol, propylene glycol, parabens, polysorbate 80, cyclodextrins, sorbitol, aspartame, saccharin), palatability requirements, and dosing device specifications. Use when developing a pediatric formulation strategy, assessing excipient safety, or preparing the quality/pharmaceutical section of a PIP. Deterministic worksheet over stated inputs; no LLM, network or program source-record read. Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. Report those states and ask for the missing facts. Reference profiles do not establish product evidence, waiver grants, regulatory applicability or incentive entitlement.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",

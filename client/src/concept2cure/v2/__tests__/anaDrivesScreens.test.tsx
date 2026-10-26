@@ -116,6 +116,7 @@ function vaultSearchPayload(q: string) {
       folderId: 'cab-module-3',
       ctdSection: d.ctdSection,
       placementStatus: 'confirmed',
+      current: true,
       snippet: null,
     }));
   return { success: true, data: { query: q, total: results.length, limit: 100, offset: 0, results } };
@@ -201,7 +202,8 @@ describe('Vault — AnA operates the real surface', () => {
     await waitFor(() =>
       expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0),
     );
-    expect(screen.getByText('stability-summary-24m')).toBeTruthy();
+    expect(await screen.findByText('stability-summary-24m')).toBeTruthy();
+    expect(screen.queryAllByText('specifications-drug-substance')).toHaveLength(0);
   });
 
   it('vault.search on an empty vault is refused, not reported as a search nobody can see', async () => {

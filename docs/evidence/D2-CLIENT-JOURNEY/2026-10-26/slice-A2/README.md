@@ -53,9 +53,18 @@ readiness. IDE/regional/Other rows remain visible. Explicit recorded progress is
 preserved separately from readiness. Full evidence, red checks, review findings
 and limits are in [A2.3/README.md](A2.3/README.md). No schema or dependency changed.
 
+## A2.4 — all admitted creation doors reach the wizard
+
+Completed the existing surface action/bus and Projects wizard opener; Home,
+Onboarding and device doors now use it. Retired the separate AnA command writer
+and made stale commands fail honestly without a write or proposal. The person
+still reviews intake and presses Create. Replacement paths, red proof, SQL/HTTP
+refusal checks and native browser evidence are in [A2.4/README.md](A2.4/README.md).
+Existing-project configuration, catalog and entitlements remain unchanged.
+
 ## Remaining sequence
 
-A2.4 (converge creation doors onto the existing Projects wizard) is next. A2.5–A2.6 remain as reviewed in the plan. A2.7 and later screen removals retain function-parity and founder-decision prerequisites; no catalog row, feature entitlement, creator or surface was retired here.
+A2.5 (complete the existing filing picker note and Ask AnA prompt) is next, followed by A2.6. A2.7 and later screen removals retain function-parity and founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
 
 ## Final integration
 
