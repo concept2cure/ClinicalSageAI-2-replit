@@ -506,7 +506,7 @@ test('first session: create an IND project, add a source, assign, draft with AnA
   await test.step('see what is left: the project shows the document started, assigned and in review', async () => {
     await page.getByTestId('home-projects').getByRole('button', { name: new RegExp(escapeRegExp(projectName)) }).click();
     await expect(page).toHaveURL(/project-home/);
-    await page.getByRole('button', { name: /^Plan/ }).first().click();
+    await expect(page.locator('.pj-lc-stage[data-status="active"]')).toHaveText('Plan');
     const phase1 = page.locator('details[data-phase="phase1"]');
     await expect(phase1.locator('> summary')).toContainText(/\d+ documents · 1 started/);
     await expect(entryIn(phase1).getByTestId('plan-assignment')).toHaveText('Assigned to Admin User, due Dec 15, 2026');

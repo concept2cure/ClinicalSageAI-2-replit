@@ -1,0 +1,24 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 714ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage 26ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > keeps a selected step through same-project card republishing 9ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > drops the prior project step on A → B → A 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > clear retires the step and its mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > restores a valid step only for the URL’s same project 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "lifecycle" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step "not-a-step" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step {} 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectStep.test.ts > the open step belongs to this project visit > discards invalid mirrored step null 1ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  15:48:25
+   Duration  4.31s (transform 1.65s, setup 214ms, import 2.03s, tests 983ms, environment 821ms)
+

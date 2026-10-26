@@ -5,6 +5,14 @@
 
 # Slice A.2: Projects, one way in and back to the right step
 
+**Continuation review (2026-10-26, base `b3661f72d`).** Independently rechecked before implementation. The original discovery and line references below remain historical; apply these corrections:
+- The cited golden journey returns through Home's project card. A2.1 also needs proof through the actual top-bar project chip, including template creation and reload.
+- A2.2 reuses the canonical accepted anchor relationship. Any captured anchor/client mapping must be frozen and compared during final scope revalidation, even when program IDs stay unchanged. Keep `meta.count` as page length; expose only minimal active client options derived from accessible anchors. The existing `projects_regulatory_program_idx` suffices; no new index migration is justified.
+- A2.3 must update device pathway consumers alongside the shared classifier so IDE, regional and Other rows stay visible.
+- A2.4 also retires `create_project` from its command-name union and verifies an honest refusal for old directives.
+- A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
+- Founder-dependent admissions and folds remain pending.
+
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 
 **State of the tree.** Read on 2026-10-26 against HEAD `7d1f7f316` plus a working tree that holds uncommitted slice A.1 edits.

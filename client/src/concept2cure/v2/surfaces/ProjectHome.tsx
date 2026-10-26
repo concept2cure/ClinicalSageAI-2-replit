@@ -9,7 +9,7 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
-import { updateShellProject } from '../shellProject';
+import { projectStepId, readShellProject, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
@@ -1409,7 +1409,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // renders standalone (and in tests) without a host wired up.
   const ask = onAsk || (() => {});
   const available = useSurfaceAvailable();
-  const sel = window.C2C_PROJECT ?? null;
+  const sel = useShellProject();
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
@@ -1456,24 +1456,30 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const reviews = useProjectReviews(pid);
 
   const [workTarget, setWorkTarget] = useState<string | null>(null);
-  const [stage, setStage] = useState('author');
-  /* Until a person, AnA or a handoff chooses a step, a project with no
-     documents opens on Plan, what the filing needs (CLIENT_JOURNEY_2026-10-25.md,
-     passes 2 and 3). A choice is never overridden. */
-  const stageChosen = useRef(false);
+  const rememberedStep = projectStepId(sel?.step);
+  const [stepSelection, setStepSelection] = useState(() => ({
+    pid, stage: rememberedStep ?? 'author', chosen: rememberedStep !== null,
+  }));
+  // Project changes can happen without unmounting this surface. Reset before
+  // rendering its panels so the old project's step cannot drive the new one.
+  const selection = stepSelection.pid === pid ? stepSelection : {
+    pid, stage: rememberedStep ?? 'author', chosen: rememberedStep !== null,
+  };
+  if (stepSelection.pid !== pid) setStepSelection(selection);
+  const stage = selection.stage;
   const chooseStage = useCallback((next: string) => {
-    stageChosen.current = true;
-    setStage(next);
-  }, []);
-  // First: on mount effects run in order, so the handoff below still counts.
-  useEffect(() => { stageChosen.current = false; }, [pid]);
+    const step = projectStepId(next);
+    // A late callback from a previous visit may not overwrite another project.
+    if (!pid || readShellProject()?.id !== pid || !step) return;
+    setStepSelection({ pid, stage: step, chosen: true });
+    updateShellProject({ step });
+  }, [pid]);
+  useEffect(() => { setWorkTarget(null); }, [pid]);
   useEffect(() => {
-    const target = consumeNavParams('project-home')?.workId;
-    if (target) { setWorkTarget(target); chooseStage('review'); }
-  }, [chooseStage]);
-  useEffect(() => {
-    if (!stageChosen.current && docsRead.state === 'ready' && docsRead.rows.length === 0) setStage('plan');
-  }, [docsRead]);
+    // A first empty project starts on Plan. Remember even this default so
+    // creating its first document and returning does not jump it to Author.
+    if (!selection.chosen && docsRead.state === 'ready' && docsRead.rows.length === 0) chooseStage('plan');
+  }, [docsRead, selection.chosen, chooseStage]);
 
   const prog = progState.data;
 
@@ -1657,7 +1663,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
      project-home.*, identity-resolved). The one action drives the SAME state
-     the StageTracker's own buttons drive (setStage). Stage is pure view state:
+     the StageTracker's own buttons drive (chooseStage). Stage is per-tab view state:
      it selects which panels render over whatever the five reads deliver, so —
      same reasoning as vault.search — applying it mid-load is correct, not
      early, and there is no loading refusal and no retry.
@@ -1688,6 +1694,16 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   useEffect(() => {
     if (!progState.loading) notifySurfaceActionReady('project-home');
   }, [progState.loading]);
+  // Register pending step actions first, then apply an explicit Tasks/navigation
+  // handoff: handoff > pending action > remembered step > first-open default.
+  useEffect(() => {
+    if (!pid) return;
+    const params = consumeNavParams('project-home');
+    const step = projectStepId(params?.stage);
+    const target = params?.workId;
+    if (target) setWorkTarget(target);
+    if (step || target) chooseStage(step ?? 'review');
+  }, [pid, chooseStage]);
 
   return (
     <div className="page-inner pj">
