@@ -2,9 +2,8 @@
 /** Actual Workbench, canonical assembly controller and AI review; synthetic HTTP only. */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { Editor } from '@tiptap/core';
-import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { AssemblyCommitData, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -17,7 +16,8 @@ vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => 
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
 
-import { DocumentWorkbench, type DocumentWorkbenchProps } from '../DocumentWorkbench';
+import { DocumentWorkbench } from '../DocumentWorkbench';
+import { PID, DOC, SEC, SECOND, THIRD, TEMPLATE, OTHER, SECTIONS_READ, doc, section, emptySection, thirdSection, template, plan, deferred, ok, user, bearer, editorNode, mounted, localEdit, assemblyUi } from './workbenchAssemblyBuild.testSupport';
 import { authService } from '@/services/portal/authService';
 import { setAuthToken } from '@/utils/authToken';
 import { publishShellProject } from '../../shellProject';
@@ -25,55 +25,17 @@ import { clearEditorTarget, setEditorTarget } from '../../editorTarget';
 import { surfaceLeaveRefusal } from '../../navParams';
 import { registerCeremonyOpen } from '../../ceremony';
 
-const PID = 'bbbbbbbb-0000-4000-8000-000000000181';
-const DOC = 'dddddddd-0000-4000-8000-000000000181';
-const SEC = 'aaaaaaaa-0000-4000-8000-000000000181';
-const SECOND = 'aaaaaaaa-0000-4000-8000-000000000182';
-const THIRD = 'aaaaaaaa-0000-4000-8000-000000000183';
-const TEMPLATE = 'cccccccc-0000-4000-8000-000000000181';
-const OTHER = 'bbbbbbbb-0000-4000-8000-000000000182';
-const SECTIONS_READ = `/api/authoring/docs/${DOC}/sections?programId=${PID}`;
-const AT = '2026-10-17T20:00:00Z';
-const doc = { id: DOC, title: 'Assembly working document', module: 'M3', product_code: null,
-  section_count: 1, status: 'DRAFT', updated_at: AT, client_program_id: PID };
-const section = { id: SEC, doc_id: DOC, code: '3.2.P.8.1', title: 'Existing stability summary',
-  content: '<p>Existing saved stability evidence.</p>', order_index: 7, updated_at: AT };
-const emptySection = { id: SECOND, doc_id: DOC, code: '3.2.P.8.2', title: 'Post-approval stability protocol',
-  content: '', order_index: 8, updated_at: AT };
-const thirdSection = { ...emptySection, id: THIRD, code: '3.2.P.8.3', title: 'Stability data', order_index: 9 };
-const template = { id: TEMPLATE, name: 'Organization stability assembly', module: 'M3' };
+const { aiCalls, assemblyCalls, previewBuild, buildDocument } = assemblyUi(apiRequest);
 let savedSections: AssemblySection[];
 let previewReply: (input: AssemblyPreviewInput) => Response | Promise<Response>;
 let commitReply: (input: AssemblyPreviewInput) => Response | Promise<Response>;
 let draftReply: (sectionId: string) => Response | Promise<Response>;
-function plan(input: AssemblyPreviewInput): AssemblyPlan {
-  const all = [section, emptySection, thirdSection];
-  const selection = input.selection;
-  const selected = selection.target === 'document' ? all : all.filter(row => row.code === selection.code);
-  return { version: 1, docId: DOC, programId: PID, templateId: TEMPLATE, selection: input.selection,
-    targetSnapshot: 'target-snapshot', templateSnapshot: 'template-snapshot', fingerprint: 'fingerprint-181',
-    templateName: template.name, draftRegion: 'FDA', limitations: ['Working text requires human review.'], gaps: [],
-    rows: selected.map(row => ({ code: row.code, title: row.title, content: row.content, ordering: row.order_index,
-      disposition: row.id === SEC ? 'preserve' : 'append', ...(row.id === SEC ? { existingSectionId: SEC } : {}),
-      aiDraftable: true, aiDraftableReason: 'Text drafting is permitted.', gaps: row.content ? [] : ['Scientific content is missing.'] })) };
-}
 function commit(input: AssemblyPreviewInput): AssemblyCommitData {
   const build = plan(input);
   const sections = [section, emptySection, thirdSection].filter(row => build.rows.some(item => item.code === row.code));
   savedSections = [...new Map([...savedSections, ...sections].map(row => [row.id, row])).values()];
   return { docId: DOC, programId: PID, plan: build, sections };
 }
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  return { promise: new Promise<T>(done => { resolve = done; }), resolve: (value: T) => resolve(value) };
-}
-const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-const user = (id = '181', organizationId = '18') => ({ id, organizationId, organizationName: null,
-  email: 'assembly@example.test', firstName: 'Synthetic', lastName: 'Author', displayName: 'Synthetic author',
-  roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false });
-const bearer = (userId = '181', organizationId = '18', visit = 'original') =>
-  `fixture.${btoa(JSON.stringify({ userId: Number(userId), organizationId: Number(organizationId), visit }))}.synthetic`;
-function editorNode() { return document.querySelector('.tiptap') as HTMLElement & { editor: Editor }; }
 for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   prototype.getClientRects ??= () => [];
   prototype.getBoundingClientRect ??= () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
@@ -106,38 +68,6 @@ afterEach(() => {
   cleanup(); localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
   publishShellProject({ id: '' }); vi.unstubAllGlobals();
 });
-async function mounted(overrides: Partial<DocumentWorkbenchProps> = {}) {
-  const props: DocumentWorkbenchProps = { docs: [doc], docsState: 'ready', status: 'all',
-    programId: PID, onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined), ...overrides };
-  const view = render(<DocumentWorkbench {...props} />);
-  await waitFor(() => expect(editorNode()?.textContent).toContain('Existing saved stability evidence.'));
-  return { props, ...view };
-}
-function localEdit() { act(() => { editorNode().editor.commands.insertContent('Unsaved local work. '); }); }
-function aiCalls() { return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).includes('/ai/draft')); }
-function assemblyCalls(stage: 'preview' | 'commit') { return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).endsWith(`/assembly/${stage}`)); }
-async function previewBuild(targetCode?: string, withAna = false) {
-  fireEvent.click(screen.getByText('Build document or section'));
-  const templateInput = await screen.findByLabelText('Template');
-  await waitFor(() => expect((templateInput as HTMLSelectElement).options.length).toBeGreaterThan(1));
-  fireEvent.change(templateInput, { target: { value: TEMPLATE } });
-  await waitFor(() => expect(assemblyCalls('preview')).toHaveLength(1));
-  await screen.findByRole('option', { name: `${emptySection.code} ${emptySection.title}` });
-  if (targetCode) fireEvent.change(screen.getByLabelText('Build target'), { target: { value: targetCode } });
-  fireEvent.click(screen.getByRole('button', { name: 'Preview build' }));
-  await waitFor(() => expect(assemblyCalls('preview')).toHaveLength(2));
-  fireEvent.change(screen.getByLabelText('Reason for build'), { target: { value: 'Assemble the selected saved template sections.' } });
-  if (withAna) fireEvent.click(screen.getByLabelText('Draft empty eligible sections with AnA'));
-  const build = screen.getByRole('button', { name: targetCode ? 'Build section' : 'Build document' }) as HTMLButtonElement;
-  await waitFor(() => expect(build.disabled).toBe(false));
-  return build;
-}
-async function buildDocument(withAna = false) {
-  const build = await previewBuild(undefined, withAna);
-  fireEvent.click(build);
-  await waitFor(() => expect(assemblyCalls('commit')).toHaveLength(1));
-}
-
 describe('assembly is reachable in the one existing editor', () => {
   it('offers a build disclosure for the exact open saved document', async () => {
     await mounted();
@@ -422,6 +352,63 @@ describe('assembly late results preserve current work and scope', () => {
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
     if (mode !== 'unmount') expect(editorNode().textContent).toContain('Existing saved stability evidence.');
   });
+});
+
+describe('saved text does not starve later assembly candidates in the existing panel', () => {
+  it.each(['initial saved-row race', 'explicit retry after refusal'])('preserves newly saved text and prepares the later candidate after %s', async mode => {
+    await mounted();
+    const savedText = '<p>Human-authored protocol saved before preparation.</p>';
+    const preserveProtocol = () => {
+      savedSections = savedSections.map(row => row.id === SECOND ? { ...row, content: savedText } : row);
+    };
+    if (mode === 'initial saved-row race') {
+      const normal = apiRequest.getMockImplementation()!;
+      let changed = false;
+      apiRequest.mockImplementation((method: string, url: string, body?: AssemblyPreviewInput) => {
+        // The structure refresh sees the confirmed empty receipt. Another save
+        // lands before the queue's separate exact saved-section inspection.
+        const result = normal(method, url, body);
+        if (method === 'GET' && url === SECTIONS_READ && assemblyCalls('commit').length && !changed) {
+          preserveProtocol(); changed = true;
+        }
+        return result;
+      });
+      await buildDocument(true);
+    } else {
+      draftReply = () => ok({ success: false, message: 'Synthetic first preparation refused.' }, 503);
+      await buildDocument(true);
+      await screen.findByText('Synthetic first preparation refused.');
+      expect(aiCalls().map(([, url]) => url)).toEqual([`/api/authoring/sections/${SECOND}/ai/draft`]);
+      preserveProtocol();
+      draftReply = sectionId => ok({ success: true, draft: { content: `Retained candidate for ${sectionId}.`, draftId: `draft-${sectionId}`, metadata: {} } });
+      fireEvent.click(screen.getByRole('button', { name: 'Retry remaining candidates' }));
+    }
+    const candidates = await screen.findByTestId('assembly-candidates');
+    const preserved = within(candidates).getByText(`${emptySection.code} ${emptySection.title}`).closest('li')!;
+    await waitFor(() => expect(preserved.textContent).toContain(`${emptySection.title} · preserved`));
+    expect(within(preserved).getByText('Saved text now exists. It was preserved; no new candidate was generated.')).toBeTruthy();
+    expect(within(candidates).queryByRole('button', { name: `Review ${emptySection.code}` })).toBeNull();
+    fireEvent.click(await within(candidates).findByRole('button', { name: `Review ${thirdSection.code}` }));
+    await screen.findByTestId('ai-draft-panel');
+    expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toBe(`Retained candidate for ${THIRD}.`);
+    fireEvent.change(screen.getByTestId('ai-draft-body'), { target: { value: 'Human-reviewed stability data.' } });
+    fireEvent.change(screen.getByPlaceholderText('Accepted AI draft'), { target: { value: 'Checked against the source evidence.' } });
+    expect((screen.getByTestId('ai-draft-accept') as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toBe('Human-reviewed stability data.');
+    expect((screen.getByPlaceholderText('Accepted AI draft') as HTMLInputElement).value).toBe('Checked against the source evidence.');
+    expect(aiCalls().map(([, url]) => url)).toEqual([
+      ...(mode === 'explicit retry after refusal' ? [`/api/authoring/sections/${SECOND}/ai/draft`] : []),
+      `/api/authoring/sections/${THIRD}/ai/draft`,
+    ]);
+    expect(savedSections.find(row => row.id === SECOND)?.content).toBe(savedText);
+    expect(savedSections.find(row => row.id === THIRD)?.content).toBe('');
+    expect(assemblyCalls('commit')).toHaveLength(1);
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).endsWith('/accept'))).toBe(false);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+    expect(screen.queryByRole('button', { name: 'Retry remaining candidates' })).toBeNull();
+    expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
+  });
+
 });
 
 describe('automatic AnA preparation retains individual review in the existing panel', () => {

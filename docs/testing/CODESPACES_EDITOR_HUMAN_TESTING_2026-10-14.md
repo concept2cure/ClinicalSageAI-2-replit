@@ -300,6 +300,11 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 105 | Refresh the session normally during an inventory response/body read. Preserve the selected document/sources and accept the valid reply; each GET retains its dispatched actor headers, and the next GET uses the adopted bearer. Raw storage-only replacement, anonymous launch and stale retained callbacks must refuse, mask private choices and explain the original-context refusal. | Not run | |
 | 106 | Return explicit section-only, missing/unknown readScope, duplicate UUID or foreign-project inventory rows through the controlled fixture. Section-only targets are unavailable; malformed/foreign lists show a read error and may retry. After a genuine handoff is consumed, changing its original sender or selected sources must retire it; copied/raw commands must not acquire ownership. Check keyboard Close/Escape and footer access at desktop/phone widths in both themes. | Not run | |
 
+| 107 | Build several eligible empty sections with AnA. Before the first section is inspected, have a collaborator save text in it. Confirm that section is shown as preserved, receives no candidate/review control, and the following empty section receives a candidate for separate review. Existing text and section order stay intact. | Not run | |
+| 108 | Stop preparation or use the operator’s provider-refusal fixture. Save manual text in the first pending section, then choose Retry remaining candidates. Verify the saved row becomes preserved, later empty rows continue, completed candidate edits/reasons remain, and no text is accepted automatically. | Not run | |
+| 109 | Repeat with all pending rows filled manually, and with an exact single-section target. All-filled rows show preserved with zero generated candidates; a selected target never starts other sections. A later retry does not regenerate completed/preserved rows. | Not run | |
+| 110 | With the operator, interrupt the exact saved-section read or return a missing/wrong-code row, then test Stop and a project/account change during a delayed read. Preparation must stop before later candidates; an unreadable section is not shown as preserved. Return only through existing explicit checks/retry controls. | Not run | |
+
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
@@ -325,6 +330,8 @@ For cases 92–95, use the [assembly template discovery contract](../design/ASSE
 For cases 96–102, use the [source intake ownership and recovery contract](../design/SOURCE_INTAKE_OWNERSHIP_2026-10-23.md). Conditional source-version reuse is not durable request idempotency. An exact recovered working copy does not establish current source eligibility, filing approval or submission readiness.
 
 For cases 103–106, use the [selected-source handoff ownership contract](../design/SELECTED_SOURCE_HANDOFF_OWNERSHIP_2026-10-26.md). Automated component/browser results use synthetic HTTP and remain separate from these human observations. The current project journey is Plan → Evidence → Author → Review → Submit → Respond.
+
+For cases 107–110, use the [assembly queue completion contract](../design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md). Preserved means exact saved text was observed; it does not mean AnA generated, reviewed or accepted that text. Automated synthetic-HTTP regressions do not fill these human observations.
 
 For cases 34–37, use the [saved-reference contract](../design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md). The last recorded source selection is historical build intent. Its successful read does not select it or establish current citation support; reuse requires a fresh check and another explicit preview.
 
