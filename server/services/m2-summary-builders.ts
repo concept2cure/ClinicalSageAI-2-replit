@@ -25,6 +25,7 @@
 import type { ComposedSection, GeneratedTable } from './module3Composer.js';
 import type { CSRSection } from './csr-builder.js';
 import { ichHeadingTitle } from './ind/ctd/ich-m4-headings.js';
+import { ctdRecordSubtree } from './market-specs/ctd-component-outlines.js';
 
 /**
  * A heading line as the ICH M2–M5 record numbers and titles it. The first level
@@ -36,6 +37,38 @@ function heading(code: string): string {
   if (title === null) throw new Error(`The ICH M2–M5 record holds no heading ${code}.`);
   return `${code} ${code.split('.').length <= 3 ? title.toUpperCase() : title}`;
 }
+
+/**
+ * The record's headings below `root` that a composer does not write, as runs
+ * in CTD order ("2.7.4.3–2.7.4.5"), for its open items. `composed` is what the
+ * composer writes. A heading below one not written is covered by it; a heading
+ * the record makes conditional (2.5.6.5, 2.7.4.6) is not an open item and ends
+ * a run. (D2 cleanup C4c: the open items named 2.7.6 alone, so they read as if
+ * everything else were written.)
+ */
+function notComposed(root: string, composed: readonly string[]): string[] {
+  const written = new Set([root, ...composed]);
+  const runs: string[][] = [];
+  let run: string[] | null = null;
+  for (const h of ctdRecordSubtree(root)) {
+    const parent = h.code.slice(0, h.code.lastIndexOf('.'));
+    if (!written.has(h.code) && !written.has(parent)) continue; // covered by an ancestor not written
+    if (written.has(h.code) || h.condition) { run = null; continue; }
+    if (!run) runs.push((run = []));
+    run.push(h.code);
+  }
+  return runs.map((r) => (r.length === 1 ? r[0] : `${r[0]}–${r[r.length - 1]}`));
+}
+
+/** The open item naming what `notComposed` found, or none. */
+function notComposedGap(root: string, composed: readonly string[]): string[] {
+  const runs = notComposed(root, composed);
+  return runs.length ? [`headings of ${root} this composer does not write: ${runs.join(', ')}`] : [];
+}
+
+/** The literature-reference placeholder: the composer cites nothing, but the text it was given may. */
+const literatureReferences = (scope: string, copies: string) =>
+  `[This composer cites no literature of its own. List here every reference ${scope} cites, including any in the text it was given; copies of important references are filed in ${copies}.]`;
 
 /**
  * Where a narrative would name the drug substance and none is recorded.
@@ -74,6 +107,8 @@ export interface M24BuildContext {
   nonclinicalStudies: NonclinicalStudy[];
   drugSubstanceName?: string;
   indication?: string;
+  /** The target-organ adversity classifier's paragraph, printed inside 2.4.4 (preclinical/nonclinical-m24-adapter.ts). */
+  targetOrganProfile?: string;
 }
 
 export interface NonclinicalStudy {
@@ -320,6 +355,8 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     byType.carcino.length > 0
       ? `Carcinogenicity per ICH S1: ${byType.carcino.length} study/ies.`
       : ``,
+    // 2026-10-26 (C4c): the adapter used to append this after the whole overview as "2.4.4.1", a code the record does not hold.
+    ctx.targetOrganProfile ? `Target-organ adversity profile: ${ctx.targetOrganProfile}` : ``,
     ``,
     heading('2.4.5'),
     // The "supports the plan" sentence used to print whenever any nonclinical
@@ -331,7 +368,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
       : `Studies are recorded in every category this overview checks. Whether the nonclinical safety profile of ${ds} supports the proposed clinical investigational plan — the findings and NOAELs above weighed against the proposed clinical dose and exposure — is the sponsor's toxicology judgment and is not drawn automatically.`,
     ``,
     heading('2.4.6'),
-    `[No literature is cited in this composed overview. List here any reference the author cites; copies are filed in Module 4.3.]`,
+    literatureReferences('this overview', 'Module 4.3'),
   ].filter(Boolean).join('\n');
 
   const tables: GeneratedTable[] = [];
@@ -414,18 +451,6 @@ function safetyCounts(csrs: CSRSummaryInput[]): {
   };
 }
 
-/**
- * Build M2.5 Clinical Overview from CSR data.
- * Per ICH M4E(R2), this is the *critical assessment* of the clinical data —
- * shorter and more integrative than the 2.7 Clinical Summary — culminating in
- * an explicit benefit-risk conclusion. The six subsections are:
- *   2.5.1 Product Development Rationale
- *   2.5.2 Overview of Biopharmaceutics
- *   2.5.3 Overview of Clinical Pharmacology
- *   2.5.4 Overview of Efficacy
- *   2.5.5 Overview of Safety
- *   2.5.6 Benefits and Risks Conclusions
- */
 /** "n=…" for a study: the recorded size, or an explicit statement that none was recorded. */
 function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize'>): string {
   return typeof c.sampleSize === 'number' ? String(c.sampleSize) : '[sample size not recorded]';
@@ -595,6 +620,16 @@ function commonAdverseEvents(csrs: CSRSummaryInput[]): { integrated: string[]; r
   };
 }
 
+/** The headings the 2.5 composer writes; the record's others below 2.5 are open items. */
+const COMPOSED_25 = ['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.7'] as const;
+
+/**
+ * Build M2.5 Clinical Overview from CSR data.
+ * Per ICH M4E(R2), this is the *critical assessment* of the clinical data —
+ * shorter and more integrative than the 2.7 Clinical Summary — culminating in
+ * an explicit benefit-risk conclusion. It writes 2.5.1–2.5.7 as the record
+ * heads them; the 2.5.6 benefit-risk subdivisions are not composed, and say so.
+ */
 export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   const csrs = ctx.csrs;
   const pivotal = csrs.filter(c => c.phase.startsWith('3'));
@@ -624,6 +659,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   // the same sentence without either gating the word. The counts are stated;
   // the conclusion is left for a reviewer and recorded as an open item.
   if (efficacyShown) gaps.push('benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)');
+  gaps.push(...notComposedGap('2.5', COMPOSED_25));
   const benefitRisk = benefitRiskStatement({ indication: ctx.indication, studies: csrs.length, pivotal: pivotal.length, outcomes, totalSubjects, safetyStatement: safety.statement });
 
   const narrative = [
@@ -669,7 +705,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       : `No open items preclude the benefit-risk conclusion.`,
     ``,
     heading('2.5.7'),
-    `[No literature is cited in this composed overview. List here any reference the author cites; copies are filed in Module 5.4.]`,
+    literatureReferences('this overview', 'Module 5.4'),
   ]
     .filter(Boolean)
     .join('\n');
@@ -738,8 +774,12 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
  * Every heading the record holds directly below 2.7 is written; 2.7.1–2.7.4 are
  * composed from the CSR records, and of 2.7.4's subdivisions, those the records
  * reach (exposure; common adverse events, deaths, other serious adverse events).
+ * The record's other headings below 2.7 are named as open items (COMPOSED_27).
  */
 const NOT_AMONG_INPUTS = 'Their narratives and causality assessments are not among the recorded inputs to this summary.';
+
+/** The headings the 2.7 composer writes; the record's others below 2.7 are open items. */
+const COMPOSED_27 = ['2.7.1', '2.7.2', '2.7.3', '2.7.4', '2.7.4.1', '2.7.4.2', '2.7.4.2.1', '2.7.4.2.1.1', '2.7.4.2.1.2', '2.7.4.2.1.3', '2.7.5', '2.7.6'] as const;
 
 export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   const csrs = ctx.csrs;
@@ -765,7 +805,8 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   if (outcomes.unrecorded > 0) gaps.push(`primary endpoint outcome not recorded for ${outcomes.unrecorded} of ${pivotal.length} pivotal study/ies`);
   if (safety.gap) gaps.push(safety.gap);
   gaps.push(...ae.gaps);
-  gaps.push('individual study synopses (2.7.6): not composed');
+  gaps.push('Listing of Clinical Studies and synopsis links (2.7.6): not composed');
+  gaps.push(...notComposedGap('2.7', COMPOSED_27));
 
   const narrative = [
     `MODULE 2.7 — CLINICAL SUMMARY`,
@@ -827,10 +868,11 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       : `${safety.totalSAEs} serious adverse event(s) reported${safety.totalDeaths > 0 ? '; whether this count includes the deaths above is not recorded' : ''}.${safety.totalSAEs > 0 ? ` ${NOT_AMONG_INPUTS}` : ''}`,
     ``,
     heading('2.7.5'),
-    `See Module 5.4 for the integrated reference list.`,
+    // 2026-10-26 (C4c): this said "See Module 5.4 for the integrated reference list"; 2.7.5 is the list, and 5.4 holds the copies.
+    literatureReferences('2.7.1–2.7.4', 'Module 5.4'),
     ``,
     heading('2.7.6'),
-    `[The synopses of the ${csrs.length} study/ies in the Clinical Study Index are not composed here; include each report's synopsis, in the order of the Module 5 reports.]`,
+    `[Not composed: the Listing of Clinical Studies, one row per study with its Module 5 location, each linked to the synopsis in its study report. For a US eCTD the synopses are not repeated in Module 2.]`,
     // The open items used to live only on the sibling `gaps` field, which a
     // consumer of the narrative alone (the authoring tool) never renders.
     ...(gaps.length > 0 ? [``, `Open items: ${gaps.join('; ')}.`] : []),

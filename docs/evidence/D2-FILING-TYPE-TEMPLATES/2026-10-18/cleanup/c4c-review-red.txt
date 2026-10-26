@@ -1,0 +1,32 @@
+C4c red, on 805efa13d (trunk, C4a/C4b as pushed) before the fixes. The review: workflow wf_4db15643-511.
+ × server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_clinical_overview_m2_5 returns ICH M4E(R2) outline (no DB needed) 25ms
+ × server/services/ana/__tests__/ind-module-tool.test.ts > existing input qualification and missing-string blockers remain visible > keeps both prior blockers when an unassessed plan also fails its own text check 16ms
+ × server/services/ana/__tests__/ind-module-tool.test.ts > existing input qualification and missing-string blockers remain visible > names a supplied fact that fits no section of the template, instead of dropping it (C4c) 4ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.4 with a target-organ profile: every heading is the record’s, and the profile sits inside 2.4.4, before 2.4.5 14ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.4: 2.4.6 never says nothing is cited, and asks for every reference the document cites 2ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.5: 2.5.7 never says nothing is cited, and asks for every reference the document cites 1ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.7: 2.7.5 never says nothing is cited, and asks for every reference the document cites 2ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.7.6 leads with the Listing of Clinical Studies, as the record’s brief does, and is an open item 2ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.5: every unconditional heading the record holds below it that is not composed is an open item 5ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > C4c: what the review of C4b found > 2.7: every unconditional heading the record holds below it that is not composed is an open item 4ms
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > a fact named by a code below a planned section lands in that section, with its own code 10ms
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > a fact naming no section of the template is returned as unplaced, never dropped silently 5ms
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > the outline carries the served template’s limits and basis, scaling to the development phase included 1ms
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > the tool tells the model the shape it returns: 2.5.1–2.5.7, never six sections 9ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 2.4.4.1: expected 'target-organ adversity profile' to be undefined // Object.is equality
+AssertionError: expected '[No literature is cited in this compo…' not to match /No literature is cited/
+AssertionError: expected '[No literature is cited in this compo…' not to match /No literature is cited/
+AssertionError: expected 'See Module 5.4 for the integrated ref…' to match /List here every reference/
+AssertionError: expected '[The synopses of the 2 study/ies in t…' to match /Listing of Clinical Studies/
+AssertionError: 2.5.6.1: expected false to be true // Object.is equality
+AssertionError: 2.7.1.1: expected false to be true // Object.is equality
+AssertionError: expected '# IND Module 2.7 — X (Y)\n\n_Common T…' to match /## 2\.7\.4 Summary of Clinical Safety…/
+AssertionError: expected undefined to deeply equal [ { sectionId: '2.7.4', …(2) } ]
+TypeError: clinicalOverviewLimits is not a function
+AssertionError: expected 'Draft the ICH M4E(R2) Clinical Overvi…' to contain '2.5.1–2.5.7'
+AssertionError: expected [ …(3) ] to have a length of 4 but got 3
+AssertionError: expected undefined to deeply equal [ { section_id: '2.7.4', …(2) } ]
+TypeError: Cannot read properties of undefined (reading 'join')
+ Test Files  4 failed (4)
+      Tests  14 failed | 99 passed (113)

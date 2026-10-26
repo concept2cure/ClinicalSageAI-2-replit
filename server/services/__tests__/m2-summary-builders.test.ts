@@ -193,7 +193,7 @@ describe('QOS preserves the upstream stability qualification', () => {
 });
 
 describe('buildM25ClinicalOverview', () => {
-  it('composes the 2.5.1–2.5.6 critical assessment and leaves the benefit-risk conclusion to the sponsor', () => {
+  it('composes the 2.5.1–2.5.7 critical assessment and leaves the benefit-risk conclusion to the sponsor', () => {
     const r = buildM25ClinicalOverview({
       csrs: [phase1, pivotal],
       indication: 'type 2 diabetes',
@@ -211,6 +211,8 @@ describe('buildM25ClinicalOverview', () => {
     expect(r.gaps).toEqual([
       'biopharmaceutics (2.5.2): no biopharmaceutic data recorded',
       'benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)',
+      // D2 cleanup C4c: the record's 2.5.6 subdivisions this composer does not write (2.5.6.5 is conditional).
+      'headings of 2.5 this composer does not write: 2.5.6.1–2.5.6.4',
     ]);
     // Completeness measures the clinical data present. 2026-10-15: this pinned
     // 100 by counting 2.5.2 biopharmaceutics, which has no input, as summarized.
