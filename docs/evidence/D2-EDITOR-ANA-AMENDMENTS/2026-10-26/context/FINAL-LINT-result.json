@@ -1,0 +1,125 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--format",
+    "json",
+    "server/services/lumen-context/sections.ts",
+    "server/services/lumen-context-builder.ts",
+    "server/services/ana-ri/chat-context-builder.ts",
+    "server/routes/ana-ri/stream.ts"
+  ],
+  "startedUtc": "2026-10-26T18:20:00.872654+00:00",
+  "elapsedSeconds": 1.727,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true,
+  "files": [
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "errors": 0,
+      "warnings": 25,
+      "metrics": [
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async function 'streamTurn' has too many lines (2321). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async function 'streamTurn' has a complexity of 342. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "message": "File has too many lines (2882). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async arrow function has too many lines (116). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async arrow function has too many lines (470). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async arrow function has a complexity of 95. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async arrow function has a complexity of 21. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async arrow function has a complexity of 24. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana-ri/chat-context-builder.ts",
+      "errors": 0,
+      "warnings": 5,
+      "metrics": [
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async function 'prefetchRouteIntelligenceContext' has too many lines (176). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async function 'prefetchRouteIntelligenceContext' has a complexity of 45. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async function 'buildChatContext' has too many lines (217). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async function 'buildChatContext' has a complexity of 74. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "message": "File has too many lines (528). Maximum allowed is 500."
+        }
+      ]
+    },
+    {
+      "path": "server/services/lumen-context-builder.ts",
+      "errors": 0,
+      "warnings": 6,
+      "metrics": [
+        {
+          "rule": "complexity",
+          "message": "Async function 'loadProjectContext' has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async function 'buildAnAContext' has a complexity of 27. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "message": "Async function 'assembleSystemPrompt' has too many lines (497). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "message": "Async function 'assembleSystemPrompt' has a complexity of 145. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "message": "File has too many lines (897). Maximum allowed is 500."
+        }
+      ]
+    },
+    {
+      "path": "server/services/lumen-context/sections.ts",
+      "errors": 0,
+      "warnings": 0,
+      "metrics": []
+    }
+  ]
+}

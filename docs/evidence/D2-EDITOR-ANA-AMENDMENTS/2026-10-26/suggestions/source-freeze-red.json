@@ -1,0 +1,7 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "86def4234785dcc52ca00f60874b45672313f0b74e23814fdfa02f2543f0e254",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  }
+}

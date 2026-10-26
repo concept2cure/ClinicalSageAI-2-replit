@@ -47,7 +47,7 @@ vi.mock('../module-intelligence.js', () => ({
   getCrossCuttingIntelligence: () => '',
 }));
 
-import { buildContextAwarePrompt } from '../lumen-context-builder.js';
+import { buildContextAwarePrompt, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
 
 const RECORDED = {
   id: 7,
@@ -80,6 +80,13 @@ beforeEach(() => {
 });
 
 describe('lumen-context-builder — a project fact nobody recorded is not assumed', () => {
+  it('does not use a declared US_IND project to reinterpret local heading 3 as CMC without an open-document read', async () => {
+    const { systemPrompt } = await buildContextAwarePrompt({ projectId: 7, organizationId: 3,
+      submissionType: 'US_IND', sectionCode: '3' });
+    const guide = buildSectionSpecificPrompt as (code: string, registryId: string) => string | null;
+    expect(systemPrompt).not.toContain(guide('3', 'US_IND')!.split('\n')[0]);
+  });
+
   it('leaves an unrecorded submission type unset instead of assuming an IND', async () => {
     H.project = { ...RECORDED, metadata: {} };
     const { systemPrompt, context } = await buildContextAwarePrompt({ projectId: 7, organizationId: 3 });

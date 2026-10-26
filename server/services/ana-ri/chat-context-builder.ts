@@ -510,7 +510,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Inject section-specific ICH M4 guidance
   const sectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
   if (sectionCode) {
-    const sectionGuide = buildSectionSpecificPrompt(sectionCode);
+    const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedContext.openDocumentRegistryId);
     if (sectionGuide) {
       orchestration.systemPrompt += `\n\n${sectionGuide}`;
     }

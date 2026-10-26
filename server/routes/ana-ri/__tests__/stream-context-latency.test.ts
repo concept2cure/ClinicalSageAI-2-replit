@@ -8,6 +8,7 @@ const io = vi.hoisted(() => ({
   drive: vi.fn(),
   answer: vi.fn(),
   release: vi.fn(),
+  sectionGuide: vi.fn(),
   outcomes: [] as string[],
   operations: [] as string[],
   failAt: '' as string,
@@ -38,12 +39,15 @@ vi.mock('../../../services/ana/turn-record.js', async importOriginal => {
     return real.writeTurnRecordSafely(...args);
   } };
 });
-vi.mock('../../../services/ana-ri/orchestrator.js', async () => (await harnessModule()).mocks.orchestrator());
+vi.mock('../../../services/ana-ri/orchestrator.js', async () => {
+  const mock = (await harnessModule()).mocks.orchestrator();
+  return { ...mock, orchestrate: () => ({ ...mock.orchestrate() }) };
+});
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await harnessModule()).mocks.chatContextBuilder(await importOriginal<Record<string, unknown>>()),
   prefetchRouteIntelligenceContext: io.prefetch,
 }));
-vi.mock('../../../services/lumen-context-builder.js', async () => (await harnessModule()).mocks.lumen());
+vi.mock('../../../services/lumen-context-builder.js', async () => ({ ...(await harnessModule()).mocks.lumen(), buildSectionSpecificPrompt: io.sectionGuide }));
 vi.mock('../../../services/memory-context-assembler.js', () => ({ buildMemoryContextForChat: io.memory }));
 vi.mock('../../../services/ana-ri/context-enrichment.js', async () => (await harnessModule()).mocks.enrichment());
 vi.mock('../../../services/chat-thread-helpers.js', async () => ({
@@ -76,6 +80,9 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 
 import { mountStreamRoute } from '../stream.js';
 import { harness as h, resetHarness, streamApp, turn } from './support/stream-route-harness.js';
+import { buildSectionSpecificPrompt } from '../../../services/lumen-context/sections';
+
+const scopedGuide = buildSectionSpecificPrompt as (code: string, registryId?: string | null) => string | null;
 
 const app = streamApp(mountStreamRoute);
 const ask = () => turn(app, { message: 'Compare the evidence.', thread_id: 'thread-owned', project_id: 33 });
@@ -104,6 +111,7 @@ beforeEach(() => {
   io.drive.mockReset().mockResolvedValue({ requested: false, enabled: false, mode: 'assist' });
   io.answer.mockReset();
   io.release.mockReset();
+  io.sectionGuide.mockReset().mockImplementation(scopedGuide);
   io.prefetch.mockReset().mockResolvedValue({ contextAvailabilityBlock: 'Scoped context retained.' });
   io.memory.mockReset().mockImplementation(async () => {
     io.operations.push('memory');
@@ -111,6 +119,18 @@ beforeEach(() => {
   });
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+describe('canonical streaming section guidance uses the prefetched document type', () => {
+  it.each(['ICH_PROTOCOL', 'JP_CTN', 'US_IND', null])('passes canonical %s scope instead of the client US_IND label', async registryId => {
+    io.prefetch.mockResolvedValue({ openDocumentRegistryId: registryId });
+    await turn(app, { message: 'Review the saved heading.', thread_id: 'thread-owned', project_id: 33,
+      submission_type: 'US_IND', context: { sectionCode: '3' } });
+    expect(io.sectionGuide).toHaveBeenCalledExactlyOnceWith('3', registryId);
+    const marker = scopedGuide('3', 'US_IND')!.split('\n')[0];
+    if (registryId === 'US_IND') expect(modelInput()).toContain(marker);
+    else expect(modelInput()).not.toContain(marker);
+  });
 });
 
 describe('direct intelligence answers avoid unused model-turn reads', () => {

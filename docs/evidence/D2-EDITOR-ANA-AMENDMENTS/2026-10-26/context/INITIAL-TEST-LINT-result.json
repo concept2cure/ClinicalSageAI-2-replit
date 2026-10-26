@@ -1,0 +1,17 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/services/lumen-context/__tests__/section-scope.test.ts",
+    "server/services/ana-ri/__tests__/chat-context-latency.test.ts",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+    "server/services/__tests__/lumen-context-builder-assumes-no-project-facts.test.ts",
+    "tests/regulatory/ana-ctd-section-truth.test.ts",
+    "tests/regulatory/csr-e3-overlay.test.ts"
+  ],
+  "startedUtc": "2026-10-26T18:18:37.185656+00:00",
+  "elapsedSeconds": 1.778,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}

@@ -1,0 +1,9 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "0baf3e8345596156585ffb977641201bc656cd2f3a90e7dc70c60e1592e9ad49",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "f529138731155da9db6bc1267321d594b751173c57820dc75e814b5f9ffd10a3",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "c21370f8ccdf18a31ecb6a995e05222c3e054d5fc3dc66b269f320c02103cb19",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  }
+}

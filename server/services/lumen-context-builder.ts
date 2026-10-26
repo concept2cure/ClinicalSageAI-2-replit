@@ -1160,7 +1160,7 @@ export async function buildContextAwarePrompt(params: {
 
   // Append deep section-specific guidance if drafting a particular CTD section
   if (params.sectionCode && !params.customSystemPrompt) {
-    const sectionGuide = buildSectionSpecificPrompt(params.sectionCode);
+    const sectionGuide = buildSectionSpecificPrompt(params.sectionCode, null);
     if (sectionGuide) {
       systemPrompt += '\n' + sectionGuide;
     }

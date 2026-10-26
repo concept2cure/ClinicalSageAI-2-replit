@@ -1,15 +1,21 @@
 /** Explicit AnA proposals, never inferred from prose. Application stays with
  * the editor's version/quote/model-checked tracked-change door. */
 
-export interface AuthoringRemedy {
+export type AuthoringRemedyOperation = 'replace' | 'insert-before' | 'insert-after' | 'insert-empty';
+
+export interface AuthoringRemedyEdit {
+  /** Omitted by existing replacement/deletion remedies. */
+  operation?: AuthoringRemedyOperation;
+  quote: string;
+  replacement: string;
+  prefix?: string;
+  suffix?: string;
+}
+export interface AuthoringRemedy extends AuthoringRemedyEdit {
   sectionId: string;
   baseSha256?: string;
   baseUpdatedAt?: string;
-  quote: string;
-  replacement: string;
   reason: string;
-  prefix?: string;
-  suffix?: string;
 }
 export interface RemedyAnswer {
   prose: string;
@@ -21,7 +27,7 @@ export interface RemedyAnswer {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/i;
 const MAX_PROPOSALS = 6;
-const ALLOWED = new Set(['sectionId', 'baseSha256', 'baseUpdatedAt', 'quote', 'replacement', 'reason', 'prefix', 'suffix']);
+const ALLOWED = new Set(['sectionId', 'baseSha256', 'baseUpdatedAt', 'operation', 'quote', 'replacement', 'reason', 'prefix', 'suffix']);
 const FENCE = /^```authoring-remedy[ \t]*\r?\n([\s\S]*?)^```[ \t]*$/gm;
 
 function boundedText(value: unknown, max: number, allowEmpty = false): boolean {
@@ -36,17 +42,23 @@ function validBase(p: Record<string, unknown>): boolean {
   return typeof hash === 'string' || typeof at === 'string';
 }
 
-function validTextFields(p: Record<string, unknown>): boolean {
-  if (!boundedText(p.quote, 8000) || !boundedText(p.replacement, 16000, true) || p.replacement === p.quote) return false;
-  if (!boundedText(p.reason, 2000)) return false;
-  return ['prefix', 'suffix'].every(k => p[k] === undefined || boundedText(p[k], 4000, true));
+/** Shared by decoded turn attribution and the live editor's proposal door. */
+export function validRemedyEdit(p: { operation?: unknown; quote?: unknown; replacement?: unknown; prefix?: unknown; suffix?: unknown }): boolean {
+  const operation = p.operation === undefined ? 'replace' : p.operation;
+  if (operation === 'insert-empty') {
+    return p.quote === '' && p.prefix === undefined && p.suffix === undefined && boundedText(p.replacement, 16000);
+  }
+  if (operation !== 'replace' && operation !== 'insert-before' && operation !== 'insert-after') return false;
+  if (!boundedText(p.quote, 8000) || !boundedText(p.replacement, 16000, operation === 'replace')) return false;
+  if (operation === 'replace' && p.replacement === p.quote) return false;
+  return [p.prefix, p.suffix].every(value => value === undefined || boundedText(value, 4000, true));
 }
 
 function validRemedy(value: unknown): value is AuthoringRemedy {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const p = value as Record<string, unknown>;
   if (Object.keys(p).some(k => !ALLOWED.has(k))) return false;
-  return typeof p.sectionId === 'string' && UUID.test(p.sectionId) && validTextFields(p) && validBase(p);
+  return typeof p.sectionId === 'string' && UUID.test(p.sectionId) && validRemedyEdit(p) && boundedText(p.reason, 2000) && validBase(p);
 }
 
 export function parseRemedyAnswer(text: string): RemedyAnswer {

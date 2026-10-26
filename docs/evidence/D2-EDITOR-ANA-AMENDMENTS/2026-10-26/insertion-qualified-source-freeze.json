@@ -1,0 +1,33 @@
+{
+  "revision": "e9ee6b110ed01b7f28ab3e5cf2133871c5f13348",
+  "files": {
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/suggestions.ts": "0baf3e8345596156585ffb977641201bc656cd2f3a90e7dc70c60e1592e9ad49",
+    "client/src/concept2cure/v2/editor/AuthoringRemedies.tsx": "a38a55069ccf1106d6d68b16ff7ea0e190f93b07d96689cff1f78bd01762f1a6",
+    "client/src/concept2cure/v2/editor/authoringOversight.ts": "4a2a3d48447e41a0b502080ebb5db60205215fca80ef8c6f2412bd1c30e45d3c",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "9468bd00709ee33af5828696a6a222638422eec3ff36c447a2ab792586007761",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/anaInsertGate.ts": "2e7d0f80eab475b0d3f3172ac54f26e5094ed8d92d44ffda86edae758eb19a43",
+    "client/src/concept2cure/v2/editor/proposalLifecycle.ts": "d804f5aaffe7a11e894d2cf0174f9a32a35734a0d566023402020691eeb9633a",
+    "server/services/authoring/machine-claim-verify.ts": "63782f78347176e3e39ac9e80b8d9ed75657d167aef4984cc7da08b09b93f25f",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "client/src/concept2cure/v2/editor/__tests__/authoringRemedies.test.ts": "e9c22f71c0157a09aad23c30a9e1c01b332c882c24b674d22f6bbfbb62b139f8",
+    "server/services/authoring/__tests__/governed-machine-claims.pglite.test.ts": "c06bbce5d001ab3e606e7d841f10354d8ae8d89da92edaf7c98c03cdb8d896b9",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "f529138731155da9db6bc1267321d594b751173c57820dc75e814b5f9ffd10a3",
+    "client/src/concept2cure/v2/editor/authoringRemedies.ts": "59b091d51c9e5dee3da85356716dfceb6d820a90c00e167cfe520d13c9bf487b",
+    "client/src/concept2cure/v2/editor/editorProposalReceipt.ts": "55d0cbdb87618c4d57169f183538f9c1b6992e40f2600be132092d2570290a35",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx": "a7f53ae9071870d9d601bca1a7d14902701b7cb4df3acb273cc4eb804210aa59",
+    "client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx": "a4d451fa4c7510aa2411c376cf7fdcb7044c53111a328425ba934f3707e9125f",
+    "client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx": "5cf68ee8dc942357e94372d104c67009b1e7544528d04a2b035d7992dd17d596",
+    "client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx": "fe4013b3b075470740c078c03b054811b2d1bddfecd247071cd109412db72616",
+    "client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx": "6e9ee007813006230db28c9145949bf93f91fcd504f148b0950160fc38156ef1",
+    "client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx": "57cc20c297b30b2314e882976b614770576227b49fe2512866224fdc58787ef6",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx": "10309c502837a3d66031f0efcb40f5cf44de6181300fd405850b68a71e47fcbe",
+    "client/src/concept2cure/v2/surfaces/ConversationThread.tsx": "eda8d71fd90ccf8797d1b4a7172aef9d3e6d124ad9193578e19ae65ba1ca8b67",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "c21370f8ccdf18a31ecb6a995e05222c3e054d5fc3dc66b269f320c02103cb19",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx": "159a50543bc4010638d7777ff615b69a091efe3fb22f6b2a623c6ac9a4102a43"
+  }
+}

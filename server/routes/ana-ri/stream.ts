@@ -1701,7 +1701,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       // Inject section-specific ICH M4 guidance when drafting a CTD section
       const sectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
       if (sectionCode) {
-        const sectionGuide = buildSectionSpecificPrompt(sectionCode);
+        const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedStreamContext.openDocumentRegistryId);
         if (sectionGuide) {
           orchestration.systemPrompt += `\n\n${sectionGuide}`;
         }

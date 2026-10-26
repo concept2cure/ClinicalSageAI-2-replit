@@ -1,0 +1,11 @@
+tests/regulatory/csr-e3-overlay.test.ts:138:    const prompt = buildSectionSpecificPrompt('5.3.5', 'US_IND')!;
+tests/regulatory/ana-ctd-section-truth.test.ts:94:    const prompt = buildSectionSpecificPrompt(code, 'US_IND');
+tests/regulatory/ana-ctd-section-truth.test.ts:101:    const prompt = buildSectionSpecificPrompt('5.3.5.1', 'US_IND')!;
+tests/regulatory/ana-ctd-section-truth.test.ts:108:      const prompt = buildSectionSpecificPrompt(g.code, 'US_IND');
+tests/regulatory/ana-ctd-section-truth.test.ts:116:    expect(buildSectionSpecificPrompt('2.7', 'US_IND')).toContain('**2.7.3**: Summary of Clinical Efficacy');
+tests/regulatory/ana-ctd-section-truth.test.ts:117:    expect(buildSectionSpecificPrompt('SAP', 'US_IND')).toContain('Statistical Analysis Plan');
+server/services/lumen-context/sections.ts:424:export function buildSectionSpecificPrompt(sectionCode: string, openDocumentRegistryId: string | null = null): string | null {
+server/services/lumen-context/__tests__/section-scope.test.ts:20:    expect(buildSectionSpecificPrompt('3')).toBeNull();
+server/services/ana-ri/chat-context-builder.ts:513:    const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedContext.openDocumentRegistryId);
+server/services/lumen-context-builder.ts:1163:    const sectionGuide = buildSectionSpecificPrompt(params.sectionCode, null);
+server/routes/ana-ri/stream.ts:1704:        const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedStreamContext.openDocumentRegistryId);

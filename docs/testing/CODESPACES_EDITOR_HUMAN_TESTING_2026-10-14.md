@@ -315,6 +315,14 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 117 | Repeat a whole-document preview and a selected section with no matching terms. Whole-document selection keeps its existing query behavior; no matching section term keeps the opening excerpt. A short source remains whole. An excerpt is bounded reference intent, not a full-source scientific review or evidence that AnA used it. | Not run | |
 | 118 | After preview, change the extracted source text through the operator’s controlled fixture, including a same-length correction. Build must refuse the stale manifest without section/evidence writes. On unchanged sources, saved-reference reuse and drafting must replay the exact recorded span without reranking; acceptance remains an explicit separate action. | Not run | |
 
+| 119 | Open a saved medical-device, diagnostics or life-sciences narrative section and ask AnA to review it and prepare an addition before a specific passage. Inspect Anchor and Addition, apply through the existing card, and verify only the addition is pending with AnA attribution. The anchor remains unstruck; no save or approval occurs. | Not run | |
+| 120 | Repeat after a passage with multiple paragraphs, a list and a table. Additions must fit the named paragraph/cell boundary, preserve formatting and position, and refuse a mid-paragraph or incompatible list edge. Reject and reload; the original section must return exactly, without empty added structure or literal fallback replacing the intended structure. | Not run | |
+| 121 | Ask AnA to draft source-supported text for a genuinely empty saved section using an insert-empty remedy. Review, apply, reject and reapply; review state must reflect the actual editor. Save with a reason only as a separate choice. A section containing even an empty table, citation, pending text or several empty paragraphs must refuse this operation. | Not run | |
+| 122 | After AnA reads an empty section, type unsaved text before applying its empty-section draft. It must refuse without changing or saving the typed text. Repeat a stale saved version, ambiguous quote, existing tracked anchor, read-only/frozen/source mode and unavailable or unqualified model; each must retain its existing refusal. | Not run | |
+| 123 | In an M11 protocol at section 3, ask AnA about the open section. With the operator, inspect the actual prepared prompt: the document type remains protocol; a bare 3 must not add Module 3 CMC or Phase 1 IND guidance. Repeat a device/global component section and Canada, EU and Japan administrative section 1; their codes must not inject a US IND playbook. | Not run | |
+| 124 | Repeat with unknown/unread document type, then a verified US IND. Unknown scope must remain unknown without a guessed section playbook; the exact US IND may retain its existing scoped supplement. Confirm current template/section/evidence readers remain available. This prompt check does not establish scientific accuracy, full oversight, regulatory completeness or human-operation parity. | Not run | |
+
+
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
@@ -344,6 +352,8 @@ For cases 103–106, use the [selected-source handoff ownership contract](../des
 For cases 107–110, use the [assembly queue completion contract](../design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md). Preserved means exact saved text was observed; it does not mean AnA generated, reviewed or accepted that text. Automated synthetic-HTTP regressions do not fill these human observations.
 
 For cases 111–114, use the [regional redraft contract](../design/EDITOR_REGIONAL_REDRAFT_2026-10-26.md). Drafting options are editable review inputs, not evidence that a receiving market or candidate’s scientific content has been validated. These human observations remain separate from automated HTTP fixtures.
+
+For cases 119–124, use the [AnA amendments contract](../design/EDITOR_ANA_AMENDMENTS_2026-10-26.md). Additions use the same model, version, tracked-change and source boundaries as existing fixes. All six human observations are pending; automated fixtures and prompt inspection do not establish live model competence.
 
 For cases 115–118, use the [section evidence contract](../design/EDITOR_SECTION_EVIDENCE_2026-10-26.md). Matching section terms improves excerpt selection; it does not establish scientific relevance, complete review, model consumption or filing approval. Recorded spans and source hashes remain authoritative.
 
