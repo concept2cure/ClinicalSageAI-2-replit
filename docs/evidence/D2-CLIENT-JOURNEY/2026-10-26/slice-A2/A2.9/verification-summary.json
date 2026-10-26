@@ -98,5 +98,8 @@
     ],
     "canonicalCreateStatus": 201
   },
-  "acceptedBuild": "client, server and audit verifier passed; Vite21.25seconds"
+  "acceptedBuild": "client, server and audit verifier passed; Vite21.25seconds",
+  "implementationCommit": "ce8cae23",
+  "accountPublicationReceipt": "5c24914f06e21a93e542b333cdd8985229fb8fcc",
+  "publicationReceiptSourceChanges": false
 }

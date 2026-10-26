@@ -162,3 +162,8 @@ named import from an untyped JS module in a new retirement test; that test now
 uses a directly typed hoisted spy. Final scoped lint is clean. Source hashes
 identify the checked source; normal publication hooks still check the final
 committed tree without bypass or baseline expansion.
+
+The final integration also preserves Account publication receipt `5c24914f`.
+That commit changes only Account evidence prose/logs; all checked A2.9 source
+hashes remain identical. The implementation is `ce8cae23`; required publication
+hooks run on the merged source without changing a type/lint baseline.
