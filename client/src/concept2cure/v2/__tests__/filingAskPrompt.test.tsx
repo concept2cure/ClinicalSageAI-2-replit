@@ -21,7 +21,7 @@ describe('the existing catalog Ask AnA control shares its filing question', () =
     const onNav = vi.fn();
     const filingName = resolveFilingCatalogEntry('us_ind')!.displayName;
     render(<FilingsCatalog surface={{ id: 'filings-catalog', label: 'Filings' } as never}
-      onAsk={onAsk} onNav={onNav} />);
+      onAsk={onAsk} onNav={onNav} segment="biopharma" />);
     fireEvent.change(screen.getByRole('textbox', { name: 'Search filings' }), {
       target: { value: 'Investigational New Drug Application' },
     });

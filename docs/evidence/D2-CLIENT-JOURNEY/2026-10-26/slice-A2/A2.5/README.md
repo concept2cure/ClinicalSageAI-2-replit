@@ -106,3 +106,10 @@ Concurrent tracked-insertion and document-section expertise changes through
 shared-question, editor-remedy/insertion and section-scope suites pass **101/101**
 on the merged tree (`merged-tests.txt.gz`). Native browser/build qualification
 above precedes this merge; publishing gates qualify the final combined tree.
+
+The first pre-push attempt passed all checks before TypeScript, which caught
+a missing required segment prop in the new catalog-button test. Added the
+existing `biopharma` test lane; the same two catalog tests pass. This is a
+test-only correction with no runtime change or baseline expansion. The refused
+attempt is preserved in `prepush-type-red.txt.gz`. A subsequent upstream
+repo-health report refresh (`4a870264d`) changes documentation only.
