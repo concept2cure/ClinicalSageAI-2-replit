@@ -26,8 +26,8 @@ writers remain amended in place; existing subscriptions/metadata stay intact.
   These are historical, not claims about the merged implementation.
 - [Published A2.10a](../A2.10a/README.md) retains its own accepted checks and
   source hashes. No accepted evidence is discarded or relabelled as merged.
-- `merged/` will record the final combined source, tests, native browser/build
-  proof and normal publication receipt after qualification.
+- `merged/` records the final combined source, tests, native browser/build
+  proof and accepted normal publication receipt.
 
 The four other folds retain their documented data/function/admission gaps;
 see `.design/client-journey/A2_10_REMAINING_PARITY_REVIEW.md`. CRO label fixes and
@@ -57,7 +57,7 @@ commercial admission are unchanged.
 | Native PostgreSQL intake SQL | 16 unique native cases passed cleanly; 6.88 seconds, confirmed in 7.31 seconds after teardown repair | `merged/native-cleanup-review.md`, `merged/native-cleanup-green.log.gz`, `merged/native-cleanup-confirm.log.gz` |
 | Surface context, CSS classes and text ramp | Passed | `merged/context-gate.log.gz`, `merged/css.log.gz`, `merged/ramp.log.gz` |
 | Formal traceability | 117 parent requirement IDs preserved; 69 historical pass, 2 partial, 46 uncovered; revised 007a has no executed step | `merged-formal-review.md` and its proof/logs |
-| Normal publication gates | Pending normal accepted push | Receipt will be filed after acceptance |
+| Normal publication gates | All passed; accepted `acc74a7a3`; TypeScript 0, no added lint warnings | `merged/accepted-push.log.gz` |
 
 The smaller parallel catalogue replay test is removed after its fresh-install
 assertions are carried into the existing actual-schema
@@ -106,5 +106,15 @@ This latest union supersedes the earlier 671/48 combined qualification for the
 final source; counts from earlier snapshots/reruns are not added together.
 `merged/account-integration-source-proof.json` pins source and results;
 `merged/account-integration-review.md` records the bounded compatibility review.
-Normal push acceptance and TypeScript/lint gates are still pending at this
-README revision; the receipt will name the actually accepted source.
+Normal publication accepted `acc74a7a3cecba59ab8d7fd87b4a4a85598e3ee6` on `concept2cure-v2`.
+Every gate passed: full TypeScript exited zero with zero errors, and no pushed
+file gained lint warnings. Proof: `merged/accepted-push.log.gz`.
+
+
+## Publication receipt
+
+Accepted source: `acc74a7a3cecba59ab8d7fd87b4a4a85598e3ee6` on `concept2cure-v2`. Normal pre-commit and
+pre-push gates passed without bypasses. The full compiler exited zero with zero
+errors against baseline zero; the pushed-file lint ratchet reports no warning
+count growth. All 45 filing hashes still match the qualified tree. This receipt
+is documentation only; the revised formal OQ remains unexecuted/unsigned.
