@@ -1,0 +1,26 @@
+S06 proof of no caller, on 461f00e9a: importers of each module by path (git grep, excluding docs/):
+  regulatory_config:
+    server/config/index.ts:19:// regulatory_config.js exposes named exports only (no default); re-export the
+    server/config/index.ts:21:export * as regulatoryConfig from './regulatory_config';
+  ichSchema:
+  validateZip:
+    scripts/ci/unreferenced-modules-baseline.json:79:    "server/utils/validateZip.js",
+    tests/unit/validate-ich-structure.js:4:import { validateZip } from '../server/utils/validateZip.js';
+    tests/unit/validate-ich-structure.js:77:  console.log('Testing the validateZip utility function...');
+    tests/unit/validate-ich-structure.js:81:  const validResult = await validateZip(validZipBase64);
+  validate-ich-structure:
+  ArtifactSkeletonGenerator:
+    server/services/index.ts:95:  ArtifactSkeletonGenerator,
+    server/services/index.ts:97:} from './documents/ArtifactSkeletonGenerator';
+    server/services/index.ts:149:  'documents.skeleton': 'documents/ArtifactSkeletonGenerator',
+  artifactSkeletonGenerator:
+    server/services/index.ts:96:  artifactSkeletonGenerator,
+  usIndFromExistingSections:
+    server/services/regulatory/registry/blueprints/usIndBlueprint.ts:14:import { buildUSIndBlueprint } from '../adapters/usIndFromExistingSections.js';
+  getUSIndSectionBlueprint:
+    server/services/regulatory/registry/blueprints/usIndBlueprint.ts:114:export async function getUSIndSectionBlueprint(): Promise<SectionBlueprint> {
+  buildUSIndBlueprint:
+    server/services/regulatory/registry/blueprints/usIndBlueprint.ts:14:import { buildUSIndBlueprint } from '../adapters/usIndFromExistingSections.js';
+    server/services/regulatory/registry/blueprints/usIndBlueprint.ts:115:  return buildUSIndBlueprint();
+
+Each importer above is a barrel re-export, a registry map entry, a baseline entry or the deleted test; none is a caller.

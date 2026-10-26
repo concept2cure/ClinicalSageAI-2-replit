@@ -506,3 +506,29 @@ Not green, and not this slice's: `tests/ops/apply-c2c-migrations-manifest.test.m
 
 Neither names a file this slice touched, and neither reads the gcc manifest. Both are reported to their owners (QMS
 authoring; usage ledger).
+
+### S06 — delete dead server CTD modules, replaced by the record path
+
+**Deleted:**
+- `server/config/regulatory_config.js` and `.d.ts`. Re-exported by `server/config/index.ts` and imported by nothing.
+  Its CTD pattern was malformed and never matched.
+- `server/utils/ichSchema.js`, `server/utils/validateZip.js` and `tests/unit/validate-ich-structure.js`, which only
+  import each other.
+- `server/services/documents/ArtifactSkeletonGenerator.ts`, reached only through the `server/services/index.ts`
+  barrel and its `'documents.skeleton'` registry entry.
+- `server/services/regulatory/registry/adapters/usIndFromExistingSections.ts`. Its only caller,
+  `getUSIndSectionBlueprint`, had none, and goes with it. `US_IND_TASK_BLUEPRINT` stays.
+
+**Proof:** `s06-red.txt`. Every name's remaining mentions are a barrel, a registry map entry, a baseline entry or the
+deleted test. The unreferenced-modules baseline loses `validateZip.js` (75 → 74). `yup` stays for a dependency pass.
+
+**P-47 parity:** no function had a caller.
+- CTD heading lookups → `ichHeadingTitle` (`ich-m4-headings.test.ts`).
+- eCTD structure validation → `ectd-structural-validator.ts` (`submission-orchestrator.test.ts`).
+- Skeletons → the Authoring picker's outlines (`builtin-authoring-templates.test.ts`).
+- The US IND outline → the `ind:fda` pack scaffold (`c2c-project-scaffold.contract.test.ts`).
+
+**Gates:**
+- `ci:unreferenced-modules`: 74, at baseline;
+- `service-registry-names-only-existing-modules` and the route-bundle tests pass;
+- typecheck: 0 errors.

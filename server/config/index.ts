@@ -5,7 +5,7 @@
  * 
  * USAGE:
  * ```typescript
- * import { config, docushareConfig, regulatoryConfig } from '@server/config';
+ * import { config, docushareConfig } from '@server/config';
  * ```
  */
 
@@ -16,9 +16,8 @@ export { config, default } from './environment';
 export { default as docushareConfig } from './docushareConfig';
 // @ts-ignore — plain JS config module without type declarations
 export { default as vectorDbConfig } from './vector_database_config';
-// regulatory_config.js exposes named exports only (no default); re-export the
-// module namespace so consumers get the full surface under one name.
-export * as regulatoryConfig from './regulatory_config';
+// regulatory_config.js was re-exported here; nothing imported it, and its CTD
+// pattern never matched. Deleted 2026-10-26 (D2 cleanup S06).
 
 // Type exports
 export type { Environment } from './types';
