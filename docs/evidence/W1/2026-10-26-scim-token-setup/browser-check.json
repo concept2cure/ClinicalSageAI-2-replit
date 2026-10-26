@@ -1,0 +1,149 @@
+{
+  "basis": "Actual IdentityConsole and C2CForm with canonical CSS; synthetic API replies, no production credentials.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "action": "Rotate",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "POST",
+          "path": "/api/admin/scim-tenants/3/rotate",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "rotate-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": false,
+      "action": "Revoke",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "DELETE",
+          "path": "/api/admin/scim-tenants/3",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "revoke-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "action": "Rotate",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "POST",
+          "path": "/api/admin/scim-tenants/3/rotate",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "rotate-1440-dark.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "action": "Revoke",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "DELETE",
+          "path": "/api/admin/scim-tenants/3",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "revoke-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "action": "Rotate",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "POST",
+          "path": "/api/admin/scim-tenants/3/rotate",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "rotate-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "action": "Revoke",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "DELETE",
+          "path": "/api/admin/scim-tenants/3",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "revoke-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "action": "Rotate",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "POST",
+          "path": "/api/admin/scim-tenants/3/rotate",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "rotate-390-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "action": "Revoke",
+      "overflow": false,
+      "errors": [],
+      "changes": [
+        {
+          "method": "DELETE",
+          "path": "/api/admin/scim-tenants/3",
+          "body": {
+            "reason": "Approved identity provider change"
+          }
+        }
+      ],
+      "secretPersisted": false,
+      "screenshot": "revoke-390-dark.png"
+    }
+  ]
+}
