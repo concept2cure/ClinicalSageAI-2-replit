@@ -1,0 +1,39 @@
+{
+  "primary": {
+    "receipt": "integration.json",
+    "suites": 26,
+    "testsPassed": 834
+  },
+  "mergedSupplement": {
+    "receipt": "merged-regressions.json",
+    "suites": 10,
+    "testsPassed": 115,
+    "overlap": "Includes the same49 client cases in the primary run; do not sum as949 unique tests."
+  },
+  "buildReceipts": [
+    "build.json",
+    "merged-build.json"
+  ],
+  "gates": {
+    "receipt": "merged-gates.json",
+    "passed": 7
+  },
+  "lint": {
+    "files": 36,
+    "errors": 0,
+    "warnings": 1,
+    "warningIncrease": 0,
+    "receipt": "final-lint.json",
+    "normalPushWarningRatchetPassed": true
+  },
+  "typeScriptErrors": 0,
+  "fullCompilerReceipt": "merged-source-push.log.gz",
+  "sourceFreeze": "release-qualified-inputs.json",
+  "incomingMerge": "canonical-merge.json",
+  "humanTesting": {
+    "checklist": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+    "cases": 136,
+    "status": "Not run"
+  },
+  "environment": "Local/Codespaces automated fixtures; no live provider, deployment or agency calls"
+}

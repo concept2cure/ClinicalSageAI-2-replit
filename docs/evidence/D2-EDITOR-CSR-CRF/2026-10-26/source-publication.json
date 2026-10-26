@@ -1,0 +1,13 @@
+{
+  "atUtc": "2026-10-26T20:29:03.187899+00:00",
+  "branch": "concept2cure-v2",
+  "sourceCommit": "13bafc62ff353ce1e94e66c1e175c299ca0c1749",
+  "acceptedSourceMerge": "65214946e0cc596b3d04fc561df6ec3377c03e9d",
+  "pushReceipt": "merged-source-push.json",
+  "normalHooks": true,
+  "pushExitCode": 0,
+  "typeScriptErrors": 0,
+  "baselineChanged": false,
+  "originalAttempt": "source-push.json",
+  "originalAttemptOutcome": "Normal hooks and TypeScript0 passed; Git atomically refused a concurrent remote update. Normal SCIM merge and bounded requalification preceded successful retry."
+}
