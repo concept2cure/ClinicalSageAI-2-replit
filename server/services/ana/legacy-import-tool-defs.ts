@@ -645,7 +645,7 @@ export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
 export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
   name: 'draft_clinical_overview_m2_5',
   description:
-    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the six-subsection outline with drafting guidance and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
+    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.7 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the Clinical Overview outline the template library serves (2.5.1–2.5.7, with the 2.5.6 benefit-risk subdivisions), each section's guidance, the outline's limits and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
   input_schema: {
     type: 'object',
     properties: {

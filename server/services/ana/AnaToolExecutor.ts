@@ -152,6 +152,7 @@ import {
   evaluateIndModuleVerification,
   assessIndModuleSealability,
   listIndModules,
+  IND_MODULE_TEMPLATES,
   type IndModuleProvenance,
   type IndSourceFact,
 } from './ind-module-authoring.js';
@@ -3031,6 +3032,9 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
 // own text for the supported template headers and supplied figure values. This
 // does not author or verify a file, qualify study sources, or verify provenance;
 // the planning receipt is always non-sealable, including when labelled live.
+/** The section codes a plan_ind_module_authoring template holds, for its own messages. */
+const indModuleSectionCodes = (moduleId: string) => (IND_MODULE_TEMPLATES[moduleId] ?? []).map((s) => s.code).join(', ');
+
 registerToolHandler('plan_ind_module_authoring', async (input) => {
   const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
   if (!moduleId || !listIndModules().includes(moduleId)) {
@@ -3069,6 +3073,13 @@ registerToolHandler('plan_ind_module_authoring', async (input) => {
     requiredStrings: plan.requiredStrings,
   });
   const sealability = assessIndModuleSealability({ provenance, verification });
+  // A supplied fact that names no section is said, never dropped (D2 cleanup C4c).
+  const unplaced = plan.unplacedFacts.map((f) => ({ section_id: f.sectionId, label: f.label, value: f.value }));
+  const unplacedBlocker = unplaced.length === 0 ? [] : [
+    `${unplaced.length} supplied ${unplaced.length === 1 ? 'fact names' : 'facts name'} no section of the ${moduleId} template: ` +
+      `${[...new Set(unplaced.map((f) => f.section_id))].join(', ')}. They are not in the plan; name a section by its CTD code ` +
+      `(${indModuleSectionCodes(moduleId)}) or a code below one.`,
+  ];
 
   return JSON.stringify({
     source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
@@ -3091,8 +3102,10 @@ registerToolHandler('plan_ind_module_authoring', async (input) => {
         'Planning only: no authored file or independently verified project source evidence was checked. ' +
           'Verify the actual governed artifact and its qualified sources before sealing.',
         ...sealability.blockers,
+        ...unplacedBlocker,
       ],
       sectionsWithoutFacts: plan.sectionsWithoutFacts,
+      unplacedFacts: unplaced,
     },
     note:
       'This tool builds a transcription scaffold and checks only its supported template headers and ' +
@@ -15842,18 +15855,19 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   );
 
   // The served Clinical Overview, read from the ICH M2–M5 record (D2 cleanup C4a).
-  const { clinicalOverviewOutline } = await import('./clinical-overview-outline.js');
+  const { clinicalOverviewLimits, clinicalOverviewOutline } = await import('./clinical-overview-outline.js');
   return JSON.stringify({
     structure: {
       title: `Clinical Overview (Module 2.5) — ${productName} for ${indication}`,
       ich_reference: 'ICH M4E(R2)',
       sections: clinicalOverviewOutline(),
+      ...clinicalOverviewLimits(),
     },
     project_artifacts: projectArtifacts,
     ...(artifactsUnavailable ? { project_artifacts_unavailable: artifactsUnavailable } : {}),
     ...(!sourced.ok ? { clinical_data: { status: sourced.status, message: sourced.message } } : {}),
     next_step:
-      'Use this outline to draft each subsection inline, to its guidance and target_words. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
+      'Use this outline to draft each subsection inline. Each section\'s guidance and target_words are the brief for a marketing-application Clinical Overview (see outline_limitations): scale content to the development phase, and state a section with no data as such rather than filling it. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
   });
 });
 

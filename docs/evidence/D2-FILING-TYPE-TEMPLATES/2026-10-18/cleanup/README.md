@@ -203,7 +203,7 @@ headings:
 
 | Tool | Where the copy lived | What it got wrong |
 |---|---|---|
-| `plan_ind_module_authoring` | `IND_MODULE_TEMPLATES` in `shared/ana/ind-module-authoring.ts` | It held 2.5.1–2.5.6 and 2.7.1–2.7.4 only: no 2.5.7, 2.7.5 or 2.7.6. Its 2.7.1 header lacked "and Associated Analytical Methods". Every header is a `required_strings` entry, so the verify step required the document to carry the wrong heading. |
+| `plan_ind_module_authoring` | `IND_MODULE_TEMPLATES` in `shared/ana/ind-module-authoring.ts` | It held 2.5.1–2.5.6 and 2.7.1–2.7.4 only: no 2.5.7, 2.7.5 or 2.7.6. Its 2.7.1 header lacked "and Associated Analytical Methods". Every header is a `required_strings` entry, so the verify step required the document to carry the wrong heading. (The check matches by substring and the short title is a prefix of the full one, so a document with the full title also passed; the defect was that the scaffold emitted the short title and nothing caught it.) |
 | `draft_clinical_overview_m2_5` (outline mode) | Six sections inline in the handler, `AnaToolExecutor.ts` | No 2.5.7 and no 2.5.6.1–2.5.6.5. Its guidance and page counts were its own, beside the record's briefs and word ranges. |
 
 **What replaced each:**
@@ -266,7 +266,11 @@ All four pass after the derivation.
 - **`ind-module-authoring.test.ts`** moved with its module. Its uniqueness check reads `code`.
 
 **Gates:**
-- the six test files that name either tool, plus the C4a test: 119 pass;
+- the six test files that name either tool or its definition module (`describe-capabilities-description-says-configured-can-be-tried`,
+  `ind-module-tool`, `medical-writing-review-tool`, `new-tool-handlers`, `submission-context-block`, `tool-plan-labels`):
+  119 pass. The C4a test, `ind-module-authoring.test.ts` and `ind-module-tool.test.ts` run together: 39 pass. (Corrected
+  2026-10-26: this line first read "the six test files … plus the C4a test: 119", a file set no run had; review
+  `wf_4db15643-511`.)
 - typecheck: 0 errors;
 - ESLint: no new warnings (the two existing file-length warnings remain);
 - unreferenced modules: 75, at baseline.
@@ -335,3 +339,43 @@ and `101_complete_template_catalog.sql`. Both are manual-only: on no deploy appl
 (`docs/evaluation-2026-09/evidence/03-applier-reachability.json`, `manualOnly`). Also `scripts/seed-ectd-templates.js`
 and `scripts/add-ind-templates.js`, which are laptop seeds. Each carries its own Module 2 heading text. Whether
 anything reads the table they seed is the inventory's question.
+
+## C4c — what the adversarial review of C4a and C4b found, fixed
+
+**The review.** Workflow `wf_4db15643-511` ran four read-only lenses over `93e989df3` and `79d9913f1`: callers and
+contracts, regulatory accuracy, honesty and fail-closed, and tests and evidence. A skeptic per lens tried to refute each
+finding. 22 findings came back, 15 confirmed; they reduce to seven defects:
+
+| # | Defect | Where | Fixed by |
+|---|---|---|---|
+| 1 | AnA's 2.4 draft with findings appended "2.4.4.1 TARGET-ORGAN ADVERSITY PROFILE" after the whole overview. The record holds no 2.4.4.1, and since C4b the text landed after 2.4.6 List of Literature References. The invented code predates C4b; C4b moved it further out of order. | `preclinical/nonclinical-m24-adapter.ts` `buildEnrichedM24` | The composer takes `targetOrganProfile` (`M24BuildContext`) and prints it inside 2.4.4, unnumbered, before 2.4.5. The adapter stops appending. |
+| 2 | `plan_ind_module_authoring` asked for "its CTD code" but placed a fact only on an exact first-level code. A fact named 2.7.4.2.1.2 was dropped, its section read "NO SOURCE FACT SUPPLIED", and a short value could still pass the substring check. | `ana/ind-module-authoring.ts` `factsFor` | A fact belongs to the section whose code contains its code (`ctdCodeWithin`), and keeps its own code in the bullet. A fact that fits no section is returned as `unplacedFacts`; the tool reports it in `honesty.unplacedFacts` and as a blocker, never silently. |
+| 3 | The literature placeholders (2.4.6, 2.5.7) said "No literature is cited", beside caller text (2.5.1's `developmentRationale`) that can cite. 2.7.5 said "See Module 5.4 for the integrated reference list"; the record's brief says 2.7.5 is the list and 5.4 holds the copies. | `m2-summary-builders.ts` | One wording, true whatever the input: the composer cites nothing of its own; list here every reference the document cites; copies are in Module 4.3 or 5.4. |
+| 4 | 2.7.6 asked for each report's synopsis to be included. The record's 2.7.6 brief leads with the Listing of Clinical Studies and says a US eCTD links to the synopses rather than repeating them. | same | The placeholder and the open item now say so. |
+| 5 | The record's headings the composers do not write were not open items, so the list read as if only 2.7.6 were missing. | same | `notComposed(root, COMPOSED_xx)` derives them from the record: unconditional headings not written whose parent is written, as runs in CTD order. A conditional heading (2.5.6.5, 2.7.4.6) is not an open item. 2.5 now names 2.5.6.1–2.5.6.4; 2.7 names 2.7.1.1–2.7.1.4, 2.7.2.1–2.7.2.5, 2.7.3.1–2.7.3.6, 2.7.4.1.1–2.7.4.1.3, 2.7.4.2.1.4–2.7.4.5 and 2.7.4.7. Completeness is unchanged: it counts the composed data sections. |
+| 6 | The outline mode served the briefs and word targets without the template's own limits ("Scale content to the development phase …") or its basis note, and told the model to draft "to its guidance and target_words" for a program with no clinical data. The skeptic marked this not a defect (the old outline carried neither); it is fixed anyway, because the served template has them. | `ana/clinical-overview-outline.ts`, the handler | `clinicalOverviewLimits()` returns the template's `outline_limitations` and basis, and the handler's `next_step` says the briefs are for a marketing application, content scales to phase, and a section with no data is stated as such. |
+| 7 | Two descriptions promised the old shape: `draft_clinical_overview_m2_5` ("the 2.5.1–2.5.6 narrative", "the six-subsection outline") and the 2.5 composer's docstring. | `legacy-import-tool-defs.ts`, `m2-summary-builders.ts` | Both name 2.5.1–2.5.7 and the 2.5.6 subdivisions. `plan_ind_module_authoring`'s `section_id` says a code below a section is accepted and an unplaced fact is reported. |
+
+Also corrected: the C4a gate sentence above, and a parenthetical on the C4a table's verify claim.
+
+**Refuted by the skeptics, and left:**
+- "0 death(s)" with no study recorded: only the standalone `/m2/clinical` route allows an empty set, and nothing calls it.
+- The 2.4.1–2.4.6 numbering as convention rather than ICH M4S: already recorded as recall with a verbatim read owed (the
+  network refuses the guideline hosts; task 17).
+- No test of the not-extracted branch: refuted as a defect, but a case was added.
+
+**Red first:** `c4c-review-red.txt`: 14 of 14 new cases red on `805efa13d` (trunk, C4a and C4b as pushed), each on the
+defect it names. All pass after.
+
+**Pins moved on purpose:**
+- `m2-summary-builders.test.ts`: the 2.5 gaps add the not-composed item, `headings of 2.5 this composer does not write: 2.5.6.1–2.5.6.4`.
+- `ind-module-tool.test.ts`: an unplaced fact is a fourth blocker, after the three it already had.
+- `nonclinical-m24-adapter.test.ts`: the profile is "Target-organ adversity profile: …" inside 2.4.4, and no "2.4.4.1" appears.
+- `new-tool-handlers.test.ts`: the outline carries `outline_limitations`, and `next_step` no longer says "to its guidance and target_words".
+
+**Gates:**
+- the 66 test files that reach the changed code: 1,261 of 1,265 pass. The 4 failures are the same two pre-existing
+  suites as in C4b (`orchestrator-dry-run-identity`, `submission-release-signature` journey), which fail identically
+  without these changes.
+- typecheck: 0 errors.
+- ESLint ratchet `--since origin/concept2cure-v2`: no file changed its warning count.

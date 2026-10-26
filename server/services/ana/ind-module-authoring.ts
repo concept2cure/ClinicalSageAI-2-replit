@@ -32,6 +32,7 @@
  */
 
 import { ctdRecordSubtree } from '../market-specs/ctd-component-outlines';
+import { ctdCodeWithin, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 
 export type IndModuleProvenance = 'live' | 'sample' | 'not_assessed';
 
@@ -101,7 +102,7 @@ export function listIndModules(): string[] {
  * unit of transcription fidelity the verify step checks.
  */
 export interface IndSourceFact {
-  /** Which template section this fact belongs in. */
+  /** Which template section the fact belongs in: its CTD code (e.g. "2.5.4") or a code below it ("2.7.4.2.1.2"), or its former id. */
   sectionId: string;
   /** Human label for the fact (e.g. "Primary endpoint response rate"). */
   label: string;
@@ -135,6 +136,8 @@ export interface IndModuleAuthoringPlan {
   provenance: IndModuleProvenance;
   /** CTD codes of the template's sections that received no source fact (informational). */
   sectionsWithoutFacts: string[];
+  /** Supplied facts that name no section of the template: not in the plan, and said so. */
+  unplacedFacts: IndSourceFact[];
 }
 
 /** Trim + collapse a verbatim figure so a fact value is matched the same way it
@@ -177,9 +180,19 @@ export function deriveIndRequiredStrings(input: {
   return out;
 }
 
+const hasValue = (f: IndSourceFact) => typeof f.value === 'string' && f.value.trim().length > 0;
+
+/**
+ * A fact belongs to the section its id names: the section's code or a code
+ * below it (2.7.4.2.1.2 is under 2.7.4), or the section's former id. (D2
+ * cleanup C4c: a code below a section matched nothing, so the fact was dropped
+ * and its section read "no source fact supplied".)
+ */
+const belongsTo = (f: IndSourceFact, section: IndModuleSection) =>
+  ctdCodeWithin(f.sectionId, section.code) || f.sectionId === section.formerId;
+
 function factsFor(section: IndModuleSection, facts: readonly IndSourceFact[] = []): IndSourceFact[] {
-  return facts.filter((f) => (f.sectionId === section.code || f.sectionId === section.formerId)
-    && typeof f.value === 'string' && f.value.trim().length > 0);
+  return facts.filter((f) => belongsTo(f, section) && hasValue(f));
 }
 
 /**
@@ -216,9 +229,13 @@ export function buildIndModuleAuthoringPlan(input: IndModuleAuthoringInput): Ind
     for (const fact of sectionFacts) {
       const value = normalizeFactValue(fact.value);
       const src = fact.source ? ` (source: ${fact.source})` : '';
-      lines.push(`- ${fact.label}: ${value}${src}`);
+      // A fact named by a code below the section keeps that code, so the author sees where in it the figure goes.
+      const code = normalizeCtdCode(fact.sectionId);
+      const at = code && code !== section.code ? ` (${code})` : '';
+      lines.push(`- ${fact.label}${at}: ${value}${src}`);
     }
   }
+  const unplacedFacts = (input.facts ?? []).filter((f) => hasValue(f) && !sections.some((section) => belongsTo(f, section)));
 
   return {
     title,
@@ -226,6 +243,7 @@ export function buildIndModuleAuthoringPlan(input: IndModuleAuthoringInput): Ind
     requiredStrings: deriveIndRequiredStrings({ module: input.module, facts: input.facts }),
     provenance: input.provenance,
     sectionsWithoutFacts,
+    unplacedFacts,
   };
 }
 
