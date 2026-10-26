@@ -74,3 +74,14 @@ The tests do not claim a tenant-wide readiness benchmark or a complete regulator
 journey qualification. The native browser demonstrates positive runtime-role
 paths; PGlite isolation tests are not native RLS proof. No AI provider is needed
 for these flows. Pre-push gates run when publishing the combined commit.
+
+The first publishing attempt passed every gate before TypeScript, which caught
+two unsupported `exact` options on Testing Library role queries in the new status
+test. Removed the options (the string name matcher is already exact); the same
+six pathway/status tests pass. No compiler or lint baseline was expanded. The
+attempt was refused before publication; `prepush-type-red.txt.gz` records it.
+
+Concurrent work through `33694a45a` merged without source conflicts. A later
+upstream merge at `785b9fbb5` retains regional draft inputs in the existing editor;
+it changes no A2.3 source file. Browser/build results above precede that second
+merge; publishing gates run on the final combined tree.

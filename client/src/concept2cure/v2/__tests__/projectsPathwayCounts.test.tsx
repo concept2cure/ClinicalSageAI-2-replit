@@ -106,10 +106,10 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
       meta: { counts },
     }));
     render(<Projects {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Blocked', exact: true }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Blocked' }));
     fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
     await screen.findByText('No projects match these filters');
-    fireEvent.click(screen.getByRole('button', { name: 'All', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
     expect(await screen.findByText('Project PMA')).toBeTruthy();
   });
 });
