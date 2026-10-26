@@ -16,7 +16,7 @@ Discovery searched CSR/E3/jobs/completeness/output and CRF/case-report/CDASH/saf
 
 ## Qualification status
 
-In progress. Retain original failures and fixture boundaries. Human acceptance is pending; automated checks do not establish clinical/statistical/regulatory validation, filing readiness or full human-operation parity.
+Automated qualification is complete. Original failures and fixture boundaries are retained. Human acceptance is pending; automated checks do not establish clinical/statistical/regulatory validation, filing readiness or full human-operation parity.
 
 ## Implemented result
 
@@ -29,7 +29,7 @@ The shared CSR section5 fallback requests ethics-source records rather than inve
 ## Verification record
 
 - `regression.json`:283/283 across25 existing/extended suites, no source drift. Worker supplement counts overlap this run and are not additive.
-- `lint.json`/`lint-details.json`:8 changed TS files,0errors,8 existing warnings versus8 baseline; no per-rule warning growth. `evidence-lint.json`:new evidence helper has0warnings/errors. Baselines unchanged.
+- `lint.json`/`lint-details.json`:8 changed TS files,0errors,8 existing warnings versus8 baseline; no per-rule warning growth. `evidence-lint.json`:new evidence helper has0warnings/errors. Type and lint baselines unchanged.
 - `gates.json`:all seven existing editor/UI/size gates pass. `build.json` records the actual build outcome. Normal pre-push owns the final TypeScript check.
 - `csr/README.md`, `crf/README.md`, `ethics/README.md` disclose original prepatch failures, retained failed attempts, fixture calibration corrections and final focused receipts. No failures are overwritten or hidden.
 - `independent-review.json`:read-only review found stale progress, reproduced/corrected before final qualification; no remaining substantive blocker. This is assistant review, not human acceptance.
