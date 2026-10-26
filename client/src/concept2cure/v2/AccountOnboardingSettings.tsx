@@ -9,7 +9,7 @@ import { apiRequest, extractApiError, queryClient, redactInternals } from '@/lib
 import { useAuth } from '@/services/portal/authService';
 import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { type ReportPersona } from '@shared/constants/domain/report-personas';
-import { ASSIGNABLE_ORG_ROLES } from '@shared/constants/org-roles';
+import { acceptedMembershipRole, invitationName, invitationResponseNote, isInvitationList, type Invitation } from './organizationAccessData';
 import { EmptyState, ErrorState } from './dataConnect';
 import { I } from './icons';
 import { isPersonaRead, reportPersonaKey } from './reportingPersona';
@@ -89,39 +89,9 @@ function Outcome({ text }: { text: string | null }) {
   return text ? <div className="de-field"><p className="de-desc" role="status">{text}</p></div> : null;
 }
 
-interface Invitation {
-  id: number;
-  organizationId: number;
-  organizationName?: string | null;
-  email: string;
-  role: string;
-  status: 'pending';
-}
-function isInvitationList(v: unknown): v is Invitation[] {
-  return Array.isArray(v) && v.every(row => isObject(row) && positiveId(row.id) && positiveId(row.organizationId) &&
-    typeof row.email === 'string' && row.email.trim() && row.status === 'pending' &&
-    (ASSIGNABLE_ORG_ROLES as readonly unknown[]).includes(row.role) &&
-    (row.organizationName == null || typeof row.organizationName === 'string')) &&
-    new Set(v.map(row => String(row.id))).size === v.length;
-}
-const invitationName = (invitation: Invitation) => invitation.organizationName?.trim() || null;
 function invitationResponseAllowed(invitation: Invitation, action: 'accept' | 'decline', locked: boolean): boolean {
   return !locked && (action !== 'accept' || Boolean(invitationName(invitation)));
 }
-/** The canonical membership store permits existing roles beyond the invitation
- * picker. This confirms the server's actual role; it does not grant access. */
-function acceptedMembershipRole(data: unknown, invitation: Invitation, userId: string): string | null {
-  if (!isObject(data) || String(data.invitationId) !== String(invitation.id) ||
-      String(data.organizationId) !== String(invitation.organizationId) || String(data.userId) !== userId ||
-      data.status !== 'accepted' || typeof data.role !== 'string' || !data.role.trim()) return null;
-  return data.role.trim();
-}
-function invitationResponseNote(invitation: Invitation, action: 'accept' | 'decline', role: string | null): string {
-  const name = invitationName(invitation);
-  const preservedRole = action === 'accept' && role !== invitation.role ? ` Your existing membership role remains ${role}.` : '';
-  return `Invitation ${action === 'accept' ? 'accepted' : 'declined'}${name ? ` for ${name}` : ''}.${preservedRole} Your current workspace remains active.`;
-}
-
 function InvitationsSection({ userId, organizationId, onMembershipChange }: { userId: string; organizationId: string; onMembershipChange: () => void }) {
   const heading = React.useId();
   const { capture, mounted } = useAccountOwner(userId, organizationId);

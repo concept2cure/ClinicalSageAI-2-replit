@@ -1,19 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { getJwtOrgId } from '@/utils/authToken';
-import { useLiveRows, type ListState } from './dataConnect';
+import { acceptedMembershipRole, invitationName, invitationResponseNote, isInvitationList, isMembershipList, useOrganizationAccessRows, type Invitation, type Membership } from './organizationAccessData';
+import { type ListState } from './dataConnect';
 import { useDialog } from './useDialog';
 import { ceremonyOpen, registerCeremonyOpen } from './ceremony';
 import { C2CForm, type C2CFormConfig } from './C2CForm';
-import { assertOrganizationSwitchSafe, switchOrganization } from './switchOrganization';
+import { assertOrganizationSwitchSafe, requireOrganizationOwner, switchOrganization, type OrganizationOwner } from './switchOrganization';
 import { C2CToast, useToast } from './toast';
 import { I } from './icons';
 
-interface Membership { id: number; name: string; role: string; status: string; }
-interface Invitation { id: number; organizationId: number; organizationName: string; role: string; }
-const membershipsShape = (value: unknown): value is Membership[] => Array.isArray(value) && value.every((row) => Number.isInteger(row?.id) && typeof row.name === 'string' && typeof row.role === 'string');
-const invitationsShape = (value: unknown): value is Invitation[] => Array.isArray(value) && value.every((row) => Number.isInteger(row?.id) && Number.isInteger(row?.organizationId) && typeof row.role === 'string');
-type Decision = { kind: 'switch'; membership: Membership } | { kind: 'accept' | 'decline'; invitation: Invitation };
+type Decision = ({ kind: 'switch'; membership: Membership } | { kind: 'accept' | 'decline'; invitation: Invitation }) & { owner: OrganizationOwner };
+type Choice = Omit<Extract<Decision, { kind: 'switch' }>, 'owner'> | Omit<Extract<Decision, { kind: 'accept' | 'decline' }>, 'owner'>;
 
 function decisionForm(decision: Decision | null, busy: boolean): C2CFormConfig | null {
   if (!decision) return null;
@@ -25,32 +22,45 @@ function decisionForm(decision: Decision | null, busy: boolean): C2CFormConfig |
   const accepting = decision.kind === 'accept';
   return {
     ...common,
-    title: `${accepting ? 'Accept' : 'Decline'} invitation to ${decision.invitation.organizationName || `organization ${decision.invitation.organizationId}`}?`,
-    governed: accepting ? `You will join this organization as ${decision.invitation.role}. Your current organization does not change until you choose to switch.` : 'The invitation will be declined. You will not join this organization.',
+    title: `${accepting ? 'Accept' : 'Decline'} invitation to ${invitationName(decision.invitation) || 'an unnamed organization'}?`,
+    governed: accepting ? `The invitation offers ${decision.invitation.role}. Your existing membership role, if present, is preserved. Your current organization does not change until you choose to switch.` : 'The invitation will be declined. You will not join this organization.',
     submitLabel: accepting ? 'Accept invitation' : 'Decline invitation',
   };
 }
 
-function OrganizationList({ state, choose }: { state: ListState<Membership>; choose: (choice: Decision) => void }) {
+function OrganizationList({ state, choose, currentId }: { state: ListState<Membership>; choose: (choice: Choice) => void; currentId?: string }) {
   if (state.loading) return <p>Loading organizations…</p>;
   if (state.error) return <p role="alert">{state.error}</p>;
   return <>{state.rows.map((membership) => <div key={membership.id}>
-    <b>{membership.name}</b> · {membership.role}{String(membership.id) === getJwtOrgId() ? ' · current' : ''}{membership.status !== 'active' ? ` · ${membership.status}` : ''}
-    <button className="btn ghost small" disabled={String(membership.id) === getJwtOrgId() || membership.status !== 'active'} onClick={() => choose({ kind: 'switch', membership })}>Switch to {membership.name}</button>
+    <b>{membership.name}</b> · {membership.role}{String(membership.id) === currentId ? ' · current' : ''}{membership.status !== 'active' ? ` · ${membership.status}` : ''}
+    <button className="btn ghost small" disabled={String(membership.id) === currentId || membership.status !== 'active'} onClick={() => choose({ kind: 'switch', membership })}>Switch to {membership.name}</button>
   </div>)}</>;
 }
 
-function InvitationList({ state, choose }: { state: ListState<Invitation>; choose: (choice: Decision) => void }) {
+function InvitationList({ state, choose }: { state: ListState<Invitation>; choose: (choice: Choice) => void }) {
   if (state.loading) return <p>Loading invitations…</p>;
   if (state.error) return <p role="alert">{state.error}</p>;
   if (!state.rows.length) return <p>No pending invitations.</p>;
   return <>{state.rows.map((invitation) => {
-    const name = invitation.organizationName || `Organization ${invitation.organizationId}`;
+    const name = invitationName(invitation) || 'Organization name unavailable';
     return <div key={invitation.id}><b>{name}</b> · offered role: {invitation.role}
-      <button className="btn ghost small" aria-label={`Accept invitation from ${name}`} onClick={() => choose({ kind: 'accept', invitation })}>Accept</button>
+      <button className="btn ghost small" aria-label={`Accept invitation from ${name}`} disabled={!invitationName(invitation)} onClick={() => choose({ kind: 'accept', invitation })}>Accept</button>
       <button className="btn ghost small" aria-label={`Decline invitation from ${name}`} onClick={() => choose({ kind: 'decline', invitation })}>Decline</button>
     </div>;
   })}</>;
+}
+
+async function respondToInvitation(decision: Extract<Decision, { kind: 'accept' | 'decline' }>, mounted: () => boolean) {
+  const response = await apiRequest('POST', `/api/tenant-users/invitations/${decision.invitation.id}/${decision.kind}`, undefined, decision.owner.headers);
+  if (!mounted()) return null;
+  requireOrganizationOwner(decision.owner);
+  const body = await response.json().catch(() => null);
+  if (!mounted()) return null;
+  requireOrganizationOwner(decision.owner);
+  if (!response.ok || body?.success !== true) throw new Error(serverMessage(body) ?? 'The invitation decision was not confirmed.');
+  const role = decision.kind === 'accept' ? acceptedMembershipRole(body.data, decision.invitation, decision.owner.userId) : null;
+  if (decision.kind === 'accept' && role === null) throw new Error('The server did not confirm membership for this invitation. Reload invitations before trying again.');
+  return invitationResponseNote(decision.invitation, decision.kind, role);
 }
 
 /** The recipient's own invitation inbox and membership selector, available to
@@ -63,38 +73,43 @@ export function OrganizationAccess() {
   const [toast, notify] = useToast();
   const sending = useRef(false);
   const ref = useDialog(() => setOpen(false), open);
-  const invitations = useLiveRows<Invitation>('/api/tenant-users/invitations/mine', ['own-invitations', epoch], invitationsShape);
-  const memberships = useLiveRows<Membership>(open ? '/api/auth/enterprise/organizations' : null, ['own-organizations', open, epoch], membershipsShape);
+  const invitations = useOrganizationAccessRows<Invitation>('/api/tenant-users/invitations/mine', epoch, isInvitationList);
+  const memberships = useOrganizationAccessRows<Membership>(open ? '/api/auth/enterprise/organizations' : null, epoch, isMembershipList);
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => open ? registerCeremonyOpen() : undefined, [open]);
   useEffect(() => {
     const timer = window.setInterval(() => setEpoch((value) => value + 1), 60_000);
     return () => window.clearInterval(timer);
   }, []);
-  const choose = (choice: Decision) => {
+  const choose = (choice: Choice) => {
+    const owner = choice.kind === 'switch' ? memberships.owner : invitations.owner;
+    if (choice.kind === 'accept' && !invitationName(choice.invitation)) return;
+    if (!owner?.current()) { notify('Your session has changed. Reload organization access before continuing.', 'error'); return; }
     if (choice.kind === 'switch') {
       try { assertOrganizationSwitchSafe(); } catch (error) { notify((error as Error).message, 'error'); return; }
     }
-    setOpen(false); setDecision(choice);
+    setOpen(false); setDecision({ ...choice, owner });
   };
   const submit = async () => {
     if (!decision || sending.current) return;
     sending.current = true;
     setBusy(true);
     try {
+      requireOrganizationOwner(decision.owner);
       if (decision.kind === 'switch') {
-        await switchOrganization(decision.membership.id);
-        setDecision(null);
+        await switchOrganization(decision.membership.id, undefined, decision.owner);
+        if (mounted.current) setDecision(null);
       } else {
-        const response = await apiRequest('POST', `/api/tenant-users/invitations/${decision.invitation.id}/${decision.kind}`);
-        const body = await response.json().catch(() => null);
-        if (!response.ok || body?.success !== true) throw new Error(serverMessage(body) ?? 'The invitation decision was not confirmed.');
-        notify(decision.kind === 'accept' ? 'Invitation accepted. The organization is now available in your organization list; your current organization has not changed.' : 'Invitation declined. No membership was added.');
+        const note = await respondToInvitation(decision, () => mounted.current);
+        if (!note || !mounted.current) return;
+        notify(note);
         setEpoch((value) => value + 1); setDecision(null); setOpen(true);
       }
-    } catch (error) { notify(error instanceof Error ? error.message : 'The request could not be completed.', 'error'); }
-    finally { sending.current = false; setBusy(false); }
+    } catch (error) { if (mounted.current) notify(error instanceof Error ? error.message : 'The request could not be completed.', 'error'); }
+    finally { sending.current = false; if (mounted.current) setBusy(false); }
   };
-  const form = decisionForm(decision, busy);
+  const form = decisionForm(decision?.owner.current() ? decision : null, busy);
   return <>
     <button className="tb-btn" aria-label="Organizations and invitations" title="Organizations and invitations" onClick={() => {
       if (ceremonyOpen()) { notify('Finish or cancel the open governed form before changing organization access.', 'error'); return; }
@@ -104,7 +119,7 @@ export function OrganizationAccess() {
       <div className="tt-head"><b>Organizations and invitations</b><button className="tt-close" aria-label="Close organizations and invitations" onClick={() => setOpen(false)}>Close</button></div>
       <div className="tt-scroll">
         <h3>Your organizations</h3>
-        <OrganizationList state={memberships} choose={choose} />
+        <OrganizationList state={memberships} choose={choose} currentId={memberships.owner?.organizationId} />
         <h3>Pending invitations</h3>
         <InvitationList state={invitations} choose={choose} />
         {(invitations.error || memberships.error) && <button className="btn ghost small" onClick={() => setEpoch((value) => value + 1)}>Retry organization access</button>}

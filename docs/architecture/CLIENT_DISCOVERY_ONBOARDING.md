@@ -108,5 +108,21 @@ Account's organization membership reader pins its source owner, withholds late
 or malformed reads and reports failures explicitly. The existing confirmed
 workspace-rotation POST also pins source-account headers before spending that
 session. Its unsaved-editor reservation, replacement-session probe and fresh
-shell handoff remain the existing ceremony. The separate organization-access
-entry remains an identified follow-up rather than an implied completed audit.
+shell handoff remain the existing ceremony. Both organization-access homes now use the shared ceremony below.
+
+The top-bar Organizations and invitations entry shares the Account invitation
+contracts in `organizationAccessData.ts`: actual pending, recipient and role
+records; unique identities; named acceptance; and exact accepted membership
+proof. Each list and retained decision is bound to its captured source account.
+A late or obsolete reply cannot acknowledge another sign-in's consent, reopen
+its drawer or refresh its memberships. Existing membership roles are reported
+as confirmed by the server rather than promised from the invitation's offer.
+
+`switchOrganization.ts` is now the single rotation ceremony used by both the
+top-bar entry and Account's `OrganizationSwitcher`. It carries Account's editor
+reservation, late-unsaved-work check, exact destination probe and replacement
+login protection, plus the helper's existing cleanup and audit-warning carryover.
+An uncertain source session ends while preserving that account's device
+recovery text; another login is never ended or overwritten. AuthService session
+cleanup delegates bearer removal to `clearAuthToken`, including both storage
+tiers, legacy keys and its in-memory fallback.

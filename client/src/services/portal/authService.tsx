@@ -13,6 +13,7 @@
  */
 
 import { authLogger } from './logger';
+import { clearAuthToken } from '@/utils/authToken';
 import { purgeDeviceDrafts } from '@/lib/deviceDraftCache';
 import { releaseSessionChange } from '@/lib/sessionChangeGuard';
 import {
@@ -147,14 +148,6 @@ export interface AuthResult<T> {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Bearer keys written by older builds. Not part of AUTH_STORAGE_KEYS (nothing
- * writes them any more) but still resolvable by getAuthToken's read-only legacy
- * fallback, so every logout has to clear them alongside the canonical keys.
- * Kept in sync with LEGACY_TOKEN_KEYS in client/src/utils/authToken.ts.
- */
-const LEGACY_BEARER_KEYS = ['token', 'auth_token'] as const;
-
 const AUTH_STORAGE_KEYS = {
   accessToken: 'trialsage_access_token',
   refreshToken: 'trialsage_refresh_token',
@@ -225,16 +218,9 @@ class SecureStorage {
   }
 
   static clear(preserveDraftOwnerId?: string): void {
+    // Canonical bearer cleanup includes both storage tiers, legacy keys and memory.
+    clearAuthToken();
     Object.values(AUTH_STORAGE_KEYS).forEach(key => {
-      this.removeItem(key);
-    });
-    // Bearer keys written by older builds. getAuthToken still resolves these as
-    // a read-only fallback for sessions minted before the canonical key landed,
-    // so logout MUST purge them too — otherwise a browser upgraded mid-session
-    // could keep a legacy (still-valid) bearer after the canonical token was
-    // revoked, resurrecting the stale-token-after-logout bug this cleanup exists
-    // to prevent.
-    LEGACY_BEARER_KEYS.forEach(key => {
       this.removeItem(key);
     });
     // Unsaved section text the editor cached on this device is the signed-out
