@@ -127,3 +127,21 @@ red nor pre-merge qualification; each remains attributed to its own snapshot.
 The Projects filter retains its existing view-local lifetime. Reloading the
 canonical Projects URL uses ordinary defaults; revisiting the legacy MDX URL
 applies MDX once. This change introduces no filter persistence store.
+
+## Concurrent editor-context integration
+
+All publication gates, including full TypeScript with zero errors, passed on
+`af20a0e85`; the remote advanced during that check and refused its stale ref.
+`merged/gates-ref-race.log.gz` retains both the successful gates and refusal.
+No forced push or gate bypass was used. Concurrent editor saved-section context
+work through `28d129756` was merged as `4417929f1`, alongside its metadata/logging
+fixes. Read-only review found no MDX/navigation overlap and retained request-client
+access, saved-section identity and template/drafting refusals.
+
+All eight qualified A2.8 source/test hashes remain byte-identical. On this further
+combined tree, **112 tests in nine suites** pass: both saved-section HTTP/PGlite
+paths, reader/prompt/turn/outline context, template safeguards, the MDX real shell
+and AnA navigation. These overlap earlier selections and are not added to the
+398-test total. The production client/server/audit-verifier build passes again
+(frontend **23.91 seconds**). `merged/editor-*.log.gz` records these results.
+Normal publication gates run again on the final commit.
