@@ -270,3 +270,68 @@ All four pass after the derivation.
 - typecheck: 0 errors;
 - ESLint: no new warnings (the two existing file-length warnings remain);
 - unreferenced modules: 75, at baseline.
+
+## C4b — the deterministic Module 2 composers head each section as the record does
+
+**What the duplicate was.** `server/services/m2-summary-builders.ts` composes 2.3, 2.4, 2.5 and 2.7 from recorded data
+for the submission package, the submission orchestrator route and AnA's `draft_*` tools. Each composer typed its
+headings by hand:
+
+| Composer | What the hand copy got wrong |
+|---|---|
+| 2.3 QOS | "2.3.P.1 Description and Composition". The record: "Description and Composition of the Drug Product". |
+| 2.4 Nonclinical Overview | "2.4.1 Overview of Nonclinical Testing Strategy". The record: "Overview of **the** Nonclinical Testing Strategy". No 2.4.6. |
+| 2.5 Clinical Overview | No 2.5.7. |
+| 2.7 Clinical Summary | "2.7.4.1 Exposure to the Investigational Drug". The record: "Exposure to the Drug". The SAE and death counts sat under "2.7.4.3 Serious Adverse Events and Deaths", but the record's 2.7.4.3 is Clinical Laboratory Evaluations. No 2.7.6. |
+
+**What replaced it.** `heading(code)` reads the record's number and title, through `ichHeadingTitle`. It throws on a
+code the record does not hold, so a composer cannot invent one. The first level below a module stays in capitals,
+the composers' house style. `QOS_SECTIONS` lost its `heading` field: `qosHeading('3.2.S.4')` is the record's 2.3.S.4.
+
+**What changed in the composed text:**
+- **2.7.4.2** now opens 2.7.4.2.1 Analysis of Adverse Events, with these under it:
+  - 2.7.4.2.1.1 Common Adverse Events (the ≥5% statement, unchanged);
+  - 2.7.4.2.1.2 Deaths (the death count);
+  - 2.7.4.2.1.3 Other Serious Adverse Events (the SAE count).
+  Whether a study's SAE count includes its fatal events is not recorded, so when any death is recorded the SAE line
+  says so. When the counts were not extracted, both sections print the existing "not extracted" statement.
+- **2.4.6 and 2.5.7** say that no literature is cited in the composed overview, and where copies are filed (Module 4.3,
+  Module 5.4).
+- **2.7.6** says the study synopses are not composed. That is now an open item, in `gaps` and in the narrative's
+  "Open items" line. Completeness is unchanged: it counts the data sections 2.7.1–2.7.4.
+
+**P-47 parity.** Every composed paragraph, table, gap and completeness figure is kept. The only text that moved is the
+SAE and death statement, from a wrong number to the record's two sections. Three headings were added, and one open
+item (2.7.6).
+
+**Not changed, and why:**
+- **The QOS part headings "2.3.S DRUG SUBSTANCE" and "2.3.P DRUG PRODUCT".** The record titles 2.3.S and 2.3.P
+  "Quality Overall Summary — Drug Substance/Product". That reads as a platform label, not the guideline's heading;
+  from recall, M4Q's is "2.3.S DRUG SUBSTANCE (NAME, MANUFACTURER)". Copying the label into the composer would make
+  it less right. Correcting the record changes every reader of it (the served QOS outline, AnA's chat outline,
+  drafting's title match), so it needs a verbatim read of M4Q(R1) first. The test names the two codes as owed.
+- **2.3.A and 2.3.R.** The QOS composer summarizes 2.3.S and 2.3.P only, because Module 3 composition is P-28
+  small-molecule (3.2.A has no composer input).
+- **2.7.4.3–2.7.4.7.** These are not composed, because no CSR field the composer receives reaches them (labs, vital
+  signs, special groups, post-marketing). That is unchanged.
+
+**Red first:** `c4b-m2-composers-red.txt`: 7 of 9 red on `93e989df3`, before the derivation:
+- the three wrong titles;
+- the missing 2.4.6, 2.5.7 and 2.7.6;
+- no Deaths or Other SAEs section.
+
+All 9 pass after.
+
+**Gates:**
+- **The 54 test files that reach the composers.** 865 of 869 pass. The 4 failures are in two suites,
+  `tests/unit/orchestrator-dry-run-identity.test.ts` (applicant identity, P-27) and
+  `tests/golden-journeys/submission-release-signature.journey.test.ts` (release signature). With
+  `m2-summary-builders.ts` put back to HEAD, the same 4 fail, so they predate this change and are not touched by it.
+- typecheck: 0 errors.
+- ESLint ratchet `--since origin/concept2cure-v2`: no file changed its warning count (C4a and C4b together).
+
+**More copies found while tracing these headings**, for a later slice: `db/migrations/100_regulatory_templates.sql`
+and `101_complete_template_catalog.sql`. Both are manual-only: on no deploy applier
+(`docs/evaluation-2026-09/evidence/03-applier-reachability.json`, `manualOnly`). Also `scripts/seed-ectd-templates.js`
+and `scripts/add-ind-templates.js`, which are laptop seeds. Each carries its own Module 2 heading text. Whether
+anything reads the table they seed is the inventory's question.
