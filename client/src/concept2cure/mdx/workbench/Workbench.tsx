@@ -153,7 +153,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      that performs it. */
   const newTask = React.useCallback(() => {
     onAskAna(
-      'Create a new task. Walk me through the fields — program, section, summary, label, due date, assignee, ' +
+      'Create a new task. Walk me through the fields — project, section, summary, label, due date, assignee, ' +
                   'and whether an e-signature is required — then file it to the right Kanban column.',
     );
   }, [onAskAna]);
@@ -292,7 +292,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           >
             <div>Task</div>
             <div>Summary</div>
-            <div>Program · §</div>
+            <div>Project · §</div>
             <div>Label</div>
             <div>Due</div>
             <div>Assignee</div>
@@ -334,7 +334,11 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
 
 export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const [sev, setSev] = React.useState<'all' | 'err' | 'warn'>('all');
-  const [prog, setProg] = React.useState<string>('all');
+  /* Slice 0 (map row `device-validation`): each card used to set a program
+     filter on the rules. A c2c_blockers row names a project and no program,
+     so the filter matched nothing and one click left a bare table header,
+     which read as "this program has no blockers". There is no filter until
+     the blockers read carries a key that joins a blocker to a program. */
 
   /* Live validation: per-program readiness matrix derived by joining
      /api/submission-ops/blockers with the live program list, plus the
@@ -347,11 +351,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const sourcePrograms = validation.programs ?? NO_VALIDATION_PROGRAMS;
   const sourceSummary  = validation.summary ?? NO_VALIDATION_SUMMARY;
 
-  const rules = sourceRules.filter(
-    r =>
-      (sev === 'all' || r.severity === sev) &&
-      (prog === 'all' || r.prog === prog),
-  );
+  const rules = sourceRules.filter(r => sev === 'all' || r.severity === sev);
 
   return (
     <>
@@ -359,16 +359,25 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
         <div>
           <div className="page-eyebrow">Workbench</div>
           <h1 className="page-title">Validation center</h1>
+          {/* Slice 0 (map row `device-validation`): this read "eSTAR required-field
+              rules and claim-evidence checks, every program, one dashboard". The
+              page runs neither; it reads the open rows of c2c_blockers. */}
           <div className="page-sub">
-            eSTAR required-field rules and claim-evidence checks, every program, one dashboard.
+            Open blockers recorded against your organization’s projects.
           </div>
         </div>
         <div className="page-actions">
+          {/* Slice 0 (map row `device-validation`): on a failed or unanswered
+              read this wrote a header-only CSV, which reads as a clean report.
+              It exports only a read that answered. */}
           <button
             className="btn ghost small"
+            disabled={validation.rules === null}
+            title={validation.rules === null ? 'Available once the open blockers have been read' : undefined}
             onClick={() => {
-              const headers = ['Severity', 'Rule', 'Program', 'Section', 'Category', 'Message', 'Since'];
-              const rows = sourceRules.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
+              if (validation.rules === null) return;
+              const headers = ['Severity', 'Rule', 'Project', 'Category', 'Message', 'Since'];
+              const rows = validation.rules.map(r => [r.severity, r.id, r.project, r.category, r.msg, r.since]);
               downloadCsv(
                 `validation-report-${new Date().toISOString().slice(0, 10)}.csv`,
                 headers,
@@ -380,7 +389,16 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           </button>
           <button
             className="btn primary small"
-            onClick={() => onAskAna('Summarize the 3 blockers across my portfolio')}
+            /* Slice 0 (map row `device-validation`): the prompt hard-coded "the 3
+               blockers" whatever the list held. It states the count this screen
+               read, and no count before the read has answered. */
+            onClick={() =>
+              onAskAna(
+                validation.rules
+                  ? `Summarize the ${validation.rules.length} open blocker${validation.rules.length === 1 ? '' : 's'} recorded across my projects`
+                  : 'Summarize the open blockers recorded across my projects',
+              )
+            }
           >
             {I.sparkles} Ask Claude to triage
           </button>
@@ -401,29 +419,45 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <section className="section">
+        {/* Slice 0 (map row `device-validation`): this read "Readiness by
+            program · Column order · errors · warnings · pass". Each card draws
+            the project's stored progressPercent, not an assessment, and no
+            card can show counts (see `errs` below). A project with none
+            recorded reads 0% (useMdxPrograms), so the line says so. */}
         <div className="section-head">
-          <h2>Readiness by program</h2>
-          <span className="section-sub">Column order · errors · warnings · pass</span>
+          <h2>Recorded progress by project</h2>
+          <span className="section-sub">
+            Stored project progress, not an eSTAR assessment. A project with none recorded shows 0%.
+          </span>
         </div>
+        {/* Slice 0 (map row `device-validation`): the project read's failure
+            was dropped (`programs ?? []`), so a failed read showed the idle
+            "nothing to validate". Both reads feed this panel; either failing
+            is a failure, and retry re-runs both. */}
         <PanelState
           rows={sourcePrograms}
-          loading={validation.loading}
-          error={validation.error}
-          refresh={validation.refresh}
+          loading={validation.loading || programsState.loading}
+          error={validation.error ?? programsState.error}
+          refresh={() => {
+            validation.refresh();
+            programsState.refresh();
+          }}
           icon={I.shieldCheck}
-          title="No programs to validate"
+          title="No projects to show"
           errorTitle="Could not load the validation matrix"
-          hint="Each program you run appears here with its error, warning and pass counts."
+          hint="Each project appears here with its recorded progress."
           testId="workbench-no-validation-programs"
         />
         <div className="val-matrix">
+          {/* A card, not a button: it filters nothing (see `sev` above). The
+              inline style takes off the pointer and the hover lift the
+              stylesheet gives the card for its old click. */}
           {sourcePrograms.map(p => (
-            <button
+            <div
               key={p.id}
               className="val-prog-card"
-              data-on={prog === p.code}
               data-status={p.status}
-              onClick={() => setProg(prog === p.code ? 'all' : p.code)}
+              style={{ cursor: 'default', transform: 'none' }}
             >
               <div className="val-prog-head">
                 <span className="val-prog-code mono">{p.code}</span>
@@ -431,16 +465,21 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
               </div>
               <div className="val-prog-title">{p.title}</div>
               <div className="val-prog-path">{p.pathway}</div>
+              <div className="val-prog-path">Recorded progress</div>
               <div className="val-prog-bars">
-                <div className="val-bar">
+                <div
+                  className="val-bar"
+                  role="img"
+                  aria-label={`Recorded progress ${p.readiness}%`}
+                >
                   <div className="val-bar-fill" style={{ width: `${p.readiness}%` }} />
                 </div>
                 <span className="val-bar-pct mono">{p.readiness}%</span>
               </div>
               <div className="val-prog-counts">
                 {p.errs === null ? (
-                  <span className="val-count" title="Blockers are recorded per project and cannot be attributed to this program">
-                    Blockers not linked to this program
+                  <span className="val-count" title="Blockers are recorded on the tracking record and cannot be attributed to this project">
+                    Blockers not linked to this project
                   </span>
                 ) : (
                   <>
@@ -450,7 +489,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
                   </>
                 )}
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </section>
@@ -463,12 +502,33 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             <button className="seg-btn" data-on={sev === 'err'} onClick={() => setSev('err')}>Blockers</button>
             <button className="seg-btn" data-on={sev === 'warn'} onClick={() => setSev('warn')}>Warnings</button>
           </div>
-          {prog !== 'all' && (
-            <button className="chip-filter" onClick={() => setProg('all')}>
-              {prog} {I.close}
-            </button>
-          )}
         </div>
+        {/* Slice 0 (map row `device-validation`): an empty read rendered a table
+            header over blank space. It says none is recorded and where a
+            filing's readiness is assessed. Only on a read that answered: a
+            failed one says so here too, never as empty. */}
+        {validation.error && validation.rules === null && (
+          <EmptyState
+            tone="error"
+            icon={I.shieldCheck}
+            title="Could not load the open blockers"
+            hint={validation.error}
+            retry={validation.refresh}
+            testId="workbench-blockers-error"
+          />
+        )}
+        {validation.rules !== null && validation.rules.length === 0 && (
+          <EmptyState
+            icon={I.shieldCheck}
+            title="No open blockers recorded"
+            hint={
+              'Blockers are not added on this screen. They are recorded against a project’s submission ' +
+              'package, for example from a blocking issue in agency correspondence. Each device filing’s ' +
+              'readiness is assessed on the eSTAR filing readiness panel in its 510(k), PMA or IVD workspace.'
+            }
+            testId="workbench-no-blockers"
+          />
+        )}
         <div className="ctable">
           <div
             className="ctable-head"
@@ -476,14 +536,14 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           >
             <div>Sev</div>
             <div>Rule</div>
-            <div>Program</div>
+            <div>Project</div>
             <div>Category</div>
             <div>Message</div>
             <div>Since</div>
           </div>
           {rules.map(r => (
             <div
-              key={r.id + r.prog}
+              key={r.id}
               className="ctable-row"
               style={{ gridTemplateColumns: VALIDATION_COLS }}
             >
@@ -493,9 +553,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
                 </span>
               </div>
               <div className="mono">{r.id}</div>
-              <div>
-                {r.prog} <span style={{ color: 'var(--text-400)' }}>· {r.sect}</span>
-              </div>
+              <div>{r.project}</div>
               <div>{r.category}</div>
               <div>{r.msg}</div>
               <div>{r.since}</div>
@@ -529,18 +587,25 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      the v2 Submission Center (SC_SUBMISSIONS) and from the pathway audit and
      approvals panes; this was the third copy, one lane over.
 
-     The pipeline pane now renders zero counts before the first response, which
-     is what is true then, and the empty state below when the answer is zero. */
+     Slice 0 (map row `device-submission`): the pipeline and the header
+     rendered zero counts before the first response and after a failed one,
+     with no error, so a read that never landed said "nothing in flight". They
+     state a count only for a list that answered; before that the list says
+     it is loading or that it could not be read, with a retry. */
   const live = useSubmissions();
   const sourceSubmissions = live.submissions ?? NO_SUBMISSIONS;
+  const answered = live.submissions !== null;
 
   /* One definition of "start a new submission", used by the header button and
      by the empty state's CTA. Two copies of this string is how a panel comes to
      name an action slightly differently from the control that performs it. */
+  /* Slice 0 (map row `device-submission`): this offered a "target authority
+     (FDA ESG, notified body, EU MDR)". No notified-body transmitter exists and
+     the package record names no authority; it asks for what the record holds. */
   const startNewSubmission = React.useCallback(() => {
     onAskAna(
-      'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
-        'pathway, package contents and cover letter — and run the gate checks before transmission.',
+      'Start a new submission package. Walk me through selecting the project, pathway, package contents ' +
+        'and cover letter, and run the gate checks before it is sent.',
     );
   }, [onAskAna]);
 
@@ -554,16 +619,28 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
 
   /* Per-package gate + activity log. The list endpoint omits these (they
      come from /readiness and /milestones), so the detail hook fires when
-     a row is selected and merges its results into `sel`. */
-  const { gate: liveGate, log: liveLog } = useSubmissionDetail(selected);
+     a row is selected and merges its results into `sel`.
+     Slice 0 (map row `device-submission`): the gate is the readiness read and
+     nothing else. It fell back to the list row's gate, a 0 / 0 / 0 default,
+     while the read was in flight or after it failed, and showed a green
+     "0 err · 0 warn · 0 pass" with Transmit enabled for a gate nobody read. */
+  const detail = useSubmissionDetail(selected);
   const baseSel = sourceSubmissions.find((s) => s.id === selected);
-  const sel = baseSel
-    ? {
-        ...baseSel,
-        gate: liveGate ?? baseSel.gate,
-        log:  liveLog  ?? baseSel.log,
-      }
-    : undefined;
+  /* Slice 0: the log is the milestones read and nothing else. It fell back to
+     the list row's empty log while the read was in flight or after it
+     failed, and Activity showed no rows: "no activity". */
+  const sel = baseSel ? { ...baseSel, gate: detail.gate } : undefined;
+  const gateUnread = detail.gateError || detail.error ? 'Could not read the readiness gate' : 'Not read yet';
+  /* Slice 0 (map row `device-submission`): a gate is clear only when the read
+     assessed something and found no error. A package with nothing in it reads
+     0 / 0 / 0, and that ticked Validation and enabled Transmit. */
+  const gateClear = sel?.gate != null && sel.gate.errs === 0 && sel.gate.ok > 0;
+  const gateValue = !sel?.gate
+    ? gateUnread
+    : sel.gate.errs + sel.gate.warns + sel.gate.ok === 0 && detail.gateArtifacts === 0
+      ? 'Nothing assessed yet'
+      : `${sel.gate.errs} err · ${sel.gate.warns} warn · ${sel.gate.ok} pass`;
+  const stageless = sourceSubmissions.filter((s) => s.stage === null).length;
 
   const visible = statusFilter === 'all'
     ? sourceSubmissions
@@ -579,8 +656,12 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         <div>
           <div className="page-eyebrow">Workbench</div>
           <h1 className="page-title">Submission center</h1>
+          {/* Slice 0 (map row `device-submission`): this read "Package and
+              transmit — FDA ESG, notified bodies, EU MDR". The page sends
+              nothing; sending is Gateway transmittals', and no notified-body
+              transmitter exists. It says what the page shows. */}
           <div className="page-sub">
-            Package and transmit — FDA ESG, notified bodies, EU MDR. Status tracking in-flight.
+            Submission packages and their status.
           </div>
         </div>
         <div className="page-actions">
@@ -598,9 +679,16 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
       </div>
 
       <section className="section">
+        {/* Slice 0: a package is counted at a stage only when its record names
+            one (see useSubmissions `deriveStage`); the rest are said to have
+            none rather than placed at "Package" or "Decision". */}
         <div className="section-head">
           <h2>Pipeline</h2>
-          <span className="section-sub">7 stages from package to decision</span>
+          <span className="section-sub">
+            7 stages from package to decision
+            {answered && stageless > 0 &&
+              ` · ${stageless} package${stageless === 1 ? '' : 's'} record${stageless === 1 ? 's' : ''} no stage`}
+          </span>
         </div>
         <div className="sub-pipeline">
           {SUBMISSION_PIPELINE.map((st, i) => {
@@ -610,7 +698,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 <div className="sub-stage-num">{String(i + 1).padStart(2, '0')}</div>
                 <div className="sub-stage-label">{st.label}</div>
                 <div className="sub-stage-desc">{st.desc}</div>
-                <div className="sub-stage-n">{count}</div>
+                <div className="sub-stage-n">{answered ? count : '—'}</div>
               </div>
             );
           })}
@@ -621,13 +709,28 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         <div className="section-head">
           <h2>Active submissions</h2>
           <span className="section-sub">
-            {sourceSubmissions.length} total ·{' '}
-            {sourceSubmissions.filter(s => s.status === 'active').length} active ·{' '}
-            {sourceSubmissions.filter(s => s.status === 'blocked').length} blocked
+            {answered
+              ? `${sourceSubmissions.length} total · ` +
+                `${sourceSubmissions.filter(s => s.status === 'active').length} active · ` +
+                `${sourceSubmissions.filter(s => s.status === 'blocked').length} blocked`
+              : '—'}
           </span>
         </div>
         <div className="sub-layout">
           <div className="sub-list">
+            {live.error && !answered && (
+              <EmptyState
+                tone="error"
+                icon={I.rocket}
+                title="Could not load the submission packages"
+                hint={live.error}
+                retry={live.refresh}
+                testId="workbench-submissions-error"
+              />
+            )}
+            {!live.error && !answered && (
+              <EmptyState busy icon={I.rocket} title="Loading…" testId="workbench-submissions-loading" />
+            )}
             {/* The prose used to say: Use "New submission" above. The button was
                 real and forty lines up, so the empty state named an action and
                 made the user go and find it — the same passive instruction W0-5
@@ -638,7 +741,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
               <EmptyState
                 icon={I.rocket}
                 title="No submissions yet"
-                hint="Packages you create appear here — FDA ESG, notified body, or EU MDR transmittals."
+                hint="Packages you create appear here with their status."
                 action={{ label: 'New submission', onAct: startNewSubmission }}
                 testId="workbench-no-submissions"
               />
@@ -656,19 +759,27 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                   <span className={`status-pill ${s.status}`}>{s.status}</span>
                 </div>
                 <div className="sub-row-title">{s.title}</div>
+                {/* Slice 0 (map row `device-submission`): a receiving authority is
+                    not on the package record. useSubmissions derived "NB · TÜV" or
+                    "FDA · ESG" from the family alone; it no longer computes one
+                    (see the Submission type), so nothing here can render it. */}
+                {/* Slice 0: a record with no file count said "0 files · —";
+                    and with no gate counts, three 0 chips. Neither was read.
+                    Nothing writes a file count on a package; the assembled
+                    bundle the server records is what is shown. */}
                 <div className="sub-row-meta">
-                  <span>{s.target}</span>
-                  <span className="dot-sep" aria-hidden="true">·</span>
-                  <span>
-                    {s.files} files · {s.bytes}
-                  </span>
+                  <span>{s.bundle ? `Bundle · ${s.bundle.size}` : 'No bundle assembled'}</span>
                 </div>
                 <div className="sub-row-foot">
-                  <span className="sub-row-gate">
-                    <span className="gate-chip err">{s.gate.errs}</span>
-                    <span className="gate-chip warn">{s.gate.warns}</span>
-                    <span className="gate-chip ok">{s.gate.ok}</span>
-                  </span>
+                  {s.gate ? (
+                    <span className="sub-row-gate">
+                      <span className="gate-chip err">{s.gate.errs}</span>
+                      <span className="gate-chip warn">{s.gate.warns}</span>
+                      <span className="gate-chip ok">{s.gate.ok}</span>
+                    </span>
+                  ) : (
+                    <span className="sub-row-gate" title="Select the package to read its readiness gate">—</span>
+                  )}
                   <span className="sub-row-due">
                     {s.transmitAt ? `Sent ${s.transmitAt}` : `Target · ${s.targetAt}`}
                   </span>
@@ -686,7 +797,6 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                       {sel.prog} · {sel.pathway}
                     </div>
                     <h3 className="sub-detail-title">{sel.title}</h3>
-                    <div className="sub-detail-target">Target · {sel.target}</div>
                   </div>
                   <div className="sub-detail-actions">
                     {sel.status === 'blocked' && (
@@ -697,16 +807,25 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                         {I.sparkles} Ask Claude
                       </button>
                     )}
+                    {/* Slice 0 (map row `device-submission`): enabled only on a
+                        readiness gate that was read, assessed something and
+                        has no errors (`gateClear`); it was
+                        also gated on the free-form `metadata.esig` flag, which
+                        is not a signature record. The prompt names no
+                        transmitter (none exists for a notified body; sending is
+                        Gateway transmittals'), and the receipt states a
+                        transmission date only when the record carries one. */}
                     <button
                       className="btn primary small"
-                      disabled={sel.gate.errs > 0 || !sel.esig}
+                      disabled={!gateClear}
                       onClick={() =>
                         onAskAna(
                           sel.status === 'complete'
-                            ? `Show me the receipt for ${sel.prog} · ${sel.title} (target ${sel.target}, transmitted ${sel.transmitAt}). ` +
-                                'Confirm the ack ID and the post-submission checklist.'
-                            : `Transmit ${sel.prog} · ${sel.title} to ${sel.target}. Re-run the gate (validation, cover letter, e-signature, package), ` +
-                                'confirm the package hash, then hand off to the ESG/NB transmitter and log the audit entry.',
+                            ? `Show me the receipt for ${sel.prog} · ${sel.title}` +
+                                (sel.transmitAt ? ` (transmitted ${sel.transmitAt})` : '') +
+                                '. Confirm the ack ID and the post-submission checklist.'
+                            : `Transmit ${sel.prog} · ${sel.title}. Re-run the gate (validation, cover letter, e-signature, package), ` +
+                                'confirm the package hash, and tell me what the Gateway transmittals step needs from me before this can be sent.',
                         )
                       }
                     >
@@ -718,39 +837,45 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 <div className="sub-gate">
                   <div className="sub-gate-lbl">Submission gate</div>
                   <div className="sub-gate-row">
-                    <div className="sub-gate-item" data-ok={sel.gate.errs === 0}>
-                      <span className="sub-gate-ico">
-                        {sel.gate.errs === 0 ? I.check : I.alertCircle}
-                      </span>
+                    <div className="sub-gate-item" data-ok={gateClear}>
+                      <span className="sub-gate-ico">{gateClear ? I.check : I.alertCircle}</span>
                       <div>
                         <div className="sub-gate-k">Validation</div>
-                        <div className="sub-gate-v">
-                          {sel.gate.errs} err · {sel.gate.warns} warn · {sel.gate.ok} pass
-                        </div>
+                        <div className="sub-gate-v">{gateValue}</div>
                       </div>
                     </div>
-                    <div className="sub-gate-item" data-ok={sel.cover === 'signed'}>
-                      <span className="sub-gate-ico">
-                        {sel.cover === 'signed' ? I.check : I.alertCircle}
-                      </span>
+                    {/* Slice 0: the cover letter read "draft" or ticked "signed"
+                        from `metadata.cover`, and the e-signature "Signed" from
+                        the free-form `metadata.esig` flag, then "Not recorded".
+                        Nothing writes either on a package, and this page reads
+                        no cover letter and no signature record (the Part 11
+                        signature is applied when the package is sent, on
+                        Gateway transmittals), so it states neither. */}
+                    <div className="sub-gate-item" data-ok={false}>
+                      <span className="sub-gate-ico">{I.alertCircle}</span>
                       <div>
                         <div className="sub-gate-k">Cover letter</div>
-                        <div className="sub-gate-v">{sel.cover}</div>
+                        <div className="sub-gate-v">Not read on this page</div>
                       </div>
                     </div>
-                    <div className="sub-gate-item" data-ok={sel.esig}>
-                      <span className="sub-gate-ico">{sel.esig ? I.check : I.alertCircle}</span>
+                    <div className="sub-gate-item" data-ok={false}>
+                      <span className="sub-gate-ico">{I.alertCircle}</span>
                       <div>
                         <div className="sub-gate-k">E-signature</div>
-                        <div className="sub-gate-v">{sel.esig ? 'Signed' : 'Pending'}</div>
+                        <div className="sub-gate-v">Not read on this page</div>
                       </div>
                     </div>
-                    <div className="sub-gate-item" data-ok={true}>
-                      <span className="sub-gate-ico">{I.check}</span>
+                    {/* Slice 0: always checked, even at "0 files · —", then
+                        "No files recorded" from a file count nothing writes.
+                        It is the assembled bundle the server records. */}
+                    <div className="sub-gate-item" data-ok={sel.bundle !== null}>
+                      <span className="sub-gate-ico">{sel.bundle ? I.check : I.alertCircle}</span>
                       <div>
                         <div className="sub-gate-k">Package</div>
                         <div className="sub-gate-v">
-                          {sel.files} files · {sel.bytes}
+                          {sel.bundle
+                            ? `Bundle · ${sel.bundle.size} · SHA-256 ${sel.bundle.sha256.slice(0, 12)}…`
+                            : 'No bundle assembled'}
                         </div>
                       </div>
                     </div>
@@ -758,15 +883,28 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 </div>
 
                 <div className="drawer-section-lbl">Activity</div>
-                {sel.log.map((l, i) => (
-                  <div key={i} className="activity-row">
-                    <span className="activity-when">{l.when}</span>
-                    {/* An unresolved actor renders '—', the repo's unknown-value
-                        convention (FilesTreePane). Never a stand-in name. */}
-                    <span className="activity-who">{l.who || '—'}</span>
-                    <span className="activity-what">{l.what}</span>
+                {detail.log === null ? (
+                  <div
+                    className="version-note"
+                    data-testid={detail.logError ? 'submission-activity-error' : 'submission-activity-unread'}
+                  >
+                    {detail.logError ? 'Could not read the activity log.' : 'Activity not read yet.'}
                   </div>
-                ))}
+                ) : detail.log.length === 0 ? (
+                  <div className="version-note" data-testid="submission-activity-empty">
+                    No milestones recorded.
+                  </div>
+                ) : (
+                  detail.log.map((l, i) => (
+                    <div key={i} className="activity-row">
+                      <span className="activity-when">{l.when}</span>
+                      {/* An unresolved actor renders '—', the repo's unknown-value
+                          convention (FilesTreePane). Never a stand-in name. */}
+                      <span className="activity-who">{l.who || '—'}</span>
+                      <span className="activity-what">{l.what}</span>
+                    </div>
+                  ))
+                )}
               </>
             )}
           </div>

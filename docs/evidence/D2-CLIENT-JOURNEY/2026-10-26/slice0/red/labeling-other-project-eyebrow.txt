@@ -1,0 +1,363 @@
+Slice 0, labeling, audit item 3: the first assertion ('Other project infusion pump' not on the page) could not fail, since device_name reached only the closed Add translation form and AnA. It is replaced by the other document's eyebrow, 'Instructions for use v7', checked first.
+Run against Labeling.tsx at HEAD (git show HEAD:client/src/concept2cure/v2/surfaces/Labeling.tsx), i.e. the screen before slice 0. The working copy was saved aside and restored byte-for-byte after this run.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xxstderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+AssertionError: expected 'Specialist / device / Instructions fo…' not to match /Instructions for use v7/
+
+- Expected:
+/Instructions for use v7/
+
++ Received:
+"Specialist / device / Instructions for use v7Labeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnA Where the label package stands right nowAll 1 translation are approved.Translation coverage is 1/1 approved (100%), 1 back-translation verified. Each warning should trace to the ISO 14971 hazard it controls. I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one. Add a translationOr work the symbols and translations below.ISO 15223-1 symbolssymbol glossaryISO-OTHER-5.1.1Other project manufacturerEU MDRWarnings and precautionstraced to the risk file (ISO 14971)No label warnings yetWarnings and their ISO 14971 hazard trace aren't captured by the labeling service yet.UDI placement21 CFR 801.45 / GUDIDUDI placement not captured yetThe document records UDI-DI 00812345000017, but the carrier, PI qualifiers and per-location placement checklist aren't backed by the labeling service yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet.Translations and coverage1/1 approved / 1 back-translation verified Add translationSwedish svHumanback-trans verifiedApproved"
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:80:24
+     78|        name is not asserted: before slice 0 it reached only the closed…
+     79|        translation form and AnA, never the page, so that check could n…
+     80|     expect(text()).not.toMatch(/Instructions for use v7/);
+       |                        ^
+     81|     expect(text()).not.toMatch(/00812345000017/);
+     82|     expect(text()).not.toMatch(/ISO-OTHER-5\.1\.1|Other project manufa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+AssertionError: expected [ '/api/mdx/labeling', …(2) ] to not include '/api/mdx/labeling'
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:104:23
+    102|     await waitFor(() => expect(text()).toMatch(/Labeling and IFU/));
+    103|     await settle();
+    104|     expect(paths).not.toContain('/api/mdx/labeling');
+       |                       ^
+    105|     expect(paths.filter((p) => p.startsWith('/api/mdx/labeling/'))).to…
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+AssertionError: expected [ '/api/mdx/labeling', …(2) ] to include '/api/mdx/labeling?program_id=0b6f1c1e…'
+
+Ignored nodes: comments, script, style
+        class="page-inner"
+      >
+          class="ph"
+        >
+              class="ph-eyebrow"
+            >
+              Specialist / device / Instructions for use v7
+              class="ph-title"
+            >
+              Labeling and IFU
+              class="ph-sub"
+            >
+              Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+            style="display: flex; gap: 8px;"
+          >
+              class="btn ghost"
+            >
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                  d="M20 3v4"
+                />
+                  d="M22 5h-4"
+                />
+                  d="M4 17v2"
+                />
+                  d="M5 18H3"
+                />
+               Ask AnA
+          class="al-lead al-calm"
+        >
+            class="al-k"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             
+            Where the label package stands right now
+            class="al-h"
+          >
+            No translations are recorded for this label yet.
+            class="al-b"
+          >
+            Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage.
+            class="al-re"
+          >
+              aria-hidden="true"
+              class="lucide lucide-shield-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+              />
+                d="m9 12 2 2 4-4"
+              />
+             
+            I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one.
+            class="al-act"
+          >
+              class="al-btn"
+              type="button"
+            >
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+            ...
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:122:39
+    120|     });
+    121|     render(<Labeling {...({ onAsk: () => {}, programId: PROGRAM_ID } a…
+    122|     await waitFor(() => expect(paths).toContain(KEYED));
+       |                                       ^
+    123|     await settle();
+    124|     expect(paths).not.toContain('/api/mdx/labeling');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+AssertionError: expected { id: 91, …(5) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "device": "Other project infusion pump",
+  "id": 91,
+  "kind": "Instructions for use",
+  "status": "approved",
+  "udiDi": "00812345000017",
+  "version": "7",
+}
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:135:48
+    133|     await settle();
+    134|     expect(published.current).not.toBeNull();
+    135|     expect(published.current?.facts?.document).toBeUndefined();
+       |                                                ^
+    136|     expect(published.current?.summary ?? '').not.toMatch(/Other projec…
+    137|     expect(published.current?.summary ?? '').toMatch(/not shown/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:19:38
+   Duration  6.59s (transform 377ms, setup 165ms, import 465ms, tests 5.19s, environment 575ms)
+

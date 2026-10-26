@@ -83,14 +83,14 @@ export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps)
           <div className="section-sub">
             {program
               ? `EU MDR Article 61 · ${program.dueLabel}`
-              : 'EU MDR Article 61 · select a CER program to load its evaluation'}
+              : 'EU MDR Article 61 · select a CER project to load its evaluation'}
           </div>
         </div>
         <button
           className="section-more"
           onClick={() =>
             onAskAna(
-              `Generate the CER draft for ${program ? program.title : 'the selected program'} — pull from the included ` +
+              `Generate the CER draft for ${program ? program.title : 'the selected project'} — pull from the included ` +
                 'safety signals, the literature corpus, and the equivalence data. Mark gaps in narrative form.',
             )
           }

@@ -1,0 +1,129 @@
+# device-diagnostics, audit [2]: the IVDR strip states a stage re-labelled from the derived kit stageIdx and ticks every stage before it.
+# IvdSurface.tsx unchanged (HEAD); the real host and the real useMdxPrograms. The strip is asserted first, then the sentence.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+xxx
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > a recorded `authoring` ticks no IVDR stage and names none
+AssertionError: expected [ …(4) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "IntakeBiomarker · intended purpose",
++   "ClassificationAnnex VIII rule engine",
++   "Analytical validationLoD · LoQ · precision",
++   "4Clinical evidence2×2 · sensitivity · specificity",
++ ]
+ ❯ settle client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:112:108
+    110|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    111|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+    112|   expect(nodes.filter((n) => /\b(complete|active|blocked)\b/.test(n.cl…
+       |                                                                                                            ^
+    113|   // Every dot carries its number; a tick (an svg) claims a stage done.
+    114|   expect(container.querySelectorAll('.stage-strip .stage-dot svg').len…
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:123:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > an approved IVD is not clamped to "Stage 7 of 7 — Submit"
+AssertionError: expected [ …(7) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "IntakeBiomarker · intended purpose",
++   "ClassificationAnnex VIII rule engine",
++   "Analytical validationLoD · LoQ · precision",
++   "Clinical evidence2×2 · sensitivity · specificity",
++   "GSPR complianceAnnex I · 20 requirements",
++   "Assemble dossierTechnical file · declaration",
++   "7SubmitEUDAMED · NB review",
++ ]
+ ❯ settle client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:112:108
+    110|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    111|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+    112|   expect(nodes.filter((n) => /\b(complete|active|blocked)\b/.test(n.cl…
+       |                                                                                                            ^
+    113|   // Every dot carries its number; a tick (an svg) claims a stage done.
+    114|   expect(container.querySelectorAll('.stage-strip .stage-dot svg').len…
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:130:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx > IvdSurface — states the recorded project phase, through the real host > no recorded phase states none — the hook's progress-band stage is not one
+AssertionError: expected [ …(2) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "IntakeBiomarker · intended purpose",
++   "2ClassificationAnnex VIII rule engine",
++ ]
+ ❯ settle client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:112:108
+    110|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    111|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+    112|   expect(nodes.filter((n) => /\b(complete|active|blocked)\b/.test(n.cl…
+       |                                                                                                            ^
+    113|   // Every dot carries its number; a tick (an svg) claims a stage done.
+    114|   expect(container.querySelectorAll('.stage-strip .stage-dot svg').len…
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx:137:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  03:32:26
+   Duration  3.71s (transform 1.84s, setup 188ms, import 2.14s, tests 234ms, environment 851ms)
+
+------------------------------------------------------------------------ the same file with the sentence asserted before the strip (a temporary copy, deleted after this run)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+xxx
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx > IvdSurface — states the recorded project phase, through the real host > a recorded `authoring` ticks no IVDR stage and names none
+AssertionError: expected 'Stage 4 of 7 — Clinical evidence · No…' to match /^Project phase: Authoring · No target…/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^Project phase: Authoring · No target set$/
++ Received:
+"Stage 4 of 7 — Clinical evidence · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx:110:52
+    108| async function settle(container: HTMLElement, expected: RegExp) {
+    109|   await waitFor(() => expect(container.querySelectorAll('.stage-strip …
+    110|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    111|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    112|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx > IvdSurface — states the recorded project phase, through the real host > an approved IVD is not clamped to "Stage 7 of 7 — Submit"
+AssertionError: expected 'Stage 7 of 7 — Submit · Complete' to match /^Project phase: Post-market · Complet…/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^Project phase: Post-market · Complete$/
++ Received:
+"Stage 7 of 7 — Submit · Complete"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx:110:52
+    108| async function settle(container: HTMLElement, expected: RegExp) {
+    109|   await waitFor(() => expect(container.querySelectorAll('.stage-strip …
+    110|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    111|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    112|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx > IvdSurface — states the recorded project phase, through the real host > no recorded phase states none — the hook's progress-band stage is not one
+AssertionError: expected 'Stage 2 of 7 — Classification · No ta…' to match /^No project phase recorded · No targe…/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^No project phase recorded · No target set$/
++ Received:
+"Stage 2 of 7 — Classification · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.sentenceFirst.tmp.test.tsx:110:52
+    108| async function settle(container: HTMLElement, expected: RegExp) {
+    109|   await waitFor(() => expect(container.querySelectorAll('.stage-strip …
+    110|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    111|   const nodes = Array.from(container.querySelectorAll('.stage-strip .s…
+    112|   // No IVDR stage is recorded for a project: none is ticked, lit or b…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  03:32:45
+   Duration  18.68s (transform 2.10s, setup 218ms, import 2.42s, tests 15.33s, environment 557ms)

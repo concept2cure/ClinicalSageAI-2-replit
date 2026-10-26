@@ -133,15 +133,22 @@ function PreSubQuestionView({ q, onJumpToDossier }: PreSubQuestionViewProps) {
             </div>
           </div>
           <div className="ps-q-commit-r">
-            {q.commitment.dossierLink && (
+            {/* Slice 0 (placement map, `device-presub` row): no caller passes
+                `onJumpToDossier`, so this button did nothing. It is offered only
+                once a caller wires the jump; until then the section the
+                commitment rolls into is said as text, since that is the
+                server's fact, with the direction the arrow gave it. */}
+            {q.commitment.dossierLink && (onJumpToDossier ? (
               <button
                 className="ps-q-commit-link"
-                onClick={() => onJumpToDossier?.(q.commitment!.dossierLink)}
+                onClick={() => onJumpToDossier(q.commitment!.dossierLink)}
               >
                 <span>{q.commitment.dossierLink.label}</span>
                 <span className="ico">{I.right}</span>
               </button>
-            )}
+            ) : (
+              <span className="ps-commit-from">Rolls into {q.commitment.dossierLink.label}</span>
+            ))}
             <span
               className={`ps-q-commit-state ${
                 q.commitment.rolledIn ? 'ok' : q.commitment.blocker ? 'err' : 'warn'
@@ -166,18 +173,20 @@ type DetailTab = 'questions' | 'timeline' | 'commitments';
 
 function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
   /* Live detail: questions + timeline + commitments come from
-     /api/q-sub/:id. Until the fetch resolves, the strip + meeting card +
-     summary + tabs all render with the row's aggregate counts (already
-     hydrated from the list response). */
-  const { detail, loading, error, refresh } = usePresubDetail(row.id);
+     /api/q-sub/:id. Until the fetch resolves, only the row's header (already
+     hydrated from the list response) is drawn, over a loading state. */
+  const { detail, error, refresh } = usePresubDetail(row.id);
   const [tab, setTab] = React.useState<DetailTab>('questions');
 
   if (!detail) {
-    /* Three reasons we hit this branch: still loading, fetch failed, or
-       package is genuinely in draft (server returns 404 → error set). The
-       UI distinguishes loading from empty; errors fall through to the
-       "in draft" empty state since that's the most likely cause. */
-    const loadingState = loading;
+    /* Two reasons we hit this branch: still loading, or the read failed (a
+       404, a network error, or a body that is not a Q-Sub record). Slice 0:
+       there was a third, "Package in draft — the question list and the FDA
+       response appear here once the Q-Sub is filed". The server never sends a
+       draft that way (a Q-Sub in Planning arrives with `questions: []`), so it
+       was reached only by an unreadable body or the hook's pre-fetch frame,
+       and stated a filing status the code did not know. usePresubDetail now
+       reports both as what they are. */
     return (
       <div className="ps-detail">
         <div className="ps-detail-head">
@@ -195,9 +204,7 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
             unparsed response body). A reviewer could not tell "we could not
             reach the server" from "this Q-Sub has not been filed yet", which
             are opposite facts about a regulatory package. */}
-        {loadingState ? (
-          <EmptyState busy title="Loading Q-Sub detail" hint="Fetching questions, timeline and commitments." />
-        ) : error ? (
+        {error ? (
           <ErrorState
             variant="panel"
             title="Couldn't load this Q-Sub's detail"
@@ -205,12 +212,7 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
             testId="presub-detail-error"
           />
         ) : (
-          <EmptyState
-            icon={I.fileText}
-            title="Package in draft"
-            hint="The question list and the FDA response appear here once the Q-Sub is filed."
-            regulation="Serves the pre-submission record (FDA Q-Submission programme)"
-          />
+          <EmptyState busy title="Loading Q-Sub detail" hint="Fetching questions, timeline and commitments." />
         )}
       </div>
     );
@@ -286,6 +288,14 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
 
       {tab === 'questions' && (
         <div className="ps-q-list">
+          {/* Slice 0: a Q-Sub with no questions on record drew a blank tab
+              under "Questions 0/0". The read returned none; say that. */}
+          {detail.questions.length === 0 && (
+            <div className="ps-empty">
+              <div className="ps-empty-t">No questions recorded</div>
+              <div className="ps-empty-s">This Q-Sub has no questions or FDA responses on record.</div>
+            </div>
+          )}
           {detail.questions.map(q => (
             <PreSubQuestionView key={q.n} q={q} onJumpToDossier={onJumpToDossier} />
           ))}
@@ -324,12 +334,20 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
                 <div className="ps-commit-id mono">{c.id}</div>
                 <div className="ps-commit-text">{c.text}</div>
                 <div className="ps-commit-from">From Q{q.n}</div>
-                <button
-                  className="ps-commit-jump"
-                  onClick={() => onJumpToDossier?.(c.dossierLink)}
-                >
-                  {c.dossierLink.label} {I.right}
-                </button>
+                {/* Slice 0: the same unwired jump as the question view's — a
+                    button only when a caller passes `onJumpToDossier`. The text
+                    says "Rolls into": bare, beside "From Q{n}" in the same grey,
+                    the section read as the commitment's origin. */}
+                {onJumpToDossier ? (
+                  <button
+                    className="ps-commit-jump"
+                    onClick={() => onJumpToDossier(c.dossierLink)}
+                  >
+                    {c.dossierLink.label} {I.right}
+                  </button>
+                ) : (
+                  <span className="ps-commit-from">Rolls into {c.dossierLink.label}</span>
+                )}
                 <span
                   className={`ps-commit-state ${c.rolledIn ? 'ok' : c.blocker ? 'err' : 'warn'}`}
                 >
@@ -354,7 +372,12 @@ export interface PreSubManagerProps {
 const NO_PRESUBS: PresubListRow[] = [];
 const NO_PRESUB_KPIS: { label: string; metric: string; unit?: string; meta: string; tone?: string }[] = [];
 
-type ListFilter = 'all' | 'mine' | PresubTypeId;
+/* Slice 0 (placement map, `device-presub` row): there was a 'mine' filter,
+   `['BX-204', 'OR-801'].includes(r.prog)` — two demo program codes from the UI
+   kit, not ownership; the list row carries no owner. It emptied a real
+   tenant's list and called demo-coded rows "mine". It returns when the list
+   carries an owner (slice 12). */
+type ListFilter = 'all' | PresubTypeId;
 type StageFilter = 'all' | PresubStageId;
 
 export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps) {
@@ -380,7 +403,6 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
 
   const filtered = sourceList
     .filter(r => {
-      if (filter === 'mine') return ['BX-204', 'OR-801'].includes(r.prog);
       if (filter !== 'all') return r.type === filter;
       return true;
     })
@@ -414,7 +436,7 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
           <button
             className="btn ghost small"
             onClick={() => {
-              const headers = ['Q-number', 'Program', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
+              const headers = ['Q-number', 'Project', 'Type', 'Title', 'Stage', 'Days in', 'Questions', 'Answered', 'Commitments', 'Rolled in'];
               const rows = sourceList.map(r => [
                 r.qNumber, r.prog, r.type, r.title, r.stage, String(r.daysIn),
                 String(r.questions), String(r.answered), String(r.commitments), String(r.rolledIn),
@@ -428,16 +450,24 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
           >
             {I.download} Export
           </button>
+          {/* Slice 0 (placement map, `device-presub` row): this read "New
+              Q-Sub", which names a form there is none of. The click asks AnA,
+              whose `create_q_sub` records the Q-Sub in Planning — so it says it
+              asks AnA, and asks to start one, not to file one ("Filed" is a
+              later stage on this screen's strip). It asks only for what
+              `create_q_sub` records, for the project the host publishes to
+              AnA: it also asked her to "seed the question list", which no tool
+              writes and this screen would show as Questions 0/0. */}
           <button
             className="btn primary small"
             onClick={() =>
               onAskAna(
-                'File a new Q-Submission — pick the type (Pre-Sub / SIR / SRD / Agreement / Informational), ' +
-                  'set the FDA team and target meeting date, and seed the question list.',
+                'Start a new Q-Submission for this project — pick the type (Pre-Sub / SIR / SRD / Agreement / Informational), ' +
+                  'give it a title, and set the FDA team, target meeting date and summary.',
               )
             }
           >
-            {I.plus} New Q-Sub
+            {I.sparkles} Ask AnA to start a Q-Sub
           </button>
         </div>
       </div>
@@ -463,7 +493,6 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
         <div className="ps-filter-row">
           <div className="seg small">
             <button className="seg-btn" data-on={filter === 'all'} onClick={() => setFilter('all')}>All</button>
-            <button className="seg-btn" data-on={filter === 'mine'} onClick={() => setFilter('mine')}>Mine</button>
             {PRESUB_TYPES.map(t => (
               <button
                 key={t.id}
@@ -538,8 +567,11 @@ export function PreSubManager({ onAskAna, onJumpToDossier }: PreSubManagerProps)
             )}
           </div>
 
+          {/* Slice 0: keyed by the selection, so a row change starts the pane
+              (its detail read and its tab) afresh rather than drawing the new
+              row's header over the previous Q-Sub's record. */}
           {sel && (
-            <PreSubDetail row={sel} onJumpToDossier={onJumpToDossier} onAskAna={onAskAna} />
+            <PreSubDetail key={sel.id} row={sel} onJumpToDossier={onJumpToDossier} onAskAna={onAskAna} />
           )}
         </div>
       </section>

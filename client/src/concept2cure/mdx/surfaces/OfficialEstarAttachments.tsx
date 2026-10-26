@@ -55,7 +55,7 @@ function rowProblem(rows: AttachmentRow[], catalog: SlotCatalog): string | null 
 
 function planProblem(rows: AttachmentRow[], enabled: boolean, loading: boolean, catalog: SlotCatalog | null): string | null {
   if (!rows.length) return null;
-  if (!enabled) return 'Open a regulatory program before choosing Vault attachments.';
+  if (!enabled) return 'Open a project before choosing Vault attachments.';
   if (loading) return 'Reading FDA attachment destinations…';
   if (!catalog) return 'Attachment destinations could not be read. Retry them or remove the attachment rows.';
   if (!catalog.slots.length) return 'This template has no attachment destinations. Remove the attachment rows to generate without them.';
@@ -135,7 +135,7 @@ export function OfficialEstarAttachments({ plan, programId, busy }: { plan: Atta
     {plan.problem && !plan.loading && !plan.failed && <p role="status" aria-live="polite" className="section-sub">{plan.problem}</p>}
     <button type="button" className="btn ghost small" style={buttonStyle} disabled={busy || !plan.enabled || plan.full} onClick={plan.add}>Add Vault attachment</button>
     {plan.full && <p className="section-sub" role="status">Up to 150 Vault attachments can be requested in one export. Remove an attachment before adding another.</p>}
-    {!plan.enabled && <p className="section-sub" role="status">Open a regulatory program to choose its Vault versions.</p>}
+    {!plan.enabled && <p className="section-sub" role="status">Open a project to choose its Vault versions.</p>}
   </section>;
 }
 

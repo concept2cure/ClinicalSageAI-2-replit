@@ -1,0 +1,34 @@
+# 2026-10-26T03:40:18Z HEAD 928b70996 (working tree with a DELIBERATE regression, reverted after this run): the removed manifest prompt put back on a header button relabelled "Export", so only the prompt assertion, not the label check, can catch it
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx -t offers no Export manifest button
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-x-----
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault claims nothing it does not do (slice 0) > offers no Export manifest button, and keeps the real upload
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:123:52
+    121|     }
+    122|     expect(asked.length).toBeGreaterThan(0);
+    123|     expect(asked.some((t) => /manifest/i.test(t))).toBe(false);
+       |                                                    ^
+    124|     expect(screen.queryByRole('button', { name: /export manifest/i }))…
+    125|     expect(container.textContent ?? '').not.toMatch(/Export manifest/i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  03:40:19
+   Duration  1.81s (transform 456ms, setup 220ms, import 530ms, tests 258ms, environment 584ms)
+

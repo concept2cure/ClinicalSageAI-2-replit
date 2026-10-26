@@ -24,10 +24,12 @@ beforeEach(() => { state.programs = [row(A), row(B)]; state.loading = false; sta
 afterEach(() => { cleanup(); clearShellProject(); consumeEditorTarget(); sessionStorage.clear(); });
 
 describe('MDX project context isolation', () => {
-  it('labels the mixed scope of surveillance without changing the selected project', () => {
+  it('says which postmarket panels are this project\'s, without changing the selected project', () => {
     publishShellProject({ id: A });
     render(<MdxSurfaceHost {...props()} nav="device-postmarket" />);
-    expect(screen.getByText('Mixed scope: organization-wide surveillance feeds; reporting clocks for this project')).toBeTruthy();
+    /* Slice 0: the organisation-wide surveillance panels are no longer shown on a project, so the banner no longer says they are. */
+    expect(screen.getByText('Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project')).toBeTruthy();
+    expect(screen.queryByText(/organization-wide surveillance feeds/)).toBeNull();
     expect(screen.getByTestId('selected-program').textContent).toBe(A);
   });
   it('requires an explicit project selection before mounting a project feature', () => {

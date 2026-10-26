@@ -289,7 +289,7 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
   const dirty = Object.keys(patch).length > 0;
 
   const summary = !ident
-    ? 'The device profile is held per program'
+    ? 'The device profile is held per project'
     : loading
       ? 'Loading device profile…'
       : error
@@ -376,7 +376,7 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
         <button
           className="section-more"
           disabled={!ident}
-          title={ident ? (open ? 'Collapse the intake form' : 'Edit the device intake fields') : 'Editing is available once a program is open'}
+          title={ident ? (open ? 'Collapse the intake form' : 'Edit the device intake fields') : 'Editing is available once a project is open'}
           onClick={() => setOpen((o) => !o)}
         >
           {open ? 'Hide' : 'Edit'}

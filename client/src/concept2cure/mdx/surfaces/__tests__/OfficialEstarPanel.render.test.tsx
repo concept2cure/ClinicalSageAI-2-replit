@@ -266,12 +266,12 @@ describe('OfficialEstarPanel — survives first paint', () => {
     render(<OfficialEstarPanel program={null} variant="device" />);
     expect(screen.getByTestId('official-estar-idle')).toBeTruthy();
     expect(generateButton().disabled).toBe(true);
-    expect(generateButton().title).toMatch(/Open a program first/);
+    expect(generateButton().title).toMatch(/Open a project first/);
     // Let the readiness probe settle so the assertion covers the resolved state too.
     await waitFor(() => expect(spy).toHaveBeenCalled());
     await act(async () => {});
     expect(spy.mock.calls.some(c => String(c[0]).includes('/official-fields'))).toBe(false);
-    expect(generateButton().title).toMatch(/Open a program first/);
+    expect(generateButton().title).toMatch(/Open a project first/);
   });
 });
 
@@ -332,7 +332,7 @@ describe('OfficialEstarPanel — the produce-gate', () => {
     };
     expect(generateDisabledReason(base)).toBeNull();
     expect(generateDisabledReason({ ...base, lockedTitle: 'Locked — x' })).toBe('Locked — x');
-    expect(generateDisabledReason({ ...base, hasProgram: false })).toMatch(/Open a program first/);
+    expect(generateDisabledReason({ ...base, hasProgram: false })).toMatch(/Open a project first/);
     expect(generateDisabledReason({ ...base, readinessLoading: true })).toBe(CHECKING);
     expect(generateDisabledReason({ ...base, busy: true })).toBe('Exporting…');
     expect(generateDisabledReason({ ...base, ready: false, blockers: ['a', 'b'] })).toBe(
@@ -353,7 +353,7 @@ describe('OfficialEstarPanel — the produce-gate', () => {
       CHECKING
     );
     expect(generateDisabledReason({ ...base, fieldsError: 'x', hasProgram: false })).toMatch(
-      /Open a program first/
+      /Open a project first/
     );
     expect(generateDisabledReason({ ...base, fieldsError: 'x', lockedTitle: 'Locked — x' })).toBe(
       'Locked — x'
@@ -440,7 +440,7 @@ describe('OfficialEstarPanel — the field preview', () => {
     render(<OfficialEstarPanel program={PROGRAM} variant="device" />);
     await waitFor(() => expect(screen.getByTestId('official-estar-error')).toBeTruthy());
     const error = within(screen.getByTestId('official-estar-error'));
-    expect(error.getByText('This program was not found in your organization')).toBeTruthy();
+    expect(error.getByText('This project was not found in your organization')).toBeTruthy();
     expect(error.queryByRole('button', { name: 'Try again' })).toBeNull();
     expect(document.querySelector('table.tbl')).toBeNull();
   });

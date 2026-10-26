@@ -46,7 +46,7 @@ function deriveLiveHealth(programs: Program[]): HealthKpi[] {
         .join(' · ');
 
   return [
-    { label: 'Active programs',      metric: String(total),         meta: `${k510} 510(k) · ${pma} PMA · ${cleared} cleared` },
+    { label: 'Active projects',      metric: String(total),         meta: `${k510} 510(k) · ${pma} PMA · ${cleared} cleared` },
     { label: 'Average readiness',    metric: String(avgReadiness), unit: '%', bar: { pct: avgReadiness, tone: readinessTone }, meta: 'Across MDX portfolio' },
     { label: 'Blockers open',        metric: String(blocked.length), meta: blockedMeta, tone: blocked.length > 0 ? 'err' : 'ok' },
     { label: 'Submissions in flight',metric: String(inFlight),       meta: 'Stages: assemble · submit' },
@@ -143,7 +143,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
 
       <div className="section-hdr">
         <div>
-          <div className="section-title">Programs</div>
+          <div className="section-title">Projects</div>
           <div className="section-sub">
             {programs.length} of {sourcePrograms.length} shown
           </div>
@@ -151,7 +151,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
         <button
           className="section-more"
           onClick={() =>
-            onAskAna('Walk me through creating a new MDX program (510(k), PMA, or CER).')
+            onAskAna('Walk me through creating a new device project (510(k), PMA, or CER).')
           }
         >
           New program {I.right}
@@ -240,7 +240,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
           <button
             className="btn primary small"
             onClick={() =>
-              onAskAna('Walk me through creating a new MDX program (510(k), PMA, or CER).')
+              onAskAna('Walk me through creating a new device project (510(k), PMA, or CER).')
             }
           >
             {I.plus} Create your first program
@@ -319,7 +319,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
       ) : (
         <div className="pg-list">
           <div className="pg-list-hdr">
-            <div>Program</div>
+            <div>Project</div>
             <div>Pathway</div>
             <div>Stage / Readiness</div>
             <div>Next blocker</div>

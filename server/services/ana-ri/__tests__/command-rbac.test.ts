@@ -390,13 +390,17 @@ describe('authorization registry — total coverage (anti-drift CI guard)', () =
    scope is enforced (production by default), reads included, before any
    tenant policy or role check. */
 describe('launch scope', () => {
-  const HIDDEN = ['pdev.program.get', 'q_sub.create', 'post_market.document.create', 'search_precedents'];
+  /* `q_sub.create` (device-presub) and `post_market.document.create`
+     (device-postmarket) moved to KEPT when the device surfaces joined the launch
+     catalog on 2026-10-23 (62a8d5e7f); `pdev.program.contradictions` and
+     `evaluate_endpoint`, whose surfaces are still outside it, take their places. */
+  const HIDDEN = ['pdev.program.get', 'pdev.program.contradictions', 'evaluate_endpoint', 'search_precedents'];
   /* `cmc_status` moved from HIDDEN to KEPT when the CMC surface joined the
      launch catalog on 2026-10-12 (decision P-28). It is the same check that
      decides either way — anaCapabilityInLaunchScope against
      LAUNCH_SURFACE_IDS — so the pair below is one assertion about one rule, and
      a command whose app leaves the catalog is refused again. */
-  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status'];
+  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all', 'cmc_status', 'q_sub.create', 'post_market.document.create'];
 
   it('refuses a hidden-app command in production, read or write, whatever the role', async () => {
     vi.stubEnv('NODE_ENV', 'production');

@@ -49,14 +49,32 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
 
-function respond(unavailable: string[]) {
+function respond(unavailable: string[], scopes?: Record<string, string>) {
   fetchMock.mockResolvedValue({
     ok: true,
     status: 200,
-    json: async () => ({ data: EMPTY_DATA, meta: { unavailable } }),
+    json: async () => ({ data: EMPTY_DATA, meta: scopes ? { unavailable, scopes } : { unavailable } }),
     text: async () => '',
   });
 }
+
+/** Every blocker source keyed to the project — the shape slice 19 brings. */
+const ALL_KEYED = {
+  risks: 'program', trace: 'program', dhf: 'program',
+  ecrs: 'program', issues: 'program', documents: 'program',
+};
+
+/** The sub-head of "What's blocking your documents". */
+function blockerSub(c: HTMLElement): string {
+  const head = Array.from(c.querySelectorAll('.section-head')).find((h) =>
+    /What.s blocking your documents/.test(h.querySelector('h2')?.textContent ?? ''),
+  );
+  expect(head, 'the blocker section head must render').toBeTruthy();
+  return head?.querySelector('.section-sub')?.textContent ?? '';
+}
+
+/** The checkCircle icon's path: the all-clear's success mark. */
+const CHECK_CIRCLE_PATH = 'M9 11l3 3 8-8';
 
 /** The residual-risk matrix lives inside the "awareness" accordion, which is
  *  collapsed on mount. Without expanding it, `.eng-heat` is absent for a reason
@@ -84,14 +102,22 @@ describe('EngineeringSurface — an unreadable panel is not an all-clear', () =>
     expect(/Nothing is blocking your documents/i.test(container.textContent ?? '')).toBe(false);
   });
 
-  it('still gives the all-clear when the sources genuinely read empty', async () => {
-    // Over-correction guard: a clean read with no blockers is good news and
-    // must keep saying so.
+  it('says an empty read has nothing to check', async () => {
+    // Slice 0 audit: sources that read empty hold nothing assessed, which is
+    // not the all-clear. `eng-no-blockers` is shared by both states, so the
+    // testid alone cannot tell them apart; the copy and the mark can. The real
+    // all-clear (records read, none blocking) is pinned by
+    // EngineeringSurface.projectKeyed.test.tsx.
     respond([]);
     const { container } = mount();
     await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
 
-    expect(container.querySelector('[data-testid="eng-no-blockers"]')).not.toBeNull();
+    const state = container.querySelector('[data-testid="eng-no-blockers"]') as HTMLElement | null;
+    expect(state).not.toBeNull();
+    expect(state?.textContent ?? '').toMatch(/No risk records for this project yet/);
+    expect(state?.textContent ?? '').toMatch(/so there is nothing to check yet/);
+    expect(state?.textContent ?? '').not.toMatch(/Nothing is blocking your documents|were found/);
+    expect(state?.innerHTML ?? '').not.toContain(CHECK_CIRCLE_PATH);
   });
 
   it('does not draw an all-zero ISO 14971 matrix over a failed risk read', async () => {
@@ -129,5 +155,59 @@ describe('EngineeringSurface — an unreadable panel is not an all-clear', () =>
     await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
 
     expect(/Documents in flight/i.test(container.textContent ?? '')).toBe(false);
+  });
+});
+
+/* Audit 2 of slice 0: the sub-head above the blocker feed printed its counts
+   whatever the read state. `blockers` goes through readyRows, which yields []
+   for a failed or loading read as well as an empty one, so "0 review-pending"
+   sat directly above "Could not load blocker sources" — and, once slice 19 keys
+   the stores, "0 hard blockers" would print over a DHF or non-conformance read
+   that failed. */
+describe('EngineeringSurface — the blocker sub-head counts only what was read', () => {
+  it('prints no review-pending count over a risk file it could not read', async () => {
+    respond(['risks', 'summary']);
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/Could not load blocker sources/));
+
+    const sub = blockerSub(container);
+    expect(sub).not.toMatch(/\d+ review-pending/);
+    expect(sub).not.toMatch(/\d+ hard blockers/);
+    expect(sub).toMatch(/Not counted until the risk file is read/);
+  });
+
+  it('prints no hard-blocker count over sources it could not read, once every source is keyed', async () => {
+    respond(['dhf', 'risks', 'ecrs', 'issues', 'summary'], ALL_KEYED);
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/Could not load blocker sources/));
+
+    const sub = blockerSub(container);
+    expect(sub).not.toMatch(/\d+ hard blockers/);
+    expect(sub).not.toMatch(/\d+ review-pending/);
+    expect(sub).toMatch(
+      /Not counted until the design history file, risk file, change requests and non-conformances are read/,
+    );
+  });
+
+  it('prints no counts while the sources are still loading', async () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/Loading blocker sources/));
+
+    const sub = blockerSub(container);
+    expect(sub).not.toMatch(/\d+ review-pending/);
+    expect(sub).not.toMatch(/\d+ hard blockers/);
+  });
+
+  it('prints the counts once the sources have been read', async () => {
+    // Over-correction guard: a read that resolved is a count, and says so.
+    respond([], ALL_KEYED);
+    const { container } = mount();
+    await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
+
+    const sub = blockerSub(container);
+    expect(sub).toMatch(/\d+ hard blockers/);
+    expect(sub).toMatch(/\d+ review-pending/);
+    expect(sub).not.toMatch(/Not counted until/);
   });
 });

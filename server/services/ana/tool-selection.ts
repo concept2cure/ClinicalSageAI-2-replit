@@ -72,6 +72,15 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'find_cmc_guidance',
   'get_cmc_requirements',
   'explain_cmc_topic',
+  // The authoring outline. The open-document brief tells her to "call
+  // get_document_template with registry_id …" for the rest of an outline
+  // (ana-ri/open-document.ts), and the persona drafts from it; an instruction
+  // that names a tool the cap removed points at nothing. Relevance dropped it for
+  // "help me prepare an EU clinical trial application" once device-510k joined
+  // the launch catalog (62a8d5e7f) and its clinical tools outranked it by name:
+  // its description names the IMPD, not the words a person uses. Deterministic
+  // and read-only, like the record tools above.
+  'get_document_template',
 ]);
 
 /**

@@ -52,9 +52,13 @@ export const TASKS_COLUMNS: TaskColumn[] = [
 
 export interface ValidationSummary { label: string; metric: string; unit?: string; meta: string; tone?: Tone }
 /** errs / warns / ok are null when no blocker can be attributed to the program
- *  — see useWorkbenchValidation. Never 0 by default: 0 is a finding. */
+ *  — see useWorkbenchValidation. Never 0 by default: 0 is a finding.
+ *  `readiness` is the project's stored progressPercent, not an assessment; it
+ *  is 0 when none is recorded until useMdxPrograms carries that as null. */
 export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number | null; warns: number | null; ok: number | null; status: 'blocked' | 'active' | 'complete'; readiness: number }
-export interface ValidationRule { id: string; prog: string; sect: string; severity: 'err' | 'warn' | 'ok'; category: string; msg: string; since: string }
+/** Slice 0: `project` replaces `prog` and `sect`. A c2c_blockers row names a
+ *  project and no program code or section label, so those were always '—'. */
+export interface ValidationRule { id: string; project: string; severity: 'err' | 'warn' | 'ok'; category: string; msg: string; since: string }
 
 
 
@@ -63,22 +67,36 @@ export interface ValidationRule { id: string; prog: string; sect: string; severi
 
 export interface SubmissionStage { id: string; label: string; desc: string }
 export interface SubmissionLogEntry { when: string; who: string; what: string }
+/** The assembled bundle the server records on a package (`metadata.bundle`,
+ *  written by POST /packages/:id/assemble). */
+export interface SubmissionBundle { sha256: string; size: string; assembledAt: string | null }
 export interface Submission {
   id: string;
   prog: string;
   pathway: string;
-  stage: string;
-  status: 'active' | 'blocked' | 'complete';
+  /** The stage the record names (`metadata.stage`), or null. Slice 0: it was
+   *  inferred from the status, so every open package sat at "Package" and
+   *  every completed one at "Decision", and nothing recorded either. */
+  stage: string | null;
+  /** The package's own status. Slice 0: `locked` (set when the package is
+   *  published) read "active", and `cancelled` read "blocked". */
+  status: 'active' | 'blocked' | 'complete' | 'locked' | 'cancelled';
   title: string;
-  target: string;
-  bytes: string;
-  files: number;
-  cover: 'signed' | 'draft';
-  esig: boolean;
+  /* Slice 0 (map row `device-submission`): no `target` and no `esig`. A
+     package record names no receiving authority, and its `metadata.esig` is a
+     free-form flag, not a signature record; the adapter derived "NB · TÜV" /
+     "FDA · ESG" and "Signed" from them. Off the type, so no consumer can
+     render them again. Nor `cover`, `files` or `bytes`: nothing writes
+     `metadata.cover`, `fileCount` or `bytes` on a package, so every package
+     read "Cover letter: draft" and "No files recorded". The bundle the server
+     does record stands in for the last two. */
+  bundle: SubmissionBundle | null;
   transmitAt: string | null;
   targetAt: string;
   tone: Tone;
-  gate: { errs: number; warns: number; ok: number };
+  /** The readiness read's gate (useSubmissionDetail), or null: never assumed
+   *  to be 0 / 0 / 0. The list read carries none (see useSubmissions). */
+  gate: { errs: number; warns: number; ok: number } | null;
   log: SubmissionLogEntry[];
 }
 
@@ -86,10 +104,14 @@ export const SUBMISSION_PIPELINE: SubmissionStage[] = [
   { id: 'package',   label: 'Package',         desc: 'eSTAR export · attachments' },
   { id: 'validate',  label: 'Validate',        desc: 'Required-field · claims' },
   { id: 'sign',      label: 'Cover + sign',    desc: 'Cover letter · e-signature' },
-  { id: 'transmit',  label: 'Transmit',        desc: 'FDA ESG · notified body' },
+  /* Slice 0: was 'FDA ESG · notified body'. The record names no authority
+     and no notified-body transmitter exists; sending is Gateway transmittals'. */
+  { id: 'transmit',  label: 'Transmit',        desc: 'Gateway transmittal' },
   { id: 'ack',       label: 'Acknowledgement', desc: 'Receipt · review clock' },
   { id: 'review',    label: 'Review',          desc: 'Substantive · deficiency' },
-  { id: 'decision',  label: 'Decision',        desc: 'Cleared · approved' },
+  /* Slice 0: was 'Cleared · approved', while every completed package was
+     counted here with no decision recorded. */
+  { id: 'decision',  label: 'Decision',        desc: 'Agency decision' },
 ];
 
 

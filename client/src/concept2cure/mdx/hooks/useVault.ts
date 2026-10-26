@@ -15,6 +15,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from './useFetchJson';
+import { shapeMismatch } from '../lib/payloadShape';
 import type {
   VaultFile,
   VaultFileStatus,
@@ -25,7 +26,8 @@ import type {
 
 /* Row shape returned by GET /api/mdx/vault (see mdx-vault.ts list map). */
 export interface VaultApiArtifact {
-  id: number;
+  /** An integer for an authored artifact, a uuid for an uploaded file. */
+  id: number | string;
   artifactId: string;
   title: string;
   type: string;
@@ -71,7 +73,7 @@ interface VaultVersionsPayload {
 
 /** Live program ids are uuids; the surface's fixture ids ('or801' …) are not,
  *  and the list route's zod schema rejects a non-uuid program_id outright. */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
   /* FIRST, and before the lock check: an ingested file has no authoring
@@ -147,9 +149,16 @@ export function selectVaultFiles(
     status: toStatus(r.status, r.lockedAt),
     updated: toWhen(r.updatedAt),
     author: r.createdById != null ? `User #${r.createdById}` : 'system',
-    linked: 0,
+    /* Slice 0 (map row `device-vault`): was the literal 0, so the drawer read
+       "Linked 0 artifacts" for every file. The list reads no links. */
+    linked: null,
     esig: Boolean(r.eSig),
     hash: r.contentHash ?? '—',
+    /* Slice 0 (map row `device-vault`): carried so the drawer can tell an
+       upload from an authored artifact. `id` above is the document code for an
+       upload; the download route needs its uuid. */
+    source: r.source,
+    documentId: r.source === 'upload' && typeof r.id === 'string' ? r.id : undefined,
   }));
 }
 
@@ -245,7 +254,11 @@ export function useVault(programId: string | null): UseVaultResult {
   const files = useMemo(() => selectVaultFiles(data), [data]);
   const folders = useMemo(() => (files && files.length ? deriveVaultFolders(files) : null), [files]);
   const kpis = useMemo(() => (files && files.length ? deriveVaultKpis(files) : null), [files]);
-  return { files, folders, kpis, loading, error, refresh };
+  /* Slice 0 (map row `device-vault`): a 200 whose `data` is not a list gave
+     no files and no error, and the surface drew an empty vault. The route
+     always answers `{ data: [...] }`, so anything else is a failed read. */
+  const failed = error ?? (data != null && files === null ? shapeMismatch('the vault list') : null);
+  return { files, folders, kpis, loading, error: failed, refresh };
 }
 
 export interface UseVaultVersionsResult {

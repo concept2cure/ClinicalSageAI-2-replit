@@ -1,0 +1,33 @@
+RED (audit2 postmarket-host #2, copy): with the pre-fix PostmarketSurface.tsx swapped in, the Overdue card says 'No reporting deadline passed' beside an MDR filed before its due date (rows now show 'due 12d ago').
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---x--
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > says no reporting deadline was missed, not that none passed, beside an MDR filed before its date
+AssertionError: expected 'WorkstreamPost-market vigilance21 CFR…' not to match /No reporting deadline passed/
+
+- Expected:
+/No reporting deadline passed/
+
++ Received:
+"WorkstreamPost-market vigilance21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization. They are not shown until this screen reads this project's records. Reporting clocks and the MDR/CAPA deadline metrics are limited to Class II · 510(k). Triage signalsMDRs due ≤72h1FDA 5-day · 30-day · EU 15-day clocksCAPAs open00 past target datePMS plan entries—Not read for this project yetOpen signals—Not read for this project yetRegulatory submissions in flightThis project's post-market documents are not read here yet.Reporting clocksClass II · 510(k) only · complaints · MDR events · CAPAs — overdue first, then soonest due. FDA 5-day and 30-day, EU MDR Article 87 15-day.Overdue0No reporting deadline passedDue within 7 days0Clock runningOpen items11 MDR · 0 complaint · 0 CAPAmdrMDR-FILED-PASTMDR-FILED-PAST narrative5-dayfiled-12d leftSignal triage queueCritical or under-review signals not yet wrapped in an MDR or CAPA · oldest firstShown once this screen reads this project's records; today it reads every project's signals in this organization.Situational awarenessFull signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx:118:33
+    116|     await waitFor(() => expect(text(container)).toMatch(/MDR-FILED-PAS…
+    117|
+    118|     expect(text(container)).not.toMatch(/No reporting deadline passed/…
+       |                                 ^
+    119|     expect(text(container)).toMatch(/No reporting deadline missed/);
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  05:05:51
+   Duration  1.69s (transform 445ms, setup 165ms, import 571ms, tests 104ms, environment 654ms)
+

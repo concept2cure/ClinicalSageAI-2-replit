@@ -1,0 +1,34 @@
+RED (audit2 pma-ivd #4): the Annex VIII Ask AnA chip on a row shown as 'Not classified' sends 'Explain the IVDR Annex VIII rule that puts <device> in Class null.'; the classified row's chip (positive control) passes.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unclassifiedAskAna.test.tsx > IvdSurface — Ask AnA on an unclassified device > asks AnA to classify it, not to explain the rule for "Class null"
+AssertionError: expected 'Explain the IVDR Annex VIII rule that…' not to match /Class null|Class undefined/
+
+- Expected:
+/Class null|Class undefined/
+
++ Received:
+"Explain the IVDR Annex VIII rule that puts Unclassified Assay in Class null."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.unclassifiedAskAna.test.tsx:75:24
+     73|     expect(onAskAna).toHaveBeenCalledTimes(1);
+     74|     const prompt = String(onAskAna.mock.calls[0][0]);
+     75|     expect(prompt).not.toMatch(/Class null|Class undefined/);
+       |                        ^
+     76|     expect(prompt).not.toMatch(/rule that puts/);
+     77|     expect(prompt).toMatch(/^Classify Unclassified Assay under IVDR An…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  07:36:16
+   Duration  2.66s (transform 1.26s, setup 167ms, import 1.47s, tests 314ms, environment 531ms)
+

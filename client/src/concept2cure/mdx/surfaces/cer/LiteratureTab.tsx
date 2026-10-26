@@ -541,7 +541,7 @@ export function LiteratureTab({
                   title="Refine literature search with AnA" aria-label="Refine literature search with AnA"
                   onClick={() =>
                     onAskAna(
-                      `Refine the literature search for ${programTitle ?? 'this program'} — tighten the inclusion window, ` +
+                      `Refine the literature search for ${programTitle ?? 'this project'} — tighten the inclusion window, ` +
                         'expand to MeSH synonyms, and flag any cohort studies missing from the corpus.',
                     )
                   }
@@ -554,7 +554,7 @@ export function LiteratureTab({
               {literature === null ? (
                 /* null is "not read" — still loading, or the feed failed. */
                 <div role="status" style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}>
-                  {loading ? 'Loading the literature corpus…' : 'The literature corpus could not be loaded for this program.'}
+                  {loading ? 'Loading the literature corpus…' : 'The literature corpus could not be loaded for this project.'}
                 </div>
               ) : corpusTotal === 0 ? (
                 <div

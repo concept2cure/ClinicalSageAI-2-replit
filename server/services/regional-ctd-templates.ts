@@ -290,69 +290,7 @@ export function getRegionalTemplate(agency: string): RegionalTemplate | null {
   return TEMPLATES[agency.toUpperCase()] || null;
 }
 
-/**
- * Get all supported regional templates.
- */
-export function getAllRegionalTemplates(): RegionalTemplate[] {
-  return Object.values(TEMPLATES);
-}
-
-/**
- * Get Module 1 sections for a specific agency.
- */
-export function getModule1Sections(agency: string): CTDSection[] {
-  const template = TEMPLATES[agency.toUpperCase()];
-  return template?.module1Sections || [];
-}
-
-/**
- * Get all supported agencies.
- */
-export function getSupportedAgencies(): string[] {
-  return Object.keys(TEMPLATES);
-}
-
-/**
- * Generate a merged CTD structure for multi-agency submissions.
- * Modules 2-5 are shared (ICH common), Module 1 is per-agency.
- */
-export function getMultiAgencyCTDStructure(agencies: string[]): {
-  commonModules: CTDSection[];
-  regionalModule1: Record<string, CTDSection[]>;
-} {
-  const commonModules: CTDSection[] = [
-    {
-      number: '2', title: 'Common Technical Document Summaries', required: true, description: 'CTD Summaries',
-      childSections: [
-        { number: '2.1', title: 'CTD Table of Contents', required: true, description: 'Comprehensive TOC' },
-        { number: '2.2', title: 'CTD Introduction', required: true, description: 'Introduction to the submission' },
-        { number: '2.3', title: 'Quality Overall Summary', required: true, description: 'Summary of Module 3 (Quality)' },
-        { number: '2.4', title: 'Nonclinical Overview', required: true, description: 'Nonclinical study overview' },
-        { number: '2.5', title: 'Clinical Overview', required: true, description: 'Clinical study overview' },
-        { number: '2.6', title: 'Nonclinical Written and Tabulated Summaries', required: true, description: 'Detailed nonclinical summaries' },
-        { number: '2.7', title: 'Clinical Summary', required: true, description: 'Detailed clinical summaries' },
-      ],
-    },
-    { number: '3', title: 'Quality', required: true, description: 'CMC data (Drug substance, Drug product, Quality)' },
-    { number: '4', title: 'Nonclinical Study Reports', required: true, description: 'Nonclinical pharmacology, PK, toxicology' },
-    { number: '5', title: 'Clinical Study Reports', required: true, description: 'Clinical study reports, case report forms, literature' },
-  ];
-
-  const regionalModule1: Record<string, CTDSection[]> = {};
-  for (const agency of agencies) {
-    const sections = getModule1Sections(agency);
-    if (sections.length > 0) {
-      regionalModule1[agency] = sections;
-    }
-  }
-
-  return { commonModules, regionalModule1 };
-}
-
-export default {
-  getRegionalTemplate,
-  getAllRegionalTemplates,
-  getModule1Sections,
-  getSupportedAgencies,
-  getMultiAgencyCTDStructure,
-};
+// getAllRegionalTemplates, getModule1Sections, getSupportedAgencies and
+// getMultiAgencyCTDStructure (a hand-typed Module 2 list), with the default export
+// that re-exposed them, had no caller and were deleted 2026-10-26 (D2 cleanup S07).
+// Module 2–5 headings are the ICH M2–M5 record's; Module 1 is regional-module1.ts.

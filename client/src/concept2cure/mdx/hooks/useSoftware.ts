@@ -94,12 +94,26 @@ export interface DeliverableRow {
   approved: boolean;
 }
 
+/* The route's contract (server/routes/mdx-software.ts, pinned by
+   mdx-software-summary.test.ts). With no items, or items at more than one
+   level, docLevel is 'undetermined', the counts are null and the matrix is
+   empty; with cyber-device status unrecorded, the counts are real but
+   completion is null. Either way `reason` says why. This was typed as the
+   older always-scored shape, so the panel drew nulls as numbers (slice 0,
+   the placement map's `device-software` row).
+   For a determined level the counts are over the lifecycle kinds this register
+   tracks, not FDA's whole documentation set: `untracked` names the recommended
+   documents no kind records, and `completionScope` says they are not counted.
+   Slice 0: `untracked` was dropped here, so a partial score read as complete. */
 export interface SoftwareSummary {
-  docLevel: 'basic' | 'enhanced';
-  completion: number;
-  required: number;
-  approved: number;
+  docLevel: 'basic' | 'enhanced' | 'undetermined';
+  completion: number | null;
+  required: number | null;
+  approved: number | null;
   matrix: DeliverableRow[];
+  reason: string | null;
+  completionScope: string | null;
+  untracked: { id: string; title: string }[];
 }
 
 interface ListPayload {
@@ -157,7 +171,7 @@ export function useSoftware(programId: string | null): UseSoftwareResult {
   return {
     items: toDataState(items, list.loading, listFailed),
     summary: toDataState(summary, sum.loading, sumFailed, {
-      idleReason: 'IEC 62304 deliverable completeness is scored per program.',
+      idleReason: 'IEC 62304 deliverable completeness is scored per project.',
     }),
     loading: list.loading || sum.loading,
     error: listFailed ?? sumFailed,

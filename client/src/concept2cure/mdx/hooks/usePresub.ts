@@ -18,7 +18,7 @@
  * keyed by the row id so the hook re-fetches on selection change.
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   PresubKpi,
   PresubListRow,
@@ -28,7 +28,7 @@ import type {
   DossierLink,
 } from '../data/presub';
 import { useFetchJson } from './useFetchJson';
-import { shapeMismatch } from '../lib/payloadShape';
+import { isRecord, shapeMismatch } from '../lib/payloadShape';
 
 interface ServerQSubListRow {
   id: string;
@@ -141,15 +141,19 @@ function adaptQuestion(q: ServerQSubQuestionDto): PresubQuestion {
  * that serialized to zero bytes once its data resolved. The existing mount test
  * cannot see it — it asserts synchronously, while the surface is still drawing
  * its loading state, which is before the crash.
+ *
+ * Slice 0: "no questions" is `questions: []`, which is what `getQSubDetail`
+ * sends for a Q-Sub with none on record. A record with no `questions` or
+ * `timeline` array at all, or a list where the record should be, was drawn as
+ * that empty Q-Sub, and an absent record as "Package in draft". Neither was
+ * read, so both are null here and `usePresubDetail` reports them as a failure.
  */
 function adaptDetail(d: ServerQSubDetail | null | undefined): PresubDetail | null {
-  if (!d || typeof d !== 'object') return null;
+  if (!isRecord(d) || !Array.isArray(d.questions) || !Array.isArray(d.timeline)) return null;
   return {
-    summary:   d.summary,
-    questions: Array.isArray(d.questions) ? d.questions.map(adaptQuestion) : [],
-    timeline:  Array.isArray(d.timeline)
-      ? d.timeline.map((t) => ({ when: t.when, who: t.who, what: t.what }))
-      : [],
+    summary:   typeof d.summary === 'string' ? d.summary : '',
+    questions: d.questions.map(adaptQuestion),
+    timeline:  d.timeline.map((t) => ({ when: t.when, who: t.who, what: t.what })),
   };
 }
 
@@ -182,10 +186,19 @@ function deriveKpis(list: PresubListRow[]): PresubKpi[] {
   const avgFeedbackDays = inFeedback.length
     ? Math.round(inFeedback.reduce((s, r) => s + r.daysIn, 0) / inFeedback.length)
     : 0;
+  /* Slice 0 (placement map, `device-presub` row): with no commitments on
+     record these read "0% · 0 of 0" in red and "0 · All integrated" in green —
+     a failure and a completion where nothing exists yet. Say that instead,
+     with no tone; the figures stand once there is a commitment to count. */
+  const noCommitments = totalCommit === 0;
   return [
     { label: 'Q-Subs in flight',  metric: String(total),    unit: '',  meta: `${awaiting} awaiting · ${feedback} feedback`, tone: '' },
-    { label: 'Commitments rolled',metric: String(rolledPct),unit: '%', meta: `${rolled} of ${totalCommit}`, tone: rolledPct >= 80 ? 'ok' : rolledPct >= 50 ? 'warn' : 'err' },
-    { label: 'Pending rollin',    metric: String(blockedRolled), unit: '', meta: blockedRolled === 0 ? 'All integrated' : 'Open in dossier', tone: blockedRolled === 0 ? 'ok' : 'warn' },
+    noCommitments
+      ? { label: 'Commitments rolled', metric: '—', unit: '', meta: 'No commitments recorded yet', tone: '' }
+      : { label: 'Commitments rolled',metric: String(rolledPct),unit: '%', meta: `${rolled} of ${totalCommit}`, tone: rolledPct >= 80 ? 'ok' : rolledPct >= 50 ? 'warn' : 'err' },
+    noCommitments
+      ? { label: 'Pending rollin', metric: '—', unit: '', meta: 'No commitments recorded yet', tone: '' }
+      : { label: 'Pending rollin',    metric: String(blockedRolled), unit: '', meta: blockedRolled === 0 ? 'All integrated' : 'Open in dossier', tone: blockedRolled === 0 ? 'ok' : 'warn' },
     { label: 'Avg days in feedback', metric: String(avgFeedbackDays), unit: 'd', meta: feedback === 0 ? 'No active feedback' : 'Across active Q-Subs', tone: avgFeedbackDays > 30 ? 'warn' : '' },
   ];
 }
@@ -263,11 +276,35 @@ export interface UsePresubDetailResult {
  * and parseInts the dossierLink.sectionId.
  *
  * Pass `null` for `id` to disable the fetch (idle state).
+ *
+ * With an id, every render is one of three things: pending (`loading`), the
+ * detail of THAT id, or a failure. Slice 0 (placement map, `device-presub`
+ * row): `useFetchJson` keeps the previous URL's body while the next one loads,
+ * and its first render, before the fetch effect runs, is neither loading nor
+ * done. So a row change drew the new Q-Sub's header over the old one's summary
+ * and FDA responses, and the first frame read as "Package in draft". A body
+ * counts only once a fetch for this URL has settled, and a settled body that
+ * is not a Q-Sub record is a failed read, as it is for the list above.
  */
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
   /* Canonical envelope: server returns { data: ServerQSubDetail }. */
   const { data, loading, error, refresh } = useFetchJson<{ data: ServerQSubDetail }>(url);
-  const detail = useMemo(() => (data ? adaptDetail(data.data) : null), [data]);
-  return { detail, loading, error, refresh };
+  /* The URL whose fetch has started, and the body on hand when it did (the
+     previous URL's). Set by an effect declared after useFetchJson's, so it
+     lands in the same update as that fetch's `loading: true`: a render that
+     sees it with `loading` false holds this URL's settled result. */
+  const [started, setStarted] = useState<{ url: string | null; stale: unknown } | null>(null);
+  useEffect(() => {
+    setStarted({ url, stale: data });
+    /* `data` is read once, as the previous URL's body. */
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [url]);
+  const current = started !== null && started.url === url;
+  const fresh = current && data !== started.stale ? data : null;
+  const detail = useMemo(() => (fresh ? adaptDetail(fresh.data) : null), [fresh]);
+  if (url === null) return { detail: null, loading: false, error: null, refresh };
+  const settled = current && !loading;
+  const failed = settled ? error ?? (detail === null ? shapeMismatch(url) : null) : null;
+  return { detail, loading: !settled, error: failed, refresh };
 }

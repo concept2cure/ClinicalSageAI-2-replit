@@ -84,7 +84,7 @@ const VIEW = {
   ],
 };
 
-const NOT_FOUND = 'This program was not found in your organization';
+const NOT_FOUND = 'This project was not found in your organization';
 const NOT_PRODUCIBLE =
   'The field map for this template is not populated, so there is nothing to preview';
 const FAILED = 'The field list could not be loaded';

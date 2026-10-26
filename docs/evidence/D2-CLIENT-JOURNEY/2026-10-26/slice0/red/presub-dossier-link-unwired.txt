@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx > PreSubManager — a dossier link nothing carries out is not a button > offers no dossier-link button on a question when no caller wires the jump
+AssertionError: expected [ <button …(1)>…(2)</button> ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx:69:26
+     67|     render(<PreSubManager onAskAna={() => {}} />);
+     68|     await waitFor(() => expect(screen.getByText('Add a sensitisation t…
+     69|     expect(linkButton()).toHaveLength(0);
+       |                          ^
+     70|     // The section is the server's fact, so it is still said.
+     71|     expect(screen.getByText('Biocompatibility section')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx > PreSubManager — a dossier link nothing carries out is not a button > offers no dossier-link button on the Commitments tab either
+AssertionError: expected [ <button …(1)>…(1)</button> ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx:79:26
+     77|     fireEvent.click(screen.getByRole('button', { name: /^Commitments/ …
+     78|     await waitFor(() => expect(screen.getByText('From Q1')).toBeTruthy…
+     79|     expect(linkButton()).toHaveLength(0);
+       |                          ^
+     80|     expect(screen.getByText('Biocompatibility section')).toBeTruthy();
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  02:16:45
+   Duration  3.08s (transform 713ms, setup 282ms, import 981ms, tests 846ms, environment 801ms)
+

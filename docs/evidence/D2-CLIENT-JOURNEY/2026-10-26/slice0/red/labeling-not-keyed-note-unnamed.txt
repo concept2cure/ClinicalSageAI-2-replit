@@ -1,0 +1,79 @@
+Slice 0, labeling, audit item 2: the line explaining the hidden panels ('Shown once this screen reads this project's records.') had no subject, so it read as describing the Warnings, Compliance checks and Label and IFU sections panels shown beneath it.
+Run against Labeling.tsx with items 0 and 1 in place and the note's copy unchanged.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Labeling inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+··
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+AssertionError: expected 'Shown once this screen reads this pro…' to match /^Translation coverage, ISO 15223-1 sy…/
+
+- Expected:
+/^Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are shown once this screen reads this project's records\./
+
++ Received:
+"Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx:89:98
+     87|     /* The line names what is withheld, so it cannot be read as descri…
+     88|        panels that are still shown beneath it. */
+     89|     expect(document.body.querySelector('[data-testid="labeling-not-key…
+       |                                                                                                  ^
+     90|       /^Translation coverage, ISO 15223-1 symbols, UDI placement and t…
+     91|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:18:57
+   Duration  1.39s (transform 339ms, setup 174ms, import 446ms, tests 142ms, environment 483ms)
+

@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·····x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > shows no count while the triage read has failed
+AssertionError: expected '0' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "0"
+
+ ❯ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx:116:51
+    114|        below are asserted after the read has failed, not before it set…
+    115|     await waitFor(() => getByTestId('data-gate-error'));
+    116|     expect(getByTestId('pm-mdr-due').textContent).toBe('—');
+       |                                                   ^
+    117|     expect(getByTestId('pm-capas').textContent).toBe('—');
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  03:08:23
+   Duration  1.83s (transform 447ms, setup 163ms, import 600ms, tests 297ms, environment 551ms)
+

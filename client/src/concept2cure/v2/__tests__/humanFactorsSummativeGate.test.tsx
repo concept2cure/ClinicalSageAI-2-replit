@@ -66,7 +66,10 @@ const FILE = {
       },
     ],
   },
-  meta: { count: 1, source: 'hf_engineering_files' },
+  // Slice 0: the screen shows the file only when the route reports the read keyed
+  // to the project. The route cannot send `scope: 'program'` today (slice 19 keys
+  // hf_engineering_files); humanFactorsProjectKeyed.test.tsx covers today's response.
+  meta: { count: 1, source: 'hf_engineering_files', scope: 'program' },
 };
 
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });

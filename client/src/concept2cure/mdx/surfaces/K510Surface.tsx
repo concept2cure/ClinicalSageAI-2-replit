@@ -184,10 +184,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      per-section status, and drove both the blocker count and the completion
      readout. The server owns that list. */
   const predicatesState = toDataState(predicates.rows, predicates.loading, predicates.error, {
-    idleReason: 'Predicate candidates are searched per device program.',
+    idleReason: 'Predicate candidates are searched per device project.',
   });
   const seState = toDataState(seMatrix.rows, seMatrix.loading, seMatrix.error, {
-    idleReason: 'The substantial-equivalence matrix is held per program.',
+    idleReason: 'The substantial-equivalence matrix is held per project.',
   });
   const estarState = toDataState(estar.rows, estar.loading, estar.error, {
     idleReason: 'eSTAR sections are held per submission.',
@@ -264,7 +264,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       );
     }
     const refusal = !deviceIdent
-      ? 'Open a device program to claim a predicate of record'
+      ? 'Open a device project to claim a predicate of record'
       : null;
     return (
       <button
@@ -308,12 +308,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            510(k) pathway · {program ? program.title : 'No program selected'}
+            510(k) pathway · {program ? program.title : 'No project selected'}
           </div>
           <div className="section-sub">
             {program
               ? `Stage ${activeStageIdx + 1} of ${K510_STAGES.length} — ${K510_STAGES[activeStageIdx]?.label ?? ''} · ${program.dueLabel}`
-              : 'Open a device program to see its stage and filing clock.'}
+              : 'Open a device project to see its stage and filing clock.'}
           </div>
         </div>
         <button
@@ -336,7 +336,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             lockedTitle ??
             (program
               ? 'Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests'
-              : 'Select a 510(k) program first')
+              : 'Select a 510(k) project first')
           }
           onClick={() => {
             if (!program) return;

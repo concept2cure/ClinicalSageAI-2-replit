@@ -148,7 +148,8 @@ export const BIOTECH_PROGRAM_SPINE: Record<BiotechProgramPhase, PhaseSpine> = {
       'compute_fih_dose',
       'classify_tox_findings',
       'assess_nonclinical_program',
-      'draft_nonclinical_overview_m2_4',
+      // draft_nonclinical_overview_m2_4 returns the M4S outline until nonclinical
+      // studies are recorded against a project (Rule 2 audit S2, 2026-10-26).
       'plan_ind_module_authoring',
       'build_pre_ind_package',
       'assess_ind_readiness',

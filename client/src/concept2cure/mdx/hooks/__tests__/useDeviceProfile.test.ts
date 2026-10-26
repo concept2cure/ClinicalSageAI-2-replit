@@ -349,7 +349,7 @@ describe('lookupRecognizedStandards (vendored FDA list, never inferred)', () => 
     /* Copy retired by W0-5: the reason states the precondition, it no
        longer instructs ("Select a program or enter a product code first").
        What is pinned here is that a reason is GIVEN and no request is made. */
-    expect(empty?.unavailableReason).toMatch(/program is open, or a product code/);
+    expect(empty?.unavailableReason).toMatch(/project is open, or a product code/);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

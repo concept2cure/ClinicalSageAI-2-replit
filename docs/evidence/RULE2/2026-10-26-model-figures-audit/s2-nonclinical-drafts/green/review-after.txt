@@ -1,0 +1,16 @@
+# S2 review green: nonclinical-drafts-refuse-model-figures.test.ts after the fix. The 13-file neighbourhood (638 tests) also passes.
+
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer 34ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and nothing supplied, gives the outline without claiming what a project holds 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > when the named project cannot be resolved, says so with its code and claims no absence 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them 0ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and nothing supplied, gives the outline without claiming what a project holds 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > when the named project cannot be resolved, says so with its code and claims no absence 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them 1ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

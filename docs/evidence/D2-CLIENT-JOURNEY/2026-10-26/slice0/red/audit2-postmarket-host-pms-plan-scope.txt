@@ -1,0 +1,33 @@
+RED (audit2 postmarket-host #4): the scope line still says 'PMS plan entries ... cover all projects in this organization' though the route has no PMS plan store (pmsPlan: []).
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-------x-
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no scope for PMS plan entries, which have no store
+AssertionError: expected 'Surveillance signals, PMS plan entrie…' not to match /PMS plan entries/
+
+- Expected:
+/PMS plan entries/
+
++ Received:
+"Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization. They are not shown until this screen reads this project's records. Reporting clocks and the MDR/CAPA deadline metrics are limited to Class II · 510(k)."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:210:23
+    208|
+    209|     const scope = getByTestId('postmarket-scope').textContent ?? '';
+    210|     expect(scope).not.toMatch(/PMS plan entries/);
+       |                       ^
+    211|     expect(scope).toContain(
+    212|       "Surveillance signals and the CAPA board are read for every proj…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  05:03:39
+   Duration  1.45s (transform 325ms, setup 172ms, import 415ms, tests 111ms, environment 612ms)
+

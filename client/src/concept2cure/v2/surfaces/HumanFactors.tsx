@@ -115,6 +115,13 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
      empty, or an honest error — never a fabricated stand-in. */
   const hf = useLiveData<HfFileData>('/api/human-factors');
   const file = hf.data;
+  /* Slice 0 (INFORMATION_ARCHITECTURE.md, `human-factors` row): the read
+     returns the organization's FIRST file (server/routes/human-factors.ts:92)
+     and hf_engineering_files has no program column, so the file may be another
+     project's. Its panels, and the writes into it, render only once the route
+     reports the read keyed to the project; an unreported scope counts as not
+     keyed. */
+  const keyed = hf.meta?.scope === 'program';
 
   /* ── The overlay holds ONLY what the server has acknowledged ───────────────
      This screen renders a SAFETY GATE: the IEC 62366-1 §5.9 summative-evaluation
@@ -221,7 +228,9 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     eyebrow: 'Use-related risk — IEC 62366-1',
     title: 'Add use scenario',
     sub: 'Each scenario is a task where a use error could cause harm. Serious or critical harm makes it a critical task that must be mitigated before summative testing.',
-    governed: 'Use scenarios feed the use-related risk analysis and the HFE/UE report; changes are audit-logged.',
+    /* Slice 0 audit: "changes are audit-logged" dropped — creating a scenario
+       records no audit row (server/routes/human-factors.ts:269). */
+    governed: 'Use scenarios feed the use-related risk analysis and the HFE/UE report.',
     submitLabel: 'Add scenario',
     fields: [
       { key: 'task', label: 'Task / use step', type: 'text', placeholder: 'e.g. Result interpretation (positive call)', required: true },
@@ -345,11 +354,24 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       };
     }
     if (hf.empty || !file) {
+      /* Slice 0 audit 2: no "Create the HFE/UE file" action — no AnA tool and
+         no control on this screen creates one. Unkeyed, a file recorded later
+         would not be shown here either, and AnA is told so. */
       return {
         summary:
           'Human factors (IEC 62366-1): this organisation has no HFE/UE file yet, so there is no ' +
-          'completeness score or use-related risk analysis on screen.',
-        availableActions: ['Create the HFE/UE file for this device'],
+          'completeness score or use-related risk analysis on screen.' +
+          (keyed ? '' : " A file recorded later is not shown here until this screen reads this project's records."),
+      };
+    }
+    /* Slice 0: the screen hides a file it cannot tie to the project, so AnA is
+       not handed that file's facts, or its writes, as this screen's either. */
+    if (!keyed) {
+      return {
+        summary:
+          "Human factors (IEC 62366-1): this screen reads the organization's first HFE/UE file, which may be " +
+          "another project's, so it shows no file, completeness or use-related risk analysis, and offers no " +
+          "write into it, until the read is keyed to the project.",
       };
     }
     return {
@@ -394,13 +416,14 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         })),
       },
       availableActions: [
-        'Add a use scenario (feeds the use-related risk analysis; the write is audit-logged)',
+        /* Slice 0 audit: no "audit-logged" — the scenario create writes no audit row. */
+        'Add a use scenario (feeds the use-related risk analysis)',
         'Record a mitigation against a critical task (governed — requires a reason for change, and only a ' +
           'mitigation the HFE/UE record accepts can move the summative gate)',
         'Mark an HFE/UE file element present or absent (written to the HFE/UE record and audit-logged)',
       ],
     };
-  }, [hf.loading, hf.error, hf.empty, file, device, compPct, hfe, risk, firstUnmit, scenarios]);
+  }, [hf.loading, hf.error, hf.empty, file, keyed, device, compPct, hfe, risk, firstUnmit, scenarios]);
   usePublishSurfaceContext('human-factors', anaContext);
 
   /* ── Honest states: loading / error / empty (no fixture fallback) ── */
@@ -420,10 +443,14 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     );
   }
   if (hf.empty || !file) {
+    /* Slice 0 audit 2: this branch runs before the keyed check, so unkeyed it
+       must not promise a recorded file "appears here" — it would be hidden. */
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
         <EmptyState icon={I.fileText} title="No HFE/UE file yet"
-          hint="Once an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here." />
+          hint={keyed
+            ? 'Once an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here.'
+            : "No IEC 62366-1 HFE/UE file is recorded for the organization. A file is shown here once this screen reads this project's records."} />
       </div>
     );
   }
@@ -434,10 +461,24 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} human factors</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1</h1>
-          <p className="sp-state">Organization-wide usability records. {device} — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
+          {/* Slice 0: the device name is the file's record, so it is named only once the read is keyed. */}
+          <p className="sp-state">{keyed
+            ? `${device} — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.`
+            : 'Use-related risk analysis and HFE/UE file completeness, the gate before summative testing.'}</p>
         </div>
-        <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
+        {/* Slice 0 audit: the scenario POST attaches to the organization's oldest
+            file (human-factors.ts:259), not necessarily the one read, so no write
+            is offered into a file this screen cannot tie to the project. */}
+        {keyed && <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>}
       </div>
+
+      {/* Slice 0: the file panels below read the organization's first file, which
+          may be another project's, so they are not shown until the read is keyed. */}
+      {!keyed ? (
+        <EmptyState icon={I.info} testId="hf-not-keyed"
+          title="Shown once this screen reads this project's records"
+          hint="This screen reads the organization's first HFE/UE file, which may be another project's, so its use-related risk analysis and completeness are not shown here, and no use scenario is added from here." />
+      ) : (<>
 
       {/* Three branches, because there are three states. The middle one — an
           HFE/UE file with no hazard-related use scenarios on it — used to fall
@@ -528,6 +569,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
           </button>
         ))}
       </div>
+      </>)}
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addScenario} />}
       {mitigating && <C2CForm config={MITIGATE_FORM} onCancel={() => setMitigating(null)} onSubmit={recordMitigation} />}

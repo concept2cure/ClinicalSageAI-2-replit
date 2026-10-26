@@ -103,7 +103,7 @@ const PATHWAY_ANCHOR: Partial<Record<MdxSurfaceId, Program['pathway'] | null>> =
 const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }> = {
   'device-workstream': {
     title: 'Device portfolio',
-    blurb: 'the device portfolio overview — program cards and portfolio health KPIs.',
+    blurb: 'the device portfolio overview — project cards and portfolio health KPIs.',
   },
   'device-510k': {
     title: '510(k) pathway',
@@ -112,7 +112,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-pma': {
     title: 'PMA pathway',
-    blurb: 'the PMA pathway workspace — premarket-approval modules for the program in context.',
+    blurb: 'the PMA pathway workspace — premarket-approval modules for the project in context.',
   },
   'device-cer': {
     title: 'Clinical Evaluation Report',
@@ -128,7 +128,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-software': {
     title: 'Software lifecycle',
-    blurb: 'software documentation completeness for the program in context.',
+    blurb: 'software documentation completeness for the project in context.',
   },
   'device-engineering': {
     title: 'Device engineering',
@@ -183,7 +183,7 @@ const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
 ]);
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
-  if (nav === 'device-postmarket') return 'Mixed scope: organization-wide surveillance feeds; reporting clocks for this project';
+  if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
   return ORGANIZATION_VIEWS.has(nav) ? 'Organization-wide view' : null;
 }
 
@@ -295,14 +295,14 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     const meta = DEVICE_SCREEN_META[nav];
     if (liveProgramsResult.loading) {
       return {
-        summary: `${meta.title} — the regulatory-program read is still loading; nothing program-scoped is final yet.`,
+        summary: `${meta.title} — the projects read is still loading; nothing project-scoped is final yet.`,
         facts: { screen: nav },
         availableActions: DEVICE_SCREEN_ACTIONS,
       };
     }
     if (liveProgramsResult.error) {
       return {
-        summary: `${meta.title} — the regulatory programs could not be read — program-scoped content is missing because of a failure, not because none exists.`,
+        summary: `${meta.title} — the projects could not be read — project-scoped content is missing because of a failure, not because none exists.`,
         facts: { screen: nav },
         availableActions: DEVICE_SCREEN_ACTIONS,
       };
@@ -311,8 +311,8 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       summary:
         `${meta.title} — ${meta.blurb}` +
         (programForContext
-          ? ` Program in context: ${programForContext.title}.`
-          : ' No device program is in context; program-scoped registers show their empty states.'),
+          ? ` Project in context: ${programForContext.title}.`
+          : ' No device project is in context; project-scoped registers show their empty states.'),
       facts: {
         screen: nav,
         program: programForContext
@@ -429,11 +429,11 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
          nothing called it, so a transient failure on the portfolio left the
          user with a dead screen and no control — UI standards §8. */
       surface = liveProgramsResult.loading ? (
-        <EmptyState busy title="Loading device programs" testId="mdx-programs-loading" />
+        <EmptyState busy title="Loading device projects" testId="mdx-programs-loading" />
       ) : liveProgramsResult.error ? (
         <ErrorState
           variant="panel"
-          title="Couldn't load your device programs"
+          title="Couldn't load your device projects"
           message={liveProgramsResult.error}
           retry={liveProgramsResult.refresh}
           testId="mdx-programs-error"

@@ -1,0 +1,706 @@
+# 2026-10-26T03:39:53Z HEAD 928b70996 (working tree, before the fix)
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx -t Download delivers a file
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+----xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault Download delivers a file, or says it asks AnA (audit [7]) > an uploaded file of the open project downloads through the governed route
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Document vault
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Documents in the vault, with each one’s versions and audit trail.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <input
+            accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.ndjson,.xml,.png,.jpg,.jpeg,.gif,.xpt,.doc,.xls,.rtf"
+            aria-label="Choose documents to upload to the vault"
+            multiple=""
+            style="display: none;"
+            type="file"
+          />
+          <button
+            class="btn primary small"
+            title="File a document into this program’s vault"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="17 8 12 3 7 8"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="3"
+                y2="15"
+              />
+            </svg>
+             
+            Upload
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row metrics-compact"
+      >
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Artifacts in vault
+          </div>
+          <div
+            class="metric-val"
+          >
+            1
+          </div>
+          <div
+            class="metric-meta"
+          >
+            All folders
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="ok"
+        >
+          <div
+            class="metric-label"
+          >
+            Locked + final
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Content hash sealed
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="ok"
+        >
+          <div
+            class="metric-label"
+          >
+            In review
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Awaiting approval
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Drafts
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Working copies
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Uploaded files
+          </div>
+          <div
+            class="metric-val"
+          >
+            1
+          </div>
+          <div
+            class="metric-meta"
+          >
+            No authoring lifecycle
+          </div>
+        </div>
+      </div>
+      <div
+        class="vault-grid"
+      >
+        <aside
+          class="vault-rail"
+        >
+          <div
+            class="vault-rail-lbl"
+          >
+            Folders
+          </div>
+          <button
+            class="vault-tree-row"
+            data-active="true"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="16"
+              >
+                <path
+                  d="M22 19a2 2 0 0 ...
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:162:46
+    160|     await waitFor(() => expect(container.querySelector('.drawer-title'…
+    161|     fireEvent.click(within(container.querySelector('.drawer-actions') …
+    162|     await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
+       |                                              ^
+    163|     expect(calls).toContain(`/api/c2c/project-vault/${PROJECT.id}/docu…
+    164|     expect(downloadBlob.mock.calls[0][0]).toBe('bench.bin');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault Download delivers a file, or says it asks AnA (audit [7]) > a refused download says so and hands nothing over
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-download-error"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Document vault
+        </h1>
+        <div
+          class="page-sub"
+        >
+          Documents in the vault, with each one’s versions and audit trail.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <input
+          accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.ndjson,.xml,.png,.jpg,.jpeg,.gif,.xpt,.doc,.xls,.rtf"
+          aria-label="Choose documents to upload to the vault"
+          multiple=""
+          style="display: none;"
+          type="file"
+        />
+        <button
+          class="btn primary small"
+          title="File a document into this program’s vault"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="17 8 12 3 7 8"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="3"
+              y2="15"
+            />
+          </svg>
+           
+          Upload
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row metrics-compact"
+    >
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Artifacts in vault
+        </div>
+        <div
+          class="metric-val"
+        >
+          1
+        </div>
+        <div
+          class="metric-meta"
+        >
+          All folders
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="ok"
+      >
+        <div
+          class="metric-label"
+        >
+          Locked + final
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Content hash sealed
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="ok"
+      >
+        <div
+          class="metric-label"
+        >
+          In review
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Awaiting approval
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Drafts
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Working copies
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Uploaded files
+        </div>
+        <div
+          class="metric-val"
+        >
+          1
+        </div>
+        <div
+          class="metric-meta"
+        >
+          No authoring lifecycle
+        </div>
+      </div>
+    </div>
+    <div
+      class="vault-grid"
+    >
+      <aside
+        class="vault-rail"
+      >
+        <div
+          class="vault-rail-lbl"
+        >
+          Folders
+        </div>
+        <button
+          class="vault-tree-row"
+          data-active="true"
+        >
+          <span
+            class="ico"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+              />
+            </svg>
+          </span>
+          <span
+            class="lbl"
+          >
+            All artifacts
+          </span>
+          <span
+            class="n"
+          >
+            1
+          </...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Document vault
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Documents in the vault, with each one’s versions and audit trail.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <input
+            accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.tsv,.json,.ndjson,.xml,.png,.jpg,.jpeg,.gif,.xpt,.doc,.xls,.rtf"
+            aria-label="Choose documents to upload to the vault"
+            multiple=""
+            style="display: none;"
+            type="file"
+          />
+          <button
+            class="btn primary small"
+            title="File a document into this program’s vault"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="17 8 12 3 7 8"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="3"
+                y2="15"
+              />
+            </svg>
+             
+            Upload
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row metrics-compact"
+      >
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Artifacts in vault
+          </div>
+          <div
+            class="metric-val"
+          >
+            1
+          </div>
+          <div
+            class="metric-meta"
+          >
+            All folders
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="ok"
+        >
+          <div
+            class="metric-label"
+          >
+            Locked + final
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Content hash sealed
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="ok"
+        >
+          <div
+            class="metric-label"
+          >
+            In review
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Awaiting approval
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Drafts
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Working copies
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Uploaded files
+          </div>
+          <div
+            class="metric-val"
+          >
+            1
+          </div>
+          <div
+            class="metric-meta"
+          >
+            No authoring lifecycle
+          </div>
+        </div>
+      </div>
+      <div
+        class="vault-grid"
+      >
+        <aside
+          class="vault-rail"
+        >
+          <div
+            class="vault-rail-lbl"
+          >
+            Folders
+          </div>
+          <button
+            class="vault-tree-row"
+            data-active="true"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="16"
+              >
+                <path
+                  d="M22 19a2 2 0 0 ...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:184:11
+    182|     await waitFor(() => expect(container.querySelector('.drawer-title'…
+    183|     fireEvent.click(within(container.querySelector('.drawer-actions') …
+    184|     await waitFor(() => expect(screen.getByTestId('vault-download-erro…
+       |           ^
+    185|     expect(screen.getByTestId('vault-download-error').textContent).toM…
+    186|     expect(downloadBlob).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx > device-vault Download delivers a file, or says it asks AnA (audit [7]) > an authored artifact offers no Download; its button says it asks AnA, and promises no logging
+AssertionError: expected <button …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn primary small"
+>
+  <svg
+    fill="none"
+    height="16"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="16"
+  >
+    <path
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+    />
+    <polyline
+      points="7 10 12 15 17 10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="15"
+      y2="3"
+    />
+  </svg>
+   Download
+</button>
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx:195:72
+    193|     await waitFor(() => expect(container.querySelector('.drawer-title'…
+    194|     const actions = within(container.querySelector('.drawer-actions') …
+    195|     expect(actions.queryByRole('button', { name: /^.?\s*Download$/ }))…
+       |                                                                        ^
+    196|     fireEvent.click(actions.getByRole('button', { name: /ask ana about…
+    197|     expect(asked).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 skipped (7)
+   Start at  03:39:55
+   Duration  12.21s (transform 458ms, setup 226ms, import 540ms, tests 10.49s, environment 671ms)
+

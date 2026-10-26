@@ -72,7 +72,7 @@ describe('DeviceProfilePanel — honest states', () => {
     /* W0-5: the panel states why it is empty rather than instructing.
        The behaviour under test — an honest summary, a disabled Edit, no
        fetch — is unchanged. */
-    expect(screen.getByText('The device profile is held per program')).toBeTruthy();
+    expect(screen.getByText('The device profile is held per project')).toBeTruthy();
     expect((screen.getByText('Edit') as HTMLButtonElement).disabled).toBe(true);
     expect(fetchSpy).not.toHaveBeenCalled();
   });

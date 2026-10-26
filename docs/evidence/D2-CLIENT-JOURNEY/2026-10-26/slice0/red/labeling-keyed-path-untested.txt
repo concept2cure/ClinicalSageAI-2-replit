@@ -1,0 +1,1544 @@
+Slice 0, labeling, audit item 0: the keyed path's tests mount the screen with a project and serve /api/mdx/labeling?program_id=<id>.
+Run against Labeling.tsx as it stood after the first pass (RECORDS_KEYED_TO_PROJECT = false), before the key came from the screen.
+
+=== labelingCoverageHonesty.test.tsx ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx > Labeling — coverage honesty > claims no coverage and offers no "start tracking" CTA while translations are still being read
+AssertionError: expected 'Specialist / device / LabelingLabelin…' to match /Reading this label's translation cove…/
+
+Ignored nodes: comments, script, style
+        class="page-inner"
+      >
+          class="ph"
+        >
+              class="ph-eyebrow"
+            >
+              Specialist / device / Labeling
+              class="ph-title"
+            >
+              Labeling and IFU
+              class="ph-sub"
+            >
+              Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+            style="display: flex; gap: 8px;"
+          >
+              class="btn ghost"
+            >
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                  d="M20 3v4"
+                />
+                  d="M22 5h-4"
+                />
+                  d="M4 17v2"
+                />
+                  d="M5 18H3"
+                />
+               Ask AnA
+          class="scaf-note"
+          data-testid="labeling-not-keyed"
+          style="padding: 18px 10px;"
+        >
+          Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+          class="split2"
+        >
+            class="sec"
+          >
+              class="sec-hdr"
+            >
+                class="sec-title"
+              >
+                Warnings and precautions
+                class="sec-sub"
+              >
+                traced to the risk file (ISO 14971)
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                  aria-hidden="true"
+                  class="lucide lucide-info"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                    d="M12 16v-4"
+                  />
+                    d="M12 8h.01"
+                  />
+                class="c2c-empty-t"
+              >
+                Warnings and precautions are not available yet
+                class="c2c-empty-h"
+              >
+                This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+            class="sec"
+          >
+              class="sec-hdr"
+            >
+                class="sec-title"
+              >
+                Compliance checks
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                  aria-hidden="true"
+                  class="lucide lucide-info"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                    d="M12 16v-4"
+                  />
+                    d="M12 8h.01"
+                  />
+                class="c2c-empty-t"
+              >
+                No automated compliance checks yet
+                class="c2c-empty-h"
+              >
+                Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Label and IFU sections
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-file-text"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+                />
+                  d="M14 2v4a2 2 0 0 0 2 2h4"
+                />
+                  d="M10 9H8"
+                />
+                  d="M16 13H8"
+                />
+                  d="M16 17H8"
+                />
+              class="c2c-empty-t"
+            >
+              No section breakdown yet
+              class="c2c-empty-h"
+            >
+              Per-section authoring status for this label isn't captured by the labeling service yet.
+
+- Expected:
+/Reading this label's translation coverage/
+
++ Received:
+"Specialist / device / LabelingLabeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnAShown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.Warnings and precautionstraced to the risk file (ISO 14971)Warnings and precautions are not available yetThis screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx:53:40
+     51|     serve('pending');
+     52|     mount();
+     53|     await waitFor(() => expect(text()).toMatch(/Reading this label's t…
+       |                                        ^
+     54|     expect(text()).not.toMatch(/Add the target-language IFU\/label tra…
+     55|     expect(text()).not.toMatch(/0\/0 approved/);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx > Labeling — coverage honesty > claims no coverage figure after the translations read failed
+AssertionError: expected 'Specialist / device / LabelingLabelin…' to match /Couldn't read this label's translatio…/
+
+Ignored nodes: comments, script, style
+        class="page-inner"
+      >
+          class="ph"
+        >
+              class="ph-eyebrow"
+            >
+              Specialist / device / Labeling
+              class="ph-title"
+            >
+              Labeling and IFU
+              class="ph-sub"
+            >
+              Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+            style="display: flex; gap: 8px;"
+          >
+              class="btn ghost"
+            >
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                  d="M20 3v4"
+                />
+                  d="M22 5h-4"
+                />
+                  d="M4 17v2"
+                />
+                  d="M5 18H3"
+                />
+               Ask AnA
+          class="scaf-note"
+          data-testid="labeling-not-keyed"
+          style="padding: 18px 10px;"
+        >
+          Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+          class="split2"
+        >
+            class="sec"
+          >
+              class="sec-hdr"
+            >
+                class="sec-title"
+              >
+                Warnings and precautions
+                class="sec-sub"
+              >
+                traced to the risk file (ISO 14971)
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                  aria-hidden="true"
+                  class="lucide lucide-info"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                    d="M12 16v-4"
+                  />
+                    d="M12 8h.01"
+                  />
+                class="c2c-empty-t"
+              >
+                Warnings and precautions are not available yet
+                class="c2c-empty-h"
+              >
+                This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+            class="sec"
+          >
+              class="sec-hdr"
+            >
+                class="sec-title"
+              >
+                Compliance checks
+              aria-live="polite"
+              class="c2c-empty-state tone-idle"
+              role="status"
+            >
+                aria-hidden="true"
+                class="c2c-empty-ic"
+              >
+                  aria-hidden="true"
+                  class="lucide lucide-info"
+                  fill="none"
+                  focusable="false"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                    d="M12 16v-4"
+                  />
+                    d="M12 8h.01"
+                  />
+                class="c2c-empty-t"
+              >
+                No automated compliance checks yet
+                class="c2c-empty-h"
+              >
+                Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Label and IFU sections
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-file-text"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+                />
+                  d="M14 2v4a2 2 0 0 0 2 2h4"
+                />
+                  d="M10 9H8"
+                />
+                  d="M16 13H8"
+                />
+                  d="M16 17H8"
+                />
+              class="c2c-empty-t"
+            >
+              No section breakdown yet
+              class="c2c-empty-h"
+            >
+              Per-section authoring status for this label isn't captured by the labeling service yet.
+
+- Expected:
+/Couldn't read this label's translation coverage/
+
++ Received:
+"Specialist / device / LabelingLabeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnAShown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.Warnings and precautionstraced to the risk file (ISO 14971)Warnings and precautions are not available yetThis screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx:61:40
+     59|     serve('failed');
+     60|     mount();
+     61|     await waitFor(() => expect(text()).toMatch(/Couldn't read this lab…
+       |                                        ^
+     62|     expect(text()).not.toMatch(/Add the target-language IFU\/label tra…
+     63|     expect(text()).not.toMatch(/0\/0 approved/);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  03:16:46
+   Duration  11.40s (transform 383ms, setup 175ms, import 466ms, tests 10.10s, environment 514ms)
+
+=== labelingAddTranslation.test.tsx ===
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx > Labeling — add translation > does not ask for a language name it cannot store
+TestingLibraryElementError: Unable to find an element with the text: /Add translation/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openForm client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:78:28
+     76|     />,
+     77|   );
+     78|   const add = await screen.findAllByText(/Add translation/);
+       |                            ^
+     79|   fireEvent.click(add[0].closest('button')!);
+     80|   return await screen.findByLabelText(/Language code/);
+ ❯ client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:85:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx > Labeling — add translation > POSTs language + method after the code and method alone are filled in
+TestingLibraryElementError: Unable to find an element with the text: /Add translation/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openForm client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:78:28
+     76|     />,
+     77|   );
+     78|   const add = await screen.findAllByText(/Add translation/);
+       |                            ^
+     79|   fireEvent.click(add[0].closest('button')!);
+     80|   return await screen.findByLabelText(/Language code/);
+ ❯ client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:92:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx > Labeling — add translation > still refuses to submit without the one field the write needs
+TestingLibraryElementError: Unable to find an element with the text: /Add translation/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+
+Ignored nodes: comments, script, style
+      class="page-inner"
+    >
+        class="ph"
+      >
+            class="ph-eyebrow"
+          >
+            Specialist / device / Labeling
+            class="ph-title"
+          >
+            Labeling and IFU
+            class="ph-sub"
+          >
+            Organization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file.
+          style="display: flex; gap: 8px;"
+        >
+            class="btn ghost"
+          >
+              aria-hidden="true"
+              class="lucide lucide-sparkles"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+              />
+                d="M20 3v4"
+              />
+                d="M22 5h-4"
+              />
+                d="M4 17v2"
+              />
+                d="M5 18H3"
+              />
+             Ask AnA
+        class="scaf-note"
+        data-testid="labeling-not-keyed"
+        style="padding: 18px 10px;"
+      >
+        Shown once this screen reads this project's records. Its labeling read is not limited to a project yet, so it would show the organization's first labeling document, which may belong to another project.
+        class="split2"
+      >
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Warnings and precautions
+              class="sec-sub"
+            >
+              traced to the risk file (ISO 14971)
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              Warnings and precautions are not available yet
+              class="c2c-empty-h"
+            >
+              This screen does not read label warnings or the ISO 14971 hazard each one controls. The labeling service has no store for them yet.
+          class="sec"
+        >
+            class="sec-hdr"
+          >
+              class="sec-title"
+            >
+              Compliance checks
+            aria-live="polite"
+            class="c2c-empty-state tone-idle"
+            role="status"
+          >
+              aria-hidden="true"
+              class="c2c-empty-ic"
+            >
+                aria-hidden="true"
+                class="lucide lucide-info"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                  d="M12 16v-4"
+                />
+                  d="M12 8h.01"
+                />
+              class="c2c-empty-t"
+            >
+              No automated compliance checks yet
+              class="c2c-empty-h"
+            >
+              Reading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.
+        class="sec"
+      >
+          class="sec-hdr"
+        >
+            class="sec-title"
+          >
+            Label and IFU sections
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          role="status"
+        >
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+              aria-hidden="true"
+              class="lucide lucide-file-text"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+                d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+              />
+                d="M14 2v4a2 2 0 0 0 2 2h4"
+              />
+                d="M10 9H8"
+              />
+                d="M16 13H8"
+              />
+                d="M16 17H8"
+              />
+            class="c2c-empty-t"
+          >
+            No section breakdown yet
+            class="c2c-empty-h"
+          >
+            Per-section authoring status for this label isn't captured by the labeling service yet.
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ openForm client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:78:28
+     76|     />,
+     77|   );
+     78|   const add = await screen.findAllByText(/Add translation/);
+       |                            ^
+     79|   fireEvent.click(add[0].closest('button')!);
+     80|   return await screen.findByLabelText(/Language code/);
+ ❯ client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx:121:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  03:16:59
+   Duration  16.82s (transform 478ms, setup 232ms, import 608ms, tests 15.09s, environment 705ms)
+

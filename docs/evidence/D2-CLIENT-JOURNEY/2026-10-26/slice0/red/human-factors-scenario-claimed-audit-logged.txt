@@ -1,0 +1,34 @@
+Red run against HumanFactors.tsx at HEAD (928b70996); the file had no working-tree diff when this ran.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-----x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not say adding a use scenario is audit-logged, which the route does not record
+AssertionError: expected 'Specialist  device  human factorsHuma…' not to match /audit-logged/
+
+- Expected:
+/audit-logged/
+
++ Received:
+"Specialist  device  human factorsHuman factors  IEC 62366-1Organization-wide usability records. OTHER-PROJECT pump — infusion pump — use-related risk analysis and HFE/UE file completeness, the gate before summative testing. Add use scenario Whether you can run the summative usability study yet1 critical task still has no mitigation — summative testing shouldn't start until it is controlled.You've analysed 1 use scenarios; 1 is a critical task (serious or critical harm). The HFE/UE file is 20% complete against IEC 62366-1 — 8 elements still open. I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one. Mitigate Other project bolus programmingOr work the use-related risk table and HFE checklist below.Use-related risk analysis  1 critical of 1 scenarios  critical-task gate: blockedUnmitigated critical tasks1 critical task must be mitigated before summative testing (IEC 62366-1 S5.9).Other project bolus programmingCritical taskDecimal misplacedCriticalUnmitigated MitigateHFE/UE file completeness  IEC 62366-1  2/10 elements  each tick is written to the HFE/UE recordUse specificationUser profilesUse environmentsUI characteristicsKnown use problemsHazard-related use scenariosCritical tasksFormative evaluationSummative evaluationHFE/UE reportUse-related risk — IEC 62366-1Add use scenarioEach scenario is a task where a use error could cause harm. Serious or critical harm makes it a critical task that must be mitigated before summative testing.Task / use step*Potential use error*Potential harm severity*Select…NegligibleMinorSeriousCriticalMitigation in place?*Select…No — not yet mitigatedYes — risk control documentedUse scenarios feed the use-related risk analysis and the HFE/UE report; changes are audit-logged.Cancel Add scenario"
+
+ ❯ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx:158:28
+    156|     const form = await screen.findByRole('button', { name: /Add scenar…
+    157|     expect(form).toBeTruthy();
+    158|     expect(bodyText()).not.toMatch(/audit-logged/);
+       |                            ^
+    159|
+    160|     const actions = (seen?.availableActions ?? []).join('\n');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  03:17:02
+   Duration  1.83s (transform 430ms, setup 175ms, import 523ms, tests 463ms, environment 508ms)
+

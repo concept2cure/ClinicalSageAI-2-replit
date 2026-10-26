@@ -1,0 +1,657 @@
+# Rule 2 S2 green, after the change: the S2 suites (vitest --reporter=verbose).
+
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cover every authored module 2ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > names only skills the library holds 1ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Can you walk me through the type I error implications of our superiority trial and whether the hypothesis testing approach holds up? 79ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Our biostatistician says the confidence interval excludes 1 but the p-value is 0.06. How do we reconcile that? 57ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How many patients do we need per arm if we assume a 30% dropout rate and 90% power? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Please check the sample size justification in the protocol. I think we're underpowered for the non-inferiority margin we picked. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Given how unsure we are about the effect size, what's the realistic probability of success for phase 3? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How should rescue medication be handled as an intercurrent event in the estimand for our 12-week trial? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > For discontinuation due to adverse events, is a hypothetical strategy defensible or should we stay with treatment policy? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Draft the E9(R1) wording for the primary estimand, including the population-level summary. 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Review our statistical analysis plan: is the full analysis set defined consistently with the ITT principle? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Which analyses should run on the per-protocol set versus the safety population? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > What does the SAP need to say about key secondary endpoints and the subgroup analyses we plan? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > We have two primary endpoints and three key secondaries. Hierarchical testing or a graphical approach to hold the family-wise error? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Can we use Hochberg rather than Holm for the three doses compared with placebo? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > If the first endpoint in our fixed-sequence procedure fails, is alpha recycling to the next one allowed? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > We plan one interim analysis at half the information with an O'Brien-Fleming spending function. What are the boundaries? 53ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Who on our side can see unblinded results from the DSMB, and what belongs in the data monitoring committee charter? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Would FDA accept a seamless phase 2/3 adaptive design with sample size re-estimation at the end of stage one? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Is LOCF still acceptable as the primary approach, or do we need multiple imputation with a tipping point analysis? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > What sensitivity analyses should we pre-specify if the data are missing not at random? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How much power do we lose with 20% missing data if the primary analysis is MMRM? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How do we deal with prior-data conflict if we use dynamic borrowing in a Bayesian design? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > What effective sample size does our informative prior contribute, and is that too much? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Can we augment the concurrent control with a historical control using a power prior? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > The hazard ratio looks shaky because the curves separate late. Should we use RMST instead of the log-rank test? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > For our event-driven design we need an event projection: how long until 300 events at 20 patients enrolled per month? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Is a win ratio a sound primary analysis for a hierarchical composite of death and heart-failure hospitalisation? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Our comparator isn't a reference standard, so should we report PPA and NPA instead of sensitivity and specificity? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How many readers do we need in an MRMC reader study comparing AI-assisted reads with unaided reads? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > How large does the study need to be so the lower bound of clinical sensitivity clears our performance goal? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Which SDTM and ADaM versions will FDA accept for our NDA, and do we need define-xml 2.1? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Pinnacle 21 flagged errors in ADSL. What should go in the reviewer's guide? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Are our datasets ready for FDA's technical conformance expectations before we file? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > The CSR calls the result statistically significant, but it's only a nominal p-value after the hierarchy failed. How should it be worded? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Draft the topline results paragraph for the primary endpoint and describe the forest plot. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > biostatistics.json > Enrolled N in Module 2.7.3 doesn't match the CSR. Can you reconcile numbers across the dossier? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > How do we justify the first-in-human dose from our rat and dog NOAELs? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Can we claim dose proportionality across the single ascending dose cohorts? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > What should the clinical pharmacology package include before we file the NDA? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Our in vitro data show CYP3A4 time-dependent inhibition. Do we need a clinical DDI study? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Which index substrate should the interaction study use under ICH M12? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > How do we estimate the fraction metabolized by CYP2C19 for the victim drug assessment? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Can concentration-QTc data from the MAD study replace a thorough QT study? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Our hERG IC50 is 3 uM and the clinical Cmax is 0.1 uM. How worried should we be about QTc? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > What does the E14/S7B Q&A allow for a TQT waiver when we can only dose patients? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Do we need a dedicated hepatic impairment study if the drug is cleared mainly by CYP3A? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Should the food effect study use a high-fat meal with the commercial tablet? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Do we have enough older adults in the phase 3 trials to satisfy ICH E7? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Can we get a BCS biowaiver for our class III immediate-release tablet? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > What design should the bioequivalence study use for a highly variable drug? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Are the test and reference profiles similar? I have the f2 similarity numbers for both lots. 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Can a PBPK model support skipping the clinical study with a strong inhibitor? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Plan the population PK analysis for the phase 3 program, including the covariate analysis. 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Use the exposure-response data to support the 10 mg dose in Module 2.7.2. 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > What ADA sampling schedule do we need for a monthly subcutaneous antibody? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Should our neutralizing antibody assay be cell-based or competitive ligand binding? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical-pharmacology.json > Does this formulation change need an immunogenicity comparability assessment with clinical data? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > We're putting together the clinical development plan for a first-in-class oral anticoagulant. Which studies do we need before the pivotal trial? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is one adequate and well-controlled trial enough for US approval, or do we need two phase 3 studies? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How do we apply quality by design from E8(R1) when planning our proof of concept study? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Can you look over the schedule of activities and the inclusion criteria in our phase 2 protocol? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Draft the objectives and endpoints section using the ICH M11 template. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Check the eligibility criteria in this study protocol for anything a reviewer would flag. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > We need to change the dosing schedule mid-study. Does this protocol amendment have to go to FDA before we implement it? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is adding a new cohort a substantial modification under the EU CTR, and can sites start before it is authorised in CTIS? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Help me write the summary of changes for amendment 3, with a rationale for each change. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Which clinical outcome assessment should measure fatigue in our MS trial, a PRO or a ClinRO? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How do we set a meaningful within-patient change threshold for the symptom score? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Could a patient-reported outcome support a label claim if it is only a key secondary endpoint? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Draft the CSR synopsis for study 301 from the final TLFs. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Which MedDRA version should the adverse event tables in the clinical study report use, and where do we state it? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Check that the subject disposition in this report reconciles from screening to completion. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What needs to change in the investigator's brochure now that the first-in-human safety data are in? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > We want to add hepatotoxicity to the reference safety information in the IB. Does the EU have to approve that before we use it? 17ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Write the guidance for the investigator section. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is our informed consent form missing any of the 21 CFR 50.25 required elements? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Do enrolled participants need to re-consent after the new liver safety finding? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What should the assent document for 8 to 11 year olds say, and how does parental permission work? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > We're expecting a BIMO inspection at our lead site next month. What should we fix first? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > A subject was dosed after failing an entry criterion. Is that an important protocol deviation, and who has to be told? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Set up risk-based monitoring for a 40-site study under E6(R3). 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Our MTD is 400 mg but responses plateau at 200 mg. How should we pick the RP2D? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Design a randomized dose comparison that meets Project Optimus expectations before the registrational trial. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Should we use BOIN instead of 3+3 for the escalation part of the first-in-human study? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > There are maybe 200 patients in the US with this disease. Can we use an external control arm built from natural history data? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What trial design works for such a small population when randomization isn't feasible? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How much information can we take from the historical control using Bayesian borrowing? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Can we use immunobridging instead of a vaccine efficacy trial for the adolescent indication? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How should we set up the lot consistency study for our mRNA product? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is anti-HA antibody titer a correlate of protection we could rely on? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How long does long-term follow-up need to be for our AAV gene therapy? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is our minimally manipulated autologous product an HCT/P under section 361, or does it need a BLA? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What cytokine release syndrome and ICANS monitoring should the CAR-T protocol include? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > When is the initial pediatric study plan due, and can we ask for a deferral? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Can we extrapolate adult efficacy to adolescents under E11A? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Which formulation suits children under two, and how should we scale the pediatric dose? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Could a target trial emulation using claims data support a label expansion? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is this hospital registry fit for purpose as a real-world data source for an FDA submission? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How do we handle confounding by indication with propensity scores in our observational study? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Is our phase 2 study an applicable clinical trial, and who is the responsible party for the ClinicalTrials.gov registration? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What do we need to redact before our clinical study reports are published under Policy 0070, and what counts as commercially confidential information? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > When are results due on ClinicalTrials.gov after the primary completion date, and how do we certify on Form FDA 3674? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Does our open-label outcomes trial need an independent data monitoring committee, and who should sit on it? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Draft a DSMB charter that sets out the closed session and open session arrangements. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > How do we keep unblinded interim data away from the sponsor's study team? Do we need an independent statistical group? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > Which countries should we pick for our phase 3 asthma trial? Help with country selection and site feasibility. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What does an investigator need to sign before site activation: the statement of investigator, financial disclosure, anything else? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > clinical.json > What does investigator qualification involve, and how do we screen for debarment during site selection? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Walk me through what Module 3 needs to cover for our product and how the control strategy ties it together. 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How should the QTPP and our CQAs drive the CMC package? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Where does this program stand on CMC, and which sections are still missing inputs? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What does 3.2.S.2 need to say about the synthetic route and the regulatory starting material? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > We found a second polymorph of the API late in development. How should solid form be characterised and controlled in the drug substance section? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Is our choice of starting materials defensible under ICH Q11? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What belongs in 3.2.P.2 pharmaceutical development for an immediate-release tablet? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Can we show f2 similarity between the clinical and the commercial dissolution profile? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Do we need full information on a novel excipient in our drug product section? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How do we justify the acceptance criteria in our drug substance specification when we only have three batches? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Which universal tests does ICH Q6A expect for a solid oral product, and how should we write the justification of specification? 17ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Should the release specification for our phase 1 batch be tighter than the shelf-life specification? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Check batch poolability for our three registration stability studies before we propose a shelf life. 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What long-term and accelerated conditions do we need for a refrigerated product going to climatic zone IVb? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Is anything out of trend in stability study 42, and how far can Q1E extrapolation take the retest period? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > A late-step reagent is Ames positive. What acceptable intake and control option apply to this mutagenic impurity under ICH M7? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Do we need a nitrosamine risk assessment for a secondary amine API, and what limit applies to an NDSRI? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What qualification threshold applies under Q3A to an impurity in a drug substance dosed at 50 mg a day? 17ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How should elemental impurities and residual solvents be handled for a parenteral product? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Which validation characteristics does ICH Q2(R2) require for a quantitative impurity method, and how does Q14 change method development? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How do we show our HPLC assay is stability-indicating with forced degradation data? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Plan a method transfer of the release assay to the contract manufacturer's QC laboratory. 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How much phase 1 CMC does FDA expect in an original IND for a small molecule? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Is our clinical batch exempt from Part 211, and what does CGMP for phase 1 look like in practice? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What goes in 3.2.R for a US IND, and how do we file manufacturing changes as a CMC information amendment? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What viral clearance studies and cell bank testing do we need before first dosing with a CHO-derived antibody? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How should we set the potency assay and the host cell protein limits for our monoclonal antibody? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Can the platform build Module 3 for our biologic, and what does Q5A(R2) expect from us? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What release testing does our CAR-T need under cell therapy CMC expectations, and how is chain of identity kept? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > How do we control empty capsids and vector copy number in AAV manufacturing? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Our lentiviral vector manufacturing moves to a new site before phase 2. What does ATMP CMC comparability need? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > We are changing the cell culture media after approval. How big a comparability exercise does Q5E call for? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Is moving tablet compression to a new site a prior approval supplement or a CBE-30, and what EU variation type would it be? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Which elements of our dossier should be established conditions, and is a PACMP worth filing? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What goes into the PPQ protocol, and how do we set up continued process verification afterwards? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What is the process capability, as Cpk, of our tablet assay across the recorded batches? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What does EU Annex 15 expect for process validation compared with FDA's three stages? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Draft the Quality Overall Summary for our IND from what is recorded. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > Check that our Module 2.3 agrees with Module 3 on shelf life and impurity limits. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > cmc.json > What goes in 2.3.P of the QOS? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > What is the right order of work for a new medical device program, from intended use through to what the reviewer will ask? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > We are planning a class III device for the US and EU MDR. What has to be in place before we file? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Walk me through what FDA will look for in our device submission before we build the PMA. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How should our design inputs trace to verification and validation results in the design history file? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Our SOP still cites 820.30 for design reviews. Is that right under the new regulation? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Check this file for gaps before the audit. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How do I document the overall residual risk evaluation in our ISO 14971 risk management file? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Our dFMEA lists failure modes but the notified body says we never identified hazardous situations. How do we restructure it? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > What is missing from this before we send it to the notified body? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Which IEC 62304 software safety class fits our insulin dose calculator, and what documentation level will FDA expect? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > We want to retrain our AI/ML model every quarter after clearance. Do we need a PCCP? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Is our sepsis risk score clinical decision support or a device software function? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Is our Bluetooth glucose meter a cyber device under 524B, and what has to be in the SBOM? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How should we present threat modeling and penetration testing results in the premarket cybersecurity documentation? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How many participants do we need for the summative validation of our autoinjector, and which tasks count as critical tasks? 17ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > What goes into a use-related risk analysis under IEC 62366-1? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Which ISO 10993 endpoints apply to a catheter in contact with circulating blood for ten days? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Our device is ethylene oxide sterilized and mains powered. What sterilization validation and IEC 60601 testing do we need? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Can we cite one predicate device for the intended use and another for the technology in our 510(k)? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How do we show our different technological characteristics do not raise different questions of safety and effectiveness? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Build the predicate comparison against K201234 and tell me where our argument is weak. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Is our trial a significant risk device study that needs an IDE, or can the IRB treat it as non-significant risk? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > What will the notified body expect in our clinical evaluation report if we rely on MDR equivalence to a competitor's implant? 19ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Review this against MDR Annex XIV. 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > We changed the housing material on our cleared device. Is that a new 510(k) or a letter to file? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > FDA has ordered a 522 study for our implant. What does that obligation involve? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Does a software change to our cleared infusion pump need a new 510(k), or is our assessment enough? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Which PMA supplement type covers moving final assembly to a new site? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > When does a change to our catheter require a new UDI-DI, and what goes into the GUDID submission? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Do we need FDA establishment registration and device listing for our contract manufacturer, and does our foreign site need a US agent? 18ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Explain the device identifier and production identifier in unique device identification, and whether reusable instruments need direct marking. 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > What essential drug delivery outputs should we verify for our autoinjector, and how do we test dose accuracy on aged units? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > How do we bridge from the vial used in phase 2 to the commercial pen injector? Do we need device bridging data? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > device.json > Plan design verification for the device constituent of our on-body injector, including its essential performance requirements. 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What evidence does a new in vitro diagnostic need before we choose a regulatory pathway? 15ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > How do we show scientific validity for a novel analyte with only a handful of published studies? 16ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Where are the gaps in our IVD submission plan? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Calculate the limit of blank and limit of detection from our EP17 replicates. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > How should we design the EP05 imprecision study and the method comparison for our troponin assay? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What is missing from this report? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Our comparator is another cleared assay, not a reference method. Should we report PPA and NPA rather than sensitivity and specificity? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > How many positive specimens does the clinical performance study need to show sensitivity above our goal? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Is our PD-L1 test a companion diagnostic or a complementary diagnostic? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > The pivotal trial enrolled on a clinical trial assay. How do we bridge to the final CDx kit? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What does contemporaneous approval of the drug and its companion diagnostic require from our side? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Is this a predictive biomarker or a prognostic biomarker, and what evidence does each claim need? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Should we seek biomarker qualification through the drug development tool program or keep it inside our IND? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Help me write the context of use for our kidney safety biomarker. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What goes into the performance evaluation report under the IVDR? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What IVDR class is an HbA1c self-test, and does it need an IVDR notified body? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Gap-check this against Annex XIII. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > Do LDTs still have to follow the FDA phase-out schedule from the LDT final rule? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > How do we get a CLIA waiver for our point-of-care strep test? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > diagnostics.json > What does our CLIA lab have to establish before running a modified FDA-cleared assay on patient samples? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > How do I make sure every statement in our draft product labeling traces back to the clinical data? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > FDA sent us a safety labeling change notification. What does the labeling supplement involve? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Which of the carton and container labels should carry the storage statement? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Can you check whether the Highlights of Prescribing Information match what the FPI sections say? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Does this hepatotoxicity signal meet the criteria for a boxed warning? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Generate the SPL XML for our label once the text is final. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > How should section 8.1 read when all we have is rat and rabbit embryo-fetal toxicity data? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > What goes in the PLLR lactation subsection if there are no human breast milk data? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Draft section 4.8 of the SmPC from our pooled safety data. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Does the package leaflet need user testing before we file the MAA? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > What headings does the Drug Facts panel need for an acetaminophen tablet? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Do we need a label comprehension study for our Rx-to-OTC switch? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Which ISO 15223 symbols do we need on a sterile single-use catheter label, and what has to be in the IFU? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > What does an IVD package insert have to contain for the US? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Can you review this detail aid for fair balance before it goes to MLR review? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > labeling.json > Is the superiority claim in our journal ad supportable from the head-to-head data? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > names only skills the library holds 1ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Is our new oncology antibody within the mandatory scope of the centralised procedure, and when should we send EMA the eligibility request? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Who will the CHMP appoint as rapporteur and co-rapporteur for our gene therapy, and does the CAT get involved? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Walk me through the EMA MAA timeline from validation to the Commission decision, including how the clock stops work. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > We still have a major objection open at day 180. Should we prepare for an oral explanation or think about withdrawing? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Which country should be the reporting member state for our phase 2 trial in Germany, France and Spain under the EU CTR? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > What goes in the Part I dossier versus Part II in CTIS, and which documents need translating for each member state? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > What will CTIS publish from our application, and how should we prepare the documents redacted for publication? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Our phase 3 started under the Clinical Trials Directive. Should it have been transitioned to CTIS, and what if it wasn't? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Can we use the MHRA International Recognition Procedure off our FDA approval, and what has to match? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > How do we apply for a UK clinical trial through IRAS, and is MHRA review combined with the ethics committee? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Do we need UKCA marking to sell in Great Britain or will our CE mark still be accepted, and do we need a UK Responsible Person? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Does the Windsor Framework change how we license our medicine for Northern Ireland? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Can Swissmedic rely on our EMA approval, or is the fast-track authorisation a better route into Switzerland? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Since the Swiss MRA wasn't updated, do we need a Swiss authorised representative to keep selling our devices? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Our IVD is certified under the IVDR. What does Swissmedic expect from us, and when do we have to register in swissdamed? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-europe.json > Is Switzerland in the Access Consortium, and would a Swiss filing under the Article 13 TPA route be faster for us? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Do we need a PMDA consultation before adding Japanese sites to the global phase 3, or can we go straight to the clinical trial notification? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > We have no entity in Japan. For the J-NDA, do we need a designated MAH, foreign manufacturer accreditation for our API site, and who acts as in-country caretaker for the master file? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Is our class II monitor in Japan a ninsho case through a registered certification body, or does it need shonin from MHLW? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Will CDE accept our global phase 3 without a separate China study, and how big does the Chinese cohort need to be? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Do we need HGRAC approval to ship blood samples from our China sites to the central lab in Germany? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What class will NMPA put our infusion pump in, and will registration testing have to be done in China? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Will MFDS ask for a Korean bridging study, or will the bridging data review accept our Asian PK data? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What do we need for an IND in South Korea, and does the site IRB review run in parallel with MFDS? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Our class 3 device needs KGMP certification for Korea. Does our existing audit cover it, and who can be the Korea license holder? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Should we file the NDS for a NOC/c on the phase 2 data, or wait for the confirmatory trial to read out? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Health Canada wants the MDSAP certificate with our class III medical device licence application. What else has to go in? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What goes into a Canadian CTA for our phase 2 study, and is a pre-CTA meeting with Health Canada worth asking for? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Should our phase 1 in Australia run under the CTN scheme, or does it need the CTA scheme? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Can we use the FDA approval for a COR-B application to the TGA, and what will they want from the FDA review? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What conformity assessment evidence will the TGA accept for ARTG inclusion of our class IIb device? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What does ANVISA need for a new medicine registration, and do we need a Brazilian registration holder before we file? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Is there an optimised ANVISA review that relies on the FDA approval, and how do we get the CBPF for our plant? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Our class III device for Brazil: registro or notification, and do we also need INMETRO certification? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Under the New Drugs and Clinical Trials Rules, can we get a waiver of the local phase 3 in India? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > What will the Subject Expert Committee at CDSCO look for in a trial application that adds Indian sites to our global study? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Which licence does our class C device need from CDSCO under the Medical Devices Rules, and can our distributor be the Indian authorised agent? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Can we file with HSA on the verification route once FDA approves, or is the abridged route the better fit? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > Does a phase 1 in Singapore need a clinical trial authorisation from HSA or just a notification? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > markets-international.json > How do we register a class C device in Singapore, and do we need a local registrant and a dealer licence? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Please proofread this section and build the list of abbreviations. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > The numbers do not match between the results text and Table 14.2.1. How should I fix the writing? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Tighten the writing in this paragraph without changing any figures. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > How should the benefits and risks conclusions in Module 2.5 be structured? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Our clinical overview mostly repeats the 2.7 summaries. How do we make it a critical analysis? 18ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Is the efficacy discussion here too descriptive? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Which safety pool should the summary of clinical safety in 2.7.4 use? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Draft Module 2.7 from our completed CSRs. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Where should the study synopses for this section come from? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > How should we word the questions for the agency in our pre-IND meeting briefing document? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Our EOP2 meeting package is due next month. How should each sponsor position be laid out? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Verify everything in this reference list and flag anything that has been retracted. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Format these EndNote exports in Vancouver style for the CER. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Which CONSORT items are missing from our manuscript? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > We are writing up an observational cohort for a journal. Does STROBE apply, and do we need ICMJE disclosures? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Write a lay summary of the trial results for CTIS at a low reading level. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > medical-writing.json > Is this plain-language summary at the right grade level for patients? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > What IND-enabling nonclinical studies do we need before a four-week phase 1 study? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > How does ICH S6(R1) change the nonclinical package for a monoclonal antibody? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Are our GLP studies enough under M3(R2) to dose women of childbearing potential in phase 2? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Which species should we use for the three-month repeat-dose toxicology studies, and do we need recovery animals? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Do we need rodent carcinogenicity studies for a chronic-use drug, and what genotoxicity battery comes first? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Plan the DART studies and the embryo-fetal development timing for women of childbearing potential. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > What does the S7A core battery need before first dosing in humans, and is our hERG margin adequate? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Our compound is centrally active. Do we need abuse potential studies such as drug discrimination? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Design the cardiovascular safety pharmacology telemetry study in dogs. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Calculate the MRSD from our rat and dog NOAELs and compare it with MABEL. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > What first-in-human dose should a CD28 agonist antibody start at, given our receptor occupancy data? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Convert our NOAEL to a human equivalent dose and justify the safety factor. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Do any of our human metabolites need qualification under metabolites in safety testing? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Design the human 14C mass balance study and the metabolite profiling plan. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Protein binding differs a lot between rat and human. How do we read the margins? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Draft the Module 2.4 nonclinical overview from our study set. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Build the toxicology tabulated summaries for 2.6.7. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > nonclinical.json > Does our nonclinical summary agree with the Investigator's Brochure on the NOAEL? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Now that the QMSR is in force, what changes for our quality management system as a device maker? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > What does 21 CFR 820 now require for management review? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Where are we on the quality manual? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Draft an SOP for CAPA for our class II device. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Review our SOP for complaint handling against what the regulations require. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > How do I get this procedure approved and make it effective in the quality register? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Can you acknowledge training on the new revision for my team? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > We had an OOS result on a released batch. How should the OOS investigation run, and do we need a field alert report? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Root cause analysis for a recurring deviation: which method should we use, and how do we define the effectiveness check? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > We want to move tablet compression to a new site. Is the reporting category CBE-30 or a prior approval supplement? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Raise a change request for the new HPLC column and work out the change impact. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Our HPLC uses a shared login and nobody reviews the audit trail. What are the ALCOA gaps? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > What GAMP 5 category is our LIMS, and which Part 11 controls apply? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > How should we qualify a new CDMO, and what belongs in the quality agreement? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Are we ready for a pre-approval inspection next quarter? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > What should our inspection readiness review cover? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > A customer complaint says the pen cap cracked. How should complaint intake work, and do we have to investigate? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > What should our product quality complaint process cover for a marketed tablet under 211.198? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > How do we set up complaint trending for our infusion pump so trends feed CAPA and the risk file? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > Help me plan our internal audit programme for the ISO 13485 quality system next year. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > We received six 483 observations after the FDA inspection. How should we structure the 483 response? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > quality-systems.json > How should we respond to a major MDSAP audit nonconformity and the other audit findings from our notified body audit? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Can you help me put together the regulatory strategy for our lead asset before the board meeting? I need the path to approval and the main risks. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Is there regulatory precedent for approval on a single pivotal study in this setting, and what does the regulatory landscape look like? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Run a pre-mortem on our regulatory roadmap so we know where FDA is likely to push back. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Should our extended-release reformulation go as a 505(b)(2) or a full 505(b)(1) NDA, given there is a reference listed drug? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > For our adalimumab program, what does a 351(k) filing commit us to compared with a stand-alone 351(a) BLA, and could we claim interchangeable status? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > For the EU generic, is the decentralised procedure or mutual recognition the better route, and what legal basis applies? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > We have no clear predicate. Is this a De Novo or 510(k) situation, and should we file a 513(g) first to pin down the product code? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > What MDR classification would a long-term implantable sensor get under the Annex VIII classification rules, and which conformity assessment route follows? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Does our assay qualify for the Breakthrough Devices Program, or is a humanitarian device exemption more realistic? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Do we have enough phase 1b response data to request breakthrough therapy designation, or should we start with fast track? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Could we pursue accelerated approval on ORR with a confirmatory trial running, and would rolling review be open to us? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Is the product a fit for EMA's PRIME scheme, and would accelerated assessment follow from it? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > How should we support the prevalence estimate in our orphan drug designation request, and is an orphan subset defensible here? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > When is our initial pediatric study plan due under PREA, and can we ask for a pediatric waiver for children under two? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Do we need an agreed paediatric investigation plan from the PDCO before the MAA can be validated? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Our prefilled syringe delivers a monoclonal antibody. What is the primary mode of action and which lead center will review it? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Should we file a request for designation with the Office of Combination Products, or is a pre-RFD inquiry enough? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > How does part 4 cGMP work for our drug-device combination if we run on the device quality system as the base? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Help me draft the questions for our pre-IND meeting briefing package. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > We got the meeting minutes back from FDA after our Type C meeting and they do not match our notes. What now? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > How do we put together a Pre-Sub meeting request under the Q-Sub program so CDRH can comment on our pivotal study design? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > What filing sequence makes sense across the US, EU and Japan, and is there a reliance pathway we could use? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Could Project Orbis or the Access Consortium get us into Australia and Canada sooner after the FDA approval? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > regulatory-strategy.json > Will Japan expect a bridging study because of ethnic factors, or can an MRCT cover it? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > What does our pharmacovigilance system need before the first EU marketing authorisation? Do we need a QPPV and a PSMF? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Can IND safety reporting and ICSR transmission to FDA go out directly from the platform? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Is our pharmacovigilance system master file complete? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Is this SAE a SUSAR? The event isn't in the reference safety information and the investigator thinks it's related. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Run a causality assessment with Naranjo for this hepatotoxicity case that recurred on rechallenge. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Draft the patient narrative for the serious adverse event in subject 104 and code the event in MedDRA. 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > When is the DSUR due relative to the DIBD, and which data lock point do we use? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > What goes into the integrated benefit-risk section of a periodic benefit-risk evaluation report? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Do we still need a quarterly PADER, or can we send FDA a PBRER instead? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > We found a PRR of 3.2 in FAERS for hepatic failure. Is that a safety signal we have to act on? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > How should we validate and prioritise a signal of disproportionate reporting picked up in EudraVigilance? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Run a disproportionality screen with EBGM and BCPNN on these counts. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Which additional risk minimisation measures belong in the EU RMP, and how do we show they work? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Is FDA likely to require a REMS with ETASU for this liver injury risk? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > How do we decide what is an important identified risk versus an important potential risk in the safety specification? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Help me build an effects table and a value tree for the advisory committee benefit-risk discussion. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Draft the benefits and risks conclusions for Module 2.5.6. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > How fragile is our benefit-risk conclusion given that the efficacy rests on a surrogate endpoint? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > A catheter tip broke during a procedure but the patient wasn't hurt. Is this MDR reportable under Part 803? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Is a false-negative result that delayed treatment a serious incident for IVDR vigilance purposes? 12ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > Do we need a correction and removal report and a field safety notice for this software fix? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > safety.json > What should our PMS plan say about trend reporting? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Put together a submission plan for our NDA: the required documents and the filing plan by module. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What are the submission requirements for a BLA, and what is still missing from our dossier? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Which review clock applies to our application and what does the submission timeline look like from here? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What has to be in our initial IND under 312.23, and how much CMC do we need for a phase 1 study? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Prepare Form 1571 and the 1572s for the original IND. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > When does the 30-day wait end, and do we need a letter of authorization for the DMF we cross-reference? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > A new investigator is joining the study next month. Does that go to FDA as a protocol amendment? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What goes into the IND annual report this year, and can the DSUR stand in for it? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Can we implement this change in protocol immediately to remove an immediate hazard, and notify FDA afterwards? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Which lifecycle operation do I use when I update the stability leaf in the next eCTD sequence? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Where does this document go in regional Module 1 for the EU, and what leaf title should it carry? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > How should granularity and hyperlinks work for the study reports so we avoid a technical rejection? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > We received an information request from FDA with twelve questions. Help me plan the IR response. 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > How should we structure our answers to the EMA day 120 list of questions? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Draft our deficiency response to the CMC items in the complete response letter. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Is sequence 0004 ready to dispatch, and what is still blocking the dispatch gate? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > The shadow review raised a critical finding that we have since fixed. How do we close it so the dispatch gate clears? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Give me the go/no-go on this sequence. 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What goes into the substantial equivalence section of our 510(k) eSTAR, and how should the comparison with the predicate device be laid out? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What performance testing summaries and consensus standard declarations does a traditional 510(k) need in eSTAR? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What special controls should we propose in our De Novo request for this risk profile? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Can we run this as a modular PMA, and what would go in each PMA module? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > What does the notified body expect in our MDR technical documentation under Annex II? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Generate the GSPR checklist and the EU declaration of conformity for our Class IIb device. 20ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > submissions.json > Do we need to register in EUDAMED and get an SRN before CE marking our IVD? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > names only skills the library holds 0ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > How should we design the SLIT tablet program for our allergen immunotherapy? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What do reviewers expect from a cardiovascular outcomes trial powered on MACE? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is a fluoride varnish study with a caries increment endpoint enough? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Can EASI-75 sit beside vIGA-AD as a co-primary endpoint? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Which endpoints support growth hormone deficiency height velocity claims? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is the modified Mayo score the right primary endpoint for ulcerative colitis induction? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What does FDA expect for our AAV gene therapy capsid and serotype choice? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is annualized bleeding rate acceptable as the primary endpoint in hemophilia A? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What do reviewers look for in an autoimmune lupus program? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > How are susceptibility testing breakpoints set for a new antibacterial? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is HbA1c reduction at week 26 enough for type 2 diabetes mellitus? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Will a DAS28-CRP remission rate support approval in our musculoskeletal program? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Can eGFR slope support accelerated approval in IgA nephropathy? 9ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Which endpoints does the agency accept for an Alzheimer program? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > How do we use pregnancy exposure registry data for a major congenital malformation risk statement? 13ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is progression-free survival acceptable as the primary endpoint for our oncology trial? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Best corrected visual acuity in ETDRS letters for an anti-VEGF intravitreal injection: what margin? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is a 30% responder analysis on the numeric rating scale adequate for chronic pain? 14ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is MADRS change from baseline the right primary endpoint in our depression trial? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Can natural history data serve as the external control in our rare disease program? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is trough FEV1 the right primary endpoint for our COPD bronchodilator? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What endpoints work for a kidney transplant immunosuppression trial? 11ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > Is micturition frequency from the bladder diary acceptable in overactive bladder? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What do reviewers expect for seroconversion in a vaccine program? 10ms
+ ✓ server/services/ana/skills/__tests__/golden.test.ts > golden questions > therapeutic-areas.json > What does an oncology program owe reviewers? 12ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and as a victim?" is still offered assess_ddi_risk 26ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "what about with itraconazole?" is still offered assess_ddi_risk 15ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and with 80% power?" is still offered estimate_sample_size 21ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the drug product?" is still offered design_stability_study 16ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "now the toxicology part" is still offered draft_nonclinical_overview_m2_4 17ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "and for the EU?" keeps required CMC record get_cmc_requirements without needing the carry 15ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > "go on" keeps required CMC record explain_cmc_topic without needing the carry 12ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a follow-up keeps the tool the previous turn ran > a bare continuation is offered the carried tool first, right after the always-on core and the pins 6ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carries at most 4, in the order carried, inside the cap 10ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > carried tools never cost a question its own tools near the end of its slots 26ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > offers a carried tool once, though the current request also selects it 8ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > never offers a carried name outside the governed set, nor carries an unhealthy one ahead 2ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > what the carry may not do > with nothing carried the selection is what it was 33ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > reads the eval 1ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'prepare_fda_form' after any other topic 164ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'amend_fda_form' after any other topic 160ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_forms' after any other topic 162ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'search_grants_gov' after any other topic 163ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'screen_restricted_party' after any other topic 182ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'triage_compliance_attention' after any other topic 163ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 151ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 149ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 159ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 153ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 152ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 179ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 156ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_cmc_requirements' after any other topic 158ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 145ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'find_cmc_guidance' after any other topic 149ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'explain_cmc_topic' after any other topic 153ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 118ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 131ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 115ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 128ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 126ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 122ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'get_document_section_requirements' after any other topic 134ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'list_fda_technical_rules' after any other topic 125ms
+ ✓ server/services/ana/__tests__/tool-selection-carry-over.test.ts > a change of topic loses nothing the routing eval routes > still selects 'plan_submission_from_database_lock' after any other topic 132ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a v2 project (a program uuid in projectRef) is composed from 570ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a numeric open project is composed from, with the actor passed to the CSR scope 14ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > another project named while one is open is refused, never read 5ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a project with no completed CSR says so 10ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > a person who is not a member is refused as such, not as a missing project and not by a throw 3ms
+ ✓ server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts > loadModule2CsrInputs reads the open project as the person asking > no open project and none named asks for one 0ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > loads when picked, with no phrase calling for it and the program saying it is for another segment 4ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > loads when deployed to the project, on a turn about something else 2ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > has its own allowance: three chosen skills never crowd out what the question asks for 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > puts a pick ahead of a deployment when the allowance is short 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a skill the person chose > picks a library skill the organization replaced by either key 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a project’s skills > leaves out a skill turned off there, under its library key or its replacement’s, and names what it deploys 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a project’s skills > keeps the organization’s skills and this project’s, never another project’s 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > what the request may pick > keeps only skill-shaped keys, once each, up to the allowance 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > the organization’s client type > names the segment of a product-owning organization, and none for a service organization 1ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > loads a deployed skill on a turn about something else, and never a skill turned off there 69ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > loads a skill written for the project only in that project 67ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > a turn in a project > reads the organization’s client type as the segment when the turn names no submission type 26ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > market skills > load for a question about their market 30ms
+ ✓ server/services/ana/skills/__tests__/skills-in-use.test.ts > market skills > never load on a word that means something else in another discipline 27ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes compute_fih_dose in ALL_ANA_TOOLS 4ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes classify_tox_findings in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes select_exposure_response_dose in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes load_nonclinical_program in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes get_nonclinical_template in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes draft_nonclinical_overview_m2_4 in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes draft_nonclinical_summaries_m2_6 in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes draft_quality_overall_summary_m2_3 in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes assess_nonclinical_program in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes assess_nonclinical_safety in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes assess_concentration_qtc in ALL_ANA_TOOLS 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes assess_ddi_risk in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes characterize_pk in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes draft_clinical_summary_m2_7 in ALL_ANA_TOOLS 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > compute_fih_dose handler > returns needs_parameters when no species are supplied 19ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > compute_fih_dose handler > computes the MABEL-limited worked example 2ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > classify_tox_findings handler > returns needs_parameters without findings 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > classify_tox_findings handler > classifies hepatocellular hypertrophy as adaptive 16ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > select_exposure_response_dose handler > returns needs_parameters without an exposure mapping 13ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > select_exposure_response_dose handler > accepts an array-form exposuresByDose and computes a result 2ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_nonclinical_overview_m2_4 handler > does not compose from studies supplied in the call 25ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > get_nonclinical_template handler > lists templates when no key is given 16ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > get_nonclinical_template handler > returns a specific template by section code 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > load_nonclinical_program handler > refuses without an active organization context (tenant isolation) 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > load_nonclinical_program handler > returns needs_parameters without a valid program id 0ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > load_nonclinical_program handler > reports unavailable when the preclinical data layer is disabled 24ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_quality_overall_summary_m2_3 handler > refuses CMC data supplied in the call, rather than composing from it 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_nonclinical_summaries_m2_6 handler > does not compose from studies supplied in the call 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_nonclinical_program handler > returns needs_parameters without the clinical duration 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_nonclinical_program handler > flags gaps for a Phase 2 program 19ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_nonclinical_safety handler > rolls up the integrated assessment with a readiness verdict 69ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_nonclinical_safety handler > a dose with no program context is not ready_for_fih, and programGaps is null rather than [] 2ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assemble_briefing_book handler — no fixture content is passed off as the sponsor's > builds no book when the sponsor supplied no questions for the Agency 26ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assemble_briefing_book handler — no fixture content is passed off as the sponsor's > builds from the sponsor's own questions, with nothing borrowed 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_concentration_qtc handler > returns a negative C-QTc verdict 11ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > assess_ddi_risk handler > flags a reversible CYP inhibitor and recommends a study 14ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > characterize_pk handler > returns needs_parameters when nothing is supplied 1ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > characterize_pk handler > characterizes dose proportionality and accumulation 14ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_clinical_summary_m2_7 handler > composes nothing from figures in the tool input when no program is open 4ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_clinical_summary_m2_7 handler > says so when the program has no completed CSR 2ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_clinical_summary_m2_7 handler > drafts the M2.7 summary from the program’s CSR records, not from the tool input 7ms
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > the M2.7 draft returns the tables its text refers to > M2.7 3ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the organization’s view of the library > leaves out a library skill an administrator turned off 3ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the organization’s view of the library > loads the organization’s replacement in place of the library method, even with the library skill off 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the organization’s view of the library > attaches an addendum to its library skill, and drops it with the library skill turned off 2ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the organization’s view of the library > selects a skill of the organization’s own on its own triggers, and never a draft or archived one 2ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the organization’s view of the library > keeps a replacement whose library skill is gone as a skill of its own, and reports the orphan 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the prompt block > says which method was loaded, why, which version, and what the person may ask 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the prompt block > names a tool the method relies on that this turn cannot call 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > the prompt block > is empty when nothing was selected 0ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > a turn whose skills cannot be read > loads none, says why, and does not throw 38ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > a turn whose skills cannot be read > reads the organization’s state in its own scope and pins the loaded skills’ tools 74ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > context from the turn > reads segments and region from the submission type the registry knows 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > context from the turn > reads a free-form therapeutic area through the vocabulary and the profile aliases 1ms
+ ✓ server/services/ana/skills/__tests__/turn-skills.test.ts > context from the turn > accepts only a registry-shaped document type from the client 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the platform command bridge (the command registry; a typed tool it drops is not reachable through it) 10ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the core search/guidance/authoring tools 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces the nonclinical tools for a nonclinical turn 14ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > surfaces clin-pharm tools for a DDI / QTc turn, and respects the cap 8ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns the full surface unchanged below the cap 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > returns only the always-on set when the query carries no intent signal 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > passes everything through when disabled via env 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > always includes the user-pinned tools from the picker 3ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > selects by context (document type) even when the message is terse 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > selects IVD tools from tenant context when the message is generic 5ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn > maps generic medtech context to device capability vocabulary 6ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > groups the surface into categories for the picker 8ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > getToolCatalog > routes representative tools to sensible categories 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > keeps a healthy relevant tool over an unhealthy one when over the cap 1ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > without deprioritization, ranks purely by relevance (stable order) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > selectToolsForTurn — reliability-aware deprioritization > never drops an always-on tool even if marked unhealthy (capability guarantee) 0ms
+ ✓ server/services/ana/__tests__/tool-selection.test.ts > generate_document — no from-scratch regulatory artefacts > no longer offers ectd_backbone or icsr as document types 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > normalizes modality aliases to known modalities 3ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > defaults unknown / missing modality to other 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > normalizes development-phase aliases, or returns null when unknown 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > infers a coarse phase from each journey stage 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > every phase in the arc has a complete, well-formed spine 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > the nextPhase chain walks the arc in order and terminates 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — pure resolvers > every modality has a non-empty critical path 0ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — buildBiotechProgramStatus > uses an explicit phase hint and tags it as hint 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — buildBiotechProgramStatus > falls back to journey-inferred phase and tags it accordingly 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — buildBiotechProgramStatus > surfaces biosimilar analytical-similarity critical path 0ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — tool registration > get_biotech_program_status is registered and defined 1ms
+ ✓ server/services/ana/__tests__/biotech-program.test.ts > biotech-program — tool registration > handler returns a well-formed status with no tenant context (fail-soft) 55ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)" 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a single-number annex key is a code token too ("ii.6" is not inside "iii.6.1" or "ii.61") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools 13ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 8ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 14ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 6ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > has no skill the registry had to leave out 3ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > routes only to tools AnA has in the launch scope 1ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > names in its method exactly the tools it lists, so Settings and AnA read the same skill 2ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > cites only what the platform holds 2ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > names only submission and document types the global registry knows 1ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > covers every discipline, every client segment, and every therapeutic area but the cross-cutting one 2ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > gives every market the platform files in a skill written for it 1ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > gives CMC and biostatistics sub-skills, not one broad skill each 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the platform skill library > hashes content: the same skill hashes the same, a changed method does not 25ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > accepts a well-formed skill 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses an unknown discipline 1ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses a submission type no registry knows 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses an exclamation mark 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses no Method section 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses nothing that can select it 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > refuses a reviewed state with no reviewer 0ms
+ ✓ server/services/ana/skills/__tests__/library.test.ts > the library refuses a broken skill > leaves out a skill whose parent is missing, and its children with it 0ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer 13ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them 3ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 3ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them 2ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them 1ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.5: one section per heading the record holds directly below it, headed as the record titles it 3ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.7: one section per heading the record holds directly below it, headed as the record titles it 2ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > a fact lands by its CTD code, and still by the id it had before (the tool’s existing contract) 2ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > draft_clinical_overview_m2_5 outlines the served Clinical Overview > every section is the record’s, 2.5.7 and the 2.5.6 subdivisions included, with its 2.7 cross-reference kept 2ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > a fact named by a code below a planned section lands in that section, with its own code 1ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > a fact naming no section of the template is returned as unplaced, never dropped silently 0ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > the outline carries the served template’s limits and basis, scaling to the development phase included 0ms
+ ✓ server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > C4c: what the review of C4a found > the tool tells the model the shape it returns: 2.5.1–2.5.7, never six sections 0ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > trigger matching > matches whole phrases only 4ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > trigger matching > reads typographic dashes and quotes as plain ones 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > trigger matching > matches a trigger with punctuation, such as 510(k) 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > loads a skill the question names and none it does not 2ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > loads what is on screen when the question names nothing 2ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > never loads on the screen alone a method the program says is for another segment 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > loads it when the person asks about it in words, and says the program differs 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > loads at most one skill on the screen alone 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > holds three skills a turn and says why the fourth was passed over 2ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > keeps the turn within its character budget 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > loads a skill the person named, ahead of any match 1ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > resolves any spelling of a submission type before comparing it 0ms
+ ✓ server/services/ana/skills/__tests__/selector.test.ts > selection > breaks ties by the more specific skill, then by key, the same way every time 1ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > mapStudyTypeToM24 > maps the ingest enum onto builder categories 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > mapStudyTypeToM24 > passes through builder values and defaults unknowns to toxicology 0ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > produces the M2.4 overview from ingest-shaped studies 3ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > adds the target-organ adversity profile when findings are supplied 2ms
+ ✓ server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts > buildEnrichedM24 > returns no tox profile when no findings are supplied 0ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > composes all 2.6.x subsections and per-discipline tables 5ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > weaves the target-organ adversity profile into 2.6.6 when findings are supplied 2ms
+ ✓ server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts > buildM26NonclinicalSummaries > flags every gap and scores completeness 0 for an empty program 1ms
+ Test Files  15 passed (15)
+      Tests  653 passed (653)

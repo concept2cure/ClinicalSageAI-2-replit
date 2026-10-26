@@ -1,0 +1,20 @@
+# S2 review red: the new no-project and scope-error cases on trunk de12d309c (S2 as pushed). 4 of 4 new cases fail.
+
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer 38ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them 3ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and nothing supplied, gives the outline without claiming what a project holds 8ms
+   → expected '{"structure":{"title":"Nonclinical Ov…' not to match /recorded against this project/
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > when the named project cannot be resolved, says so with its code and claims no absence 6ms
+   → expected { status: 'needs_project', …(1) } to match object { status: 'needs_project', …(1) }
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them 0ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 2ms
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and nothing supplied, gives the outline without claiming what a project holds 3ms
+   → expected '{"structure":{"title":"Nonclinical Wr…' not to match /recorded against this project/
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > when the named project cannot be resolved, says so with its code and claims no absence 3ms
+   → expected { status: 'needs_project', …(1) } to match object { status: 'needs_project', …(1) }
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them 1ms
+ ✓ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them 1ms
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 passed (12)

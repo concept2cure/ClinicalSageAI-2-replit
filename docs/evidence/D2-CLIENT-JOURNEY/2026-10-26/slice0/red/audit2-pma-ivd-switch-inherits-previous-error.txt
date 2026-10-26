@@ -1,0 +1,27 @@
+RED (audit2 pma-ivd #0, related effect): run against useRecordedPhaseLine as the slice left it (source temporarily restored, then put back and confirmed with cmp). After a switch from project A, whose phase read failed, project B's first render returns 'The project phase could not be read' before any read of B has started. The stale-row pin beside it (A's phase never shown for B) passes.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+-------x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > useRecordedPhaseLine — a switch of project states nothing of the previous one > B does not inherit A's failed read
+AssertionError: expected [ …(2) ] to not include 'The project phase could not be read'
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:240:67
+    238|     hook.rerender({ id: B });
+    239|     await waitFor(() => expect(hook.result.current).toBe('Reading the …
+    240|     expect(seen.filter((s) => s.id === B).map((s) => s.line)).not.toCo…
+       |                                                                   ^
+    241|   });
+    242|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 7 skipped (9)
+   Start at  07:42:18
+   Duration  3.37s (transform 1.91s, setup 204ms, import 2.28s, tests 145ms, environment 552ms)
+
