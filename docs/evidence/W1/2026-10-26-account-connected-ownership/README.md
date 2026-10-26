@@ -27,3 +27,7 @@ Extend the canonical persona query to pin actor headers, consume query cancellat
 - The initial browser refusal seam omitted JSON content type, so the canonical transport correctly rendered its generic 403 message. Correcting the harness header resolved that expectation failure without product changes.
 
 Remaining: normal publication gates and hosted CI/security/browser/staging verdicts. Company-session leases remain their existing owner. The separate OrganizationAccess/switchOrganization path is identified, not declared fully reconciled by this batch. No backend scope, schema, dependency or navigation change.
+
+## Shared-branch integration
+
+Merged upstream `8d26d9127` into the implementation at `91506b8e0` without conflicts. Incoming project-creation retirement and its ownership gate do not overlap these Account/reporting owners; `package.json` only adds CI script entries. `merged-regressions.txt` repeats all 126 tests successfully, `merged-build.txt` passes all production targets, and refreshed browser artifacts repeat all twelve flows on the merged source. `corrected-controls.txt` records the 65 focused checks after the DataState field correction. Normal push gates remain required.
