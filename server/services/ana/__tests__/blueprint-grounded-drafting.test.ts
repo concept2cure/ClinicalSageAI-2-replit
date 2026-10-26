@@ -189,13 +189,15 @@ describe("resolveDraftingRequirements — titles and codes resolve inside the en
     // …and stays a candidate listing when several lie inside it (an IND's 2.7.5 and 5.4).
     expect(resolveDraftingRequirements('US_IND', 'Literature References').requirementsSource).toBe('record:candidates');
 
-    // A title the outline lacks, which the record holds only outside the
-    // entry's modules, is not briefed as that other module's section.
+    // A QOS holds its own stability summaries since 2026-10-25 (2.3.S.7 and 2.3.P.8, in the
+    // record and its served outline): "Stability" lists both, and is never briefed as Module 3's
+    // 3.2.P.8. Before, the QOS outline was five headings, and the title was refused as outside it.
     const qosStability = resolveDraftingRequirements('ICH_QOS', 'Stability');
-    expect(qosStability.requirementsSource).toBe('record:outside-outline');
-    expect(qosStability.requirements).toContain('3.2.P.8');
+    expect(qosStability.requirementsSource).toBe('record:candidates');
+    expect(qosStability.requirements).toContain('2.3.S.7');
+    expect(qosStability.requirements).toContain('2.3.P.8');
+    expect(qosStability.requirements).not.toContain('3.2.P.8');
     expect(qosStability.requirements).not.toContain(firstLine('3.2.P.8'));
-    expect(qosStability.requirements).toContain('do not supply');
   });
 
   it('treats a leading section code as the code whatever title follows it, and says when the title disagrees', () => {

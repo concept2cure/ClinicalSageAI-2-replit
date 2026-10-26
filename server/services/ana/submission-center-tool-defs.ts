@@ -559,6 +559,10 @@ export const TEMPLATE_OUTLINES_FROM_RECORD: Readonly<Record<string, string>> = {
   nonclinical_overview: 'M4',
   clinical_overview: 'M4',
   clinical_summary: 'M4',
+  // And since 2026-10-25 (D2 cleanup C2).
+  quality_overall_summary: 'M4',
+  drug_substance: 'M4',
+  drug_product: 'M4',
 };
 
 /** These are canonical platform scaffolds, not a verified agency document structure. */
@@ -574,9 +578,12 @@ const HAND_KEPT_OUTLINE_NOTES: Readonly<Record<string, string>> = {
   cover_letter: 'platform headings',
 };
 
-const recordDerivedOutlines = DOCUMENT_TEMPLATES
+// Outlines read from the same record are named once with it ("a, b, c (M4)"), so
+// the list stays inside the 1,024-character trim as more outlines join (2026-10-25).
+const recordDerivedOutlines = [...DOCUMENT_TEMPLATES
   .filter((t) => t.id in TEMPLATE_OUTLINES_FROM_RECORD)
-  .map((t) => `${t.id} (${TEMPLATE_OUTLINES_FROM_RECORD[t.id]})`)
+  .reduce((byRecord, t) => byRecord.set(TEMPLATE_OUTLINES_FROM_RECORD[t.id], [...(byRecord.get(TEMPLATE_OUTLINES_FROM_RECORD[t.id]) ?? []), t.id]), new Map<string, string[]>())]
+  .map(([record, ids]) => `${ids.join(', ')} (${record})`)
   .join('; ');
 
 const blueprintOutlines = Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).join('; ');

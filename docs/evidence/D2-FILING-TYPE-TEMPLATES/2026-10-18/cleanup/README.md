@@ -122,3 +122,39 @@ folder. The sweep's "none" was not taken on trust: it had also proposed `server/
   and it passes.
 - **`ci:orm-reachability`, `ci:reg-reference-single-copy`, `check-image-runtime-assets` and the typecheck:** pass
   (typecheck: 0 errors).
+
+## C2 — the QOS, drug substance and drug product templates read the record
+
+| Template | Before | Now |
+|---|---|---|
+| `quality_overall_summary` (`ICH_QOS`) | A five-heading hand copy. Its Introduction was coded `2.3.Intro`, while the project blueprint coded it `2.3.I`. | The record's 2.3 subtree: 2.3.S, 2.3.S.1–7, 2.3.P, 2.3.P.1–8, 2.3.A, 2.3.A.1–3 and 2.3.R. The Introduction is front matter coded `2.3.I`, with its purpose from the 2.3 brief. |
+| `drug_substance` (`ICH_M3_DS`) | The project blueprint's copy: seven headings with their own titles. | The record's 3.2.S subtree, to its depth. |
+| `drug_product` (`ICH_M3_DP`) | The project blueprint's copy. | The record's 3.2.P subtree, to its depth. |
+
+**Composition stays with CMC.** All three outlines now say that they are headings only, and that for a
+small-molecule US IND, Module 3 content is composed in CMC / Module 3 (P-28).
+
+**Supporting changes:**
+- `ctdComponentTemplate` gained front matter (`ctdFrontMatter`) and extra limitations.
+- The tool description groups outlines read from the same record ("… (M4)"). That keeps it at 1,013 characters,
+  inside the 1,024 trim, as more outlines join.
+
+**Red first:** `c2-quality-templates-red.txt`: 10 of 64 red on trunk `1d9f68643`. After the fix, 64/64 pass.
+
+**Pins moved on purpose:**
+- **`blueprint-grounded-drafting.test.ts`.** A QOS asked for "Stability" lists its own 2.3.S.7 and 2.3.P.8 and is
+  never briefed as Module 3's 3.2.P.8. Before, the five-heading QOS had no stability section, and the title was
+  refused as outside the outline.
+- **`document-template-library.test.ts`.** Drug substance and drug product read the record's subtree, not a project
+  blueprint.
+- **`cross-sector-builtin-authoring-templates.test.ts`.** The digest was re-recorded. `c2-builtin-snapshot-delta.txt`
+  shows six snapshots changed (the registry and component templates of the three), with none added or removed.
+
+**Still a copy, and why (next: C3).** The shared project blueprints `QOS_SECTIONS`, `M3_DS_SECTIONS` and
+`M3_DP_SECTIONS` (`shared/regulatory/project-bootstrap.ts`) remain, for two reasons:
+- **Drafting reads them as title synonyms.** "Stability" resolves to 3.2.S.7 for a drug substance only because the
+  copy says "Stability", while the record says "Stability (Drug Substance)".
+- **They can't simply read the record.** `project-bootstrap.ts` reaches the client bundle through
+  `shared/regulatory/index.ts`, so importing the 6,200-line server record there would ship it to the browser.
+
+C3 first gives the record a place to hold those synonyms, then removes the copies.

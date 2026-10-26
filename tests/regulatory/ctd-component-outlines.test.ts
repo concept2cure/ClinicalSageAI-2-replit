@@ -27,19 +27,30 @@ const served = async (registryId: string) => {
 };
 
 const COMPONENTS = [
+  // The Quality Overall Summary and Module 3's drug substance and drug product joined on
+  // 2026-10-25 (D2 cleanup C2): hand-kept and project-blueprint copies before.
+  ['ICH_QOS', '2.3'],
   ['ICH_NONCLIN_OVERVIEW', '2.4'],
   ['ICH_CLIN_OVERVIEW', '2.5'],
   ['ICH_NONCLIN_SUMMARY', '2.6'],
   ['ICH_CLIN_SUMMARY', '2.7'],
+  ['ICH_M3_DS', '3.2.S'],
+  ['ICH_M3_DP', '3.2.P'],
 ] as const;
+/** The numbered sections only: an unnumbered front-matter heading (the QOS Introduction) is not an ICH M4 code. */
+const numbered = async (registryId: string) => {
+  const t = await getRegistryDocumentTemplate(registryId);
+  if (!t) throw new Error(`${registryId} has no outline`);
+  return every(t.sections);
+};
 
 describe('a Module 2 component is the record’s subtree, to its depth', () => {
   it.each(COMPONENTS)('%s serves every heading the record holds below %s, in CTD order', async (id, root) => {
-    expect((await served(id)).map((s) => s.number)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
+    expect((await numbered(id)).map((s) => s.number)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
   });
 
   it.each(COMPONENTS)('%s: every heading is the record’s wording for its number (no second heading tree)', async (id) => {
-    const wrong = (await served(id)).filter((s) => ichHeadingTitle(s.number) !== s.heading).map((s) => `${s.number} ${s.heading}`);
+    const wrong = (await numbered(id)).filter((s) => ichHeadingTitle(s.number) !== s.heading).map((s) => `${s.number} ${s.heading}`);
     expect(wrong).toEqual([]);
   });
 
@@ -52,6 +63,16 @@ describe('a Module 2 component is the record’s subtree, to its depth', () => {
     for (const c of ['2.7.4.2', '2.7.4.2.1.2', '2.7.4.5.4', '2.7.3.3.3']) expect(cs).toContain(c);
     const ns = (await served('ICH_NONCLIN_SUMMARY')).map((s) => s.number);
     for (const c of ['2.6.4.5', '2.6.4.10', '2.6.6.3', '2.6.6.10']) expect(ns).toContain(c);
+  });
+
+  it('the QOS keeps its unnumbered Introduction as front matter, coded as the project blueprint codes it', async () => {
+    const t = await getRegistryDocumentTemplate('ICH_QOS');
+    expect(t?.frontMatter?.map((s) => `${s.number} ${s.heading}`)).toEqual(['2.3.I Introduction']);
+    expect(t?.frontMatter?.[0].purpose).toMatch(/^From the 2\.3 brief: 2\.3\.Introduction with proprietary name/);
+    // Module 3 headings only: composing Module 3 content stays the CMC lane's (P-28).
+    for (const id of ['ICH_M3_DS', 'ICH_M3_DP', 'ICH_QOS']) {
+      expect((await getRegistryDocumentTemplate(id))?.outlineLimitations?.join(' '), id).toMatch(/CMC \/ Module 3/);
+    }
   });
 
   it('the component template id serves the same tree as the registry id', async () => {
