@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T16:02:50.907Z",
+  "generatedAt": "2026-10-26T16:32:24.458Z",
   "git": {
-    "sha": "2a9b968c2ff16004c416e3195d0702ed4d119cb3",
+    "sha": "133de1428c67cf3946095b2f2978fa97485fea9d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2342,7 +2342,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1168864
+        "bytes": 1168735
       },
       {
         "file": "shared/schema.ts",
@@ -2433,10 +2433,6 @@
         "bytes": 138885
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 138807
-      },
-      {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 137820
       },
@@ -2459,6 +2455,10 @@
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 132755
+      },
+      {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 130218
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2568,7 +2568,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22227
+        "lines": 22210
       },
       {
         "file": "shared/schema.ts",
@@ -2711,10 +2711,6 @@
         "lines": 2429
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2416
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2401
       },
@@ -2744,6 +2740,10 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2278
+      },
+      {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2278
       },
       {
@@ -3003,11 +3003,11 @@
         "lines": 1605
       },
       {
-        "file": "server/services/toxicology/toxicology-knowledge.ts",
-        "lines": 1602
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1567
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1567
       },
       {
