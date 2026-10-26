@@ -190,7 +190,12 @@ and **56 server tests in 7 suites**. The latter retains incoming real-admission
 tests for pre-read replacement, mid-read anchor/client remap and role revocation;
 an actual missing tracking table still permits independent artifact data and
 currentness verification. The converged build passes (Vite **23.27 seconds**).
-Earlier raw proofs remain historical; final native and publication checks follow.
+The converged native run passes **all 4 browser flows in 54.1 seconds**: canonical
+artifact states/counts, both legacy destinations and tracking, question prefill,
+and editor/Vault return/reload behavior. Source blob hashes are recorded at
+`117a3591a` in `converged-source-proof.json`. Updated root screenshots/results
+show the converged tree; preceding native artifacts are preserved under
+`pre-convergence/`. Final publication hooks check this combined source again.
 
 A2.8: route the existing MDX alias to Projects using the existing device filter.
 The device-workstream screen remains until A2.10's separate parity work.
