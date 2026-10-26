@@ -454,7 +454,9 @@
 .c2c-v2 .pj-lmod-sections li span:first-child{min-width:0;overflow-wrap:anywhere;}
 .c2c-v2 .pj-lmod-sections li span:last-child{flex-shrink:0;color:var(--text-400);}
 .c2c-v2 .pj-dossier-supporting{display:flex;flex-direction:column;gap:14px;margin-top:16px;min-width:0;}
-.c2c-v2 .pj-dossier-table{overflow-x:auto;}
+.c2c-v2 .pj-artifact-table{max-width:100%;overflow-x:auto;}
+.c2c-v2 .pj-artifact-table caption{text-align:left;margin:8px 0;}
+.c2c-v2 .pj-artifact-table th,.c2c-v2 .pj-artifact-table td{vertical-align:top;}
 /* Review tab: this filing's reviews, grouped by what they need from the
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}

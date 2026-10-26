@@ -16,8 +16,8 @@ const URL = `/api/c2c/projects/${PROGRAM}/dossier`;
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
 function payload(modules: unknown[]) {
   return { projectId: PROGRAM, measuredAt: '2026-10-26T00:00:00Z', home: { state: 'no_sections', pct: null }, markets: [], rows: [],
+    artifactReadiness: { basis: 'governed_artifacts', state: 'no_artifacts', sections: [], summary: { totalSections: 0, readySections: 0, inProgressSections: 0, draftSections: 0, notAssessedSections: 0 } },
     supportingReadiness: {
-      artifactReadiness: { state: 'read', sections: [], summary: { totalSections: 0, readySections: 0, inProgressSections: 0, draftSections: 0, unknownSections: 0 } },
       sectionTracking: { state: 'read', modules },
     },
   };

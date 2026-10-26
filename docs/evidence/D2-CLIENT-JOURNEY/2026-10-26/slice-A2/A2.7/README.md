@@ -64,6 +64,14 @@ make a section ready. The existing tracking assembler and its formula/section
 labels survive as an internal reader with a required request executor. Supporting
 records never change the governed home/market figure. Vault keeps the editable tree.
 
+After concurrent A2.7a convergence, the single canonical artifact reader is
+`server/services/c2c/dossier-artifact-read.ts`; shared types/helpers own its
+weakest-state and summary rules. Its top-level `artifactReadiness` is rendered
+once by `ProjectArtifactReadiness.tsx`, whose semantic validation rejects
+inconsistent counts, dates, summaries or empty measured answers. Unknown is
+`not_assessed`. `supportingReadiness` contains only sectionTracking. The earlier
+overlapping extraction/table were removed; no parallel artifact read is published.
+
 String aliases remain string-valued. `destinationFor` supplies the existing
 Author stage action and the project-required fallback to Projects. URL and nav
 handoffs use the same resolver and validated action bus; canonical replacement
@@ -172,9 +180,17 @@ No auth traces, token values or real customer data are included.
 
 Publication encountered overlapping upstream A2.7a work at `7d193063f` after
 all hooks had passed. Its shared artifact types/reader and stricter semantic
-client validation are being reused as the single artifact owner, with tracking
-and the route fold retained. The reconciliation contract is recorded in the
-design addendum; previous raw proofs remain historical until combined checks.
+client validation are reused as the single artifact owner, with tracking and
+the route fold retained. Pre-read fresh-scope admission, exact accepted mapping
+and both closing currentness checks survive. Without an admitted program/client
+mapping, the source performs no query; all production artifact reads use the one
+joined, parameterized query. Independent failed/malformed-source and missing-schema
+states remain explicit. Combined checks pass: **75 client tests in 9 suites**
+and **56 server tests in 7 suites**. The latter retains incoming real-admission
+tests for pre-read replacement, mid-read anchor/client remap and role revocation;
+an actual missing tracking table still permits independent artifact data and
+currentness verification. The converged build passes (Vite **23.27 seconds**).
+Earlier raw proofs remain historical; final native and publication checks follow.
 
 A2.8: route the existing MDX alias to Projects using the existing device filter.
 The device-workstream screen remains until A2.10's separate parity work.

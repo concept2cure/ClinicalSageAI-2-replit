@@ -41,13 +41,13 @@ describe('supporting dossier reads retain their own recorded basis', () => {
       (11,7,'M2','m2.5','Clinical overview','approved'),(11,7,'M2','m2.7','Clinical summary','drafting'),
       (12,7,'M5','m5.3','Sibling section','locked'),(13,8,'M5','m5.3','Other organization','locked');`);
     const result = await supporting();
-    expect(result.artifactReadiness).toMatchObject({ state: 'read', summary: {
-      totalSections: 4, readySections: 1, inProgressSections: 1, draftSections: 1, unknownSections: 1,
+    expect(result.artifactReadiness).toMatchObject({ state: 'measured', summary: {
+      totalSections: 4, readySections: 1, inProgressSections: 1, draftSections: 1, notAssessedSections: 1,
     } });
-    if (result.artifactReadiness.state !== 'read') throw new Error('Expected artifact read');
+    if (result.artifactReadiness.state !== 'measured') throw new Error('Expected artifact read');
     expect(result.artifactReadiness.sections[0]).toEqual({ ctdSection: '2.5', status: 'approved', artifactCount: 2,
       draftCount: 0, reviewCount: 0, approvedCount: 1, lockedCount: 1, unknownCount: 0, lastUpdated: '2026-10-25T00:00:00.000Z' });
-    expect(result.artifactReadiness.sections.find(s => s.ctdSection === '3.2.P.1')).toMatchObject({ status: 'unknown', unknownCount: 1 });
+    expect(result.artifactReadiness.sections.find(s => s.ctdSection === '3.2.P.1')).toMatchObject({ status: 'not_assessed', unknownCount: 1 });
     expect(result.sectionTracking).toEqual({ state: 'read', modules: [
       { m: '2', label: 'CTD summaries', pct: 50, tone: 'warn', sections: ['2.5 Clinical overview', '2.7 Clinical summary'] },
     ] });
@@ -83,7 +83,7 @@ describe('supporting dossier reads retain their own recorded basis', () => {
       INSERT INTO project_sections VALUES(11,7,'M2','m2.5','Clinical overview','locked');
       UPDATE projects SET status='archived' WHERE id=11;`);
     const result = await supporting();
-    expect(result.artifactReadiness).toMatchObject({ state: 'read', sections: [], summary: { totalSections: 0 } });
+    expect(result.artifactReadiness).toMatchObject({ state: 'no_artifacts', sections: [], summary: { totalSections: 0 } });
     expect(result.sectionTracking).toEqual({ state: 'read', modules: [] });
     await pg.exec(`UPDATE projects SET status='active',organization_id=8 WHERE id=11;`);
     expect(await supporting()).toEqual(result);

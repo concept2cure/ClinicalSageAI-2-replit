@@ -75,3 +75,13 @@ explicitly seats its actor/anchor admission double; it proves dossier and
 compile data handling, not JWT/membership admission. Existing parent-access
 SQL coverage and control tower's signed-in browser proof provide that boundary.
 No compiler or build was run by this worker. `git diff --check` passes.
+
+## Concurrent A2.7a convergence
+
+The earlier extraction named above was superseded before publication by the
+upstream shared owner, `server/services/c2c/dossier-artifact-read.ts`, with
+exact accepted parent program/client predicates. The original extraction and
+legacy route are deleted. One artifact read uses shared states/summary helpers
+and semantic client validation; tracking remains independent. Final converged
+server verification: 56 passed in seven suites. See the parent README for
+current wire fields, retained admission/currentness guards and native proof.

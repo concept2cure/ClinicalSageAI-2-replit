@@ -46,12 +46,13 @@ anchor and revalidate the exact accepted relationship before returning. An
 unanchored or ambiguous program remains the existing canonical 409 response;
 do not replace it with empty supporting records or a second bridge lookup.
 
-The dossier response gains optional `supportingReadiness` (optional on the
-client for older responses), with independent `artifactReadiness` and
-`sectionTracking` branches. Each branch is `state: 'read'` with its actual
-records, or `state: 'unavailable'` with safe `STORE_UNAVAILABLE` / `READ_FAILED`
-code and reason. Supporting failures do not impersonate empty lists or alter
-the governed figure; governed-read failures keep the existing whole-read 500.
+After the concurrent A2.7a convergence below, the response has one top-level
+`artifactReadiness` using the shared governed-artifact type, plus optional
+`supportingReadiness.sectionTracking`. Artifact states are measured,
+no_artifacts, unavailable or unanchored; unknown statuses are not_assessed.
+Tracking is read with actual records or unavailable. Source failures carry
+safe STORE_UNAVAILABLE / READ_FAILED codes/reasons and never impersonate empty
+lists or alter the governed figure. Governed-read failures keep whole-read 500.
 
 Artifact records retain CTD key, total/status counts, weakest status and section
 date. Unknown statuses are `unknown`, with unknown counts and summary totals;

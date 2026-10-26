@@ -49,7 +49,8 @@ import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
-import { readArtifactReadiness, type ArtifactReadiness } from '../dossier/artifact-readiness';
+import { readDossierArtifactReadiness } from './dossier-artifact-read';
+import type { ArtifactReadiness } from '../../../shared/types/dossier-artifact-readiness';
 import { assembleProjectDossierMap, type DossierTrackedModule } from '../dossier/dossier-map-view-assembler';
 import { ProgramReadAccessError, requireCurrentProgramAccess, type CurrentProgramAccess } from './current-program-access';
 
@@ -99,12 +100,12 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
+  artifactReadiness?: ArtifactReadiness;
   supportingReadiness?: DossierSupportingReadiness;
 }
 
 export interface DossierSupportUnavailable { state: 'unavailable'; code: 'STORE_UNAVAILABLE' | 'READ_FAILED'; reason: string }
 export interface DossierSupportingReadiness {
-  artifactReadiness: ArtifactReadiness | DossierSupportUnavailable;
   sectionTracking: { state: 'read'; modules: DossierTrackedModule[] } | DossierSupportUnavailable;
 }
 
@@ -120,8 +121,8 @@ async function supportingRead<T>(read: () => Promise<T>, name: string): Promise<
 /** Carry the two pre-existing dossier views on their own recorded bases.
  * The caller supplies the request client and its already-admitted exact anchor.
  * Current access is rechecked after the reads, before any result is returned. */
-export async function readDossierSupporting(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<DossierSupportingReadiness> {
-  const artifactReadiness = await supportingRead(() => readArtifactReadiness(db, { organizationId, ...access }), 'Artifact readiness');
+export async function readDossierSupporting(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<DossierSupportingReadiness & { artifactReadiness: ArtifactReadiness }> {
+  const artifactReadiness = await readDossierArtifactReadiness(db, organizationId, access.projectId, access);
   const sectionTracking = await supportingRead(async () => ({ state: 'read' as const,
     modules: await assembleProjectDossierMap(db, organizationId, access.projectId, access),
   }), 'Section tracking');

@@ -227,8 +227,8 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
     await R.step('dossier-readiness-on-an-empty-project', async () => {
       const res = await asOrg(ORG)(request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`));
       expect(res.status).toBe(200);
-      expect(res.body.supportingReadiness.artifactReadiness.sections).toEqual([]);
-      expect(res.body.supportingReadiness.artifactReadiness.summary.totalSections).toBe(0);
+      expect(res.body.artifactReadiness.sections).toEqual([]);
+      expect(res.body.artifactReadiness.summary.totalSections).toBe(0);
       expect(res.body.home).toEqual({ state: 'no_sections', pct: null });
       return { status: res.status, sections: 0 };
     });
@@ -262,14 +262,14 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       const res = await asOrg(ORG)(request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`));
       expect(res.status).toBe(200);
       const byId = Object.fromEntries(
-        (res.body.supportingReadiness.artifactReadiness.sections as { ctdSection: string; status: string; artifactCount: number }[]).map((s) => [s.ctdSection, s]),
+        (res.body.artifactReadiness.sections as { ctdSection: string; status: string; artifactCount: number }[]).map((s) => [s.ctdSection, s]),
       );
       // 2.5 holds one approved and one draft artifact → the section is draft.
       expect(byId['2.5'].status).toBe('draft');
       expect(byId['2.5'].artifactCount).toBe(2);
       expect(byId['2.7'].status).toBe('review');
       expect(res.body.supportingReadiness.sectionTracking.modules).not.toHaveLength(0);
-      return res.body.supportingReadiness;
+      return { artifactReadiness: res.body.artifactReadiness, ...res.body.supportingReadiness };
     });
 
     // ── 4. Pre-compile validation reads real section state ──────────────────
@@ -373,7 +373,7 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       return {
         blocked: res.status === 404 && res.body.supportingReadiness === undefined,
         status: res.status,
-        sections: (res.body.supportingReadiness?.artifactReadiness?.sections ?? []).length,
+        sections: (res.body.artifactReadiness?.sections ?? []).length,
       };
     });
 

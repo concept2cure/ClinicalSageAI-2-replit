@@ -1,0 +1,40 @@
+{
+  "dossierReadStatus": 200,
+  "moduleRows": 5,
+  "firstModuleSections": 13,
+  "moduleUpdatedAt": "2026-10-26T20:14:57.925Z",
+  "homeInReview": 0,
+  "homeDrafted": 0,
+  "questionPrefilled": true,
+  "artifactReadiness": {
+    "basis": "governed_artifacts",
+    "state": "measured",
+    "sections": [
+      {
+        "ctdSection": "1.1",
+        "artifactCount": 2,
+        "draftCount": 1,
+        "reviewCount": 1,
+        "approvedCount": 0,
+        "lockedCount": 0,
+        "unknownCount": 0,
+        "status": "draft",
+        "lastUpdated": "2026-10-26T20:15:01.159Z"
+      }
+    ],
+    "summary": {
+      "totalSections": 1,
+      "readySections": 0,
+      "inProgressSections": 0,
+      "draftSections": 1,
+      "notAssessedSections": 0
+    }
+  },
+  "artifactCreates": [
+    201,
+    201
+  ],
+  "artifactReview": 200,
+  "modelRequests": 0,
+  "writesAfterQuestion": 0
+}

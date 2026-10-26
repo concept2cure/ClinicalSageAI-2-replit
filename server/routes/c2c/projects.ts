@@ -1149,15 +1149,26 @@ router.get('/:id/dossier', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const db = requestPgClient(req);
-    const access = res.locals.currentProgramAccess;
-    if (!access) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
-    if (!(await programInOrganization(db, req.params.id, orgId))) return send404(res);
-    const dossier = await readDossier(db, orgId, String(req.params.id));
-    const supportingReadiness = await readDossierSupporting(db, orgId, access);
-    return res.json({ ...dossier, supportingReadiness });
+    const q = requestPgClient(req);
+    const identity = { organizationId: orgId, userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) };
+    const scope = await getCurrentAccessibleProgramScope(q, identity);
+    const anchors = verifiedProgramAnchors(q, identity, scope);
+    const anchor = anchors[0];
+    const admitted = res.locals.currentProgramAccess;
+    // A fresh scope must still name the exact relationship admitted by the
+    // param middleware before any source is read. Never switch anchors/clients.
+    if (!admitted || anchors.length !== 1 || !anchor ||
+        anchor.programId !== admitted.programId || anchor.projectId !== admitted.projectId ||
+        anchor.clientWorkspaceId !== admitted.clientWorkspaceId ||
+        scope.actor.userId !== admitted.actor.userId || scope.actor.role !== admitted.actor.role) {
+      throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+    }
+    const dossier = await readDossier(q, orgId, identity.programId);
+    const { artifactReadiness, sectionTracking } = await readDossierSupporting(q, orgId, admitted);
+    await requireProgramScopeStillCurrent(q, identity, scope);
+    return res.json({ ...dossier, artifactReadiness, supportingReadiness: { sectionTracking } });
   } catch (err: unknown) {
-    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err, true);
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });

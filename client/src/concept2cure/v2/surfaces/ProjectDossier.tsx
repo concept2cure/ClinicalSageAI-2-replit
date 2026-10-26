@@ -20,6 +20,8 @@ import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } fro
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
+import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
+import { ArtifactSectionStatus, artifactReadinessOf } from './ProjectArtifactReadiness';
 
 /** A figure as the server states it (dossier-read DossierFigure). */
 export type DossierFigure =
@@ -57,28 +59,11 @@ interface SupportingUnavailable {
   code: 'STORE_UNAVAILABLE' | 'READ_FAILED';
   reason: string;
 }
-interface ArtifactSection {
-  ctdSection: string;
-  status: string;
-  artifactCount: number;
-  draftCount: number;
-  reviewCount: number;
-  approvedCount: number;
-  lockedCount: number;
-  unknownCount: number;
-  lastUpdated: string | null;
-}
-type ArtifactReadiness = SupportingUnavailable | {
-  state: 'read';
-  sections: ArtifactSection[];
-  summary: { totalSections: number; readySections: number; inProgressSections: number; draftSections: number; unknownSections: number };
-};
 type SectionTracking = SupportingUnavailable | {
   state: 'read';
   modules: Array<{ m: string; label: string; pct: number; tone: string; sections: string[] }>;
 };
 export interface SupportingReadiness {
-  artifactReadiness: ArtifactReadiness;
   sectionTracking: SectionTracking;
 }
 
@@ -88,8 +73,10 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
-  /** Independent artifact and tracking records, not the governed filing figure. */
+  /** Independent tracked records, not the governed filing figure. */
   supportingReadiness?: SupportingReadiness;
+  /** Separate artifact lifecycle source; absent from older responses. */
+  artifactReadiness?: ArtifactReadiness;
 }
 
 const isFigure = (v: unknown): v is DossierFigure => {
@@ -145,24 +132,14 @@ const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (
 
 const SUPPORTING_UNAVAILABLE = 'Supporting section details are unavailable.';
 const unavailableDetail = (): SupportingUnavailable => ({ state: 'unavailable', code: 'READ_FAILED', reason: SUPPORTING_UNAVAILABLE });
-const count = (n: unknown) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
-const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
+const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const isUnavailable = (v: unknown): v is SupportingUnavailable => record(v) && v.state === 'unavailable'
-  && ['STORE_UNAVAILABLE', 'READ_FAILED'].includes(v.code) && typeof v.reason === 'string';
+  && (v.code === 'STORE_UNAVAILABLE' || v.code === 'READ_FAILED') && typeof v.reason === 'string' && v.reason.trim() !== '';
 
 /** Validate each independent read without converting an old/malformed answer to zero. */
 function supportingDetails(value: unknown): SupportingReadiness {
   const data = record(value) ? value : {};
-  const a = data.artifactReadiness;
   const t = data.sectionTracking;
-  const artifactReadiness: ArtifactReadiness = isUnavailable(a) ? a : (
-    record(a) && a.state === 'read' && Array.isArray(a.sections) && record(a.summary)
-    && ['totalSections', 'readySections', 'inProgressSections', 'draftSections', 'unknownSections'].every(k => count(a.summary[k]))
-    && a.sections.every((s: unknown) => record(s) && typeof s.ctdSection === 'string' && typeof s.status === 'string'
-      && ['artifactCount', 'draftCount', 'reviewCount', 'approvedCount', 'lockedCount', 'unknownCount'].every(k => count(s[k]))
-      && (s.lastUpdated === null || typeof s.lastUpdated === 'string'))
-      ? a as ArtifactReadiness : unavailableDetail()
-  );
   const sectionTracking: SectionTracking = isUnavailable(t) ? t : (
     record(t) && t.state === 'read' && Array.isArray(t.modules)
     && t.modules.every((m: unknown) => record(m) && typeof m.m === 'string' && typeof m.label === 'string'
@@ -170,37 +147,13 @@ function supportingDetails(value: unknown): SupportingReadiness {
       && typeof m.tone === 'string' && Array.isArray(m.sections) && m.sections.every((s: unknown) => typeof s === 'string'))
       ? t as SectionTracking : unavailableDetail()
   );
-  return { artifactReadiness, sectionTracking };
+  return { sectionTracking };
 }
 
-function RecordedTime({ value }: { value: string | null }) {
-  const date = value ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime())
-    ? <time dateTime={value!}>{date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time>
-    : <>Not recorded</>;
-}
-
-/** The former dossier's artifact table and map's tracking read, in Author. */
+/** The former map's existing tracking read, in Author. */
 function SupportingDossierDetails({ value }: { value: unknown }) {
-  const { artifactReadiness: a, sectionTracking: t } = supportingDetails(value);
+  const { sectionTracking: t } = supportingDetails(value);
   return <div className="pj-dossier-supporting">
-    <section className="pj-card" aria-label="Section artifacts">
-      <h3>Section artifacts</h3>
-      <p className="pj-card-note">Each section takes the status of its least advanced artifact. These records do not change the governed dossier readiness figure.</p>
-      {a.state === 'unavailable' ? <p role="status" className="pj-card-note">{a.reason}</p> : <>
-        <p className="pj-card-note">{a.summary.totalSections} section{a.summary.totalSections === 1 ? '' : 's'} · {a.summary.readySections} ready · {a.summary.inProgressSections} in progress · {a.summary.draftSections} draft{a.summary.unknownSections > 0 && <> · {a.summary.unknownSections} with unrecognized status</>}</p>
-        {a.sections.length === 0 ? <p className="pj-card-note">No sectioned artifacts yet. Artifacts tagged with a CTD section appear here.</p> : <div className="pj-dossier-table">
-          <table className="reg-tbl">
-            <thead><tr><th scope="col">CTD section</th><th scope="col">Artifacts</th><th scope="col">Draft / Review / Approved / Locked</th><th scope="col">Updated</th><th scope="col">Status</th></tr></thead>
-            <tbody>{a.sections.map(s => <tr key={s.ctdSection}>
-              <th scope="row">{s.ctdSection}</th><td>{s.artifactCount}</td>
-              <td>{s.draftCount} / {s.reviewCount} / {s.approvedCount} / {s.lockedCount}{s.unknownCount > 0 && <> · {s.unknownCount} unrecognized</>}</td>
-              <td><RecordedTime value={s.lastUpdated} /></td><td>{sectionStatus(s.status)}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>}
-      </>}
-    </section>
     <section className="pj-card" aria-label="Tracked CTD sections">
       <h3>Tracked CTD sections</h3>
       <p className="pj-card-note">Progress recorded in section tracking, separate from governed document readiness.</p>
@@ -349,12 +302,12 @@ export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
     );
   }
   return (
-    <section className="pj-sec">
+    <><section className="pj-sec">
       <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
       {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
       {body}
       {d && !state.error && <SupportingDossierDetails value={d.supportingReadiness} />}
-    </section>
+    </section><ArtifactSectionStatus read={read} /></>
   );
 }
 
@@ -370,6 +323,7 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       home: d.home,
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
       rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
+      artifactReadiness: artifactReadinessOf(d.artifactReadiness),
       supportingReadiness: supportingDetails(d.supportingReadiness),
     },
     dossierUnavailable: null,

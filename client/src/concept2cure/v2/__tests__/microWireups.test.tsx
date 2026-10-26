@@ -40,12 +40,12 @@ describe('Author — preserved per-section artifact readiness binding', () => {
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === `/api/c2c/projects/${PROGRAM}/dossier`) return ok({
         projectId: PROGRAM, measuredAt: '2026-10-26T00:00:00Z', home: { state: 'no_sections', pct: null }, markets: [], rows: [],
-        supportingReadiness: {
-          artifactReadiness: {
-            state: 'read',
+        artifactReadiness: {
+            basis: 'governed_artifacts', state: 'measured',
             sections: [{ ctdSection: '3.2.P.5', status: 'review', artifactCount: 4, draftCount: 0, reviewCount: 2, approvedCount: 1, lockedCount: 1, unknownCount: 0, lastUpdated: '2026-07-20T00:00:00Z' }],
-            summary: { totalSections: 1, readySections: 0, inProgressSections: 1, draftSections: 0, unknownSections: 0 },
+            summary: { totalSections: 1, readySections: 0, inProgressSections: 1, draftSections: 0, notAssessedSections: 0 },
           },
+        supportingReadiness: {
           sectionTracking: { state: 'read', modules: [] },
         },
       });
@@ -53,7 +53,7 @@ describe('Author — preserved per-section artifact readiness binding', () => {
     });
     render(<DossierProjection />);
     expect(await screen.findByText('3.2.P.5')).toBeTruthy();
-    expect(screen.getByText('0 / 2 / 1 / 1')).toBeTruthy();
+    expect(screen.getByText('0 / 2 / 1 / 1 / 0')).toBeTruthy();
     expect(screen.getByText('In review')).toBeTruthy();
     expect(apiRequest.mock.calls.some(([, u]) => String(u).startsWith('/api/dossier-readiness'))).toBe(false);
   });

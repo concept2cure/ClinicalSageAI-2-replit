@@ -79,9 +79,9 @@ test('legacy dossier URLs reach Author with all recorded detail, or Projects wit
   expect(dossierRead.status()).toBe(200);
   const dossier = await dossierRead.json();
   expect(dossier.home).toEqual(initialHome);
-  expect(dossier.supportingReadiness.artifactReadiness.state).toBe('read');
+  expect(dossier.artifactReadiness.state).toBe('measured');
   expect(dossier.supportingReadiness.sectionTracking.state).toBe('read');
-  const section = dossier.supportingReadiness.artifactReadiness.sections.find((s: { ctdSection: string }) => s.ctdSection === '3.2.P.5');
+  const section = dossier.artifactReadiness.sections.find((s: { ctdSection: string }) => s.ctdSection === '3.2.P.5');
   expect(section).toMatchObject({ status: 'draft', artifactCount: 1, draftCount: 1 });
   const modules = dossier.supportingReadiness.sectionTracking.modules;
   expect(modules.length).toBeGreaterThan(0);
@@ -91,10 +91,10 @@ test('legacy dossier URLs reach Author with all recorded detail, or Projects wit
   await expect(page).toHaveURL(new RegExp(`/project-home\\?program=${pid}#section-status$`));
   const active = page.locator('.pj-lc-stage[aria-current="step"]');
   await expect(active).toHaveText('Author');
-  const artifacts = page.getByRole('region', { name: 'Section artifacts', exact: true });
-  await expect(artifacts.getByRole('rowheader', { name: '3.2.P.5', exact: true })).toBeVisible();
+  const artifacts = page.getByRole('region', { name: 'Artifact section status', exact: true });
+  await expect(artifacts.getByRole('cell', { name: '3.2.P.5', exact: true })).toBeVisible();
   await expect(artifacts.locator('time')).toHaveAttribute('datetime', section.lastUpdated);
-  await expect(artifacts).toContainText('1 section · 0 ready · 0 in progress · 1 draft');
+  await expect(artifacts).toContainText('1 section · 0 approved or locked · 0 in review · 1 draft · 0 not assessed');
   const tracking = page.getByRole('region', { name: 'Tracked CTD sections', exact: true });
   await expect(tracking).toContainText(`Module ${modules[0].m} · ${modules[0].label} · ${modules[0].pct}%`);
   await expect(tracking).toContainText(modules[0].sections[0]);
