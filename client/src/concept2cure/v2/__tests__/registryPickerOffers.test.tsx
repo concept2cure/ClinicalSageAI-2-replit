@@ -57,8 +57,8 @@ function serverAnswer(_m: string, raw: unknown) {
 const typeOf = (e: { id: string; pathwayKey?: string | null }) =>
   programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, 'biotech');
 
-function renderPicker(onChange = vi.fn(), value = '') {
-  return render(<RegistryPicker value={value} onChange={onChange} applicationTypeOf={typeOf} initialSegment="pharma_biotech" />);
+function renderPicker(onChange = vi.fn(), value = '', onAsk?: (text: string) => void) {
+  return render(<RegistryPicker value={value} onChange={onChange} onAsk={onAsk} applicationTypeOf={typeOf} initialSegment="pharma_biotech" />);
 }
 
 const tiles = () => Array.from(document.querySelectorAll('button.rpk-type')).map((b) => ({
@@ -70,6 +70,92 @@ const tiles = () => Array.from(document.querySelectorAll('button.rpk-type')).map
 beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(serverAnswer);
+});
+
+describe('RegistryPicker selected filing reference and build facts', () => {
+  it('shows the catalog description and the selected market facts as visible text', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const entry = GLOBAL_REGISTRY.find(e => e.id === 'us_ind')!;
+    const support = marketSupport({ applicationType: 'ind', market: entry.agency }, packs, ASOF);
+    expect(within(note).getByText(/Catalog reference/)).toBeTruthy();
+    expect(note.textContent).toContain(entry.description);
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toContain(support.outline.pack!.label);
+    expect(build.textContent).toContain(support.module1.detail);
+    expect(build.textContent).toContain(support.channel.detail);
+  });
+
+  it('asks the catalog question about the chosen filing without changing the selection', async () => {
+    const onAsk = vi.fn();
+    const onChange = vi.fn();
+    renderPicker(onChange, 'us_ind', onAsk);
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const reads = apiRequest.mock.calls.length;
+    fireEvent.click(within(note).getByRole('button', { name: 'Ask AnA' }));
+    expect(onAsk).toHaveBeenCalledExactlyOnceWith("Tell me about the Investigational New Drug Application — when it's required, what it contains, and what evidence I need.");
+    expect(onChange).not.toHaveBeenCalled();
+    expect(apiRequest.mock.calls).toHaveLength(reads);
+  });
+
+  it('keeps author-only limits in the details instead of claiming a sequence or transmit', async () => {
+    renderPicker(vi.fn(), 'us_510k');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toContain('k510:fda');
+    expect(build.textContent).toContain('a device filing is not eCTD, so it has no Module 1');
+    expect(build.textContent).toContain('the platform transmits no device filing yet');
+    expect(build.textContent).not.toMatch(/validation gates|built and sequenced/i);
+  });
+
+  it('does not present parent-application build facts as facts about an unclaimed filing', async () => {
+    renderPicker(vi.fn(), 'us_pre_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    const build = within(note).getByTestId('rpk-chosen-build');
+    expect(build.textContent).toMatch(/No build details are stated for this filing/);
+    expect(build.textContent).not.toContain('ind:fda');
+    expect(note.textContent).toContain(GLOBAL_REGISTRY.find(e => e.id === 'us_pre_ind')!.description);
+  });
+
+  it('reports missing build fields without discarding the existing offer or inventing facts', async () => {
+    apiRequest.mockImplementation(async (method: string, raw: unknown) => {
+      const response = await serverAnswer(method, raw);
+      const body = await response.json();
+      body.markets.forEach((m: { outline?: unknown }) => { delete m.outline; });
+      return ok(body);
+    });
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    expect(note.textContent).toMatch(/^Build and sequence\./);
+    expect(within(note).getByTestId('rpk-chosen-build').textContent).toContain('Build details could not be read');
+    expect(within(note).getByTestId('rpk-chosen-build').textContent).not.toContain('ind:fda');
+  });
+
+  it('keeps Ask AnA absent for callers with no question callback', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    expect(within(note).queryByRole('button', { name: 'Ask AnA' })).toBeNull();
+  });
+});
+
+describe('RegistryPicker description search', () => {
+  it('finds an offered filing using wording present only in its description', async () => {
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: '30 days before trial start' } });
+    expect(tiles().map(t => t.name)).toContain('Investigational New Drug Application');
+  });
+
+  it('uses the same description rule for refused filings and retains the refusal reason', async () => {
+    const refused = GLOBAL_REGISTRY.find(e => e.description &&
+      marketSupport({ applicationType: typeOf(e), market: e.agency }, packs, ASOF).offer.tier === 'not_offered')!;
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: refused.description } });
+    const section = screen.getByTestId('rpk-not-offered');
+    expect(within(section).getByText(`${refused.displayName} · ${refused.agency}.`)).toBeTruthy();
+    expect(section.textContent).toContain(marketSupport({ applicationType: typeOf(refused), market: refused.agency }, packs, ASOF).offer.reason);
+  });
 });
 afterEach(() => cleanup());
 

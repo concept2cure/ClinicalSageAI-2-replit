@@ -22,6 +22,7 @@ import type { FilingItem } from '../fixtures/filings-catalog-data';
 import '../styles/project-home-v2.css';
 import { useDialog } from '../useDialog';
 import { getSurfaceMeta } from '../registryModel';
+import { filingAskPrompt } from '@shared/regulatory/filing-catalog';
 
 /* ---- Filing detail slide-over ---- */
 
@@ -117,7 +118,7 @@ function FilingDetail({
 
         <div className="fc-detail-actions">
           <button className="fc-detail-go" onClick={onStart}>{hasWf ? 'Open workflow' : 'Start with AnA'} {I.arrowRight}</button>
-          <button className="fc-detail-ask" onClick={() => { onAsk('Tell me about the ' + it.n + ' — when it\'s required, what it contains, and what evidence I need.'); onClose(); }}>{I.sparkles} Ask AnA</button>
+          <button className="fc-detail-ask" onClick={() => { onAsk(filingAskPrompt(it.n)); onClose(); }}>{I.sparkles} Ask AnA</button>
         </div>
 
         {loop && <>

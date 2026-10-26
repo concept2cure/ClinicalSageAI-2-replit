@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 835ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 167ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 150ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 113ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 298ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 408ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 405ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 314ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 346ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 340ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 283ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 295ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 284ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 289ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > complete discovery review > previews therapeutic, experience and security answers and returns to their existing question steps 400ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 624ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 262ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 220ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 299ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 271ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 171ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 193ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 8ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 572ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 313ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 288ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 296ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 282ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > loads a saved draft and preserves revision without browser persistence 71ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > saves a partial draft with a revision and audit reason, then advances revision 59ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > refuses completion locally for incomplete answers 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > cleans comma-input blanks before saving and requires an actual therapeutic area 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > rejects an incomplete server confirmation and retains unsaved answers for retry 58ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > requires reload after a concurrent edit and prevents blind overwrite 107ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > retains answers after network refusal and permits retry 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > disables writes for a viewer while exposing saved discovery 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > treats malformed reads as errors rather than as an empty editable draft 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > drops late read results across tenant changes 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > holds browser exit and workspace switching only while answers are unsaved 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > retains dirty answers and the exit guard when reloading saved answers fails 158ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > refuses same-turn edits and reloads until the pending write reports 55ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 201ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 20ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 74ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 34ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the wizard names the organisation it will change > does not call itself a new organization 88ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > prefills the recorded name 36ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > pre-selects the archetype whose write-back is the recorded industry, not "Virtual biotech" 58ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered 58ms
+ ✓ client/src/concept2cure/v2/__tests__/DiscoveryNextSteps.test.tsx > routes guidance to existing surfaces and leaves configured controls and project creation to those workflows 147ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > probes the rotated token, preserves session storage choice, clears tenant selection and loads Projects 4ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > does not rotate or clear anything while the editor refuses unload 4ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > preserves the original tenant selection on a refused membership switch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > ends the spent old session if the destination probe fails rather than retaining an old canvas under a new token 1ms
+
+ Test Files  8 passed (8)
+      Tests  55 passed (55)
+   Start at  18:47:25
+   Duration  19.62s (transform 1.47s, setup 1.04s, import 2.58s, tests 10.56s, environment 4.20s)

@@ -1,0 +1,122 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-26T19:00:03.111Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T19:00:03.112Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-10-26T19:00:03.113Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection successful
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > shows the catalog description and the selected market facts as visible text 88ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > asks the catalog question about the chosen filing without changing the selection 205ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps author-only limits in the details instead of claiming a sequence or transmit 49ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > does not present parent-application build facts as facts about an unclaimed filing 98ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > reports missing build fields without discarding the existing offer or inventing facts 69ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps Ask AnA absent for callers with no question callback 67ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > finds an offered filing using wording present only in its description 101ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > uses the same description rule for refused filings and retains the refusal reason 71ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1140ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 43ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 51ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 55ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 8ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 39ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a tab shows the filings built and validated here first; the rest are one press away 123ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a chosen filing among the rest is never hidden behind the press 348ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a search lists everything it matches, built here or not, with no press 48ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 47ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 34ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 40ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 42ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 51ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 118ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 45ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 661ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 143ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 164ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 121ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 361ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 414ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 474ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 354ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 457ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 385ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 451ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 372ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 352ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 273ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > complete discovery review > previews therapeutic, experience and security answers and returns to their existing question steps 429ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 684ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 334ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 232ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 385ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 285ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 165ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 247ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 277ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 8ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > files a real licence request carrying the contact and the configured plan 840ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > sends nothing — and says nothing was sent — when the intake refuses 553ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — Request Enterprise onboarding > cannot be fired at all without an address to reply to 432ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > provisions the free tier through the real checkout endpoint and does not redirect 415ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx > Onboarding — the free tier activates a plan > reports no plan when the server refuses the free activation 465ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > loads a saved draft and preserves revision without browser persistence 81ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > saves a partial draft with a revision and audit reason, then advances revision 59ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > refuses completion locally for incomplete answers 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > cleans comma-input blanks before saving and requires an actual therapeutic area 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > rejects an incomplete server confirmation and retains unsaved answers for retry 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > requires reload after a concurrent edit and prevents blind overwrite 110ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > retains answers after network refusal and permits retry 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > disables writes for a viewer while exposing saved discovery 54ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > treats malformed reads as errors rather than as an empty editable draft 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > drops late read results across tenant changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > holds browser exit and workspace switching only while answers are unsaved 60ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > retains dirty answers and the exit guard when reloading saved answers fails 167ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > refuses same-turn edits and reloads until the pending write reports 56ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > publishes the first step and chosen filing, and passes Ask AnA through 335ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > tracks Configure, Review and Back while excluding entered/private fields 356ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > replaces a prior selection and restores portfolio context on close 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > keeps wizard state when a delayed portfolio response arrives 97ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > retires selected metadata if the signed-in organization no longer matches 115ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > starts a matching new account at the first step with no prior selection 205ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 223ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 23ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 87ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 31ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the wizard names the organisation it will change > does not call itself a new organization 88ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > prefills the recorded name 29ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > pre-selects the archetype whose write-back is the recorded industry, not "Virtual biotech" 33ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered 56ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > probes the rotated token, preserves session storage choice, clears tenant selection and loads Projects 6ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > does not rotate or clear anything while the editor refuses unload 3ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > preserves the original tenant selection on a refused membership switch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > ends the spent old session if the destination probe fails rather than retaining an old canvas under a new token 1ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the existing catalog Ask AnA control shares its filing question > uses the shared builder for the chosen real catalog filing and closes its detail 361ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the existing catalog Ask AnA control shares its filing question > preserves the existing question wording and the catalog display name 2ms
+ ✓ client/src/concept2cure/v2/__tests__/DiscoveryNextSteps.test.tsx > routes guidance to existing surfaces and leaves configured controls and project creation to those workflows 170ms
+
+ Test Files  11 passed (11)
+      Tests  87 passed (87)
+   Start at  18:59:58
+   Duration  33.32s (transform 4.79s, setup 1.00s, import 8.03s, tests 17.10s, environment 5.58s)

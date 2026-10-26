@@ -62,9 +62,17 @@ still reviews intake and presses Create. Replacement paths, red proof, SQL/HTTP
 refusal checks and native browser evidence are in [A2.4/README.md](A2.4/README.md).
 Existing-project configuration, catalog and entitlements remain unchanged.
 
+## A2.5 — selected filing guidance and shared Ask AnA prompt
+
+Completed the existing picker note with catalog reference wording and server
+build facts, description search and the catalog's shared Ask AnA question.
+The actor-bound wizard now reports its actual step and public selection through
+the parent's single context publisher. Detailed red/green evidence, private-field
+limits and native browser checks are in [A2.5/README.md](A2.5/README.md).
+
 ## Remaining sequence
 
-A2.5 (complete the existing filing picker note and Ask AnA prompt) is next, followed by A2.6. A2.7 and later screen removals retain function-parity and founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
+A2.6 (complete the existing ProjectDossier facts and module details) is next. A2.7 and later screen removals retain function-parity and founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
 
 ## Final integration
 

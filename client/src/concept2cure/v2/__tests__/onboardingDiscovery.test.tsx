@@ -195,3 +195,49 @@ describe('intelligent discovery wizard', () => {
     expect(screen.getByText(/0 of 1 invitations recorded.*need attention/i)).toBeTruthy();
   });
 });
+
+describe('discovery setup handoffs', () => {
+  async function securityStep() {
+    props.onNav = vi.fn();
+    render(<Onboarding {...props} />);
+    for (let index = 0; index < 7; index += 1) await next();
+    const checkbox = screen.getByRole('checkbox', { name: /Help me establish/ });
+    fireEvent.click(checkbox);
+  }
+
+  it('saves changed discovery before opening existing organization setup', async () => {
+    await securityStep();
+    fireEvent.click(screen.getByRole('button', { name: 'Organization setup' }));
+    await waitFor(() => expect(props.onNav).toHaveBeenCalledWith('setup'));
+    expect(request).toHaveBeenLastCalledWith('PATCH', '/api/onboarding/discovery', expect.objectContaining({ complete: false }));
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it('keeps the wizard and changed answers when the handoff save is refused', async () => {
+    await securityStep();
+    request.mockRejectedValueOnce(new Error('Discovery save unavailable.'));
+    fireEvent.click(screen.getByRole('button', { name: 'Roles and access' }));
+    await screen.findByText('Discovery save unavailable.');
+    expect(props.onNav).not.toHaveBeenCalled();
+    expect(screen.getByTestId('discovery-security')).toBeTruthy();
+    expect(screen.getByText(/unsaved changes/)).toBeTruthy();
+  });
+});
+
+describe('complete discovery review', () => {
+  it('previews therapeutic, experience and security answers and returns to their existing question steps', async () => {
+    await reviewWithInvite();
+    const projectSummary = screen.getByText('Project and desired outcome');
+    fireEvent.click(projectSummary);
+    expect(screen.getByText(answers.indication)).toBeTruthy();
+    expect(screen.getByText(answers.therapeuticAreas.join(', '))).toBeTruthy();
+    fireEvent.click(screen.getByText('Company and working context'));
+    expect(screen.getByText('Regularly manage regulated projects')).toBeTruthy();
+    fireEvent.click(screen.getAllByText('Security requirements')[0]);
+    expect(screen.getByText('Multi-factor authentication')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Review project and desired outcome' }));
+    expect(screen.getByTestId('discovery-project')).toBeTruthy();
+    expect((screen.getByLabelText('Therapeutic areas *') as HTMLInputElement).value).toBe(answers.therapeuticAreas.join(', '));
+    expect(mutation).not.toHaveBeenCalled();
+  });
+});

@@ -1282,9 +1282,10 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-The smallest next UI change remains **A2.5**, already specified in `SLICE_A2_PLAN.md`: complete the existing
-RegistryPicker chosen-filing note with the market-support build line and reuse the catalogue's Ask AnA prompt from
-`shared/regulatory/filing-catalog.ts`. A2.1–A2.4 are complete; no former screen is removed by this next change.
+A2.1–A2.5 are complete, including the existing RegistryPicker's filing guidance and shared Ask AnA prompt.
+The next UI change is **A2.6**, specified in `SLICE_A2_PLAN.md`: complete the existing ProjectDossier's section
+facts, update time and review totals. This enrichment does not authorize a former screen's removal; A2.7 still
+requires the visible-function parity proof stated in that plan.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.
