@@ -448,18 +448,21 @@ await step(
       csrInputs: [{ studyId: 'OQ-301', protocolNumber: 'OQ-301', phase: '3', studyDesign: 'randomized', primaryEndpoint: 'ORR', primaryResult: 'ORR 42% (OQ figure)', sampleSize: 312 }],
     });
     const program = await api('POST', '/api/submission-orchestrator/runs', { projectId: 1, ctdProgramId: 77 });
-    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' || code(program) !== 'CTD_PROGRAM_INPUTS_REFUSED') {
+    /* A deviation only on a development server, which this run knows from its
+       own sign-in (dev-login is answered only there). Anywhere else a missing
+       refusal is a failure of the control, never a deviation (S1 review). */
+    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' && ctx.auth.method === 'dev-login') {
       ctx.deviation(
-        `not executed — this server allows inline run inputs (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}), ` +
-          'which is the documented development behaviour. The refusal is a production control; observe it under the W3 posture.',
+        `not executed — this is a development server (dev-login), which allows inline run inputs by design (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}). ` +
+          'The refusal is a production control; observe it under the W3 posture.',
         { inline: inline.json, program: program.json },
       );
     }
-    expect(inline.status === 400, `inline csrInputs: expected 400, got ${inline.status}`, inline.json);
+    expect(inline.status === 400 && code(inline) === 'INLINE_RUN_INPUTS_REFUSED', `inline csrInputs: expected 400 INLINE_RUN_INPUTS_REFUSED, got ${inline.status} ${code(inline)}`, inline.json);
     expect(inline.json?.field === 'csrInputs', 'the refusal names the field', inline.json);
     expect(String(inline.json?.message ?? '').includes('/api/submission-orchestrator/runs/for-program'), 'the refusal names the route to use', inline.json);
     expect(!JSON.stringify(inline.json ?? {}).includes('OQ figure'), 'the refusal echoes the refused figure', inline.json);
-    expect(program.status === 400, `ctdProgramId: expected 400, got ${program.status}`, program.json);
+    expect(program.status === 400 && code(program) === 'CTD_PROGRAM_INPUTS_REFUSED', `ctdProgramId: expected 400 CTD_PROGRAM_INPUTS_REFUSED, got ${program.status} ${code(program)}`, program.json);
     return `inline 400 ${code(inline)}; ctdProgramId 400 ${code(program)}`;
   },
 );

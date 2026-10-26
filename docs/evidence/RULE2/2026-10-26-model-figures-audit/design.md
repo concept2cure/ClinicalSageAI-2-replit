@@ -649,6 +649,10 @@ Move the `deepening-tools.test.ts` cases. Red: a retirement test.
 
 ### S13. Delete the dead request-body routes (inventory-plan S13 as written)
 
+> **Added 2026-10-26 (S1 review):** `POST /runs/:runId/regenerate` has no client caller. Outside development, S1 refuses
+> every body it could carry except one with every array empty, which re-runs every step over nothing. Refuse it outside
+> development, or retire it, with `POST /runs/for-program` as the replacement.
+
 - **Delete:** `/m2/nonclinical`, `/m2/clinical`, `/m2/clinical-overview`, `/csr/tabulate` and `/validate/hardened` (`submission-orchestrator.ts:918-1094`), and the schemas only they use.
 - **Keep:** `NonclinicalStudySchema`, `CSRInputSchema` and `StudyDataSchema` while Mode B uses them in development; `csr-readiness-launch-claim.test.ts`.
 - **Red:** in development the five paths return 404. On trunk they are handled.

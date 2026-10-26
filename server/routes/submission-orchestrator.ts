@@ -618,10 +618,14 @@ router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Respons
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
+  const rawBody = req.body ?? {};
+  // Refused figures get their own code and field whatever else the body
+  // carries (S1 review, 2026-10-26: beside a projectId they read as ambiguous).
+  if (refusedInlineRunInputs(rawBody, res, organizationId, 'runs')) return;
+
   // Defensive: reject ambiguous requests where the caller supplied BOTH
   // projectId AND any hand-built input array. Either mode by itself is
   // valid; both together is a programming error.
-  const rawBody = req.body ?? {};
   const hasProjectId = typeof rawBody.projectId === 'number';
   const hasInlineInputs =
     Array.isArray(rawBody.cmcSources) ||
@@ -638,8 +642,6 @@ router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Respons
         'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.',
     });
   }
-
-  if (refusedInlineRunInputs(rawBody, res, organizationId, 'runs')) return;
 
   const parsed = RunSchema.safeParse(rawBody);
   if (!parsed.success) {
@@ -906,6 +908,8 @@ router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
 router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
+  // Before the run is read: the refusal depends on the body alone (S1 review).
+  if (refusedInlineRunInputs(req.body ?? {}, res, organizationId, 'regenerate')) return;
 
   let previousRun;
   try {
@@ -914,8 +918,6 @@ router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Req
     return serverError(res, log, 'reading the run', err);
   }
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
-
-  if (refusedInlineRunInputs(req.body ?? {}, res, organizationId, 'regenerate')) return;
 
   const RegenSchema = buildRunSchema({
     changedStep: z.string().optional(),

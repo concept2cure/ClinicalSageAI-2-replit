@@ -93,3 +93,36 @@ development a `ctdProgramId` is refused before the loader can throw `CtdProgramN
 - `ci:unreferenced-modules`: OK.
 - `check-validation-traceability`: every URS citation resolves, and every OQ step carries its protocol's kind. Its
   `--self-test` (17 mutations) catches every one.
+
+## The adversarial review (2026-10-26), and the fixes
+
+Three read-only lenses reviewed `e0ad84e84`: bypass, regressions, and the validation package. A separate verifier then
+tried to refute each finding.
+
+**Confirmed, and fixed:**
+- **The regenerate refusal came after the run was read.** It was confirmed twice. `getRun` ran first, so an unknown run
+  answered 404 `run_not_found` and a failed read answered 500. That contradicted URS-SUBC-014's "before anything is
+  read". The refusal now runs straight after the tenant check; it depends on the body alone, so it reveals nothing about
+  the run.
+- **A `projectId` beside a non-empty array answered `ambiguous_request`.** That is still a 400, but not the code and
+  field the URS names. The refusal now runs before the ambiguity check. A `projectId` beside empty arrays is still
+  ambiguous.
+- **OQ-SUBC-16 decided "deviation" from the response codes.** A production server that failed to refuse would have been
+  recorded as a deviation, never a fail. The step now records a deviation only on a development server, which it knows
+  from its own sign-in (`ctx.auth.method === 'dev-login'`; only development answers dev-login). Anywhere else, both codes
+  are asserted.
+
+**Refuted, and filed:**
+- A regenerate with no inputs at all (Mode B, every array empty) still re-runs every step over nothing. It predates S1,
+  and the S1 spec admits empty arrays.
+- The regenerate route has no client caller, and outside development every body it now admits is that vacuous one. The
+  design's S13 records it as a route to refuse or retire, with `/runs/for-program` as the replacement.
+- An OQ step for regenerate: the OQ row states its own scope (`POST /runs`); the unit test covers regenerate.
+
+**Proof:**
+- `red/review-before.txt`: 7 cases fail on `0d94a6666`. Two are the `projectId` cases. Four are the regenerate cases,
+  which now assert `getRun` is not called. One is a regenerate for a run that does not exist.
+- `green/review-after.txt`: 15 of 15 pass.
+- The 12-file orchestrator neighbourhood passes: 131 tests.
+- typecheck 0; ESLint ratchet unchanged; `check-validation-traceability` passes.
+

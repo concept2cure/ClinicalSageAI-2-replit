@@ -117,7 +117,7 @@ It states no study, dose, NOAEL or finding.
 - **Four fail identically on trunk with this change stashed.** They are not this change's:
   - `ana-launch-scope` ×3: `device-510k` is now a launch surface (`62a8d5e7f`), but the inventory still files its tools, such as `write_kit_section`, as hidden.
   - `tool-selection-biotech-workflows` ×1: `get_document_template` falls outside the 50-tool budget for "help me prepare an EU clinical trial application".
-  - They belong to the device integration work and are reported to the founder; this change leaves them alone.
+  - They belong to the device integration work, and this change leaves them alone. The UI session fixed all four, and a fifth with the same cause, in `30e83d4ed` (pushed as `7d1f7f316`); its evidence is `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/ana-device-scope/`.
 
 **Moved pins.** These tests pinned the defect, and were moved, not deleted:
 - `nonclinical-clinpharm-tools.test.ts`:

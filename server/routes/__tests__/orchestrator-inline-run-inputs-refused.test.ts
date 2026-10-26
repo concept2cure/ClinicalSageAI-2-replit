@@ -118,6 +118,8 @@ beforeEach(() => {
 });
 
 function nothingRead() {
+  // S1 review: the regenerate refusal came after the run was read (getRun).
+  expect(h.getRun, 'the run was read before the refusal').not.toHaveBeenCalled();
   expect(h.runOrchestrator, 'a refused run still orchestrated').not.toHaveBeenCalled();
   expect(h.regenerateAffected, 'a refused regenerate still ran').not.toHaveBeenCalled();
   expect(h.scope).not.toHaveBeenCalled();
@@ -146,6 +148,18 @@ describe('outside development, a run takes no clinical or nonclinical figures fr
     nothingRead();
   });
 
+  // S1 review: a projectId beside a non-empty array answered ambiguous_request,
+  // not the refusal URS-SUBC-014 names.
+  it.each([
+    ['csrInputs', { csrInputs: [CSR] }],
+    ['nonclinicalStudies', { nonclinicalStudies: [STUDY] }],
+  ])('refuses a projectId beside inline %s with the same code and field', async (field, arrays) => {
+    const res = await request(app()).post(RUNS).send(body({ projectId: 7, ...arrays }));
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body).toMatchObject({ error: 'INLINE_RUN_INPUTS_REFUSED', field });
+    nothingRead();
+  });
+
   it('refuses a Mode A ctdProgramId: the extractor’s rows are not a record', async () => {
     const res = await request(app()).post(RUNS).send(body({ projectId: 7, ctdProgramId: 77 }));
     expect(res.status, JSON.stringify(res.body)).toBe(400);
@@ -164,6 +178,16 @@ describe('outside development, a run takes no clinical or nonclinical figures fr
     expect(res.status, JSON.stringify(res.body)).toBe(400);
     expect(res.body).toMatchObject({ error, field });
     expect(res.body.message).toContain('/api/submission-orchestrator/runs/for-program');
+    nothingRead();
+  });
+});
+
+describe('the regenerate refusal does not depend on the run', () => {
+  it('refuses inline figures for a run that does not exist, without reading it', async () => {
+    h.getRun.mockResolvedValue(null);
+    const res = await request(app()).post(REGEN).send(body({ csrInputs: [CSR] }));
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body).toMatchObject({ error: 'INLINE_RUN_INPUTS_REFUSED', field: 'csrInputs' });
     nothingRead();
   });
 });
