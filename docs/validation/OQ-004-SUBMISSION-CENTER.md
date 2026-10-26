@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-004 |
-| Version | 0.6 |
+| Version | 0.7 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-004 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-center/run.mjs` — `npm run validation:oq -- submission-center` |
@@ -19,6 +19,7 @@
 | 0.4 | 2026-09-27 | W3 | Two steps follow product changes that the 2026-09-27 first attempt showed failing (VSR-001 §18). OQ-SUBC-04 places a document ingested into the submission's own program and adds the refusal of another project's document (409 `CROSS_PROJECT`, PF-11, 2026-09-26). Since LX-22, OQ-SUBC-03 gives the submission a program of its own, so the step's former document, OQ-SUBC-00's, was another project's and was refused. OQ-SUBC-08's signature states its meaning, `approval`, as the Submission Center's modal proposes for a freeze: without one, a sign is refused 400 `SIGNATURE_MEANING_REQUIRED` (P1-21, 2026-09-25) before the second-factor check the step exists to show. |
 | 0.5 | 2026-10-15 | D2 | OQ-SUBC-15 is new (URS-SUBC-013, decision P-34): a Shadow Review waiver is offered only after a provider outage and recorded only by signature. On an installation with no AI provider the run fails as `no_provider_configured`, which is not an outage, so the step shows the waiver not offered, the presence gate blocking, and an unsigned waive refused with nothing recorded. The positive path cannot be produced on demand on an installation; it is proven over the real act in `server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts`. **Not yet executed at this version.** |
 | 0.6 | 2026-10-26 | D2 | OQ-SUBC-16 is new (URS-SUBC-014, CLAUDE.md Rule 2): a submission run refuses inline clinical and nonclinical figures and a `ctdProgramId` outside development. A development server allows both by design (the fixture door), so there the step records a deviation, never a pass; the refusal is a production control and is observed under the W3 posture, as OQ-CMC-30's is. **Not yet executed at this version.** |
+| 0.7 | 2026-10-26 | D2 A2.7 | OQ-SUBC-10 now reads the canonical UUID dossier endpoint and cites revised URS-SUBC-009a. It checks independent artifact and tracking states rather than a retired standalone map route. Earlier OQ-SUBC-10 passes remain historical; this revised formal protocol is not yet executed. Focused SQL/HTTP/browser evidence is in D2 A2.7. |
 
 ## 1. Method
 
@@ -42,7 +43,7 @@ IQ-001 executed; OQ-SUBC-00 creates a program and ingests one PDF to serve as a 
 | OQ-SUBC-07 | URS-SUBC-007 | scripted | `POST /api/c2c/actions/sign` without `reauth` | 4xx; no `actionId` |
 | OQ-SUBC-08 | URS-SUBC-007 | **credentialed** (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`, and `OQ_SIGNER_TOTP_SECRET` for a signer with a second factor enrolled, as OQ-006 §1; deviation *not executed — credential not supplied* when absent) | as the signer: when a second factor is enrolled, first sign with `reauth:{password}` only (v0.3); then `POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze", meaning:"approval"}, reauth:{password, totp}}`; read signatures by target; `POST /sequences/:id/freeze {signatureActionId}` | with a second factor enrolled the password-only signature is refused 401 `REAUTH_TOTP_REQUIRED` and writes no row; sign 200 with `actionId`; exactly one `electronic_signatures` row by the signer, `second_factor_verified` true when a code was presented; freeze of the never-validated sequence (status `assembling` after OQ-SUBC-04) refused 409 `INVALID_STATE` by the state machine — a valid signature is necessary, not sufficient; status unchanged. A frozen outcome needs a validated, shadow-reviewed sequence and is outside this fixture |
 | OQ-SUBC-09 | URS-SUBC-008 | scripted | `GET /capabilities` | every gateway `configured:false` |
-| OQ-SUBC-10 | URS-SUBC-009 | scripted | `GET /api/dossier-map?projectId=<program uuid>` | 200 with per-module data |
+| OQ-SUBC-10 | URS-SUBC-009a | scripted | `GET /api/c2c/projects/<program uuid>/dossier` | 200 for an accepted project, with independent governed figure, artifact section rollup and tracked module states; no substituted zero on failed supporting reads |
 | OQ-SUBC-11 | URS-SUBC-010 | unscripted | compile FDA initial; status | <500; observation recorded |
 | OQ-SUBC-12 | URS-SUBC-012 | scripted | transmit without signature | 400 `VALIDATION` |
 | OQ-SUBC-13 | URS-SUBC-011 | unscripted (browser) | Open `/concept2cure/submission-center` | Submission title visible; screenshot |

@@ -49,6 +49,9 @@ import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
+import { readArtifactReadiness, type ArtifactReadiness } from '../dossier/artifact-readiness';
+import { assembleProjectDossierMap, type DossierTrackedModule } from '../dossier/dossier-map-view-assembler';
+import { ProgramReadAccessError, requireCurrentProgramAccess, type CurrentProgramAccess } from './current-program-access';
 
 interface Queryable { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> }
 
@@ -96,6 +99,38 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
+  supportingReadiness?: DossierSupportingReadiness;
+}
+
+export interface DossierSupportUnavailable { state: 'unavailable'; code: 'STORE_UNAVAILABLE' | 'READ_FAILED'; reason: string }
+export interface DossierSupportingReadiness {
+  artifactReadiness: ArtifactReadiness | DossierSupportUnavailable;
+  sectionTracking: { state: 'read'; modules: DossierTrackedModule[] } | DossierSupportUnavailable;
+}
+
+async function supportingRead<T>(read: () => Promise<T>, name: string): Promise<T | DossierSupportUnavailable> {
+  try { return await read(); }
+  catch (error) {
+    const missing = UNPROVISIONED.has(String((error as { code?: unknown })?.code ?? ''));
+    return { state: 'unavailable', code: missing ? 'STORE_UNAVAILABLE' : 'READ_FAILED',
+      reason: missing ? `${name} is not provisioned in this environment.` : `${name} could not be read.` };
+  }
+}
+
+/** Carry the two pre-existing dossier views on their own recorded bases.
+ * The caller supplies the request client and its already-admitted exact anchor.
+ * Current access is rechecked after the reads, before any result is returned. */
+export async function readDossierSupporting(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<DossierSupportingReadiness> {
+  const artifactReadiness = await supportingRead(() => readArtifactReadiness(db, { organizationId, ...access }), 'Artifact readiness');
+  const sectionTracking = await supportingRead(async () => ({ state: 'read' as const,
+    modules: await assembleProjectDossierMap(db, organizationId, access.projectId, access),
+  }), 'Section tracking');
+  const current = await requireCurrentProgramAccess(db, { organizationId, userId: access.actor.userId, programId: access.programId });
+  if (current.programId !== access.programId || current.projectId !== access.projectId || current.clientWorkspaceId !== access.clientWorkspaceId ||
+      current.actor.userId !== access.actor.userId || current.actor.role !== access.actor.role) {
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+  }
+  return { artifactReadiness, sectionTracking };
 }
 
 const UNPROVISIONED = new Set(['42P01', '42703']);

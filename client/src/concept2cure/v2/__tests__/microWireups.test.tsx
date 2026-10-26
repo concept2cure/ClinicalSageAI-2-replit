@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * §4.3 micro wire-ups — three previously-documented-but-unwired paths:
- *  • Dossier binds GET /api/dossier-readiness/:projectId (was a comment only)
+ *  • Author preserves artifact rollups through GET /api/c2c/projects/:id/dossier (A2.7)
  *  • Health authority questions is a view of the project's agency inbox (the
  *    /api/haq-manager store it used to call was retired 2026-10-18)
  *  • PrecedentEngine saves/reloads queries on /api/saved-precedent-queries
@@ -17,7 +17,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { Dossier } from '../surfaces/Dossier';
+import { ModuleCompletion, useProjectDossier } from '../surfaces/ProjectDossier';
 import { HaqManager } from '../surfaces/HaqManager';
 import { PrecedentEngine } from '../surfaces/PrecedentEngine';
 
@@ -29,28 +29,36 @@ const props = () => ({ surface: { id: 'x', label: 'X' } as any, onAsk: vi.fn(), 
 afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 beforeEach(() => apiRequest.mockReset());
 
-describe('Dossier — per-section readiness binding', () => {
-  it('binds the real readiness endpoint and renders the section rollups', async () => {
-    (window as any).C2C_PROJECT = { id: 42 };
+const PROGRAM = '6191805f-e83d-4327-af00-aa2c6f4d43b0';
+function DossierProjection() {
+  const read = useProjectDossier(PROGRAM);
+  return <ModuleCompletion read={read} docForModule={() => null} onOpen={vi.fn()} />;
+}
+
+describe('Author — preserved per-section artifact readiness binding', () => {
+  it('reads the canonical program dossier and renders artifact rollups without the retired numeric route', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url === '/api/dossier-readiness/42') return ok({
-        projectId: 42,
-        sections: [{ ctdSection: '3.2.P.5', status: 'review', artifactCount: 4, draftCount: 1, reviewCount: 2, approvedCount: 1, lockedCount: 0, lastUpdated: '2026-07-20T00:00:00Z' }],
-        summary: { totalSections: 1, readySections: 0, inProgressSections: 1, draftSections: 0 },
+      if (url === `/api/c2c/projects/${PROGRAM}/dossier`) return ok({
+        projectId: PROGRAM, measuredAt: '2026-10-26T00:00:00Z', home: { state: 'no_sections', pct: null }, markets: [], rows: [],
+        supportingReadiness: {
+          artifactReadiness: {
+            state: 'read',
+            sections: [{ ctdSection: '3.2.P.5', status: 'review', artifactCount: 4, draftCount: 0, reviewCount: 2, approvedCount: 1, lockedCount: 1, unknownCount: 0, lastUpdated: '2026-07-20T00:00:00Z' }],
+            summary: { totalSections: 1, readySections: 0, inProgressSections: 1, draftSections: 0, unknownSections: 0 },
+          },
+          sectionTracking: { state: 'read', modules: [] },
+        },
       });
       return ok({});
     });
-    render(<Dossier {...props()} />);
+    render(<DossierProjection />);
     expect(await screen.findByText('3.2.P.5')).toBeTruthy();
-    expect(screen.getByText('1 / 2 / 1 / 0')).toBeTruthy();
-    expect(screen.getByText('review')).toBeTruthy();
+    expect(screen.getByText('0 / 2 / 1 / 1')).toBeTruthy();
+    expect(screen.getByText('In review')).toBeTruthy();
+    expect(apiRequest.mock.calls.some(([, u]) => String(u).startsWith('/api/dossier-readiness'))).toBe(false);
   });
-
-  it('asks for a program honestly with no numeric project (no call)', () => {
-    render(<Dossier {...props()} />);
-    expect(screen.getByText(/Open a project to see its dossier readiness/)).toBeTruthy();
-    expect(apiRequest).not.toHaveBeenCalled();
-  });
+  // The former no-numeric-project empty state is now the actual Projects
+  // destination, covered by projectDestinationShell and projectHomeReadiness.
 });
 
 describe('HaqManager — a view of the project inbox, not a store of its own (2026-10-18)', () => {

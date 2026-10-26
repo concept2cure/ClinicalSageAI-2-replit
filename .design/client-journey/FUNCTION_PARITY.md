@@ -204,9 +204,9 @@ The labeling-pi registry entry must claim /api/labeling-smpc. Any re-keying amen
 #### From `dossier` (safe to fold)
 Repoint every onNav('dossier') caller: `Nonclinical.tsx:799`, `NdaCockpit.tsx:633,684`, `AgencyMeetings.tsx:662` and `BiopharmaJourney.tsx:162,169`.
 
-- [ ] Readiness for each CTD section. Partially carried in A2.6: `ProjectDossier.tsx` shows counted governed section key, label and status under each module, with the module's lastUpdated. The legacy screen instead rolls up `concept2cure_artifacts` and shows artifact counts and per-section dates; those semantics still need reconciliation before removal. Module dates are not per-section dates.
+- [x] Readiness for each CTD section. A2.7: ProjectDossier's Section artifacts table carries the old artifact rollup, total/status counts, weakest status and each section's own update date. Its independent supporting read uses the exact accepted project/anchor/client scope; unknown artifact statuses remain unknown. Governed section details and module dates stay separate. Proof: `projectDossierParity.test.tsx`, `dossier-support.pglite.test.ts`, `projects-dossier.test.ts`, native `project-dossier-destinations.e2e.ts`.
 - [x] Summary counts. A2.6: in-review and drafted totals on DossierReadinessCard sum the server's home rows only; added-market rows stay separate. No new percentage is computed. Proof: `projectDossierDetails.test.tsx`, `projectHomeReadiness.test.tsx` and native `project-dossier-details.e2e.ts`.
-- [ ] AnA reads section readiness. Partially carried in A2.6: each module's counted governed section rows and module date are in dossierFacts. Missing/malformed section detail is null. The legacy artifact-rollup facts remain part of the reconciliation above.
+- [x] AnA reads section readiness. A2.7: dossierFacts includes independent artifact section counts/status/date/totals and tracking modules, alongside governed sections. Missing/malformed supporting reads say unavailable; they never become empty or zero. Proof: `projectDossierParity.test.tsx` and scoped SQL/route tests above.
 
 #### From `program-journey`
 Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared constant before the file is deleted.
@@ -231,9 +231,9 @@ Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared
 #### From `dossier-map` (safe to fold)
 In one change, delete /api/dossier-map, DossierMap.tsx, the registry and nav entries and the catalogue row, and repoint the "Start Dossier Map" action and capability.
 
-- [ ] Section chips under each module. A2.6 provides the same visible function as read-only counted governed section details in ModuleCompletion, without duplicating Vault's editable tree. Before removal, reconcile the legacy endpoint's artifact-derived completion semantics with this governed read; the old screen/route remain.
+- [x] Section chips under each module. A2.7: ProjectDossier's Tracked CTD sections view reuses the old map assembler's real `project_sections` percentages and section labels. This corrects A2.6's imprecise description of that source as artifact-derived. The view is separate from governed sections and artifact rollups; Vault keeps the editable tree. Proof: tracking assembler PGlite tests, `dossierMapProgramScope.test.tsx`, `projectDossierParity.test.tsx`, native `project-dossier-destinations.e2e.ts`.
 - [x] Ask AnA for the critical path to filing. A2.6: ModuleCompletion on Author calls the existing onAsk with the exact question. Native `project-dossier-details.e2e.ts` proves the conversation prefill without a model request or dossier write.
-- [ ] AnA reads module completeness and the section lists. A2.6 includes server figures, each row's counted sections, agency and module update date in dossierFacts. Governed-section facts are verified; legacy artifact-derived semantics still need the reconciliation above before removal.
+- [x] AnA reads module completeness and the section lists. A2.7: the old section-tracking modules/percentages/labels are in dossierFacts as their own read, as are the artifact rollups and governed section facts. No client-computed mean replaces the canonical filing figure. Proof: `projectDossierParity.test.tsx` and `dossier-support.pglite.test.ts`.
 
 #### From `haq-manager`
 Retire the second HAQ store (`server/routes/c2c/haq-sessions.ts`, which has no client caller) in the same change.

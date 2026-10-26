@@ -1,24 +1,24 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T22:45:11.641Z",
+  "generatedAt": "2026-10-26T20:09:56.392Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 82,
+    "requirements": 116,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 11
+    "uncovered": 45
   },
   "byApp": {
     "Projects": {
-      "requirements": 13,
+      "requirements": 14,
       "pass": 13,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 0
+      "uncovered": 1
     },
     "Vault": {
       "requirements": 21,
@@ -37,12 +37,12 @@
       "uncovered": 0
     },
     "Submission Center": {
-      "requirements": 12,
+      "requirements": 15,
       "pass": 12,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 0
+      "uncovered": 3
     },
     "Submission Readiness": {
       "requirements": 8,
@@ -59,6 +59,14 @@
       "fail": 0,
       "open": 0,
       "uncovered": 0
+    },
+    "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)": {
+      "requirements": 30,
+      "pass": 0,
+      "partial": 0,
+      "fail": 0,
+      "open": 0,
+      "uncovered": 30
     }
   },
   "stepTotals": {
@@ -526,6 +534,22 @@
         "rationale": "a session of the step's own, left alone past a one-minute window, refused by the API and the refresh with SESSION_IDLE and reported signed out by the session check, while the run's own session, in use, keeps reading; the window restored"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-014",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "A postmarketing requirement, postmarketing commitment or REMS is recorded as fulfilled only by an electronic signature of the person recording it (meaning approval or responsibility, their reason, password and second factor when enrolled), which names the dispatched sequence the agency received or the Vault version that met it, with its sha256, and the date, and binds them. Every refusal that needs no password is given before one is asked for. The database refuses, at commit, such a fulfilment without that signature; refuses any change of a commitment's type; and refuses any later change to a recorded fulfilment, its removal by an UPDATE included (a hard DELETE by the runtime role is not yet refused, §3). Evidence in a project the reader cannot open is shown as present and not named. A meeting commitment or other is fulfilled with a reason and an audit entry. AnA cannot record a signed fulfilment.",
+      "part11": "§11.50 §11.70 §11.200 §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Record a PMR, PMC or REMS as fulfilled only by the recorder's electronic signature over what met it (the sequence the agency received, the Vault version at its sha256, the date); hold it at commit and fix it once recorded",
+        "risk": "high — recording one fulfilled takes a postmarketing obligation off the overdue register and out of the annual status report (21 CFR 314.81(b)(2)(vii), 601.70; FD&C 505(o)(3), 505-1); an unsigned record naming nothing, or one changed after its signature, is an attestation no one made (§11.50, §11.70, §11.10(e))",
+        "assurance": "scripted; automated on real PostgreSQL as the non-superuser runtime role with row security on (`tests/db/commitment-fulfilment-evidence.dbtest.ts`, `tests/db/commitment-fulfilment-database.dbtest.ts`); the credentialed OQ-PROJ step is owed (VSR-001 §19)",
+        "rationale": "a fulfilment recorded through the signing dialog's API, read back with its signature, and the §11.70 digest recomputed from the stored record (the OQ-006 QMS pattern); until the step exists, each database clause and each route refusal was shown to catch its own removal (`docs/evidence/D2-COMMITMENT-FULFILMENT/2026-10-19/`)"
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-VAULT-001",
@@ -1604,7 +1628,7 @@
       "id": "URS-SUBC-009",
       "app": "Submission Center",
       "doc": "URS-004-SUBMISSION-CENTER.md",
-      "requirement": "The dossier map answers per-module (M1–M5) completeness for the program open in the shell.",
+      "requirement": "Historical: the dossier map answers per-module (M1–M5) completeness for the program open in the shell; superseded by URS-SUBC-009a in A2.7.",
       "part11": "none",
       "risk": "medium",
       "steps": [
@@ -1617,12 +1641,28 @@
         }
       ],
       "ra": {
-        "intendedUse": "Dossier map for the open program",
+        "intendedUse": "Historical dossier map for the open program; superseded by 009a",
         "risk": "medium",
         "assurance": "scripted",
-        "rationale": "id-space consistency between shell and route is the risk"
+        "rationale": "Historical id-space control and its executed evidence are retained."
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-009a",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "The canonical project dossier answers for the exact accepted program/anchor/client relationship; governed readiness, artifact section counts/status/dates and tracked CTD module completion retain distinct bases and explicit failed/unavailable states.",
+      "part11": "11.10(d)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Project dossier preserves governed, artifact and tracking records for the exact accepted project",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Wrong-project or stale-anchor reads and substituted readiness could silently misstate a filing; scripted scope/refusal checks plus SQL and browser parity evidence."
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-SUBC-010",
@@ -1702,6 +1742,38 @@
         "rationale": "signature-less transmit refused; real transport under D7"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-013",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "A Shadow Review waiver is offered only while the sequence has no completed Shadow Review, is not frozen, and its newest run failed within 24 hours because every AI provider failed or was overloaded (`provider_unavailable`, `provider_overloaded`); a missing configuration or any other failure is not an outage. It is recorded only with a Part 11 signature on `ectd-sequence:<id>` with intent `shadow-waiver` and the meaning responsibility or approval, by someone who did not author the sequence; without one it is refused and nothing is recorded. An active waiver clears the dispatch verdict's Shadow Review presence gate as *not assessed*, naming the signature; it lapses when the leaves change, and it never clears an open critical finding.",
+      "part11": "§11.10(e) §11.50 §11.70 §11.200",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Shadow Review waived only after a provider outage, only by signature, never over a critical finding",
+        "risk": "high — a waiver offered for anything but an outage, or recorded without a signature, sends a never-reviewed dossier to the agency as cleared",
+        "assurance": "scripted (negative) / PGlite (positive)",
+        "rationale": "an outage cannot be produced on demand on an installation; the offer, act, lapse and revocation are proven over the real act in `shadow-review-waiver.pglite.integration.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-SUBC-014",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "A submission run's clinical and nonclinical inputs come from the record, never from the request. Outside development, `POST /api/submission-orchestrator/runs` and `POST /api/submission-orchestrator/runs/:runId/regenerate` refuse, before anything is read or a run starts: a non-empty `csrInputs`, `nonclinicalStudies` or `clinicalStudyData` (400 `INLINE_RUN_INPUTS_REFUSED`, naming the field); a `ctdProgramId` (400 `CTD_PROGRAM_INPUTS_REFUSED`); and a regenerate that names a `projectId` (400 `REGENERATE_MODE_A_UNSUPPORTED`). Each refusal names `POST /api/submission-orchestrator/runs/for-program` and does not echo the figures it refused. Empty arrays are not refused.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Submission-run inputs come from records; inline figures are refused outside development",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Existing URS-004 v0.4 and OQ-SUBC-16 v0.6; production refusal requires its stated posture. Not formally executed at this version."
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-SRDY-001",
@@ -1865,7 +1937,7 @@
       "id": "URS-SRDY-007",
       "app": "Submission Readiness",
       "doc": "URS-005-SUBMISSION-READINESS.md",
-      "requirement": "The Dispatch Readiness surface shows the open program's newest sequence and its gate verdict — the sequence the user is working on, not another submission's.",
+      "requirement": "The Dispatch Readiness surface lists every market of the open program, each with its newest sequence and that sequence's gate verdict — the program's own submissions, never another program's.",
       "part11": "none",
       "risk": "high",
       "steps": [
@@ -2297,6 +2369,486 @@
         "rationale": "one GET"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-CMC-001",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Every `/api/cmc` endpoint requires an authenticated member of the organisation; a read-only (viewer) session is refused on every write and still served every read and every computation that saves nothing.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Every `/api/cmc` endpoint requires an authenticated member of the organisation; a read-only (viewer) session is refused on every write and still served every read and every computation that saves nothing.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-01, OQ-CMC-02, OQ-CMC-31. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-002",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-03, OQ-CMC-04. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-003",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Each register write reaches Module 3 only as a canonical source object; no screen or request body writes a Module 3 section record.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Each register write reaches Module 3 only as a canonical source object; no screen or request body writes a Module 3 section record.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-05. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-004",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Module 3 is composed by one deterministic engine from the programme's own canonical sources — core §3.2.S / §3.2.P / 3.1 / 3.3, the emittable 3.2.A appendices, and 3.2.R for the region the linked submission records. A compile of a programme with no sources is refused and says what to record.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Module 3 is composed by one deterministic engine from the programme's own canonical sources — core §3.2.S / §3.2.P / 3.1 / 3.3, the emittable 3.2.A appendices, and 3.2.R for the region the linked submission records. A compile of a programme with no sources is refused and says what to record.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-06, OQ-CMC-07. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-005",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Composition is refused, 409, for a biologic or ATMP substance, a programme recorded as anything but a drug, an application that is not a US IND, and a substance whose modality the record does not establish. Each refusal names the guidelines not modelled and the path that does author it.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Composition is refused, 409, for a biologic or ATMP substance, a programme recorded as anything but a drug, an application that is not a US IND, and a substance whose modality the record does not establish. Each refusal names the guidelines not modelled and the path that does author it.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-08, OQ-CMC-09. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-006",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A section's stored record is the compiler's own output and its completeness is the compiler's verdict; a request body cannot supply either.",
+      "part11": "§11.10(a)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A section's stored record is the compiler's own output and its completeness is the compiler's verdict; a request body cannot supply either.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-10. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-007",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A section approval is an electronic signature: it requires a role with signing authority, a stated reason of at least the governed minimum, and re-authentication of the signer; it records the signature, the version snapshot and a chained audit row, or nothing.",
+      "part11": "§11.10(e) §11.50 §11.70",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A section approval is an electronic signature: it requires a role with signing authority, a stated reason of at least the governed minimum, and re-authentication of the signer; it records the signature, the version snapshot and a chained audit row, or nothing.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-11, OQ-CMC-12, OQ-CMC-13, OQ-CMC-14. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-008",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "What the signer read is what is signed: a section recompiled since the read is refused 409, and the state change is guarded on the content hash the transaction itself read.",
+      "part11": "§11.70",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "What the signer read is what is signed: a section recompiled since the read is refused 409, and the state change is guarded on the content hash the transaction itself read.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-15. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-009",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-16, OQ-CMC-17. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-010",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The final-export gate refuses unless every composed section is approved, no critical contradiction is open, no approved section is stale, the provenance chain is complete, each approved section matches what the compiler established, and no critical finding in the current records is unrecorded. Each blocker is named.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The final-export gate refuses unless every composed section is approved, no critical contradiction is open, no approved section is stale, the provenance chain is complete, each approved section matches what the compiler established, and no critical finding in the current records is unrecorded. Each blocker is named.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-18. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-011",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-19, OQ-CMC-20. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-012",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The Module 3 version history and the provenance events are append-only in the database: the runtime role cannot update, delete or truncate them.",
+      "part11": "§11.10(c) §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The Module 3 version history and the provenance events are append-only in the database: the runtime role cannot update, delete or truncate them.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-21. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-013",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A signed or released record is closed to an ordinary edit (409); a batch cannot be created already released, nor dispositioned twice; a release is refused over QC results that are not recorded and reviewed.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A signed or released record is closed to an ordinary edit (409); a batch cannot be created already released, nor dispositioned twice; a release is refused over QC results that are not recorded and reviewed.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-22, OQ-CMC-23. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-014",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The quality engines — ICH compliance judged at the programme's stage against current revisions, QbD, control strategy, process capability, shelf-life estimation, stability trending, poolability, dissolution comparison — are deterministic, cite what they judged, and answer 404 for a programme of another organisation.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The quality engines — ICH compliance judged at the programme's stage against current revisions, QbD, control strategy, process capability, shelf-life estimation, stability trending, poolability, dissolution comparison — are deterministic, cite what they judged, and answer 404 for a programme of another organisation.",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-24. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-015",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The Overview board states section approvals, the portfolio, the build state and a readiness lead taken from the gate's own verdict; a figure it cannot compute is reported as not computed, never as zero.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The Overview board states section approvals, the portfolio, the build state and a readiness lead taken from the gate's own verdict; a figure it cannot compute is reported as not computed, never as zero.",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-25. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-016",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Only the CMC specification interview commits to a record; an interview of any other kind is refused where the launch boundary is enforced, because its answers reach no record.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Only the CMC specification interview commits to a record; an interview of any other kind is refused where the launch boundary is enforced, because its answers reach no record.",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-26. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-017",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence.",
+      "part11": "§11.70",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-27. Credentialed signer/role setup remains required. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-018",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-28. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-019",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-29. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-020",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-30. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-021",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-32. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-022",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A section approval is independent of the people who entered the records the section was composed from: the operator of a cited record cannot approve it, a cited record with no recorded operator refuses the approval and is named, and an authorship-meaning signature is not accepted at all. A failed check refuses; it never reads as no conflict.",
+      "part11": "§11.10(g) §11.50(a)(3)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A section approval is independent of the people who entered the records the section was composed from: the operator of a cited record cannot approve it, a cited record with no recorded operator refuses the approval and is named, and an authorship-meaning signature is not accepted at all. A failed check refuses; it never reads as no conflict.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-33, OQ-CMC-31. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-023",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A register's signed state — a method *validated*, a process-validation record or a comparability assessment *approved*, a QC result *reviewed* — is reached only under a signature with a reason and re-authentication, never by a create or an ordinary edit, and the record names the person who signed it. A record already in that state is closed to content edits and is retired rather than reversed. The signature is refused when the thing it would accept is not recorded.",
+      "part11": "§11.10(a) §11.50 §11.70 §11.200",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A register's signed state — a method *validated*, a process-validation record or a comparability assessment *approved*, a QC result *reviewed* — is reached only under a signature with a reason and re-authentication, never by a create or an ordinary edit, and the record names the person who signed it. A record already in that state is closed to content edits and is retired rather than reversed. The signature is refused when the thing it would accept is not recorded.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-34, OQ-CMC-35. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-024",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A shelf-life claim is judged against the data the programme's own stability studies cover: a claim within the coverage passes, one beyond it is reported, and one beyond the ICH Q1E extrapolation ceiling fails for a marketing application. The verdict is reported at the programme's stage, because Q1E governs a registration application's proposed shelf life and a clinical-trial application answers 21 CFR 312.23(a)(7)(ii) instead. A claim or a coverage the register states in text the rule cannot read unambiguously is reported *not evaluated*, never as a pass.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A shelf-life claim is judged against the data the programme's own stability studies cover: a claim within the coverage passes, one beyond it is reported, and one beyond the ICH Q1E extrapolation ceiling fails for a marketing application. The verdict is reported at the programme's stage, because Q1E governs a registration application's proposed shelf life and a clinical-trial application answers 21 CFR 312.23(a)(7)(ii) instead. A claim or a coverage the register states in text the rule cannot read unambiguously is reported *not evaluated*, never as a pass.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-36. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-025",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Every register edit records the person who changed the record, which fields moved and both values, on the tenant's audit chain and in the same transaction as the row itself. An edit that moves nothing is not recorded; an edit of a record that does not exist records nothing. No register edit reaches a table by any other path.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Every register edit records the person who changed the record, which fields moved and both values, on the tenant's audit chain and in the same transaction as the row itself. An edit that moves nothing is not recorded; an edit of a record that does not exist records nothing. No register edit reaches a table by any other path.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-37. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-026",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A register record's chained history is readable in the product, against the record it is about: every act, oldest first, with the person, the fields that moved and both values, and the §11.50 signature where one is bound to the act. A read that fails is reported as a failure and never as a record with no changes; a record with no chained act says so and why. The history of another organisation's record is not readable.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A register record's chained history is readable in the product, against the record it is about: every act, oldest first, with the person, the fields that moved and both values, and the §11.50 signature where one is bound to the act. A read that fails is reported as a failure and never as a record with no changes; a record with no chained act says so and why. The history of another organisation's record is not readable.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-38. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-027",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A CMC route that judges, derives from or files a record under a programme establishes first that the programme is this organisation's. A programme the organisation does not hold — one that does not exist, one of another organisation, or an id that is not well formed — is refused by every such route: a read or a derivation answers 404 stating that nothing was assessed, and a create answers 409 naming the problem and writes nothing. A record with no programme is organisation-wide and is not refused.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A CMC route that judges, derives from or files a record under a programme establishes first that the programme is this organisation's. A programme the organisation does not hold — one that does not exist, one of another organisation, or an id that is not well formed — is refused by every such route: a read or a derivation answers 404 stating that nothing was assessed, and a create answers 409 naming the problem and writes nothing. A record with no programme is organisation-wide and is not refused.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-39. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-028",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "A stability study reaches its terminal state only under a signature with a reason and re-authentication, and the signature names the signer and the date. The signature is refused when the study records no shelf life, when it records no pull-point results — a planned schedule is not data — and when the recorded series cannot be read. A study cannot be created already closed out, an ordinary edit cannot reach the close-out or write its signature columns, a closed-out study is closed to content edits and may be retired but not reopened, and the act cannot be signed twice.",
+      "part11": "§11.10(a) §11.50 §11.70 §11.200",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "A stability study reaches its terminal state only under a signature with a reason and re-authentication, and the signature names the signer and the date. The signature is refused when the study records no shelf life, when it records no pull-point results — a planned schedule is not data — and when the recorded series cannot be read. A study cannot be created already closed out, an ordinary edit cannot reach the close-out or write its signature columns, a closed-out study is closed to content edits and may be retired but not reopened, and the act cannot be signed twice.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-40. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-029",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "The composed §3.2.P.8 states the provenance of the shelf life it prints: a period accepted on a signed study close-out, or one recorded on a study that has not been closed out under signature. The signature and the claim must be on the same study and the same side, so a signed study with no claim lends its signature to nothing and a signed drug-substance close-out does not make the product's claim read as accepted. The sentence states the provenance only; whether the period is supported by the data is the ICH Q1E verdict.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "The composed §3.2.P.8 states the provenance of the shelf life it prints: a period accepted on a signed study close-out, or one recorded on a study that has not been closed out under signature. The signature and the claim must be on the same study and the same side, so a signed study with no claim lends its signature to nothing and a signed drug-substance close-out does not make the product's claim read as accepted. The sentence states the provenance only; whether the period is supported by the data is the ICH Q1E verdict.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-41. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-CMC-030",
+      "app": "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)",
+      "doc": "URS-007-CMC-MODULE-3.md",
+      "requirement": "Agency questions about Module 3 are the agency letter's record. CMC reads a programme's questions from the letters they came in and shows each as that record states it: its response state, its owner, and overdue only when its letter is past its due date with responses not approved as they stand, so an approved answer is never shown overdue. A letter is counted as overdue for Module 3 only when a Module 3 question on it is overdue, or when it is a Module 3 letter with no question to answer recorded; a letter overdue only on its other questions is said as that. Letters the person may not see are neither listed nor counted, and their number is said; questions with no CTD section are counted as not placed, never dropped, and never added to a count of letters. CMC records, answers, approves and closes nothing about an agency question: each opens on its letter, where that happens, and where its owner is set with a reason to a member who may open the letter. The earlier CMC question file refuses every INSERT, UPDATE, DELETE and TRUNCATE, in the route and in the database, for the owner role as for the runtime role, and is shown only as the history its rows hold.",
+      "part11": "§11.10(a) §11.10(e) §11.70",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Agency questions about Module 3 are the agency letter's record. CMC reads a programme's questions from the letters they came in and shows each as that record states it: its response state, its owner, and overdue only when its letter is past its due date with responses not approved as they stand, so an approved answer is never shown overdue. A letter is counted as overdue for Module 3 only when a Module 3 question on it is overdue, or when it is a Module 3 letter with no question to answer recorded; a letter overdue only on its other questions is said as that. Letters the person may not see are neither listed nor counted, and their number is said; questions with no CTD section are counted as not placed, never dropped, and never added to a count of letters. CMC records, answers, approves and closes nothing about an agency question: each opens on its letter, where that happens, and where its owner is set with a reason to a member who may open the letter. The earlier CMC question file refuses every INSERT, UPDATE, DELETE and TRUNCATE, in the route and in the database, for the owner role as for the runtime role, and is shown only as the history its rows hold.",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-42. No execution or admission is claimed."
+      },
+      "verdict": "uncovered"
     }
   ],
   "problems": []

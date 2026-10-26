@@ -3,7 +3,7 @@
  * compilation → compilation history.
  *
  * Route-level traversal of the marketing-application spine: the REAL
- * dossier-readiness and ectd-compile routers mounted in an express app and
+ * project-dossier and ectd-compile routers mounted in an express app and
  * driven over HTTP, against the REAL canonical DDL for `project_sections`,
  * `ectd_compilations` and `concept2cure_artifacts`.
  *
@@ -49,7 +49,7 @@ vi.mock('../../server/db', () => ({
   query: (text: string, params?: unknown[]) =>
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
-// dossier-readiness imports '../db.js'; vitest resolves that to the same module
+// The project dossier imports '../db.js'; vitest resolves that to the same module
 // only if mocked under both specifiers.
 vi.mock('../../server/db.js', () => ({
   get db() {
@@ -65,6 +65,16 @@ const ORG = 1;
 const OTHER_ORG = 2;
 const PROJECT = 101;
 const OTHER_PROJECT = 202;
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+
+// The current-access service has its own native SQL admission coverage. This
+// journey seats the actor and exact canonical anchor, then proves the real
+// dossier/compile reads over canonical DDL. It does not claim JWT admission.
+vi.mock('../../server/services/c2c/current-program-access', async original => {
+  const real = await original<typeof import('../../server/services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../../server/routes/c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+import { clearSeats, seatMember, seatProgram } from '../../server/routes/c2c/__tests__/support/current-member';
 
 /**
  * FK prerequisites. project_sections references organizations, projects and
@@ -139,7 +149,8 @@ beforeAll(async () => {
     // meant none of them could run: the journey hand-copied two of their
     // statements and silently lacked the rest, and GET /history — which selects
     // sequence_number and leaf_manifest — answered from a swallowed error.
-    prereqSql: PREREQ + ECTD_COMPILATIONS_DDL + extractTableDdl('migrations/20260524_program_workbench_schema.sql', ['regulatory_programs']),
+    prereqSql: PREREQ + ECTD_COMPILATIONS_DDL + extractTableDdl('migrations/20260524_program_workbench_schema.sql', ['regulatory_programs'])
+      + extractTableDdl('migrations/20260528_phase9_document_schema.sql', ['c2c_rule_packs', 'c2c_documents', 'c2c_document_sections']),
     migrations: [
       // Numeric projects now read the real nullable program bridge for filing applicability.
       'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -156,8 +167,15 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  await jdb.pool.query(`INSERT INTO regulatory_programs (id,organization_id,name,code,program_type,product_type,primary_agency,product_name)
+    VALUES ($1,$2,'NDA 210001','JOURNEY-B','ind','drug','FDA','Journey product')`, [PROGRAM, ORG]);
+  await jdb.pool.query('UPDATE projects SET regulatory_program_id=$1 WHERE id=$2', [PROGRAM, PROJECT]);
+  clearSeats();
+  seatMember(ORG, 1, 'member');
+  seatMember(OTHER_ORG, 1, 'member');
+  seatProgram(ORG, PROGRAM, { projectId: PROJECT, clientWorkspaceId: 1 });
 
-  const { default: readinessRouter } = await import('../../server/routes/dossier-readiness');
+  const { default: projectRouter } = await import('../../server/routes/c2c/projects');
   const { default: ectdCompileRouter } = await import('../../server/routes/ectd-compile');
 
   app = express();
@@ -165,9 +183,11 @@ beforeAll(async () => {
   app.use((req, _res, next) => {
     const raw = req.headers['x-journey-org'];
     if (raw) (req as unknown as { tenantId: number }).tenantId = Number(raw);
+    (req as any).userId = 1;
+    (req as any).dbClient = jdb.pool;
     next();
   });
-  app.use('/api/dossier-readiness', readinessRouter);
+  app.use('/api/c2c/projects', projectRouter);
   app.use('/api/ectd-compile', ectdCompileRouter);
 }, T);
 
@@ -205,10 +225,11 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
   it('runs the submission spine', async () => {
     // ── 1. The dossier starts empty ─────────────────────────────────────────
     await R.step('dossier-readiness-on-an-empty-project', async () => {
-      const res = await asOrg(ORG)(request(app).get(`/api/dossier-readiness/${PROJECT}`));
+      const res = await asOrg(ORG)(request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`));
       expect(res.status).toBe(200);
-      expect(res.body.sections).toEqual([]);
-      expect(res.body.summary.totalSections).toBe(0);
+      expect(res.body.supportingReadiness.artifactReadiness.sections).toEqual([]);
+      expect(res.body.supportingReadiness.artifactReadiness.summary.totalSections).toBe(0);
+      expect(res.body.home).toEqual({ state: 'no_sections', pct: null });
       return { status: res.status, sections: 0 };
     });
 
@@ -238,16 +259,17 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
 
     // ── 3. Readiness rolls up to the WEAKEST artifact in each section ───────
     await R.step('dossier-readiness-rolls-up-to-the-weakest-artifact', async () => {
-      const res = await asOrg(ORG)(request(app).get(`/api/dossier-readiness/${PROJECT}`));
+      const res = await asOrg(ORG)(request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`));
       expect(res.status).toBe(200);
       const byId = Object.fromEntries(
-        (res.body.sections as { ctdSection: string; status: string; artifactCount: number }[]).map((s) => [s.ctdSection, s]),
+        (res.body.supportingReadiness.artifactReadiness.sections as { ctdSection: string; status: string; artifactCount: number }[]).map((s) => [s.ctdSection, s]),
       );
       // 2.5 holds one approved and one draft artifact → the section is draft.
       expect(byId['2.5'].status).toBe('draft');
       expect(byId['2.5'].artifactCount).toBe(2);
       expect(byId['2.7'].status).toBe('review');
-      return { sections: res.body.sections, summary: res.body.summary };
+      expect(res.body.supportingReadiness.sectionTracking.modules).not.toHaveLength(0);
+      return res.body.supportingReadiness;
     });
 
     // ── 4. Pre-compile validation reads real section state ──────────────────
@@ -346,18 +368,19 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       };
     });
 
-    await R.expectBlocked('cross-tenant-dossier-readiness-is-empty', async () => {
-      const res = await asOrg(OTHER_ORG)(request(app).get(`/api/dossier-readiness/${PROJECT}`));
+    await R.expectBlocked('cross-tenant-project-dossier-is-not-found', async () => {
+      const res = await asOrg(OTHER_ORG)(request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`));
       return {
-        blocked: res.status === 200 && (res.body.sections ?? []).length === 0,
+        blocked: res.status === 404 && res.body.supportingReadiness === undefined,
         status: res.status,
-        sections: (res.body.sections ?? []).length,
+        sections: (res.body.supportingReadiness?.artifactReadiness?.sections ?? []).length,
       };
     });
 
-    await R.expectBlocked('readiness-without-org-context-is-401', async () => {
-      const res = await request(app).get(`/api/dossier-readiness/${PROJECT}`);
-      return { blocked: res.status === 401, status: res.status };
+    await R.expectBlocked('project-dossier-without-org-context-is-refused', async () => {
+      const res = await request(app).get(`/api/c2c/projects/${PROGRAM}/dossier`);
+      // Canonical project GET admission conceals denied access as not found.
+      return { blocked: res.status === 404, status: res.status };
     });
 
     await R.expectBlocked('compile-without-org-context-is-401', async () => {
@@ -365,9 +388,9 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       return { blocked: res.status === 401, status: res.status };
     });
 
-    await R.expectBlocked('non-numeric-project-id-is-rejected', async () => {
-      const res = await asOrg(ORG)(request(app).get('/api/dossier-readiness/not-a-project'));
-      return { blocked: res.status === 400, status: res.status, code: res.body.code };
+    await R.expectBlocked('non-program-project-id-is-rejected', async () => {
+      const res = await asOrg(ORG)(request(app).get('/api/c2c/projects/not-a-project/dossier'));
+      return { blocked: res.status === 404, status: res.status, code: res.body.error };
     });
 
     void validation;
@@ -381,7 +404,7 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
     );
     R.limitations.push(
       'ectd_compilations is created from the drizzle baseline shape (migrations/0000_sweet_joseph.sql) as prerequisite DDL, and the four real migrations that alter it — project-level nullability, the sequence columns, the leaf manifest and submission_id — then run over it.',
-      'Both routers take the organization from request context rather than verifying a JWT themselves, so this journey installs a tenant middleware. Journey A covers the JWT-verifying path; the token-issuance flow is outside both.',
+      'Both routers take the organization from request context rather than verifying a JWT themselves. This journey installs tenant middleware and seats the canonical project actor/anchor admission double; current-program-access has native SQL admission coverage and the browser journey covers signed-in project access. This journey proves actual dossier/compile SQL, not JWT or membership admission.',
       'The eCTD ZIP/export path (the canonical assembleSubmissionEctd over the submission spine) and gateway submission are not in this journey; it ends at a persisted compilation with an XML backbone.',
     );
 

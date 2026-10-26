@@ -1,0 +1,5 @@
+2cf92bdd5 One labelled-figure lexicon, one normaliser, one grouping engine
+c6b0d4002 CI: the device questions a program answered reach the eSTAR engine, and four gates return to green
+8e830f6da chore(server): delete the unreachable /api/documents gateway and /api/intelligent-docs — 1,932 lines of parallel-store surface
+90760ae00 Editor: one canonical canvas (TipTap), track changes, anchored comments, revision diff, collab wiring
+d9c0d65f5 test: retire 37 tests whose subjects were deleted, keep the 18 that still test something

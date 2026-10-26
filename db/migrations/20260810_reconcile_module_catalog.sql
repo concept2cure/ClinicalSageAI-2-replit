@@ -1,4 +1,10 @@
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.7 dossier fold (CLAUDE.md Rule 1).
+-- Dossier artifact rollups and section tracking now live on project Author in
+-- ProjectDossier.tsx. Remove dossier/dossier-map from this writer's keep-list
+-- and upsert; step 1 deprecates existing rows on every replay. Keep rows, FKs,
+-- subscriptions and stored project data intact. No cascading DELETE or later
+-- UPDATE that this upsert could undo. Evidence: slice-A2/A2.7/README.md.
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
@@ -253,8 +259,6 @@ UPDATE available_modules
    'dispatch-readiness',
    'doc-journey',
    'document-authoring',
-   'dossier',
-   'dossier-map',
    'ectd-coauthor',
    'ectd-publishing',   -- added 2026-09-22: a launch module; see the amendment note at the top
    'ectd-compile',
@@ -331,7 +335,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('device-workstream', 'Medical Device & IVD', 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.', 'Author & assemble', '/concept2cure/device-workstream', 'stethoscope', 100, '{"tiers": [], "industries": []}'::json),
   ('doc-journey', 'Document journey', 'One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG). Document state visible at every stage.', 'Author & assemble', '/concept2cure/doc-journey', 'gitBranch', 110, '{"tiers": [], "industries": []}'::json),
   ('document-authoring', 'The editor', 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.', 'Author & assemble', '/concept2cure/document-authoring', 'penLine', 120, '{"tiers": [], "industries": []}'::json),
-  ('dossier', 'Dossier', 'Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.', 'Author & assemble', '/concept2cure/dossier', 'folder', 130, '{"tiers": [], "industries": []}'::json),
   ('ectd-coauthor', 'eCTD co-author', 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.', 'Author & assemble', '/concept2cure/ectd-coauthor', 'gitBranch', 140, '{"tiers": [], "industries": []}'::json),
   ('ectd-compile', 'Compile & Export eCTD', 'eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id (/api/ectd-compile).', 'Author & assemble', '/concept2cure/ectd-compile', 'gitBranch', 150, '{"tiers": [], "industries": []}'::json),
   ('inconsistency', 'Inconsistency Intelligence', 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved/locked sections are flagged for re-approval with a task, on the audit trail. Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts', 'Author & assemble', '/concept2cure/inconsistency', 'gitCompare', 160, '{"tiers": [], "industries": []}'::json),
@@ -353,7 +356,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('vault', 'Vault', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
   ('device-submission', 'Device submission packages', 'Package readiness and milestones from submission-ops. submission-center is the eCTD sequence dispatch surface — a later lifecycle stage over different endpoints.', 'Submit & file', '/concept2cure/device-submission', 'rocket', 330, '{"tiers": [], "industries": []}'::json),
   ('device-validation', 'Submission blockers', 'Open blockers across programs. The only blockers view in the product.', 'Submit & file', '/concept2cure/device-validation', 'shieldAlert', 340, '{"tiers": [], "industries": []}'::json),
-  ('dossier-map', 'Dossier map', 'CTD/eCTD module map with completeness + readiness overlay.', 'Submit & file', '/concept2cure/dossier-map', 'network', 350, '{"tiers": [], "industries": []}'::json),
   ('gateway-transmittals', 'Gateway transmittals', 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback (/api/mdx/gateways).', 'Submit & file', '/concept2cure/gateway-transmittals', 'rocket', 360, '{"tiers": [], "industries": []}'::json),
   ('haq-manager', 'Health authority questions', 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package. Contract ref (not yet a @shared file): @shared/types/haq', 'Submit & file', '/concept2cure/haq-manager', 'messageSquare', 370, '{"tiers": [], "industries": []}'::json),
   ('pyramid', 'Submission pyramid', 'Deterministic submission work breakdown — type selector (8 engine + 12 global types), dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase→task drill-down with full-metadata detail sheet (risk, CTD bindings, guidance, deps, deliverables), analytics (resources/bottlenecks, document coverage, critical path), global pyramid browser. Task status is the only client-owned state. Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts', 'Submit & file', '/concept2cure/pyramid', 'workflow', 380, '{"tiers": [], "industries": []}'::json),

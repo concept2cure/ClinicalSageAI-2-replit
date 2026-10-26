@@ -22,7 +22,7 @@ import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
-import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
+import { readDossier, readDossierFigures, readDossierSupporting, type DossierFigure } from '../../services/c2c/dossier-read.js';
 import { requestPgClient } from '../../db/requestDb';
 import type { PoolClient } from 'pg';
 import {
@@ -1149,9 +1149,15 @@ router.get('/:id/dossier', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
-    return res.json(await readDossier(pool, orgId, String(req.params.id)));
+    const db = requestPgClient(req);
+    const access = res.locals.currentProgramAccess;
+    if (!access) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    if (!(await programInOrganization(db, req.params.id, orgId))) return send404(res);
+    const dossier = await readDossier(db, orgId, String(req.params.id));
+    const supportingReadiness = await readDossierSupporting(db, orgId, access);
+    return res.json({ ...dossier, supportingReadiness });
   } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err, true);
     return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });
   }
 });

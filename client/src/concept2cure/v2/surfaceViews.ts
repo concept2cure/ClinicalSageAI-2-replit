@@ -309,8 +309,6 @@ const DesignControls = lazySurface(() => import('./surfaces/DesignControls').the
 const DispatchReadiness = lazySurface(() => import('./surfaces/DispatchReadiness').then((m) => ({ default: m.DispatchReadiness })));
 const DocJourney = lazySurface(() => import('./surfaces/DocJourney').then((m) => ({ default: m.DocJourney })));
 const DocumentAuthoring = lazyOwnedSurface(() => import('./surfaces/DocumentAuthoring').then((m) => ({ default: m.DocumentAuthoring })));
-const Dossier = lazySurface(() => import('./surfaces/Dossier').then((m) => ({ default: m.Dossier })));
-const DossierMap = lazySurface(() => import('./surfaces/DossierMap').then((m) => ({ default: m.DossierMap })));
 const EctdCoauthor = lazyOwnedSurface(() => import('./surfaces/EctdCoauthor').then((m) => ({ default: m.EctdCoauthor })));
 const EctdCompile = lazySurface(() => import('./surfaces/EctdCompile').then((m) => ({ default: m.EctdCompile })));
 const PublishingCenter = lazySurface(() => import('./surfaces/PublishingCenter').then((m) => ({ default: m.PublishingCenter })));
@@ -463,8 +461,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // conversation and reopen this same editor in DocumentCanvas. The flag
   // retains the full-width host contract; it does not create a private chat.
   'document-authoring': { component: DocumentAuthoring, full: true, ownsConversation: true },
-  dossier: { component: Dossier },
-  'dossier-map': { component: DossierMap },
   // Owns its conversation in its middle intelligence pane. The pane was already
   // drawn and already had a composer; it just had nowhere to put an answer —
   // it appended the user's turn to a local array and forwarded the question to

@@ -27808,7 +27808,7 @@
           "name": "target",
           "type": "string",
           "required": true,
-          "description": "Target screen id from list_app_screens, e.g. \"cmc\", \"dossier-map\", \"intelligence\"."
+          "description": "Target screen id from list_app_screens, e.g. \"cmc\", \"project-home\", \"intelligence\"."
         },
         {
           "name": "params",

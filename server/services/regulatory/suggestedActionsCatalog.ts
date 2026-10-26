@@ -26,7 +26,6 @@ export interface SuggestedAction {
 // ─── Base Actions ─────────────────────────────────────────────────────────────
 
 const BASE_ACTIONS: SuggestedAction[] = [
-  { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier', priority: 1 },
   { id: 'add-docs', label: 'Add Documents', command: '/upload', priority: 2 },
   { id: 'readiness', label: 'Run Readiness Check', command: '/readiness', priority: 3 },
 ];

@@ -268,16 +268,24 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-10',
-    urs: ['URS-SUBC-009'],
-    title: 'Dossier map for the open program',
-    action: 'GET /api/dossier-map?projectId=<program id as the shell supplies it>',
-    expected: 'HTTP 200 with per-module (M1–M5) completeness for the program',
+    urs: ['URS-SUBC-009a'],
+    title: 'Canonical dossier for the accepted project',
+    action: 'GET /api/c2c/projects/<program UUID>/dossier',
+    expected: 'HTTP 200 with governed readiness and independent artifact/tracking states',
     dependsOn: ['OQ-SUBC-00'],
   },
   async ({ api, expect }) => {
-    const r = await api('GET', `/api/dossier-map?projectId=${encodeURIComponent(state.programId)}`);
-    expect(r.status === 200, `expected 200, got ${r.status} — the route requires an integer projectId while the shell's program id is a UUID (server/routes/dossier-map.routes.ts:46-53 vs client/src/concept2cure/v2/surfaces/DossierMap.tsx readShellProjectId)`, r.json);
-    return `HTTP 200: ${JSON.stringify(r.json?.meta)}`;
+    const r = await api('GET', `/api/c2c/projects/${encodeURIComponent(state.programId)}/dossier`);
+    expect(r.status === 200, `expected accepted project dossier HTTP 200, got ${r.status}`, r.json);
+    expect(r.json?.projectId === state.programId, 'dossier does not name the accepted program', r.json);
+    expect(['measured', 'no_sections', 'unavailable'].includes(r.json?.home?.state), 'governed readiness state missing', r.json);
+    for (const key of ['artifactReadiness', 'sectionTracking']) {
+      const detail = r.json?.supportingReadiness?.[key];
+      expect(['read', 'unavailable'].includes(detail?.state), `${key} must state its own read outcome`, detail);
+      if (detail?.state === 'unavailable') expect(typeof detail.reason === 'string' && detail.reason.length > 0, `${key} lacks its refusal reason`, detail);
+      else expect(Array.isArray(detail[key === 'artifactReadiness' ? 'sections' : 'modules']), `${key} lacks its recorded rows`, detail);
+    }
+    return `HTTP 200: program ${state.programId}; governed ${r.json.home.state}; artifacts ${r.json.supportingReadiness.artifactReadiness.state}; tracking ${r.json.supportingReadiness.sectionTracking.state}`;
   },
 );
 

@@ -31,6 +31,7 @@ import {
   RAIL_WORK_AREAS_LABEL,
   breadcrumbTierOf,
   resolveSegmentId,
+  type SurfaceApplies,
 } from './registryModel';
 import { flagAllowsSurface } from './clinicalRegulatoryGraphFlag';
 import { PJ_LIFECYCLE } from './fixtures/project-home-data';
@@ -69,7 +70,7 @@ type RailEntry = {
   label: string;
   icon: string;
   target?: string;
-  applies?: { actionId: string; params: Record<string, string> };
+  applies?: SurfaceApplies;
   group?: 'work-areas';
 };
 
@@ -660,7 +661,7 @@ interface CmdKItem {
   lock?: NavSurfaceEntitlement;
   /** A screen action asked of the destination as it opens: a rail place's
    *  (Tasks opens on everyone's tasks), or a project step's. */
-  applies?: { actionId: string; params: Record<string, string> };
+  applies?: SurfaceApplies;
 }
 
 /**

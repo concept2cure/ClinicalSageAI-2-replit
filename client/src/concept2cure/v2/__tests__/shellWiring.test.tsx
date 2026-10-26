@@ -51,6 +51,7 @@ import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
 import { locationForSurface } from '../routing';
+import { clearShellProject, publishShellProject } from '../shellProject';
 import { setAnaLockedScreens } from '../../components/ana/anaLockedScreens';
 
 const DEMO_TURN = [
@@ -98,6 +99,8 @@ async function mountShell(on: string) {
 }
 
 beforeEach(() => {
+  clearShellProject();
+  publishShellProject({ id: '6191805f-e83d-4327-af00-aa2c6f4d43b0' });
   localStorage.clear();
   chat.messages = [];
   chat.send.mockClear();
@@ -127,6 +130,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  clearShellProject();
   setAnaLockedScreens([]);
   vi.unstubAllGlobals();
   localStorage.clear();
