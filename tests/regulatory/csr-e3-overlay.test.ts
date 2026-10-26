@@ -135,7 +135,7 @@ describe('every CSR outline on the platform is read from the overlay', () => {
   });
 
   it("the stream's 5.3.5 playbook lists E3's sixteen headings", () => {
-    const prompt = buildSectionSpecificPrompt('5.3.5')!;
+    const prompt = buildSectionSpecificPrompt('5.3.5', 'US_IND')!;
     for (const s of e3TopLevel()) expect(prompt, s.number).toContain(`${s.number}. ${s.title}`);
   });
 

@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-10-26T18:07:17.644383+00:00",
+  "argv": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.429,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "source-freeze-green.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "28f5047c20285c2eb7b5441bf245e429201a6c982d23032d5905aceb5c0947d1",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "2c98891c4edb5b32295f8a8af305fd05fb4d12c2e21f37c40ab764282e4819f6",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "19f6f9077cd614f5346d2a877461db281d6c41bda4d7b611a889b0f79e48ef9d",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "28f5047c20285c2eb7b5441bf245e429201a6c982d23032d5905aceb5c0947d1",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "2c98891c4edb5b32295f8a8af305fd05fb4d12c2e21f37c40ab764282e4819f6",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "19f6f9077cd614f5346d2a877461db281d6c41bda4d7b611a889b0f79e48ef9d",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "68e4de224a3be379e86836353677379ac1d2d39aaee918d2191920b96f51512a",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 52 passed (53)",
+    "Duration  1.91s (transform 283ms, setup 125ms, import 290ms, tests 832ms, environment 482ms)"
+  ]
+}

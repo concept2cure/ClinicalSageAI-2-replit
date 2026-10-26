@@ -1,0 +1,385 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "GREEN-result.json",
+      "bytes": 425,
+      "sha256": "56f95fc519aa25f4d029974a480285147bec9da4160a29dfb105c7e1d17ed30e"
+    },
+    {
+      "path": "GREEN.log.gz",
+      "bytes": 856,
+      "sha256": "4639883a79a43e29bf017870e451f46507c01d025ec0bf633ac6467d3026724b"
+    },
+    {
+      "path": "INITIAL-GREEN-result.json",
+      "bytes": 425,
+      "sha256": "011bfa7b67c2429125fed37012bc30e525cf82b78e42fc85c43aa114161da095"
+    },
+    {
+      "path": "INITIAL-GREEN.log.gz",
+      "bytes": 1334,
+      "sha256": "0d780d574a5573c00a8be8750ac5e4b8c17b1fd3f3dfc5d64f406ad7d140253c"
+    },
+    {
+      "path": "INITIAL-LINT-result.json",
+      "bytes": 400,
+      "sha256": "cd02d32e2b2d6023581cec6e264f4608459b97f034b3165438b631b2f8dae602"
+    },
+    {
+      "path": "INITIAL-LINT.log.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "LINT-result.json",
+      "bytes": 400,
+      "sha256": "013a909386c40d81130ef9defb0182d410adb2e9b1013a3642f86bc194bc7aab"
+    },
+    {
+      "path": "LINT.log.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4041,
+      "sha256": "e1deac51519bbaa5faf5f43ca5e2ff8f6e0c43badb7ea7dadfa97071458f9a3e"
+    },
+    {
+      "path": "RED-result.json",
+      "bytes": 425,
+      "sha256": "22857ed13330f47a7258ac059b5a0d79e99f13e7f1c79119702a74d8e75f34a8"
+    },
+    {
+      "path": "RED.log.gz",
+      "bytes": 1314,
+      "sha256": "c24fe72264cab90ebb1a29f79e44a6037de39d00eec21098b769f9d3fcb3528f"
+    },
+    {
+      "path": "SETTLED-GREEN-result.json",
+      "bytes": 425,
+      "sha256": "b4e3deafc994d556ce0987d6544705e10ea787ee96d972b93709f015fc90d3ed"
+    },
+    {
+      "path": "SETTLED-GREEN.log.gz",
+      "bytes": 855,
+      "sha256": "e50e1df731483cad4631afffbdee007ccc9c13ce5fcd8af032ccee5be6f2ea6d"
+    },
+    {
+      "path": "SETTLED-LINT-result.json",
+      "bytes": 400,
+      "sha256": "4887872dde33bb8cda5ce7081a322a0ff4330dccd75afb3df799514a20efdbf0"
+    },
+    {
+      "path": "SETTLED-LINT.log.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "deferred-context-audit.md",
+      "bytes": 5758,
+      "sha256": "806fa5efbeb487d7fcfdba3914038cf11b6e57fdc60ccbde04f7a81cbc35244a"
+    },
+    {
+      "path": "final-inputs.json",
+      "bytes": 2620,
+      "sha256": "9d3d150af4cfd8046574956621f6616503ef055f5245878618bea83d3a225178"
+    },
+    {
+      "path": "green-initial-inputs.json",
+      "bytes": 3376,
+      "sha256": "a93ff10e4808ffd2d51d2d11828b1a4cb4ad20a50daa89e6a0b4ebd36c622c88"
+    },
+    {
+      "path": "green-inputs.json",
+      "bytes": 3264,
+      "sha256": "5a3020a3c5cb648ea8104d882dcb8c0b92f4b430545d0c1c6270c548227ecaa5"
+    },
+    {
+      "path": "green-source-AuthoringRemedies.tsx.txt.gz",
+      "bytes": 2664,
+      "sha256": "7a2b3ee87eb2ff6b95ee9f407e0890db367a5a558a7b6ef4601abe79b835ffb1"
+    },
+    {
+      "path": "green-source-DocumentWorkbench.tsx.txt.gz",
+      "bytes": 87351,
+      "sha256": "8c7a2a0e3c9654c7743cc3f55cbb1c747fd50eba93ad47746f1f7bccb72d9ac7"
+    },
+    {
+      "path": "green-source-EDITOR_ANA_AMENDMENTS_2026-10-26.md.txt.gz",
+      "bytes": 2950,
+      "sha256": "89eb92c53c59c9d86ae79ac9b0a16e03c6a03e3a70c92ae6d6a8f6bfd1bd8b35"
+    },
+    {
+      "path": "green-source-RichSectionEditor.tsx.txt.gz",
+      "bytes": 38951,
+      "sha256": "9c8664a2d021435f6121a6291a647997e5ed4d1eefd707c9dfb10ab39608c63e"
+    },
+    {
+      "path": "green-source-authoringOversight.ts.txt.gz",
+      "bytes": 2598,
+      "sha256": "960783b8d4ccb84677e3e87901298596202ea2cc68c70873aadeaeba48deb8db"
+    },
+    {
+      "path": "green-source-authoringRemedies.ts.txt.gz",
+      "bytes": 697,
+      "sha256": "03799f47ae25a57cec40f43c6cc89bd0da9f5a8ce1be500e470f340234d13ae2"
+    },
+    {
+      "path": "green-source-machine-claim-verify.ts.txt.gz",
+      "bytes": 5690,
+      "sha256": "9ab72692af995ebd8de2a892c43ec03424b2e4f8180280105b5374ed2d0b69c7"
+    },
+    {
+      "path": "green-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "green-source-proposalAnchor.ts.txt.gz",
+      "bytes": 3029,
+      "sha256": "f1bc98f133619c3db6ffd9ff2b2e136f655853b47d69ba7ffe01342136d31cb1"
+    },
+    {
+      "path": "green-source-remedies.ts.txt.gz",
+      "bytes": 1573,
+      "sha256": "b97514fc271141977b7fdd12e35c97bf7d11a75b7d4196a0aa6325f319a2365a"
+    },
+    {
+      "path": "green-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "green-source-suggestions.ts.txt.gz",
+      "bytes": 28577,
+      "sha256": "39c63b29df2a1d8a0d86141bcf46f43d303f59354ac61abfb83f662933e157fa"
+    },
+    {
+      "path": "green-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "green-source-workbenchRemedies.test.tsx.txt.gz",
+      "bytes": 5156,
+      "sha256": "3d7d5c314155e951d635feb6dbe206f08ad9b5f73a11b3683dff8ff561aa82e0"
+    },
+    {
+      "path": "initial-green-source-AuthoringRemedies.tsx.txt.gz",
+      "bytes": 2664,
+      "sha256": "7a2b3ee87eb2ff6b95ee9f407e0890db367a5a558a7b6ef4601abe79b835ffb1"
+    },
+    {
+      "path": "initial-green-source-DocumentWorkbench.tsx.txt.gz",
+      "bytes": 87351,
+      "sha256": "8c7a2a0e3c9654c7743cc3f55cbb1c747fd50eba93ad47746f1f7bccb72d9ac7"
+    },
+    {
+      "path": "initial-green-source-EDITOR_ANA_AMENDMENTS_2026-10-26.md.txt.gz",
+      "bytes": 2950,
+      "sha256": "89eb92c53c59c9d86ae79ac9b0a16e03c6a03e3a70c92ae6d6a8f6bfd1bd8b35"
+    },
+    {
+      "path": "initial-green-source-RichSectionEditor.tsx.txt.gz",
+      "bytes": 38951,
+      "sha256": "9c8664a2d021435f6121a6291a647997e5ed4d1eefd707c9dfb10ab39608c63e"
+    },
+    {
+      "path": "initial-green-source-authoringOversight.ts.txt.gz",
+      "bytes": 2598,
+      "sha256": "960783b8d4ccb84677e3e87901298596202ea2cc68c70873aadeaeba48deb8db"
+    },
+    {
+      "path": "initial-green-source-authoringRemedies.ts.txt.gz",
+      "bytes": 697,
+      "sha256": "03799f47ae25a57cec40f43c6cc89bd0da9f5a8ce1be500e470f340234d13ae2"
+    },
+    {
+      "path": "initial-green-source-machine-claim-verify.ts.txt.gz",
+      "bytes": 5690,
+      "sha256": "9ab72692af995ebd8de2a892c43ec03424b2e4f8180280105b5374ed2d0b69c7"
+    },
+    {
+      "path": "initial-green-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "initial-green-source-proposalAnchor.ts.txt.gz",
+      "bytes": 2946,
+      "sha256": "e6f9d69908fa8992d97ca2fae39043b82c7a65063208fce61e147697b8f549c8"
+    },
+    {
+      "path": "initial-green-source-remedies.ts.txt.gz",
+      "bytes": 1573,
+      "sha256": "b97514fc271141977b7fdd12e35c97bf7d11a75b7d4196a0aa6325f319a2365a"
+    },
+    {
+      "path": "initial-green-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "initial-green-source-suggestions.ts.txt.gz",
+      "bytes": 28377,
+      "sha256": "cc192064e705c09f035118a7ef9f4988bc4bb4513ecf35a1ad76d091b545cc01"
+    },
+    {
+      "path": "initial-green-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "initial-green-source-workbenchRemedies.test.tsx.txt.gz",
+      "bytes": 5129,
+      "sha256": "d0c020e89a11c0cff3072207ed4521c97a517b3e9200c2675229cd6ee6431e88"
+    },
+    {
+      "path": "red-inputs.json",
+      "bytes": 3014,
+      "sha256": "83152a095d01537ef7504fa9946ebaa540dcf194d18cc2142691b5a238dcd394"
+    },
+    {
+      "path": "red-source-AuthoringRemedies.tsx.txt.gz",
+      "bytes": 2475,
+      "sha256": "5ea63bde8e00fab5f436eae1ed214e56d8448e9092cffccc01390bdcda36cb34"
+    },
+    {
+      "path": "red-source-DocumentWorkbench.tsx.txt.gz",
+      "bytes": 87351,
+      "sha256": "8c7a2a0e3c9654c7743cc3f55cbb1c747fd50eba93ad47746f1f7bccb72d9ac7"
+    },
+    {
+      "path": "red-source-EDITOR_ANA_AMENDMENTS_2026-10-26.md.txt.gz",
+      "bytes": 2950,
+      "sha256": "89eb92c53c59c9d86ae79ac9b0a16e03c6a03e3a70c92ae6d6a8f6bfd1bd8b35"
+    },
+    {
+      "path": "red-source-RichSectionEditor.tsx.txt.gz",
+      "bytes": 38951,
+      "sha256": "9c8664a2d021435f6121a6291a647997e5ed4d1eefd707c9dfb10ab39608c63e"
+    },
+    {
+      "path": "red-source-authoringOversight.ts.txt.gz",
+      "bytes": 2352,
+      "sha256": "9b2467ae49ca3df563782ad3237499f1f27131e8fe32d5f441765f5b507213fa"
+    },
+    {
+      "path": "red-source-authoringRemedies.ts.txt.gz",
+      "bytes": 697,
+      "sha256": "03799f47ae25a57cec40f43c6cc89bd0da9f5a8ce1be500e470f340234d13ae2"
+    },
+    {
+      "path": "red-source-machine-claim-verify.ts.txt.gz",
+      "bytes": 5690,
+      "sha256": "9ab72692af995ebd8de2a892c43ec03424b2e4f8180280105b5374ed2d0b69c7"
+    },
+    {
+      "path": "red-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "red-source-remedies.ts.txt.gz",
+      "bytes": 1341,
+      "sha256": "3666186e1621b39f07e66f98aabd05c3b4068d7f4c8d4ad755f5a694b9a7806a"
+    },
+    {
+      "path": "red-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "red-source-suggestions.ts.txt.gz",
+      "bytes": 30218,
+      "sha256": "4563f4acd430634de8e710252a0f17aa4eb9480fd2d1a4b649897af896af4cf4"
+    },
+    {
+      "path": "red-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "red-source-workbenchRemedies.test.tsx.txt.gz",
+      "bytes": 5129,
+      "sha256": "d0c020e89a11c0cff3072207ed4521c97a517b3e9200c2675229cd6ee6431e88"
+    },
+    {
+      "path": "settled-inputs.json",
+      "bytes": 3292,
+      "sha256": "4609d47e6d2885d35025eb82a7fbb0e45206ae02442a9cfafda5057af55ed2b9"
+    },
+    {
+      "path": "settled-source-AuthoringRemedies.tsx.txt.gz",
+      "bytes": 2664,
+      "sha256": "7a2b3ee87eb2ff6b95ee9f407e0890db367a5a558a7b6ef4601abe79b835ffb1"
+    },
+    {
+      "path": "settled-source-DocumentWorkbench.tsx.txt.gz",
+      "bytes": 87351,
+      "sha256": "8c7a2a0e3c9654c7743cc3f55cbb1c747fd50eba93ad47746f1f7bccb72d9ac7"
+    },
+    {
+      "path": "settled-source-EDITOR_ANA_AMENDMENTS_2026-10-26.md.txt.gz",
+      "bytes": 2950,
+      "sha256": "89eb92c53c59c9d86ae79ac9b0a16e03c6a03e3a70c92ae6d6a8f6bfd1bd8b35"
+    },
+    {
+      "path": "settled-source-RichSectionEditor.tsx.txt.gz",
+      "bytes": 38951,
+      "sha256": "9c8664a2d021435f6121a6291a647997e5ed4d1eefd707c9dfb10ab39608c63e"
+    },
+    {
+      "path": "settled-source-authoringOversight.ts.txt.gz",
+      "bytes": 2598,
+      "sha256": "960783b8d4ccb84677e3e87901298596202ea2cc68c70873aadeaeba48deb8db"
+    },
+    {
+      "path": "settled-source-authoringRemedies.ts.txt.gz",
+      "bytes": 697,
+      "sha256": "03799f47ae25a57cec40f43c6cc89bd0da9f5a8ce1be500e470f340234d13ae2"
+    },
+    {
+      "path": "settled-source-machine-claim-verify.ts.txt.gz",
+      "bytes": 5690,
+      "sha256": "9ab72692af995ebd8de2a892c43ec03424b2e4f8180280105b5374ed2d0b69c7"
+    },
+    {
+      "path": "settled-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "settled-source-proposalAnchor.ts.txt.gz",
+      "bytes": 3029,
+      "sha256": "f1bc98f133619c3db6ffd9ff2b2e136f655853b47d69ba7ffe01342136d31cb1"
+    },
+    {
+      "path": "settled-source-remedies.ts.txt.gz",
+      "bytes": 1573,
+      "sha256": "b97514fc271141977b7fdd12e35c97bf7d11a75b7d4196a0aa6325f319a2365a"
+    },
+    {
+      "path": "settled-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "settled-source-suggestions.ts.txt.gz",
+      "bytes": 28578,
+      "sha256": "26af296ae22dced632b7d201167e1d02f5b6839a5ee4ae1d571027aa88022b49"
+    },
+    {
+      "path": "settled-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "settled-source-workbenchRemedies.test.tsx.txt.gz",
+      "bytes": 5156,
+      "sha256": "3d7d5c314155e951d635feb6dbe206f08ad9b5f73a11b3683dff8ff561aa82e0"
+    }
+  ]
+}

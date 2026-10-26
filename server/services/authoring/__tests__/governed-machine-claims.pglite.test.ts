@@ -266,6 +266,18 @@ describe('what the record and the saver are told', () => {
 });
 
 describe('decoded explicit remedy attribution', () => {
+  it.each(['insert-before', 'insert-after', 'insert-empty'])('credits decoded %s additions only against an intact admitted turn', async operation => {
+    const replacement = 'Reported result: "not assessed".\nNo result is inferred.';
+    const fix = { operation, sectionId: 'aaaaaaaa-0000-4000-8000-000000000001', baseUpdatedAt: '2026-10-13T10:00:00Z', quote: operation === 'insert-empty' ? '' : 'The saved anchor.', replacement, reason: 'State the evidence gap without inventing results.' };
+    const fenced = `\`\`\`authoring-remedy\n${JSON.stringify(fix)}\n\`\`\``;
+    const turn = await filedTurn(fenced, [OPUS]);
+    expect((await creditMachineClaims(q, ORG, [claim(replacement, turn)])).credited).toHaveLength(1);
+    expect((await creditMachineClaims(q, ORG + 1, [claim(replacement, turn)])).credited).toEqual([]);
+    expect((await creditMachineClaims(q, ORG, [claim('An invented conclusion.', turn)])).credited).toEqual([]);
+    const refused = await filedTurn(fenced, [SONNET]);
+    expect((await creditMachineClaims(q, ORG, [claim(replacement, refused)])).credited).toEqual([]);
+  });
+
   it('credits decoded remedy words from an intact qualified turn, but never unrelated or malformed JSON', async () => {
     const replacement = 'Dose is 5 mg of "salt A".\nAt 24 weeks the response was 42%.';
     const fix = { sectionId: 'aaaaaaaa-0000-4000-8000-000000000001', baseUpdatedAt: '2026-10-13T10:00:00Z', quote: 'The earlier wording.', replacement, reason: 'Use the source value.' };

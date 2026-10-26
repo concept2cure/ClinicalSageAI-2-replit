@@ -61,6 +61,16 @@ function useProposalState(receipt: EditorProposalReceipt | null, target?: Remedy
   return receipt ? target?.getProposalState?.(receipt) ?? 'unavailable' : null;
 }
 
+function RemedyPassages({ remedy }: { remedy: AuthoringRemedy }) {
+  const operation = remedy.operation ?? 'replace';
+  const label = { replace: 'Replacement: ', 'insert-before': 'Addition before anchor: ', 'insert-after': 'Addition after anchor: ', 'insert-empty': 'Addition: ' }[operation];
+  const anchor = operation === 'insert-empty' ? 'Empty section' : remedy.quote;
+  return <div className="authoring-remedy-passages">
+    <p className="authoring-remedy-passage"><span className="authoring-remedy-label">{operation === 'replace' ? 'Original: ' : 'Anchor: '}</span>{operation === 'replace' ? <del className="rdl-del">{anchor}</del> : anchor}</p>
+    <p className="authoring-remedy-passage"><span className="authoring-remedy-label">{label}</span>{remedy.replacement ? <ins className="rdl-ins">{remedy.replacement}</ins> : '(delete this passage)'}</p>
+  </div>;
+}
+
 function RemedyCard({ remedy, target, record, unfinished }: {
   remedy: AuthoringRemedy; target?: RemedyTarget; record?: AnaTurnRecordStatus; unfinished: boolean;
 }) {
@@ -85,7 +95,8 @@ function RemedyCard({ remedy, target, record, unfinished }: {
         ...(record?.status === 'recorded' ? { sourceRecord: record.id } : {}),
       }, record, unfinished);
       if (result.ok) { setReceipt(result.receipt ?? null); setWasApplied(true); }
-      else setError(remedyRefusal(result));
+      else setError(result.reason === 'not-found' && remedy.operation === 'insert-empty'
+        ? 'This section is no longer empty. Ask AnA to re-read it before preparing an addition.' : remedyRefusal(result));
     } catch {
       setError('The fix could not be applied. Your document has not been saved.');
     } finally { setBusy(false); }
@@ -95,10 +106,7 @@ function RemedyCard({ remedy, target, record, unfinished }: {
     <p className="authoring-remedy-reason">{remedy.reason}</p>
     <details className="authoring-remedy-changes">
       <summary className="authoring-remedy-toggle">What changed</summary>
-      <div className="authoring-remedy-passages">
-        <p className="authoring-remedy-passage"><span className="authoring-remedy-label">Original: </span><del className="rdl-del">{remedy.quote}</del></p>
-        <p className="authoring-remedy-passage"><span className="authoring-remedy-label">Replacement: </span>{remedy.replacement ? <ins className="rdl-ins">{remedy.replacement}</ins> : '(delete this passage)'}</p>
-      </div>
+      <RemedyPassages remedy={remedy} />
     </details>
     <div className="authoring-remedy-actions">
       <button type="button" className="btn ghost authoring-remedy-action" onClick={() => void apply()} disabled={busy || applied || !!refusal} aria-describedby={noteId}>

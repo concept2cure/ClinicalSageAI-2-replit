@@ -42,6 +42,31 @@ describe('explicit, bounded authoring remedies', () => {
     expect(parseRemedyAnswer(Array.from({ length: 7 }, () => fenced(remedy)).join('\n')).proposals).toEqual([]);
   });
 
+  it('admits explicit anchored additions and empty-section drafts through the same versioned schema', () => {
+    for (const operation of ['replace', 'insert-before', 'insert-after']) {
+      const addition = { ...remedy, operation };
+      expect(parseRemedyAnswer(fenced(addition))).toMatchObject({ proposals: [addition], errors: [] });
+    }
+    const empty = { ...remedy, operation: 'insert-empty', quote: '' };
+    expect(parseRemedyAnswer(fenced(empty))).toMatchObject({ proposals: [empty], errors: [] });
+  });
+
+  it('refuses ambiguous operation combinations, blank additions and invented insertion coordinates', () => {
+    for (const invalid of [
+      { ...remedy, operation: 'append' },
+      { ...remedy, operation: null },
+      { ...remedy, operation: 'insert-after', quote: '' },
+      { ...remedy, operation: 'insert-before', replacement: ' ' },
+      { ...remedy, operation: 'insert-empty' },
+      { ...remedy, operation: 'insert-empty', quote: '', prefix: '' },
+      { ...remedy, operation: 'insert-empty', quote: '', suffix: 'context' },
+      { ...remedy, operation: 'insert-empty', quote: '', baseSha256: undefined },
+      { ...remedy, operation: 'insert-after', position: 5 },
+    ]) {
+      expect(parseRemedyAnswer(fenced(invalid))).toMatchObject({ proposals: [], errors: [expect.any(String)] });
+    }
+  });
+
   it('asks for saved, paged authoring and evidence reads, genuine bases and tracked proposals', () => {
     for (const action of ['section', 'document', 'evidence', 'fixes'] as const) {
       const prompt = oversightPrompt(action);
@@ -53,6 +78,9 @@ describe('explicit, bounded authoring remedies', () => {
       expect(prompt).toContain('authoring-remedy');
       expect(prompt).toMatch(/Do not invent a base version/);
       expect(prompt).toMatch(/do not save, accept, approve or file/);
+      expect(prompt).toContain('insert-before');
+      expect(prompt).toContain('insert-after');
+      expect(prompt).toContain('insert-empty');
     }
     expect(oversightPrompt('document')).toContain('critique_document');
     expect(oversightPrompt('evidence')).toContain('every phase and its deliverables');

@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-10-26T18:04:12.551213+00:00",
+  "argv": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.105,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "source-freeze-red.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "86def4234785dcc52ca00f60874b45672313f0b74e23814fdfa02f2543f0e254",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "86def4234785dcc52ca00f60874b45672313f0b74e23814fdfa02f2543f0e254",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "d4966656744cd71b149273c95fd67fe573c91e686dfe6a476d051585f3ab1415",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  20 failed | 33 passed (53)",
+    "Duration  1.66s (transform 232ms, setup 132ms, import 242ms, tests 702ms, environment 427ms)"
+  ]
+}

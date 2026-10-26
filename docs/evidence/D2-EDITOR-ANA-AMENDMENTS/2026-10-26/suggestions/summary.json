@@ -1,0 +1,134 @@
+{
+  "scope": "Existing tracked amendment command: before/after/empty additions",
+  "tests": "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx",
+  "finalTestCount": 65,
+  "testLines": 278,
+  "runs": [
+    {
+      "receipt": "red.json",
+      "exitCode": 1,
+      "summary": [
+        "Test Files  1 failed (1)",
+        "Tests  20 failed | 33 passed (53)",
+        "Duration  1.66s (transform 232ms, setup 132ms, import 242ms, tests 702ms, environment 427ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "green.json",
+      "exitCode": 1,
+      "summary": [
+        "Test Files  1 failed (1)",
+        "Tests  1 failed | 52 passed (53)",
+        "Duration  1.91s (transform 283ms, setup 125ms, import 290ms, tests 832ms, environment 482ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "strict-lint.json",
+      "exitCode": 0,
+      "summary": [],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "final-green.json",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  1 passed (1)",
+        "Tests  53 passed (53)",
+        "Duration  2.45s (transform 351ms, setup 165ms, import 329ms, tests 1.10s, environment 613ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "final-strict-lint.json",
+      "exitCode": 0,
+      "summary": [],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "production-final-green.json",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  1 passed (1)",
+        "Tests  53 passed (53)",
+        "Duration  1.93s (transform 256ms, setup 147ms, import 248ms, tests 928ms, environment 445ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "production-final-strict-lint.json",
+      "exitCode": 0,
+      "summary": [],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "edge-review-red.json",
+      "exitCode": 1,
+      "summary": [
+        "Test Files  1 failed (1)",
+        "Tests  5 failed | 57 passed (62)",
+        "Duration  2.21s (transform 230ms, setup 134ms, import 251ms, tests 1.18s, environment 472ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "release-green.json",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  1 passed (1)",
+        "Tests  65 passed (65)",
+        "Duration  2.07s (transform 235ms, setup 141ms, import 245ms, tests 1.05s, environment 463ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "release-strict-lint.json",
+      "exitCode": 0,
+      "summary": [],
+      "sourceDrift": []
+    }
+  ],
+  "qualification": "No provider, native database, browser, agency, human testing or deployment claims; root owns broader checks/publication.",
+  "independentReview": "Five real structural placement/markless-table failures were reproduced and fixed; no unresolved blocker in this scoped review.",
+  "finalSourcePins": {
+    "client/src/concept2cure/v2/editor/suggestions.ts": "0baf3e8345596156585ffb977641201bc656cd2f3a90e7dc70c60e1592e9ad49",
+    "client/src/concept2cure/v2/editor/proposalAnchor.ts": "f529138731155da9db6bc1267321d594b751173c57820dc75e814b5f9ffd10a3",
+    "shared/authoring/remedies.ts": "cdf39fbd14adec0e643ac5d6c80ac00a0d7ae194285111c4828e69530b22568e",
+    "client/src/concept2cure/v2/editor/__tests__/suggestionsInsertions.test.tsx": "c21370f8ccdf18a31ecb6a995e05222c3e054d5fc3dc66b269f320c02103cb19",
+    "client/src/concept2cure/v2/editor/citationNode.ts": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+  },
+  "receiptSha256": {
+    "README.md": "6c3b38f38cecc81390f74a1525e4e9035bb471181ad73e9c5d25192588a565dd",
+    "edge-review-red-test-source.tsx.gz": "57ecabbefef7b5ce9950e8f842700d28970b9c929b30e54418e2b7f1d2d3e301",
+    "edge-review-red.json": "12d060a2e97d6ec46ee8d7088b43f2f9029e32246fbad18c1599a3e5199ddd18",
+    "edge-review-red.log.gz": "681a7ee67d41f387fbc28beec2c098469e08f773a8deaacc45b7e21920087682",
+    "final-green.json": "6b8dc9dc6ced4e21a72feb59429a47b06e158dc535c0cd78cb649268d2963cb5",
+    "final-green.log.gz": "75234a1327634bd7dc66b4b6cb149f1678a0915fdb3d21872ab96ff9b18a9ec2",
+    "final-strict-lint.json": "06e8d19139c14dfb2727dff785093b7c61f4a6e5a05e3adf722fffc7b0ff667f",
+    "final-strict-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "first-green-test-source.tsx.gz": "39faa60c1475ea150558264bfea1a6f8cdf48974159c40263969efa6882865cd",
+    "green.json": "a8c0dfb55788a8e2aa5f60f322eac4b883d64245034630b9824c6c4387053c8a",
+    "green.log.gz": "68e4de224a3be379e86836353677379ac1d2d39aaee918d2191920b96f51512a",
+    "production-final-green.json": "d0361d69e70ed8bc2acd8c78f3ba053f59467458855d810b89ce3fc567992a93",
+    "production-final-green.log.gz": "8dff19704807d4f22c37fd46ed724c748011abf0a7a9968395b816466e202522",
+    "production-final-strict-lint.json": "838a68900ff67d44ca265545d19cb344bbcb5e246a908efd08f8bbbd8bee1cd2",
+    "production-final-strict-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "red-test-source.tsx.gz": "8b3b09f70552f95e463e433147f138bb14b88d388b805aa75b9cd920580282d7",
+    "red.json": "f08e20f0a316dcbbb4ae7e474da2ad4a4827829ea1535bc07c8c16c4ff34ca36",
+    "red.log.gz": "d4966656744cd71b149273c95fd67fe573c91e686dfe6a476d051585f3ab1415",
+    "release-green.json": "7076770a226e472d80063e1314e83752a1aef2c6e078ef9467ab6819861925e3",
+    "release-green.log.gz": "6a2aa43d0225dc8c55f58000fe2f1c4354b1afa359de47ec61e74327653b916f",
+    "release-strict-lint.json": "8cf3f77b195a149c0271902d133099fac9e864ce8e371799302630cee2e34471",
+    "release-strict-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "run-check.py": "4eb8f0f313cc617a28564e16a463a60c01ecea8ca2c7abfd21679ead896efd9e",
+    "source-freeze-edge-review-red.json": "4c860e2b56f7fb2324bf7337f07d0b1bb37f143432b8654481e85511fafb3973",
+    "source-freeze-final.json": "5194ca438edbfd5fcc5d882acc494ba5721da1d4fe46ced917a8cb4e9b825b50",
+    "source-freeze-green.json": "9b2c87a37a300f0ac2f39639e85a11f53455bc892a395009d9ee6ac71e9c4da3",
+    "source-freeze-production-final.json": "9cf1bf4ebe589da644e8247161fe760733898189a5cbf2552683aa29c60cf7ca",
+    "source-freeze-red.json": "179dba358a2159e97219340fbf01be8396967d977c658c5e23e4c3f8711b2f99",
+    "source-freeze-release.json": "2112180137e02a8f0cc47d02ac31fa8084869af71009d7eb87afdbe82ea0db51",
+    "strict-lint.json": "9c51a5d0c78574eaf7bd772f3f3652aaf39fdf9860115a2df711a8d45ddada5d",
+    "strict-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+  }
+}

@@ -1,0 +1,360 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "BASELINE-LINT-result.json",
+      "bytes": 4070,
+      "sha256": "2281780ed917d3f79d2938676eb9d17a4d5bdca06e97f889aeecc10e94179a46"
+    },
+    {
+      "path": "BASELINE-LINT.log.gz",
+      "bytes": 93946,
+      "sha256": "23c896e3e12a272e2b9b3f23139c555e3ea4a6d238e718e329e1ee26b8db857e"
+    },
+    {
+      "path": "FINAL-LINT-result.json",
+      "bytes": 4070,
+      "sha256": "2d701bc35cc49ebb8dc3ca8f83c80812ae98a926f89791ed3e9713cb843265a8"
+    },
+    {
+      "path": "FINAL-LINT.log.gz",
+      "bytes": 93969,
+      "sha256": "ba8a67da3ca7f950872ba45811626ae811b8e562905c5b851c17142f6de91956"
+    },
+    {
+      "path": "GREEN-result.json",
+      "bytes": 650,
+      "sha256": "3d21d0628cfdac45f6491ec946163a966d062810fe43430a34e698b2f07ae135"
+    },
+    {
+      "path": "GREEN.log.gz",
+      "bytes": 3701,
+      "sha256": "c31c6097168e33defdf9bd782060059d0a05d0f575509d16163cd63177b56139"
+    },
+    {
+      "path": "INITIAL-FINAL-LINT-result.json",
+      "bytes": 4070,
+      "sha256": "4693d6060f1df156d11161c46f28df63516d4e545f1b9b96007e229643dd13ac"
+    },
+    {
+      "path": "INITIAL-FINAL-LINT.log.gz",
+      "bytes": 93969,
+      "sha256": "ba8a67da3ca7f950872ba45811626ae811b8e562905c5b851c17142f6de91956"
+    },
+    {
+      "path": "INITIAL-GREEN-result.json",
+      "bytes": 650,
+      "sha256": "57ad400c369da13991ac623bfea13d783b45888e19c3c1d9c7ac76014510803b"
+    },
+    {
+      "path": "INITIAL-GREEN.log.gz",
+      "bytes": 6731,
+      "sha256": "02d621e79e100bd71b2bee9faa5fcf8631e3b064b0a98c441e0b9fee210b9994"
+    },
+    {
+      "path": "INITIAL-TEST-LINT-result.json",
+      "bytes": 625,
+      "sha256": "7de929202414e70275ed256d5b4df3f2bee956a479bbe61c3934e2b87ba87d0e"
+    },
+    {
+      "path": "INITIAL-TEST-LINT.log.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3951,
+      "sha256": "5e16f9eef1793a657b306aaa841d32b822d9fd22df3034ea650df5bf057bcb19"
+    },
+    {
+      "path": "RED-result.json",
+      "bytes": 650,
+      "sha256": "5c182d685f99918c1945249e4b3e0dfc7bbdc56b2858714091425f74c68cff99"
+    },
+    {
+      "path": "RED.log.gz",
+      "bytes": 8359,
+      "sha256": "cd4e4304d96b79dadb67e3f18b1def72c55e0a132a379c9174152332d60d26f7"
+    },
+    {
+      "path": "TEST-LINT-result.json",
+      "bytes": 625,
+      "sha256": "de8a986747f713dd0e73476d672f1cc8dcd216884fb530801b31f1a9f9281024"
+    },
+    {
+      "path": "TEST-LINT.log.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "callers.txt",
+      "bytes": 1502,
+      "sha256": "f00a6422d88fcb2273b9042dc8d4231d286a14c177b0b72d8494d8dab9763617"
+    },
+    {
+      "path": "final-inputs.json",
+      "bytes": 2755,
+      "sha256": "027b0fb408cac366d2f386613110c9ed2041826fa195b0c7c9c101c14040f418"
+    },
+    {
+      "path": "green-initial-inputs.json",
+      "bytes": 4507,
+      "sha256": "ff0977e66d32c419a5bf49337a5cd3baccde5a0c9e866694a9de11ae8216ebb9"
+    },
+    {
+      "path": "green-inputs.json",
+      "bytes": 4379,
+      "sha256": "865a26671d37a349c9766d751ff791588433388bfa8e0189084a47105841416b"
+    },
+    {
+      "path": "green-source-00-sections.ts.txt.gz",
+      "bytes": 10915,
+      "sha256": "7628bb95c9b200b2d81725e0490cacb92e3085e3072fed7c074fd6f372906bf5"
+    },
+    {
+      "path": "green-source-01-lumen-context-builder.ts.txt.gz",
+      "bytes": 15732,
+      "sha256": "789ec022e4ff3d9ac6cd047ae64110a847dd572cde4a88a44834c0da7a732c35"
+    },
+    {
+      "path": "green-source-02-chat-context-builder.ts.txt.gz",
+      "bytes": 8704,
+      "sha256": "1dd7a55332d6905886a8fbf5a798eb2f7e61b84996d2589a343b474a46456ab0"
+    },
+    {
+      "path": "green-source-03-stream.ts.txt.gz",
+      "bytes": 69013,
+      "sha256": "3467411c6538a6083926c1519422c393ac12ebe4e1c9e56dd6e835dbc9def2b6"
+    },
+    {
+      "path": "green-source-04-section-scope.test.ts.txt.gz",
+      "bytes": 636,
+      "sha256": "5063f8a2673d6f72c6be776047b4295504bc7bf26b08e055b56081139f45d405"
+    },
+    {
+      "path": "green-source-05-chat-context-latency.test.ts.txt.gz",
+      "bytes": 2743,
+      "sha256": "1098beb9599c92cafdca8afcc02f88c6de1275ac40fc3708b521f3ec2dbeaaf3"
+    },
+    {
+      "path": "green-source-06-stream-context-latency.test.ts.txt.gz",
+      "bytes": 4135,
+      "sha256": "9077cee3c29ed677c39c3268aa857245f6fae2a0e8d24c643f0397a64f4d0f53"
+    },
+    {
+      "path": "green-source-07-lumen-context-builder-assumes-no-project-facts.test.ts.txt.gz",
+      "bytes": 2893,
+      "sha256": "944cb3691f87b4cee396606ca77aade1317706c4309ead8cf3e1705bab471e76"
+    },
+    {
+      "path": "green-source-08-ana-ctd-section-truth.test.ts.txt.gz",
+      "bytes": 2972,
+      "sha256": "ff2c555e2f3d4b54ff17e4320e81357d0215963a5bbe04c8d38a290a8fe5e326"
+    },
+    {
+      "path": "green-source-09-csr-e3-overlay.test.ts.txt.gz",
+      "bytes": 3969,
+      "sha256": "9e374d997aa6938150429e39d1494820a42fc7c333d44558e0c0ce67cbfbfab4"
+    },
+    {
+      "path": "green-source-10-open-document.ts.txt.gz",
+      "bytes": 4713,
+      "sha256": "4245d4a5c89e7868be007edfdb9a269642affae8409a27ef9692ef5a1502ce4f"
+    },
+    {
+      "path": "green-source-11-stream-route-harness.ts.txt.gz",
+      "bytes": 8395,
+      "sha256": "3e69a2ed53759f0845511b9ec0912ff52f28f2b0c4e229acd316cb6ffd4be69c"
+    },
+    {
+      "path": "green-source-12-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "green-source-13-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "green-source-14-eslint.config.js.txt.gz",
+      "bytes": 5745,
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1"
+    },
+    {
+      "path": "green-source-15-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "initial-green-source-00-sections.ts.txt.gz",
+      "bytes": 10915,
+      "sha256": "7628bb95c9b200b2d81725e0490cacb92e3085e3072fed7c074fd6f372906bf5"
+    },
+    {
+      "path": "initial-green-source-01-lumen-context-builder.ts.txt.gz",
+      "bytes": 15732,
+      "sha256": "789ec022e4ff3d9ac6cd047ae64110a847dd572cde4a88a44834c0da7a732c35"
+    },
+    {
+      "path": "initial-green-source-02-chat-context-builder.ts.txt.gz",
+      "bytes": 8704,
+      "sha256": "1dd7a55332d6905886a8fbf5a798eb2f7e61b84996d2589a343b474a46456ab0"
+    },
+    {
+      "path": "initial-green-source-03-stream.ts.txt.gz",
+      "bytes": 69013,
+      "sha256": "3467411c6538a6083926c1519422c393ac12ebe4e1c9e56dd6e835dbc9def2b6"
+    },
+    {
+      "path": "initial-green-source-04-section-scope.test.ts.txt.gz",
+      "bytes": 636,
+      "sha256": "5063f8a2673d6f72c6be776047b4295504bc7bf26b08e055b56081139f45d405"
+    },
+    {
+      "path": "initial-green-source-05-chat-context-latency.test.ts.txt.gz",
+      "bytes": 2743,
+      "sha256": "1098beb9599c92cafdca8afcc02f88c6de1275ac40fc3708b521f3ec2dbeaaf3"
+    },
+    {
+      "path": "initial-green-source-06-stream-context-latency.test.ts.txt.gz",
+      "bytes": 4114,
+      "sha256": "5a4d8c409845ee0c87200f26e536c309ade41b3720c068feec9367ff3a4ea086"
+    },
+    {
+      "path": "initial-green-source-07-lumen-context-builder-assumes-no-project-facts.test.ts.txt.gz",
+      "bytes": 2893,
+      "sha256": "944cb3691f87b4cee396606ca77aade1317706c4309ead8cf3e1705bab471e76"
+    },
+    {
+      "path": "initial-green-source-08-ana-ctd-section-truth.test.ts.txt.gz",
+      "bytes": 2972,
+      "sha256": "ff2c555e2f3d4b54ff17e4320e81357d0215963a5bbe04c8d38a290a8fe5e326"
+    },
+    {
+      "path": "initial-green-source-09-csr-e3-overlay.test.ts.txt.gz",
+      "bytes": 3969,
+      "sha256": "9e374d997aa6938150429e39d1494820a42fc7c333d44558e0c0ce67cbfbfab4"
+    },
+    {
+      "path": "initial-green-source-10-open-document.ts.txt.gz",
+      "bytes": 4713,
+      "sha256": "4245d4a5c89e7868be007edfdb9a269642affae8409a27ef9692ef5a1502ce4f"
+    },
+    {
+      "path": "initial-green-source-11-stream-route-harness.ts.txt.gz",
+      "bytes": 8395,
+      "sha256": "3e69a2ed53759f0845511b9ec0912ff52f28f2b0c4e229acd316cb6ffd4be69c"
+    },
+    {
+      "path": "initial-green-source-12-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "initial-green-source-13-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "initial-green-source-14-eslint.config.js.txt.gz",
+      "bytes": 5745,
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1"
+    },
+    {
+      "path": "initial-green-source-15-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "lint-comparison.json",
+      "bytes": 7337,
+      "sha256": "ec90da280d9857a40a8f972c51c2f12333225bddb046ba11330739f5659a7039"
+    },
+    {
+      "path": "red-inputs.json",
+      "bytes": 4347,
+      "sha256": "734bb84a42a232ac0b713cbb9ecdf5c0f4995b69bfd3990cbb8933a51d3ced86"
+    },
+    {
+      "path": "red-source-00-sections.ts.txt.gz",
+      "bytes": 10881,
+      "sha256": "6af01439df7cbf5987fdad5cf6db062bfe822a509a5b0a1a338911ed37675838"
+    },
+    {
+      "path": "red-source-01-lumen-context-builder.ts.txt.gz",
+      "bytes": 15729,
+      "sha256": "9a6d7b6caf60a6d63095bf929ecc3083ab1d6e1c784dbd9036eac952aa6b50d5"
+    },
+    {
+      "path": "red-source-02-chat-context-builder.ts.txt.gz",
+      "bytes": 8692,
+      "sha256": "e55c0c674bcc4c1166c1ec93c29365f8789fac7195aafcc225159aab9774b959"
+    },
+    {
+      "path": "red-source-03-stream.ts.txt.gz",
+      "bytes": 69006,
+      "sha256": "b48a454a50657115b8972aa6e3daca5c4054113a6911a7ae7a823b34bf391d75"
+    },
+    {
+      "path": "red-source-04-section-scope.test.ts.txt.gz",
+      "bytes": 636,
+      "sha256": "5063f8a2673d6f72c6be776047b4295504bc7bf26b08e055b56081139f45d405"
+    },
+    {
+      "path": "red-source-05-chat-context-latency.test.ts.txt.gz",
+      "bytes": 2743,
+      "sha256": "1098beb9599c92cafdca8afcc02f88c6de1275ac40fc3708b521f3ec2dbeaaf3"
+    },
+    {
+      "path": "red-source-06-stream-context-latency.test.ts.txt.gz",
+      "bytes": 4114,
+      "sha256": "5a4d8c409845ee0c87200f26e536c309ade41b3720c068feec9367ff3a4ea086"
+    },
+    {
+      "path": "red-source-07-lumen-context-builder-assumes-no-project-facts.test.ts.txt.gz",
+      "bytes": 2893,
+      "sha256": "944cb3691f87b4cee396606ca77aade1317706c4309ead8cf3e1705bab471e76"
+    },
+    {
+      "path": "red-source-08-ana-ctd-section-truth.test.ts.txt.gz",
+      "bytes": 2972,
+      "sha256": "ff2c555e2f3d4b54ff17e4320e81357d0215963a5bbe04c8d38a290a8fe5e326"
+    },
+    {
+      "path": "red-source-09-csr-e3-overlay.test.ts.txt.gz",
+      "bytes": 3969,
+      "sha256": "9e374d997aa6938150429e39d1494820a42fc7c333d44558e0c0ce67cbfbfab4"
+    },
+    {
+      "path": "red-source-10-open-document.ts.txt.gz",
+      "bytes": 4713,
+      "sha256": "4245d4a5c89e7868be007edfdb9a269642affae8409a27ef9692ef5a1502ce4f"
+    },
+    {
+      "path": "red-source-11-stream-route-harness.ts.txt.gz",
+      "bytes": 8395,
+      "sha256": "3e69a2ed53759f0845511b9ec0912ff52f28f2b0c4e229acd316cb6ffd4be69c"
+    },
+    {
+      "path": "red-source-12-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "red-source-13-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "red-source-14-eslint.config.js.txt.gz",
+      "bytes": 5745,
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1"
+    },
+    {
+      "path": "red-source-15-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    }
+  ]
+}
