@@ -100,3 +100,9 @@ Screenshots and result JSON contain synthetic records and safe support metadata;
 tokens and raw authenticated traces are not committed. Full TypeScript and
 pre-push gates are required for publication. A2.6 is next. Its additive enrichment
 does not remove the later visible section-readiness parity prerequisite.
+
+Concurrent tracked-insertion and document-section expertise changes through
+`449baa69d` merged without source conflicts. Five directly interacting wizard,
+shared-question, editor-remedy/insertion and section-scope suites pass **101/101**
+on the merged tree (`merged-tests.txt.gz`). Native browser/build qualification
+above precedes this merge; publishing gates qualify the final combined tree.
