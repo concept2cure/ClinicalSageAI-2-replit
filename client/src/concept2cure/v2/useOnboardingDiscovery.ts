@@ -53,6 +53,18 @@ async function persistDraft(answers: OnboardingDiscoveryAnswers, revision: numbe
   return record;
 }
 
+function useDiscoveryExitGuard(hold: boolean) {
+  useEffect(() => {
+    if (!hold) return;
+    const holdDraft = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', holdDraft);
+    return () => window.removeEventListener('beforeunload', holdDraft);
+  }, [hold]);
+}
+
 /** Organisation-wide answers stay on the server; no browser storage or model context. */
 export function useOnboardingDiscovery() {
   const orgId = getOrgId();
@@ -68,10 +80,11 @@ export function useOnboardingDiscovery() {
   const changed = useRef(false);
   const writePending = useRef(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (replaceDraft = false) => {
     const request = ++generation.current;
     setLoading(true);
     setError(null);
+    setNote(null);
     setCanEdit(false);
     try {
       const res = await apiRequest('GET', PATH);
@@ -79,7 +92,11 @@ export function useOnboardingDiscovery() {
       const data = decodeReply(await res.json());
       if (request !== generation.current) return;
       setRecord(data.record);
-      if (!changed.current) setAnswers(data.record?.answers ?? emptyDiscoveryAnswers());
+      if (replaceDraft || !changed.current) {
+        setAnswers(data.record?.answers ?? emptyDiscoveryAnswers());
+        changed.current = false;
+        setDirty(false);
+      }
       setCanEdit(data.canEdit);
     } catch (err) {
       if (request === generation.current) {
@@ -96,13 +113,14 @@ export function useOnboardingDiscovery() {
     setRecord(null);
     setBusy(false);
     setDirty(false);
-    setNote(null);
     void load();
     return () => { generation.current += 1; };
   }, [orgId, load]);
 
+  useDiscoveryExitGuard(dirty || busy);
+
   const setAnswer = <K extends keyof OnboardingDiscoveryAnswers>(key: K, value: OnboardingDiscoveryAnswers[K]) => {
-    if (!canEdit || loading || busy) return;
+    if (!canEdit || loading || error || writePending.current) return;
     changed.current = true;
     setDirty(true);
     setNote(null);
@@ -149,10 +167,8 @@ export function useOnboardingDiscovery() {
   };
 
   const reloadSaved = () => {
-    changed.current = false;
-    setDirty(false);
-    setNote(null);
-    void load();
+    if (writePending.current) return;
+    void load(true);
   };
   return { answers, setAnswer, record, assessment, loading, canEdit, busy, error, note, dirty, save, reloadSaved };
 }

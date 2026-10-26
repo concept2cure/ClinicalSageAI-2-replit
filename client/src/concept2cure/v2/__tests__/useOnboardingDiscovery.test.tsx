@@ -130,3 +130,61 @@ describe('org-wide discovery persistence', () => {
     expect(hook.result.current.record).toBeNull();
   });
 });
+
+describe('discovery draft safety', () => {
+  const exitHeld = () => {
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+
+  it('holds browser exit and workspace switching only while answers are unsaved', async () => {
+    const hook = await ready();
+    expect(exitHeld()).toBe(false);
+    act(() => hook.result.current.setAnswer('companyGoal', 'Preserve this goal.'));
+    expect(exitHeld()).toBe(true);
+    await act(async () => expect(await hook.result.current.save()).toBe(true));
+    expect(exitHeld()).toBe(false);
+    act(() => hook.result.current.setAnswer('companyGoal', 'Another goal.'));
+    hook.unmount();
+    expect(exitHeld()).toBe(false);
+  });
+
+  it('retains dirty answers and the exit guard when reloading saved answers fails', async () => {
+    const hook = await ready();
+    act(() => hook.result.current.setAnswer('companyGoal', 'Keep my unsaved goal.'));
+    request.mockRejectedValueOnce(new Error('Read unavailable.'));
+    act(() => hook.result.current.reloadSaved());
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+    expect(hook.result.current.answers.companyGoal).toBe('Keep my unsaved goal.');
+    expect(hook.result.current.dirty).toBe(true);
+    expect(exitHeld()).toBe(true);
+    request.mockResolvedValueOnce(response({ canEdit: true, discovery: record() }));
+    act(() => hook.result.current.reloadSaved());
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+    expect(hook.result.current.answers.companyGoal).toBe(completeDiscovery().companyGoal);
+    expect(hook.result.current.dirty).toBe(false);
+    expect(exitHeld()).toBe(false);
+  });
+
+  it('refuses same-turn edits and reloads until the pending write reports', async () => {
+    const hook = await ready();
+    act(() => hook.result.current.setAnswer('companyGoal', 'The submitted goal.'));
+    let release!: (value: ReturnType<typeof response>) => void;
+    request.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+    let save!: Promise<boolean>;
+    act(() => {
+      save = hook.result.current.save();
+      hook.result.current.setAnswer('companyGoal', 'This edit would be silently overwritten.');
+      hook.result.current.reloadSaved();
+    });
+    expect(hook.result.current.answers.companyGoal).toBe('The submitted goal.');
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(exitHeld()).toBe(true);
+    await act(async () => {
+      release(response({ canEdit: true, discovery: record({ ...completeDiscovery(), companyGoal: 'The submitted goal.' }, 1) }));
+      expect(await save).toBe(true);
+    });
+    expect(exitHeld()).toBe(false);
+  });
+});
