@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-26T15:19:30.838144+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/boundary-cases.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/browser.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/final-matrix.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/fixtures.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/measure.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/positive-api.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/positive-case.mjs",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/positive.tsx",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/probe.tsx",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/server.mjs",
+    "--max-warnings=0"
+  ],
+  "exit": 0,
+  "rawSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+}

@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-26T15:34:58.235418+00:00",
+  "ownedServerPid": 5556,
+  "port": 5216,
+  "ownedServerStopped": true,
+  "diagnosticAndPreLatchServerPids": [
+    1295,
+    2120,
+    2816,
+    3513
+  ],
+  "scope": "Only owned Vite processes were stopped. No database, Docker, provider or production mutation by this worker."
+}

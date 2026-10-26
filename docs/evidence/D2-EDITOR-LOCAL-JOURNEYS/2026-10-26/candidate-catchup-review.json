@@ -1,0 +1,22 @@
+{
+  "from": "4bae69d89",
+  "to": "6f7477656",
+  "files": {
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": {
+      "before": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+      "after": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": {
+      "before": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a",
+      "after": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a",
+      "unchanged": true
+    },
+    "client/src/concept2cure/v2/editorTarget.ts": {
+      "before": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af",
+      "after": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af",
+      "unchanged": true
+    }
+  },
+  "review": "Candidate production owners unchanged; incoming client-journey UI retained. SourceImportDialog wording changed outside this candidate and is preserved."
+}

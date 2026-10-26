@@ -1,0 +1,102 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "pageWidth": 1440,
+  "dialog": {
+    "x": 920,
+    "y": 0,
+    "right": 1440,
+    "bottom": 1000,
+    "width": 520,
+    "height": 1000,
+    "scrollWidth": 519,
+    "clientWidth": 519
+  },
+  "footer": {
+    "x": 921,
+    "y": 927,
+    "right": 1440,
+    "bottom": 1000,
+    "width": 519,
+    "height": 73,
+    "scrollWidth": 519,
+    "clientWidth": 519
+  },
+  "editorCount": 0,
+  "focusInDialog": true,
+  "controls": [
+    {
+      "label": "",
+      "disabled": false,
+      "bounds": {
+        "x": 1390,
+        "y": 18,
+        "right": 1420,
+        "bottom": 48,
+        "width": 30,
+        "height": 30,
+        "scrollWidth": 30,
+        "clientWidth": 30
+      }
+    },
+    {
+      "label": "Choose a working documentSynthetic diagnostics working document",
+      "disabled": false,
+      "bounds": {
+        "x": 941,
+        "y": 365.8125,
+        "right": 1420,
+        "bottom": 395.8125,
+        "width": 479,
+        "height": 30,
+        "scrollWidth": 477,
+        "clientWidth": 477
+      }
+    },
+    {
+      "label": "New document",
+      "disabled": false,
+      "bounds": {
+        "x": 941,
+        "y": 426.203125,
+        "right": 1061.90625,
+        "bottom": 466.203125,
+        "width": 120.90625,
+        "height": 40,
+        "scrollWidth": 121,
+        "clientWidth": 121
+      }
+    },
+    {
+      "label": "Cancel",
+      "disabled": false,
+      "bounds": {
+        "x": 941,
+        "y": 944,
+        "right": 1175.5,
+        "bottom": 984,
+        "width": 234.5,
+        "height": 40,
+        "scrollWidth": 235,
+        "clientWidth": 235
+      }
+    },
+    {
+      "label": "Open in editor",
+      "disabled": false,
+      "bounds": {
+        "x": 1185.5,
+        "y": 944,
+        "right": 1420,
+        "bottom": 984,
+        "width": 234.5,
+        "height": 40,
+        "scrollWidth": 235,
+        "clientWidth": 235
+      }
+    }
+  ],
+  "axe": null
+}

@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "node",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/browser.mjs",
+    "--red"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "node": "v22.23.3",
+  "exitCode": 1,
+  "stdout": "command.stdout.txt",
+  "limits": "Final exec poll reports completion, not total execution time. All API/auth credentials synthetic and omitted from request records."
+}
