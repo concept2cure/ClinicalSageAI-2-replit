@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not turn negated findings typed in a call into fetal-risk label advice 2ms
+ ✓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > returns the PLLR section structure without asking for model-typed product facts 1ms
+ ✓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not derive different product labeling from different stated evidence 0ms
+ ✓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not authorize choosing a generic risk template from conversation facts 1ms
+ ✓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > offers structure only and tells AnA not to pass product findings or facts 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessPregnancyLactationLabeling > does not write "not excreted in breast milk" when excretion was not stated 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessPregnancyLactationLabeling > does not request conversation facts for product label text it cannot assess 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessPregnancyLactationLabeling > returns a structure and the no-records reason with nothing supplied 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessPregnancyLactationLabeling > a stated excretion answer does not become a product label statement 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessPregnancyLactationLabeling > is offered to AnA without product facts or figures 0ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessOTCLabeling > does not drop the pregnancy/breast-feeding warning because the population was not stated 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessOTCLabeling > requires the category, ingredients and dosage form it writes from 1ms
+ ✓ server/services/labeling/__tests__/pllr-and-otc-labeling-need-the-facts-they-write.test.ts > assessOTCLabeling > gives a stated adult product the warning 1ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  16:06:53
+   Duration  692ms (transform 258ms, setup 92ms, import 256ms, tests 18ms, environment 0ms)

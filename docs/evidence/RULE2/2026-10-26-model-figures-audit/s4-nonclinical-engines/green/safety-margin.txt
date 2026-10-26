@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > resolves canonical species 5ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > tolerates strain prefixes and casing 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > kmForSpecies > returns null for unknown species rather than guessing 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > parses mg/kg and mg/kg/day 2ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > parseDoseMgPerKg > refuses to convert a bare mg amount 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeHED > scales by Km ratio (FDA 2005) 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > selects the most sensitive species and applies SF 10 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > honours a safety-factor override with rationale 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MRSD path > can force the most appropriate species away from the most sensitive 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > is MABEL-limited when MABEL is the lower derivation 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > is MRSD-limited when the MRSD is the lower derivation 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — MABEL competes with MRSD > applies a MABEL safety factor 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > throws when no species are supplied 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > skips species without a resolvable Km and warns 1ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > throws when no species produce a usable HED 0ms
+ ✓ server/services/preclinical/__tests__/fih-dose-engine.test.ts > computeFirstInHumanDose — failure modes > accepts an explicit Km override for an unknown species 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses an unknown species instead of reporting a computed zero dose 4ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > uses the same custom safety factor, body weight and rounding as computeFirstInHumanDose 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves minipig through the canonical minipig species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves micropig through the canonical micro-pig species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves guinea_pig through the canonical guinea pig species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Gottingen through the canonical minipig species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Sprague-Dawley through the canonical rat species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves rhesus through the canonical rhesus monkey species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Beagle dog through the canonical dog species without another Km table 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses a nonpositive safety factor rather than producing a non-finite dose 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > reports the applied HED/MRSD safety factor as the dose margin, not a species conversion factor 1ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > preserves the AUC and Cmax margins and low-exposure warnings 1ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  16:01:09
+   Duration  883ms (transform 233ms, setup 139ms, import 173ms, tests 36ms, environment 0ms)

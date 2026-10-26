@@ -31,7 +31,7 @@ import {
   type ProgramAssessment,
 } from './nonclinical-program-requirements.js';
 import { buildEnrichedM24, type NonclinicalStudyInput } from './nonclinical-m24-adapter.js';
-import type { M2Summary } from '../m2-summary-builders.js';
+import { DRUG_SUBSTANCE_NAME_NOT_RECORDED, type M2Summary } from '../m2-summary-builders.js';
 
 export interface NonclinicalSafetyInput {
   drugSubstanceName?: string;
@@ -108,7 +108,7 @@ export function assessNonclinicalSafety(input: NonclinicalSafetyInput): Nonclini
   }
 
   const parts: string[] = [];
-  const ds = input.drugSubstanceName || 'the drug substance';
+  const ds = input.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
   if (fihDose) {
     parts.push(
       `Recommended FIH starting dose for ${ds}: ${fihDose.recommendedStartingDoseMg} mg (${fihDose.limitedBy}-limited).`,

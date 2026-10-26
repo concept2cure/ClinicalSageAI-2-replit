@@ -1,0 +1,394 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:01:06.536Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T16:01:06.539Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:01:06.539Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts
+{
+  "timestamp": "2026-10-26T16:01:06.915Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a full stated battery and NOAEL cannot establish readiness or a program starting dose 84ms
+   → expected { status: 'assessed', …(11) } to match object { status: 'needs_data', …(4) }
+(8 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > without a project, asks for one and claims no record was read 2ms
+   → expected { status: 'assessed', …(11) } to match object { status: 'needs_project', …(2) }
+(9 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > refuses another project while one is open 2ms
+   → expected { status: 'assessed', …(11) } to match object { status: 'cross_project', …(3) }
+(9 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a database failure remains an error, not an empty battery 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > an open project with no supplied figures gets requirements and no gap determination 2ms
+   → expected { status: 'assessed', …(11) } to match object { status: 'needs_data', …(3) }
+(9 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > does not invent a clinical duration for its requirements 1ms
+   → expected { status: 'assessed', …(11) } to match object { status: 'needs_parameters', …(1) }
+(10 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > offers only project/context fields and tells the model not to pass figures 1ms
+   → expected [ 'drugSubstanceName', 'fih', …(5) ] to deeply equal [ 'drugSubstanceName', …(3) ]
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > a complete listed battery has a stated basis and no program adequacy verdict 1ms
+   → expected true to be null
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > classifies stated findings as a worksheet without directing their use in M2.4 2ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > labels the carcinogenicity assessment as based on stated inputs 62ms
+   → expected undefined to be 'stated' // Object.is equality
+ ✓ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > refuses an unknown safety-margin species instead of computing zero doses 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a full stated battery and NOAEL cannot establish readiness or a program starting dose
+AssertionError: expected { status: 'assessed', …(11) } to match object { status: 'needs_data', …(4) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ignoredSuppliedFigures": true,
+-   "programAssessed": false,
+-   "programGaps": null,
+-   "readiness": "not_assessed",
+-   "status": "needs_data",
++   "programAssessed": true,
++   "programGaps": [],
++   "readiness": "ready_for_fih",
++   "status": "assessed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:33:17
+     31|       findings: [{ organ: 'liver', finding: 'MODEL-FINDING' }],
+     32|     });
+     33|     expect(out).toMatchObject({ status: 'needs_data', readiness: 'not_…
+       |                 ^
+     34|     expect(out.requiredBattery).toEqual(requiredNonclinicalBattery(PRO…
+     35|     expect(out.recommendedStartingDoseMg).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > without a project, asks for one and claims no record was read
+AssertionError: expected { status: 'assessed', …(11) } to match object { status: 'needs_project', …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "programGaps": null,
+-   "readiness": "not_assessed",
+-   "status": "needs_project",
++   "programGaps": [
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing non-rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH S7A",
++       "key": "safety_pharm",
++       "label": "Safety pharmacology core battery (CV, CNS, respiratory)",
++       "reason": "Safety pharmacology core battery not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_ames",
++       "label": "Genotoxicity — gene mutation (Ames)",
++       "reason": "Ames (gene-mutation) assay not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_in_vitro_mammalian",
++       "label": "Genotoxicity — in-vitro chromosomal damage",
++       "reason": "In-vitro chromosomal damage assay not present.",
++     },
++   ],
++   "readiness": "gaps_block_fih",
++   "status": "assessed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:41:17
+     39|   it('without a project, asks for one and claims no record was read', …
+     40|     const out = await run({ program: PROGRAM }, { organizationId: 3, u…
+     41|     expect(out).toMatchObject({ status: 'needs_project', readiness: 'n…
+       |                 ^
+     42|     expect(out.requiredBattery).toBeUndefined();
+     43|     expect(out.message).toMatch(/no project.*read|open.*project/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > refuses another project while one is open
+AssertionError: expected { status: 'assessed', …(11) } to match object { status: 'cross_project', …(3) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "programGaps": null,
+-   "projectId": 9,
+-   "readiness": "not_assessed",
+-   "status": "cross_project",
++   "programGaps": [
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing non-rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH S7A",
++       "key": "safety_pharm",
++       "label": "Safety pharmacology core battery (CV, CNS, respiratory)",
++       "reason": "Safety pharmacology core battery not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_ames",
++       "label": "Genotoxicity — gene mutation (Ames)",
++       "reason": "Ames (gene-mutation) assay not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_in_vitro_mammalian",
++       "label": "Genotoxicity — in-vitro chromosomal damage",
++       "reason": "In-vitro chromosomal damage assay not present.",
++     },
++   ],
++   "readiness": "gaps_block_fih",
++   "status": "assessed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:47:61
+     45|
+     46|   it('refuses another project while one is open', async () => {
+     47|     expect(await run({ project_id: 10, program: PROGRAM })).toMatchObj…
+       |                                                             ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > a database failure remains an error, not an empty battery
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:54:23
+     52|     vi.mocked(resolveCsrScope).mockRejectedValueOnce(new Error('synthe…
+     53|     const out = await run({ program: PROGRAM });
+     54|     expect(out.error).toMatch(/synthetic nonclinical scope failure/);
+       |                       ^
+     55|     expect(out.requiredBattery).toBeUndefined();
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > an open project with no supplied figures gets requirements and no gap determination
+AssertionError: expected { status: 'assessed', …(11) } to match object { status: 'needs_data', …(3) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ignoredSuppliedFigures": false,
+-   "programGaps": null,
+-   "readiness": "not_assessed",
+-   "status": "needs_data",
++   "programGaps": [
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH M3(R2) §5",
++       "key": "repeat_dose_tox",
++       "label": "Repeat-dose toxicity (rodent + non-rodent)",
++       "reason": "Missing non-rodent repeat-dose tox of ≥4 weeks.",
++     },
++     {
++       "ichRef": "ICH S7A",
++       "key": "safety_pharm",
++       "label": "Safety pharmacology core battery (CV, CNS, respiratory)",
++       "reason": "Safety pharmacology core battery not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_ames",
++       "label": "Genotoxicity — gene mutation (Ames)",
++       "reason": "Ames (gene-mutation) assay not present.",
++     },
++     {
++       "ichRef": "ICH S2(R1)",
++       "key": "genotox_in_vitro_mammalian",
++       "label": "Genotoxicity — in-vitro chromosomal damage",
++       "reason": "In-vitro chromosomal damage assay not present.",
++     },
++   ],
++   "readiness": "gaps_block_fih",
++   "status": "assessed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:60:17
+     58|   it('an open project with no supplied figures gets requirements and n…
+     59|     const out = await run({ program: PROGRAM });
+     60|     expect(out).toMatchObject({ status: 'needs_data', readiness: 'not_…
+       |                 ^
+     61|     expect(out.requiredBattery).toEqual(requiredNonclinicalBattery(PRO…
+     62|     expect(out.message).toMatch(/not yet.*record|record.*not yet/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > does not invent a clinical duration for its requirements
+AssertionError: expected { status: 'assessed', …(11) } to match object { status: 'needs_parameters', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "readiness": "not_assessed",
+-   "status": "needs_parameters",
++   "readiness": "insufficient_input",
++   "status": "assessed",
+  }
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:66:27
+     64|
+     65|   it('does not invent a clinical duration for its requirements', async…
+     66|     expect(await run({})).toMatchObject({ status: 'needs_parameters', …
+       |                           ^
+     67|   });
+     68|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical safety is assessed from records, not figures typed in the call > offers only project/context fields and tells the model not to pass figures
+AssertionError: expected [ 'drugSubstanceName', 'fih', …(5) ] to deeply equal [ 'drugSubstanceName', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "drugSubstanceName",
++   "fih",
++   "findings",
+    "indication",
++   "presentStudies",
+    "program",
+-   "project_id",
++   "studies",
+  ]
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:71:39
+     69|   it('offers only project/context fields and tells the model not to pa…
+     70|     const props = ASSESS_NONCLINICAL_SAFETY.input_schema.properties ??…
+     71|     expect(Object.keys(props).sort()).toEqual(['drugSubstanceName', 'i…
+       |                                       ^
+     72|     expect(ASSESS_NONCLINICAL_SAFETY.description).toMatch(/do not pass…
+     73|     expect(ASSESS_NONCLINICAL_SAFETY.description.length).toBeLessThanO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > a complete listed battery has a stated basis and no program adequacy verdict
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:80:26
+     78|   it('a complete listed battery has a stated basis and no program adeq…
+     79|     const out = JSON.parse(await getToolHandler('assess_nonclinical_pr…
+     80|     expect(out.adequate).toBeNull();
+       |                          ^
+     81|     expect(out.basis).toBe('stated');
+     82|     expect(out.gaps).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > classifies stated findings as a worksheet without directing their use in M2.4
+AssertionError: expected undefined to be 'stated' // Object.is equality
+
+- Expected:
+"stated"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:88:23
+     86|   it('classifies stated findings as a worksheet without directing thei…
+     87|     const out = JSON.parse(await getToolHandler('classify_tox_findings…
+     88|     expect(out.basis).toBe('stated');
+       |                       ^
+     89|     expect(out.instruction).not.toMatch(/Use.*M2.4 target-organ profil…
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts > nonclinical worksheets never decide whether the recorded program is adequate > labels the carcinogenicity assessment as based on stated inputs
+AssertionError: expected undefined to be 'stated' // Object.is equality
+
+- Expected:
+"stated"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/nonclinical-safety-does-not-decide-from-stated-figures.test.ts:94:23
+     92|   it('labels the carcinogenicity assessment as based on stated inputs'…
+     93|     const out = JSON.parse(await getToolHandler('assess_carcinogenicit…
+     94|     expect(out.basis).toBe('stated');
+       |                       ^
+     95|     expect(out.instruction).toMatch(/not.*program/i);
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  16:01:03
+   Duration  14.25s (transform 9.83s, setup 84ms, import 13.66s, tests 164ms, environment 0ms)

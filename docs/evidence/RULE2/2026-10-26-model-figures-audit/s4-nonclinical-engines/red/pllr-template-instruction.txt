@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not turn negated findings typed in a call into fetal-risk label advice
+ ↓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > returns the PLLR section structure without asking for model-typed product facts
+ ↓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not derive different product labeling from different stated evidence
+ × server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not authorize choosing a generic risk template from conversation facts 4ms
+   → .toMatch() expects to receive a string, but got undefined
+ ↓ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > offers structure only and tells AnA not to pass product findings or facts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not authorize choosing a generic risk template from conversation facts
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts:46:29
+     44|   it('does not authorize choosing a generic risk template from convers…
+     45|     const out = assessPregnancyLactationLabeling(STATED);
+     46|     expect(out.instruction).toMatch(/structure only/i);
+       |                             ^
+     47|     expect(out.instruction).toMatch(/product-specific .*remain unasses…
+     48|     expect(out.instruction).toMatch(/do not select or apply .*template…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  16:06:43
+   Duration  539ms (transform 244ms, setup 71ms, import 214ms, tests 7ms, environment 0ms)

@@ -1,0 +1,145 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses an unknown species instead of reporting a computed zero dose 8ms
+   → expected [Function] to throw an error
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > uses the same custom safety factor, body weight and rounding as computeFirstInHumanDose 3ms
+   → expected 167.95 to be 167.96 // Object.is equality
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves minipig through the canonical minipig species without another Km table 1ms
+   → expected 21.8919 to be 28.3784 // Object.is equality
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves micropig through the canonical micro-pig species without another Km table 0ms
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves guinea_pig through the canonical guinea pig species without another Km table 1ms
+   → expected 0.6486 to be 0.6487 // Object.is equality
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Gottingen through the canonical minipig species without another Km table 1ms
+   → expected 21.8919 to be 28.3784 // Object.is equality
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Sprague-Dawley through the canonical rat species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves rhesus through the canonical rhesus monkey species without another Km table 0ms
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Beagle dog through the canonical dog species without another Km table 1ms
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses a nonpositive safety factor rather than producing a non-finite dose 1ms
+   → expected [Function] to throw an error
+ × server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > reports the applied HED/MRSD safety factor as the dose margin, not a species conversion factor 1ms
+   → expected 1.8 to be 20 // Object.is equality
+ ✓ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > preserves the AUC and Cmax margins and low-exposure warnings 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses an unknown species instead of reporting a computed zero dose
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:9:8
+      7|   it('refuses an unknown species instead of reporting a computed zero …
+      8|     expect(() => calculateSafetyMargin({ noaelMgKg: 30, species: 'axol…
+      9|       .toThrow(/species must be supported/i);
+       |        ^
+     10|   });
+     11|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > uses the same custom safety factor, body weight and rounding as computeFirstInHumanDose
+AssertionError: expected 167.95 to be 167.96 // Object.is equality
+
+- Expected
++ Received
+
+- 167.96
++ 167.95
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:22:40
+     20|     expect(out.mrsd).toBe(canonical.mrsd.mrsdMgPerKg);
+     21|     expect(out.safetyFactor).toBe(canonical.mrsd.safetyFactor);
+     22|     expect(out.calculations[2].result).toBe(Math.round(canonical.mrsd.…
+       |                                        ^
+     23|   });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves minipig through the canonical minipig species without another Km table
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves Gottingen through the canonical minipig species without another Km table
+AssertionError: expected 21.8919 to be 28.3784 // Object.is equality
+
+- Expected
++ Received
+
+- 28.3784
++ 21.8919
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:36:21
+     34|     const canonical = computeFirstInHumanDose({ speciesNoaels: [{ spec…
+     35|     const out = calculateSafetyMargin({ species: supplied, noaelMgKg: …
+     36|     expect(out.hed).toBe(canonical.mrsd.selectedHedMgPerKg);
+       |                     ^
+     37|     expect(out.mrsd).toBe(canonical.mrsd.mrsdMgPerKg);
+     38|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > resolves guinea_pig through the canonical guinea pig species without another Km table
+AssertionError: expected 0.6486 to be 0.6487 // Object.is equality
+
+- Expected
++ Received
+
+- 0.6487
++ 0.6486
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:37:22
+     35|     const out = calculateSafetyMargin({ species: supplied, noaelMgKg: …
+     36|     expect(out.hed).toBe(canonical.mrsd.selectedHedMgPerKg);
+     37|     expect(out.mrsd).toBe(canonical.mrsd.mrsdMgPerKg);
+       |                      ^
+     38|   });
+     39|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > refuses a nonpositive safety factor rather than producing a non-finite dose
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:42:8
+     40|   it('refuses a nonpositive safety factor rather than producing a non-…
+     41|     expect(() => calculateSafetyMargin({ noaelMgKg: 30, species: 'dog'…
+     42|       .toThrow(/safetyFactor must be > 0/);
+       |        ^
+     43|   });
+     44|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts > calculateSafetyMargin uses the canonical FIH dose calculation > reports the applied HED/MRSD safety factor as the dose margin, not a species conversion factor
+AssertionError: expected 1.8 to be 20 // Object.is equality
+
+- Expected
++ Received
+
+- 20
++ 1.8
+
+ ❯ server/services/toxicology/__tests__/safety-margin-uses-the-fih-dose-engine.test.ts:47:30
+     45|   it('reports the applied HED/MRSD safety factor as the dose margin, n…
+     46|     const out = calculateSafetyMargin({ noaelMgKg: 30, species: 'dog',…
+     47|     expect(out.safetyMargin).toBe(20);
+       |                              ^
+     48|     expect(out.safetyMargin).toBe(out.safetyFactor);
+     49|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  16:00:34
+   Duration  2.33s (transform 946ms, setup 285ms, import 759ms, tests 23ms, environment 0ms)

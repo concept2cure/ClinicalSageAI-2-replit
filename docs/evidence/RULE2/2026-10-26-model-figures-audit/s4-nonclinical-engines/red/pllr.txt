@@ -1,0 +1,173 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not turn negated findings typed in a call into fetal-risk label advice 24ms
+   → expected [ …(2) ] to be null
+ × server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > returns the PLLR section structure without asking for model-typed product facts 118ms
+   → assessPregnancyLactationLabeling: required and not stated: animalReproToxData (the animal reproductive toxicology studies, or [] if none were conducted); humanPregnancyData (true or false); placentalTransfer (one of known, likely, unknown, none); breastMilkExcretion (one of known, likely, unknown, none); mechanismBasedRisk (true or false). Nothing is assessed without them.
+ × server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not derive different product labeling from different stated evidence 6ms
+   → expected { sectionTitle: '8.1 Pregnancy', …(2) } to deeply equal { sectionTitle: '8.1 Pregnancy', …(2) }
+ × server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > offers structure only and tells AnA not to pass product findings or facts 2ms
+   → expected { animalReproToxData: { …(3) }, …(5) } to deeply equal {}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not turn negated findings typed in a call into fetal-risk label advice
+AssertionError: expected [ …(2) ] to be null
+
+- Expected:
+null
+
++ Received:
+[
+  "Based on animal data, advise pregnant women and females of reproductive potential of the potential risk to a fetus.",
+  "Background risk statement required: \"The estimated background risk of major birth defects and miscarriage for the indicated population is unknown. All pregnancies have a background risk of birth defect, loss, or other adverse outcomes. In the U.S. general population, the estimated background risk of major birth defects and miscarriage in clinically recognized pregnancies is 2% to 4% and 15% to 20%, respectively.\"",
+]
+
+ ❯ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts:18:47
+     16|   it('does not turn negated findings typed in a call into fetal-risk l…
+     17|     const out = assessPregnancyLactationLabeling(STATED);
+     18|     expect(out.section8_1.requiredStatements).toBeNull();
+       |                                               ^
+     19|     expect(JSON.stringify(out.section8_1)).not.toContain('Based on ani…
+     20|     expect(out).toMatchObject({ status: 'not_assessed', ignoredSupplie…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > returns the PLLR section structure without asking for model-typed product facts
+ComputationRefusal: assessPregnancyLactationLabeling: required and not stated: animalReproToxData (the animal reproductive toxicology studies, or [] if none were conducted); humanPregnancyData (true or false); placentalTransfer (one of known, likely, unknown, none); breastMilkExcretion (one of known, likely, unknown, none); mechanismBasedRisk (true or false). Nothing is assessed without them.
+ ❯ refuseUnlessStated server/services/ana-biostats/computation-engine.ts:61:9
+     59|   const absent = (v: unknown): boolean => v === undefined || v === nul…
+     60|   const named = bad.map((i) => `${i.field} (${i.expected}${absent(i.va…
+     61|   throw new ComputationRefusal(
+       |         ^
+     62|     bad.every((i) => absent(i.value)) ? 'missing_input' : 'invalid_inp…
+     63|     `${fn}: required and not stated: ${named.join('; ')}. Nothing is $…
+ ❯ assessPregnancyLactationLabeling server/services/labeling/labeling-intelligence-knowledge.ts:1630:3
+ ❯ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts:24:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'missing_input', field: 'animalReproToxData' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > does not derive different product labeling from different stated evidence
+AssertionError: expected { sectionTitle: '8.1 Pregnancy', …(2) } to deeply equal { sectionTitle: '8.1 Pregnancy', …(2) }
+
+- Expected
++ Received
+
+@@ -1,18 +1,19 @@
+  {
+    "requiredStatements": [
+      "Based on animal data, advise pregnant women and females of reproductive potential of the potential risk to a fetus.",
++     "Based on the mechanism of action, [drug name] may cause fetal harm when administered to a pregnant woman.",
+      "Background risk statement required: \"The estimated background risk of major birth defects and miscarriage for the indicated population is unknown. All pregnancies have a background risk of birth defect, loss, or other adverse outcomes. In the U.S. general population, the estimated background risk of major birth defects and miscarriage in clinically recognized pregnancies is 2% to 4% and 15% to 20%, respectively.\"",
+    ],
+    "sectionTitle": "8.1 Pregnancy",
+    "subsections": [
+      {
+        "contentGuidance": "If no registry exists, this subsection is omitted. Consider whether a registry should be established based on the anticipated patient population.",
+        "name": "Pregnancy Exposure Registry",
+      },
+      {
+-       "contentGuidance": "No human data available: State \"There are no adequate data on the developmental risk associated with the use of [drug name] in pregnant women.\" Then proceed to describe animal data. Adverse animal findings: Describe the species, adverse developmental outcomes (malformations, embryolethality, reduced fetal weight), doses at which effects occurred, and relationship to human exposure (multiples of MRHD on a mg/m2 or AUC basis). Include standard statement: \"In animal reproduction studies, [adverse effect] was observed in [species] at doses [X] times the maximum recommended human dose (MRHD) based on [body surface area/AUC].\" Placental transfer status is unknown. Acknowledge this data gap in the Risk Summary.",
++       "contentGuidance": "No human data available: State \"There are no adequate data on the developmental risk associated with the use of [drug name] in pregnant women.\" Then proceed to describe animal data. Adverse animal findings: Describe the species, adverse developmental outcomes (malformations, embryolethality, reduced fetal weight), doses at which effects occurred, and relationship to human exposure (multiples of MRHD on a mg/m2 or AUC basis). Include standard statement: \"In animal reproduction studies, [adverse effect] was observed in [species] at doses [X] times the maximum recommended human dose (MRHD) based on [body surface area/AUC].\" Mechanism-based risk: If the pharmacological mechanism suggests developmental risk (e.g., antiangiogenic agents, retinoids, ACE inhibitors in 2nd/3rd trimester), describe the mechanistic basis for concern even in the absence of direct evidence. Placental transfer status is unknown. Acknowledge this data gap in the Risk Summary.",
+        "name": "Risk Summary",
+      },
+      {
+        "contentGuidance": "Describe disease-associated maternal and/or embryo/fetal risk if the disease itself poses a risk in pregnancy. Include information on dose adjustments during pregnancy and labor/delivery considerations if relevant. Address fetal/neonatal adverse reactions if the drug is used during pregnancy or near delivery.",
+        "name": "Clinical Considerations",
+
+ ❯ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts:39:33
+     37|     const negative = assessPregnancyLactationLabeling(STATED);
+     38|     const positive = assessPregnancyLactationLabeling({ ...STATED, mec…
+     39|     expect(positive.section8_1).toEqual(negative.section8_1);
+       |                                 ^
+     40|     expect(positive.section8_2).toEqual(negative.section8_2);
+     41|     expect(positive.section8_3).toEqual(negative.section8_3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts > PLLR structure without product risk statements > offers structure only and tells AnA not to pass product findings or facts
+AssertionError: expected { animalReproToxData: { …(3) }, …(5) } to deeply equal {}
+
+- Expected
++ Received
+
+- {}
++ {
++   "animalReproToxData": {
++     "description": "Animal reproductive toxicology study results — used to populate the Data subsection of Section 8.1 Pregnancy.",
++     "items": {
++       "properties": {
++         "dose": {
++           "description": "Dose level and route (e.g., \"100 mg/kg/day oral\", \"5 mg/kg IV\"). Include multiples of clinical exposure when available.",
++           "type": "string",
++         },
++         "findings": {
++           "description": "Key findings from the study (e.g., \"embryo-fetal lethality at 10x clinical exposure\", \"no adverse developmental effects\").",
++           "type": "string",
++         },
++         "species": {
++           "description": "Species used in the study (e.g., \"rat\", \"rabbit\", \"cynomolgus monkey\").",
++           "type": "string",
++         },
++       },
++       "required": [
++         "species",
++         "findings",
++         "dose",
++       ],
++       "type": "object",
++     },
++     "type": "array",
++   },
++   "breastMilkExcretion": {
++     "description": "Breast milk excretion status — \"known\" if demonstrated in lactation studies, \"likely\" if expected based on molecular characteristics, \"unknown\" if not studied, \"none\" if demonstrated not to be excreted.",
++     "enum": [
++       "known",
++       "likely",
++       "unknown",
++       "none",
++     ],
++     "type": "string",
++   },
++   "humanPregnancyData": {
++     "description": "Whether human pregnancy outcome data are available (from clinical trials, pregnancy registries, or epidemiological studies). Presence of human data significantly strengthens the Risk Summary.",
++     "type": "boolean",
++   },
++   "mechanismBasedRisk": {
++     "description": "Whether the drug's mechanism of action suggests developmental or reproductive risk (e.g., anti-angiogenic agents, cytotoxic agents, hormonal modulators). Triggers enhanced risk language in Section 8.1.",
++     "type": "boolean",
++   },
++   "placentalTransfer": {
++     "description": "Placental transfer status — \"known\" if demonstrated in studies, \"likely\" if expected based on molecular characteristics (e.g., IgG antibodies), \"unknown\" if not studied, \"none\" if demonstrated not to cross.",
++     "enum": [
++       "known",
++       "likely",
++       "unknown",
++       "none",
++     ],
++     "type": "string",
++   },
++   "pregnancyRegistryData": {
++     "description": "Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1.",
++     "type": "boolean",
++   },
++ }
+
+ ❯ server/services/labeling/__tests__/pllr-returns-structure-without-product-claims.test.ts:45:73
+     43|
+     44|   it('offers structure only and tells AnA not to pass product findings…
+     45|     expect(ASSESS_PREGNANCY_LACTATION_LABELING.input_schema.properties…
+       |                                                                         ^
+     46|     expect(ASSESS_PREGNANCY_LACTATION_LABELING.input_schema.required).…
+     47|     expect(ASSESS_PREGNANCY_LACTATION_LABELING.description).toMatch(/d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  15:59:48
+   Duration  2.37s (transform 1.44s, setup 98ms, import 1.69s, tests 169ms, environment 0ms)
