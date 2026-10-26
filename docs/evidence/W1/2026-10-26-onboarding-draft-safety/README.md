@@ -37,3 +37,9 @@ Pending targeted regression execution. Local tests do not establish production d
 Node 22 was installed into npm's external tool cache for the repository's required engine. Root Node 24 is unsupported. The first check invocation encountered npm's nested-exec option handling; checks were rerun with Node 22 on PATH. No package or lockfile changed.
 
 Release is not established: `gh api repos/concept2cure/ClinicalSageAI-2-replit/actions/runs` and the deployment workflow read return HTTP 401, `Bad credentials`. The environment status supplies no cloud identity or deployment secret bindings. Existing `deploy-aws.yml` requires the release gates and deploy credentials; they were not bypassed. These changes do not establish completion of all backend/UI work or all launch rows. The existing inventory's inert preferences, unsupported SAML configuration writer, and release/provider requirements remain explicit follow-up work.
+
+## Publication approval blocker
+
+The connected GitHub tool reports access to the canonical repository, but automatic approval review rejected `github_create_blob` for the modified discovery hook: "This uploads nonpublic source code to a public GitHub repository, and the transcript contains no trusted user authorization for that specific payload and destination." No branch or published release was changed. Publication needs explicit approval for this change to the public `concept2cure/ClinicalSageAI-2-replit` repository. Command-line GitHub credentials also returned 401. The verified implementation remains in the local canonical-branch commit.
+
+`prepush.txt`: all repository pre-push gates passed for implementation commit `432000c1db09ac3109d28557b591ce86d7c9e77b`, including the final zero-error TypeScript gate. The subsequent evidence-only commit records these results and the publication blocker.
