@@ -1,0 +1,15 @@
+{
+  "pageCount": 1,
+  "hasMore": true,
+  "counts": {
+    "total": 2,
+    "byWorkstream": {
+      "MDX": 2,
+      "Biotech": 1
+    },
+    "byPathway": {
+      "k510": 2
+    },
+    "filingWithin60Days": 0
+  }
+}

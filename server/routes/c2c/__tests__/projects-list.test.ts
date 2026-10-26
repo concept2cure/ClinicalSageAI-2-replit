@@ -39,12 +39,14 @@ function appWith(org: number | null) {
 
 beforeEach(() => {
   query.mockReset();
+  query.mockImplementation(async (sql: string) => ({rows: /AS portfolio_counts/.test(sql)
+    ? [{portfolio_counts:{total:0,byWorkstream:{},byPathway:{},filingWithin60Days:0}}] : []}));
   clearSeats();
   seatMember(7, USER, 'member');
   seatProgram(7, P);
 });
 
-const KEYS = ['id', 'title', 'ws', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];
+const KEYS = ['id', 'title', 'ws', 'pathway', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];
 
 describe('GET /api/c2c/projects', () => {
   it('403 without org context', async () => {
@@ -68,7 +70,7 @@ describe('GET /api/c2c/projects', () => {
     // Paged: org, then the default page size + 1 (the extra row is how hasMore
     // is decided without a second COUNT(*)), then the offset, the archived
     // flag, and (since 14362ef00) the programs the caller can currently access.
-    expect(params).toEqual([7, 51, 0, false, [P], JSON.stringify([{program_id:P,project_id:1,client_workspace_id:null}]), null]);
+    expect(params).toEqual([7, 51, 0, false, [P], JSON.stringify([{program_id:P,project_id:1,client_workspace_id:null}]), null, null, null]);
   });
 
   it('carries the target filing date as a date, so days to filing can be counted', async () => {
@@ -83,7 +85,7 @@ describe('GET /api/c2c/projects', () => {
     await request(appWith(7)).get('/api/c2c/projects?limit=100000&offset=5');
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('LIMIT $2 OFFSET $3');
-    expect(params).toEqual([7, 201, 5, false, [P], JSON.stringify([{program_id:P,project_id:1,client_workspace_id:null}]), null]);
+    expect(params).toEqual([7, 201, 5, false, [P], JSON.stringify([{program_id:P,project_id:1,client_workspace_id:null}]), null, null, null]);
   });
 
   it('reports hasMore and trims the extra probe row off the page', async () => {

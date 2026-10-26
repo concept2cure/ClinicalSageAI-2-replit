@@ -94,7 +94,7 @@ import { readProjectAuthoringRecords } from '../../services/c2c/project-authorin
 import { readProjectTeam } from '../../services/c2c/project-team';
 import { projectWorkspaceInput, ProjectWorkspaceInputError } from './project-intake-workspace';
 import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
-import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, readPortfolioClients } from '../../services/c2c/project-portfolio';
+import { PROJECT_CARD_LIST_SQL, PROJECT_CARD_CREATED_SQL, portfolioAnchorJson, portfolioClientFilter, portfolioWorkstreamFilter, portfolioPathwayFilter, readPortfolioClients, readPortfolioCounts } from '../../services/c2c/project-portfolio';
 
 /** A filing the market verdict does not offer, found once the scaffold has
  *  resolved its outline. Thrown inside the creation transaction so it rolls
@@ -551,11 +551,12 @@ function readinessOfDetail(program: Record<string, unknown> | null): ReturnType<
 // Paged: ?limit= (default 50, max 200) and ?offset=. The read previously had no
 // LIMIT at all, so one org with a few thousand programs serialized its entire
 // portfolio into a single response on every render of the Projects surface.
-// meta.count means rows in THIS response. No client currently reads `meta` at
-// all — dataConnect's unwrapEnvelope returns `obj.data` and discards the rest —
-// so limit/offset/hasMore are there for the paging control the portfolio still
-// needs, not for something already consuming them. See the truncation note on
-// the handler below.
+// meta.count remains rows in THIS response; meta.counts holds complete
+// access-scoped counts and facets. Dossier readiness is bounded to this page.
+
+function missingPortfolioStore(err: unknown, pageRead: boolean): boolean {
+  return !pageRead && (err as {code?:string})?.code === '42P01';
+}
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
@@ -570,6 +571,13 @@ router.get('/', async (req: Request, res: Response) => {
   let clientWorkspaceId: number | null;
   try { clientWorkspaceId = portfolioClientFilter(req.query.clientWorkspaceId); }
   catch { return send400(res, 'Client workspace must be a positive integer.'); }
+  let workstream: ReturnType<typeof portfolioWorkstreamFilter>;
+  let pathway: ReturnType<typeof portfolioPathwayFilter>;
+  try {
+    workstream = portfolioWorkstreamFilter(req.query.ws);
+    pathway = portfolioPathwayFilter(req.query.pathway);
+  } catch { return send400(res, 'Choose a listed workstream and pathway.'); }
+  let pageRead = false;
 
   try {
     const identity = { organizationId: orgId, userId: resolveUserId(req) ?? undefined };
@@ -583,8 +591,9 @@ router.get('/', async (req: Request, res: Response) => {
     // over the same predicate.
     const { rows } = await pool.query(
       PROJECT_CARD_LIST_SQL,
-      [orgId, limit + 1, offset, includeArchived, scope.programIds, portfolioAnchorJson(anchors), clientWorkspaceId],
+      [orgId, limit + 1, offset, includeArchived, scope.programIds, portfolioAnchorJson(anchors), clientWorkspaceId, workstream, pathway],
     );
+    pageRead = true;
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
 
@@ -598,15 +607,16 @@ router.get('/', async (req: Request, res: Response) => {
       Object.assign(p, readinessFields(figures.get(p.id) ?? unread()));
     }
 
+    const counts = await readPortfolioCounts(pool, {organizationId:orgId, anchors, includeArchived, clientWorkspaceId, workstream, pathway});
     const clients = await readPortfolioClients(pool, orgId, anchors, includeArchived);
     await requireProgramScopeStillCurrent(pool, identity, scope);
     return res.json({
       data: page,
-      meta: { count: page.length, limit, offset, hasMore, ...clients, scope: scope.scope, reconciliationRequired: scope.reconciliationRequired },
+      meta: { count: page.length, limit, offset, hasMore, counts, ...clients, scope: scope.scope, reconciliationRequired: scope.reconciliationRequired },
     });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
-    if ((err as { code?: string })?.code === '42P01') {
+    if (missingPortfolioStore(err, pageRead)) {
       return res.json({
         data: [],
         meta: { count: 0, limit, offset, hasMore: false, pendingStore: true },

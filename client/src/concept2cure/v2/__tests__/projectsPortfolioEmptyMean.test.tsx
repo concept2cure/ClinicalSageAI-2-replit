@@ -54,7 +54,7 @@ describe('Projects — summary over a successful empty read', () => {
     render(<Projects {...props()} />);
     expect(await screen.findByText('No projects yet')).toBeTruthy();
 
-    expect(figure(/average readiness/i), 'a mean over no programmes rendered as a figure').toBe('—');
+    expect(figure(/average readiness/i), 'a mean over no programmes rendered as a figure').toBe('Not recorded');
     expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%/);
     // The counts over an empty set are real zeros and stay so.
     expect(figure(/active projects/i)).toBe('0');
@@ -81,19 +81,26 @@ describe('Projects — a mixed portfolio still has a mean', () => {
 });
 
 describe('Projects — a program with nothing measurable has no readiness figure', () => {
+  it('keeps failed dossier measurements unavailable in the mean', async () => {
+    apiRequest.mockImplementation(async () => ok({ data: [{ ...row('failed', 'active', null), readinessState: 'unavailable' }] }));
+    render(<Projects {...props()} />);
+    await screen.findByText('Program failed');
+    expect(figure(/average readiness/i)).toBe('unavailable');
+    expect(screen.getByText('Dossier readiness unavailable')).toBeTruthy();
+  });
   /* The server answers readiness null when the measurement failed or a
      program has no governed sections to measure (server/routes/c2c/projects.ts);
      both used to reach the card as a stored, never-updated "0% ready". */
-  it('says "not measured" on its card, never "0% ready"', async () => {
+  it('says "Not recorded" on its card, never "0% ready"', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) =>
       url === '/api/c2c/projects' ? ok({ data: [row('u1', 'active', null)] }) : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program u1')).toBeTruthy());
     // Named as the dossier readiness since QA 2026-10-08 (projectsCardStatusReadiness.test.tsx).
-    expect(screen.getByText('Dossier readiness not measured')).toBeTruthy();
+    expect(screen.getByText('Dossier readiness Not recorded')).toBeTruthy();
     expect(screen.queryByText('0% ready')).toBeNull();
-    expect(figure(/average readiness/i)).toBe('—');
+    expect(figure(/average readiness/i)).toBe('Not recorded');
   });
 
   it('averages only the programs that were measured', async () => {

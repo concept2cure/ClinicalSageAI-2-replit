@@ -6,7 +6,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
-import { ProjectClientFilter, portfolioClients, portfolioClientContext, portfolioClientUrl } from './ProjectClientFilter';
+import { ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
+import { ProjectPortfolioFilters, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -1048,11 +1049,11 @@ function countFloor(n: number, paged: boolean): string {
   return paged ? `${n}+` : String(n);
 }
 
-function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled: boolean; count: number }) {
+function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
   if (!paged || !settled) return null;
   return (
     <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
-      Showing the first {count} projects. The totals, the average readiness and search cover these only.
+      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
     </div>
   );
 }
@@ -1070,6 +1071,7 @@ interface ProjPortfolioEntry {
   id: string;
   title: string;
   ws: string;
+  pathway?: string;
   code: string;
   stage: string;
   /** Share of the home filing's sections approved or locked; null with no
@@ -1098,7 +1100,8 @@ interface ProjPortfolioEntry {
  */
 function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean: string; cover: string } {
   const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => isMeasuredReadiness(p.readiness, p.readinessState));
-  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : '—';
+  const missing = projects.some(project => project.readinessState === 'unavailable') ? 'unavailable' : 'Not recorded';
+  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : missing;
   const partial = settled && measured.length > 0 && measured.length < projects.length;
   return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
 }
@@ -1125,6 +1128,7 @@ const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, 
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
+  const [pathway, setPathway] = useState('all');
   const [status, setStatus] = useState('all');
   const [clientWorkspaceId, setClientWorkspaceId] = useState('all');
   const [view, setView] = useState('grid');
@@ -1141,19 +1145,19 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      its own, so the retry the failed-load panel offers is a nonce in that list.
      The panel's copy promised a retry it did not have. */
   const [reloadNonce, setReloadNonce] = useState(0);
-  const portfolioUrl = portfolioClientUrl(clientWorkspaceId);
-  const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId]);
+  const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
+  const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
   // Options come from accessible program anchors, not an organization-wide
   // client directory. The server applies this filter before it pages the list.
   const clients = useMemo(() => portfolioClients(live.meta), [live.meta]);
   const clientContext = useMemo(() => portfolioClientContext(clientWorkspaceId, clients, live.meta),
     [clientWorkspaceId, clients, live.meta]);
-  /* The read is one page (50 by default) and the route says when there is
-     more (`meta.hasMore`). Ignored, an org with 80 programs read "50 active
-     programs", the mean covered 50 and search could not find the 51st. The
-     count is a floor then, and the screen and AnA are told so. */
+  // Readiness, status and search cover the page. Counts from the server cover
+  // the complete admitted set; older responses retain honest page floors.
   const truncated = readIsPaged(live.meta);
+  const counts = portfolioCounts(live.meta);
+  const unfilteredEmpty = portfolioIsUnfilteredEmpty(live.empty, ws, pathway);
 
   /* Search matches the two things a person actually knows a programme by — its
      title and its code. Deliberately NOT `lead`: the server projects that as
@@ -1163,7 +1167,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const needle = q.trim().toLowerCase();
   const list = projects.filter(
     p =>
-      (ws === 'all' || p.ws === ws) &&
       (status === 'all' || p.status === status) &&
       (!needle ||
         p.title.toLowerCase().includes(needle) ||
@@ -1175,7 +1178,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      divisor turned what would at least have been a visible NaN into a clean
      "0%", a portfolio-mean readiness computed over no programs. A director
      reading the header learned they run nothing and have nothing blocked. */
-  const kv = (v: string) => (live.loading || live.error ? '—' : v);
   const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, !live.loading && !live.error);
   /* No "Blocked" figure. A program's status is only ever written as active or
      archived (POST and the close-out routes in server/routes/c2c/projects.ts),
@@ -1186,17 +1188,19 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     const d = daysUntil(p.due_date);
     return d != null && d >= 0 && d < 60;
   }).length;
-  const health = [
-    { l: 'Active projects', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
+  const health = useMemo(() => {
+    const kv = (value: string) => (live.loading || live.error ? '—' : value);
+    return [
+    { l: 'Active projects', n: kv(counts ? String(counts.total) : countFloor(projects.length, truncated)), m: 'matching the selected server filters', t: '' },
     // A mean over some of the programs says how many it covers (`q`).
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
-    { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
-  ];
+    { l: 'Filing < 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
+    ];
+  }, [live.loading, live.error, counts, projects.length, truncated, meanReadiness, measuredCover, filingSoon]);
   /* The status filter offers the statuses the portfolio actually holds. It
      offered Blocked and Complete, which nothing writes, so both always showed
      an empty list. One status (or none) needs no filter. */
-  const statuses = ['all', ...Array.from(new Set(projects.map(p => p.status).filter(Boolean)))];
-  const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
+  const statusChoices = portfolioStatusChoices(projects.map(project => project.status), status);
 
   /* What AnA can see of this screen.
      The portfolio is the screen a user is most likely to ask a general question
@@ -1243,23 +1247,29 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        by workstream and status" while a search term was also hiding rows would
        describe a screen the user is not looking at, and AnA would answer "which
        programs are at risk?" over a set it had been told was complete. */
-    const filtered = ws !== 'all' || status !== 'all' || clientContext.active || needle !== '';
+    const filtered = ws !== 'all' || pathway !== 'all' || status !== 'all' || clientContext.active || needle !== '';
     const by = [
       ws !== 'all' ? `workstream "${ws}"` : null,
+      pathway !== 'all' ? `pathway "${pathway}"` : null,
       status !== 'all' ? `status "${status}"` : null,
       clientContext.description,
       needle ? `a search for "${q.trim()}"` : null,
     ].filter(Boolean);
     return {
       summary:
-        `Projects portfolio: ${projects.length} regulatory project(s)` +
-        (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
+        `Projects portfolio: ${counts?.total ?? projects.length} regulatory project(s)` +
+        (truncated ? ` — showing the first ${projects.length} only; more exist. Readiness, status and search cover this page${counts ? '; total and filing counts cover all matching projects' : '; counts are page floors'}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         `. Average readiness ${health[1].n}${measuredCover ? ` (${measuredCover})` : ''}; ${health[2].n} with a target filing date in the next 60 days. ` +
         'Blockers are not assessed on this list; each project\'s readiness is on its project home. ' +
         `Shown as a ${view}.`,
       facts: {
-        totalPrograms: projects.length,
+        totalPrograms: counts?.total ?? projects.length,
+        countsScope: counts ? 'selected client, workstream and pathway before paging' : 'returned page only',
+        readinessPageCount: projects.length,
+        pathwayFilter: pathway,
+        byWorkstream: counts?.byWorkstream ?? null,
+        byPathway: counts?.byPathway ?? null,
         portfolioTruncated: truncated,
         shownInList: list.length,
         workstreamFilter: ws,
@@ -1276,20 +1286,20 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         // card (where the person reads it); the sibling ProjectHome publisher
         // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
-          id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
+          id: p.id, code: p.code, title: p.title, workstream: p.ws, pathway: p.pathway ?? null, stage: p.stage,
           status: p.status, readiness: p.readiness, readinessState: p.readinessState ?? null, due: p.due,
           blocker: p.blocker ?? null,
         })),
       },
       availableActions: [
         'Open a project to enter its project home',
-        'Filter the portfolio by workstream (MDX, Biotech, Pharma), status or client',
+        'Filter the portfolio by workstream (MDX, Biotech, Pharma), pathway or client; filter the loaded page by status',
         'Search the portfolio by project title or code',
         'Switch between the grid and list views',
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, clientContext, q, needle, view, health, measuredCover, truncated]);
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, health, measuredCover, truncated, counts]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1376,6 +1386,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       }
       const applied: string[] = [];
       if (params.workstream) { setWs(params.workstream); applied.push(`workstream ${params.workstream}`); }
+      if (params.pathway) { setPathway(params.pathway); applied.push(`pathway ${params.pathway}`); }
       if (params.status) { setStatus(params.status); applied.push(`status ${params.status}`); }
       if (params.clientWorkspaceId) {
         setClientWorkspaceId(params.clientWorkspaceId);
@@ -1442,7 +1453,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           </span>
         ))}
       </div>
-      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} />
+      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} scopedCounts={counts !== null} />
 
       <div className="pj-toolbar">
         <div className="pj-search">
@@ -1464,13 +1475,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
       </div>
 
-      <div className="ws-switch" style={{ marginBottom: 8 }}>
-        {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
-      </div>
+      <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
+        hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
 
-      {statuses.length > 2 && (
+      {statusChoices.visible && (
         <div className="seg" style={{ marginBottom: 18 }}>
-          {statuses.map(s => (
+          {statusChoices.choices.map(s => (
             <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
               {s[0].toUpperCase() + s.slice(1)}
             </button>
@@ -1493,7 +1503,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           hint={live.error || "Couldn't load your projects. Try again, or sign in if your session has expired."}
           retry={() => setReloadNonce(n => n + 1)}
         />
-      ) : live.empty ? (
+      ) : unfilteredEmpty ? (
         <EmptyState
           icon={I.folder}
           title={clientContext.empty.title}
@@ -1505,8 +1515,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           title={needle ? `No projects match “${q.trim()}”` : 'No projects match these filters'}
           hint={
             needle
-              ? 'Search matches a project’s title or code. Clear the search, or adjust the workstream or status filter.'
-              : 'Adjust the workstream or status filter to see more.'
+              ? 'Search matches a project’s title or code on the loaded page. Clear the search, or adjust the filters.'
+              : 'Adjust the client, workstream, pathway or status filter to see more.'
           }
         />
       ) : view === 'grid' ? (

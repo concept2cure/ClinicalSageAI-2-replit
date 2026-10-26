@@ -9,10 +9,8 @@ import type { DueTone, HealthKpi, Program } from '../data/programs';
 import { AskAnaChip } from './AskAnaChip';
 import { ClientReviewZone } from '../components/ClientReviewZone';
 
-// Must cover every ProgramPathway member (k510 | pma | cer | ivdr); `ivdr` was
-// added to the union but not here, so indexing failed (TS7053). Ledger C-22.
-const PATHWAY_LABEL = { k510: '510(k)', pma: 'PMA', cer: 'CER', ivdr: 'IVDR' } as const;
-type PathFilter = 'all' | 'k510' | 'pma' | 'cer';
+import { PATHWAY_LABEL, REGULATORY_PATHWAYS, type RegulatoryPathway } from '../../../../../shared/constants/mdx';
+type PathFilter = 'all' | RegulatoryPathway;
 type StatusFilter = 'all' | 'active' | 'blocked' | 'idle';
 
 export interface OverviewProps {
@@ -34,10 +32,11 @@ function deriveLiveHealth(programs: Program[]): HealthKpi[] {
   const cleared = programs.filter((p) => p.status === 'complete').length;
   const blocked = programs.filter((p) => p.status === 'blocked');
   const inFlight = programs.filter((p) => p.stageIdx >= 5 && p.status !== 'complete').length;
-  const avgReadiness = total > 0
-    ? Math.round(programs.reduce((s, p) => s + p.readiness, 0) / total)
-    : 0;
-  const readinessTone: DueTone = avgReadiness >= 70 ? 'ok' : avgReadiness >= 40 ? 'warn' : 'err';
+  const measured = programs.map(p => p.readiness).filter((pct): pct is number =>
+    typeof pct === 'number' && Number.isFinite(pct));
+  const avgReadiness = measured.length
+    ? Math.round(measured.reduce((sum, pct) => sum + pct, 0) / measured.length) : null;
+  const readinessTone: DueTone = (avgReadiness ?? 0) >= 70 ? 'ok' : (avgReadiness ?? 0) >= 40 ? 'warn' : 'err';
   const blockedMeta = blocked.length === 0
     ? 'None open'
     : blocked
@@ -47,7 +46,9 @@ function deriveLiveHealth(programs: Program[]): HealthKpi[] {
 
   return [
     { label: 'Active projects',      metric: String(total),         meta: `${k510} 510(k) · ${pma} PMA · ${cleared} cleared` },
-    { label: 'Average readiness',    metric: String(avgReadiness), unit: '%', bar: { pct: avgReadiness, tone: readinessTone }, meta: 'Across MDX portfolio' },
+    { label: 'Average readiness', metric: avgReadiness === null ? 'Not recorded' : String(avgReadiness),
+      ...(avgReadiness === null ? {} : { unit: '%', bar: { pct: avgReadiness, tone: readinessTone } }),
+      meta: `${measured.length} of ${total} projects measured` },
     { label: 'Blockers open',        metric: String(blocked.length), meta: blockedMeta, tone: blocked.length > 0 ? 'err' : 'ok' },
     { label: 'Submissions in flight',metric: String(inFlight),       meta: 'Stages: assemble · submit' },
   ];
@@ -91,9 +92,8 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
   const counts = React.useMemo(
     () => ({
       all:      sourcePrograms.length,
-      k510:     sourcePrograms.filter(p => p.pathway === 'k510').length,
-      pma:      sourcePrograms.filter(p => p.pathway === 'pma').length,
-      cer:      sourcePrograms.filter(p => p.pathway === 'cer').length,
+      byPathway: Object.fromEntries(REGULATORY_PATHWAYS.map(pathway =>
+        [pathway, sourcePrograms.filter(p => p.pathway === pathway).length])),
       active:   sourcePrograms.filter(p => p.status === 'active').length,
       blocked:  sourcePrograms.filter(p => p.status === 'blocked').length,
       idle:     sourcePrograms.filter(p => p.status === 'idle').length,
@@ -108,7 +108,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
         <div>
           <div className="section-title">Device portfolio health</div>
           <div className="section-sub">
-            {sourcePrograms.length} active programs across 510(k), PMA and CER pathways
+            {sourcePrograms.length} projects across device pathways
           </div>
         </div>
         <button
@@ -175,15 +175,11 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
           <button className="chip" data-on={pathFilter === 'all'} onClick={() => setPathFilter('all')}>
             All <span className="count">{counts.all}</span>
           </button>
-          <button className="chip" data-on={pathFilter === 'k510'} onClick={() => setPathFilter('k510')}>
-            510(k) <span className="count">{counts.k510}</span>
-          </button>
-          <button className="chip" data-on={pathFilter === 'pma'} onClick={() => setPathFilter('pma')}>
-            PMA <span className="count">{counts.pma}</span>
-          </button>
-          <button className="chip" data-on={pathFilter === 'cer'} onClick={() => setPathFilter('cer')}>
-            CER <span className="count">{counts.cer}</span>
-          </button>
+          {REGULATORY_PATHWAYS.filter(pathway => counts.byPathway[pathway] > 0 || pathFilter === pathway).map(pathway => (
+            <button key={pathway} className="chip" data-on={pathFilter === pathway} onClick={() => setPathFilter(pathway)}>
+              {PATHWAY_LABEL[pathway]} <span className="count">{counts.byPathway[pathway]}</span>
+            </button>
+          ))}
         </div>
         <div className="chipset" style={{ marginLeft: 8 }}>
           <span
@@ -270,9 +266,9 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
               <div className="pg-stage">
                 <div className="pg-stage-label">
                   <span>{p.stage}</span>
-                  <span className="r">{p.readiness}% ready</span>
+                  <span className="r">{p.readiness === null ? 'Not recorded' : `${p.readiness}% ready`}</span>
                 </div>
-                <div className="pg-bar">
+                {p.readiness !== null && <div className="pg-bar">
                   <div
                     className="pg-bar-fill"
                     style={{
@@ -285,7 +281,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
                           : 'var(--accent-100)',
                     }}
                   />
-                </div>
+                </div>}
               </div>
               {p.nextBlocker ? (
                 <div className="pg-blocker">
@@ -340,8 +336,8 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
               <div className="pg-list-stage">
                 <span className="s">{p.stage}</span>
                 <span className="r">
-                  <span className="pct">{p.readiness}%</span>
-                  <span className="pg-bar">
+                  <span className="pct">{p.readiness === null ? 'Not recorded' : `${p.readiness}%`}</span>
+                  {p.readiness !== null && <span className="pg-bar">
                     <span
                       className="pg-bar-fill"
                       style={{
@@ -356,7 +352,7 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
                         height: '100%',
                       }}
                     />
-                  </span>
+                  </span>}
                 </span>
               </div>
               <div className={`pg-list-blocker ${p.nextBlocker ? '' : 'none'}`}>

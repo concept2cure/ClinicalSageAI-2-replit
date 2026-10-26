@@ -249,7 +249,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
         warns,
         ok,
         status,
-        readiness: p.readiness,
+        readiness: p.recordedProgress ?? null,
       };
     });
   }, [rules, programs]);
@@ -258,13 +258,11 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     if (!rules || !validationPrograms) return null;
     const totalErr  = rules.filter((r) => r.severity === 'err').length;
     const totalWarn = rules.filter((r) => r.severity === 'warn').length;
-    /* Slice 0 (map row `device-validation`): this is each project's stored
-       progressPercent (0 when unset), not an eSTAR assessment, so it carries no
-       verdict tone. With no projects there is nothing to average: it was 0%
-       in red. */
-    const avgReady = validationPrograms.length
-      ? String(Math.round(validationPrograms.reduce((s, p) => s + p.readiness, 0) / validationPrograms.length))
-      : null;
+    // Recorded progress is independent of an assessed readiness figure.
+    const measured = validationPrograms.map(p => p.readiness).filter((value): value is number =>
+      typeof value === 'number' && Number.isFinite(value));
+    const avgReady = measured.length
+      ? String(Math.round(measured.reduce((sum, value) => sum + value, 0) / measured.length)) : null;
     return [
       /* Was "Programs blocked · All programs filing-ready", computed from the
          per-program counts above that could never be non-zero. */
@@ -276,7 +274,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
       { label: 'Open warnings',    metric: String(totalWarn),    meta: totalWarn ? 'Medium or low severity' : 'None recorded', ...(totalWarn ? { tone: 'warn' as const } : {}) },
       {
         label: 'Avg recorded progress',
-        metric: avgReady ?? '—',
+        metric: avgReady ?? 'Not recorded',
         ...(avgReady === null ? {} : { unit: '%' }),
         meta: 'Recorded project progress, not an eSTAR assessment',
       },

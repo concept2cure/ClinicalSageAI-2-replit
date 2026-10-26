@@ -124,14 +124,14 @@ describe('project home — Dossier readiness', () => {
     expect(card.textContent).toContain('0 of 40 sections approved or locked.');
   });
 
-  it('a program with nothing to measure is stated as "not measured", never left out or drawn as 0', async () => {
+  it('a program with nothing to measure is stated as "Not recorded", never left out or drawn as 0', async () => {
     mockProgram(program({ readiness: null, progress_percent: 0 }), dossier({ state: 'no_sections', pct: null }));
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><ProjectHome {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
-    await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness not measured'));
+    await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness Not recorded'));
     // The card is there, under the name the Projects card uses, and says what it is.
     const card = await readinessCard();
-    expect(card.textContent).toMatch(/not measured/i);
+    expect(card.textContent).toMatch(/Not recorded/i);
     expect(card.textContent).not.toMatch(/\d+%/);
     expect(card.textContent).not.toMatch(/Measured/);
     expect(seen.ctx?.summary).not.toMatch(/\d+% complete|readiness \d+%/);
@@ -152,12 +152,12 @@ describe('project home — one dossier read for the card and the module rows (F2
     expect(apiRequest.mock.calls.some(([, u]) => String(u).includes('/workstreams'))).toBe(false);
   });
 
-  it('while the dossier is read the card says so, never "not measured"', async () => {
+  it('while the dossier is read the card says so, never "Not recorded"', async () => {
     mockProgram(program(), () => new Promise<Response>(() => {}));
     render(<ProjectHome {...props()} />);
     const card = await readinessCard();
     expect(card.textContent).toContain('Reading…');
-    expect(card.textContent).not.toMatch(/not measured|\d+%/);
+    expect(card.textContent).not.toMatch(/Not recorded|\d+%/);
     expect(await screen.findByText('Loading module completion…')).toBeTruthy();
   });
 

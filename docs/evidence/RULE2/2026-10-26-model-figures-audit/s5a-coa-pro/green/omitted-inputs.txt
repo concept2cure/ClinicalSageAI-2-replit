@@ -1,0 +1,121 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/coa-unstated-inputs.test.ts
+{
+  "timestamp": "2026-10-26T17:27:41.427Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T17:27:41.428Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/coa-unstated-inputs.test.ts
+{
+  "timestamp": "2026-10-26T17:27:41.429Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/coa-unstated-inputs.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/coa-unstated-inputs.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/coa-unstated-inputs.test.ts
+{
+  "timestamp": "2026-10-26T17:27:41.742Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not call content validity inadequate when the target population was not stated 2ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not invent a single-item instrument or a positive validation roll-up 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > leaves a wholly unstated validation unassessed rather than failed 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > recognizes explicit single-item non-applicability without penalizing the roll-up 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > keeps a known failed validation even when other evidence was not stated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not turn missing meaningful-change evidence into a confirmed blocking failure 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > retains a confirmed fit-for-purpose blocker when other facts are missing 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not assume a nonconfirmatory endpoint when its position was not stated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds a subjective endpoint position with isCoreToFeelFunctionSurvive unstated 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds a subjective endpoint position with fitForPurpose unstated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds a subjective endpoint position with meaningfulChangeDefined unstated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds a subjective endpoint position with blinded unstated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not read missing claim intent as no claim sought 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > can place a known unfit instrument as exploratory without inventing other facts 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not require a blinding answer for an objective PerfO placement 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not withhold an already determined supportive position for missing blinding 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not read an unstated endpoint count as zero 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds the instrument strategy when the deciding flag is unstated: {} 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds the instrument strategy when the deciding flag is unstated: {} 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > withholds the instrument strategy when the deciding flag is unstated: {} 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > can plan de novo work when no existing instrument is explicitly stated 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > can plan modification from a stated modification decision without guessing content validity 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > does not call FDA engagement optional when the qualification/claim goal was not stated 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA conclusions require their deciding facts > preserves explicit positive conclusions and known false blinding/claim intent 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > contentValidityEstablished is not_stated when omitted or null, and never coerced from a string 3ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > contentValidityInTargetPopulation is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > constructValidityConfirmed is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > isMultiItem is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > abilityToDetectChangeDemonstrated is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_validation' boolean input states > reaches the corrected engine through the stated-input tool envelope 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > contentValidityInContextOfUse is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > conceptMatchesClaim is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > meaningfulChangeDefined is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > recallPeriodAppropriate is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > modeOfAdministrationValidated is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'assess_coa_fit_for_purpose' boolean input states > reaches the corrected engine through the stated-input tool envelope 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > isCoreToFeelFunctionSurvive is not_stated when omitted or null, and never coerced from a string 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > fitForPurpose is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > meaningfulChangeDefined is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > blinded is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > labelClaimSought is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'position_coa_endpoint' boolean input states > reaches the corrected engine through the stated-input tool envelope 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'plan_coa_development' boolean input states > existingInstrumentAvailable is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'plan_coa_development' boolean input states > existingHasContentValidityInPopulation is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'plan_coa_development' boolean input states > modificationPlanned is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'plan_coa_development' boolean input states > seekingQualificationOrClaim is not_stated when omitted or null, and never coerced from a string 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > 'plan_coa_development' boolean input states > reaches the corrected engine through the stated-input tool envelope 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > select_coa_type requires conceptOfInterest at runtime 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > select_coa_type requires conceptObservability at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > select_coa_type requires population at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > assess_coa_validation requires coaType at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > assess_coa_fit_for_purpose requires coaType at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > assess_coa_fit_for_purpose requires conceptOfInterest at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > assess_coa_fit_for_purpose requires population at runtime 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > position_coa_endpoint requires coaType at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > position_coa_endpoint requires conceptOfInterest at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > plan_coa_development requires coaType at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > plan_coa_development requires conceptOfInterest at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > plan_coa_development requires population at runtime 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > required COA decisions do not take an implicit enum branch > determine_meaningful_change requires improvementDirection at runtime 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > does not derive a responder threshold from correlation undefined 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > does not derive a responder threshold from correlation null 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > uses only anchors with sufficient stated correlation 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses a malformed correlation through the existing parameter-refusal boundary 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses an unreadable required anchor mean: undefined 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses an unreadable required anchor mean: null 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses an unreadable required anchor mean: null 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses an unreadable required anchor mean: null 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > refuses an unreadable required anchor mean: "4" 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > does not compute supportive estimates from an invalid baselineSD 5ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > does not compute supportive estimates from an invalid sem 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > meaningful-change anchors need a stated correlation > retains the reference-only COA type lookup 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA measurement-property values must be interpretable > refuses invalid testRetestICC without assigning an adequacy grade 1ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA measurement-property values must be interpretable > refuses invalid cronbachAlpha without assigning an adequacy grade 0ms
+ ✓ server/services/ana/__tests__/coa-unstated-inputs.test.ts > COA measurement-property values must be interpretable > refuses invalid interRaterICC without assigning an adequacy grade 1ms
+
+ Test Files  1 passed (1)
+      Tests  75 passed (75)
+   Start at  17:27:39
+   Duration  8.43s (transform 5.77s, setup 73ms, import 8.09s, tests 41ms, environment 0ms)

@@ -30,11 +30,11 @@ export function isMeasuredReadiness(pct: number | null | undefined, state?: Doss
   return (state == null || state === 'measured') && typeof pct === 'number' && Number.isFinite(pct);
 }
 
-/** The figure as the screens print it: "62%", "not measured" or
+/** The figure as the screens print it: "62%", "Not recorded" or
  *  "unavailable", never a 0 for no figure. */
 export function dossierReadinessValue(pct: number | null | undefined, state?: DossierFigureState | null): string {
   if (state === 'unavailable') return 'unavailable';
-  return isMeasuredReadiness(pct, state) ? `${pct}%` : 'not measured';
+  return isMeasuredReadiness(pct, state) ? `${pct}%` : 'Not recorded';
 }
 
 /** When the server measured the figure, as a sentence; null with no usable time

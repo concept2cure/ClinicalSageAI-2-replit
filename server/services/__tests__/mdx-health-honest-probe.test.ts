@@ -67,3 +67,22 @@ describe('probeMdxHealth', () => {
     expect(report.schema).toMatchObject({ status: 'pass', requiredTablesPresent: true });
   });
 });
+
+
+it('counts exact evaluation, regional, IDE and unknown device paths with the shared classifier', async () => {
+  H.query.mockImplementation(async (sql: string) => {
+    if (/to_regclass/.test(sql)) return { rows: [{ exists: true }] };
+    if (/regulatory_path AS pathway/.test(sql)) return { rows: [
+      { program_type: 'CER', pathway: '510k', product_type: 'device', n: 2 },
+      { program_type: 'IDE', pathway: null, product_type: 'device', n: 3 },
+      { program_type: 'MDL', pathway: null, product_type: 'device', n: 1 },
+      { program_type: 'unknown', pathway: null, product_type: 'device', n: 4 },
+      { program_type: 'IND', pathway: null, product_type: 'drug', n: 10 },
+    ] };
+    return { rows: [{ n: 0 }] };
+  });
+  const report = await probeMdxHealth();
+  const counts = Object.fromEntries(report.pathwayCoverage.map(p => [p.pathway, p.programCount]));
+  expect(counts).toMatchObject({ cer: 2, ide: 3, mdl: 1, other: 4, k510: 0 });
+  expect(Object.values(counts).reduce<number>((sum, n) => sum + (n ?? 0), 0)).toBe(10);
+});

@@ -110,7 +110,7 @@ describe('Projects card — readiness is named as the dossier readiness', () => 
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program hlv')).toBeTruthy());
     expect(card('Program hlv').textContent).toContain('Dossier readiness 0%');
-    expect(card('Program bx256').textContent).toContain('Dossier readiness not measured');
+    expect(card('Program bx256').textContent).toContain('Dossier readiness Not recorded');
     // Never a bare, unlabelled "N% ready".
     expect(card('Program hlv').textContent).not.toMatch(/\d+% ready/);
   });
@@ -138,13 +138,13 @@ describe('Projects card — no figure draws no bar (F23)', () => {
     expect(bar(card('Program down'))).toBeNull();
   });
 
-  it('an unavailable figure says so, and why, never "not measured"', async () => {
+  it('an unavailable figure says so, and why, never "Not recorded"', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program down')).toBeTruthy());
     const c = card('Program down');
     expect(c.textContent).toContain('Dossier readiness unavailable');
     expect(c.querySelector(`[title="${READ_FAILED}"]`)).not.toBeNull();
-    expect(card('Program none').textContent).toContain('Dossier readiness not measured');
+    expect(card('Program none').textContent).toContain('Dossier readiness Not recorded');
   });
 
   it('the list view draws the same bars', async () => {
@@ -158,7 +158,7 @@ describe('Projects card — no figure draws no bar (F23)', () => {
     expect(listRow('Program down').textContent).toContain('Dossier readiness unavailable');
   });
 
-  it('the portfolio mean says how many programs it covers when some are not measured', async () => {
+  it('the portfolio mean says how many programs it covers when some have no recorded measurement', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
     // (0 + 50) / 2, over the two measured of four.

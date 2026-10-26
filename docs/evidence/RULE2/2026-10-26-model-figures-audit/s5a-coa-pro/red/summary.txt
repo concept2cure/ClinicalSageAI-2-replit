@@ -1,0 +1,23 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/coa-unstated-inputs.test.ts --reporter=verbose
+
+omitted-inputs: initial behavioral red on 33694a45 before production changes.
+dependent-decisions and numeric-evidence: incremental reds against the partial fixes, before their respective production corrections.
+Full original logs are compressed beside this summary.
+
+omitted-inputs
+Test Files  1 failed (1)
+Tests  56 failed | 7 passed (63)
+Start at  17:23:23
+Duration  10.23s (transform 6.59s, setup 79ms, import 9.70s, tests 72ms, environment 0ms)
+
+dependent-decisions
+Test Files  1 failed (1)
+Tests  9 failed | 56 passed (65)
+Start at  17:25:38
+Duration  8.52s (transform 5.84s, setup 74ms, import 8.13s, tests 51ms, environment 0ms)
+
+numeric-evidence
+Test Files  1 failed (1)
+Tests  10 failed | 65 passed (75)
+Start at  17:26:58
+Duration  8.50s (transform 5.78s, setup 75ms, import 8.12s, tests 52ms, environment 0ms)

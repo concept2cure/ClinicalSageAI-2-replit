@@ -142,7 +142,7 @@ describe('device-validation says only what it reads (slice 0)', () => {
     }
     expect(container.textContent).not.toMatch(/No critical issues|No warnings/);
     const avg = tile(container, /^Avg/);
-    expect(avg.metric).toBe('—');
+    expect(avg.metric).toBe('Not recorded');
     expect(avg.metric).not.toMatch(/%/);
     expect(avg.meta).toMatch(/not an eSTAR assessment/);
     expect(avg.tone).not.toBe('err');
@@ -250,4 +250,23 @@ describe('device-validation offers no control that can only hide every row (audi
     expect(empty.textContent ?? '').not.toMatch(/error, warning and pass counts/);
     expect(empty.textContent ?? '').toMatch(/recorded progress/);
   });
+});
+
+
+it('missing project readiness remains Not recorded in the validation consumer', async () => {
+  serve([], [PROGRAM]);
+  const { container } = render(<ValidationSurface onAskAna={() => {}} />);
+  await waitFor(() => expect(container.querySelector('.val-prog-card')).toBeTruthy());
+  expect(container.querySelector('.val-prog-card')?.textContent).toContain('Not recorded');
+  expect(container.querySelector('.val-bar')).toBeNull();
+  expect(tile(container, /Avg recorded progress/).metric).toBe('Not recorded');
+});
+
+
+it('retains an actual recorded progress value separately from assessed readiness', async () => {
+  serve([], [{ ...PROGRAM, progressPercent: 40 }]);
+  const { container } = render(<ValidationSurface onAskAna={() => {}} />);
+  await waitFor(() => expect(container.querySelector('.val-prog-card')).toBeTruthy());
+  expect(container.querySelector('.val-prog-card')?.textContent).toContain('40%');
+  expect(tile(container, /Avg recorded progress/).metric).toBe('40%');
 });

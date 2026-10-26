@@ -1,12 +1,14 @@
 /** The portfolio card shared by GET and the canonical creator's 201 response.
  * Client means the anchor's workspace, never the regulatory applicant sponsor. */
-import { workstreamSqlCase } from '../../../shared/constants/domain/product-types';
+import { pathwaySqlCase, workstreamSqlCase, WORKSTREAM_FILING_TYPES, type Workstream } from '../../../shared/constants/domain/product-types';
+import { REGULATORY_PATHWAYS, type RegulatoryPathway } from '../../../shared/constants/mdx';
 import { projectIntakeId } from '../../../shared/project-intake-workspace';
 import type { ProgramAccessExecutor, VerifiedProgramAnchor } from './current-program-access';
 
 const PROJECT_CARD_SELECT = `SELECT p.id::text AS id,
   p.name AS title,
   ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
+  ${pathwaySqlCase('p.program_type', 'p.regulatory_path')} AS pathway,
   COALESCE(p.code, '—') AS code,
   initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
   p.status AS status,
@@ -34,6 +36,8 @@ export const PROJECT_CARD_LIST_SQL = `${PROJECT_CARD_SELECT}
   ${projectAnchorFrom('$6')} ${PROJECT_CARD_ACTOR}
   WHERE p.organization_id = $1 AND p.deleted_at IS NULL AND p.id=ANY($5::uuid[])
     AND ($4::boolean OR p.status <> 'archived') AND ($7::int IS NULL OR cw.id=$7)
+    AND ($8::text IS NULL OR ${workstreamSqlCase('p.program_type', 'p.product_type')}=$8)
+    AND ($9::text IS NULL OR ${pathwaySqlCase('p.program_type', 'p.regulatory_path')}=$9)
   ORDER BY p.updated_at DESC, p.id LIMIT $2 OFFSET $3`;
 export const PROJECT_CARD_CREATED_SQL = `${PROJECT_CARD_SELECT}
   ${projectAnchorFrom('$3')} ${PROJECT_CARD_ACTOR}
@@ -73,4 +77,74 @@ export async function readPortfolioClients(q: ProgramAccessExecutor, organizatio
     return {id,name:row.name};
   });
   return {clients,clientsHasMore:rows.length>200};
+}
+
+
+/** These facets intentionally keep their own choice available: workstreams
+ * cover the selected Client; pathways cover Client+workstream. Only total and
+ * filingSoon apply every selected filter. All are inside accepted anchors,
+ * independently of LIMIT/OFFSET and without dossier measurements. */
+const PORTFOLIO_COUNTS_SQL = `WITH portfolio AS (
+  SELECT ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
+    ${pathwaySqlCase('p.program_type', 'p.regulatory_path')} AS pathway,
+    p.target_submission_date
+  ${projectAnchorFrom('$3')}
+  WHERE p.organization_id=$1 AND p.deleted_at IS NULL
+    AND ($2::boolean OR p.status<>'archived') AND ($4::int IS NULL OR cw.id=$4)
+), workstream AS (
+  SELECT * FROM portfolio WHERE $5::text IS NULL OR ws=$5
+), selected AS (
+  SELECT * FROM workstream WHERE $6::text IS NULL OR pathway=$6
+)
+SELECT jsonb_build_object(
+  'total', (SELECT count(*) FROM selected),
+  'byWorkstream', (SELECT COALESCE(jsonb_object_agg(ws,n), '{}'::jsonb)
+    FROM (SELECT ws,count(*) AS n FROM portfolio GROUP BY ws) groups),
+  'byPathway', (SELECT COALESCE(jsonb_object_agg(pathway,n), '{}'::jsonb)
+    FROM (SELECT pathway,count(*) AS n FROM workstream GROUP BY pathway) groups),
+  'filingWithin60Days', (SELECT count(*) FROM selected
+    WHERE target_submission_date>=current_date AND target_submission_date<current_date+60)
+) AS portfolio_counts`;
+
+export interface PortfolioCounts {
+  total: number;
+  byWorkstream: Record<string, number>;
+  byPathway: Record<string, number>;
+  filingWithin60Days: number;
+}
+
+/** An omitted filter or the explicit All choice means no SQL restriction.
+ * Reject arrays, empty strings, wrong casing and arbitrary unknown values. */
+function closedPortfolioFilter<T extends string>(raw: unknown, choices: readonly T[]): T | null {
+  if (raw === undefined || raw === 'all') return null;
+  if (typeof raw !== 'string' || !choices.includes(raw as T)) throw new Error('INVALID_PORTFOLIO_FILTER');
+  return raw as T;
+}
+
+export function portfolioWorkstreamFilter(raw: unknown): Workstream | null {
+  return closedPortfolioFilter(raw, Object.keys(WORKSTREAM_FILING_TYPES) as Workstream[]);
+}
+
+export function portfolioPathwayFilter(raw: unknown): RegulatoryPathway | null {
+  return closedPortfolioFilter(raw, REGULATORY_PATHWAYS);
+}
+
+const isCount = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+function isCountMap(value: unknown): value is Record<string, number> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && Object.values(value).every(isCount);
+}
+
+export async function readPortfolioCounts(q: ProgramAccessExecutor, input: {
+  organizationId: number; anchors: readonly VerifiedProgramAnchor[]; includeArchived: boolean;
+  clientWorkspaceId: number | null; workstream: Workstream | null; pathway: RegulatoryPathway | null;
+}): Promise<PortfolioCounts> {
+  const {rows} = await q.query(PORTFOLIO_COUNTS_SQL, [input.organizationId, input.includeArchived,
+    portfolioAnchorJson(input.anchors), input.clientWorkspaceId, input.workstream, input.pathway]);
+  const counts = rows[0]?.portfolio_counts;
+  if (!counts || typeof counts !== 'object' || Array.isArray(counts)) throw new Error('Portfolio counts could not be read');
+  const c = counts as Record<string, unknown>;
+  if (!isCount(c.total) || !isCount(c.filingWithin60Days) || !isCountMap(c.byWorkstream) || !isCountMap(c.byPathway)) {
+    throw new Error('Portfolio counts could not be read');
+  }
+  return {total:c.total, byWorkstream:c.byWorkstream, byPathway:c.byPathway, filingWithin60Days:c.filingWithin60Days};
 }
