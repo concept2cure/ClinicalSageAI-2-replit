@@ -1,0 +1,30 @@
+RED (audit2 postmarket-host #3): a triage read that resolved with no items leaves 'MDRs due ≤72h' as '—' and 'CAPAs open' as '— / Not yet read'.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx > PostmarketSurface — reporting-clock figures say only what the triage read holds (slice 0) > shows 0, not "Not yet read", when the triage read answered with nothing
+AssertionError: expected '—' to be '0' // Object.is equality
+
+Expected: "0"
+Received: "—"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.reportingClocks.test.tsx:116:51
+    114|     await waitFor(() => getByTestId('data-gate-empty'));
+    115|
+    116|     expect(getByTestId('pm-mdr-due').textContent).toBe('0');
+       |                                                   ^
+    117|     expect(getByTestId('pm-capas').textContent).toBe('0');
+    118|     expect(meta(container, 'pm-capas')).toBe('0 past target date');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 3 skipped (5)
+   Start at  05:03:37
+   Duration  1.46s (transform 384ms, setup 159ms, import 473ms, tests 90ms, environment 571ms)
+

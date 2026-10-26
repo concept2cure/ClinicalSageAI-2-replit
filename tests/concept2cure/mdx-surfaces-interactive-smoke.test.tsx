@@ -201,9 +201,31 @@ describe('MDX rich-surface interactive smoke', () => {
   });
 
   it('Postmarket: every button click is handler-safe', () => {
-    const { container } = wrap(<PostmarketSurface onAskAna={askAna} />);
+    /* The host mounts this leaf only with a project (MdxSurfaceHost's
+       mdx-project-required guard), and its triage request names it. */
+    const { container } = wrap(<PostmarketSurface program={MOCK_PROGRAM} onAskAna={askAna} />);
+    /* Slice 0 (IA map, `device-postmarket` row): the floor of 5 was met by the
+       six framework filters a DocumentsPanel drew over a list nothing reads.
+       That panel is now a one-line note, so a count floor no longer describes
+       this surface. Name what it offers: Ask-AnA triage and the Situational
+       awareness toggle. */
+    const label = (b: HTMLButtonElement) => (b.textContent || '').replace(/\s+/g, ' ').trim();
+    const enabled = (Array.from(container.querySelectorAll('button')) as HTMLButtonElement[])
+      .filter((b) => !b.disabled)
+      .map(label);
+    expect(enabled).toEqual(
+      expect.arrayContaining([expect.stringMatching(/Triage queue/), expect.stringMatching(/^Situational awareness/)]),
+    );
     const { clicked } = clickEveryButton(container);
-    expect(clicked).toBeGreaterThan(5);
+    expect(clicked).toBeGreaterThanOrEqual(2);
+    /* Slice 0: AnA's triage tool (triage_capa_mdr_queue) reads one program's
+       complaints, MDR events and CAPAs and requires its id; nothing triages
+       signals or the portfolio. */
+    expect(askAna).toHaveBeenCalledWith(
+      expect.stringContaining('Triage the open complaints, MDR events and CAPAs for BX-204 CGM (program p-test)'),
+    );
+    expect(askAna.mock.calls.map((c) => String(c[0])).join('\n')).not.toMatch(/across the portfolio|vigilance signals/);
+    expect(container.querySelector('.eng-awareness-head')?.getAttribute('aria-expanded')).toBe('true');
   });
 
   // No MemorySurface case: the kit's AnA Memory surface was retired — v2 `ana-memory` reads the same /api/mdx/ana/memory endpoint and is write-capable, so two of them was one duplicate too many.
@@ -212,7 +234,10 @@ describe('MDX rich-surface interactive smoke', () => {
     const { container, findAllByText } = wrap(
       <EngineeringSurface program={MOCK_PROGRAM} onAskAna={askAna} />,
     );
-    await findAllByText(/Design plan|ECR one|Issue one/);
+    /* Slice 0: the DHF, ECR and non-conformance panels read organisation-wide and are not shown on a
+       project (EngineeringSurface.projectKeyed.test.tsx). The risk file is the project's, and is what
+       this case is named for: wait on its hazards. */
+    await findAllByText(/^H[12]$/);
     const { clicked } = clickEveryButton(container);
     expect(clicked).toBeGreaterThan(5);
   });

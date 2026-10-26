@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx > Labeling — warnings and precautions > says the panel is not available yet instead of an empty list
+AssertionError: expected 'Specialist / device / Instructions fo…' to match /Warnings and precautions are not avai…/
+
+- Expected:
+/Warnings and precautions are not available yet/
+
++ Received:
+"Specialist / device / Instructions for use v3Labeling and IFUOrganization-wide labeling register. Label, IFU and symbols authoring — ISO 15223-1 symbols, UDI placement (21 CFR 801.45 / GUDID), translations with back-translation QC, and warnings traced to the ISO 14971 risk file. Ask AnA Where the label package stands right nowNo translations are recorded for this label yet.Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage. I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one. Add a translationOr work the symbols and translations below.ISO 15223-1 symbolssymbol glossaryNo symbols in the glossary yetAdd the ISO 15223-1 symbols that appear on this label — each carries its standard reference and where it's required.Warnings and precautionstraced to the risk file (ISO 14971)No label warnings yetWarnings and their ISO 14971 hazard trace aren't captured by the labeling service yet.UDI placement21 CFR 801.45 / GUDIDUDI placement not captured yetNo UDI-DI is set on this labeling document, and carrier / PI / placement tracking isn’t captured yet.Compliance checksNo automated compliance checks yetReading-level, symbol-legend and eIFU-URL checks aren't run by the labeling service yet.Label and IFU sectionsNo section breakdown yetPer-section authoring status for this label isn't captured by the labeling service yet.Translations and coverage0/0 approved / 0 back-translation verified Add translationNo translations yetAdd a target-language IFU/label translation to start tracking back-translation QC and approval."
+
+ ❯ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx:44:20
+     42|     mount();
+     43|     await waitFor(() => expect(text()).toMatch(/Warnings and precautio…
+     44|     expect(text()).toMatch(/Warnings and precautions are not available…
+       |                    ^
+     45|     expect(text()).not.toMatch(/No label warnings yet/);
+     46|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:36:04
+   Duration  1.63s (transform 386ms, setup 172ms, import 469ms, tests 99ms, environment 692ms)
+

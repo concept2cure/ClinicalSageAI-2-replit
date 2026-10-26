@@ -1,0 +1,5 @@
+MdxSurfaceHost.test.tsx with the host's previous banner restored ('Mixed scope: organization-wide surveillance feeds; …'), which no longer matches the surface: it shows no organization-wide surveillance panel. Restored after the run (cmp).
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project
+TestingLibraryElementError: Unable to find an element with the text: Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+      Tests  1 failed | 8 passed (9)

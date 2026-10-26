@@ -1,0 +1,67 @@
+# 2026-10-26T03:34:10Z HEAD 928b70996 (working tree with a DELIBERATE regression, reverted after this run): the triage onClick put back to its HEAD form, onAskAna("Summarize the 3 blockers across my portfolio")
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t 1 open blocker|before the read answers
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+----stderr | client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > before the read answers, the prompt states no count
+An update to ValidationSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+xx------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > one blocker is "1 open blocker", not "1 open blockers"
+AssertionError: expected 'Summarize the 3 blockers across my po…' to match /\b1 open blocker recorded\b/
+
+- Expected:
+/\b1 open blocker recorded\b/
+
++ Received:
+"Summarize the 3 blockers across my portfolio"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:115:22
+    113|     await waitFor(() => expect(screen.getByText('Correspondence raised…
+    114|     fireEvent.click(screen.getByRole('button', { name: /to triage/i })…
+    115|     expect(asked[0]).toMatch(/\b1 open blocker recorded\b/);
+       |                      ^
+    116|     expect(asked[0]).not.toMatch(/blockers/);
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > before the read answers, the prompt states no count
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Summarize the open blockers recorded across my projects",
++   "Summarize the 3 blockers across my portfolio",
+  ]
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:124:19
+    122|     render(<ValidationSurface onAskAna={(t) => { asked.push(t); }} />);
+    123|     fireEvent.click(screen.getByRole('button', { name: /to triage/i })…
+    124|     expect(asked).toEqual(['Summarize the open blockers recorded acros…
+       |                   ^
+    125|     expect(asked[0]).not.toMatch(/\d/);
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 skipped (12)
+   Start at  03:34:11
+   Duration  1.70s (transform 465ms, setup 174ms, import 566ms, tests 301ms, environment 514ms)
+

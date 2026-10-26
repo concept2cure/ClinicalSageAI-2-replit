@@ -1,0 +1,215 @@
+RED (audit2 pma-ivd #0): a project-row read that settles 200 with no row of this project ({}, {data:null}, another project's row) leaves the PMA/IVDR header on 'Reading the project phase' after the read has finished.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+····xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > an empty object
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > a null row
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — a read that settles with no row of this project is not "Reading" > another project's row
+AssertionError: expected 'Reading the project phase · No target…' not to match /^Reading the project phase/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                CV-1 Implantable Monitor
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Phases · modules
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Day-100
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Pending e-sign
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    PMA pathway
+                     · CV-1 Implantable Monitor
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Reading the project phase · No target set
+                  </div>
+                </div>
+                <div
+                  style="display: flex; gap: 8px;"
+                >
+                  <button
+                    class="section-more"
+                  >
+                    Open module editor 
+                    <svg
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path
+                        d="M9 6l6 6-6 6"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="section-more"
+                    title="Assemble a draft ZIP of your authored 21 CFR 814.20 sections (one PDF per section plus the combined PDF/DOCX) — NOT the official FDA eSTAR that CDRH ingests"
+          ...
+
+- Expected:
+/^Reading the project phase/
+
++ Received:
+"Reading the project phase · No target set"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:196:58
+    194|     release();
+    195|     // Once it settles the line stops claiming a read is in progress …
+    196|     await waitFor(() => expect(phaseLine(container)).not.toMatch(/^Rea…
+       |                                                          ^
+    197|     // … and says no phase was read: neither "none recorded" nor anoth…
+    198|     expect(phaseLine(container)).toMatch(/^The project phase (has not …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+   Start at  07:35:03
+   Duration  18.58s (transform 1.84s, setup 164ms, import 2.22s, tests 15.52s, environment 538ms)
+

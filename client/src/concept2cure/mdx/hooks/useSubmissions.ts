@@ -2,7 +2,7 @@
  * useSubmissions — fetches /api/submission-ops/packages and adapts each
  * c2cSubmissionPackages row into the kit's Submission shape.
  *
- * The list response carries the basics (id, family, title, status, target).
+ * The list response carries the basics (id, family, title, status, target date).
  * The kit's Submission also wants a transmit gate (errs/warns/ok) and an
  * activity log; both live behind per-package endpoints
  * (/packages/:id/readiness and /packages/:id/milestones). Doing N+1 fetches
@@ -11,13 +11,15 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import type {
-  Submission,
-  SubmissionLogEntry,
-  SubmissionStage,
+import {
+  SUBMISSION_PIPELINE,
+  type Submission,
+  type SubmissionBundle,
+  type SubmissionLogEntry,
 } from '../data/workbench';
 import { useFetchJson, buildAuthHeaders } from './useFetchJson';
-import { firstArray, shapeMismatch } from '../lib/payloadShape';
+import { firstArray, isRecord, shapeMismatch } from '../lib/payloadShape';
+import { formatBytes } from '@/lib/utils';
 import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
 interface ServerPackage {
@@ -41,33 +43,50 @@ interface ListPayload {
 }
 
 
-/* status → stage mapping. The schema has only active/completed/cancelled.
-   Lifting to the kit's 7 stages requires structured stage info, which we
-   read from metadata.stage when present and fall back to derived. */
-function deriveStage(status: string, metadata: Record<string, unknown> | null): Submission['stage'] {
+/* The kit's 7 stages need structured stage info, which is read from
+   metadata.stage when present.
+   Slice 0 (map row `device-submission`): when it was absent the stage was
+   inferred from the status ('completed' → 'decision', anything else →
+   'package'). Nothing writes metadata.stage on a package, so the pipeline
+   counted every open package under "Package" and every completed one under
+   "Decision · Cleared · approved", neither recorded. No stage on the record
+   is no stage. */
+function deriveStage(metadata: Record<string, unknown> | null): Submission['stage'] {
   const fromMeta = typeof metadata?.stage === 'string' ? metadata.stage : null;
-  if (fromMeta) {
-    const valid: Submission['stage'][] = ['package', 'validate', 'sign', 'transmit', 'ack', 'review', 'decision'];
-    if ((valid as readonly string[]).includes(fromMeta)) return fromMeta as Submission['stage'];
-  }
-  if (status === 'completed') return 'decision';
-  if (status === 'cancelled') return 'package';
-  return 'package';
+  const valid = SUBMISSION_PIPELINE.map((s) => s.id);
+  return fromMeta && valid.includes(fromMeta) ? fromMeta : null;
 }
 
+/* Slice 0 (map row `device-submission`): 'cancelled' read 'blocked', which
+   offered "What's blocking", and 'locked' (set when the package is published,
+   POST /packages/:id/publish) fell through to 'active'. Each is its own. */
 function deriveStatus(
   status: string,
   metadata: Record<string, unknown> | null,
 ): Submission['status'] {
   if (status === 'completed') return 'complete';
-  if (status === 'cancelled') return 'blocked';
+  if (status === 'cancelled') return 'cancelled';
+  if (status === 'locked') return 'locked';
   /* metadata.blocker = true is how server-side gates flag a stalled package. */
   if (metadata?.blocker === true) return 'blocked';
   return 'active';
 }
 
+/* The bundle the assemble route records: the zip's SHA-256 and size. Only a
+   descriptor carrying both is a bundle. */
+function readBundle(metadata: Record<string, unknown> | null): SubmissionBundle | null {
+  const b = metadata?.bundle;
+  if (!isRecord(b) || typeof b.sha256 !== 'string') return null;
+  if (typeof b.sizeBytes !== 'number' || !Number.isFinite(b.sizeBytes) || b.sizeBytes < 0) return null;
+  return {
+    sha256: b.sha256,
+    size: formatBytes(b.sizeBytes, 1),
+    assembledAt: typeof b.assembledAt === 'string' ? b.assembledAt : null,
+  };
+}
+
 function formatTarget(targetIso: string | null, status: Submission['status']): string {
-  if (status === 'complete') return '—';
+  if (status === 'complete' || status === 'cancelled') return '—';
   if (!targetIso) return 'No target';
   const ms = new Date(targetIso).getTime() - Date.now();
   if (Number.isNaN(ms)) return targetIso.slice(0, 10);
@@ -88,7 +107,7 @@ function deriveTone(stage: Submission['stage'], status: Submission['status']): S
 
 function adaptPackage(p: ServerPackage): Submission {
   const status = deriveStatus(p.status, p.metadata);
-  const stage  = deriveStage(p.status, p.metadata);
+  const stage  = deriveStage(p.metadata);
   /* `packageFamily` is declared `string`, and the shape guard on the list only
      proves the envelope is a list of objects — a package row that predates the
      family column, or comes back from a narrowed SELECT, carries none, and the
@@ -100,13 +119,14 @@ function adaptPackage(p: ServerPackage): Submission {
     ? (p.metadata.programCode as string)
     : null) ?? `pkg-${p.id}`;
   /* Rich fields the package row itself doesn't carry — read from metadata
-     when present, otherwise sensible defaults. The detail hook will
-     populate gate + log on selection. */
-  const gateErrs  = typeof p.metadata?.gateErrs  === 'number' ? (p.metadata.gateErrs  as number) : 0;
-  const gateWarns = typeof p.metadata?.gateWarns === 'number' ? (p.metadata.gateWarns as number) : 0;
-  const gateOk    = typeof p.metadata?.gateOk    === 'number' ? (p.metadata.gateOk    as number) : 0;
-  const fileCount = typeof p.metadata?.fileCount === 'number' ? (p.metadata.fileCount as number) : 0;
-  const bytes     = typeof p.metadata?.bytes     === 'string' ? (p.metadata.bytes     as string) : '—';
+     when present. The detail hook populates gate + log on selection. */
+  /* Slice 0 (map row `device-submission`): the row's gate came from
+     `metadata.gateErrs` / `gateWarns` / `gateOk`, defaulting each to 0, so a
+     package showed a clean 0 / 0 / 0 gate nobody read. Nothing writes those
+     keys on a package (the AnA tool that names them merges into a regulatory
+     program's metadata), so the list carries no gate: it is the readiness
+     read, on selection. `fileCount`, `bytes` and `cover` went for the same
+     reason; the assembled bundle is read instead. */
   const transmitAt = typeof p.metadata?.transmitAt === 'string' ? (p.metadata.transmitAt as string) : null;
 
   return {
@@ -116,18 +136,15 @@ function adaptPackage(p: ServerPackage): Submission {
     stage,
     status,
     title:    p.title,
-    /* The receiving authority follows from the family; with no family there is
-       nothing to derive it from, so it is left unstated the way formatTarget
-       leaves an absent target date. */
-    target:   family ? (pathway.startsWith('EU') ? 'NB · TÜV' : 'FDA · ESG') : '—',
-    bytes,
-    files:    fileCount,
-    cover:    p.metadata?.cover === 'signed' ? 'signed' : 'draft',
-    esig:     p.metadata?.esig === true,
+    /* Slice 0 (map row `device-submission`): `target` was derived from the
+       family alone ("NB · TÜV" for every EU package, "FDA · ESG" for every
+       other), and `esig` from the free-form `metadata.esig` flag, which no
+       signature record backs. Neither is computed any more. */
+    bundle:   readBundle(p.metadata),
     transmitAt,
     targetAt: formatTarget(p.targetDate, status),
     tone:     deriveTone(stage, status),
-    gate:     { errs: gateErrs, warns: gateWarns, ok: gateOk },
+    gate:     null,
     log:      [],
   };
 }
@@ -136,6 +153,8 @@ export interface UseSubmissionsResult {
   submissions: Submission[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the list read. A failed read has to offer a way back. */
+  refresh: () => void;
 }
 
 const PACKAGES_PATH = '/api/submission-ops/packages';
@@ -143,12 +162,12 @@ const PACKAGES_PATH = '/api/submission-ops/packages';
 /**
  * List submission packages from /api/submission-ops/packages and adapt
  * each c2cSubmissionPackages row into the kit's Submission shape. The
- * list call carries the basics (id, family, title, status, target);
+ * list call carries the basics (id, family, title, status, target date);
  * gate counts and activity log come from useSubmissionDetail() on
  * row selection.
  */
 export function useSubmissions(): UseSubmissionsResult {
-  const { data, loading, error } = useFetchJson<ListPayload>(PACKAGES_PATH);
+  const { data, loading, error, refresh } = useFetchJson<ListPayload>(PACKAGES_PATH);
   /*
    * `data ? data.data.map(...)` — `data` only says a body came back, and the
    * `ListPayload` annotation is a cast, not something the route is held to. Any
@@ -160,7 +179,7 @@ export function useSubmissions(): UseSubmissionsResult {
   const rows = Array.isArray(data?.data) ? data.data : null;
   const failed = error ?? (data != null && rows === null ? shapeMismatch(PACKAGES_PATH) : null);
   const submissions = useMemo(() => (rows ? rows.map(adaptPackage) : null), [rows]);
-  return { submissions, loading, error: failed };
+  return { submissions, loading, error: failed, refresh };
 }
 
 /* ─── Per-package detail (gate + activity log) ─────────────────────── */
@@ -168,6 +187,28 @@ export function useSubmissions(): UseSubmissionsResult {
 interface ReadinessPayload {
   errs?: number;  warns?: number;  ok?: number;
   errors?: number; warnings?: number; passed?: number;
+  /** The engine's PackageReadiness; only its sections are read here. */
+  data?: { sections?: Array<{ totalArtifacts?: number }> };
+}
+
+/* The first candidate that is a finite count, or null. */
+function count(...candidates: unknown[]): number | null {
+  for (const c of candidates) if (typeof c === 'number' && Number.isFinite(c) && c >= 0) return c;
+  return null;
+}
+
+/* How many artifacts the readiness read covered: the sum of its sections'
+   totalArtifacts, or null when the body does not say. */
+function artifactsAssessed(j: ReadinessPayload): number | null {
+  const sections = j.data?.sections;
+  if (!Array.isArray(sections)) return null;
+  let n = 0;
+  for (const s of sections) {
+    const t = count(isRecord(s) ? s.totalArtifacts : undefined);
+    if (t === null) return null;
+    n += t;
+  }
+  return n;
 }
 
 /* A milestone row as the route actually emits it. `c2c_milestones` carries no
@@ -200,10 +241,29 @@ export function milestoneActor(r: Pick<MilestoneRow, 'ownerName' | 'createdByNam
 
 export interface UseSubmissionDetailResult {
   gate: Submission['gate'] | null;
+  /** How many artifacts the readiness read covered, or null when it does not
+   *  say. 0 is the package with nothing in it to assess. */
+  gateArtifacts: number | null;
   log: SubmissionLogEntry[] | null;
   loading: boolean;
   error: string | null;
+  /** Why the readiness read gave no gate, when it settled without one. Kept
+   *  apart from `error` (both reads failing) so the surface can tell "not read
+   *  yet" from "could not be read" for the gate alone. */
+  gateError: string | null;
+  /** The same for the milestones read: why it gave no activity log. */
+  logError: string | null;
 }
+
+const IDLE_DETAIL: UseSubmissionDetailResult = {
+  gate: null,
+  gateArtifacts: null,
+  log: null,
+  loading: false,
+  error: null,
+  gateError: null,
+  logError: null,
+};
 
 function formatRelative(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -226,19 +286,14 @@ function formatRelative(iso: string): string {
  * Pass `null` for `packageId` to disable the fetch (idle state).
  */
 export function useSubmissionDetail(packageId: string | null): UseSubmissionDetailResult {
-  const [state, setState] = useState<UseSubmissionDetailResult>({
-    gate: null,
-    log: null,
-    loading: false,
-    error: null,
-  });
+  const [state, setState] = useState<UseSubmissionDetailResult>(IDLE_DETAIL);
   useEffect(() => {
     if (!packageId) {
-      setState({ gate: null, log: null, loading: false, error: null });
+      setState(IDLE_DETAIL);
       return;
     }
     let cancelled = false;
-    setState({ gate: null, log: null, loading: true, error: null });
+    setState({ ...IDLE_DETAIL, loading: true });
 
     /* `credentials: 'include'` is not authentication in this app. The global
        /api gate reads `req.headers.authorization` and has no cookie fallback
@@ -265,41 +320,66 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
       .then(async ([readinessRes, milestonesRes]) => {
         if (cancelled) return;
         let gate: Submission['gate'] | null = null;
+        let gateArtifacts: number | null = null;
+        let gateError: string | null = null;
         if (readinessRes.status === 'fulfilled' && readinessRes.value.ok) {
-          const j = (await readinessRes.value.json()) as ReadinessPayload;
-          gate = {
-            errs:  j.errs  ?? j.errors   ?? 0,
-            warns: j.warns ?? j.warnings ?? 0,
-            ok:    j.ok    ?? j.passed   ?? 0,
-          };
+          const j = ((await readinessRes.value.json()) ?? {}) as ReadinessPayload;
+          /* Slice 0 (map row `device-submission`): each count defaulted to 0
+             (`j.errs ?? j.errors ?? 0`), so a 200 carrying none became a clean
+             0 / 0 / 0 gate. A gate is three counts the read answered. */
+          const errs = count(j.errs, j.errors);
+          const warns = count(j.warns, j.warnings);
+          const ok = count(j.ok, j.passed);
+          if (errs !== null && warns !== null && ok !== null) {
+            gate = { errs, warns, ok };
+            gateArtifacts = artifactsAssessed(j);
+          } else {
+            gateError = 'The readiness read returned no gate counts';
+          }
+        } else {
+          gateError = readinessRes.status === 'fulfilled'
+            ? `The readiness read was refused (HTTP ${readinessRes.value.status})`
+            : 'The readiness read failed';
         }
         let log: SubmissionLogEntry[] | null = null;
+        let logError: string | null = null;
         if (milestonesRes.status === 'fulfilled' && milestonesRes.value.ok) {
-          const j = (await milestonesRes.value.json()) as MilestonePayload;
+          const j = ((await milestonesRes.value.json()) ?? {}) as MilestonePayload;
           /* `j.data ?? j.milestones ?? []` stepped past null and undefined but
              not past a `data` field holding an object, which then failed at
-             `.slice`. Only a real list becomes an activity log. */
-          const rows = firstArray<MilestoneRow>(
-            j.data,
-            j.milestones,
-          ) ?? [];
-          log = rows
-            .slice(0, 10)
-            .map((r) => ({
-              when: formatRelative(r.createdAt),
-              who:  milestoneActor(r),
-              what: r.title + (r.status ? ` · ${r.status}` : ''),
-            }));
+             `.slice`. Only a real list becomes an activity log.
+             Slice 0: and a body holding no list is a failed read, not an empty
+             log (it fell back to []). */
+          const rows = firstArray<MilestoneRow>(j.data, j.milestones);
+          if (rows) {
+            log = rows
+              .slice(0, 10)
+              .map((r) => ({
+                when: formatRelative(r.createdAt),
+                who:  milestoneActor(r),
+                what: r.title + (r.status ? ` · ${r.status}` : ''),
+              }));
+          } else {
+            logError = shapeMismatch('the activity log');
+          }
+        } else {
+          /* Slice 0 (map row `device-submission`): a failed milestones read
+             left `log` null with no reason, and the surface fell back to the
+             list row's empty log: "no activity". */
+          logError = milestonesRes.status === 'fulfilled'
+            ? `The activity log read was refused (HTTP ${milestonesRes.value.status})`
+            : 'The activity log read failed';
         }
-        setState({ gate, log, loading: false, error: null });
+        setState({ gate, gateArtifacts, log, loading: false, error: null, gateError, logError });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'Failed to load detail';
         setState({
-          gate: null,
-          log: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load detail',
+          ...IDLE_DETAIL,
+          error: message,
+          gateError: message,
+          logError: message,
         });
       });
     return () => {

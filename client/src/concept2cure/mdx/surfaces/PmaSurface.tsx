@@ -5,9 +5,11 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { PMA_PHASES, type PmaPhase } from '../data/pma';
+import { PMA_PHASES } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { useProgramDetail } from '../hooks/useMdxPrograms';
+import type { ProgramPhase } from '@shared/constants/mdx';
 import { DataGate } from '../components/DataGate';
 import { toDataState } from '../lib/dataState';
 import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
@@ -26,45 +28,65 @@ export interface PmaSurfaceProps {
   onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
-/* Derive per-phase status + pct from the active program's stageIdx +
-   readiness. The 10-phase taxonomy is closed-enum kit content (the PMA
-   pathway has these phases by definition); only the active position +
-   progress is dynamic. */
-function derivePhases(program: Program | null): PmaPhase[] {
-  /* With no program selected there is no progress to report. PMA_PHASES is
-     the taxonomy and nothing else now — see its header for the position it
-     used to carry and why it no longer does. */
-  if (!program) return PMA_PHASES;
-  /* Map kit's 7 stage codes onto the PMA 10-phase grid. The kit's
-     stageIdx (0..7) and the PMA grid (0..9) don't line up 1:1 — PMA
-     adds a 'pivotal trial' and 'advisory panel' that aren't in the
-     generic 7-stage timeline. We approximate:
-        kit 0 (Intake)        → presub        (idx 0)
-        kit 1 (Classify)      → preclin       (idx 1)
-        kit 2 (Predicate)     → ide           (idx 2)
-        kit 3 (Performance)   → mfg           (idx 3)
-        kit 4 (SE)            → pivotal       (idx 4)
-        kit 5 (Assemble)      → labeling+mod  (idx 5–6)
-        kit 6 (Submit)        → panel+app     (idx 7–8)
-        kit 7 (Cleared)       → postapp       (idx 9) */
-  const KIT_TO_PMA: Record<number, number> = {
-    0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 8, 7: 9,
-  };
-  const activeIdx = KIT_TO_PMA[program.stageIdx] ?? 4;
-  return PMA_PHASES.map((p, i) => {
-    if (i < activeIdx) return { ...p, pct: 100, status: 'complete' };
-    if (i === activeIdx) {
-      const status = program.status === 'blocked' ? 'blocked' : 'active';
-      return { ...p, pct: program.readiness, status };
-    }
-    return { ...p, pct: 0, status: 'idle' };
-  });
+/* Slice 0, the map's `device-pma` row ("it states only the recorded stage, and
+   none when none is recorded"), second pass after audit.
+
+   `derivePhases` mapped the kit's stageIdx onto this grid through a table its
+   own comment called an approximation, lit that cell with the project's whole
+   progress_percent, and the header stated the result as the project's
+   position: a recorded `authoring` read "Phase 4 of 10 — Manufacturing
+   validation", and a PMA filed and awaiting FDA read "Phase 9 of 10 —
+   Approval". Nor is stageIdx recorded: useMdxPrograms derives it, from progress
+   bands when no phase is recorded, so a project with none read "Phase 2 of 10
+   — Preclinical".
+
+   A project records a generic project phase (PROGRAM_PHASES), never a PMA
+   phase. So the header states that phase, read from the project's own row, and
+   the grid is the pathway's taxonomy with no cell lit. */
+const PROJECT_PHASE_LABEL: Record<ProgramPhase, string> = {
+  planning: 'Planning',
+  evidence_collection: 'Evidence collection',
+  authoring: 'Authoring',
+  review: 'Review',
+  submission: 'Submission',
+  post_market: 'Post-market',
+};
+
+/**
+ * The project's recorded phase as one sentence, or null with no project. Shared
+ * with IvdSurface, whose stage strip had the same defect. A failed read says
+ * so; it is never "no phase recorded".
+ */
+export function useRecordedPhaseLine(programId: string | null): string | null {
+  const { detail, loading, error } = useProgramDetail(programId);
+  /* Slice 0 (audit 2): the project whose read has started. useFetchJson starts
+     the read in an effect, so on the render before it (first mount, or a switch
+     of project) the hook still holds the previous project's row or error, and a
+     200 with no row in it (useProgramDetail returns `data?.data ?? null`) looked
+     like "not asked yet": the line read "Reading the project phase" for as long
+     as the screen stayed open. This is set in the same effect flush that starts
+     the read, so from the next render on `!loading` means this project's read
+     has finished. */
+  const [readFor, setReadFor] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    setReadFor(programId);
+  }, [programId]);
+  if (!programId) return null;
+  if (readFor !== programId || loading) return 'Reading the project phase';
+  if (error) return 'The project phase could not be read';
+  const row = detail as unknown as { id?: unknown; phase?: unknown } | null;
+  const isRow = !!row && typeof row === 'object' && !Array.isArray(row) && row.id != null;
+  // Finished, with no row, a malformed one or another project's: not this project's phase.
+  if (!isRow || String(row.id) !== programId) return 'The project phase could not be read';
+  const phase = row.phase;
+  if (typeof phase !== 'string' || !phase.trim()) return 'No project phase recorded';
+  return `Project phase: ${PROJECT_PHASE_LABEL[phase as ProgramPhase] ?? phase.replace(/_/g, ' ')}`;
 }
 
 export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps) {
-  const phases = derivePhases(program);
-  const activeIdx = phases.findIndex(p => p.status === 'active' || p.status === 'blocked');
-  const activeLabel = phases[Math.max(activeIdx, 0)]?.label ?? PMA_PHASES[4].label;
+  /* Slice 0: the taxonomy, no position — see the note above PROJECT_PHASE_LABEL. */
+  const phases = PMA_PHASES;
+  const phaseLine = useRecordedPhaseLine(program ? String(program.id) : null);
 
   /* Live PMA modules + trial metrics. Modules group cerv2_510k_sections by
      PMA module taxonomy (preclinical / clinical / manufacturing /
@@ -128,14 +150,16 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
               pathway === 'pma' row. The phase claim was the quietest of the
               three — Math.max(activeIdx, 0) turns "no active phase" (-1) into
               "phase 1", which is then asserted beside ten bars reading 0%.
-              Nothing is named here that the program did not supply. */}
+              Nothing is named here that the program did not supply.
+              Slice 0: the program branch claimed a PMA phase mapped from a
+              derived stage too; it now states the recorded project phase. */}
           <div className="section-title">
             PMA pathway{program ? ` · ${program.title}` : ''}
           </div>
           <div className="section-sub">
             {program
-              ? `Phase ${Math.max(activeIdx, 0) + 1} of ${phases.length} — ${activeLabel} · ${program.dueLabel}`
-              : `${phases.length} phases · position is set by the active program`}
+              ? `${phaseLine} · ${program.dueLabel}`
+              : `${phases.length} PMA phases · no project selected`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -186,12 +210,20 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
               className="phase-pct"
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
-              <span>{p.pct}%</span>
+              {/* Slice 0: an idle phase's progress is not recorded; "0%" would claim it. */}
+              <span>{p.status === 'idle' ? '—' : `${p.pct}%`}</span>
               <span className={`status-dot ${p.status}`} />
             </div>
           </div>
         ))}
       </div>
+      {/* Slice 0: say why no phase is lit, so an unlit grid is not read as "nothing started". */}
+      {program && (
+        <div className="section-sub" data-testid="pma-phase-note">
+          The PMA pathway's {phases.length} phases. None is marked: a project records its project phase, stated above,
+          not a PMA phase.
+        </div>
+      )}
 
       <DataGate
         state={trialState}

@@ -149,19 +149,23 @@ export function useWorkbenchTasks(): UseWorkbenchTasksResult {
 
 /* ─── Validation ───────────────────────────────────────────────────── */
 
+/* A c2c_blockers row as GET /api/submission-ops/blockers returns it.
+   Slice 0 (map row `device-validation`): `programCode` and `sectionLabel`
+   were read here, and the table has neither column, so every rule rendered
+   "— · —". It names the project the blocker is recorded against, and its
+   title. */
 interface ServerBlocker {
   id: number;
   blockerId?: string;
   projectId?: number;
-  programCode?: string;
   packageDbId?: number;
   packageId?: string;
   sectionDbId?: number;
-  sectionLabel?: string;
   blockerType?: string;
   severity?: string;
   status?: string;
-  description?: string;
+  title?: string;
+  description?: string | null;
   createdAt?: string;
 }
 
@@ -172,17 +176,20 @@ interface BlockersPayload {
 }
 
 function adaptBlockerToRule(b: ServerBlocker): ValidationRule {
+  /* Slice 0 (map row `device-validation`): every row here is an OPEN blocker.
+     'low' (a valid c2c_blockers severity, written straight through from a
+     correspondence issue) and any unrecognised value fell to 'ok' and rendered
+     a "Pass" pill. Nothing open is a pass, so they are warnings. */
   const sev: ValidationRule['severity'] =
-    b.severity === 'critical' || b.severity === 'high' ? 'err'
-      : b.severity === 'medium' ? 'warn'
-      : 'ok';
+    b.severity === 'critical' || b.severity === 'high' ? 'err' : 'warn';
   return {
     id:       b.blockerId ?? `bl-${b.id}`,
-    prog:     b.programCode ?? '—',
-    sect:     b.sectionLabel ?? '—',
+    project:  typeof b.projectId === 'number' ? `Project #${b.projectId}` : '—',
     severity: sev,
     category: b.blockerType ?? 'general',
-    msg:      b.description ?? '(no description)',
+    /* A blocker opened by the automation runner carries a title and no
+       description; it read "(no description)" beside a title it had. */
+    msg:      b.description || b.title || '(no description)',
     since:    b.createdAt ? formatRelativeShort(b.createdAt) : '—',
   };
 }
@@ -251,16 +258,28 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     if (!rules || !validationPrograms) return null;
     const totalErr  = rules.filter((r) => r.severity === 'err').length;
     const totalWarn = rules.filter((r) => r.severity === 'warn').length;
+    /* Slice 0 (map row `device-validation`): this is each project's stored
+       progressPercent (0 when unset), not an eSTAR assessment, so it carries no
+       verdict tone. With no projects there is nothing to average: it was 0%
+       in red. */
     const avgReady = validationPrograms.length
-      ? Math.round(validationPrograms.reduce((s, p) => s + p.readiness, 0) / validationPrograms.length)
-      : 0;
+      ? String(Math.round(validationPrograms.reduce((s, p) => s + p.readiness, 0) / validationPrograms.length))
+      : null;
     return [
       /* Was "Programs blocked · All programs filing-ready", computed from the
          per-program counts above that could never be non-zero. */
       { label: 'Programs blocked', metric: '—', meta: 'Blockers are recorded per project, not linked to programs' },
-      { label: 'Open errors',      metric: String(totalErr),     meta: totalErr ? 'High/critical severity' : 'No critical issues', tone: totalErr ? 'err' : 'ok' },
-      { label: 'Open warnings',    metric: String(totalWarn),    meta: totalWarn ? 'Review before transmit' : 'No warnings', tone: totalWarn ? 'warn' : 'ok' },
-      { label: 'Avg readiness',    metric: String(avgReady), unit: '%', meta: 'Across portfolio', tone: avgReady >= 70 ? 'ok' : avgReady >= 40 ? 'warn' : 'err' },
+      /* Slice 0: "No critical issues" and "No warnings" in the ok tone read as
+         a clean result; nothing on this screen assesses one. Zero is what was
+         recorded, so it says that, without a tone. */
+      { label: 'Open errors',      metric: String(totalErr),     meta: totalErr ? 'High/critical severity' : 'None recorded', ...(totalErr ? { tone: 'err' as const } : {}) },
+      { label: 'Open warnings',    metric: String(totalWarn),    meta: totalWarn ? 'Medium or low severity' : 'None recorded', ...(totalWarn ? { tone: 'warn' as const } : {}) },
+      {
+        label: 'Avg recorded progress',
+        metric: avgReady ?? '—',
+        ...(avgReady === null ? {} : { unit: '%' }),
+        meta: 'Recorded project progress, not an eSTAR assessment',
+      },
     ];
   }, [rules, validationPrograms]);
 

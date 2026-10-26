@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xxx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > shows none of another project's signals, CAPAs or PMS plan rows
+AssertionError: expected 'WorkstreamPost-market vigilance0 regu…' not to match /SIG-OTHER-7|Other project lead fractu…/
+
+- Expected:
+/SIG-OTHER-7|Other project lead fracture/
+
++ Received:
+"WorkstreamPost-market vigilance0 regulatory submissions in flight. 21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization. Reporting clocks and the MDR/CAPA deadline metrics are limited to PM-1. Triage signalsMDRs due ≤72h0FDA 5-day · 30-day · EU 15-day clocksCAPAs open00 past target datePMS plan entries1From the PMS planOpen signals11 critical · awaiting MDR roll-upRegulatory submissions in flightTap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnAAll 021 CFR 803 0EU MDR Art. 87 0820.100 · ISO 13485 §8.5.2/8.5.3 0FSCA / FSN 0EU MDR PSUR 0Reporting clocksPM-1 only · complaints · MDR events · CAPAs — overdue first, then soonest due. FDA 5-day and 30-day, EU MDR Article 87 15-day.Overdue0No reporting deadline passedDue within 7 days0Clock runningOpen items10 MDR · 1 complaint · 0 CAPAcomplaintCMP-OWN-1Own project occlusion alarmopenopen—Signal triage queue1 critical or under-review signals not yet wrapped in an MDR or CAPA · oldest firstcomplaintSIG-OTHER-7OTHER-9 — Other project lead fracture×3 · —A2026-10-01T00:00:00ZSituational awarenessFull signals feed · MDR clock · CAPA board · trend sparklines · PMS plan executionCAPA workflow1 active · 5-stageOpen1CAPA-OTHER-3criticalOther project seal leakOTHER-9·BInvestigate0Action0Verify0Close0Vigilance trendingNo vigilance trends yetTrend series are not yet computed from the complaint feed in this workspace.Check againPMS plan executionDeviceSourcesSignalsStateOTHER-9Other project registry4on-track"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:102:33
+    100|     await loadedAndExpanded(container);
+    101|
+    102|     expect(text(container)).not.toMatch(/SIG-OTHER-7|Other project lea…
+       |                                 ^
+    103|     expect(text(container)).not.toMatch(/CAPA-OTHER-3|Other project se…
+    104|     expect(text(container)).not.toMatch(/Other project registry/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no organisation-wide count as this project’s
+AssertionError: expected '1' to be '—' // Object.is equality
+
+Expected: "—"
+Received: "1"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:112:51
+    110|     await loadedAndExpanded(container);
+    111|
+    112|     expect(getByTestId('pm-signals').textContent).toBe('—');
+       |                                                   ^
+    113|     expect(getByTestId('pm-pms').textContent).toBe('—');
+    114|     expect(text(container)).not.toMatch(/1 critical · awaiting MDR rol…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > says why each of the signals, CAPA board and PMS plan panels is not shown
+AssertionError: panel signals must say why it is not shown: expected null not to be null
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:125:68
+    123|     for (const id of ['signals', 'capas', 'pms']) {
+    124|       const note = container.querySelector(`[data-testid="pm-not-keyed…
+    125|       expect(note, `panel ${id} must say why it is not shown`).not.toB…
+       |                                                                    ^
+    126|       expect(note?.textContent ?? '').toMatch(NOT_KEYED);
+    127|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  02:23:48
+   Duration  2.20s (transform 539ms, setup 256ms, import 725ms, tests 314ms, environment 651ms)
+

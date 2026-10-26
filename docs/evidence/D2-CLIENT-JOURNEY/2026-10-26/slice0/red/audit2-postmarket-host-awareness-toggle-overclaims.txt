@@ -1,0 +1,33 @@
+RED (audit2 postmarket-host #5): the Situational awareness toggle advertises 'Full signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution' while it holds three not-shown notes.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+--------x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > the Situational awareness toggle names only what it holds
+AssertionError: expected 'Full signals feed · MDR clock · CAPA …' not to match /Full signals feed|MDR clock/
+
+- Expected:
+/Full signals feed|MDR clock/
+
++ Received:
+"Full signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:225:21
+    223|
+    224|     const sub = container.querySelector('.eng-awareness-head .section-…
+    225|     expect(sub).not.toMatch(/Full signals feed|MDR clock/);
+       |                     ^
+    226|     expect(sub.replace(/\s+/g, ' ')).toBe('CAPA board · vigilance tren…
+    227|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  05:03:41
+   Duration  1.48s (transform 385ms, setup 176ms, import 504ms, tests 99ms, environment 470ms)
+

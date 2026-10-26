@@ -1,0 +1,709 @@
+# What this shows: Audit 2 [0]: each project card is a <button> that filters the rules by a program code no blocker carries; one click leaves no rows, and each row reads '— · —' / '(no description)'.
+# 2026-10-26T05:04:43Z HEAD a40acd714 (working tree, before the fix)
+# npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t 'project card is not a filter|names the project|no description shows its title'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+------------xxx--
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation offers no control that can only hide every row (audit 2) > a project card is not a filter, and every blocker stays listed
+AssertionError: expected  to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:212:55
+    210|     expect(card).toBeTruthy();
+    211|     fireEvent.click(card);
+    212|     expect(container.querySelectorAll('.ctable-row')).toHaveLength(2);
+       |                                                       ^
+    213|     expect(container.querySelector('.chip-filter')).toBeNull();
+    214|     expect(card.tagName).not.toBe('BUTTON');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation offers no control that can only hide every row (audit 2) > a blocker row names the project it is recorded against, not "— · —"
+AssertionError: expected 'Blockerblk_a— · —regulatory_correspon…' to match /Project #3/
+
+- Expected:
+/Project #3/
+
++ Received:
+"Blockerblk_a— · —regulatory_correspondence_issueCorrespondence raised biocompatibility6d ago"
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:222:37
+    220|     await waitFor(() => expect(screen.getByText('Correspondence raised…
+    221|     for (const row of Array.from(container.querySelectorAll('.ctable-r…
+    222|       expect(row.textContent ?? '').toMatch(/Project #3/);
+       |                                     ^
+    223|       expect(row.textContent ?? '').not.toMatch(/—\s*·\s*—/);
+    224|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation offers no control that can only hide every row (audit 2) > a blocker with no description shows its title, not "(no description)"
+TestingLibraryElementError: Unable to find an element with the text: Biocompatibility test report missing. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Validation center
+        </h1>
+        <div
+          class="page-sub"
+        >
+          Open blockers recorded against your organization’s projects.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="7 10 12 15 17 10"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="15"
+              y2="3"
+            />
+          </svg>
+           Export report
+        </button>
+        <button
+          class="btn primary small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+            />
+            <path
+              d="M5 3v4M19 17v4M3 5h4M17 19h4"
+            />
+          </svg>
+           Ask Claude to triage
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row"
+    >
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Programs blocked
+        </div>
+        <div
+          class="metric-val"
+        >
+          —
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Blockers are recorded per project, not linked to programs
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="err"
+      >
+        <div
+          class="metric-label"
+        >
+          Open errors
+        </div>
+        <div
+          class="metric-val"
+        >
+          1
+        </div>
+        <div
+          class="metric-meta"
+        >
+          High/critical severity
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Open warnings
+        </div>
+        <div
+          class="metric-val"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          None recorded
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone=""
+      >
+        <div
+          class="metric-label"
+        >
+          Avg recorded progress
+        </div>
+        <div
+          class="metric-val"
+        >
+          —
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Recorded project progress, not an eSTAR assessment
+        </div>
+      </div>
+    </div>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Readiness by program
+        </h2>
+        <span
+          class="section-sub"
+        >
+          Column order · errors · warnings · pass
+        </span>
+      </div>
+      <div
+        aria-live="polite"
+        class="c2c-empty-state tone-idle"
+        data-testid="workbench-no-validation-programs"
+        role="status"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-empty-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-empty-t"
+        >
+          No programs to validate
+        </div>
+        <div
+          class="c2c-empty-h"
+        >
+          Each program you run appears here with its error, warning and pass counts.
+        </div>
+      </div>
+      <div
+        class="val-matrix"
+      />
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Rules
+        </h2>
+        <div
+          class="seg small"
+        >
+          <button
+            class="seg-btn"
+            data-on="true"
+          >
+            All
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Blockers
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Warnings
+          </button>
+        </div>
+      </div>
+      <div
+        class="ctable"
+      >
+        <div
+          class="ctable-head"
+          style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+        >
+          <div>
+            Sev
+          </div>
+          <div>
+            Rule
+          </div>
+          <div>
+            Program
+          </div>
+          <div>
+            Category
+          </div>
+          <div>
+            Message
+          </div>
+          <div>
+            Since
+          </div>
+        </div>
+        <div
+          class="ctable-row"
+          style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+        >
+          <div>
+            <span
+              class="sev-pill err"
+            >
+              Blocker
+            </span>
+          </div>
+          <div
+            class="mono"
+          >
+            blk_a
+          </div>
+          <div>
+            —
+             
+            <span
+              style="color: var(--text-400);"
+            >
+              · 
+              —
+            </span>
+          </div>
+          <div>
+            regulatory_correspondence_issue
+          </div>
+          <div>
+            (no description)
+          </div>
+          <div>
+            6d ago
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Validation center
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Open blockers recorded against your organization’s projects.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <button
+            class="btn ghost small"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Export report
+          </button>
+          <button
+            class="btn primary small"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+              />
+              <path
+                d="M5 3v4M19 17v4M3 5h4M17 19h4"
+              />
+            </svg>
+             Ask Claude to triage
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row"
+      >
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Programs blocked
+          </div>
+          <div
+            class="metric-val"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Blockers are recorded per project, not linked to programs
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone="err"
+        >
+          <div
+            class="metric-label"
+          >
+            Open errors
+          </div>
+          <div
+            class="metric-val"
+          >
+            1
+          </div>
+          <div
+            class="metric-meta"
+          >
+            High/critical severity
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Open warnings
+          </div>
+          <div
+            class="metric-val"
+          >
+            0
+          </div>
+          <div
+            class="metric-meta"
+          >
+            None recorded
+          </div>
+        </div>
+        <div
+          class="metric-card"
+          data-tone=""
+        >
+          <div
+            class="metric-label"
+          >
+            Avg recorded progress
+          </div>
+          <div
+            class="metric-val"
+          >
+            —
+          </div>
+          <div
+            class="metric-meta"
+          >
+            Recorded project progress, not an eSTAR assessment
+          </div>
+        </div>
+      </div>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Readiness by program
+          </h2>
+          <span
+            class="section-sub"
+          >
+            Column order · errors · warnings · pass
+          </span>
+        </div>
+        <div
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          data-testid="workbench-no-validation-programs"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-empty-t"
+          >
+            No programs to validate
+          </div>
+          <div
+            class="c2c-empty-h"
+          >
+            Each program you run appears here with its error, warning and pass counts.
+          </div>
+        </div>
+        <div
+          class="val-matrix"
+        />
+      </section>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Rules
+          </h2>
+          <div
+            class="seg small"
+          >
+            <button
+              class="seg-btn"
+              data-on="true"
+            >
+              All
+            </button>
+            <button
+              class="seg-btn"
+              data-on="false"
+            >
+              Blockers
+            </button>
+            <button
+              class="seg-btn"
+              data-on="false"
+            >
+              Warnings
+            </button>
+          </div>
+        </div>
+        <div
+          class="ctable"
+        >
+          <div
+            class="ctable-head"
+            style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+          >
+            <div>
+              Sev
+            </div>
+            <div>
+              Rule
+            </div>
+            <div>
+              Program
+            </div>
+            <div>
+              Category
+            </div>
+            <div>
+              Message
+            </div>
+            <div>
+              Since
+            </div>
+          </div>
+          <div
+            class="ctable-row"
+            style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+          >
+            <div>
+              <span
+                class="sev-pill err"
+              >
+                Blocker
+              </span>
+            </div>
+            <div
+              class="mono"
+            >
+              blk_a
+            </div>
+            <div>
+              —
+               
+              <span
+                style="color: var(--text-400);"
+              >
+                · 
+                —
+              </span>
+            </div>
+            <div>
+              regulatory_correspondence_issue
+            </div>
+            <div>
+              (no description)
+            </div>
+            <div>
+              6d ago
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:230:11
+    228|     serve([{ ...BLOCKERS[0], description: undefined, title: 'Biocompat…
+    229|     render(<ValidationSurface onAskAna={() => {}} />);
+    230|     await waitFor(() => expect(screen.getByText('Biocompatibility test…
+       |           ^
+    231|     expect(screen.queryByText('(no description)')).toBeNull();
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 14 skipped (17)
+   Start at  05:04:43
+   Duration  6.76s (transform 463ms, setup 189ms, import 605ms, tests 5.23s, environment 565ms)
+

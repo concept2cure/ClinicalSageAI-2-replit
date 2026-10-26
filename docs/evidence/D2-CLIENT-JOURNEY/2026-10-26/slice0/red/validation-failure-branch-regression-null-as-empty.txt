@@ -1,0 +1,72 @@
+# 2026-10-26T03:34:00Z HEAD 928b70996 (working tree with a DELIBERATE regression, reverted after this run): Workbench.tsx empty-state gate changed to `sourceRules.length === 0`, so a failed read (rules null -> []) would render "No open blockers recorded"
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t never the empty list
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---x--------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > a FAILED blockers read is a failure, never the empty list
+AssertionError: expected <div …(4)>…(3)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  aria-live="polite"
+  class="c2c-empty-state tone-idle"
+  data-testid="workbench-no-blockers"
+  role="status"
+>
+  <span
+    aria-hidden="true"
+    class="c2c-empty-ic"
+  >
+    <svg
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="16"
+    >
+      <path
+        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+      />
+      <path
+        d="m9 12 2 2 4-4"
+      />
+    </svg>
+  </span>
+  <div
+    class="c2c-empty-t"
+  >
+    No open blockers recorded
+  </div>
+  <div
+    class="c2c-empty-h"
+  >
+    Blockers are not added on this screen. They are recorded against a project’s submission package, for example from a blocking issue in agency correspondence. Each device filing’s readiness is assessed on the eSTAR filing readiness panel in its 510(k), PMA or IVD workspace.
+  </div>
+</div>
+
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:104:59
+    102|     render(<ValidationSurface onAskAna={() => {}} />);
+    103|     await waitFor(() => expect(screen.getByTestId('workbench-no-valida…
+    104|     expect(screen.queryByTestId('workbench-no-blockers')).toBeNull();
+       |                                                           ^
+    105|     expect(screen.queryByText(/No open blockers recorded/)).toBeNull();
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  03:34:01
+   Duration  1.37s (transform 384ms, setup 190ms, import 459ms, tests 78ms, environment 486ms)
+

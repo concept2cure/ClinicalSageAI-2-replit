@@ -1,0 +1,38 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noMineFilter.test.tsx > PreSubManager — no "Mine" filter without an owner to filter on > does not offer "Mine", which matched two demo program codes
+AssertionError: expected { mineOffered: true, …(1) } to deeply equal { Object (mineOffered, listed) }
+
+- Expected
++ Received
+
+  {
+    "listed": [
+-     "Biocompatibility strategy",
+      "Shelf-life question",
+    ],
+-   "mineOffered": false,
++   "mineOffered": true,
+  }
+
+ ❯ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.noMineFilter.test.tsx:63:75
+     61|     const mine = screen.queryByRole('button', { name: 'Mine' });
+     62|     if (mine) fireEvent.click(mine);
+     63|     expect({ mineOffered: mine !== null, listed: listTitles(container)…
+       |                                                                           ^
+     64|       mineOffered: false,
+     65|       listed: ['Biocompatibility strategy', 'Shelf-life question'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  03:03:41
+   Duration  2.07s (transform 379ms, setup 219ms, import 437ms, tests 647ms, environment 600ms)
+

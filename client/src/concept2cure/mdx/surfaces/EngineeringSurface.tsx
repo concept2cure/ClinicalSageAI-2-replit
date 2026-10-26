@@ -14,9 +14,13 @@
  * in this file — in a device workspace, an example risk file that looks
  * like your own risk file is a patient-safety hazard, not a placeholder.
  *
- * Panels whose source table has no program column are labelled
- * organization-wide from `live.scopes`, so the user is never led to
- * believe org-level rows belong to the selected program.
+ * Panels whose source table has no program column are not shown until
+ * `live.scopes` reports them keyed to the project (slice 0 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md, the
+ * `device-engineering` row). Labelling them "Organization-wide" still drew
+ * another project's records under this project's name. The same holds for
+ * the metric cards counted from those rows and for the documents panel,
+ * which the route also reports organization-scoped.
  */
 
 import * as React from 'react';
@@ -49,14 +53,54 @@ interface Blocker {
 
 const SEV_ORDER: Record<Blocker['severity'], number> = { err: 0, warn: 1, low: 2 };
 
-/** Marker for panels that are organization-wide rather than per-program. */
-function ScopeNote({ scope }: { scope: PanelScope | undefined }) {
-  if (scope !== 'organization') return null;
+/* Slice 0 (INFORMATION_ARCHITECTURE.md, `device-engineering`): DHF, trace,
+   change requests, non-conformances and documents are read by organisation
+   only (server/routes/mdx-engineering.ts:523-530), so their rows may be
+   another project's. A panel renders only once the route reports it keyed to
+   the project; an unreported scope counts as not keyed. This replaces the
+   "Organization-wide" pill, which still drew those rows. */
+function keyedToProject(scope: PanelScope | undefined): boolean {
+  return scope === 'program';
+}
+
+const NOT_KEYED_LINE = "Shown once this screen reads this project's records.";
+
+/* Rendered inside the panel's DataGate, so loading, a failed read and an
+   empty organisation still read as themselves; this replaces only rows.
+   It says the records are held organization-wide only when the route said so. */
+function NotKeyedNote({ panel, scope }: { panel: string; scope: PanelScope | undefined }) {
   return (
-    <span className="scope-note" title="This source has no program column yet">
-      Organization-wide
-    </span>
+    <p className="eng-trace-summary" data-testid={`eng-not-keyed-${panel}`}>
+      {NOT_KEYED_LINE}
+      {scope === 'organization'
+        ? ' These records are held for the whole organization, not per project, so they are not shown here.'
+        : ''}
+    </p>
   );
+}
+
+/* Slice 0 audit 2: an empty read lands in the gate's empty branch, not in
+   NotKeyedNote, so its hint must not promise records "appear here" while they
+   would not be shown. Like the note, it names the organization only when the
+   route said so. */
+function notKeyedEmptyHint(scope: PanelScope | undefined): string {
+  return (scope === 'organization' ? 'Nothing is recorded for the organization. ' : '') +
+    "Records are shown here once this screen reads this project's records.";
+}
+
+/* Slice 0: a metric counted from rows not keyed to the project is not printed. */
+function NotKeyedMetric() {
+  return (
+    <>
+      <div className="metric-val">—</div>
+      <div className="metric-meta">{NOT_KEYED_LINE}</div>
+    </>
+  );
+}
+
+/** "a, b or c" / "a, b and c" for the blocker feed's copy. */
+function listOf(items: string[], conj: 'or' | 'and'): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${conj} ${items[items.length - 1]}`;
 }
 
 export function EngineeringSurface({
@@ -72,11 +116,17 @@ export function EngineeringSurface({
   /* Derived views read through readyRows: they yield [] for every
      non-ready state, and the surrounding DataGate has already told the
      user which state that is. No fixture can leak in here. */
-  const dhf = readyRows(live.dhf);
+  const dhfKeyed = keyedToProject(live.scopes.dhf);
+  const traceKeyed = keyedToProject(live.scopes.trace);
+  const ecrsKeyed = keyedToProject(live.scopes.ecrs);
+  const issuesKeyed = keyedToProject(live.scopes.issues);
+  const docsKeyed = keyedToProject(live.scopes.documents);
+  /* Slice 0: a store not keyed to the project contributes no rows here, so
+     its records cannot reach the blocker feed either. */
+  const dhf = dhfKeyed ? readyRows(live.dhf) : [];
   const risks = readyRows(live.risks);
-  const ecrs = readyRows(live.ecrs);
-  const issues = readyRows(live.issues);
-  const trace = readyRows(live.trace);
+  const ecrs = ecrsKeyed ? readyRows(live.ecrs) : [];
+  const issues = issuesKeyed ? readyRows(live.issues) : [];
 
   const programContext = program ? `${program.code} · ${program.title}` : null;
 
@@ -151,15 +201,45 @@ export function EngineeringSurface({
      actually resolved to — never from a fixture — so the cards and the
      table can never disagree. */
   /* Every source the blocker feed reads. Its all-clear is only true if all
-     four actually answered. */
-  const blockersState = gatedOn(live.dhf, live.risks, live.ecrs, live.issues);
+     of them actually answered — and, since slice 0, it names only the sources
+     read for this project; the rest are said to be left out, not "found". */
+  /* `hard`: the only sources that can raise a hard blocker (a blocked DHF
+     section, an undispositioned non-conformance). `recorded`: what "nothing
+     recorded yet" names. */
+  const blockerSources = [
+    { keyed: dhfKeyed, state: live.dhf, sub: 'DHF', found: 'draft or blocked DHF sections', left: 'DHF sections', hard: true, recorded: 'design history file' },
+    { keyed: true, state: live.risks, sub: 'risk', found: 'unverified risks', left: 'risks', hard: false, recorded: 'risk file' },
+    { keyed: ecrsKeyed, state: live.ecrs, sub: 'change requests', found: 'open change requests', left: 'change requests', hard: false, recorded: 'change requests' },
+    { keyed: issuesKeyed, state: live.issues, sub: 'non-conformance', found: 'non-conformances', left: 'non-conformances', hard: true, recorded: 'non-conformances' },
+  ];
+  const readSources = blockerSources.filter((b) => b.keyed);
+  const leftOut = blockerSources.filter((b) => !b.keyed);
+  /* Slice 0 audit: with DHF or non-conformances left out, "0 hard blockers" is
+     zero by construction, so the count is not printed. */
+  const hardLeftOut = leftOut.filter((b) => b.hard);
+  /* Slice 0 audit: every source read for this project holds no rows (a source
+     left out contributes []), so nothing has been assessed. That is not the
+     same claim as "assessed and nothing is blocking". */
+  const nothingRecorded = dhf.length + risks.length + ecrs.length + issues.length === 0;
+  const leftOutSentence =
+    leftOut.length === 0
+      ? ''
+      : ` ${listOf(leftOut.map((b) => b.left), 'and').replace(/^./, (c) => c.toUpperCase())} are left out until this screen reads this project's records.`;
+  const blockersState = gatedOn(
+    live.risks,
+    ...readSources.filter((b) => b.state !== live.risks).map((b) => b.state),
+  );
+  /* Slice 0 audit 2: `blockers` is [] for a loading or failed read as well as
+     an empty one, so its counts are printed only once every source read for
+     this project has resolved. */
+  const blockersRead = blockersState.status === 'ready' || blockersState.status === 'empty';
 
-  const documents = readyRows(live.documents) as unknown as KitDocument[];
+  /* Slice 0 audit: the documents read is organization-scoped too (the route
+     reports `documents: 'organization'`), so its rows feed no card until keyed. */
+  const documents = (docsKeyed ? readyRows(live.documents) : []) as unknown as KitDocument[];
   const readyCount = documents.filter((d) => d.status === 'ready').length;
   const reviewCount = documents.filter((d) => d.status === 'review').length;
   const draftCount = documents.filter((d) => d.status === 'draft').length;
-  const blockedDocs = documents.filter((d) => d.blocker);
-  const pendingSig = documents.filter((d) => d.esigState === 'pending').length;
   const avgCompletion = averageAssessedCompletion(documents);
 
   return (
@@ -198,36 +278,58 @@ export function EngineeringSurface({
       >
         {(s) => (
           <div className="metrics-row metrics-compact">
+            {/* Slice 0 audit: "Documents in flight", "Open change requests" and
+                "DHF completion" are counted from organisation-wide rows, so each
+                prints only once its source is keyed to the project. */}
             <div className="metric-card">
               <div className="metric-label">Documents in flight</div>
-              <div className="metric-val">{documents.length}</div>
-              <div className="metric-meta">
-                {readyCount} ready · {reviewCount} in review · {draftCount} draft
-              </div>
+              {docsKeyed ? (
+                <>
+                  <div className="metric-val">{documents.length}</div>
+                  <div className="metric-meta">
+                    {readyCount} ready · {reviewCount} in review · {draftCount} draft
+                  </div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
             <div className="metric-card" data-tone="err">
               <div className="metric-label">Open risks</div>
               <div className="metric-val">{s.openRisks}</div>
               <div className="metric-meta">
-                {s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
+                {/* Slice 0 audit: an empty risk file is not "all verified". */}
+                {risks.length === 0 ? 'No risks recorded' : s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
               </div>
             </div>
-            <div className="metric-card" data-tone="warn">
+            <div className="metric-card" data-tone={ecrsKeyed ? 'warn' : undefined}>
               <div className="metric-label">Open change requests</div>
-              <div className="metric-val">{s.openEcrs}</div>
-              <div className="metric-meta">
-                {blockedDocs.length} blocked · {pendingSig} awaiting signature
-              </div>
+              {/* The meta line used to count documents (blocked, awaiting
+                  signature), which are not change requests. */}
+              {ecrsKeyed ? (
+                <>
+                  <div className="metric-val">{s.openEcrs}</div>
+                  <div className="metric-meta">Open or in review</div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
             <div className="metric-card">
               <div className="metric-label">DHF completion</div>
-              <div className="metric-val">
-                {s.dhfCompletion}
-                <span className="unit">%</span>
-              </div>
-              <div className="metric-meta">
-                Required sections validated · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
-              </div>
+              {dhfKeyed ? (
+                <>
+                  <div className="metric-val">
+                    {s.dhfCompletion}
+                    <span className="unit">%</span>
+                  </div>
+                  <div className="metric-meta">
+                    Required sections validated · avg doc {avgCompletion === null ? '—' : `${avgCompletion}%`}
+                  </div>
+                </>
+              ) : (
+                <NotKeyedMetric />
+              )}
             </div>
           </div>
         )}
@@ -237,26 +339,47 @@ export function EngineeringSurface({
         state={live.documents}
         label="engineering documents"
         onRetry={live.refresh}
-        emptyHint="Design and software deliverables appear here once artifacts exist for this organization."
+        emptyHint={docsKeyed
+          ? 'Design and software deliverables appear here once artifacts exist for this organization.'
+          : notKeyedEmptyHint(live.scopes.documents)}
       >
-        {(docs) => (
-          <DocumentsPanel
-            title="Documents in flight"
-            subtitle="Tap any row to open in the editor · sparkle to ask AnA to draft the next section"
-            docs={docs as unknown as KitDocument[]}
-            onOpenEditor={onOpenEditor}
-            onAskAna={(text) => onAskAna(text)}
-          />
-        )}
+        {(docs) =>
+          /* Slice 0 audit: the artifacts in this list are read by organisation
+             only, so the list is not shown until the route keys it. */
+          !docsKeyed ? (
+            <section className="section">
+              <div className="section-head">
+                <h2>Documents in flight</h2>
+              </div>
+              <NotKeyedNote panel="documents" scope={live.scopes.documents} />
+            </section>
+          ) : (
+            <DocumentsPanel
+              title="Documents in flight"
+              subtitle="Tap any row to open in the editor · sparkle to ask AnA to draft the next section"
+              docs={docs as unknown as KitDocument[]}
+              onOpenEditor={onOpenEditor}
+              onAskAna={(text) => onAskAna(text)}
+            />
+          )
+        }
       </DataGate>
 
       <section className="section">
         <div className="section-head">
           <h2>What&apos;s blocking your documents</h2>
           <span className="section-sub">
-            {blockers.filter((b) => b.severity === 'err').length} hard blockers ·{' '}
-            {blockers.filter((b) => b.severity === 'warn').length} review-pending ·
-            pulled from DHF · risk · change requests · non-conformance
+            {!blockersRead ? (
+              `Not counted until the ${listOf(readSources.map((b) => b.recorded), 'and')} ${readSources.length === 1 ? 'is' : 'are'} read`
+            ) : (
+              <>
+                {hardLeftOut.length === 0
+                  ? `${blockers.filter((b) => b.severity === 'err').length} hard blockers`
+                  : `Hard blockers not counted: ${listOf(hardLeftOut.map((b) => b.left), 'and')} are left out`}{' · '}
+                {blockers.filter((b) => b.severity === 'warn').length} review-pending ·
+                pulled from {readSources.map((b) => b.sub).join(' · ')}
+              </>
+            )}
           </span>
         </div>
         {/* `blockers` is built from dhf, risks, ecrs and issues through
@@ -266,10 +389,22 @@ export function EngineeringSurface({
             unverified risks, open change requests or non-conformances were
             found" — the one positive regulatory claim on this surface, and the
             sentence the user acts on, asserted over records nobody read. */}
-        {blockersState.status !== 'ready' && blockersState.status !== 'empty' ? (
+        {!blockersRead ? (
           <DataGate state={blockersState} label="blocker sources" onRetry={live.refresh}>
             {() => null}
           </DataGate>
+        ) : blockers.length === 0 && nothingRecorded ? (
+          /* Slice 0 audit: nothing recorded is nothing assessed, so no check
+             mark and no "were found". */
+          <EmptyState
+            icon={I.fileText}
+            title={readSources.length === 1 ? 'No risk records for this project yet' : 'No records for this project yet'}
+            hint={
+              `Nothing has been recorded in this project's ${listOf(readSources.map((b) => b.recorded), 'or')}, so there is nothing to check yet.` +
+              leftOutSentence
+            }
+            testId="eng-no-blockers"
+          />
         ) : blockers.length === 0 ? (
           /* The last hand-rolled copy of the empty state `<DataGate>` used to
              draw — it reproduced the gate's `data-gate-inner` / `-copy` /
@@ -278,10 +413,13 @@ export function EngineeringSurface({
              `<EmptyState>`. No `action`: this panel is empty because nothing is
              wrong, and there is nothing for the user to fix. That is the one
              case the contract's part 3 does not apply to. */
+          /* Slice 0: with a source left out for not being keyed to the project,
+             "nothing is blocking" would be a claim over records never read
+             for it, so the copy names what was read and what was left out. */
           <EmptyState
             icon={I.checkCircle}
-            title="Nothing is blocking your documents"
-            hint="No draft or blocked DHF sections, unverified risks, open change requests or non-conformances were found."
+            title={leftOut.length === 0 ? 'Nothing is blocking your documents' : 'No blockers in the records read for this project'}
+            hint={`No ${listOf(readSources.map((b) => b.found), 'or')} were found.` + leftOutSentence}
             testId="eng-no-blockers"
           />
         ) : (
@@ -340,16 +478,21 @@ export function EngineeringSurface({
           <div className="eng-awareness-body">
             <div className="section-head" style={{ marginTop: 0 }}>
               <h2 style={{ fontSize: 14 }}>Design history file</h2>
-              <ScopeNote scope={live.scopes.dhf} />
             </div>
+            {/* Slice 0: rows not shown until keyed to the project (see
+                keyedToProject); the gate still shows loading, failure, empty. */}
             <DataGate
               state={live.dhf}
               label="DHF sections"
               onRetry={live.refresh}
               dense
-              emptyHint="Device-category sections appear here once the 510(k) section set is created."
+              emptyHint={dhfKeyed
+                ? 'Device-category sections appear here once the 510(k) section set is created.'
+                : notKeyedEmptyHint(live.scopes.dhf)}
             >
-              {(rows) => (
+              {(rows) => !dhfKeyed ? (
+                <NotKeyedNote panel="dhf" scope={live.scopes.dhf} />
+              ) : (
                 <div className="eng-dhf-strip">
                   {rows.map((d) => (
                     <div key={d.id} className="eng-dhf-cell" data-status={d.status} title={d.label}>
@@ -483,16 +626,20 @@ export function EngineeringSurface({
 
                 <div className="section-head">
                   <h2 style={{ fontSize: 14 }}>Design-controls trace</h2>
-                  <ScopeNote scope={live.scopes.trace} />
                 </div>
+                {/* Slice 0: rows not shown until keyed to the project. */}
                 <DataGate
                   state={live.trace}
                   label="traceability rows"
                   onRetry={live.refresh}
                   dense
-                  emptyHint="Design inputs trace to outputs, verification and validation once design controls are recorded."
+                  emptyHint={traceKeyed
+                    ? 'Design inputs trace to outputs, verification and validation once design controls are recorded.'
+                    : notKeyedEmptyHint(live.scopes.trace)}
                 >
-                  {(rows) => (
+                  {(rows) => !traceKeyed ? (
+                    <NotKeyedNote panel="trace" scope={live.scopes.trace} />
+                  ) : (
                     <div className="eng-trace-summary mono tiny">
                       {rows.length} traceability rows tracked ·{' '}
                       {rows.filter((t) => t.state === 'verified').length} verified
@@ -504,16 +651,20 @@ export function EngineeringSurface({
 
             <div className="section-head">
               <h2 style={{ fontSize: 14 }}>Change requests</h2>
-              <ScopeNote scope={live.scopes.ecrs} />
             </div>
+            {/* Slice 0: rows not shown until keyed to the project. */}
             <DataGate
               state={live.ecrs}
               label="change requests"
               onRetry={live.refresh}
               dense
-              emptyHint="Engineering change requests appear here as they are raised."
+              emptyHint={ecrsKeyed
+                ? 'Engineering change requests appear here as they are raised.'
+                : notKeyedEmptyHint(live.scopes.ecrs)}
             >
-              {(rows) => (
+              {(rows) => !ecrsKeyed ? (
+                <NotKeyedNote panel="ecrs" scope={live.scopes.ecrs} />
+              ) : (
                 <div className="eng-trace-summary mono tiny">
                   {rows.length} change requests ·{' '}
                   {rows.filter((e) => e.state === 'open' || e.state === 'review').length} in flight
@@ -523,16 +674,20 @@ export function EngineeringSurface({
 
             <div className="section-head">
               <h2 style={{ fontSize: 14 }}>Non-conformances</h2>
-              <ScopeNote scope={live.scopes.issues} />
             </div>
+            {/* Slice 0: rows not shown until keyed to the project. */}
             <DataGate
               state={live.issues}
               label="non-conformances"
               onRetry={live.refresh}
               dense
-              emptyHint="Non-conforming product records appear here when raised in the quality system."
+              emptyHint={issuesKeyed
+                ? 'Non-conforming product records appear here when raised in the quality system.'
+                : notKeyedEmptyHint(live.scopes.issues)}
             >
-              {(rows) => (
+              {(rows) => !issuesKeyed ? (
+                <NotKeyedNote panel="issues" scope={live.scopes.issues} />
+              ) : (
                 <div className="eng-trace-summary mono tiny">
                   {rows.length} non-conformances ·{' '}
                   {rows.filter((n) => n.severity === 'high').length} undispositioned

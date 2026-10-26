@@ -94,11 +94,15 @@ describe('PostmarketSurface — statutory-clock cards come from the reads that h
       return url.includes('/api/capa-mdr/triage') ? { items: [], count: 0 }
         : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } };
     });
-    const project = { id: 'project-a', code: 'MDX-42', title: 'Device project' } as Program;
+    /* `code` as useMdxPrograms.deriveCode builds it: a class and pathway many
+       projects share. The scope names the project by its title. */
+    const project = { id: 'project-a', code: 'Class II · 510(k)', title: 'Device project' } as Program;
     const { getByTestId, getByText } = mount(project);
-    expect(getByTestId('postmarket-scope').textContent).toContain('Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.');
-    expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to MDX-42.');
-    expect(getByText(/MDX-42 only/)).toBeTruthy();
+    /* Slice 0: PMS plan entries have no store (`pmsPlan: []`), so no scope is stated for them. */
+    expect(getByTestId('postmarket-scope').textContent).toContain("Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records.");
+    expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to Device project.');
+    expect(getByTestId('postmarket-scope').textContent).not.toContain('Class II · 510(k)');
+    expect(getByText(/Device project only/)).toBeTruthy();
     await waitFor(() => expect(seen.some(url => url.includes('/api/capa-mdr/triage?program_id=project-a'))).toBe(true));
     expect(seen).toContain('/api/mdx/postmarket');
     expect(seen).not.toContain('/api/capa-mdr/triage');
@@ -107,7 +111,12 @@ describe('PostmarketSurface — statutory-clock cards come from the reads that h
   it('shows no count while the triage read has failed', async () => {
     serve((u) => (u.includes('/api/capa-mdr/triage') ? null : { data: { metrics: [], signals: [], capas: [], pmsPlan: [], trends: [] } }));
     const { getByTestId } = mount();
-    await waitFor(() => expect(getByTestId('pm-signals').textContent).toBe('0'));
+    /* Slice 0 (IA map, `device-postmarket` row): `pm-signals` no longer counts
+       the organisation-wide read, so it reads '—' on first render, while
+       loading and here alike. Wait on the triage gate's own error state (the
+       only top-level DataGate with the accordion closed), so the two '—'
+       below are asserted after the read has failed, not before it settled. */
+    await waitFor(() => getByTestId('data-gate-error'));
     expect(getByTestId('pm-mdr-due').textContent).toBe('—');
     expect(getByTestId('pm-capas').textContent).toBe('—');
   });

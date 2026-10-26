@@ -1,0 +1,59 @@
+RED (audit2 pma-ivd #2): the pathway tab bar (PathwayPanes, shared by pma/ivd/k510/cer) prints 'Audit trail 0' and a Correspondence '0' over a read that failed (500) or is still in flight; the positive control (a finished read, zero included, is counted) passes.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx·-xx·-xx·-xx·-
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a failed read is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a failed read is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a failed read is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a failed read is not counted as 0
+AssertionError: expected '0' not to match /^\d+$/
+
+- Expected:
+/^\d+$/
+
++ Received:
+"0"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx:87:50
+     85|     fireEvent.click(tabNamed(/Audit trail/));
+     86|     await screen.findByText(/Could not load audit events/i);
+     87|     expect(countOf(tabNamed(/Audit trail/))).not.toMatch(/^\d+$/);
+       |                                                  ^
+     88|     fireEvent.click(screen.getAllByRole('tab')[2]);
+     89|     await screen.findByText(/Could not load correspondence/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a read in flight is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a read in flight is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a read in flight is not counted as 0
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a read in flight is not counted as 0
+AssertionError: expected '0' not to match /^\d+$/
+
+- Expected:
+/^\d+$/
+
++ Received:
+"0"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx:96:50
+     94|     stubFeeds({ audit: never, correspondence: never, approvals: never …
+     95|     mount(pathway);
+     96|     expect(countOf(tabNamed(/Audit trail/))).not.toMatch(/^\d+$/);
+       |                                                  ^
+     97|     expect(countOf(screen.getAllByRole('tab')[2])).not.toMatch(/^\d+$/…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed | 4 skipped (16)
+   Start at  07:37:49
+   Duration  2.30s (transform 592ms, setup 156ms, import 765ms, tests 694ms, environment 541ms)
+

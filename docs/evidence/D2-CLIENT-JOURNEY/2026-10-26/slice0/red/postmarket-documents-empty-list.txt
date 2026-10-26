@@ -1,0 +1,418 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+xx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > says this project's post-market documents are not read here yet
+TestingLibraryElementError: Unable to find an element by: [data-testid="pm-docs-not-read"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workstream
+        </div>
+        <h1
+          class="page-title"
+        >
+          Post-market vigilance
+        </h1>
+        <div
+          class="page-sub"
+        >
+          0
+           regulatory submissions in flight. 21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
+        </div>
+        <div
+          class="page-sub"
+          data-testid="postmarket-scope"
+        >
+          Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization.
+           
+          Reporting clocks and the MDR/CAPA deadline metrics are limited to PM-1.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+          type="button"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+            />
+            <path
+              d="M5 3v4M19 17v4M3 5h4M17 19h4"
+            />
+          </svg>
+           Triage signals
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row metrics-compact"
+    >
+      <div
+        class="metric-card"
+        data-tone="err"
+      >
+        <div
+          class="metric-label"
+        >
+          MDRs due ≤72h
+        </div>
+        <div
+          class="metric-val"
+          data-testid="pm-mdr-due"
+        >
+          —
+        </div>
+        <div
+          class="metric-meta"
+        >
+          FDA 5-day · 30-day · EU 15-day clocks
+        </div>
+      </div>
+      <div
+        class="metric-card"
+        data-tone="warn"
+      >
+        <div
+          class="metric-label"
+        >
+          CAPAs open
+        </div>
+        <div
+          class="metric-val"
+          data-testid="pm-capas"
+        >
+          —
+        </div>
+        <div
+          class="metric-meta"
+        >
+          Not yet read
+        </div>
+      </div>
+      <div
+        class="metric-card"
+      >
+        <div
+          class="metric-label"
+        >
+          PMS plan entries
+        </div>
+        <div
+          class="metric-val"
+          data-testid="pm-pms"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          No PMS plan recorded
+        </div>
+      </div>
+      <div
+        class="metric-card"
+      >
+        <div
+          class="metric-label"
+        >
+          Open signals
+        </div>
+        <div
+          class="metric-val"
+          data-testid="pm-signals"
+        >
+          0
+        </div>
+        <div
+          class="metric-meta"
+        >
+          0 critical · awaiting MDR roll-up
+        </div>
+      </div>
+    </div>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Regulatory submissions in flight
+        </h2>
+        <span
+          class="section-sub"
+        >
+          Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA
+        </span>
+        <div
+          class="seg small"
+          style="margin-left: auto;"
+        >
+          <button
+            class="seg-btn"
+            data-on="true"
+            type="button"
+          >
+            All 
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+          <button
+            class="seg-btn"
+            title="FDA Medical Device Reporting"
+            type="button"
+          >
+            21 CFR 803
+             
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+          <button
+            class="seg-btn"
+            title="Serious incident reporting"
+            type="button"
+          >
+            EU MDR Art. 87
+             
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+          <button
+            class="seg-btn"
+            title="CAPA / corrective and preventive action"
+            type="button"
+          >
+            820.100 · ISO 13485 §8.5.2/8.5.3
+             
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+          <button
+            class="seg-btn"
+            title="Field safety corrective action"
+            type="button"
+          >
+            FSCA / FSN
+             
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+          <button
+            class="seg-btn"
+            title="Periodic safety update"
+            type="button"
+          >
+            EU MDR PSUR
+             
+            <span
+              class="count"
+            >
+              0
+            </span>
+          </button>
+        </div>
+      </div>
+      <div
+        class="docs-panel"
+      />
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Reporting clocks
+        </h2>
+        <span
+          class="section-sub"
+        >
+          PM-1 only
+           · complaints · MDR events · CAPAs — overdue first, then soonest due. FDA 5-day and 30-day, EU MDR Article 87 15-day.
+        </span>
+      </div>
+      <div
+        class="data-gate"
+      >
+        <div
+          aria-live="polite"
+          class="c2c-empty-state tone-idle"
+          data-testid="data-gate-empty"
+          role="status"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-empty-ic"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-empty-t"
+          >
+            No reportable items yet
+          </div>
+          <div
+            class="c2c-empty-h"
+          >
+            Complaints, MDR events and CAPAs appear here as they are raised, ordered by how close they are to their reporting deadline.
+          </div>
+          <button
+            class="c2c-empty-action"
+            type="button"
+          >
+            Check again
+          </button>
+        </div>
+      </div>
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Signal triage queue
+        </h2>
+        <span
+          class="section-sub"
+        >
+          0
+           critical or under-review signals not yet wrapped in an MDR or CAPA · oldest first
+        </span>
+      </div>
+      <div
+        class="eng-blockers-feed"
+      />
+    </section>
+    <section
+      class="section eng-awareness"
+      data-open="false"
+    >
+      <button
+        aria-expanded="false"
+        class="eng-awareness-head"
+        type="button"
+      >
+        <span
+          class="eng-awareness-chev"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M9 6l6 6-6 6"
+            />
+          </svg>
+        </span>
+        <h2>
+          Situational awareness
+        </h2>
+        <span
+          class="section-sub"
+        >
+          Full signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution
+        </span>
+      </button>
+    </section>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx:53:18
+     51|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+     52|
+     53|     const note = getByTestId('pm-docs-not-read');
+       |                  ^
+     54|     expect(note.textContent ?? '').toMatch(/post-market documents are …
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx > PostmarketSurface — the documents panel is not shown as an empty list (slice 0) > counts no documents it did not read
+AssertionError: expected 'WorkstreamPost-market vigilance0 regu…' not to match /\d+ regulatory submissions in flight/
+
+- Expected:
+/\d+ regulatory submissions in flight/
+
++ Received:
+"WorkstreamPost-market vigilance0 regulatory submissions in flight. 21 CFR 803 MDR · EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.Surveillance signals, PMS plan entries and the CAPA board cover all projects in this organization. Reporting clocks and the MDR/CAPA deadline metrics are limited to PM-1. Triage signalsMDRs due ≤72h—FDA 5-day · 30-day · EU 15-day clocksCAPAs open—Not yet readPMS plan entries0No PMS plan recordedOpen signals00 critical · awaiting MDR roll-upRegulatory submissions in flightTap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnAAll 021 CFR 803 0EU MDR Art. 87 0820.100 · ISO 13485 §8.5.2/8.5.3 0FSCA / FSN 0EU MDR PSUR 0Reporting clocksPM-1 only · complaints · MDR events · CAPAs — overdue first, then soonest due. FDA 5-day and 30-day, EU MDR Article 87 15-day.No reportable items yetComplaints, MDR events and CAPAs appear here as they are raised, ordered by how close they are to their reporting deadline.Check againSignal triage queue0 critical or under-review signals not yet wrapped in an MDR or CAPA · oldest firstSituational awarenessFull signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.documentsUnread.test.tsx:62:33
+     60|     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i…
+     61|
+     62|     expect(text(container)).not.toMatch(/\d+ regulatory submissions in…
+       |                                 ^
+     63|     // The framework filter row counted an unread list: "All 0", "21 C…
+     64|     expect(container.querySelector('.docs-panel')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  02:23:58
+   Duration  1.62s (transform 403ms, setup 239ms, import 499ms, tests 129ms, environment 597ms)
+

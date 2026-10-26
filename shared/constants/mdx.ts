@@ -103,8 +103,9 @@ export const STAGE_LABELS = [
   'Cleared',
 ] as const;
 
-/** PMA-specific 10-phase grid (kit content; mapping from kit's 7-stage to
- *  this grid lives in surfaces/PmaSurface.tsx). */
+/** PMA-specific 10-phase grid (kit content). It carries no position: a
+ *  project records a generic project phase (PROGRAM_PHASES), not a PMA phase,
+ *  and the kit-stage-to-PMA mapping was deleted in slice 0 (PmaSurface.tsx). */
 export const PMA_PHASE_IDS = [
   'presub', 'preclin', 'ide', 'mfg', 'pivotal',
   'labeling', 'module', 'panel', 'approval', 'postapp',

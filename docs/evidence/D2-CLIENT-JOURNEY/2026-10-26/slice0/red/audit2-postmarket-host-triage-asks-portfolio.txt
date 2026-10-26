@@ -1,0 +1,92 @@
+RED (audit2 postmarket-host #1): the header 'Triage signals' button asks AnA to triage 'vigilance signals across the portfolio'; AnA's only triage tool reads one program's complaints, MDR events and CAPAs and requires its id.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+------x--
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > asks AnA to triage only what its triage tool reads, for this project
+AssertionError: expected 'Triage open vigilance signals across …' not to match /portfolio|vigilance signals/i
+
+- Expected:
+/portfolio|vigilance signals/i
+
++ Received:
+"Triage open vigilance signals across the portfolio and tell me which ones cross a 5-day or 30-day MDR clock today."
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx:197:26
+    195|     fireEvent.click(button as HTMLElement);
+    196|     expect(asked).toHaveLength(1);
+    197|     expect(asked[0]).not.toMatch(/portfolio|vigilance signals/i);
+       |                          ^
+    198|     expect(asked[0]).toContain('Own infusion pump (program project-own…
+    199|     expect(asked[0]).toMatch(/complaints, MDR events and CAPAs/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  05:03:59
+   Duration  1.45s (transform 362ms, setup 169ms, import 467ms, tests 122ms, environment 557ms)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PostmarketSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+-x---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+AssertionError: expected [ 'Triage signals', …(1) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   StringMatching /Triage queue/,
+-   StringMatching /^Situational awareness/,
++ [
++   "Triage signals",
++   "Situational awarenessFull signals feed · MDR clock · CAPA board · trend sparklines · PMS plan execution",
+  ]
+
+ ❯ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx:216:21
+    214|       .filter((b) => !b.disabled)
+    215|       .map(label);
+    216|     expect(enabled).toEqual(
+       |                     ^
+    217|       expect.arrayContaining([expect.stringMatching(/Triage queue/), e…
+    218|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  05:04:01
+   Duration  2.17s (transform 857ms, setup 158ms, import 1.11s, tests 68ms, environment 673ms)
+

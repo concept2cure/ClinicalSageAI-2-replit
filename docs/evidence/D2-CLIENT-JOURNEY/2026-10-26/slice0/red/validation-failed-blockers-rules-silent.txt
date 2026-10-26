@@ -1,0 +1,453 @@
+# 2026-10-26T03:33:39Z HEAD 928b70996 (working tree, before the fix)
+# npx vitest run --reporter=dot client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx -t says so in the Rules section
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+---------x--
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx > device-validation says only what it reads (slice 0) > a FAILED blockers read says so in the Rules section
+TestingLibraryElementError: Unable to find an element by: [data-testid="workbench-blockers-error"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-header"
+    >
+      <div>
+        <div
+          class="page-eyebrow"
+        >
+          Workbench
+        </div>
+        <h1
+          class="page-title"
+        >
+          Validation center
+        </h1>
+        <div
+          class="page-sub"
+        >
+          Open blockers recorded against your organization’s projects.
+        </div>
+      </div>
+      <div
+        class="page-actions"
+      >
+        <button
+          class="btn ghost small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+            <polyline
+              points="7 10 12 15 17 10"
+            />
+            <line
+              x1="12"
+              x2="12"
+              y1="15"
+              y2="3"
+            />
+          </svg>
+           Export report
+        </button>
+        <button
+          class="btn primary small"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+            />
+            <path
+              d="M5 3v4M19 17v4M3 5h4M17 19h4"
+            />
+          </svg>
+           Ask Claude to triage
+        </button>
+      </div>
+    </div>
+    <div
+      class="metrics-row"
+    />
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Readiness by program
+        </h2>
+        <span
+          class="section-sub"
+        >
+          Column order · errors · warnings · pass
+        </span>
+      </div>
+      <div
+        aria-live="assertive"
+        class="c2c-error-state variant-panel"
+        data-testid="workbench-no-validation-programs-error"
+        role="alert"
+      >
+        <span
+          aria-hidden="true"
+          class="c2c-error-ic"
+        >
+          <svg
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="16"
+          >
+            <path
+              d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+        </span>
+        <div
+          class="c2c-error-body"
+        >
+          <div
+            class="c2c-error-t"
+          >
+            Could not load the validation matrix
+          </div>
+        </div>
+        <div
+          class="c2c-error-actions"
+        >
+          <button
+            class="c2c-error-retry"
+            type="button"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+      <div
+        class="val-matrix"
+      />
+    </section>
+    <section
+      class="section"
+    >
+      <div
+        class="section-head"
+      >
+        <h2>
+          Rules
+        </h2>
+        <div
+          class="seg small"
+        >
+          <button
+            class="seg-btn"
+            data-on="true"
+          >
+            All
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Blockers
+          </button>
+          <button
+            class="seg-btn"
+            data-on="false"
+          >
+            Warnings
+          </button>
+        </div>
+      </div>
+      <div
+        class="ctable"
+      >
+        <div
+          class="ctable-head"
+          style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+        >
+          <div>
+            Sev
+          </div>
+          <div>
+            Rule
+          </div>
+          <div>
+            Program
+          </div>
+          <div>
+            Category
+          </div>
+          <div>
+            Message
+          </div>
+          <div>
+            Since
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="page-header"
+      >
+        <div>
+          <div
+            class="page-eyebrow"
+          >
+            Workbench
+          </div>
+          <h1
+            class="page-title"
+          >
+            Validation center
+          </h1>
+          <div
+            class="page-sub"
+          >
+            Open blockers recorded against your organization’s projects.
+          </div>
+        </div>
+        <div
+          class="page-actions"
+        >
+          <button
+            class="btn ghost small"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Export report
+          </button>
+          <button
+            class="btn primary small"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"
+              />
+              <path
+                d="M5 3v4M19 17v4M3 5h4M17 19h4"
+              />
+            </svg>
+             Ask Claude to triage
+          </button>
+        </div>
+      </div>
+      <div
+        class="metrics-row"
+      />
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Readiness by program
+          </h2>
+          <span
+            class="section-sub"
+          >
+            Column order · errors · warnings · pass
+          </span>
+        </div>
+        <div
+          aria-live="assertive"
+          class="c2c-error-state variant-panel"
+          data-testid="workbench-no-validation-programs-error"
+          role="alert"
+        >
+          <span
+            aria-hidden="true"
+            class="c2c-error-ic"
+          >
+            <svg
+              fill="none"
+              height="16"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="16"
+            >
+              <path
+                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+              />
+            </svg>
+          </span>
+          <div
+            class="c2c-error-body"
+          >
+            <div
+              class="c2c-error-t"
+            >
+              Could not load the validation matrix
+            </div>
+          </div>
+          <div
+            class="c2c-error-actions"
+          >
+            <button
+              class="c2c-error-retry"
+              type="button"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+        <div
+          class="val-matrix"
+        />
+      </section>
+      <section
+        class="section"
+      >
+        <div
+          class="section-head"
+        >
+          <h2>
+            Rules
+          </h2>
+          <div
+            class="seg small"
+          >
+            <button
+              class="seg-btn"
+              data-on="true"
+            >
+              All
+            </button>
+            <button
+              class="seg-btn"
+              data-on="false"
+            >
+              Blockers
+            </button>
+            <button
+              class="seg-btn"
+              data-on="false"
+            >
+              Warnings
+            </button>
+          </div>
+        </div>
+        <div
+          class="ctable"
+        >
+          <div
+            class="ctable-head"
+            style="grid-template-columns: 76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px;"
+          >
+            <div>
+              Sev
+            </div>
+            <div>
+              Rule
+            </div>
+            <div>
+              Program
+            </div>
+            <div>
+              Category
+            </div>
+            <div>
+              Message
+            </div>
+            <div>
+              Since
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/mdx/workbench/__tests__/ValidationSurface.whatItReads.test.tsx:170:11
+    168|     serve(null);
+    169|     render(<ValidationSurface onAskAna={() => {}} />);
+    170|     await waitFor(() => expect(screen.getByTestId('workbench-blockers-…
+       |           ^
+    171|     expect(screen.getByTestId('workbench-blockers-error').textContent)…
+    172|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  03:33:39
+   Duration  6.59s (transform 464ms, setup 196ms, import 535ms, tests 5.06s, environment 557ms)
+

@@ -1,0 +1,29 @@
+# device-pma, audit [1]: no recorded phase still reads a phase, because useMdxPrograms invents a stage from progress bands.
+# PmaSurface.tsx as the first pass left it; the real host and the real useMdxPrograms (row phase null, progress 0).
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+-x--
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx > PmaSurface — states the recorded project phase, through the real host > no recorded phase states none — the hook's progress-band stage is not one
+AssertionError: expected 'Phase 2 of 10 — Preclinical · No targ…' to match /^No project phase recorded · No targe…/
+Ignored nodes: comments, script, style
+...
+- Expected:
+/^No project phase recorded · No target set$/
++ Received:
+"Phase 2 of 10 — Preclinical · No target set"
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx:121:52
+    119| async function settle(container: HTMLElement, expected: RegExp) {
+    120|   await waitFor(() => expect(container.querySelectorAll('.phases .phas…
+    121|   await waitFor(() => expect(phaseLine(container)).toMatch(expected));
+       |                                                    ^
+    122| }
+    123|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  03:31:08
+   Duration  8.28s (transform 1.92s, setup 170ms, import 2.25s, tests 5.16s, environment 547ms)
