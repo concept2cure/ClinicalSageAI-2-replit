@@ -1298,11 +1298,12 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
       <div className="pj-sec-h">
         <h2 id="pj-docs-h">Documents</h2>
         <span className="pj-sec-acts">
-          {/* Protocols have no program key (protocol_documents, PF-14), so
-              the door says they are the organisation's, not this project's. */}
+          {/* Slice 0: this read "Protocols (organisation-wide)" while protocols had no
+              program key (PF-14). They carry it since 20261014_protocol_program_scope.sql
+              and the workspace lists the open project's, so the door names the job. */}
           {available('protocol-dev') && (
             <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('protocol-dev')}>
-              Protocols (organisation-wide) {I.right}
+              Write the protocol in the protocol workspace {I.right}
             </button>
           )}
           {available('document-authoring') && (

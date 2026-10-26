@@ -207,12 +207,15 @@ export interface CtArtifact {
 
 /* ---- Link maps ---- */
 
+/* Slice 0: `module` opened dossier-map and `evidence` opened evidence-search, both outside the
+   release. Module completion is shown on the project; evidence is read in its Vault
+   (conversationRefChipsNoLock.test.ts). */
 export const CT_LINKMAP: Record<string, string> = {
   doc: 'document-authoring',
   file: 'vault',
   task: 'task-board',
-  module: 'dossier-map',
-  evidence: 'evidence-search',
+  module: 'project-home',
+  evidence: 'vault',
   review: 'review',
   submission: 'submission-center',
 };

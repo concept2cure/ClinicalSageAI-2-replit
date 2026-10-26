@@ -1,0 +1,13 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > navigation targets
++   "projects.description: The projects list / workspace home — pick or create a regulatory program.",
++   "insights.description: The Reporting canvas: governed reports over the program records, each with its confidence, gaps and blockers stated.",
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions
++   "projects.filter.description: On the Projects portfolio, filter the program list by workstream and/or status. Omit a param to leave that axis unchanged; pass \"all\" to clear it.",
++   "projects.set-view.description: On the Projects portfolio, switch between the grid and list presentation of the programs.",
++   "tasking.filter.description: On the task board, filter by programme and/or module (both resolved against the live options on screen — pass the name as shown; \"all\" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.",
++   "cmc.open-tab.description: On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.",
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > demonstration scripts: what AnA is told to say
++   "training-orientation[1].say: Projects is the front door: every project with its workstream, stage, readiness and blockers. Name the projects actually in their portfolio — drug and device projects sit side by side in one portfolio. If it is empty, say so plainly and offer to set up their first program together.",
++   "training-orientation[4].say: The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — the CTD tree for a drug or biologic program, the device submission folders for a device.",
+      Tests  3 failed | 1 passed (4)

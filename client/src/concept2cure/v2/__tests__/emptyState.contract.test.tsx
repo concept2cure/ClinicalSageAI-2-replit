@@ -78,7 +78,9 @@ describe('EmptyState — the four-part contract', () => {
     const action = openProgramAction(nav);
     expect(action.label).toBe('Choose or create a project');
     action.onAct();
-    expect(nav).toHaveBeenCalledWith('mission-control');
+    /* Slice 0: Projects, where a project is opened and New project creates one. It was Mission Control,
+       which is outside the release, so every "Choose or create a project" opened a lock. */
+    expect(nav).toHaveBeenCalledWith('projects');
 
     /* No nav threaded → the event channel, NOT `undefined`.
      *

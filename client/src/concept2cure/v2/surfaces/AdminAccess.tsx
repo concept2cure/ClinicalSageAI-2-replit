@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { useSurfaceActionHandlers } from '../surfaceActions';
+import { applySurfaceAction, useSurfaceActionHandlers } from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { ceremonyOpen } from '../ceremony';
 import { isApiRequestError } from '../apiCall';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
@@ -283,7 +284,12 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   ];
   const kv = (n: number | null) => (ready && n !== null ? String(n) : '--');
 
-  const ask = (t: string) => onAsk(t);
+  /** A member's activity is read on the audit trail, searched for them (`audit-trail.search` matches the actor). */
+  const openAuditFor = (name: string) => {
+    const res = resolveSurfaceAction('audit-trail.search', { query: name });
+    if (res.ok) applySurfaceAction(res.directive, (t) => onNav(t));
+    else onNav('audit-trail');
+  };
 
   /* WHAT ANA SEES HERE. Aggregates only: a per-member MFA/SSO list is a target
      list, so who-lacks-MFA is published as a count and never as names. No
@@ -338,7 +344,8 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: [
         'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
         'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
-        'Invite members, change membership roles, revoke API keys, or propose project access and organization settings changes',
+        'Invite members, change membership roles or revoke API keys. Project access is granted on a project\'s Plan, under Project sharing; organization settings are shown here, not changed',
+        'Open the audit trail, or open it searched for one member\'s activity from that member\'s panel',
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys, Skills and Settings tabs, or filter members by state (all / active / invited / disabled)',
         'On Skills, read the platform skill library and this organization’s own skills, and test which skills a question would load. Turning a skill on or off, and creating or changing one, are the administrator’s acts with a stated reason',
       ],
@@ -399,11 +406,12 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="page-title">Admin and access</h1>
           <div className="page-sub">
             Members · roles · project-level access grants · SSO · API keys · AnA skills · admin audit.
-            Every action below emits a 21 CFR Part 11 audit entry.
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small" onClick={() => ask('Audit a member — every action, signing, and project touched this week. Export as a Part 11 PDF.')}>{I.eye} Audit a member</button>
+          {/* Slice 0: this sent AnA a request to export a member's activity as a Part 11 PDF, which no
+              AnA tool does. The audit trail is where activity is read, searched and exported. */}
+          <button className="btn ghost small" onClick={() => onNav('audit-trail')}>{I.eye} Open the audit trail</button>
           {/* Was a chat prompt: the page's primary CTA typed a sentence into
               the AnA panel and no invite form, no invite and no POST happened.
               POST /api/tenant-users exists, is org-admin gated and enforces the
@@ -520,9 +528,11 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                       <span className="adm-grant-when">{g.expires ? `expires ${g.expires}` : `granted ${g.granted}`}</span>
                     </div>
                   ))}
+                  {/* Slice 0: "Grant access" sent AnA a sentence no AnA tool carries out. A project is
+                      shared on the project itself (ProjectTeamSharing, on Plan, under Team). */}
+                  <div className="adm-muted adm-sub">Project access is granted on the project's Plan, under Project sharing.</div>
                   <div className="drawer-actions">
-                    <button className="btn primary small" onClick={() => ask(`Grant ${member.name} access to a project. Confirm project, scope, and expiry, then emit the Part 11 audit entry.`)}>{I.plus} Grant access</button>
-                    <button className="btn ghost small" onClick={() => ask(`Show ${member.name}'s last 90 days of activity — every signing and artifact touched. Export as Part 11 PDF.`)}>{I.eye} Audit activity</button>
+                    <button className="btn ghost small" onClick={() => openAuditFor(member.name)}>{I.eye} Audit activity</button>
                     {/* Role change and removal call the membership routes directly
                         (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
                         the server's own answer. */}
@@ -542,7 +552,9 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                     <div className="adm-role-head"><span className={`adm-role-pill adm-role-${r.id}`}>{r.label}</span><span className="adm-role-n mono">{r.members} member{r.members === 1 ? '' : 's'}</span></div>
                     <div className="adm-role-desc">{r.desc || 'Org-level role derived from live membership.'}</div>
                     <div className="adm-role-scopes">{r.scopes.map((s) => <span key={s} className="adm-scope mono tiny">{s}</span>)}</div>
-                    <div className="adm-role-foot"><button className="btn ghost small" onClick={() => ask(`Edit the ${r.label} role. Show current scopes, propose changes, and confirm impact on the ${r.members} member(s) assigned.`)}>{I.penLine} Edit scopes</button></div>
+                    {/* Slice 0: "Edit scopes" sent AnA a sentence. A role's scopes are read from the
+                        checks that enforce them (server/services/tenant/role-scopes.ts), so they are shown. */}
+                    <div className="adm-role-foot adm-muted adm-sub">Scopes follow from the checks that enforce this role; they are not edited here.</div>
                   </article>
                 ))}
               </div>
@@ -664,7 +676,7 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
 
           {tab === 'settings' && (
             <section className="section">
-              <div className="section-head"><h2>Org settings</h2><span className="section-sub">Changes here emit Part 11 audit entries</span></div>
+              <div className="section-head"><h2>Org settings</h2><span className="section-sub">As set now. Nothing on this tab changes them yet.</span></div>
               {facetDown('settings') && (
                 <div className="adm-facet-error">
                   <EmptyState
@@ -687,10 +699,12 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
                         <div className="adm-setting-val"><span>{s.value}</span></div>
                       </div>
                     ) : (
-                      <button key={s.id} className="adm-setting" onClick={() => ask(`Change setting "${s.label}". Current value: ${s.value}. Confirm the new value, its impact, and the audit entry.`)}>
+                      /* Slice 0: each row sent AnA "Change setting …"; no AnA tool changes an
+                         organization setting, so the row shows the value and offers nothing. */
+                      <div key={s.id} className="adm-setting adm-setting-fixed">
                         <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
-                        <div className="adm-setting-val"><span>{s.value}</span><span className="adm-setting-chev">{I.arrowRight ?? I.right}</span></div>
-                      </button>
+                        <div className="adm-setting-val"><span>{s.value}</span></div>
+                      </div>
                     ),
                   )}
                 </div>

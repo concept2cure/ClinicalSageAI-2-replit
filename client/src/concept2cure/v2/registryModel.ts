@@ -965,8 +965,14 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      KitSurfaceScaffold fallback: AnA saying "taking you to Intelligence" and
      the person arriving at a scaffold. Each maps to the surface that IS that
      capability today. Guarded by __tests__/navigationReachability.test.ts,
-     which fails the moment a registry id and this table drift apart again. */
-  biopharma: 'program-journey',
+     which fails the moment a registry id and this table drift apart again.
+     `biopharma` opened program-journey, outside the release: Projects is the
+     module's entry, and each project's six steps are its own (slice 0 of
+     .design/client-journey/INFORMATION_ARCHITECTURE.md). `intelligence` and
+     `safety` still resolve to screens outside the release; under the launch
+     scope those carry a lock AnA is given, so navigate_to refuses them in the
+     conversation (the same test file pins that every target is one or the other). */
+  biopharma: 'projects',
   documents: 'vault',
   submissions: 'submission-center',
   'section-workspace': 'document-authoring',
