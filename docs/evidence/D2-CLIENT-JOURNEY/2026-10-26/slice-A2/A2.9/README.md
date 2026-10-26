@@ -96,3 +96,15 @@ qualification limits are not reclassified by this slice.
 Next is A2.10, checking each remaining fold against its function-parity row.
 No remaining shell or catalogue identity is retired until its specific carryover
 and admission prerequisites are satisfied.
+
+## Concurrent Account integration
+
+Concurrent actor-owned Account invitation/reporting work through `5c24914f0`
+was merged as `e33b7fe3d`. It uses the existing recipient/reporting APIs and does
+not call a retired creator. The A2.9 qualified source/test/gate hashes remain
+unchanged. Seven targeted Account/creation-door/action/AnA-control/owner-contract
+suites pass **97 tests** (16.80 seconds); these overlap earlier proof and are not
+added to 307. The combined production client/server/audit-verifier build passes
+(frontend **20.68 seconds**). Results are `account-integration.log.gz` and
+`account-build.log.gz`. Normal publication gates, including full TypeScript and
+the no-new-warning check, still apply to the final combined tree.

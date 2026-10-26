@@ -26,7 +26,8 @@
     "tests/routes/concept2cure.test.ts": "05755222129099790f0c25ac0ec21d4d79e43c0ff67765bb788f4019f57464f1",
     "tests/routes/device-projects-governed-writes.test.ts": "f4290e619498e221257448cf341e5350818bbcbaba8cbdfdcc556c09ceb26d0e",
     "tests/routes/project-hierarchy-creator-retirement.test.ts": "0bee02253089fa58be9cf03c376df5971a7c4f9469dffd9b1d9b783b243d09e4",
-    "tests/routes/projects-management-tenant-boundary.test.ts": "e0b1565b9be59393c3e25c3d3c676a19362705742de9be299f8a24bff0ca7e13"
+    "tests/routes/projects-management-tenant-boundary.test.ts": "e0b1565b9be59393c3e25c3d3c676a19362705742de9be299f8a24bff0ca7e13",
+    "package.json": "60a8cca1f2a62620f8bfe5e07bbbaa5f23fe096db7f3269363ed214a1511bb9a"
   },
   "deleted": [
     "server/services/__tests__/ana-create-project-refuses-an-unrecorded-project-limit.test.ts"
