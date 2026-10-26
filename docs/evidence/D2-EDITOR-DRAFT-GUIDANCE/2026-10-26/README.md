@@ -84,3 +84,8 @@ Normal direct source publication succeeded at **`96ac4c4a3394d6725097229d7d97b1e
 Fresh authenticated fetch found **0 ahead /0 behind**. `accepted-code-verification.json` matches all **62 actual Git input blobs** and verifies both source and type-correction ancestry at the accepted canonical revision. The artifact manifest hashes the full evidence packet, including historical failures, fixture corrections and final receipts. Final normal documentation publication carries this proof and local testing handoff; the final read-only verifier checks its accepted revision without creating a recursive receipt.
 
 All **130 human cases remain Not run**. This work qualifies local automated draft-context behavior, not native PostgreSQL scheduling/RLS, live model consumption/competence, agency acceptance, deployment or full editor-action parity. Drafts still pass through the existing editor, explicit acceptance/save controls and signature requirements.
+
+
+## Complete source-snapshot publication
+
+The final read-only artifact verifier found compressed canonical SQL source snapshots excluded by the repository's `*.sql.gz` ignore rule. Each missing file was decompressed and matched by SHA-256 to an already tracked canonical migration; none is a database export. The exact list/proof is retained in `ignored-source-snapshot-publication.json`. These intended evidence files are added explicitly with `git add -f`, without bypassing hooks or forcing a branch update. The artifact manifest is recomputed and the accepted documentation revision is reverified in full. Source-code/test input hashes remain unchanged.

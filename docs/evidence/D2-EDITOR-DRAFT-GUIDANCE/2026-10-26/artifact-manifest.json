@@ -1,6 +1,6 @@
 {
   "files": {
-    "README.md": "e885f2554f1789a6c75bc8e9f74c88165969b4c0a921ee7e9897c3e7ab52ddce",
+    "README.md": "6bd0e45f2a92b6ff247a9da1587c40234918d82e95fd6c2d2658f4b9275536f4",
     "accepted-code-verification.json": "3a7932b0e53b6cd61a2fa6df913ccdf81990f8b220fc057366aab821f5b14499",
     "baseline-source-freeze.json": "d9a45eaf099c2b4b1aa2b1ad2dad368049001ad11c1a3933385661c59c7cb359",
     "build-post-merge.json": "4eb20c5718dbe06575dd224f2c2c31ab8406047dadc7fcf071acb0eb05bc90f1",
@@ -263,6 +263,7 @@
     "http/setup-unrun/red-31-20260906c_draft_candidate_assertions.sql.gz": "ea1d0b75feee50a85493c7d01fb9e943cfd1e174f661fc1c1b33e7f2b8c0353d",
     "http/setup-unrun/red-inputs.json": "d46ceac633e48b3109d8071054b69edab3b14dac925567f6d72a538f91b0f138",
     "http/setup-unrun/status.json": "73d12854345c239284b1dd9682b6bbc61b82cd4a3dfadc79ee90fabb23a2493a",
+    "ignored-source-snapshot-publication.json": "162308e27ee833858dffa1c9659cbc958c94760df72e443fac6a7402045fc405",
     "incoming-discovery.json": "a77a2779b2c7d0d55458c7dca1eb18d983d113f4a5dffc4d25fdfb096da6ee52",
     "integration-post-merge.json": "378840b15b4e3a05190c4113232cc07a3d7297d6912e1f6dd73f720eac299f84",
     "integration-post-merge.log.gz": "e47a8355c02e76a4149931e63c9554fbd486f6f08d4d6c22aa6dcbff5c6a42cc",
