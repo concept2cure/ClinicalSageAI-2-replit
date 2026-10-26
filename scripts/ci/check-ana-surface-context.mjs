@@ -97,7 +97,9 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-26 A2.7: dossier and dossier-map are aliases to project-home, whose
 // ProjectDossier now publishes all three reads. Their two retired IDs are no
 // longer routable publishers (projectDossierParity/projectDestinationShell).
-const ID_BASELINE = 114;
+// 2026-10-26 A2.10a: filings-catalog folds into the existing Projects wizard.
+// Its reference facts are published through Projects/ProjectHome, not a new id.
+const ID_BASELINE = 113;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

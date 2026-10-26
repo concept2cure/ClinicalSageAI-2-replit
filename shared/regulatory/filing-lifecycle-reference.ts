@@ -1,47 +1,6 @@
-/**
- * Regulatory Filing & Document Taxonomy -- the Filings catalog's view of the
- * ONE filing catalog (shared/regulatory/filing-catalog.ts).
- *
- * This file used to carry its own hand-written list of 113 filing types,
- * drifting from both the canonical registry and the wizard's mirror — three
- * different answers to "how many filing types do you support", and stale
- * regulatory metadata (an IB still in M5, an ANDA still scoped M1–M3) after
- * the canonical copies were corrected. BP-W1-2 retires the list:
- * FILINGS_TAXONOMY is DERIVED here, so both surfaces render the same entries,
- * the same metadata, and the same (computed) count.
- *
- * The workflow-code tables and lifecycle-loop archetypes below are the
- * catalog page's own domain content and remain authored here.
- */
-import {
-  filingCatalogTree,
-  filingWfCode,
-} from '@shared/regulatory/filing-catalog';
-
-/* ---- Interfaces ---- */
-
-export interface FilingItem {
-  n: string;
-  a: string;
-  f: string;
-  c: string;
-  wf: string;
-  d: string;
-}
-
-export interface FilingCategory {
-  cat: string;
-  desc: string;
-  items: FilingItem[];
-}
-
-export interface FilingSegment {
-  seg: string;
-  label: string;
-  sub: string;
-  icon: string;
-  cats: FilingCategory[];
-}
+/** Existing authored filing-family guides, relocated from the catalogue owner.
+ * These static examples are reference prose, never project clocks or verdicts. */
+import { AGENCY_LABEL, resolveFilingCatalogEntry, type FilingCatalogEntry } from './filing-catalog';
 
 export interface FilingLoopReturn {
   label: string;
@@ -54,53 +13,6 @@ export interface FilingLoop {
   stages: string[];
   ret: FilingLoopReturn;
 }
-
-/* ---- Taxonomy -- derived, not authored ---- */
-
-/** Legacy short segment keys the catalog page uses as tab state. */
-const SEG_KEY: Record<string, { seg: string; icon: string }> = {
-  pharma_biotech: { seg: 'pharma', icon: 'beaker' },
-  medical_devices: { seg: 'device', icon: 'stethoscope' },
-  diagnostics_ivd: { seg: 'ivd', icon: 'microscope' },
-  cross_cutting: { seg: 'cross', icon: 'layers' },
-};
-
-export const FILINGS_TAXONOMY: FilingSegment[] = filingCatalogTree().map((seg) => ({
-  seg: SEG_KEY[seg.id]?.seg ?? seg.id,
-  label: seg.title,
-  sub: seg.subtitle,
-  icon: SEG_KEY[seg.id]?.icon ?? seg.iconHint,
-  cats: seg.categories.map((cat) => ({
-    cat: cat.title,
-    desc: cat.description,
-    items: cat.entries.map((e) => ({
-      n: e.displayName,
-      a: e.agency,
-      f: e.submissionFormat,
-      c: e.ctdModule,
-      wf: filingWfCode(e),
-      d: e.description,
-    })),
-  })),
-}));
-
-
-/* ---- Workflow surface mapping ---- */
-
-export const FILING_WF_SURFACE: Record<string, string> = {
-  IND: 'document-authoring', NDA: 'document-authoring', BLA: 'document-authoring', MAA: 'document-authoring',
-  CSR: 'document-authoring', '510k': 'document-authoring', PMA: 'document-authoring',
-  denovo: 'document-authoring', CER: 'document-authoring', ANDA: 'document-authoring',
-  '505b2': 'document-authoring', biosimilar: 'document-authoring', DMF: 'document-authoring',
-  IDE: 'document-authoring', HDE: 'document-authoring', IVDR: 'document-authoring',
-  MDR: 'document-authoring', STED: 'document-authoring',
-  designation: 'document-authoring', postmarket: 'document-authoring', presub: 'document-authoring',
-  samd: 'document-authoring', qms: 'document-authoring', pv: 'document-authoring',
-  clindoc: 'document-authoring', eua: 'document-authoring', cdx: 'document-authoring',
-  pmdevice: 'document-authoring', ivdpresub: 'document-authoring', ldt: 'document-authoring',
-  intldevice: 'document-authoring', advice: 'document-authoring', ivdpostmarket: 'document-authoring',
-};
-
 
 export const FILING_WF_LABEL: Record<string, string> = {
   IND: 'IND', NDA: 'NDA', BLA: 'BLA', MAA: 'MAA', CSR: 'CSR',
@@ -166,3 +78,95 @@ export const FILING_LOOP: Record<string, FilingLoop> = {
     stages: ['Draft to ICH template', 'Bind evidence', 'Internal review', 'Finalize', 'File into dossier'],
     ret: { label: 'Reviewer questions (in the parent application)', desc: 'Clinical documents are assessed inside the marketing application; questions arrive as part of the CRL / LoQ for the parent filing.' } },
 };
+
+export interface RecordedFilingContext { programType: unknown; primaryAgency: unknown }
+export interface FilingLifecycleReference {
+  basis: 'authored_reference';
+  state: 'matched';
+  scope: 'filing_family';
+  filing: Pick<FilingCatalogEntry, 'id' | 'registryId' | 'displayName' | 'agency' | 'region'>;
+  archetype: string;
+  loop: FilingLoop;
+}
+
+interface LifecycleAdmission { archetype: string; programTypes: readonly string[] }
+
+/** Exact selections whose existing prose covers this filing family. This is
+ * reference admission only: it grants no market/build/clinical eligibility.
+ * An empty type list preserves intake reference without blessing an unmodeled
+ * project type (or one of the historical generic intake fallbacks). */
+const ADMISSIONS: ReadonlyMap<string, LifecycleAdmission> = new Map([
+  ['US_IND', { archetype: 'clinical', programTypes: ['ind'] }],
+  ['US_IDE', { archetype: 'clinical', programTypes: ['ide'] }],
+  ['US_NDA', { archetype: 'marketing', programTypes: ['nda'] }],
+  ['US_BLA', { archetype: 'marketing', programTypes: ['bla'] }],
+  ['US_ANDA', { archetype: 'marketing', programTypes: ['anda'] }],
+  ['US_505B2', { archetype: 'marketing', programTypes: ['nda'] }],
+  ['US_351K', { archetype: 'marketing', programTypes: ['bla'] }],
+  ['EU_MAA', { archetype: 'marketing', programTypes: ['maa'] }],
+  ['EU_BIOSIMILAR_MAA', { archetype: 'marketing', programTypes: ['maa'] }],
+  ['US_510K', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_PMA', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_DE_NOVO', { archetype: 'device', programTypes: ['de_novo'] }],
+  ['US_510K_IVD', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_PMA_IVD', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_DE_NOVO_IVD', { archetype: 'device', programTypes: ['de_novo'] }],
+  ['US_CDX_PMA', { archetype: 'device', programTypes: ['pma'] }],
+  ['US_CDX_510K', { archetype: 'device', programTypes: ['510k'] }],
+  ['US_QSUB', { archetype: 'presub', programTypes: ['device'] }],
+  ['US_IVD_QSUB', { archetype: 'presub', programTypes: ['ivd'] }],
+  ['US_SAMD_PRESUB', { archetype: 'presub', programTypes: ['device'] }],
+  ['EU_SCIENTIFIC_ADVICE', { archetype: 'presub', programTypes: [] }],
+  ['US_BTD', { archetype: 'designation', programTypes: ['designation'] }],
+  ['US_FAST_TRACK', { archetype: 'designation', programTypes: ['fast_track'] }],
+  ['US_ORPHAN', { archetype: 'designation', programTypes: ['orphan'] }],
+  ['EU_PRIME', { archetype: 'designation', programTypes: [] }],
+  ['EU_ORPHAN', { archetype: 'designation', programTypes: [] }],
+  ['EU_MDR_CLASS_IIA', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_MDR_CLASS_IIB', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_MDR_CLASS_III', { archetype: 'euconformity', programTypes: ['mdr'] }],
+  ['EU_IVDR_CLASS_B', { archetype: 'euconformity', programTypes: ['ivdr'] }],
+  ['EU_IVDR_CLASS_CD', { archetype: 'euconformity', programTypes: ['ivdr'] }],
+  ['US_NDA_SUPP', { archetype: 'postmarket', programTypes: ['pas'] }],
+  ['US_BLA_SUPP', { archetype: 'postmarket', programTypes: ['pas'] }],
+  ['US_CBE', { archetype: 'postmarket', programTypes: ['cbe'] }],
+  ['EU_VARIATION_II', { archetype: 'postmarket', programTypes: [] }],
+  ['US_DMF', { archetype: 'cmc', programTypes: ['dmf'] }],
+  ['EU_ASMF', { archetype: 'cmc', programTypes: ['dmf'] }],
+  ['ICH_CSR', { archetype: 'clindoc', programTypes: ['csr'] }],
+  ['ICH_PROTOCOL', { archetype: 'clindoc', programTypes: ['protocol'] }],
+  ['ICH_IB', { archetype: 'clindoc', programTypes: ['ib'] }],
+  ['ICH_SAP', { archetype: 'clindoc', programTypes: ['sap'] }],
+  ['ICH_ICF', { archetype: 'clindoc', programTypes: ['icf'] }],
+]);
+
+const words = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+/** Only established storage keys and display labels are spelling aliases. */
+function knownAgency(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const key = words(value);
+  return Object.entries(AGENCY_LABEL).find(([code, label]) => words(code) === key || words(label) === key)?.[0] ?? null;
+}
+
+function contextMatches(entry: FilingCatalogEntry, admission: LifecycleAdmission, recorded: RecordedFilingContext): boolean {
+  if (recorded === null || typeof recorded !== 'object' || typeof recorded.programType !== 'string') return false;
+  const programType = recorded.programType.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const agency = knownAgency(recorded.primaryAgency);
+  return admission.programTypes.includes(programType) && agency !== null && agency === knownAgency(entry.agency);
+}
+
+/** A known exact catalogue id selects authored family prose. Project callers
+ * must additionally match their recorded type AND agency; missing or disputed
+ * identity never falls through to a US application or another guide. */
+export function filingLifecycleReferenceFor(id: string | null | undefined, recorded?: RecordedFilingContext): FilingLifecycleReference | null {
+  if (typeof id !== 'string' || !id.trim()) return null;
+  const entry = resolveFilingCatalogEntry(id.trim());
+  if (!entry || id.trim().toLowerCase() !== entry.id) return null;
+  const admission = ADMISSIONS.get(entry.registryId);
+  if (!admission || (recorded !== undefined && !contextMatches(entry, admission, recorded))) return null;
+  const loop = FILING_LOOP[admission.archetype];
+  if (!loop) return null;
+  const { registryId, displayName, agency, region } = entry;
+  return { basis: 'authored_reference', state: 'matched', scope: 'filing_family',
+    filing: { id: entry.id, registryId, displayName, agency, region }, archetype: admission.archetype, loop };
+}

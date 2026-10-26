@@ -1,0 +1,79 @@
+{
+  "workstream": "D2 client journey A2.10a",
+  "branch": "concept2cure-v2",
+  "integratedBase": "f033cc722be329cd50c0bdac2e0bfce816f8eafd",
+  "scope": "Fold only filings-catalog into existing Projects New project and exact recorded Plan",
+  "regression": {
+    "files": 29,
+    "passed": 460,
+    "failed": 0,
+    "seconds": 63.67,
+    "log": "accepted/regression.log.gz",
+    "filesList": "accepted/test-files.txt"
+  },
+  "native": {
+    "passed": 1,
+    "failed": 0,
+    "testSeconds": 27.5,
+    "totalSeconds": 28.9,
+    "widths": [
+      1440,
+      390
+    ],
+    "localDevelopmentAuth": true,
+    "runtimeRole": "app_service",
+    "rls": "on",
+    "audit": true,
+    "readyz": {
+      "database": "ok",
+      "schema": "ok",
+      "ana": "down/no_provider"
+    },
+    "log": "accepted/browser.log.gz",
+    "result": "accepted/filing-core-result.json",
+    "mobileCapture": "navigation drawer closed; guide visible"
+  },
+  "build": {
+    "passed": true,
+    "viteSeconds": 21.99,
+    "server": true,
+    "auditVerifier": true,
+    "log": "accepted/build.log.gz"
+  },
+  "eslint": {
+    "errors": 0,
+    "existingWarnings": 18,
+    "newComponentAndTestsWarnings": 0,
+    "log": "accepted/lint.log.gz"
+  },
+  "sourceTextRamp": "passed",
+  "anaSurfaceContext": {
+    "passed": true,
+    "publisherBaseline": 113
+  },
+  "validationTraceability": "passed",
+  "typecheck": {
+    "errors": 0,
+    "passed": true,
+    "baseline": 0,
+    "log": "accepted/typecheck.log.gz"
+  },
+  "publication": "pending normal commit/push hooks",
+  "formalQualification": {
+    "status": "unexecuted and unsigned",
+    "newRequirement": "URS-PROJ-007a",
+    "procedure": "OQ-PROJ-12 v0.10",
+    "historicalRequirements": 117,
+    "historicalPass": 69,
+    "historicalPartial": 2,
+    "uncovered": 46
+  },
+  "storedData": "No tables dropped; historical catalogue row, metadata and subscriptions preserved through two catalogue replays",
+  "pendingFolds": [
+    "mission-control",
+    "cro-portfolio",
+    "device-workstream",
+    "program-journey"
+  ],
+  "sourceManifest": "accepted/source-sha256.json"
+}

@@ -86,22 +86,6 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     engineering: 'assessTmfCompleteness via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. The inspection-package ZIP and artifacts/bulk endpoints are unbuilt; Download degrades live-first.',
   },
   {
-    id: 'filings-catalog',
-    label: 'Filings catalog',
-    navTier: 'global',
-    layoutMode: 'filings-catalog',
-    group: 'workspace',
-    icon: 'clipboardList',
-    uiKit: 'home',
-    apiPrefixes: ['/api/regulatory/registry'],
-    anaToolFamilies: ['get_csr_template', 'plan_submission'],
-    sharedContract: '@shared/regulatory/global-document-registry',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: deferredSurfaceDescription('filings-catalog'),
-  },
-  {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
     // where auth/redirectUtils.ts sends a `client_user` / `client_admin` after
     // login (CLIENT_FALLBACK), and `surfaceIdFromLocation` carries the segment

@@ -7,9 +7,12 @@ const h = vi.hoisted(() => ({ actor: 12, org: 7, tenant: 7, request: vi.fn() }))
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: String(h.actor), organizationId: String(h.org) }) }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: h.tenant }, setCurrentClientWorkspace: vi.fn() }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: h.request }));
-vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ value, onChange, onAsk }: {
+vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ value, onChange, onAsk, onBrowseChange }: {
   value: string; onChange: (id: string) => void; onAsk?: (question: string) => void;
+  onBrowseChange?: (browse: { segment: string; query: string }) => void;
 }) => <>
+  <button onClick={() => onBrowseChange?.({ segment: 'medical_devices', query: 'device clearance' })}>Browse device filings</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'pharma_biotech', query: '' })}>Clear filing search</button>
   <button onClick={() => onChange('us_ind')}>Pick IND</button>
   <button onClick={() => onChange('us_nda')}>Pick NDA</button>
   {value && onAsk && <button onClick={() => onAsk(`Question about ${value}`)}>Ask about filing</button>}
@@ -61,6 +64,19 @@ describe('the actual wizard reports its public state through the Projects publis
     expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 
+  it('reports the visible filing segment and search, and clears the browsing context on close', async () => {
+    const { seen } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
+    expect(facts(seen)?.selectedFiling).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filing search' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'pharma_biotech', query: '' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowse).toBeUndefined());
+    expect(JSON.stringify(seen.ctx)).not.toMatch(/Private client|actorUserId|clientWorkspaceId/);
+    expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
   it('tracks Configure, Review and Back while excluding entered/private fields', async () => {
     const { seen } = mount(); await open(); await configure();
     await waitFor(() => expect(facts(seen)?.wizardStep).toEqual({ number: 2, label: 'Configure project' }));
@@ -103,23 +119,30 @@ describe('the actual wizard reports its public state through the Projects publis
   it('retires selected metadata if the signed-in organization no longer matches', async () => {
     const { seen, view } = mount(); await open();
     fireEvent.click(screen.getByRole('button', { name: 'Pick IND' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
     await waitFor(() => expect(facts(seen)?.selectedFiling).toMatchObject({ id: 'us_ind' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
     h.tenant = 8;
     view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
     await screen.findByText(/signed-in account or organization changed/i);
     await waitFor(() => expect(facts(seen)?.wizardState).toBe('unavailable'));
     expect(facts(seen)?.selectedFiling).toBeNull();
+    expect(facts(seen)?.filingBrowse).toBeUndefined();
     view.unmount();
     render(<Probe seen={seen} />);
     expect(seen.ctx).toBeNull();
   });
 
   it('starts a matching new account at the first step with no prior selection', async () => {
-    const { seen, view } = mount(); await open(); await configure();
+    const { seen, view } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
+    await configure();
     Object.assign(h, { actor: 13, org: 8, tenant: 8 }); token();
     view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
     await waitFor(() => expect(facts(seen)?.wizardStep).toMatchObject({ number: 1 }));
     expect(facts(seen)?.selectedFiling).toBeNull();
     expect(screen.queryByRole('button', { name: 'Ask about filing' })).toBeNull();
+    expect(JSON.stringify(facts(seen)?.filingBrowse ?? null)).not.toContain('device clearance');
   });
 });

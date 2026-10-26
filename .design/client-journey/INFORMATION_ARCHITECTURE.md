@@ -836,13 +836,13 @@ row. A function not carried as it is goes on the founder's list (section 5.9).
 | `mission-control` | Projects | partial | no | `projects` | Portfolio list → Projects. Create a project → Projects' New project, on the canonical store (it would create one in a second store). "Choose or create a project" target → `OPEN_PROGRAM_SURFACE` = `projects` (slice 0). Readiness and blockers per project → the project's readiness card and the dispatch verdict; its nine-dimension readiness engine may later score the project if it reads `regulatory_programs`. | FOLD IN | To carry |
 | `device-workstream` | Projects, filtered by pathway | works | yes | `projects` | Device portfolio list → Projects. Pathway filter (510(k), PMA, CER) → a filter on Projects for device clients (Projects already has workstream tabs and device-family mapping). Portfolio health strip → a summary on Projects, unrecorded readiness reading "Not recorded", not 0%. The `mdx` alias now reaches `projects` with its MDX filter (A2.8); the separate device-workstream target remains until A2.10 parity. Its commands `evidence_sufficiency.assess` and `reviewer_simulation.run`, which run in production, keep their claim on the device project. | FOLD IN | To carry |
 | `cro-portfolio` | Projects, grouped by sponsor | partial | no | `projects` | Every sponsor served, with contract and SOW status → a sponsor filter on Projects (needs a sponsor key on projects and on `/api/c2c/projects`; today the sponsor name is the organisation's). Studies and submissions per sponsor → the filtered project list. Onboarding a sponsor (client workspace, SOW, contract dates) → Admin. | FOLD IN | To carry |
-| `filings-catalog` | New project's filing picker | partial | no | `projects` | Browse every filing type → `RegistryPicker` (has it, with search). What a filing is and how it is built → the picker's "how you'll build it" copy. Ask AnA when a filing is required, what it contains, what evidence it needs → the picker's prompt. Its lifecycle loop → the picker. Start → the wizard creates the project (this screen's Start opened a blank editor). | FOLD IN | To carry |
+| `filings-catalog` | Projects' New-project filing picker and the recorded project's Plan | works | through Projects | `projects` | A2.10a carries all thirteen audited functions: segment/category browsing and descriptions, cross-segment search, filing/reference facts, honest server offer/build limits, shared Ask AnA and actual wizard context. All nine unchanged authored lifecycle guides live in shared regulatory reference data; project display requires exact recorded filing, program type and agency, otherwise explicit unavailability. Start is canonical project creation; the project's existing steps/tasks/correspondence own the loop work. The old bookmark opens the wizard through the shared alias/action with query/hash retained. Standalone screen/identity and fixture are removed; historical catalogue/subscription records remain. | FOLDED (A2.10a) | Complete; engineering/native proof in `slice-A2/A2.10a/README.md`; revised formal OQ unexecuted/unsigned |
 
 #### Into the project (Plan, Author, Respond)
 
 | id | After the fold, the client sees | Realness | In launch scope | Canonical | Functions, and where each goes | Status | Carry-over |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `program-journey` | A project's six steps | fixture-or-demo | no | `project-home` | Stage map from candidate to lifecycle → the six steps. What each stage needs → each step's "what to do now" and Plan's deliverables. Its stage-to-feature map → this document's placements. Stage 9's post-approval list → Submit's rows and *Coming later* line. AnA's `biopharma` alias → `projects` (slice 0). | FOLD IN | Carried (unverified), except the alias |
+| `program-journey` | A project's six steps | partial; recorded/reference parity unqualified | no | `project-home` | Stage map, gates and deliverables → the six steps and Plan reference; stage-to-feature map → these placements. Actual journey/stage readers and recorded identity, target, clock, HAQ and contradiction fields retain their own carry-over checks. Stage 9's post-approval list → Submit's rows and *Coming later* line. The `biopharma` alias already reaches Projects; A2.9 retires only alternate writes. | FOLD IN | Pending stored-record and nine-stage/reference parity; A2.10a's filing-family guide does not close this row |
 | `dossier` | Module completion on Author | partial | no | `project-home` | CTD section status (ready, in review, draft) → `ProjectDossier` (`ModuleCompletion`, readiness card). Its out-of-scope callers (Nonclinical's Module 4 rows, the NDA cockpit, Agency meetings) → repointed to the project. | FOLD IN | Carried (unverified); callers to repoint |
 | `dossier-map` | Module completion on Author | partial | no | `project-home` | Module grid M1–M5 → `ModuleCompletion`; anything the grid shows that `ModuleCompletion` lacks moves into `ProjectDossier.tsx` first; then `/api/dossier-map`, the screen and the row go together, and `Dossier.tsx`'s link points at Author. | FOLD IN | To carry |
 | `haq-manager` | *Awaiting a response* on Respond | works | no | `project-home` | Letters still needing an answer → Respond's inbox (has). A response per question, Part 11 signed → `AgencyResponses` (has). The `responseRequired` filter → added to Respond's inbox. The stale P-32 note in `launch-scope.ts` corrected. The alias lands on the open project's Respond step, or on Projects when no project is open (section 12). | FOLD IN | To carry (one filter) |
@@ -1282,7 +1282,7 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-A2.1–A2.9 are implemented. Project Author preserves governed section detail, artifact counts/states/section
+A2.1–A2.9 and A2.10a's filing-catalog fold are implemented. Project Author preserves governed section detail, artifact counts/states/section
 dates and the old map's recorded tracking modules on their own bases. Incoming A2.7 folds dossier bookmarks
 through the shared step-aware resolver onto Author, or Projects without a selection; standalone screens,
 HTTP routes and identities are retired while stored data/subscriptions remain. Its native/retirement proof
@@ -1302,8 +1302,24 @@ preserving canonical intake, all 50 retained HTTP registrations, data and the
 two explicitly deferred internal writers. A red-first bounded-writer/retired-route
 contract runs in CI and pre-push; 523 focused tests, 24 native PostgreSQL checks,
 both canonical Create/refusal browser flows and build pass (`slice-A2/A2.9/README.md`).
-Next is **A2.10** (`SLICE_A2_PLAN.md`), whose remaining folds keep their per-function
-parity and admission prerequisites; no shell is removed by this creator retirement.
+A2.10a now completes only the filing-catalog fold: its old URL opens Projects'
+existing New-project wizard, with selected filing facts, server offer/build limits,
+Ask AnA and public browse/selection context. The nine original lifecycle guides
+remain unchanged authored reference in the wizard and the exact recorded
+project's Plan, with type/agency guards and explicit unavailability. They create
+no deadline, task, readiness verdict or platform offer. Engineering/native proof
+is in `slice-A2/A2.10a/README.md`; revised URS-PROJ-007a/OQ-PROJ-12 remain
+unexecuted and unsigned. Historical OQ results remain attributed to their old
+procedure.
+
+**A2.10 remains open** for mission-control, cro-portfolio, device-workstream and
+program-journey. The first needs a tenant/store and recorded product-fact check;
+CRO needs its actual engagement/client/study/submission/onboarding relationship
+carried; device-workstream retains its client-review, portfolio-figure and live
+command functions; program-journey retains its stored journey/stage reads and
+nine-stage/reference fields. Existing Projects filters and A2.9's retired writes
+do not satisfy those gates. No stored record or remaining shell is retired by
+the filing-reference fold.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

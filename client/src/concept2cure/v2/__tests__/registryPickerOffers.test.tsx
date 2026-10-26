@@ -351,3 +351,29 @@ describe('RegistryPicker states only what the verdict states for that filing', (
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /search filing types/i }));
   });
 });
+
+// A2.10a: the former catalogue functions reach the existing selection flow.
+describe('catalogue functions carried into the Projects picker', () => {
+  it('shows the selected filing lifecycle as a clearly labelled reference', async () => {
+    renderPicker(vi.fn(), 'us_ind');
+    const guide = await screen.findByRole('region', { name: 'Filing lifecycle reference' });
+    expect(guide.textContent).toContain('Reference guide');
+    expect(guide.textContent).toContain('Assemble IND/IDE');
+    expect(guide.textContent).toContain('Clinical Hold');
+    expect(guide.textContent).toContain('Authored filing-family guidance');
+  });
+
+  it('keeps the segment visible on a search result across all segments', async () => {
+    renderPicker();
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Investigational New Drug Application' } });
+    const card = await screen.findByRole('button', { name: /^Investigational New Drug Application/ });
+    expect(within(card).getByText('Pharma & Biotech')).toBeTruthy();
+  });
+
+  it('finds a filing by the existing workflow label', async () => {
+    renderPicker();
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Biosimilar 351(k)' } });
+    const entry = GLOBAL_REGISTRY.find(e => e.id === 'us_351k')!;
+    expect(await screen.findByText(entry.displayName, { exact: false })).toBeTruthy();
+  });
+});

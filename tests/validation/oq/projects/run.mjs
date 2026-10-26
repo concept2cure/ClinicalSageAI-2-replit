@@ -8,6 +8,7 @@
 import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
 import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
 import { INACTIVITY_TEXT, inactivityStep } from './inactivity.mjs';
+import { filingReferenceStep } from './filing-reference.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -319,19 +320,14 @@ await step(
   {
     id: 'OQ-PROJ-12',
     kind: 'ad-hoc',
-    urs: ['URS-PROJ-007'],
-    title: 'Filings catalog surface renders',
-    action: 'Open /concept2cure/filings-catalog',
-    expected: 'Surface renders (screenshot) without a runtime page error',
+    urs: ['URS-PROJ-007a'],
+    title: 'Former filing catalog reaches Projects intake and recorded Plan reference',
+    action: 'Open the former catalog bookmark with query/hash; browse/search the Projects wizard and select the offered US IND. Inspect its facts, offer/build limits and authored reference; cancel. Create an exact US_IND/FDA record through the public API and inspect Plan, then inspect the OQ-PROJ-04 program without an exact filing id',
+    expected: 'Canonical Projects wizard retains query/hash. Selected facts and collapsed authored stages/timing/return guidance remain reachable, separate from server support. Exact recorded US IND/FDA Plan shows the guide beside the existing plan; missing exact identity explicitly withholds it. A real offer-read failure stays explicit and the unreached positive path is a deviation. Screenshots, URLs and text are retained for reviewer judgement',
+    dependsOn: ['OQ-PROJ-04'],
+    note: 'v0.10 replaces the historical standalone catalog-render observation. This is ad-hoc evidence for review, not a computed regulatory verdict. The runner neither injects an offer failure nor edits stored identity to manufacture negative cases.',
   },
-  async (ctx) => {
-    await ctx.newPage({ id: state.programId, name: state.programName });
-    await ctx.goto('/concept2cure/filings-catalog');
-    await ctx.screenshot();
-    const errs = (await ctx.page.evaluate(() => document.body.innerText)).length;
-    ctx.expect(errs > 0, 'page body is empty');
-    return 'rendered';
-  },
+  async (ctx) => filingReferenceStep(ctx, stamp),
 );
 
 await step(
