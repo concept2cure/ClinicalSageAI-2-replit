@@ -13,7 +13,7 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.7 are implemented. Incoming A2.7's alias,
+**Implementation status:** A2.1–A2.8 are implemented. Incoming A2.7's alias,
 parity and retirement qualification is in
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md` and
 `A2_7_PARITY_RECONCILIATION.md`. Concurrent A2.7b adds stronger recorded-tracking
@@ -21,7 +21,8 @@ identity/unknown/label/placement safeguards; its 163-test/native/build proof
 in the adjacent `A2.7b/README.md` qualifies that pre-merge snapshot. The combined tree passed 294 tests in 27 files, both native browser flows and
 the production client/server/audit-verifier build. Merged proof is under
 `slice-A2/A2.7b/merged/`; mandatory publication gates still apply.
-Next is A2.8 (MDX alias to filtered Projects). The inventory below describes
+A2.8 reaches MDX through filtered Projects; its 257-test/native/build proof is in
+`slice-A2/A2.8/README.md`. Next is A2.9 (duplicate project creators). The inventory below describes
 discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
@@ -615,7 +616,7 @@ observations, null dependent figures and unmapped rows, alongside one canonical
 states with safe fixed reasons/codes; failed scope currentness refuses the whole
 response. Both pre-merge snapshots remain historical. The combined tree passed
 294 tests across 27 files, two native flows and the production build; proof is in
-`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is next.
+`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is recorded below; A2.9 is next.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.
@@ -659,11 +660,58 @@ response. Both pre-merge snapshots remain historical. The combined tree passed
 
 ### A2.8 Converge `mdx` onto Projects, filtered to device projects
 
+**Completed 2026-10-26:** the existing alias/action pair reaches Projects with
+MDX selected, preserving copied-link context and one-shot/manual-filter behavior.
+Seven intended reds became 34 passing focused checks; 257 combined tests, the
+native IVD/drug portfolio and project-plan flow, and the production build pass.
+Proof: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.8/README.md`.
+Existing view-local filter lifetime and device-workstream boundaries remain.
+
 - **Files:** `registryModel.ts` (:965), `ALIAS_APPLIES`, `shared/navigation/index.ts:90`, `surfaceRouting.test.ts:83`.
 - **The change:** `mdx` → `projects`, applying `projects.filter {workstream: 'MDX'}`. This is the IA row's "Projects, filtered by pathway". `mdx` is an alias-only id, so no registry row moves.
 - **What stays:** `device-workstream`'s shell, target and catalogue row stay until A2.10.
 - **Depends on:** A2.3 and A2.7.
 - **Red first:** `surfaceRouting.test.ts:83` expects `projects` with the MDX filter. **Red: device-workstream.**
+
+### What already exists (A2.8 continuation, 2026-10-26)
+
+Checked from `01dbd4eb`; this reaches existing functionality under launch row D2.
+
+- `client/src/concept2cure/v2/registryModel.ts` owns string `DEEP_LINK_ALIASES`
+  and typed `ALIAS_APPLIES`. `mdx` currently aliases the retained
+  `device-workstream`; it has no standalone registry/view row. Existing dossier
+  aliases already request destination actions through this mechanism.
+- `client/src/concept2cure/v2/routing.ts` `destinationFor` resolves alias, target
+  scope and action. `V2App.tsx` applies that action through the validated bus for
+  copied URLs and imperative navigation, then writes one canonical URL. The
+  URL effect preserves existing query/hash and does not replay an alias after
+  canonicalization.
+- `client/src/concept2cure/v2/surfaces/Projects.tsx` owns `projects.filter` and
+  the MDX workstream selection. `ProjectPortfolioFilters.tsx` renders it.
+  `useLiveRows`/the canonical `/api/c2c/projects` read filter before paging;
+  no device portfolio reader or second classifier is needed. Existing filters
+  are view-local, not persisted by the current Projects canonical URL.
+- `shared/navigation/index.ts` retains the global `mdx` navigation target for
+  AnA/old handles; its description still claims a module home and must describe
+  the real filtered Projects destination. No new target or commercial grant.
+- `surfaces/ProjectMdxWorkflow.tsx` and `ProjectHome.tsx` already reach the
+  selected device project's recorded pathway work. `device-workstream`'s
+  shell, target, catalogue and feature ids remain until their A2.10 parity work.
+- `surfaceRouting.test.ts`, `projectDestination.test.ts`,
+  `projectDestinationShell.test.tsx`, `navigationReachability.test.ts`,
+  `projectsClientFilter.test.tsx` and `projectsPortfolioTruncation.test.tsx`
+  cover routing, the real shell/action bus and existing scoped filters.
+  `tests/e2e/projects-client-filter.e2e.ts` supplies the native project-creation
+  and filtered portfolio pattern. Old expectations still pin MDX to the kit.
+- Deleted-history search: `git log --all --diff-filter=D` over
+  `client/**/*Mdx*`, `client/**/*MDX*`, `client/**/*mdx*` returned no deletion
+  commits. The kit owner is retained, not reconstructed.
+
+Reach `mdx` through the existing alias/action pair as Projects plus
+`projects.filter {workstream:'MDX'}`. Prove copied links with/without project,
+query/hash preservation, imperative navigation, one-shot action behavior and
+real filtered portfolio/open-project reachability. Preserve existing Projects
+filter lifetime rather than introduce another persistence store or router.
 
 ### A2.9 Retire the uncalled creators, and fix the unchecked workspace write by deleting it
 
