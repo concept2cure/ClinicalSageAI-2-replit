@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-/** Real canonical creation, native runtime-role SQL and rendered pathway tabs. */
-test('pathway filters and portfolio counts agree across a bounded API page', async ({ page }, testInfo) => {
+/** Real canonical creation, the MDX alias, runtime-role SQL and pathway tabs. */
+test('MDX links and pathway filters agree with scoped portfolio counts', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 1000 });
   const stamp = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -45,7 +45,38 @@ test('pathway filters and portfolio counts agree across a bounded API page', asy
   expect(result.meta.counts.byWorkstream.MDX).toBe(2);
   expect(result.meta.counts.byWorkstream.Biotech).toBe(1);
   expect(result.meta.counts.byPathway).toEqual({ k510: 2 });
-  await page.goto('/concept2cure/projects');
+  // Canonical API creation does not select a shell project. The old MDX link
+  // must still open the shared portfolio with its existing filter applied.
+  expect(await page.evaluate(() => (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT ?? null)).toBeNull();
+  const aliasReads: { url: string; status: number }[] = [];
+  page.on('response', response => {
+    const url = new URL(response.url());
+    if (url.pathname === '/api/c2c/projects' && url.searchParams.get('ws') === 'MDX') {
+      aliasReads.push({ url: url.pathname + url.search, status: response.status() });
+    }
+  });
+  await page.goto('/concept2cure/mdx');
+  await expect(page).toHaveURL(/\/concept2cure\/projects(?:\?|$)/);
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'MDX 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => aliasReads.find(read => read.url === '/api/c2c/projects?ws=MDX')).toEqual({ url: '/api/c2c/projects?ws=MDX', status: 200 });
+  await expect(page.locator('.pj-card')).toHaveCount(2);
+  await expect(page.locator('.pj-card').filter({ hasText: `Pathway project 3 ${stamp}` })).toHaveCount(0);
+  await expect(page.locator('.pj-summary')).toContainText('2 active projects');
+  await testInfo.attach('mdx-alias-portfolio.png', { body: await page.screenshot(), contentType: 'image/png' });
+
+  // A person's later choice survives subsequent screen updates. The alias is
+  // an opening action; it must not continually reassert the MDX filter.
+  const biotech = page.getByRole('button', { name: 'Biotech 1', exact: true });
+  await biotech.click();
+  await expect(page.locator('.pj-card')).toHaveCount(1);
+  await expect(page.locator('.pj-card').first()).toContainText(`Pathway project 3 ${stamp}`);
+  await page.getByRole('searchbox', { name: 'Search projects by title or code' }).fill('Pathway project 3');
+  await expect(biotech).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('searchbox', { name: 'Search projects by title or code' }).clear();
+  await expect(biotech).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.pj-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'All workstreams 3', exact: true }).click();
   await expect(page.locator('.pj-card')).toHaveCount(3);
   await page.getByRole('button', { name: 'MDX 2', exact: true }).click();
   await expect(page.locator('.pj-card')).toHaveCount(2);
@@ -56,5 +87,7 @@ test('pathway filters and portfolio counts agree across a bounded API page', asy
   await expect(page.locator('.pj-card')).toHaveCount(2);
   await testInfo.attach('pathway-portfolio.png', { body: await page.screenshot(), contentType: 'image/png' });
   await testInfo.attach('pathway-counts.json', { body: JSON.stringify({ pageCount: result.meta.count,
-    hasMore: result.meta.hasMore, counts: result.meta.counts }, null, 2), contentType: 'application/json' });
+    hasMore: result.meta.hasMore, counts: result.meta.counts,
+    alias: { canonicalPath: new URL(page.url()).pathname, selectedWorkstream: 'MDX', noProjectRequired: true,
+      filteredReads: aliasReads, manualFilterSurvivedRerender: true } }, null, 2), contentType: 'application/json' });
 });

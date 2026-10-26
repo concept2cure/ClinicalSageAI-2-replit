@@ -13,7 +13,7 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.7 are implemented. Incoming A2.7's alias,
+**Implementation status:** A2.1–A2.8 are implemented. Incoming A2.7's alias,
 parity and retirement qualification is in
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md` and
 `A2_7_PARITY_RECONCILIATION.md`. Concurrent A2.7b adds stronger recorded-tracking
@@ -21,7 +21,11 @@ identity/unknown/label/placement safeguards; its 163-test/native/build proof
 in the adjacent `A2.7b/README.md` qualifies that pre-merge snapshot. The combined tree passed 294 tests in 27 files, both native browser flows and
 the production client/server/audit-verifier build. Merged proof is under
 `slice-A2/A2.7b/merged/`; mandatory publication gates still apply.
-Next is A2.8 (MDX alias to filtered Projects). The inventory below describes
+A2.8 resolves `mdx` to Projects with the existing MDX filter, through the same
+destination/action owner. Its red/green routing, native portfolio and scope
+regression proof is in `slice-A2/A2.8/README.md`. The device-workstream shell,
+target and catalogue remain for A2.10. Next is A2.9 (retire uncalled creators).
+The inventory below describes
 discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
@@ -658,6 +662,12 @@ response. Both pre-merge snapshots remain historical. The combined tree passed
   - `nav('dossier')` → Author. **Red.**
 
 ### A2.8 Converge `mdx` onto Projects, filtered to device projects
+
+Implemented 2026-10-26. Existing-owner inventory and limits:
+`A2_8_MDX_PROJECT_DESTINATION.md`. Proof:
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.8/README.md`.
+Copied links and imperative navigation apply the existing filter once, with or
+without a selected project, preserving later filter choices and project steps.
 
 - **Files:** `registryModel.ts` (:965), `ALIAS_APPLIES`, `shared/navigation/index.ts:90`, `surfaceRouting.test.ts:83`.
 - **The change:** `mdx` → `projects`, applying `projects.filter {workstream: 'MDX'}`. This is the IA row's "Projects, filtered by pathway". `mdx` is an alias-only id, so no registry row moves.

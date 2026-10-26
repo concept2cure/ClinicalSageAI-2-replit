@@ -310,7 +310,8 @@ Do not carry listPrograms' missing access, deleted and archived filters.
 - [ ] Client Review Room. From `ClientReviewZone.tsx`. Goes to: a mount on Project home that passes the integer projects.id, not the UUID. Real today.
 - [ ] AnA's evidence_sufficiency.assess and reviewer_simulation.run commands. From `mdx-command-handlers-phase2.ts:411-600`. Goes to: reclassify them to project-home or device-510k before the surface leaves launch scope. Real today.
 - [ ] Two AnA guided tours. From `demo-scripts.ts:285-287,355-357`. Goes to: retarget them to 'projects' with the MDX filter. Real today.
-- [ ] The AnA target and the /concept2cure/mdx alias. From `index.ts:194`, `registryModel.ts:960`. Goes to: alias both to 'projects'. Real today.
+- [x] The `/concept2cure/mdx` alias and AnA's `mdx` target. A2.8 routes both through the existing destination resolver to Projects, applying `projects.filter {workstream: 'MDX'}` once. Proof: `surfaceRouting.test.ts`, `projectDestination.test.ts`, `projectDestinationShell.test.tsx` and native `projects-pathway-counts.e2e.ts`; evidence under `slice-A2/A2.8/`. No new filter, query or admission.
+- [ ] The separate `device-workstream` AnA target, shell and catalogue row. Retained for A2.10 until the rest of this row's parity work is complete; A2.8 changes the alias only.
 - [ ] Remembered grid or list view. From `Overview.tsx:64-79`. Goes to: optionally, Projects, with storage access wrapped in try/catch. Real today.
 
 #### From `cro-portfolio`

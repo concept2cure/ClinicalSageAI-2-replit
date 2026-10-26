@@ -25,7 +25,20 @@ describe('one destination for a project-scoped visit', () => {
     expect(destinationFor('features', false)).toEqual({ surfaceId: 'apps' });
     expect(destinationFor('home', false)).toEqual({ surfaceId: 'home' });
     expect(destinationFor('projects', false)).toEqual({ surfaceId: 'projects' });
-    expect(destinationFor('mdx', false)).toEqual({ surfaceId: 'device-workstream' });
+    expect(destinationFor('device-workstream', false)).toEqual({ surfaceId: 'device-workstream' });
+  });
+
+  it.each([false, true])('MDX reaches the same filtered portfolio with projectOpen=%s', projectOpen => {
+    expect(destinationFor('mdx', projectOpen)).toEqual({
+      surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+    });
+    expect(destinationFor('projects', projectOpen)).toEqual({ surfaceId: 'projects' });
+  });
+
+  it('returns independent alias parameters so callers cannot alter later MDX visits', () => {
+    const first = destinationFor('mdx', false);
+    if (first.applies) first.applies.params.workstream = 'Biotech';
+    expect(destinationFor('mdx', false).applies?.params).toEqual({ workstream: 'MDX' });
   });
 
   it('keeps the raw URL id until its requested action has been applied', () => {

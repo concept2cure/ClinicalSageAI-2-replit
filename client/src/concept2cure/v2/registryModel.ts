@@ -968,11 +968,10 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // deep-link table disagreeing about what one id means. `device-submission` is
   // the kit's submission-ops package view and resolves to itself.
   'ind-lifecycle': 'ind-checklist',
-  // `/concept2cure/mdx` was the device kit's own route before it became
-  // surfaces. Existing links and bookmarks still point at it, so the segment
-  // resolves to the kit's entry surface rather than silently falling through to
-  // home. `pdev` needs no alias — it is a real registered surface id now.
-  mdx: 'device-workstream',
+  // Old MDX links now use the canonical portfolio and its existing filter
+  // (A2.8). The device-workstream shell stays until its A2.10 parity fold.
+  // `pdev` needs no alias — it is a real registered surface id now.
+  mdx: 'projects',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate
@@ -1003,6 +1002,7 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
 export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
   dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+  mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
 };
 
 /** Home is the shell's landing, not a registry surface (V2App renders it for

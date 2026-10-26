@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { DEEP_LINK_ALIASES } from '../registryModel';
-import { locationForSurface, surfaceIdFromLocation, SURFACE_ADDRESSES } from '../routing';
+import { destinationFor, locationForSurface, surfaceIdFromLocation, SURFACE_ADDRESSES } from '../routing';
 
 describe('surfaceIdFromLocation', () => {
   it('maps the bare base path to home', () => {
@@ -79,8 +79,15 @@ describe('the retired kit paths still land somewhere real', () => {
   // `?surface=` — and wouter hands this function `location.pathname`, which has
   // no query string at all — so both landed on home. A redirect that silently
   // goes to the wrong place is worse than no redirect, because it looks handled.
-  it('/concept2cure/mdx resolves to the kit entry surface', () => {
-    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('device-workstream');
+  it('/concept2cure/mdx resolves to Projects with its existing MDX filter', () => {
+    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('projects');
+    expect(destinationFor('mdx', false)).toEqual({
+      surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+    });
+    expect(getSurface('mdx')).toBeUndefined();
+    // A2.8 changes only the alias. The old portfolio shell stays until A2.10.
+    expect(getSurface('device-workstream')).toBeDefined();
+    expect(surfaceIdFromLocation('/concept2cure/device-workstream')).toBe('device-workstream');
   });
 
   it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {

@@ -1282,7 +1282,7 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-A2.1–A2.7 are implemented. Project Author preserves governed section detail, artifact counts/states/section
+A2.1–A2.8 are implemented. Project Author preserves governed section detail, artifact counts/states/section
 dates and the old map's recorded tracking modules on their own bases. Incoming A2.7 folds dossier bookmarks
 through the shared step-aware resolver onto Author, or Projects without a selection; standalone screens,
 HTTP routes and identities are retired while stored data/subscriptions remain. Its native/retirement proof
@@ -1291,9 +1291,11 @@ and unmapped rows with shared label/placement/stat validation in one typed
 `supportingReadiness.sectionTracking` source, alongside the canonical top-level `artifactReadiness`.
 Supporting-source failures remain explicit; failed scope revalidation refuses the response. Its 163-test/native/build qualification
 belongs to the pre-merge snapshot. Combined proof in `slice-A2/A2.7b/merged/` records 294 tests
-in 27 files, two native flows and the production build passing; mandatory publication gates still apply. The next
-planned UI change is **A2.8** (`SLICE_A2_PLAN.md`): route the existing MDX alias to Projects using the existing
-device-workstream filter. Device-workstream remains until its separate A2.10 parity work.
+in 27 files, two native flows and the production build passing; mandatory publication gates still apply.
+A2.8 routes the existing MDX alias to Projects using `projects.filter {workstream: 'MDX'}`.
+Its red/green routing and native portfolio proof is in `slice-A2/A2.8/README.md`;
+the existing device-workstream shell, target and catalogue remain for A2.10.
+Next is **A2.9** (`SLICE_A2_PLAN.md`), retiring the uncalled project creators while keeping canonical intake.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

@@ -5,14 +5,28 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const observed = vi.hoisted(() => ({ calls: 0, visits: [] as string[] }));
+const observed = vi.hoisted(() => ({ calls: 0, filterCalls: [] as string[], visits: [] as string[] }));
 vi.mock('../surfaceViews', async () => {
   const React = await import('react');
   const { useSurfaceActionHandlers } = await import('../surfaceActions');
   const { readShellProject, updateShellProject } = await import('../shellProject');
   function Projects({ onNav }: { onNav: (id: string) => void }) {
     observed.visits.push('projects');
-    return <><h1>Projects destination</h1><button onClick={() => onNav('dossier')}>Open legacy dossier</button></>;
+    const [workstream, setWorkstream] = React.useState('all');
+    useSurfaceActionHandlers('projects', {
+      'projects.filter': params => {
+        observed.filterCalls.push(params.workstream);
+        setWorkstream(params.workstream);
+        return { ok: true };
+      },
+    });
+    return <>
+      <h1>Projects destination</h1><p role="status">Workstream: {workstream}</p>
+      <button onClick={() => onNav('dossier')}>Open legacy dossier</button>
+      <button onClick={() => onNav('mdx')}>Open legacy MDX</button>
+      <button onClick={() => setWorkstream('Biotech')}>Choose Biotech</button>
+      <button onClick={() => updateShellProject({ title: 'Refreshed project details' })}>Refresh project details</button>
+    </>;
   }
   function Author({ onNav }: { onNav: (id: string) => void }) {
     observed.visits.push('project-home');
@@ -30,6 +44,7 @@ vi.mock('../surfaceViews', async () => {
       <button onClick={() => { setStage('evidence'); updateShellProject({ step: 'evidence' }); }}>Choose Evidence</button>
       <button onClick={() => updateShellProject({ title: 'Refreshed project details' })}>Refresh project details</button>
       <button onClick={() => onNav('projects')}>Projects index</button>
+      <button onClick={() => onNav('mdx')}>Open legacy MDX</button>
     </>;
   }
   return { SURFACE_VIEWS: {
@@ -40,7 +55,7 @@ vi.mock('../surfaceViews', async () => {
 import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
-import { clearShellProject, publishShellProject, restoreShellProject } from '../shellProject';
+import { clearShellProject, publishShellProject, readShellProject, restoreShellProject } from '../shellProject';
 
 const PROGRAM = '6191805f-e83d-4327-af00-aa2c6f4d43b0';
 function mount(location: string, strict = false) {
@@ -53,7 +68,7 @@ function mount(location: string, strict = false) {
 }
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); clearShellProject();
-  observed.calls = 0; observed.visits = [];
+  observed.calls = 0; observed.filterCalls = []; observed.visits = [];
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })));
   window.matchMedia ??= ((q: string) => ({ matches: false, media: q, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
   const Observer = class { observe() {} unobserve() {} disconnect() {} };
@@ -65,6 +80,49 @@ afterEach(() => {
 });
 
 describe('project destination in the real shell', () => {
+  it.each([false, true])('a copied MDX URL applies its filter once with an open project=%s', async projectOpen => {
+    mount(`/concept2cure/mdx?view=compact${projectOpen ? `&program=${PROGRAM}` : ''}#portfolio`, true);
+    expect(await screen.findByRole('heading', { name: 'Projects destination' })).toBeTruthy();
+    await waitFor(() => expect(window.location.pathname).toBe('/concept2cure/projects'));
+    expect(screen.getByRole('status').textContent).toBe('Workstream: MDX');
+    expect(window.location.search).toBe(`?view=compact${projectOpen ? `&program=${PROGRAM}` : ''}`);
+    expect(window.location.hash).toBe('#portfolio');
+    expect(observed.filterCalls).toEqual(['MDX']);
+    expect(observed.calls).toBe(0);
+    expect(observed.visits.every(id => id === 'projects')).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Biotech' }));
+    if (projectOpen) fireEvent.click(screen.getByRole('button', { name: 'Refresh project details' }));
+    expect(screen.getByRole('status').textContent).toBe('Workstream: Biotech');
+    expect(observed.filterCalls).toEqual(['MDX']);
+  });
+
+  it('imperative MDX navigation applies once when Projects is already mounted', async () => {
+    mount('/concept2cure/projects');
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose Biotech' }));
+    const before = window.history.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Open legacy MDX' }));
+    expect(screen.getByRole('status').textContent).toBe('Workstream: MDX');
+    expect(window.location.pathname).toBe('/concept2cure/projects');
+    expect(window.history.length).toBeLessThanOrEqual(before + 1);
+    expect(observed.filterCalls).toEqual(['MDX']);
+    expect(observed.visits.every(id => id === 'projects')).toBe(true);
+  });
+
+  it('imperative MDX navigation reaches Projects without changing the selected project step', async () => {
+    publishShellProject({ id: PROGRAM, step: 'review' });
+    mount('/concept2cure/project-home');
+    const before = window.history.length;
+    fireEvent.click(await screen.findByRole('button', { name: 'Open legacy MDX' }));
+    expect(await screen.findByRole('heading', { name: 'Projects destination' })).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Workstream: MDX');
+    expect(window.location.pathname).toBe('/concept2cure/projects');
+    expect(window.history.length).toBe(before + 1);
+    expect(observed.filterCalls).toEqual(['MDX']);
+    expect(observed.calls).toBe(0);
+    expect(readShellProject()?.step).toBe('review');
+  });
+
   it('replaces a no-project dossier URL with Projects and no pending Author action', async () => {
     mount('/concept2cure/dossier-map?view=compact#section');
     expect(await screen.findByRole('heading', { name: 'Projects destination' })).toBeTruthy();
