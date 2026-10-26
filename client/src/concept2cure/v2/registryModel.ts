@@ -181,7 +181,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   // screen. They are real, distinct surfaces now, so they are navigable.
   'ectd-coauthor',
   'csr-workflow',
-  'filings-catalog',
   'nda-cockpit',
   'maa-cockpit',
   'ind-checklist',
@@ -746,7 +745,6 @@ export const SEGMENT_MODULES = {
     {
       label: 'Applications & filing',
       items: [
-        'filings-catalog',
         'nda-cockpit',
         'maa-cockpit',
         'ind-checklist',
@@ -954,6 +952,7 @@ export const ESIGN_MEANINGS = [
  * entries (BUILD_STATE): task-board → tasks board view · device-submission →
  * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
+  'filings-catalog': 'projects',
   // Former dossier screens now reach all three recorded reads on Author.
   dossier: 'project-home',
   'dossier-map': 'project-home',
@@ -999,6 +998,7 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
 
 /** Alias visits may ask the destination for an existing action as it opens. */
 export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
+  'filings-catalog': { actionId: 'projects.new-project', params: {} },
   dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },

@@ -1,0 +1,97 @@
+{
+  "workstream": "D2 client journey A2.10a",
+  "branch": "concept2cure-v2",
+  "integratedBase": "f033cc722be329cd50c0bdac2e0bfce816f8eafd",
+  "scope": "Fold only filings-catalog into existing Projects New project and exact recorded Plan",
+  "regression": {
+    "files": 29,
+    "passed": 460,
+    "failed": 0,
+    "seconds": 63.67,
+    "log": "accepted/regression.log.gz",
+    "filesList": "accepted/test-files.txt"
+  },
+  "native": {
+    "passed": 1,
+    "failed": 0,
+    "testSeconds": 27.5,
+    "totalSeconds": 28.9,
+    "widths": [
+      1440,
+      390
+    ],
+    "localDevelopmentAuth": true,
+    "runtimeRole": "app_service",
+    "rls": "on",
+    "audit": true,
+    "readyz": {
+      "database": "ok",
+      "schema": "ok",
+      "ana": "down/no_provider"
+    },
+    "log": "accepted/browser.log.gz",
+    "result": "accepted/filing-core-result.json",
+    "mobileCapture": "navigation drawer closed; guide visible"
+  },
+  "build": {
+    "passed": true,
+    "viteSeconds": 21.99,
+    "server": true,
+    "auditVerifier": true,
+    "log": "accepted/build.log.gz"
+  },
+  "eslint": {
+    "errors": 0,
+    "existingWarnings": 18,
+    "newComponentAndTestsWarnings": 0,
+    "log": "accepted/lint.log.gz"
+  },
+  "sourceTextRamp": "passed",
+  "anaSurfaceContext": {
+    "passed": true,
+    "publisherBaseline": 113
+  },
+  "validationTraceability": "passed",
+  "typecheck": {
+    "errors": 0,
+    "passed": true,
+    "baseline": 0,
+    "log": "accepted/typecheck.log.gz"
+  },
+  "publication": {
+    "status": "pushed through normal hooks",
+    "implementationCommit": "b9975a91",
+    "publishedSourceCommit": "37706f19bf63e5ab1dd3a5ef482c3502207ef6d0",
+    "branch": "concept2cure-v2",
+    "timestamp": "2026-10-26 23:29 UTC",
+    "allPrePushGatesPassed": true,
+    "typecheckErrors": 0,
+    "lintWarningNetChange": -4,
+    "log": "accepted/publication-push.log.gz"
+  },
+  "formalQualification": {
+    "status": "unexecuted and unsigned",
+    "newRequirement": "URS-PROJ-007a",
+    "procedure": "OQ-PROJ-12 v0.10",
+    "historicalRequirements": 117,
+    "historicalPass": 69,
+    "historicalPartial": 2,
+    "uncovered": 46
+  },
+  "storedData": "No tables dropped; historical catalogue row, metadata and subscriptions preserved through two catalogue replays",
+  "pendingFolds": [
+    "mission-control",
+    "cro-portfolio",
+    "device-workstream",
+    "program-journey"
+  ],
+  "sourceManifest": "accepted/source-sha256.json",
+  "postQualificationChange": {
+    "path": "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+    "change": "Removed undefined rpk-chip-segment class; retained existing rpk-chip. The removed class has no stylesheet rule or consumer. Rendered text, styling and behavior unchanged.",
+    "qualifiedSnapshotCommit": "b9975a914c5893f67a4d24abdeb937bf2f148997",
+    "pickerTestsPassed": 27,
+    "undefinedCssCheck": "passed"
+  },
+  "publicationSourceManifest": "accepted/publication-source-sha256.json"
+}

@@ -36,7 +36,7 @@ describe('existing project doors keep their reachable destination', () => {
   it.each([
     'v2/Shell.tsx', 'v2/LaunchScopeGate.tsx', 'mdx/MdxSurfaceHost.tsx',
     'v2/surfaces/Vault.tsx', 'v2/surfaces/CommunicationCenter.tsx',
-    'v2/surfaces/CroPortfolio.tsx', 'v2/surfaces/FilingsCatalog.tsx',
+    'v2/surfaces/CroPortfolio.tsx',
     'v2/surfaces/ProjectHome.tsx', 'v2/surfaces/HomeSections.tsx',
     'v2/surfaces/Surfaces.tsx', 'v2/surfaces/WorkflowCatalog.tsx',
     'quality/ControlledDocumentDialogs.tsx',

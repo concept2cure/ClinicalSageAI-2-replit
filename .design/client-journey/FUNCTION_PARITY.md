@@ -8,6 +8,15 @@ Each catalogue entry that duplicates another, or that was marked for retirement,
 
 ## Summary
 
+**Historical audit counts.** The totals and function-count columns below remain
+the 2026-10-25 audit baseline; they are not recalculated after each fold.
+Current carry-over checklists and the Fold column record subsequent completion.
+A2.10a (2026-10-26) completes **only `filings-catalog`** into Projects' existing
+New-project wizard and the recorded project's Plan. Mission control, CRO
+portfolio, device-workstream and program-journey remain pending their own
+function and stored-record checks. This implements the accepted central-service
+direction without adding a service or admitting another surface.
+
 | Measure | Count |
 |---|---|
 | Catalogue items audited | 71, grouped under 37 canonical homes. Four homes are "retire" and have no canonical: coverage, submission-twin, authoring-engine, intelligence-catalog |
@@ -22,7 +31,8 @@ Each catalogue entry that duplicates another, or that was marked for retirement,
 | Items safe to fold today | 12 (11 folds, plus 1 retirement: authoring-engine) |
 | Items that need carry-over first | 59 (56 folds and 3 retirements) |
 
-Three things in these numbers need a decision before the work starts.
+The original audit recorded three decision categories with these numbers;
+their unresolved items keep their own gates.
 
 - Eight of the 59 blocked items are held back only by functions that do not work on real data today: program-journey, client-portal, orchestration, the four PDEV workstreams and cer-generator. The audit still holds them back because each carries something with no home yet: reference content, an external-access model, approval gates, a working activity drill, or a second CER backend.
 - Eight canonicals are themselves outside the launch catalogue: nda-cockpit, labeling-pi, precedent-intelligence, pdev, pv-cockpit, rbm, inconsistency and deep-research. Twelve items fold into them: nda-bla, labeling-smpc, insight-synthesis, the four PDEV workstreams, pharmacovigilance, safety-signal, clinical-ops, pdev-contradictions and evidence-engine. Those folds consolidate the functions but do not put them into the core product. For each home, admitting it to the launch catalogue, or moving its functions to a project step, is a founder decision under Rule 2.
@@ -282,19 +292,32 @@ Remove the id from LAUNCH_SHELL_SURFACES, the segment lists and the demo script.
 
 ### Into Projects (`projects`: Projects.tsx, the New project wizard and Project home)
 
-#### From `filings-catalog`
-Deprecate the catalogue row by amending its creating migration in place (Rule 1).
+#### From `filings-catalog` (folded in A2.10a)
 
-- [ ] Search by description and workflow label, with the segment named on each result. From `FilingsCatalog.tsx:160-170,238-260`. Goes to: RegistryPicker's match rule in the New project wizard. Real today.
-- [ ] Category descriptions. From `FilingsCatalog.tsx:277-305`. Goes to: under each category heading in RegistryPicker. Real today.
-- [ ] List every filing type, including those not offered. From `FilingsCatalog.tsx:290-299`. Goes to: nothing to add, because showing an unoffered filing as startable would be wrong. Real today.
-- [ ] Filing description as visible text. From `FilingsCatalog.tsx:138-146`. Goes to: the card, or the chosen-filing note. Real today.
-- [ ] Filing detail: authority, format, CTD module. From `FilingsCatalog.tsx:59-64,86-95`. Goes to: a chosen-filing detail in wizard step 1 or 2. Real today.
-- [ ] Lifecycle loop: stages, review clock, return loop. From `filings-catalog-data.ts:118-168`. Goes to: the wizard's chosen-filing detail and the Plan step, labelled as authored reference. Real today.
-- [ ] "How you'll build it". From `FilingsCatalog.tsx:56-58`. Goes to: a filing-specific review-step note (`Projects.tsx:936-939`). Real today.
-- [ ] Ask AnA about a filing type. From `FilingsCatalog.tsx:119`. Goes to: an Ask AnA button on the chosen filing, with the filing published in the wizard's AnA context. Real today.
-- [ ] Links to run the whole loop. From `FilingsCatalog.tsx:122-130`. Goes to: already reached inside the project. The journey link is not needed. Real today.
-- [ ] AnA sees the segment, search and selection. From `FilingsCatalog.tsx:179-211`. Goes to: the wizard's state, published in the projects AnA context. Real today.
+All thirteen audited functions have reachable canonical homes: the three already
+present functions (segment tabs, starting a filing and returning through the
+wizard) remain, and the ten carry-over items below are complete. The former
+bookmark aliases `projects.new-project` through the shared destination/action
+owner, retaining query/hash with or without an open project. The old screen,
+fixture and standalone registry/view/navigation identity are removed. Existing
+catalogue reconciliation deprecates an old row without deleting that row or its
+subscriptions; replay proof preserves their metadata. No redundant migration or
+new commercial grant is needed. Evidence: `slice-A2/A2.10a/README.md`.
+
+- [x] Search by description and workflow label, with the segment named on cross-segment results: `AnaVerbs.tsx` RegistryPicker uses the shared catalog and workflow labels.
+- [x] Category descriptions: RegistryPicker reaches the shared category metadata under its category headings.
+- [x] List every filing type, including those not offered: the nonselectable Not offered disclosure retains descriptions/reference facts and applicable authored guidance with the server's refusal. A failed offer read stays explicit with Retry; it invents no selectable filing.
+- [x] Filing description as visible text: the chosen-filing note and Not offered reference display it.
+- [x] Filing detail: authority/region, submission format, CTD module and reference workflow family remain visible in `FilingReferenceFacts` beside the selected filing.
+- [x] Lifecycle stages, timing examples and return loop: all nine original authored tables are unchanged in `shared/regulatory/filing-lifecycle-reference.ts`; `FilingLifecycleReference.tsx` reaches them in the wizard and Plan. A project guide requires its exact recorded active filing id plus matching program type and agency. Missing, unknown, conflicting or excluded identity explicitly withholds a guide; no generic US/regional fallback or computed deadline is supplied.
+- [x] "How you'll build it": the selected note and review step retain server-derived offer, outline/format/channel facts and explicit build limitations. Reference guidance grants no platform support.
+- [x] Ask AnA about a filing type: the selected filing uses the existing shared `filingAskPrompt`; the native control prefills the question without sending it or writing a record.
+- [x] Links to run the whole loop: canonical creation preserves the selected filing and reaches the project's existing Plan, Author, Review, Submit and Respond work, tasks and correspondence. The old unscoped shortcuts are replaced by these scoped project destinations; the separate program-journey fold remains pending.
+- [x] AnA sees the visible segment, exact search and selection: the wizard's single public context publisher carries browse state, selected description/format/CTD/workflow and typed authored guide, clearing on exit or actor/tenant change and excluding private configuration.
+
+Focused engineering and native-browser proof qualifies this fold. Revised
+URS-PROJ-007a and OQ-PROJ-12 v0.10 remain unexecuted/unsigned; historical OQ
+catalog-render passes do not qualify the revised formal requirement.
 
 #### From `device-workstream`
 
@@ -963,12 +986,18 @@ Present: verifying the audit_logs ledger chain (`AdminSurfaces.tsx:706,590-635,1
 ### projects
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| filings-catalog | 13 | 3 | 8 | 2 | 0 | 13 | No |
+| filings-catalog | 13 | 3 | 8 | 2 | 0 | 13 | Yes (A2.10a) |
 | device-workstream | 18 | 5 | 7 | 6 | 0 | 17 | No |
 | cro-portfolio | 12 | 1 | 1 | 10 | 0 | 12 | No |
 | mission-control | 16 | 3 | 9 | 4 | 0 | 9 | No |
 
-Present: segment tabs (`AnaVerbs.tsx:265-276`). Starting a filing and going back (`Projects.tsx:378-466,496-498`). Listing and opening programs, average readiness, creating a program, honest states and AnA context (`Projects.tsx:1139,1095-1102,1405,1459-1473,1201-1280`). Opening the portfolio. Creating and selecting a program, and the mission-control AnA context (`Projects.tsx:378-466,1310`).
+The numeric columns retain the original audit. The filings-catalog completion
+above supersedes its original 3 present / 8 partial / 2 missing assessment;
+the other three Projects folds remain No. Program-journey's separate row also
+remains No. Their recorded-data and per-function gates are not satisfied by
+the filing-reference carry-over.
+
+Historical present functions: segment tabs (`AnaVerbs.tsx:265-276`). Starting a filing and going back (`Projects.tsx:378-466,496-498`). Listing and opening programs, average readiness, creating a program, honest states and AnA context (`Projects.tsx:1139,1095-1102,1405,1459-1473,1201-1280`). Opening the portfolio. Creating and selecting a program, and the mission-control AnA context (`Projects.tsx:378-466,1310`).
 
 ### ectd-compile
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |

@@ -1,24 +1,24 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-26T20:09:56.392Z",
+  "generatedAt": "2026-10-26T23:10:44.295Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 116,
+    "requirements": 117,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 45
+    "uncovered": 46
   },
   "byApp": {
     "Projects": {
-      "requirements": 14,
+      "requirements": 15,
       "pass": 13,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 1
+      "uncovered": 2
     },
     "Vault": {
       "requirements": 21,
@@ -357,7 +357,7 @@
       "id": "URS-PROJ-007",
       "app": "Projects",
       "doc": "URS-001-PROJECTS.md",
-      "requirement": "The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500).",
+      "requirement": "The Program Journey read model answers honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). The earlier standalone Filings Catalog clause and its OQ-PROJ-12 results are historical, superseded by URS-PROJ-007a.",
       "part11": "none",
       "risk": "low",
       "steps": [
@@ -377,12 +377,28 @@
         }
       ],
       "ra": {
-        "intendedUse": "Honest empty/unavailable states for journey and catalog",
+        "intendedUse": "Honest empty/unavailable states for Journey; historical standalone catalog clause retained",
         "risk": "low — informational",
         "assurance": "ad-hoc",
-        "rationale": "render and record; no fixture data may appear"
+        "rationale": "render and record; no fixture data may appear; earlier catalog results do not qualify URS-PROJ-007a"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-007a",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash. Filing browsing/search and selected description, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Reach filing reference in Projects intake and the exact recorded project's Plan",
+        "risk": "low — informational authored guidance, explicitly separate from project deadlines, readiness and the server's offer",
+        "assurance": "ad-hoc",
+        "rationale": "record legacy-bookmark destination, selected facts, collapsed authored guide and missing-identity state beside the existing plan; actual offer-read failures remain explicit. OQ-PROJ-12 v0.10 awaits formal execution and review; focused automated/browser proof is supplemental"
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-PROJ-008",
