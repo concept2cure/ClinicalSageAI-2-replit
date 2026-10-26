@@ -18,6 +18,8 @@ for name,expected in inputs.items():
  assert sha((root/name).read_bytes())==expected,name
 source=publication['sourceCommit']
 subprocess.run(['git','merge-base','--is-ancestor',source,revision],cwd=root,check=True)
+for commit in publication.get('sourceCommits', []):
+ subprocess.run(['git','merge-base','--is-ancestor',commit,revision],cwd=root,check=True)
 count=None
 if args.artifacts:
  manifest=json.loads(git('show',f'{revision}:{relative}/artifact-manifest.json'))['files']
