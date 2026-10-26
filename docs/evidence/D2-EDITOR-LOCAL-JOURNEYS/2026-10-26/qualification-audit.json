@@ -24,5 +24,10 @@
   },
   "browserCases": 44,
   "humanCasesNotRun": 106,
-  "compilerAndPublication": "pending normal push hook"
+  "compilerAndPublication": {
+    "acceptedCodeCommit": "2af4894eebb52fe83ff16a1d14f5796bbab21adc",
+    "typeScriptErrors": 0,
+    "pushReceipt": "canonical-push.json",
+    "gitBlobVerification": "accepted-git-blobs.json"
+  }
 }

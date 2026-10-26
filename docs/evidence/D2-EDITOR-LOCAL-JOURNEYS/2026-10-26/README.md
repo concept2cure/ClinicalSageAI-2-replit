@@ -103,3 +103,20 @@ Owned browser servers are stopped; no app/database/container was created or
 modified. The human guide has 106 cases, all Not run. Final compiler and ordinary
 direct canonical publication are pending the normal push hook; accepted Git blob
 verification and its receipt will be filed after that hook completes.
+
+## Accepted canonical publication
+
+Normal direct push accepted **`2af4894eebb52fe83ff16a1d14f5796bbab21adc`**. A subsequent authenticated fetch
+returned the same `concept2cure-v2` commit. `canonical-push.*` records zero exit,
+full TypeScript **0 errors / exit 0**, ordinary push gates and zero input drift.
+`accepted-git-blobs.json` verifies all 77 distinct root/browser input hashes
+against actual accepted Git objects, including browser fixture/shared-host
+inputs. Source `4d8cf50d0` and canonical `b3661f72d` remain ancestors. All 500
+pre-publication evidence artifacts were tracked; no hook, baseline or branch
+rule was bypassed. Package lock is unchanged from synchronized baseline6f7477656.
+The verification helper normalizes browser-relative fixture keys before Git
+lookup; its initial bare-path lookup failure changed no qualified source.
+
+The final follow-up records this accepted result and releases only this work-order
+row. It is documentation/evidence only and uses a normal push. Final clean/sync
+verification is read-only to avoid recursive publication-receipt commits.
