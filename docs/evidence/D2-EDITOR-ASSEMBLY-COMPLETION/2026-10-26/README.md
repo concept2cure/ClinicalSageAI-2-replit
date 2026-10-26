@@ -5,7 +5,7 @@
 | Existing queue/state | Root | Completed; final qualified hashes recorded |
 | Focused queue regressions | ana_drafting_usecase | 16/16 passed; frozen |
 | Actual Workbench integration | next_authoring_usecase | 31/31 passed; frozen |
-| Git, global checks and human handoff | Root | Claimed |
+| Git, global checks and human handoff | Root | Code published; all gates passed; 110 human cases Not run |
 
 Contract: `docs/design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md`.
 
@@ -52,3 +52,11 @@ Root also approved alignment of `v2/__tests__/authoringDraftTermination.test.tsx
 The focused suite retains its first 6-failure epoch and final 5-failure RED separately. Only an overbroad source-change phase expectation was corrected: changing source selection leaves old pending slots isolated and makes the current selected set empty. Slot/source/no-generation boundary assertions remain intact; no product phase behavior was changed.
 
 Independent final read-only review found no blocking issue in the two production files or the fixture correction. The existing target-blind summary/remaining predicate is unchanged; exact-target iteration never broadens to another target. Preserved is an observation of saved text, not approval, acceptance or current regulatory completeness. A later manual section draft remains available through the existing editor controls.
+
+## Accepted canonical publication
+
+Normal source commit **a85d6885d97a2cd5ffff195fb9342e5d30a40f7d**, followed by normal merge **ea2dc660687aca9cd8c130990da8efbdc9614a59** of report-only repo-health refresh e632a364e. `post-merge-qualification.json` verifies all 52 final inputs against actual Git blobs after that merge.
+
+`publication-code.json` / `publication-code.log.gz` retain the successful normal direct push and every pre-push gate, including the full TypeScript check: **zero errors against baseline zero**. No bypass, baseline change, PR, alternate branch, force or deployment. A fresh authenticated fetch then observed origin/concept2cure-v2 at ea2dc660687aca9cd8c130990da8efbdc9614a59, with local/remote 0 ahead and 0 behind. `accepted-code-verification.json` proves the 52 accepted blobs match and the source commit is an ancestor.
+
+This final evidence follow-up changes only documentation and the retained verification helper. `verify-publication.py --revision origin/concept2cure-v2 --require-artifacts` is the read-only final check after that follow-up is accepted. It verifies actual canonical Git source/config/test blobs, every manifest artifact against Git and the filesystem, and that every packet file is tracked. Its final console result avoids recursively creating another publication receipt.
