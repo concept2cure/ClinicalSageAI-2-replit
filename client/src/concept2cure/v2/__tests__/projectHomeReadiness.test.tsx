@@ -24,7 +24,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -139,6 +139,15 @@ describe('project home — Dossier readiness', () => {
 });
 
 describe('project home — one dossier read for the card and the module rows (F23)', () => {
+  it('Author hands the critical-path question through the project’s existing AnA callback', async () => {
+    mockProgram(program());
+    const p = props();
+    render(<ProjectHome {...p} />);
+    fireEvent.click(await screen.findByRole('button', { name: /critical path to filing/i }));
+    expect(p.onAsk).toHaveBeenCalledWith('What is the critical path to filing?');
+    expect(p.onNav).not.toHaveBeenCalled();
+  });
+
   it('every section in review reads 0% on the card and on its rows, with the review counted', async () => {
     const zero = measured(0, 12);
     mockProgram(program(), dossier(zero, { rows: [row('2', 'Module 2 · Summaries', zero, { inReview: 12 })] }));

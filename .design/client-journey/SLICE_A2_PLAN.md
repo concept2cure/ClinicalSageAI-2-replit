@@ -13,9 +13,10 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.5 complete. A2.5 evidence is under
-`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.5/README.md`.
-Next is A2.6; the inventory below describes discovery-time behavior.
+**Implementation status:** A2.1–A2.6 complete. A2.6 evidence is under
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.6/README.md`.
+Next is A2.7, beginning with the legacy artifact-rollup parity reconciliation
+recorded in that evidence; the inventory below describes discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 
@@ -550,6 +551,14 @@ Every item is a completion, a reach, a fix or a convergence. No item adds a surf
 
 ### A2.6 Complete ProjectDossier with what `dossier` and `dossier-map` show that it lacks
 
+**Completed 2026-10-26.** The read now carries counted section details in regulatory
+order; Author shows read-only section status and module dates, the card shows home
+review/draft totals, and the critical-path question uses the existing AnA handoff.
+This corrects the original visible-chip exclusion below: a flat read-only detail
+list preserves governed-section visibility without recreating Vault's editable tree.
+Legacy artifact rollups, artifact counts and per-section dates still require explicit
+reconciliation before A2.7 can remove a screen. No deletion is authorized by A2.6.
+
 - **Files:** `server/services/c2c/dossier-read.ts`, `surfaces/ProjectDossier.tsx`.
 - **Carry:**
   - `DossierRow` gains the counted sections, `{ key, label, status }`, from the existing `DOSSIER_SECTIONS_SQL`. No new query.
@@ -559,12 +568,12 @@ Every item is a completion, a reach, a fix or a convergence. No item adds a surf
   - `ModuleCompletion` gets the "What is the critical path to filing?" prompt (DossierMap :174-176).
   - Rows sort by `compareSectionCode` rather than `localeCompare` (`dossier-read.ts:256`).
 - **Not carried:**
-  - The visible per-section chips. The tree is the Vault's by design (`project-vault.ts:22-24`), and a second tree on Author would duplicate it. This decision is written in the README.
+  - An editable per-section tree. The tree remains Vault's by design (`project-vault.ts:22-24`); A2.6 now carries visible status through flat read-only details on Author, correcting the discovery-time chip exclusion.
   - Fixed module titles (`MODULE_LABEL`). dossier-read labels each row from the pack's own heading on purpose (:224-231).
   - The client-computed mean (Rule 2).
   - The unanchored state.
   - The three-way tone (cosmetic).
-  - These are confirmed in the parity rows.
+  - The current parity rows distinguish carried governed-section functions from the legacy artifact-rollup reconciliation still required before removal.
 - **Rule 1:** none. `d.org_id` (:162) and `programInOrganization` (`projects.ts:1168`) stay.
 - **Red first:**
   - `projects-dossier.test.ts`: a row carries its sections with label and status. **Red.**
