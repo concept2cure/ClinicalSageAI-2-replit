@@ -1,0 +1,11 @@
+{
+  "observation": "Source pins taken during the initial pre-production route run; final behavioral replay will use before/after pins.",
+  "files": {
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts": "7dfff3d2d8ca0d4d0cc6761d5dca9b78de39a4f9dc2e2dd23771ff97a5293a26",
+    "server/routes/ana-ri/stream.ts": "8b421dec1930dd0a108720fc7c26e275ffe5f45dccd9322d3e81e97c2b9de1e3",
+    "server/services/ana-ri/chat-context-builder.ts": "00ee77c39720e9757492d32ff286a69f815bf026a0bd0b5516bb77c7aeefff2e",
+    "server/services/ana-ri/open-document.ts": "1dfdb161b8d683d57129fefcaf7408840f3e057b62e2bd989348f63b4eb0c9c8",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-draft-template.ts": "806a1167678157d4b2cbe14f0d2e4f3501d20690c7ae159a700f14ca08ad6c6b"
+  }
+}

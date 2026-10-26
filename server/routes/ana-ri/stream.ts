@@ -189,6 +189,8 @@ import {
   buildRouteContextBlock,
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
+  openDocumentPromptContexts,
+  selectAuthoringContext,
 } from '../../services/ana-ri/chat-context-builder.js';
 import { withStatedDocumentType } from '../../services/ana-ri/open-document.js';
 import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
@@ -1487,10 +1489,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
          the program UUID remains available to program-keyed readers. */
       const streamProjectPromise: Promise<TurnProject> = Promise.resolve(admittedProject.projectId == null
         ? { status: 'none' } : { status: 'linked', id: admittedProject.projectId });
-      const streamAuthoringContext =
-        authoring_context && typeof authoring_context === 'object'
-          ? ({ ...authoring_context } as Record<string, unknown>)
-          : undefined;
+      const streamAuthoringContext = selectAuthoringContext(authoring_context, req.body.context);
 
       // Thread resolution (before private memory and server history).
       //
@@ -1641,21 +1640,20 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
         authoringContext: withStatedDocumentType(streamAuthoringContext, document_context),
+        openDocumentAccess: { getClient: () => requestPgClient(req), userId: guardUserId, project: admittedProject },
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
         sessionStart: historyWindow.totalTurns === 0,
       });
       const streamDecisionContext = prefetchedStreamContext.decisionContext;
-      const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
-      const streamProjectProfile = prefetchedStreamContext.projectProfile;
-      const streamRimContext = prefetchedStreamContext.rimContext;
+      const openDocumentContexts = openDocumentPromptContexts(prefetchedStreamContext, streamAuthoringContext, document_context);
       const streamOrchestratorAuthoringContext = buildOrchestratorAuthoringContext({
-        authoringContext: streamAuthoringContext,
+        authoringContext: openDocumentContexts.authoringContext,
         projectId: streamProjectId,
         organizationId: orgId,
         decisionContext: streamDecisionContext,
-        rimContext: streamRimContext,
+        rimContext: prefetchedStreamContext.rimContext,
       });
 
       // Orchestrate
@@ -1665,12 +1663,12 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         userRole: effectiveRole,
         language: validatedLanguage,
         projectContext: project_context,
-        documentContext: document_context,
+        documentContext: openDocumentContexts.documentContext,
         submissionType: submission_type as SubmissionType | undefined,
         conversationHistory: conversationTurns,
         authoringContext: streamOrchestratorAuthoringContext,
-        _feedbackContext: streamFeedbackContext,
-        _projectIntelligenceProfile: streamProjectProfile,
+        _feedbackContext: prefetchedStreamContext.feedbackContext,
+        _projectIntelligenceProfile: prefetchedStreamContext.projectProfile,
         _relationalOverlay: prefetchedStreamContext.relationalOverlay,
         _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
         _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
@@ -1699,7 +1697,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       }
 
       // Inject section-specific ICH M4 guidance when drafting a CTD section
-      const sectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
+      const sectionCode = openDocumentContexts.sectionCode;
       if (sectionCode) {
         const sectionGuide = buildSectionSpecificPrompt(sectionCode, prefetchedStreamContext.openDocumentRegistryId);
         if (sectionGuide) {
@@ -1844,9 +1842,9 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       // join below.
       const turnContextSources: EvidenceEntry[] = [{ source: 'person', content: message }];
       const projectDataGiven = [
-        streamRimContext,
+        prefetchedStreamContext.rimContext,
         Array.isArray(streamDecisionContext) && streamDecisionContext.length > 0 ? JSON.stringify(streamDecisionContext) : '',
-        streamProjectProfile ? JSON.stringify(streamProjectProfile) : '',
+        prefetchedStreamContext.projectProfile ? JSON.stringify(prefetchedStreamContext.projectProfile) : '',
         prefetchedStreamContext.externalIntelBlock,
         prefetchedStreamContext.deadlineRadarBlock,
         prefetchedStreamContext.sessionBriefingBlock,

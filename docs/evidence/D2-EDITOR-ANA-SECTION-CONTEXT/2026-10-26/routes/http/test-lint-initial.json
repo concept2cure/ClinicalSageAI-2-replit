@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-10-26T20:45:38.228854+00:00",
+  "argv": [
+    "npx",
+    "eslint",
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts",
+    "--max-warnings",
+    "0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.203,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "routes/http/source-freeze-test-lint.json",
+  "sourcesBefore": {
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts": "da6271e0c3050e79c67d0be7414e9ef8ad88fe7a7b4adae43ca1a82ccdbd8bdc"
+  },
+  "sourcesAfter": {
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts": "da6271e0c3050e79c67d0be7414e9ef8ad88fe7a7b4adae43ca1a82ccdbd8bdc"
+  },
+  "sourceDrift": [],
+  "rawOutput": "test-lint-initial.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}

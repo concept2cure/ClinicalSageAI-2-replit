@@ -1,0 +1,39 @@
+{
+  "startedAt": "2026-10-26T20:42:33.774725+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 8.426,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "routes-json-red-freeze.json",
+  "sourcesBefore": {
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts": "a91d8e18deebe6cea28f05d793ebfe940cecbbecbd8e05fe2f7edb9c24e8dfe3",
+    "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+    "server/routes/ana-ri/stream.ts": "8b421dec1930dd0a108720fc7c26e275ffe5f45dccd9322d3e81e97c2b9de1e3",
+    "server/services/ana-ri/chat-context-builder.ts": "00ee77c39720e9757492d32ff286a69f815bf026a0bd0b5516bb77c7aeefff2e",
+    "server/services/ana-ri/open-document.ts": "1dfdb161b8d683d57129fefcaf7408840f3e057b62e2bd989348f63b4eb0c9c8",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369"
+  },
+  "sourcesAfter": {
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts": "a91d8e18deebe6cea28f05d793ebfe940cecbbecbd8e05fe2f7edb9c24e8dfe3",
+    "server/routes/chat/send-message.ts": "22fb4af19e172a5a12e108e383826a2cb5d5d50727a7343b8a8c4e3d92a15008",
+    "server/routes/ana-ri/stream.ts": "8b421dec1930dd0a108720fc7c26e275ffe5f45dccd9322d3e81e97c2b9de1e3",
+    "server/services/ana-ri/chat-context-builder.ts": "00ee77c39720e9757492d32ff286a69f815bf026a0bd0b5516bb77c7aeefff2e",
+    "server/services/ana-ri/open-document.ts": "1dfdb161b8d683d57129fefcaf7408840f3e057b62e2bd989348f63b4eb0c9c8",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369"
+  },
+  "sourceDrift": [],
+  "rawOutput": "routes-json-red.log.gz",
+  "rawGzipSha256": "bda0c99b8b826d4745af56dda42893b9516a62f418e7ac14c7037fc17cebb73f",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  2 failed (2)",
+    "Duration  7.37s (transform 2.73s, setup 114ms, import 4.52s, tests 2.35s, environment 0ms)"
+  ]
+}

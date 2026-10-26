@@ -16,6 +16,8 @@
  */
 import { getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { sanitizeLine } from './surface-context-block.js';
+import { hasSavedAuthoringSelector, type OpenDocumentTurnFields } from './open-document';
+import type { OrchestratorInput } from './orchestrator';
 
 const MAX_VALUE = 200;
 const MAX_TEXT = 400;
@@ -120,4 +122,40 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   }
   parts.push('</authoring_context>');
   return parts.join('\n');
+}
+
+const contextText = (value: unknown): string | undefined => typeof value === 'string' ? value : undefined;
+const legacyPromptText = (value: string | undefined): string | undefined => value ? sanitizeLine(value, 80) || undefined : undefined;
+
+/** Choose one complete request channel; never borrow missing identity fields from the other. */
+export function selectAuthoringContext(authoring: unknown, legacy: unknown): Record<string, unknown> | undefined {
+  const selected = authoring === undefined ? legacy : authoring;
+  return selected && typeof selected === 'object' && !Array.isArray(selected)
+    ? { ...selected } as Record<string, unknown> : undefined;
+}
+
+function openDocumentFocus(fields: OpenDocumentTurnFields, saved: boolean,
+  authoring: Record<string, unknown> | undefined, document: OrchestratorInput['documentContext']) {
+  if (saved) return { section: fields.openDocumentSectionCode ?? undefined, module: undefined };
+  return { section: contextText(authoring?.sectionCode) ?? contextText(document?.section),
+    module: contextText(authoring?.moduleCode) ?? contextText(authoring?.module) ?? contextText(document?.module) };
+}
+
+function internalAuthoringContext(fields: OpenDocumentTurnFields, authoring: Record<string, unknown> | undefined,
+  saved: boolean, focus: { section: string | undefined; module: string | undefined }): OrchestratorInput['authoringContext'] {
+  if (!authoring) return undefined;
+  // This legacy consumer names CTD headings; shared documents and ordinal codes do not acquire that meaning.
+  return { ...authoring,
+    sectionCode: fields.openDocumentRegistryId === 'US_IND' ? legacyPromptText(focus.section) : undefined,
+    moduleCode: fields.openDocumentRegistryId === 'US_IND' ? legacyPromptText(focus.module) : undefined,
+    artifactStatus: saved ? fields.openDocumentStatus ?? undefined : contextText(authoring.artifactStatus) };
+}
+
+/** Adapt the resolved source to legacy prompt consumers, without promoting screen claims to saved authority. */
+export function openDocumentPromptContexts(fields: OpenDocumentTurnFields,
+  authoringContext: Record<string, unknown> | undefined, documentContext?: OrchestratorInput['documentContext']) {
+  const saved = hasSavedAuthoringSelector(authoringContext);
+  const focus = openDocumentFocus(fields, saved, authoringContext, documentContext);
+  return { authoringContext: internalAuthoringContext(fields, authoringContext, saved, focus), sectionCode: legacyPromptText(focus.section),
+    documentContext: { documentType: fields.openDocumentRegistryId ?? undefined, ...focus } };
 }

@@ -1,0 +1,10 @@
+{
+  "head": "6e72f44947c13878c4d8879a8f0a60ae7fbe3515",
+  "branch": "concept2cure-v2",
+  "nodeToolchain": "/workspace/scratch/editor-toolchain/node_modules/.bin/node",
+  "workstream": "W1",
+  "launchRow": "D2",
+  "environment": "Local/Codespaces automated testing; no deployment/live model/agency calls",
+  "sourceBeforeProduction": "reader/red-inputs.json and routes/http/source-freeze-red.json",
+  "rule3Design": "docs/design/EDITOR_ANA_SECTION_CONTEXT_2026-10-26.md"
+}
