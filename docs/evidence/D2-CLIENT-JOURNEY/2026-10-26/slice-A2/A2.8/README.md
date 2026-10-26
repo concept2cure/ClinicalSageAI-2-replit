@@ -24,7 +24,14 @@ names; relevant prior convergence/removal commits include `2895218b8`,
 `806733231`, `0fc2fc294`, `7855b5115`. No surface/route/store is deleted here.
 `device-workstream` and its catalogue remain for A2.10.
 
-## Verification
+## Pre-merge continuation verification
+
+The table below qualifies the continuation before merging the independently
+published `1f6a8bf7c`. That snapshot's complete evidence is retained under
+`pre-merge-1f6a8bf7c/`; its source hashes, 257-test qualification, native IVD/Plan
+flow and TypeScript log belong to that pre-merge source. They are not reused as
+proof of the final combined tree. Both implementations used the same alias and
+action owners; duplicate test assertions were consolidated.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
@@ -86,3 +93,37 @@ warning in the expanded shell test group (`push-lint-red.log.gz`). Splitting
 MDX and dossier cases into separate describe groups removed the warning,
 retaining all 30 assertions/tests (`routing-green.log.gz` and
 `lint-correction.log.gz`). No lint baseline or rule changed.
+
+## Combined-tree qualification
+
+Production retains one MDX alias/action and the incoming accurate navigation
+description. Shell tests preserve both versions' strongest assertions: bus reset,
+actual filter values, no-project portfolio rerenders, exact canonical history,
+and the selected project's step. The incoming admission/reachability test remains.
+Both native flows remain: bounded 510(k)/drug pathway counts and the complementary
+IVD-to-recorded-Plan journey, including selected-project URLs. An independent
+read-only review found no material loss, duplicate runtime owner or scope widening.
+
+The final union of the two selections passes **398 tests in 30 suites** (72.52
+seconds), including portfolio parent/client/anchor SQL tests, navigation and
+mentions, validated action/commit boundaries, Live Drive, existing guarded
+intake, device workflow placement and incoming dossier/tracking parity.
+`merged/test-files.txt` records the exact selection, and
+`merged/regression.log.gz` records its result. The separate four-suite routing
+selection also passes **36/36**, with zero lint errors and the sole existing
+registry file-length warning (`merged/routing*.log.gz`). No warning limit grew.
+
+Both native flows pass together in **22.0 seconds**, using two fresh synthetic
+organizations, canonical creation and the same non-bypass runtime role.
+`merged/browser.log.gz`, two selected JSON results and four screenshots record
+the actual scoped MDX reads, preserved query/hash/program, manual filter choices,
+bounded counts and the reachable IVD analytical-performance Plan work package.
+Screenshots were inspected. The merged production client/server/audit-verifier
+build passes (frontend **26.27 seconds**, `merged/build.log.gz`).
+`merged/source-proof.json` pins both merge parents and the exact qualified
+production/test file hashes. These combined results supersede neither historical
+red nor pre-merge qualification; each remains attributed to its own snapshot.
+
+The Projects filter retains its existing view-local lifetime. Reloading the
+canonical Projects URL uses ordinary defaults; revisiting the legacy MDX URL
+applies MDX once. This change introduces no filter persistence store.

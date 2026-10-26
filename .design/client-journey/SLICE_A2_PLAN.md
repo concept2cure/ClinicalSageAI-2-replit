@@ -619,7 +619,7 @@ observations, null dependent figures and unmapped rows, alongside one canonical
 states with safe fixed reasons/codes; failed scope currentness refuses the whole
 response. Both pre-merge snapshots remain historical. The combined tree passed
 294 tests across 27 files, two native flows and the production build; proof is in
-`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is next.
+`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is recorded below; A2.9 is next.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.
@@ -668,12 +668,60 @@ Implemented 2026-10-26. Existing-owner inventory and limits:
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.8/README.md`.
 Copied links and imperative navigation apply the existing filter once, with or
 without a selected project, preserving later filter choices and project steps.
+Concurrent A2.8 implementation `1f6a8bf7c` is reconciled onto the same owners;
+398 tests in 30 suites, both complementary native flows and the production build
+pass on the combined tree. Proof: `slice-A2/A2.8/merged/`; earlier snapshots stay
+separately attributed. Projects retains its existing view-local filter lifetime.
 
 - **Files:** `registryModel.ts` (:965), `ALIAS_APPLIES`, `shared/navigation/index.ts:90`, `surfaceRouting.test.ts:83`.
 - **The change:** `mdx` → `projects`, applying `projects.filter {workstream: 'MDX'}`. This is the IA row's "Projects, filtered by pathway". `mdx` is an alias-only id, so no registry row moves.
 - **What stays:** `device-workstream`'s shell, target and catalogue row stay until A2.10.
 - **Depends on:** A2.3 and A2.7.
 - **Red first:** `surfaceRouting.test.ts:83` expects `projects` with the MDX filter. **Red: device-workstream.**
+
+### What already exists (independent A2.8 pre-merge inventory, 2026-10-26)
+
+Checked from `01dbd4eb`; historical discovery wording follows. The parallel
+continuation inventory is in `A2_8_MDX_PROJECT_DESTINATION.md`; both extend the
+same owners. Current qualification is recorded in the A2.8 evidence README.
+
+- `client/src/concept2cure/v2/registryModel.ts` owns string `DEEP_LINK_ALIASES`
+  and typed `ALIAS_APPLIES`. `mdx` currently aliases the retained
+  `device-workstream`; it has no standalone registry/view row. Existing dossier
+  aliases already request destination actions through this mechanism.
+- `client/src/concept2cure/v2/routing.ts` `destinationFor` resolves alias, target
+  scope and action. `V2App.tsx` applies that action through the validated bus for
+  copied URLs and imperative navigation, then writes one canonical URL. The
+  URL effect preserves existing query/hash and does not replay an alias after
+  canonicalization.
+- `client/src/concept2cure/v2/surfaces/Projects.tsx` owns `projects.filter` and
+  the MDX workstream selection. `ProjectPortfolioFilters.tsx` renders it.
+  `useLiveRows`/the canonical `/api/c2c/projects` read filter before paging;
+  no device portfolio reader or second classifier is needed. Existing filters
+  are view-local, not persisted by the current Projects canonical URL.
+- `shared/navigation/index.ts` retains the global `mdx` navigation target for
+  AnA/old handles; its description still claims a module home and must describe
+  the real filtered Projects destination. No new target or commercial grant.
+- `surfaces/ProjectMdxWorkflow.tsx` and `ProjectHome.tsx` already reach the
+  selected device project's recorded pathway work. `device-workstream`'s
+  shell, target, catalogue and feature ids remain until their A2.10 parity work.
+- `surfaceRouting.test.ts`, `projectDestination.test.ts`,
+  `projectDestinationShell.test.tsx`, `navigationReachability.test.ts`,
+  `projectsClientFilter.test.tsx` and `projectsPortfolioTruncation.test.tsx`
+  cover routing, the real shell/action bus and existing scoped filters.
+  `tests/e2e/projects-client-filter.e2e.ts` supplies the native project-creation
+  and filtered portfolio pattern. Old expectations still pin MDX to the kit.
+- Deleted-history search: `git log --all --diff-filter=D` over
+  `client/**/*Mdx*`, `client/**/*MDX*`, `client/**/*mdx*` returned no deletion
+  commits under those narrow path patterns. The broader name/path searches in
+  `A2_8_MDX_PROJECT_DESTINATION.md` found earlier kit/template/sample removals
+  (`2895218b8`, `0fc2fc294`, `806733231`, `7855b5115`). The kit owner remains.
+
+Reach `mdx` through the existing alias/action pair as Projects plus
+`projects.filter {workstream:'MDX'}`. Prove copied links with/without project,
+query/hash preservation, imperative navigation, one-shot action behavior and
+real filtered portfolio/open-project reachability. Preserve existing Projects
+filter lifetime rather than introduce another persistence store or router.
 
 ### A2.9 Retire the uncalled creators, and fix the unchecked workspace write by deleting it
 

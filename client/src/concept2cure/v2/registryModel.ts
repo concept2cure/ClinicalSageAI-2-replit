@@ -968,9 +968,8 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // deep-link table disagreeing about what one id means. `device-submission` is
   // the kit's submission-ops package view and resolves to itself.
   'ind-lifecycle': 'ind-checklist',
-  // Old MDX links now use the canonical portfolio and its existing filter
-  // (A2.8). The device-workstream shell stays until its A2.10 parity fold.
-  // `pdev` needs no alias — it is a real registered surface id now.
+  // Legacy MDX links reach the existing device-filtered Projects view.
+  // The device-workstream screen retains its separate A2.10 parity work.
   mdx: 'projects',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA

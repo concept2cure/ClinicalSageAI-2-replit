@@ -81,6 +81,7 @@ describe('the retired kit paths still land somewhere real', () => {
   // goes to the wrong place is worse than no redirect, because it looks handled.
   it('/concept2cure/mdx resolves to Projects with its existing MDX filter', () => {
     expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('projects');
+    expect(surfaceIdFromLocation('/concept2cure/mdx?view=compact#devices')).toBe('projects');
     expect(destinationFor('mdx', false)).toEqual({
       surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
     });

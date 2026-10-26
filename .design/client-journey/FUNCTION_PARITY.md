@@ -297,6 +297,14 @@ Deprecate the catalogue row by amending its creating migration in place (Rule 1)
 - [ ] AnA sees the segment, search and selection. From `FilingsCatalog.tsx:179-211`. Goes to: the wizard's state, published in the projects AnA context. Real today.
 
 #### From `device-workstream`
+
+A2.8 (2026-10-26) completed the alias-only MDX entry: existing `mdx` navigation
+now reaches Projects with its MDX filter. The independent pre-merge snapshot
+passed 257 tests, the native IVD/drug portfolio and project Plan flow, and the
+production build. Both pre-merge proofs and the final combined qualification are
+recorded in `slice-A2/A2.8/`. The device-workstream target/screen and remaining functions
+below stay for A2.10; this does not mark their combined parity row complete.
+
 Do not carry listPrograms' missing access, deleted and archived filters.
 
 - [ ] Pathway filter with counts. From `Overview.tsx:73,85,91-103`. Goes to: a program_type filter on Projects for device clients. Real today.

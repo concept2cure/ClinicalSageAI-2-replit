@@ -13,6 +13,7 @@ vi.mock('../surfaceViews', async () => {
   function Projects({ onNav }: { onNav: (id: string) => void }) {
     observed.visits.push('projects');
     const [workstream, setWorkstream] = React.useState('all');
+    const [, rerender] = React.useState(0);
     useSurfaceActionHandlers('projects', {
       'projects.filter': params => {
         observed.filterCalls.push(params.workstream);
@@ -25,6 +26,7 @@ vi.mock('../surfaceViews', async () => {
       <button onClick={() => onNav('dossier')}>Open legacy dossier</button>
       <button onClick={() => onNav('mdx')}>Open legacy MDX</button>
       <button onClick={() => setWorkstream('Biotech')}>Choose Biotech</button>
+      <button onClick={() => rerender(value => value + 1)}>Refresh portfolio view</button>
       <button onClick={() => updateShellProject({ title: 'Refreshed project details' })}>Refresh project details</button>
     </>;
   }
@@ -55,6 +57,7 @@ vi.mock('../surfaceViews', async () => {
 import { AuthProvider } from '@/services/portal/authService';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { V2App } from '../V2App';
+import { __resetSurfaceActionBus } from '../surfaceActions';
 import { clearShellProject, publishShellProject, readShellProject, restoreShellProject } from '../shellProject';
 
 const PROGRAM = '6191805f-e83d-4327-af00-aa2c6f4d43b0';
@@ -69,13 +72,14 @@ function mount(location: string, strict = false) {
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); clearShellProject();
   observed.calls = 0; observed.filterCalls = []; observed.visits = [];
+  __resetSurfaceActionBus();
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })));
   window.matchMedia ??= ((q: string) => ({ matches: false, media: q, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
   const Observer = class { observe() {} unobserve() {} disconnect() {} };
   vi.stubGlobal('ResizeObserver', Observer); vi.stubGlobal('IntersectionObserver', Observer);
 });
 afterEach(() => {
-  cleanup(); clearShellProject(); localStorage.clear(); sessionStorage.clear();
+  cleanup(); __resetSurfaceActionBus(); clearShellProject(); localStorage.clear(); sessionStorage.clear();
   vi.unstubAllGlobals(); window.history.replaceState({}, '', '/');
 });
 
@@ -92,6 +96,7 @@ describe('MDX destination in the real shell', () => {
     expect(observed.visits.every(id => id === 'projects')).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Choose Biotech' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh portfolio view' }));
     if (projectOpen) fireEvent.click(screen.getByRole('button', { name: 'Refresh project details' }));
     expect(screen.getByRole('status').textContent).toBe('Workstream: Biotech');
     expect(observed.filterCalls).toEqual(['MDX']);
@@ -104,9 +109,12 @@ describe('MDX destination in the real shell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open legacy MDX' }));
     expect(screen.getByRole('status').textContent).toBe('Workstream: MDX');
     expect(window.location.pathname).toBe('/concept2cure/projects');
-    expect(window.history.length).toBeLessThanOrEqual(before + 1);
+    expect(window.history.length).toBe(before + 1);
     expect(observed.filterCalls).toEqual(['MDX']);
     expect(observed.visits.every(id => id === 'projects')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Choose Biotech' }));
+    expect(screen.getByRole('status').textContent).toBe('Workstream: Biotech');
+    expect(observed.filterCalls).toEqual(['MDX']);
   });
 
   it('imperative MDX navigation reaches Projects without changing the selected project step', async () => {

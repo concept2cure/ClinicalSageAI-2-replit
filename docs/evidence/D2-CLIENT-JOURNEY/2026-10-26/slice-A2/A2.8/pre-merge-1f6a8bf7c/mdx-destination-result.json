@@ -1,0 +1,27 @@
+{
+  "alias": "mdx",
+  "canonical": "projects",
+  "workstream": "MDX",
+  "noProject": {
+    "status": 200,
+    "count": 1,
+    "scopedTotal": 1
+  },
+  "withProject": {
+    "status": 200,
+    "count": 1,
+    "scopedTotal": 1
+  },
+  "preservedQueryAndHash": true,
+  "personCanClearFilter": true,
+  "recordedDevicePlanReached": true,
+  "pagedRead": {
+    "status": 200,
+    "count": 1,
+    "scopedTotal": 1
+  },
+  "projectCreators": [
+    201,
+    201
+  ]
+}
