@@ -195,3 +195,78 @@ guidance and word targets. The outline is now the record's, and the module is 36
 
 **Prompt size.** The block for `cmc_drug_product` is now about 10.5k characters, because it carries the record's 30
 Module 3 headings. The orchestrator appends it as it is, with no cap.
+
+## C4a — AnA's IND planning tools read the record
+
+**What the duplicates were.** Two AnA tools kept their own copies of the Clinical Overview and Clinical Summary
+headings:
+
+| Tool | Where the copy lived | What it got wrong |
+|---|---|---|
+| `plan_ind_module_authoring` | `IND_MODULE_TEMPLATES` in `shared/ana/ind-module-authoring.ts` | It held 2.5.1–2.5.6 and 2.7.1–2.7.4 only: no 2.5.7, 2.7.5 or 2.7.6. Its 2.7.1 header lacked "and Associated Analytical Methods". Every header is a `required_strings` entry, so the verify step required the document to carry the wrong heading. |
+| `draft_clinical_overview_m2_5` (outline mode) | Six sections inline in the handler, `AnaToolExecutor.ts` | No 2.5.7 and no 2.5.6.1–2.5.6.5. Its guidance and page counts were its own, beside the record's briefs and word ranges. |
+
+**What replaced each:**
+- **`IND_MODULE_TEMPLATES`** is the headings the record holds directly below 2.5 and 2.7, from `ctdRecordSubtree`.
+  Each one's header is its code and the record's title.
+  - A section's id is now its CTD code.
+  - The ten former ids (`overview_efficacy` …) are still accepted on a fact, through `formerId`.
+  - The module moved to `server/services/ana/ind-module-authoring.ts`, beside the record it now reads. Nothing in
+    `client/` or `shared/` imported it (`git grep ind-module-authoring -- client shared` returns nothing). Its
+    header's mention of a "Document Studio client affordance" described no code.
+- **The clinical overview outline** is `clinicalOverviewOutline()` in `server/services/ana/clinical-overview-outline.ts`.
+  It reads the Clinical Overview the template library serves (`getDocumentTemplate('clinical_overview')`): the same
+  outline the Authoring picker and `get_document_template` serve.
+  - A briefed heading's guidance is its brief's full key content, and `target_words` is the brief's word range.
+  - Any other heading carries the served purpose line.
+  - The handler loads the module lazily, as it already loads the template library.
+
+**P-47 parity, function by function:**
+
+| Function | Before | Now |
+|---|---|---|
+| Plan sections for 2.5 and 2.7 | 6 and 4 hand headers | 7 and 6, from the record |
+| Place a fact in its section | by snake id | by CTD code, or by the former snake id |
+| `required_strings` (headers and figures) | `deriveIndRequiredStrings` | unchanged; headers are now the record's |
+| Self-check and sealability | `evaluateIndModuleVerification`, `assessIndModuleSealability` | unchanged |
+| `sectionsWithoutFacts` | snake ids | CTD codes (a contract change, pinned in `ind-module-tool.test.ts`) |
+| 2.5 outline: numbers and titles | 2.5.1–2.5.6, hand copy | 2.5.1–2.5.7 and 2.5.6.1–2.5.6.5, the served outline |
+| `cite_from_module` (2.5.2→2.7.1 … 2.5.5→2.7.4) | inline | carried over, as `CITES`; each target is a record heading |
+| Section guidance | one hand sentence each | the record brief's full key content |
+| Length | "Typically 2-3 pages" (2.5.1), "3-5 pages" (2.5.6) | the brief's word range (`target_words`); the record's figure replaces the hand one |
+
+The hand guidance's phrases, mapped to the record's briefs:
+- **2.5.1** "background, therapeutic options, unmet need, scientific rationale": in the 2.5.1 brief. "Cite key external
+  references": 2.5.7 Literature References is now a section.
+- **2.5.2** "formulation development, bioavailability, food effect, IVIVC": in the 2.5.2 brief, as formulation
+  history, BA, food effect and IVIVC.
+- **2.5.3** "PK/PD, dose-response, special populations, DDI": in the 2.5.3 brief.
+- **2.5.4** "endpoints, subgroups, sensitivity analyses, robustness, durability": in the 2.5.4 brief. Sensitivity
+  analyses are under estimand and missing-data handling; robustness is under consistency of effect.
+- **2.5.5** "exposure, AEs, SAEs, deaths, special-interest events, lab abnormalities, risk minimisation,
+  contraindications/warnings": in the 2.5.5 brief. Contraindications and warnings are under anticipated labelling
+  risks.
+- **2.5.6** "integrated benefit-risk, explicit conclusion, residual uncertainties": in 2.5.6.4.
+  - **"Post-approval commitments" is not carried over.** It was a hand phrase with no source. The record's 2.5.6.4
+    names risk management (labelling, monitoring, pharmacovigilance, REMS). Adding the phrase to the record would
+    need a verbatim read of M4E(R2) first.
+
+**Red first:** `c4-ana-tools-red.txt` was run after a pure move and extraction, before any derivation. 4 of 4 red:
+- 2.5 had no 2.5.7;
+- 2.7 had the short 2.7.1 title and no 2.7.5 or 2.7.6;
+- a fact by CTD code was not placed;
+- the 2.5 outline stopped at 2.5.6.
+
+All four pass after the derivation.
+
+**Pins moved on purpose:**
+- **`ind-module-tool.test.ts`.** `sectionsWithoutFacts` is now codes: `['2.5.1', '2.5.2', '2.5.6', '2.5.7']`. The
+  checked count is the template's length plus one, not a literal 7.
+- **`new-tool-handlers.test.ts`.** The 2.5 outline is seven sections, with 2.5.7.
+- **`ind-module-authoring.test.ts`** moved with its module. Its uniqueness check reads `code`.
+
+**Gates:**
+- the six test files that name either tool, plus the C4a test: 119 pass;
+- typecheck: 0 errors;
+- ESLint: no new warnings (the two existing file-length warnings remain);
+- unreferenced modules: 75, at baseline.
