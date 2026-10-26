@@ -111,3 +111,10 @@ until dispatcher membership is checked; the dispatchable union stays closed.
 Four directly affected command/governance/GDPR suites pass **34/34** after that
 type-only correction (`backend-boundary-type.txt.gz`). No caller or runtime
 behavior changed.
+
+Whole-tree TypeScript passed with zero errors before integration. Concurrent
+section-evidence assembly work through `e9ee6b110` merged without source
+conflicts. The four directly interacting wizard, step-return, command-schema
+and assembly-source suites pass **39/39** on the merged tree
+(`merged-related.txt.gz`). Browser/build qualification above precedes that
+merge; mandatory pre-push gates run on the final combined tree.
