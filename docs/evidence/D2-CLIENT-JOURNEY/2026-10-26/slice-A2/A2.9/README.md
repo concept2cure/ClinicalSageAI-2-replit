@@ -167,3 +167,9 @@ The final integration also preserves Account publication receipt `5c24914f`.
 That commit changes only Account evidence prose/logs; all checked A2.9 source
 hashes remain identical. The implementation is `ce8cae23`; required publication
 hooks run on the merged source without changing a type/lint baseline.
+
+The first publication attempt correctly stopped at the SQL ratchet: deleting
+the journey writer reduced that file's interpolation count from two to one.
+The allowance is narrowed to one in `sql-interpolation-baseline.json`; it is
+not expanded. The retained read's existing allowance remains unchanged.
+Normal hooks are rerun after this required reduction.

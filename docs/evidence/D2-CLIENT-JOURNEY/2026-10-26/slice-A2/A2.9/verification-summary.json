@@ -101,5 +101,11 @@
   "acceptedBuild": "client, server and audit verifier passed; Vite21.25seconds",
   "implementationCommit": "ce8cae23",
   "accountPublicationReceipt": "5c24914f06e21a93e542b333cdd8985229fb8fcc",
-  "publicationReceiptSourceChanges": false
+  "publicationReceiptSourceChanges": false,
+  "sqlRatchetReduction": {
+    "file": "server/services/program-journey/program-journey-service.ts",
+    "before": 2,
+    "after": 1,
+    "reason": "Retired unused journey writer removes one existing interpolation; hook requires allowance to shrink."
+  }
 }
