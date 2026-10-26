@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T10:11:36.888Z",
+  "generatedAt": "2026-10-26T12:37:12.157Z",
   "git": {
-    "sha": "0d94a666678cf0ebc76563b2df9a8cd4fa516c5d",
+    "sha": "5aa47407d02f4509a06fa2eea6292322eacacb40",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2341,7 +2341,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1165911
+        "bytes": 1168466
       },
       {
         "file": "shared/schema.ts",
@@ -2567,7 +2567,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22172
+        "lines": 22219
       },
       {
         "file": "shared/schema.ts",
@@ -2750,6 +2750,10 @@
         "lines": 2265
       },
       {
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2256
+      },
+      {
         "file": "server/services/ana/run-control.ts",
         "lines": 2218
       },
@@ -2764,10 +2768,6 @@
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2207
-      },
-      {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2175
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
@@ -2806,12 +2806,12 @@
         "lines": 2115
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2097
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2098
       },
       {
-        "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2095
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2097
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2858,6 +2858,10 @@
         "lines": 1942
       },
       {
+        "file": "server/services/digital-health/digital-health-knowledge.ts",
+        "lines": 1941
+      },
+      {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1939
       },
@@ -2876,10 +2880,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 1875
-      },
-      {
-        "file": "server/services/digital-health/digital-health-knowledge.ts",
-        "lines": 1871
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
