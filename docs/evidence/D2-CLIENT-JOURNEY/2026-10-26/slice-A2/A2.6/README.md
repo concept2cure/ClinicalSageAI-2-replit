@@ -86,6 +86,10 @@ remain callable; this slice does not authorize their removal.
   status correction.
 - Concurrent onboarding changes through `ddbdfb938` merged cleanly. The merged
   dossier/readiness and onboarding suites pass: **47 tests in 4 suites**.
+- All pre-push gates then passed, including TypeScript **0 errors**, but Git
+  rejected the ref update after concurrent vaccine safeguards landed. Changes
+  through `619a946f8` merged cleanly; the vaccine/dossier suites pass together:
+  **91 tests in 2 suites**. The shared IA continuation now points to A2.7.
 - Required pre-push gates, including the zero-baseline TypeScript check, run
   during publication; no bypass is used.
   The first typecheck caught a missing required `empty` flag in the new test
