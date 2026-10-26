@@ -6,8 +6,9 @@
 > |---|---|---|
 > | S1 | done | `s1-orchestrator-inline-inputs/` |
 > | S2 | done, with its review fixes | `s2-nonclinical-drafts/` |
-> | S3 | done | `s3-invented-defaults/` |
-> | S4–S14 | queued | — |
+> | S3 | done, with review fixes | `s3-invented-defaults/review/` |
+> | S4 | independent safeguards implemented; R-2/F2 policy pending | `s4-nonclinical-engines/` |
+> | S5–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 

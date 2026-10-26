@@ -6636,56 +6636,13 @@
         "id": "device_ivd",
         "label": "Device / IVD"
       },
-      "description": "Assess Pregnancy and Lactation Labeling Rule (PLLR) requirements and generate structured labeling content recommendations per 21 CFR 201.56(d)(1) and the FDA final rule effective June 30, 2015. Returns recommended content for all three PLLR subsections: 8.1 Pregnancy (risk summary, clinical considerations, data from human and animal studies), 8.2 Lactation (risk summary, clinical considerations, data), and 8.3 Females and Males of Reproductive Potential (pregnancy testing, contraception, infertility). Evaluates available evidence (animal reproductive toxicology data, human pregnancy registries, placental transfer studies, breast milk excretion data) against PLLR content standards and identifies data gaps requiring additional studies or post-marketing commitments. Eliminates legacy pregnancy categories (A/B/C/D/X) per the final rule. Cites 21 CFR 201.56(d)(1), 201.57(c)(9), FDA PLLR guidance (2014), and relevant FDA draft guidance on lactation studies. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Return the PLLR structure for 8.1 Pregnancy, 8.2 Lactation and 8.3 Females and Males of Reproductive Potential, with generic reference guidance. Product-specific requiredStatements are null because no recorded pregnancy, lactation or reproductive-potential evidence is read here. Do not pass animal findings, pregnancy data, milk or placental-transfer facts, mechanism-based risks or registry facts; conversation inputs are not used to infer product label statements. Report what was not assessed and use the structure in the governed authoring flow with cited source records. Cites 21 CFR 201.57(c)(9) and the PLLR Final Rule. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
-      "governed": false,
-      "renderer": "document-canvas",
+      "governed": true,
+      "renderer": "result-card",
       "example": "",
-      "inputs": [
-        {
-          "name": "animalReproToxData",
-          "type": "array",
-          "required": true,
-          "description": "Animal reproductive toxicology study results — used to populate the Data subsection of Section 8.1 Pregnancy."
-        },
-        {
-          "name": "humanPregnancyData",
-          "type": "boolean",
-          "required": true,
-          "description": "Whether human pregnancy outcome data are available (from clinical trials, pregnancy registries, or epidemiological studies). Presence of human data significantly strengthens the Risk Summary."
-        },
-        {
-          "name": "placentalTransfer",
-          "type": "string",
-          "required": true,
-          "description": "Placental transfer status — \"known\" if demonstrated in studies, \"likely\" if expected based on molecular characteristics (e.g., IgG antibodies), \"unknown\" if not studied, \"none\" if demonstrated not to cross."
-        },
-        {
-          "name": "breastMilkExcretion",
-          "type": "string",
-          "required": true,
-          "description": "Breast milk excretion status — \"known\" if demonstrated in lactation studies, \"likely\" if expected based on molecular characteristics, \"unknown\" if not studied, \"none\" if demonstrated not to be excreted."
-        },
-        {
-          "name": "mechanismBasedRisk",
-          "type": "boolean",
-          "required": true,
-          "description": "Whether the drug's mechanism of action suggests developmental or reproductive risk (e.g., anti-angiogenic agents, cytotoxic agents, hormonal modulators). Triggers enhanced risk language in Section 8.1."
-        },
-        {
-          "name": "pregnancyRegistryData",
-          "type": "boolean",
-          "required": false,
-          "description": "Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1."
-        }
-      ],
-      "requiredInputs": [
-        "animalReproToxData",
-        "humanPregnancyData",
-        "placentalTransfer",
-        "breastMilkExcretion",
-        "mechanismBasedRisk"
-      ],
+      "inputs": [],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -10448,7 +10405,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Determine which nonclinical studies are required to support a clinical trial of a given duration and phase, and which are missing, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the required battery and the gaps verbatim; only studies due at or before the target phase are gated.",
+      "description": "List required nonclinical studies for a stated clinical duration and phase, and compare only the studies you listed, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the requirements and comparison against the stated list; it does not establish program adequacy. No listed studies means requirements only, with gaps null.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -10500,7 +10457,7 @@
           "name": "present",
           "type": "array",
           "required": false,
-          "description": "Studies the program already holds."
+          "description": "Studies stated in the conversation for a worksheet comparison; not read from the program records."
         }
       ],
       "requiredInputs": [
@@ -10514,12 +10471,18 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Produce the integrated nonclinical safety assessment for an IND in one call — the roll-up a toxicology lead writes. Composes the first-in-human starting dose (NOAEL→HED→MRSD vs MABEL), the target-organ adversity profile, the ICH M3(R2)/S-series program gaps, and the M2.4 overview into a single readiness verdict (ready_for_fih / gaps_block_fih / insufficient_input) with the blocker list. Each input block is optional; supply what the program has. Prefer this for 'what is the nonclinical safety story / are we ready for first-in-human?' questions; report the verdict, dose, adverse findings, and blockers verbatim.",
-      "scope": "global",
+      "description": "Assess nonclinical safety readiness from the open project's recorded studies only. Do not pass studies, presentStudies, findings, NOAELs, doses or FIH inputs, or restate them from the conversation. Until nonclinical studies are recorded against a project, returns readiness not_assessed and, when the clinical duration is stated, the ICH M3(R2)/S-series required battery. No studies were read: this is a requirement list, not a gap analysis or a starting-dose determination. Report the refusal and requirements as returned; never infer that the program holds or lacks a study or is ready for first-in-human.",
+      "scope": "project",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "findings-list",
       "example": "",
       "inputs": [
+        {
+          "name": "project_id",
+          "type": "number",
+          "required": false,
+          "description": "Project to resolve when none is open. Another project while one is open is refused."
+        },
         {
           "name": "drugSubstanceName",
           "type": "string",
@@ -10533,32 +10496,8 @@
           "description": ""
         },
         {
-          "name": "fih",
-          "type": "object",
-          "required": false,
-          "description": "First-in-human dose inputs (same shape as compute_fih_dose)."
-        },
-        {
-          "name": "findings",
-          "type": "array",
-          "required": false,
-          "description": ""
-        },
-        {
           "name": "program",
           "type": "object",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "presentStudies",
-          "type": "array",
-          "required": false,
-          "description": ""
-        },
-        {
-          "name": "studies",
-          "type": "array",
           "required": false,
           "description": ""
         }
@@ -10572,9 +10511,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this when framing tox findings for a Module 2.4 Nonclinical Overview or deciding which findings define the NOAEL. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
+      "description": "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this only as a worksheet over findings stated in the conversation; no study records are read and it is not governed Module 2.4 content or the program's NOAEL determination. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -10596,9 +10535,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Compute a defensible first-in-human (FIH) starting dose using the platform's DETERMINISTIC dose engine. Shows BOTH standard derivations: (1) NOAEL → HED (FDA 2005 body-surface Km scaling) → safety factor → MRSD from the most sensitive species, and (2) MABEL from the minimum anticipated effective exposure (EMA FIH guidance), then selects the more conservative and flags which is limiting. ALWAYS call this tool for FIH/MRSD/MABEL/starting-dose questions (e.g. /fih, /dose, Module 2.4 dose-justification). NEVER hand-calculate an HED, MRSD, or MABEL — a fabricated starting dose is a critical safety defect. Gather the per-species NOAELs (mg/kg/day) and, for high-risk molecules, the MABEL inputs, then report the returned numbers verbatim.",
+      "description": "Calculate a first-in-human dose worksheet from NOAELs explicitly stated by the person: NOAEL to HED to safety factor to MRSD, and optional MABEL, using the canonical deterministic engine. Shows both derivations and which limits. No study records are read; this is not the program's starting dose or governed Module 2.4 content. Do not pass invented or inferred NOAELs or treat the result as a readiness determination. Report the stated basis, numbers, limiting derivation and warnings verbatim.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -11034,7 +10973,7 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -14088,9 +14027,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate whether carcinogenicity studies are required per ICH S1A triggers and, if so, recommend a study design per ICH S1B(R1) and S1C(R2). Evaluates all ICH S1A triggers: clinical duration ≥6 months, positive genotoxicity, structural alerts, preneoplastic lesions in repeat-dose studies, endocrine activity, immunosuppression. Returns trigger-by-trigger assessment, recommended design (2-year rat bioassay, 6-month Tg.rasH2 transgenic mouse model, or weight-of-evidence waiver per ICH S1B(R1) 2022 revision), dose selection per ICH S1C(R2), and statistical approaches. Handles biologics (ICH S6(R1) — standard bioassays generally inappropriate) and oncology (ICH S9 — typically not required). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Worksheet over explicitly stated clinical duration, modality, genotoxicity and other risk inputs, using ICH S1A triggers and S1B(R1)/S1C(R2) study-design guidance. No study records are read: do not present stated genotoxicity findings as the program's recorded results or this worksheet as governed content. Covers duration, structural alerts, preneoplastic lesions, endocrine activity and immunosuppression, with S6(R1) biologic and S9 oncology considerations. Report its stated basis and trigger-by-trigger comparison verbatim. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -17763,9 +17702,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Calculate the Human Equivalent Dose (HED) and Maximum Recommended Starting Dose (MRSD) from a nonclinical NOAEL using the FDA body surface area (Km factor) method (FDA 2005 Guidance). Returns step-by-step calculations: HED = NOAEL × (animal Km / human Km), MRSD = HED / safety factor. Optionally computes AUC-based and Cmax-based safety margins when exposure data are provided. Includes regulatory interpretation, warnings for low margins, and ICH S9 oncology-specific dose-selection considerations (STD10, HNSTD). Supported species: mouse, rat, hamster, guinea pig, rabbit, dog, NHP, minipig. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data verbatim — do NOT reinterpret regulatory citations, invent additional guidance, or substitute your own species/dose/study-design recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Calculate a safety-margin worksheet from explicitly stated NOAEL and exposure inputs. Uses the canonical FIH engine for HED and MRSD via FDA 2005 Km scaling and the stated safety factor, and returns separate AUC/Cmax ratios when exposures are supplied. No study records are read; it is not the program's starting dose, readiness verdict or governed content. Do not pass invented or inferred study figures. Unknown species are refused. Report the stated basis, calculations and warnings verbatim.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [

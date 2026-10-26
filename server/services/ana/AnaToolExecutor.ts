@@ -1,3 +1,4 @@
+import { statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
 import { readOnlyToolRefusal } from './read-only-turn.js';
 /**
  * AnA Tool Executor — Agentic Orchestration Loop
@@ -5493,13 +5494,13 @@ registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) =
     const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
 
     const result = computeFirstInHumanDose(input as any);
-    return JSON.stringify({
+    return statedInputResult(JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       instruction:
         'Report these numbers verbatim. Do NOT recompute or round differently. State which derivation is limiting (limitedBy) and surface any warnings.',
-    });
+    }), STATED_DOSE_NOTE);
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/required|at least one|usable HED|must be/.test(message)) {
@@ -5519,13 +5520,13 @@ registerToolHandler('classify_tox_findings', async (input: Record<string, unknow
     const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
 
     const summary = classifyToxFindings(findings as any);
-    return JSON.stringify({
+    return statedInputResult(JSON.stringify({
       status: 'classified',
       engine: 'deterministic',
       ...summary,
       instruction:
-        'Use these classifications and the overviewParagraph for the M2.4 target-organ profile. A pathologist adjudicates the final adversity call; surface any escalated or indeterminate findings.',
-    });
+        'Report these classifications only against the findings stated in this conversation. A pathologist adjudicates the final adversity call; surface any escalated or indeterminate findings.',
+    }), 'No study records were read; this worksheet is not the program\'s target-organ assessment or governed Module 2.4 content.');
   } catch (err: any) {
     return JSON.stringify({ error: `Tox-finding classification failed: ${err?.message || 'unknown error'}` });
   }
@@ -5650,7 +5651,7 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
       presentStudies: loaded.presentStudies,
       speciesNoaels: loaded.speciesNoaels,
       instruction:
-        'Pass presentStudies into assess_nonclinical_program and speciesNoaels into compute_fih_dose. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+        'These rows are model-extracted observations, not an approved basis for program readiness or a starting dose. Do not relay them as a program determination; any worksheet comparison is labelled as stated inputs, not records the calculator read. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
     // 2026-10-22: a program outside the organization read as a failed load.
@@ -5740,29 +5741,9 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
 });
 
 // Integrated nonclinical safety assessment — composes the engines
-registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
-  try {
-    const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
-
-    const a = assessNonclinicalSafety(input as any);
-    return JSON.stringify({
-      status: 'assessed',
-      engine: 'deterministic',
-      readiness: a.readiness,
-      recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
-      limitedBy: a.fihDose?.limitedBy ?? null,
-      adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
-      // null, not [], when the study battery was never assessed.
-      programAssessed: a.programAssessed,
-      programGaps: a.programGaps ? a.programGaps.gaps : null,
-      blockers: a.blockers,
-      overviewCompleteness: a.overview?.completeness ?? null,
-      summary: a.summary,
-      instruction: 'Report the readiness verdict, FIH dose, adverse findings, and blockers verbatim. A blocker means a study is missing for the target phase, not that the molecule is unsafe.',
-    });
-  } catch (err: any) {
-    return JSON.stringify({ error: `Nonclinical safety assessment failed: ${err?.message || 'unknown error'}` });
-  }
+registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const { assessRecordedNonclinicalSafety } = await import('./nonclinical-safety-tool.js');
+  return assessRecordedNonclinicalSafety(input, ctx);
 });
 
 // Nonclinical study-program requirements & gaps — deterministic ICH M3(R2)
@@ -5797,11 +5778,13 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
     return JSON.stringify({
       status: 'assessed',
       engine: 'deterministic',
-      adequate: result.adequate,
+      adequate: null,
+      basis: 'stated',
+      appliesTo: 'the studies you listed',
       required: result.required,
       gaps: result.gaps,
       instruction:
-        'Report the required battery and the gaps verbatim. Only studies due at or before the target phase are gated; note the timing of later-due studies.',
+        'Report the required battery and comparisons against the studies you listed. No recorded studies were read, so this is not a program adequacy or readiness verdict. Only studies due at or before the target phase are compared; note later-due studies.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Nonclinical program assessment failed: ${err?.message || 'unknown error'}` });
@@ -19179,10 +19162,10 @@ registerToolHandler('design_repeat_dose_study', async (input: Record<string, unk
 );
 
 registerToolHandler('calculate_safety_margin', async (input: Record<string, unknown>) =>
-  runStatsTool('calculate_safety_margin', async () => {
+  statedInputResult(await runStatsTool('calculate_safety_margin', async () => {
     const { calculateSafetyMargin } = await import('../toxicology/toxicology-knowledge.js');
     return calculateSafetyMargin(input as any);
-  }, 'deterministic')
+  }, 'deterministic'), STATED_DOSE_NOTE)
 );
 
 registerToolHandler('design_genotox_battery', async (input: Record<string, unknown>) =>
@@ -19193,10 +19176,10 @@ registerToolHandler('design_genotox_battery', async (input: Record<string, unkno
 );
 
 registerToolHandler('assess_carcinogenicity_need', async (input: Record<string, unknown>) =>
-  runStatsTool('assess_carcinogenicity_need', async () => {
+  statedInputResult(await runStatsTool('assess_carcinogenicity_need', async () => {
     const { assessCarcinogenicityNeed } = await import('../toxicology/toxicology-knowledge.js');
     return assessCarcinogenicityNeed(input as any);
-  }, 'deterministic')
+  }, 'deterministic'), 'This worksheet applies only to the genotoxicity and other inputs explicitly stated in the conversation, not the program\'s recorded assessment or governed content. Do not claim any study records were read.')
 );
 
 registerToolHandler('design_repro_tox_study', async (input: Record<string, unknown>) =>

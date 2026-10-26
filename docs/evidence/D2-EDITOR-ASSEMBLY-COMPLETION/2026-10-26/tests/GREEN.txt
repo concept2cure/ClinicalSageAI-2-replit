@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > preserves text found on the initial inspect and prepares the next empty section without accepting either 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > explicit retry moves past a now-populated failed first section and drafts the later empty section once 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > finishes an entirely populated pending batch with no manufactured candidate or acceptance 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > retains completed review edits while preserving a later changed row and preparing the remaining section 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed missing row as preserved or drafting later sections 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed wrong-id row as preserved or drafting later sections 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed wrong-code row as preserved or drafting later sections 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed malformed row as preserved or drafting later sections 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed failed-read row as preserved or drafting later sections 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed inaccessible row as preserved or drafting later sections 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after stop during the exact-row read 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after editor-change during the exact-row read 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after source-change during the exact-row read 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > still stops on provider refusal after a preserved row, leaving the later empty row unstarted 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > an exact-section retry does not preserve or draft the unselected pending rows 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > a different source selection never retries or preserves slots retained for the earlier selection 4ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  16:08:06
+   Duration  2.00s (transform 636ms, setup 143ms, import 709ms, tests 290ms, environment 613ms)
+

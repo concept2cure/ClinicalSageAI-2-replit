@@ -244,20 +244,20 @@ describe('assess_nonclinical_program handler', () => {
 });
 
 describe('assess_nonclinical_safety handler', () => {
-  it('rolls up the integrated assessment with a readiness verdict', async () => {
+  it('does not roll typed study figures into a readiness verdict', async () => {
     const handler = getToolHandler('assess_nonclinical_safety')!;
     const out = JSON.parse(
       await handler({
         fih: { speciesNoaels: [{ species: 'dog', noaelMgPerKg: 30 }], mabel: { minAnticipatedEffectiveExposure: 10, exposurePerMgDose: 1 } },
         program: { maxClinicalDurationWeeks: 4, targetPhase: 2 },
         presentStudies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 4 }],
-      }),
+      }, { organizationId: 3, projectId: 9 } as never),
     );
-    expect(out.status).toBe('assessed');
-    expect(out.readiness).toBe('gaps_block_fih');
-    expect(out.recommendedStartingDoseMg).toBe(10);
-    expect(out.blockers.length).toBeGreaterThan(0);
-    expect(out.programAssessed).toBe(true);
+    expect(out.status).toBe('needs_data');
+    expect(out.readiness).toBe('not_assessed');
+    expect(out.recommendedStartingDoseMg).toBeUndefined();
+    expect(out.programGaps).toBeNull();
+    expect(out.programAssessed).toBe(false);
   });
 
   it('a dose with no program context is not ready_for_fih, and programGaps is null rather than []', async () => {
@@ -265,10 +265,11 @@ describe('assess_nonclinical_safety handler', () => {
     // as [] — "assessed, no gaps" — when the study battery was never checked.
     const handler = getToolHandler('assess_nonclinical_safety')!;
     const out = JSON.parse(await handler({ drugSubstanceName: 'BX-115', fih: { speciesNoaels: [{ species: 'rat', noaelMgPerKg: 10 }] } }));
-    expect(out.readiness).toBe('insufficient_input');
+    expect(out.readiness).toBe('not_assessed');
+    expect(out.status).toBe('needs_project');
     expect(out.programAssessed).toBe(false);
     expect(out.programGaps).toBeNull();
-    expect(out.summary).toMatch(/study battery was not assessed/);
+    expect(out.recommendedStartingDoseMg).toBeUndefined();
   });
 });
 

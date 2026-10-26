@@ -227,60 +227,11 @@ export const DESIGN_REMS: AnaTool = {
 export const ASSESS_PREGNANCY_LACTATION_LABELING: AnaTool = {
   name: 'assess_pregnancy_lactation_labeling',
   description:
-    'Assess Pregnancy and Lactation Labeling Rule (PLLR) requirements and generate ' +
-    'structured labeling content recommendations per 21 CFR 201.56(d)(1) and the ' +
-    'FDA final rule effective June 30, 2015. Returns recommended content for all ' +
-    'three PLLR subsections: 8.1 Pregnancy (risk summary, clinical considerations, ' +
-    'data from human and animal studies), 8.2 Lactation (risk summary, clinical ' +
-    'considerations, data), and 8.3 Females and Males of Reproductive Potential ' +
-    '(pregnancy testing, contraception, infertility). Evaluates available evidence ' +
-    '(animal reproductive toxicology data, human pregnancy registries, placental ' +
-    'transfer studies, breast milk excretion data) against PLLR content standards ' +
-    'and identifies data gaps requiring additional studies or post-marketing ' +
-    'commitments. Eliminates legacy pregnancy categories (A/B/C/D/X) per the ' +
-    'final rule. Cites 21 CFR 201.56(d)(1), 201.57(c)(9), FDA PLLR guidance ' +
-    '(2014), and relevant FDA draft guidance on lactation studies. ' + DETERMINISTIC_NOTE,
+    'Return the PLLR structure for 8.1 Pregnancy, 8.2 Lactation and 8.3 Females and Males of Reproductive Potential, with generic reference guidance. Product-specific requiredStatements are null because no recorded pregnancy, lactation or reproductive-potential evidence is read here. Do not pass animal findings, pregnancy data, milk or placental-transfer facts, mechanism-based risks or registry facts; conversation inputs are not used to infer product label statements. Report what was not assessed and use the structure in the governed authoring flow with cited source records. Cites 21 CFR 201.57(c)(9) and the PLLR Final Rule. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
-    properties: {
-      animalReproToxData: {
-        type: 'array',
-        description: 'Animal reproductive toxicology study results — used to populate the Data subsection of Section 8.1 Pregnancy.',
-        items: {
-          type: 'object',
-          properties: {
-            species: { type: 'string', description: 'Species used in the study (e.g., "rat", "rabbit", "cynomolgus monkey").' },
-            findings: { type: 'string', description: 'Key findings from the study (e.g., "embryo-fetal lethality at 10x clinical exposure", "no adverse developmental effects").' },
-            dose: { type: 'string', description: 'Dose level and route (e.g., "100 mg/kg/day oral", "5 mg/kg IV"). Include multiples of clinical exposure when available.' },
-          },
-          required: ['species', 'findings', 'dose'],
-        },
-      },
-      humanPregnancyData: {
-        type: 'boolean',
-        description: 'Whether human pregnancy outcome data are available (from clinical trials, pregnancy registries, or epidemiological studies). Presence of human data significantly strengthens the Risk Summary.',
-      },
-      placentalTransfer: {
-        type: 'string',
-        enum: ['known', 'likely', 'unknown', 'none'],
-        description: 'Placental transfer status — "known" if demonstrated in studies, "likely" if expected based on molecular characteristics (e.g., IgG antibodies), "unknown" if not studied, "none" if demonstrated not to cross.',
-      },
-      breastMilkExcretion: {
-        type: 'string',
-        enum: ['known', 'likely', 'unknown', 'none'],
-        description: 'Breast milk excretion status — "known" if demonstrated in lactation studies, "likely" if expected based on molecular characteristics, "unknown" if not studied, "none" if demonstrated not to be excreted.',
-      },
-      mechanismBasedRisk: {
-        type: 'boolean',
-        description: 'Whether the drug\'s mechanism of action suggests developmental or reproductive risk (e.g., anti-angiogenic agents, cytotoxic agents, hormonal modulators). Triggers enhanced risk language in Section 8.1.',
-      },
-      pregnancyRegistryData: {
-        type: 'boolean',
-        description: 'Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1.',
-      },
-    },
-    // 2026-10-15: each of these writes label text; unstated, the engine used to read it as "no".
-    required: ['animalReproToxData', 'humanPregnancyData', 'placentalTransfer', 'breastMilkExcretion', 'mechanismBasedRisk'],
+    properties: {},
+    required: [],
   },
 };
 

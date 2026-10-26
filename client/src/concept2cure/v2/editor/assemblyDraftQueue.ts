@@ -35,9 +35,13 @@ async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, 
   const saved = await inspectAssemblyDocument(operation.options.docId!, operation.options.programId!, operation.current);
   if (!operation.current() || operation.bucket.stopRequested) return false;
   const row = saved?.find(section => section.id === slot.section.id && section.code === slot.section.code);
-  if (!row || row.content.trim() !== '') {
-    updateSlot(operation, slot, { status: 'failed', message: row ? 'Saved text now exists. It was preserved; no new candidate was generated.' : 'The exact saved section could not be confirmed. Check the document before retrying.' });
+  if (!row) {
+    updateSlot(operation, slot, { status: 'failed', message: 'The exact saved section could not be confirmed. Check the document before retrying.' });
     return false;
+  }
+  if (row.content.trim() !== '') {
+    updateSlot(operation, slot, { status: 'preserved', message: 'Saved text now exists. It was preserved; no new candidate was generated.' });
+    return !operation.bucket.stopRequested;
   }
   updateSlot(operation, slot, { status: 'drafting', message: undefined });
   const result = await generateAuthoringDraft({ sectionId: slot.section.id, region,
@@ -74,6 +78,9 @@ export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<v
   if (bucket.token !== operation.token) return;
   const selected = bucket.state.slots.filter(slot => slot.sourceSelectionKey === assemblySelectionKey(bucket.state.sourceSelection));
   const ready = selected.filter(slot => slot.status === 'ready').length;
+  const preserved = selected.filter(slot => slot.status === 'preserved').length;
   const remaining = selected.some(slot => ['not-started', 'failed'].includes(slot.status));
-  operation.update({ phase: remaining ? 'stopped' : 'built', message: `${ready} candidate${ready === 1 ? '' : 's'} retained for individual review. ${remaining ? 'Preparation stopped; retry failed or not-started sections explicitly.' : 'Review and accept each section separately in the existing editor.'}` });
+  const preservation = preserved ? `${preserved} saved section${preserved === 1 ? '' : 's'} preserved. ` : '';
+  const completion = ready ? 'Review and accept each section separately in the existing editor.' : 'No candidate is awaiting review.';
+  operation.update({ phase: remaining ? 'stopped' : 'built', message: `${ready} candidate${ready === 1 ? '' : 's'} retained for individual review. ${preservation}${remaining ? 'Preparation stopped; retry failed or not-started sections explicitly.' : completion}` });
 }

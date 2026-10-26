@@ -1,0 +1,18 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx"
+  ],
+  "environment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NO_COLOR": "1"
+  },
+  "startedUtc": "2026-10-26T16:08:06.292113+00:00",
+  "elapsedSeconds": 2.537,
+  "exitCode": 0,
+  "pinnedInputsStillMatch": true
+}

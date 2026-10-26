@@ -1,0 +1,170 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "path": "GREEN-result.json",
+      "bytes": 435,
+      "sha256": "cdc6338bad83cc28c065d4570105518eb851eef34fc1b199ae68f681b0dc1d82"
+    },
+    {
+      "path": "GREEN.txt",
+      "bytes": 4301,
+      "sha256": "092bd76ce21f86558fa7d2532b2cebfd4ec8358aed942ad4a6ef295de6b49b4f"
+    },
+    {
+      "path": "LINT-result.json",
+      "bytes": 411,
+      "sha256": "11ce00673fc51593c6aa3b72f16c9de656b34c641578e1eadc1207ba726a9675"
+    },
+    {
+      "path": "LINT.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4236,
+      "sha256": "bb136a9bf977ad42e1ae91257ba9d0274e9a634be41de2476e8ba58769712546"
+    },
+    {
+      "path": "RED-initial-result.json",
+      "bytes": 401,
+      "sha256": "81ff9caf2d70c03535b95f3d495dd87edf9eddf16d90c29e121322c5420b1e7e"
+    },
+    {
+      "path": "RED-initial.txt",
+      "bytes": 10803,
+      "sha256": "344f1cb7f904358f1dddd5c7e17287c3d1232a201ea9389ccd3796337ec2076f"
+    },
+    {
+      "path": "RED-result.json",
+      "bytes": 435,
+      "sha256": "a4749f21fe4c9fb568a4d535efb745d0f0e7f3e06cd274964c9b67d75ff66f74"
+    },
+    {
+      "path": "RED.txt",
+      "bytes": 9885,
+      "sha256": "2ede8428e7ba4b5825708cade8256c723034f6e79ea50f0120e89e8990295c85"
+    },
+    {
+      "path": "green-inputs.json",
+      "bytes": 2705,
+      "sha256": "e3108db987416a7d9272ab2f9e94dc17bdb8d67a5d32847b422b1f7955c58cb7"
+    },
+    {
+      "path": "green-source-ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md.txt.gz",
+      "bytes": 1972,
+      "sha256": "338b01924b8593b4592d062426c6b9fd8a04662f0d8bc145a80a276effdd5f72"
+    },
+    {
+      "path": "green-source-assemblyBuildState.ts.txt.gz",
+      "bytes": 1412,
+      "sha256": "2b2891c1981b8fefc44699ee7e1131d22fb4fad196c1419796ea535d3622538c"
+    },
+    {
+      "path": "green-source-assemblyBuildTransport.ts.txt.gz",
+      "bytes": 2765,
+      "sha256": "9a92cba422256afd5982b494f8de2f920abb94502df85a92e9d896b9522122a9"
+    },
+    {
+      "path": "green-source-assemblyDraftQueue.ts.txt.gz",
+      "bytes": 2250,
+      "sha256": "5d71946b0426d8cdb9f68cdcd21682e6d42740988f20b1a18fd4b2bedbc50f10"
+    },
+    {
+      "path": "green-source-assemblyDraftQueueCompletion.test.tsx.txt.gz",
+      "bytes": 4072,
+      "sha256": "871e6f201f0805ced2e393cf63d1d8c044b4864730aa628ccc4ce18e7a101d9b"
+    },
+    {
+      "path": "green-source-assemblySourceSelection.ts.txt.gz",
+      "bytes": 464,
+      "sha256": "16811fa7f65c466115d68662552a386385a14e3112d665fb082716d3d8fedf05"
+    },
+    {
+      "path": "green-source-authoringDraftTransport.ts.txt.gz",
+      "bytes": 2978,
+      "sha256": "909c55ec93ce85b535ef8b33e3031de1eb4c2c41e33ce8bdc61450ab4039e448"
+    },
+    {
+      "path": "green-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "green-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "green-source-useAuthoringAssemblyBuild.ts.txt.gz",
+      "bytes": 6369,
+      "sha256": "ae41d32c0fbad6fd7b6aae5cfb83db4ddb15a020aafcd4dee3d408eb5d90878b"
+    },
+    {
+      "path": "green-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    },
+    {
+      "path": "red-inputs.json",
+      "bytes": 2683,
+      "sha256": "200c291d911ad39ab4e2b80441aed9fc5f2c02e132755abf8214ad1749429b8c"
+    },
+    {
+      "path": "red-source-ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md.txt.gz",
+      "bytes": 1972,
+      "sha256": "338b01924b8593b4592d062426c6b9fd8a04662f0d8bc145a80a276effdd5f72"
+    },
+    {
+      "path": "red-source-assemblyBuildState.ts.txt.gz",
+      "bytes": 1407,
+      "sha256": "e27897b2aaf9956354cc17663b8039f5b94706f1d58d230984896fc370e6b0b4"
+    },
+    {
+      "path": "red-source-assemblyBuildTransport.ts.txt.gz",
+      "bytes": 2765,
+      "sha256": "9a92cba422256afd5982b494f8de2f920abb94502df85a92e9d896b9522122a9"
+    },
+    {
+      "path": "red-source-assemblyDraftQueue.ts.txt.gz",
+      "bytes": 2175,
+      "sha256": "d847ff1e2a983b9d9e397454049abddfb25563d1c2a94ab37783688e3cf9418e"
+    },
+    {
+      "path": "red-source-assemblyDraftQueueCompletion.test.tsx.txt.gz",
+      "bytes": 4072,
+      "sha256": "871e6f201f0805ced2e393cf63d1d8c044b4864730aa628ccc4ce18e7a101d9b"
+    },
+    {
+      "path": "red-source-assemblySourceSelection.ts.txt.gz",
+      "bytes": 464,
+      "sha256": "16811fa7f65c466115d68662552a386385a14e3112d665fb082716d3d8fedf05"
+    },
+    {
+      "path": "red-source-authoringDraftTransport.ts.txt.gz",
+      "bytes": 2978,
+      "sha256": "909c55ec93ce85b535ef8b33e3031de1eb4c2c41e33ce8bdc61450ab4039e448"
+    },
+    {
+      "path": "red-source-package.json.txt.gz",
+      "bytes": 10297,
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808"
+    },
+    {
+      "path": "red-source-setup.ts.txt.gz",
+      "bytes": 5501,
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08"
+    },
+    {
+      "path": "red-source-useAuthoringAssemblyBuild.ts.txt.gz",
+      "bytes": 6369,
+      "sha256": "ae41d32c0fbad6fd7b6aae5cfb83db4ddb15a020aafcd4dee3d408eb5d90878b"
+    },
+    {
+      "path": "red-source-vitest.config.ts.txt.gz",
+      "bytes": 1763,
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce"
+    }
+  ]
+}

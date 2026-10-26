@@ -1,0 +1,162 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > preserves text found on the initial inspect and prepares the next empty section without accepting either 34ms
+   → expected [] to deeply equal [ Array(1) ]
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > explicit retry moves past a now-populated failed first section and drafts the later empty section once 21ms
+   → expected [ Array(1) ] to deeply equal [ …(2) ]
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > finishes an entirely populated pending batch with no manufactured candidate or acceptance 6ms
+   → expected [ 'failed', 'not-started' ] to deeply equal [ 'preserved', 'preserved' ]
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > retains completed review edits while preserving a later changed row and preparing the remaining section 9ms
+   → expected [ 'ready', 'failed', 'not-started' ] to deeply equal [ 'ready', 'preserved', 'ready' ]
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed missing row as preserved or drafting later sections 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed wrong-id row as preserved or drafting later sections 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed wrong-code row as preserved or drafting later sections 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed malformed row as preserved or drafting later sections 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed failed-read row as preserved or drafting later sections 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > stops rather than treating an unconfirmed inaccessible row as preserved or drafting later sections 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after stop during the exact-row read 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after editor-change during the exact-row read 56ms
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after source-change during the exact-row read 57ms
+   → expected 'built' to be 'stopped' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > still stops on provider refusal after a preserved row, leaving the later empty row unstarted 4ms
+   → expected [ 'failed', 'not-started', …(1) ] to deeply equal [ Array(3) ]
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > an exact-section retry does not preserve or draft the unselected pending rows 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > a different source selection never retries or preserves slots retained for the earlier selection 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > preserves text found on the initial inspect and prepares the next empty section without accepting either
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "/api/authoring/sections/55555555-5555-4555-8555-555555555555/ai/draft",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:100:59
+     98|     const view = mount(); await prepare(view); await build(view);
+     99|
+    100|     expect(requests('/ai/draft').map(([, path]) => path)).toEqual([`/a…
+       |                                                           ^
+    101|     expect(view.result.current.slots.map(slot => slot.status)).toEqual…
+    102|     expect(view.result.current.slots[0]).toMatchObject({ message: expe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > explicit retry moves past a now-populated failed first section and drafts the later empty section once
+AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    "/api/authoring/sections/44444444-4444-4444-8444-444444444444/ai/draft",
+-   "/api/authoring/sections/55555555-5555-4555-8555-555555555555/ai/draft",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:126:59
+    124|     await act(async () => { await view.result.current.retryDrafts(); }…
+    125|
+    126|     expect(requests('/ai/draft').map(([, path]) => path)).toEqual([
+       |                                                           ^
+    127|       `/api/authoring/sections/${FIRST}/ai/draft`, `/api/authoring/sec…
+    128|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > finishes an entirely populated pending batch with no manufactured candidate or acceptance
+AssertionError: expected [ 'failed', 'not-started' ] to deeply equal [ 'preserved', 'preserved' ]
+
+- Expected
++ Received
+
+  [
+-   "preserved",
+-   "preserved",
++   "failed",
++   "not-started",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:142:64
+    140|     const view = mount(); await prepare(view); await build(view);
+    141|
+    142|     expect(view.result.current.slots.map(slot => slot.status)).toEqual…
+       |                                                                ^
+    143|     expect(view.result.current.phase).toBe('built');
+    144|     expect(view.result.current.message).toMatch(/0 candidates retained…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion when a verified pending section gains saved text > retains completed review edits while preserving a later changed row and preparing the remaining section
+AssertionError: expected [ 'ready', 'failed', 'not-started' ] to deeply equal [ 'ready', 'preserved', 'ready' ]
+
+- Expected
++ Received
+
+  [
+    "ready",
+-   "preserved",
+-   "ready",
++   "failed",
++   "not-started",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:168:64
+    166|     await act(async () => { await view.result.current.retryDrafts(); }…
+    167|
+    168|     expect(view.result.current.slots.map(slot => slot.status)).toEqual…
+       |                                                                ^
+    169|     expect(view.result.current.reviewSessions[FIRST].state).toMatchObj…
+    170|     expect(requests('/ai/draft').map(([, path]) => path)).toEqual([FIR…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > does not preserve or continue after source-change during the exact-row read
+AssertionError: expected 'built' to be 'stopped' // Object.is equality
+
+Expected: "stopped"
+Received: "built"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:210:41
+    208|
+    209|       expect(view.result.current.slots.map(slot => slot.status)).toEqu…
+    210|       expect(view.result.current.phase).toBe('stopped');
+       |                                         ^
+    211|       expect(requests('/sections')).toHaveLength(1);
+    212|       expect(requests('/ai/draft')).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx > assembly completion keeps existing refusal and ownership boundaries > still stops on provider refusal after a preserved row, leaving the later empty row unstarted
+AssertionError: expected [ 'failed', 'not-started', …(1) ] to deeply equal [ Array(3) ]
+
+- Expected
++ Received
+
+  [
+-   "preserved",
+    "failed",
++   "not-started",
+    "not-started",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx:221:64
+    219|     const view = mount(); await prepare(view); await build(view);
+    220|
+    221|     expect(view.result.current.slots.map(slot => slot.status)).toEqual…
+       |                                                                ^
+    222|     expect(view.result.current.phase).toBe('stopped');
+    223|     expect(view.result.current.reviewSessions).toEqual({});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 10 passed (16)
+   Start at  16:06:23
+   Duration  1.47s (transform 439ms, setup 114ms, import 486ms, tests 292ms, environment 417ms)
+

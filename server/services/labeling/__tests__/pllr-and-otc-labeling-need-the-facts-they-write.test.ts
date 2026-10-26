@@ -1,15 +1,7 @@
 /**
- * assessPregnancyLactationLabeling and assessOTCLabeling (AnA tools
- * assess_pregnancy_lactation_labeling and assess_otc_labeling) write label
- * guidance only from facts that were stated (2026-10-15).
- *
- * An unstated input was read as its most favourable value. With
- * breastMilkExcretion missing, section 8.2 told the author "Drug is not excreted
- * in breast milk. State this and note whether breastfeeding may be continued";
- * with humanPregnancyData missing, 8.1 said to state "There are no adequate data
- * on the developmental risk ... in pregnant women"; and a Drug Facts panel with
- * targetPopulation missing lost the 21 CFR 201.63 pregnancy/breast-feeding
- * warning. A missing animal-study or ingredient list threw a TypeError.
+ * PLLR now returns structure only, with no product statements from typed facts
+ * (Rule 2 S4). The OTC Drug Facts contract still requires the product facts
+ * deciding its panel; that independent behavior remains pinned here.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -40,31 +32,37 @@ const PLLR_FACTS: Record<string, unknown> = {
 
 describe('assessPregnancyLactationLabeling', () => {
   it('does not write "not excreted in breast milk" when excretion was not stated', () => {
-    expect(() => pllr(without(PLLR_FACTS, 'breastMilkExcretion')), 'lactation text written with excretion unstated')
-      .toThrow(/breastMilkExcretion/);
+    const result = pllr(without(PLLR_FACTS, 'breastMilkExcretion'));
+    expect(result.section8_2.requiredStatements).toBeNull();
+    expect(result.section8_2.subsections[0].contentGuidance).not.toMatch(/not excreted/);
   });
 
-  it('requires each fact that decides the 8.1 and 8.3 text', () => {
+  it('does not request conversation facts for product label text it cannot assess', () => {
+    const structure = pllr({});
     for (const k of ['animalReproToxData', 'humanPregnancyData', 'placentalTransfer', 'mechanismBasedRisk']) {
-      expect(() => pllr(without(PLLR_FACTS, k)), k).toThrow(new RegExp(k));
+      const result = pllr(without(PLLR_FACTS, k));
+      expect(result.section8_1, k).toEqual(structure.section8_1);
+      expect(result.section8_3, k).toEqual(structure.section8_3);
     }
   });
 
-  it('names every missing fact in one refusal, so they can all be asked for at once', () => {
-    expect(() => pllr({})).toThrow(new RegExp(Object.keys(PLLR_FACTS).join('.*')));
+  it('returns a structure and the no-records reason with nothing supplied', () => {
+    const result = pllr({});
+    expect(result).toMatchObject({ status: 'not_assessed', ignoredSuppliedFigures: false });
+    expect(result.reason).toMatch(/no .*records.*read/i);
   });
 
-  it('writes "not excreted" only when that was stated', () => {
+  it('a stated excretion answer does not become a product label statement', () => {
     const none = pllr({ ...PLLR_FACTS, breastMilkExcretion: 'none' });
-    expect(none.section8_2.subsections[0].contentGuidance).toMatch(/not excreted/);
     const unknown = pllr(PLLR_FACTS);
-    expect(unknown.section8_2.subsections[0].contentGuidance).toMatch(/no data on the presence/);
+    expect(none.section8_2).toEqual(unknown.section8_2);
+    expect(none.section8_2.requiredStatements).toBeNull();
+    expect(none.ignoredSuppliedFigures).toBe(true);
   });
 
-  it('is offered to AnA with those facts required', () => {
-    expect(ASSESS_PREGNANCY_LACTATION_LABELING.input_schema.required).toEqual(
-      expect.arrayContaining(['animalReproToxData', 'humanPregnancyData', 'placentalTransfer', 'breastMilkExcretion', 'mechanismBasedRisk']),
-    );
+  it('is offered to AnA without product facts or figures', () => {
+    expect(ASSESS_PREGNANCY_LACTATION_LABELING.input_schema.properties).toEqual({});
+    expect(ASSESS_PREGNANCY_LACTATION_LABELING.input_schema.required).toEqual([]);
   });
 });
 

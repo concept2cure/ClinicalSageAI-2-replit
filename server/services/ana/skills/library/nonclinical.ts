@@ -78,8 +78,8 @@ Planning or assessing a nonclinical development program: which studies must be c
 
 ## Method
 1. Establish the modality (small molecule, biologic, oligonucleotide, antibody-drug conjugate, cell or gene therapy), the indication and whether it is advanced cancer or otherwise life-threatening, the route, the clinical phase to be enabled and its maximum dosing duration, whether women of childbearing potential will enrol, whether use will be chronic, and which studies exist (species, duration, GLP status, findings).
-2. Required program by phase: run \`assess_nonclinical_program\` with the maximum clinical duration, the target phase and the population. It returns the required battery and the gaps under ICH M3(R2) and the S-series (repeat-dose duration against clinical duration, genotoxicity timing, safety pharmacology before first-in-human, reproductive toxicity staged to the population, carcinogenicity at marketing for chronic use, and the S9 relaxations). Report the battery and gaps as returned, and say when later-due studies fall.
-3. Readiness: \`assess_nonclinical_safety\` combines the starting dose, the target-organ profile, the program gaps and the overview into a readiness verdict with blockers. A blocker means a study is missing for the target phase, not that the molecule is unsafe; say so.
+2. Required program by phase: run \`assess_nonclinical_program\` with the maximum clinical duration, the target phase and the population. With no listed studies it returns requirements only; any listed studies are a stated-input worksheet, with no program adequacy verdict. It lists the battery and comparisons under ICH M3(R2) and the S-series (repeat-dose duration against clinical duration, genotoxicity timing, safety pharmacology before first-in-human, reproductive toxicity staged to the population, carcinogenicity at marketing for chronic use, and the S9 relaxations). Report the battery and gaps as returned, and say when later-due studies fall.
+3. Readiness: \`assess_nonclinical_safety\` resolves the open project. Until nonclinical study records are reached, it returns readiness not_assessed, no program gaps and no starting dose, with requirements only for the stated clinical context. Do not pass studies, NOAELs, findings or FIH inputs; never infer readiness or missing studies from this answer.
 4. Biotechnology-derived products (ICH S6(R1)): toxicology in pharmacologically relevant species, sometimes only one; the effect of anti-drug antibodies on exposure and interpretation; and the standard genotoxicity battery and rodent carcinogenicity bioassays generally not applicable. The approach is case by case.
 5. Advanced cancer (ICH S9): a reduced, differently timed package and a different starting-dose approach; the toxicology and first-in-human dose skills carry the detail.
 6. Other studies when the product or population triggers them: immunotoxicity (S8), photosafety (S10), juvenile animal studies for pediatric development (S11), biodistribution for gene therapy (S12), local tolerance for non-oral routes. Confirm each with \`lookup_ich_guideline\` before citing. For a gene therapy, \`assess_gene_therapy_requirements\` returns the nonclinical expectations with the CMC and clinical ones.
@@ -89,7 +89,7 @@ Planning or assessing a nonclinical development program: which studies must be c
 10. When a study report or summary is started before data are ingested, \`get_nonclinical_template\` returns the Module 4 report scaffolds. Hand detail to the toxicology, safety pharmacology, first-in-human dose, ADME and written summaries skills.
 
 ## Before answering
-- Modality, indication, route, target phase and clinical duration are stated, or the answer says which were assumed.
+- Modality, indication, route, target phase and clinical duration are stated, or the answer says which were not stated.
 - Required studies and gaps are quoted as the engine returned them; no duration or timing is supplied from memory.
 - ICH codes are confirmed; FDA guidance is named by topic and marked as needing confirmation.
 
@@ -321,15 +321,15 @@ Choosing and justifying the starting dose for a first-in-human trial: the NOAEL-
 
 ## Method
 1. Establish the modality and mechanism, and whether the risk profile is higher (agonist, immunomodulator, novel target, steep dose-response, effects that are hard to monitor); the species tested and the NOAEL in each, as the study reports conclude; exposure at those NOAELs; the pharmacology data (concentration-response, receptor occupancy); the population (healthy volunteers or patients); and whether the indication is advanced cancer.
-2. Compute with \`compute_fih_dose\`: it derives the maximum recommended starting dose (NOAEL, human equivalent dose by body surface area, safety factor, most appropriate species) and, given the inputs, MABEL; it selects the more conservative and says which derivation limits. Never hand-calculate a human equivalent dose, MRSD or MABEL; report the numbers as returned.
+2. The existing \`compute_fih_dose\` calculator is a worksheet over explicitly stated inputs, not a program starting-dose determination; no study records are read and its output must not become governed content. As a worksheet, it derives the maximum recommended starting dose (NOAEL, human equivalent dose by body surface area, safety factor, most appropriate species) and, given the inputs, MABEL; it selects the more conservative and says which derivation limits. Never hand-calculate a human equivalent dose, MRSD or MABEL; report the numbers as returned.
 3. Safety factor: the default and the reasons to increase it come from FDA's guidance on estimating the maximum safe starting dose in adult healthy volunteers, named by topic; \`lookup_fda_guidance\` returns only dated facts from the currency register, so say the guidance needs confirming unless the person supplied it. Record the rationale for the factor chosen with the input.
 4. Higher-risk molecules: MABEL from in vitro and in vivo pharmacology, as described in EMA's guideline on first-in-human and early clinical trial risk mitigation (named by topic); the more conservative of MRSD and MABEL normally sets the start.
 5. Exposure margins at the starting dose and through planned escalation: \`calculate_safety_margin\` with AUC and Cmax. With the oncology flag it returns the ICH S9 starting-dose considerations, which differ from the healthy-volunteer approach.
-6. Readiness: \`assess_nonclinical_safety\` rolls the dose, the target-organ profile and the program gaps into one verdict with blockers.
-7. Document the justification: \`get_nonclinical_template\` returns the first-in-human dose-justification memo scaffold; the dose and its derivation also belong in the Module 2.4 overview and the protocol rationale, and must agree across them.
+6. Readiness: \`assess_nonclinical_safety\` does not accept typed study figures. Until a recorded study source is reached, it returns not_assessed, a requirements list for the stated clinical context, and no program dose or gaps.
+7. \`get_nonclinical_template\` returns the dose-justification memo scaffold only. Author governed justification from the versioned study reports cited by the author; do not insert a stated-input worksheet as the program's dose or Module 2.4 content.
 
 ## Before answering
-- The NOAELs used are named with their species and study, and identified as the study reports' conclusions.
+- The worksheet NOAELs are identified as the person's stated inputs with species and study reference; do not claim study records were read.
 - Every dose, factor and margin is quoted from the engine, with the limiting derivation stated.
 - The population the dose is for is stated.
 

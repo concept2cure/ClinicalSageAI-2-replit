@@ -38,6 +38,8 @@ export interface RecordSourceContext {
 export interface RecordSourceSubject {
   module: string;
   source: string;
+  /** Assessment label when the caller is not a Module 2 composer. */
+  label?: string;
 }
 
 export function integerId(v: unknown): number | null {
@@ -97,7 +99,7 @@ export async function resolveRecordSourceProject(
       status: 'needs_project',
       ignoredSuppliedFigures,
       message:
-        `Module ${subject.module} is composed from the project's ${subject.source}. ` +
+        `${subject.label ?? `Module ${subject.module}`} is composed from the project's ${subject.source}. ` +
         'Open the project, or name it, and draft again. Figures given in the conversation are not used.',
     };
   }
@@ -116,7 +118,7 @@ export async function resolveRecordSourceProject(
         projectId: scope.projectId,
         ignoredSuppliedFigures,
         message:
-          `Module ${subject.module} is composed from the open project's own ${subject.source}. Project ${named} is not the open project, ` +
+          `${subject.label ?? `Module ${subject.module}`} is composed from the open project's own ${subject.source}. Project ${named} is not the open project, ` +
           `so its ${subject.source} are not read here: a project's Module 2 is written from its own records.`,
       };
     }

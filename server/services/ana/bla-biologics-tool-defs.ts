@@ -303,7 +303,7 @@ export const GET_CTD_MODULE_HOME: AnaTool = {
 export const COMPUTE_FIH_DOSE: AnaTool = {
   name: 'compute_fih_dose',
   description:
-    "Compute a defensible first-in-human (FIH) starting dose using the platform's DETERMINISTIC dose engine. Shows BOTH standard derivations: (1) NOAEL → HED (FDA 2005 body-surface Km scaling) → safety factor → MRSD from the most sensitive species, and (2) MABEL from the minimum anticipated effective exposure (EMA FIH guidance), then selects the more conservative and flags which is limiting. ALWAYS call this tool for FIH/MRSD/MABEL/starting-dose questions (e.g. /fih, /dose, Module 2.4 dose-justification). NEVER hand-calculate an HED, MRSD, or MABEL — a fabricated starting dose is a critical safety defect. Gather the per-species NOAELs (mg/kg/day) and, for high-risk molecules, the MABEL inputs, then report the returned numbers verbatim.",
+    "Calculate a first-in-human dose worksheet from NOAELs explicitly stated by the person: NOAEL to HED to safety factor to MRSD, and optional MABEL, using the canonical deterministic engine. Shows both derivations and which limits. No study records are read; this is not the program's starting dose or governed Module 2.4 content. Do not pass invented or inferred NOAELs or treat the result as a readiness determination. Report the stated basis, numbers, limiting derivation and warnings verbatim.",
   input_schema: {
     type: 'object',
     properties: {
@@ -344,7 +344,7 @@ export const COMPUTE_FIH_DOSE: AnaTool = {
 export const CLASSIFY_TOX_FINDINGS: AnaTool = {
   name: 'classify_tox_findings',
   description:
-    "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this when framing tox findings for a Module 2.4 Nonclinical Overview or deciding which findings define the NOAEL. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
+    "Classify nonclinical target-organ findings as adverse / adaptive-non-adverse / monitor / indeterminate using the platform's DETERMINISTIC toxicologic-pathology classifier (STP adversity framework, INHAND nomenclature). Returns a reversibility and human-relevance call and an overview-ready framing sentence per finding, plus the assembled M2.4 target-organ paragraph. Use this only as a worksheet over findings stated in the conversation; no study records are read and it is not governed Module 2.4 content or the program's NOAEL determination. The classifier conservatively escalates normally-adaptive findings (e.g. hepatocellular hypertrophy) to adverse when adverse correlates or moderate+ severity are present, and never assumes an unrecognised finding is benign. Report the classifications and rationale; a pathologist adjudicates the final adversity call.",
   input_schema: {
     type: 'object',
     properties: {
@@ -511,7 +511,7 @@ export const DRAFT_CLINICAL_SUMMARY_M2_7: AnaTool = {
 export const ASSESS_NONCLINICAL_PROGRAM: AnaTool = {
   name: 'assess_nonclinical_program',
   description:
-    "Determine which nonclinical studies are required to support a clinical trial of a given duration and phase, and which are missing, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the required battery and the gaps verbatim; only studies due at or before the target phase are gated.",
+    "List required nonclinical studies for a stated clinical duration and phase, and compare only the studies you listed, using the platform's deterministic ICH M3(R2)/S-series staging engine. Encodes the repeat-dose tox duration vs clinical duration table (two species), the genotox battery timing (S2(R1)), safety pharmacology before FIH (S7A), reproductive tox staging (S5(R3)), carcinogenicity at marketing for chronic use (S1), and the ICH S9 oncology relaxations. ALWAYS call this for 'what nonclinical studies do I need for Phase X' / nonclinical gap-analysis / study-program planning. Report the requirements and comparison against the stated list; it does not establish program adequacy. No listed studies means requirements only, with gaps null.",
   input_schema: {
     type: 'object',
     properties: {
@@ -524,7 +524,7 @@ export const ASSESS_NONCLINICAL_PROGRAM: AnaTool = {
       marketingApplication: { type: 'boolean', description: 'This is a marketing application (carcinogenicity becomes due).' },
       present: {
         type: 'array',
-        description: 'Studies the program already holds.',
+        description: 'Studies stated in the conversation for a worksheet comparison; not read from the program records.',
         items: {
           type: 'object',
           properties: {
@@ -597,7 +597,7 @@ export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
 export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
   name: 'load_nonclinical_program',
   description:
-    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
   input_schema: {
     type: 'object',
     properties: {
@@ -636,41 +636,17 @@ export const GET_CSR_TEMPLATE: AnaTool = {
 export const ASSESS_NONCLINICAL_SAFETY: AnaTool = {
   name: 'assess_nonclinical_safety',
   description:
-    "Produce the integrated nonclinical safety assessment for an IND in one call — the roll-up a toxicology lead writes. Composes the first-in-human starting dose (NOAEL→HED→MRSD vs MABEL), the target-organ adversity profile, the ICH M3(R2)/S-series program gaps, and the M2.4 overview into a single readiness verdict (ready_for_fih / gaps_block_fih / insufficient_input) with the blocker list. Each input block is optional; supply what the program has. Prefer this for 'what is the nonclinical safety story / are we ready for first-in-human?' questions; report the verdict, dose, adverse findings, and blockers verbatim.",
+    "Assess nonclinical safety readiness from the open project's recorded studies only. Do not pass studies, presentStudies, findings, NOAELs, doses or FIH inputs, or restate them from the conversation. Until nonclinical studies are recorded against a project, returns readiness not_assessed and, when the clinical duration is stated, the ICH M3(R2)/S-series required battery. No studies were read: this is a requirement list, not a gap analysis or a starting-dose determination. Report the refusal and requirements as returned; never infer that the program holds or lacks a study or is ready for first-in-human.",
   input_schema: {
     type: 'object',
     properties: {
+      project_id: { type: 'number', description: 'Project to resolve when none is open. Another project while one is open is refused.' },
       drugSubstanceName: { type: 'string' },
       indication: { type: 'string' },
-      fih: {
-        type: 'object',
-        description: 'First-in-human dose inputs (same shape as compute_fih_dose).',
-        properties: {
-          speciesNoaels: {
-            type: 'array',
-            items: { type: 'object', properties: { species: { type: 'string' }, noaelMgPerKg: { type: 'number' }, studyRef: { type: 'string' }, km: { type: 'number' } }, required: ['species', 'noaelMgPerKg'] },
-          },
-          safetyFactor: { type: 'number' },
-          mabel: { type: 'object', properties: { minAnticipatedEffectiveExposure: { type: 'number' }, exposurePerMgDose: { type: 'number' }, mabelSafetyFactor: { type: 'number' }, basis: { type: 'string' } }, required: ['minAnticipatedEffectiveExposure', 'exposurePerMgDose'] },
-        },
-        required: ['speciesNoaels'],
-      },
-      findings: {
-        type: 'array',
-        items: { type: 'object', properties: { organ: { type: 'string' }, finding: { type: 'string' }, severity: { type: 'string' }, correlates: { type: 'array', items: { type: 'string' } } }, required: ['organ', 'finding'] },
-      },
       program: {
         type: 'object',
         properties: { maxClinicalDurationWeeks: { type: 'number' }, targetPhase: { type: 'number' }, route: { type: 'string' }, includesWocbp: { type: 'boolean' }, chronicUse: { type: 'boolean' }, oncology: { type: 'boolean' }, marketingApplication: { type: 'boolean' } },
         required: ['maxClinicalDurationWeeks'],
-      },
-      presentStudies: {
-        type: 'array',
-        items: { type: 'object', properties: { studyType: { type: 'string' }, species: { type: 'string' }, durationWeeks: { type: 'number' }, genotoxComponent: { type: 'string' } }, required: ['studyType'] },
-      },
-      studies: {
-        type: 'array',
-        items: { type: 'object', properties: { studyType: { type: 'string' }, species: { type: 'string' }, durationWeeks: { type: 'number' }, glpCompliant: { type: 'boolean' }, noael: { type: 'string' }, keyFindings: { type: 'string' } }, required: ['studyType'] },
       },
     },
     required: [],
