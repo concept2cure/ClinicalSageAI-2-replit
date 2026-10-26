@@ -170,3 +170,15 @@ was inspected. No token or trace archive is included. The combined production
 client/server/audit-verifier build passes (frontend **23.05 seconds**,
 `merged/build.log.gz`). `merged/source-proof.json` pins the merge parents and
 qualified source/test/gate hashes. Mandatory final publication gates still apply.
+
+## Further CSR/CRF integration
+
+Concurrent CSR/CRF coverage work through `c89a78956` was merged as `621151183`.
+All 38 pinned A2.9/canonical source, test and gate hashes remain unchanged.
+Independent source review found no creator, access-scope or guard overlap: CSR
+output coverage and CRF safety preservation tighten existing document behavior.
+Five affected server suites plus the creator contract and current creation-door
+checks pass **141 tests in seven suites** (25.32 seconds); these overlap earlier
+proof and are not added to 523. The production client/server/audit-verifier
+build passes again (frontend **22.30 seconds**). `merged/editor-*.log.gz` records
+these results. Final normal publication gates run on this combined source.
