@@ -310,6 +310,11 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 113 | Discard explicitly, then change Tone, Region, Context and Requirements using the existing controls. Close/reopen or switch away/back before drafting; the chosen values must remain for that section. A standalone draft keeps its existing initial region or FDA default. | Not run | |
 | 114 | Using the operator’s refusal fixture, regenerate an edited candidate and verify its review text/reason and chosen inputs survive. An unknown acceptance outcome or a retired source/project/account still blocks further work through existing controls; input retention must not authorize a write, replace selected sources or revive a late reply. | Not run | |
 
+| 115 | Select a long Data Room source and repeat with a Vault source whose relevant passage is beyond the opening 8,000 characters. Choose an exact template section with a matching scientific title. Preview shows a later bounded UTF-16 excerpt and its hash; verify the exact source slice with the operator. Build preserves that manifest and does not copy evidence into authored prose. | Not run | |
+| 116 | Repeat with a relevant term found only in the selected section’s guidance, then with Japanese section guidance/text. A saved section may have a renamed heading; relevance must use its canonical template heading/guidance. Confirm normalized code selection still targets the same exact row. | Not run | |
+| 117 | Repeat a whole-document preview and a selected section with no matching terms. Whole-document selection keeps its existing query behavior; no matching section term keeps the opening excerpt. A short source remains whole. An excerpt is bounded reference intent, not a full-source scientific review or evidence that AnA used it. | Not run | |
+| 118 | After preview, change the extracted source text through the operator’s controlled fixture, including a same-length correction. Build must refuse the stale manifest without section/evidence writes. On unchanged sources, saved-reference reuse and drafting must replay the exact recorded span without reranking; acceptance remains an explicit separate action. | Not run | |
+
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
@@ -339,6 +344,8 @@ For cases 103–106, use the [selected-source handoff ownership contract](../des
 For cases 107–110, use the [assembly queue completion contract](../design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md). Preserved means exact saved text was observed; it does not mean AnA generated, reviewed or accepted that text. Automated synthetic-HTTP regressions do not fill these human observations.
 
 For cases 111–114, use the [regional redraft contract](../design/EDITOR_REGIONAL_REDRAFT_2026-10-26.md). Drafting options are editable review inputs, not evidence that a receiving market or candidate’s scientific content has been validated. These human observations remain separate from automated HTTP fixtures.
+
+For cases 115–118, use the [section evidence contract](../design/EDITOR_SECTION_EVIDENCE_2026-10-26.md). Matching section terms improves excerpt selection; it does not establish scientific relevance, complete review, model consumption or filing approval. Recorded spans and source hashes remain authoritative.
 
 For cases 34–37, use the [saved-reference contract](../design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md). The last recorded source selection is historical build intent. Its successful read does not select it or establish current citation support; reuse requires a fresh check and another explicit preview.
 

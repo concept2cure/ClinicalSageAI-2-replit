@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > normalizes only selection identity and retains the canonical raw title followed by raw guidance 3ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > uses the selected template heading even when planning correctly preserves a renamed saved heading 2ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > does not query another section or let a long generic template name consume relevance terms 3ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > puts title terms before guidance while retaining the selector's existing 40-term cap 1ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > uses title alone when persisted templates have no drafting guidance 1ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > can locate an English guidance-only passage when the title contains only selector stop words 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > retains raw Japanese guidance and the existing compound/bigram grouping 3ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > keeps the opening when selected terms do not match rather than falling back to generic metadata 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > keeps stop-only title/no-guidance selection at the opening 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > canonical exact-template-section source query > keeps a short source whole irrespective of whether selected terms match 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > keeps the exact old whole-document query for module M5 without adding section references 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > keeps the exact old whole-document query for module null without adding section references 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses an unknown selected code before asking for any guidance 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses a empty template before selecting relevance context 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses a empty-code template before selecting relevance context 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses a empty-title template before selecting relevance context 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses a unsafe-order template before selecting relevance context 0ms
+ ✓ server/services/authoring/__tests__/assembly-source-query.test.ts > unchanged whole-document scope and canonical refusal > refuses a duplicate-other-code template before selecting relevance context 0ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  17:37:59
+   Duration  378ms (transform 108ms, setup 88ms, import 57ms, tests 19ms, environment 0ms)
+

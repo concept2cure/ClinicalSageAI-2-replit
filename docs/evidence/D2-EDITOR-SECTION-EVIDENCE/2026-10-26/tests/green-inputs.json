@@ -1,0 +1,64 @@
+{
+  "capturedUtc": "2026-10-26T17:37:59.046073+00:00",
+  "inputs": [
+    {
+      "path": "server/services/authoring/__tests__/assembly-source-query.test.ts",
+      "sha256": "c9e16f1021bc6743b55e7dcf65638703d31860e562afb3b161d125e73c7e19ee",
+      "snapshot": "green-source-assembly-source-query.test.ts.txt.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-plan.ts",
+      "sha256": "0f5360ec15d93ce19a114540c623176b3ba87618544a3b3f0eb66d23d0e3a8f5",
+      "snapshot": "green-source-authoring-assembly-plan.ts.txt.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly.ts",
+      "sha256": "5163454329eaf80cd28947db8dd89a830cbf08e3f281bd78c1853cfb906ff44b",
+      "snapshot": "green-source-authoring-assembly.ts.txt.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-sources.ts",
+      "sha256": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+      "snapshot": "green-source-authoring-assembly-sources.ts.txt.gz"
+    },
+    {
+      "path": "server/services/ana/draft-source-window.ts",
+      "sha256": "ec41c5b08809da08699e7f12a42751361671a7ba7d852435d2d8e77716fc4fdb",
+      "snapshot": "green-source-draft-source-window.ts.txt.gz"
+    },
+    {
+      "path": "shared/authoring/assembly-sources.ts",
+      "sha256": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+      "snapshot": "green-source-assembly-sources.ts.txt.gz"
+    },
+    {
+      "path": "shared/authoring/assembly.ts",
+      "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+      "snapshot": "green-source-assembly.ts.txt.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "green-source-vitest.config.ts.txt.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "green-source-setup.ts.txt.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "green-source-package.json.txt.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "docs/design/EDITOR_SECTION_EVIDENCE_2026-10-26.md",
+      "sha256": "7ada9ed961b48e2fa2e335280b038be5b214ec95ed30e0b1d86c441dbb972c26",
+      "snapshot": "green-source-EDITOR_SECTION_EVIDENCE_2026-10-26.md.txt.gz"
+    }
+  ]
+}
