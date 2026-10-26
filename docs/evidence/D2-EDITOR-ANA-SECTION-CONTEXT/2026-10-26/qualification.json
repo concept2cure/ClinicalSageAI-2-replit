@@ -1,0 +1,34 @@
+{
+  "primary": {
+    "receipt": "merged-integration.json",
+    "suites": 34,
+    "passed": 439
+  },
+  "trackingSupplement": {
+    "receipt": "tracking-tests.json",
+    "suites": 12,
+    "passed": 136
+  },
+  "routingSupplement": {
+    "receipt": "mdx-tests.json",
+    "suites": 5,
+    "passed": 37
+  },
+  "counting": "Supplements overlap the primary; do not sum as612 unique tests.",
+  "build": "mdx-build.json",
+  "uiEditorSizeGates": {
+    "receipt": "mdx-gates.json",
+    "passed": 7
+  },
+  "lint": "final-lint.json; evidence-lint.json and normal pushed-warning ratchet",
+  "warningAndTypeBaselinesIncreased": false,
+  "typeScriptErrors": 0,
+  "normalSourcePush": "source-push-final.json",
+  "qualifiedInputs": "mdx-qualified-inputs.json",
+  "humanTesting": {
+    "cases": 142,
+    "status": "Not run",
+    "checklist": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
+  },
+  "scope": "Local/Codespaces automated context/permission/transport checks; no live provider, deployment or agency action. Not clinical/regulatory validation or all-human-operation parity."
+}
