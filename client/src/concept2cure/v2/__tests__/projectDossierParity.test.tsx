@@ -11,7 +11,12 @@ const artifactReadiness = {
   sections: [{ ctdSection: '3.2.P.5', status: 'review', artifactCount: 4, draftCount: 0, reviewCount: 2, approvedCount: 1, lockedCount: 1, unknownCount: 0, lastUpdated: date }],
   summary: { totalSections: 1, readySections: 0, inProgressSections: 1, draftSections: 0, notAssessedSections: 0 },
 };
-const sectionTracking = { state: 'read', modules: [{ m: '3', label: 'Quality', pct: 50, tone: 'warn', sections: ['3.2.P.5 Control of drug product', '3.2.P.8 Stability'] }] };
+const sectionTracking = { basis: 'section_tracking', state: 'measured', unmapped: [], modules: [{
+  m: '3', label: 'Quality', counted: 2, complete: 1, unknownCount: 0, pct: 50, tone: 'warn', sections: [
+    { code: '3.2.P.5', title: 'Control of drug product', label: '3.2.P.5 Control of drug product', status: 'approved', observedStatuses: ['approved'] },
+    { code: '3.2.P.8', title: 'Stability', label: '3.2.P.8 Stability', status: 'drafting', observedStatuses: ['drafting'] },
+  ],
+}] };
 function read({ artifactReadiness: artifacts = artifactReadiness, sectionTracking: tracking = sectionTracking }: { artifactReadiness?: unknown; sectionTracking?: unknown } = {}): DossierState {
   return {
     retry: vi.fn(), state: { loading: false, empty: false, data: {
@@ -43,7 +48,7 @@ describe('old dossier functions in project Author', () => {
 
   it('shows actual tracking module percentage and all its section labels separately', () => {
     show(read());
-    const region = screen.getByRole('region', { name: 'Tracked CTD sections' });
+    const region = screen.getByRole('region', { name: 'Section tracking' });
     expect(region.textContent).toContain('Module 3 · Quality');
     expect(region.textContent).toContain('50%');
     expect(region.textContent).toContain('3.2.P.5 Control of drug product');
@@ -57,7 +62,7 @@ describe('old dossier functions in project Author', () => {
   });
 
   it('preserves independent failed/unprovisioned states rather than reporting empty or zero', () => {
-    const r = read({ artifactReadiness: { basis: 'governed_artifacts', state: 'unavailable', reason: 'Artifact records could not be read.', sections: null, summary: null }, sectionTracking: { state: 'unavailable', code: 'STORE_UNAVAILABLE', reason: 'Section tracking is not provisioned.' } });
+    const r = read({ artifactReadiness: { basis: 'governed_artifacts', state: 'unavailable', reason: 'Artifact records could not be read.', sections: null, summary: null }, sectionTracking: { basis: 'section_tracking', modules: null, unmapped: null, state: 'unavailable', code: 'STORE_UNAVAILABLE', reason: 'Section tracking is not provisioned.' } });
     show(r);
     expect(screen.getByText('Artifact records could not be read.')).toBeTruthy();
     expect(screen.getByText('Section tracking is not provisioned.')).toBeTruthy();
@@ -68,7 +73,7 @@ describe('old dossier functions in project Author', () => {
 
   it('calls an older or malformed supporting response unavailable, with no fabricated empty counts', () => {
     show(read({ artifactReadiness: { state: 'read', sections: [null] }, sectionTracking: null }));
-    expect(screen.getByText('Supporting section details are unavailable.')).toBeTruthy();
+    expect(screen.getByText('Section tracking is unavailable.')).toBeTruthy();
     expect(screen.getByText('Artifact section status is unavailable.')).toBeTruthy();
     expect(document.body.textContent).not.toContain('0 approved or locked');
   });
@@ -87,7 +92,7 @@ describe('old dossier functions in project Author', () => {
     r.state.error = 'The dossier read failed.';
     show(r);
     expect(screen.getByText('Artifact section status could not be read.')).toBeTruthy();
-    expect(screen.queryByRole('region', { name: 'Tracked CTD sections' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Section tracking' }).textContent).toContain('Section tracking could not be read.');
     expect(screen.queryByRole('table')).toBeNull();
     expect(document.body.textContent).not.toMatch(/0 approved or locked|1 in review|50%/);
     expect(dossierFacts(r)).toEqual({ dossier: null, dossierUnavailable: 'the dossier read failed' });

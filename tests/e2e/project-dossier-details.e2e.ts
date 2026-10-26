@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { seedHistoricalTracking } from './dossierTrackingFixture';
 
 async function recordSyntheticArtifacts(page: Page, programId: string, stamp: string) {
   return page.evaluate(async ({ programId, stamp }) => {
@@ -25,7 +26,52 @@ async function recordSyntheticArtifacts(page: Page, programId: string, stamp: st
   }, { programId, stamp });
 }
 
-/** Actual scaffold, governed sections and carried artifact facts, without provider calls. */
+async function verifyRecordedTracking(page: Page, programId: string, anchor: number, home: unknown, testInfo: TestInfo) {
+  await seedHistoricalTracking(anchor, programId, [
+    { code: 'm2.5', module: 'M2', title: 'Synthetic signed clinical overview', status: 'signed' },
+    { code: '2.5', module: 'M2', title: 'Synthetic separate raw-code record', status: 'drafting' },
+    { code: 'm3.2.S.1', module: 'M3', title: 'Synthetic control record', status: 'internal_review' },
+  ]);
+  const recorded = await page.evaluate(async programId => {
+    const token = localStorage.getItem('trialsage_access_token');
+    const response = await fetch(`/api/c2c/projects/${programId}/dossier`, { credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    return { status: response.status, body: await response.json() };
+  }, programId);
+  expect(recorded.status).toBe(200);
+  expect(recorded.body.home).toEqual(home);
+  const tracking = recorded.body.supportingReadiness.sectionTracking;
+  expect(tracking).toMatchObject({ basis: 'section_tracking', state: 'measured', unmapped: [] });
+  expect(tracking.modules[0]).toMatchObject({ m: '2', counted: 2, complete: 1, pct: 50 });
+  expect(tracking.modules[0].sections.map((s: { code: string }) => s.code).sort()).toEqual(['2.5', 'm2.5']);
+  await page.goto(`/concept2cure/dossier-map?program=${programId}`);
+  await expect(page).toHaveURL(new RegExp(`/project-home\\?program=${programId}$`));
+  await expect(page.locator('.pj-lc-stage[aria-current="step"]')).toHaveText('Author');
+  const panel = page.getByRole('region', { name: 'Section tracking', exact: true });
+  await expect(panel.getByRole('heading', { name: `Module ${tracking.modules[0].m} · ${tracking.modules[0].label}` })).toBeVisible();
+  await panel.locator('summary').first().click();
+  await expect(panel.getByRole('list').first().getByRole('listitem')).toHaveCount(tracking.modules[0].counted);
+  await expect(panel.getByText('Signed', { exact: true })).toBeVisible();
+  for (const [index, section] of tracking.modules[0].sections.entries()) {
+    const item = panel.getByRole('list').first().getByRole('listitem').nth(index);
+    await expect(item).toContainText(section.label);
+    await expect(item).toContainText(`Recorded code: ${section.code}`);
+  }
+  await panel.scrollIntoViewIfNeeded();
+  await testInfo.attach('author-section-tracking.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.keyboard.press('Escape');
+  await panel.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await testInfo.attach('author-section-tracking-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await testInfo.attach('section-tracking-result.json', { body: JSON.stringify({ coreStatus: recorded.status,
+    fixture: 'three synthetic historical rows in explicit local concept_handoff', moduleCount: tracking.modules.length,
+    firstModule: tracking.modules[0], legacyPageReachedAuthor: true, homeUnchanged: true }, null, 2), contentType: 'application/json' });
+  return { moduleCount: tracking.modules.length, rawAliasesPreserved: true };
+}
+
+/** Actual scaffold, governed sections and carried source facts, without provider calls. */
 test('Author shows governed sections and artifact states, then hands the critical path to AnA', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -53,9 +99,13 @@ test('Author shows governed sections and artifact states, then hands the critica
   await page.getByLabel('Product type').selectOption('Drug');
   await page.getByLabel('Target submission date').fill('2027-03-31');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const createdResponse = page.waitForResponse(r => new URL(r.url()).pathname === '/api/c2c/projects' && r.request().method() === 'POST');
   const dossierResponse = page.waitForResponse(r => /\/api\/c2c\/projects\/[^/]+\/dossier$/.test(new URL(r.url()).pathname));
   await page.getByRole('button', { name: /Create project/ }).click();
   await expect(page).toHaveURL(/project-home/, { timeout: 30_000 });
+  const receipt = await (await createdResponse).json();
+  const anchor = receipt.meta.projectAnchorId;
+  expect(Number.isSafeInteger(anchor)).toBe(true);
   const response = await dossierResponse;
   expect(response.status()).toBe(200);
   const dossier = await response.json();
@@ -104,6 +154,7 @@ test('Author shows governed sections and artifact states, then hands the critica
   await testInfo.attach('author-artifact-status-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
   await page.setViewportSize({ width: 1440, height: 1000 });
 
+  const tracking = await verifyRecordedTracking(page, dossier.projectId, anchor, dossier.home, testInfo);
   const modelRequests: string[] = [];
   const writes: string[] = [];
   page.on('request', r => {
@@ -121,6 +172,7 @@ test('Author shows governed sections and artifact states, then hands the critica
     firstModuleSections: dossier.rows[0].sections.length, moduleUpdatedAt: dossier.rows[0].lastUpdated,
     homeInReview: inReview, homeDrafted: drafted, questionPrefilled: true,
     artifactReadiness: rollup, artifactCreates: artifacts.created, artifactReview: artifacts.review,
+    sectionTracking: tracking,
     modelRequests: modelRequests.length, writesAfterQuestion: writes.length,
   }, null, 2), contentType: 'application/json' });
 });

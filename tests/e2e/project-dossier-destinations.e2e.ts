@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import pg from 'pg';
+import { seedHistoricalTracking } from './dossierTrackingFixture';
 
 /** Native request-role reads, real artifact API and local tracking fixtures. */
 test('legacy dossier URLs reach Author with all recorded detail, or Projects without a project', async ({ page, browser }, testInfo) => {
@@ -63,24 +63,16 @@ test('legacy dossier URLs reach Author with all recorded detail, or Projects wit
   // The older tracking writer is not admitted for this fresh user's workflow.
   // Seed only synthetic historical tracking rows for the just-created anchor;
   // the read below still runs through the real app_service request role and guards.
-  const fixture = new pg.Client({ connectionString: fixtureUrl });
-  await fixture.connect();
-  try {
-    const inserted = await fixture.query(`INSERT INTO project_sections
-      (organization_id, project_id, section_code, module, title, status)
-      SELECT p.organization_id, p.id, s.code, 'M3', s.title, s.status
-      FROM projects p CROSS JOIN (VALUES
-        ('3.2.P.5', 'Synthetic recorded drug product controls', 'approved'),
-        ('3.2.P.8', 'Synthetic recorded stability', 'drafting')) AS s(code,title,status)
-      WHERE p.id=$1 AND p.regulatory_program_id=$2 RETURNING id`, [anchor, pid]);
-    expect(inserted.rowCount).toBe(2);
-  } finally { await fixture.end(); }
+  await seedHistoricalTracking(anchor, pid, [
+    { code: '3.2.P.5', module: 'M3', title: 'Synthetic recorded drug product controls', status: 'approved' },
+    { code: '3.2.P.8', module: 'M3', title: 'Synthetic recorded stability', status: 'drafting' },
+  ]);
   const dossierRead = await page.request.get(`/api/c2c/projects/${pid}/dossier`, { headers });
   expect(dossierRead.status()).toBe(200);
   const dossier = await dossierRead.json();
   expect(dossier.home).toEqual(initialHome);
   expect(dossier.artifactReadiness.state).toBe('measured');
-  expect(dossier.supportingReadiness.sectionTracking.state).toBe('read');
+  expect(dossier.supportingReadiness.sectionTracking.state).toBe('measured');
   const section = dossier.artifactReadiness.sections.find((s: { ctdSection: string }) => s.ctdSection === '3.2.P.5');
   expect(section).toMatchObject({ status: 'draft', artifactCount: 1, draftCount: 1 });
   const modules = dossier.supportingReadiness.sectionTracking.modules;
@@ -95,9 +87,11 @@ test('legacy dossier URLs reach Author with all recorded detail, or Projects wit
   await expect(artifacts.getByRole('cell', { name: '3.2.P.5', exact: true })).toBeVisible();
   await expect(artifacts.locator('time')).toHaveAttribute('datetime', section.lastUpdated);
   await expect(artifacts).toContainText('1 section · 0 approved or locked · 0 in review · 1 draft · 0 not assessed');
-  const tracking = page.getByRole('region', { name: 'Tracked CTD sections', exact: true });
-  await expect(tracking).toContainText(`Module ${modules[0].m} · ${modules[0].label} · ${modules[0].pct}%`);
-  await expect(tracking).toContainText(modules[0].sections[0]);
+  const tracking = page.getByRole('region', { name: 'Section tracking', exact: true });
+  await expect(tracking).toContainText(`Module ${modules[0].m} · ${modules[0].label}`);
+  await tracking.locator('summary').first().click();
+  await expect(tracking).toContainText(modules[0].sections[0].label);
+  await expect(tracking).toContainText(`${modules[0].pct}%`);
   await artifacts.scrollIntoViewIfNeeded();
   await testInfo.attach('author-artifact-and-tracking-parity.png', { body: await page.screenshot(), contentType: 'image/png' });
 

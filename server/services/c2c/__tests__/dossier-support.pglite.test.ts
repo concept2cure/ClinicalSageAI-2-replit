@@ -31,6 +31,13 @@ beforeEach(async () => {
 const supporting = () => readDossierSupporting(q, 7, ACCESS);
 
 describe('supporting dossier reads retain their own recorded basis', () => {
+  it('refuses a stale accepted mapping before either source query', async () => {
+    currentAccess.mockResolvedValue({ ...ACCESS, projectId: 12 });
+    const query = vi.fn(q.query);
+    await expect(readDossierSupporting({ query }, 7, ACCESS)).rejects.toMatchObject({ code: 'PROJECT_ACCESS_CHANGED' });
+    expect(query).not.toHaveBeenCalled();
+  });
+
   it('carries artifact counts, weakest state, dates and real tracked modules without mixing stores or projects', async () => {
     await pg.exec(`INSERT INTO concept2cure_artifacts VALUES
       (11,7,'2.5','approved','2026-10-20'),(11,7,'2.5','locked','2026-10-25'),
@@ -48,9 +55,12 @@ describe('supporting dossier reads retain their own recorded basis', () => {
     expect(result.artifactReadiness.sections[0]).toEqual({ ctdSection: '2.5', status: 'approved', artifactCount: 2,
       draftCount: 0, reviewCount: 0, approvedCount: 1, lockedCount: 1, unknownCount: 0, lastUpdated: '2026-10-25T00:00:00.000Z' });
     expect(result.artifactReadiness.sections.find(s => s.ctdSection === '3.2.P.1')).toMatchObject({ status: 'not_assessed', unknownCount: 1 });
-    expect(result.sectionTracking).toEqual({ state: 'read', modules: [
-      { m: '2', label: 'CTD summaries', pct: 50, tone: 'warn', sections: ['2.5 Clinical overview', '2.7 Clinical summary'] },
-    ] });
+    expect(result.sectionTracking).toMatchObject({basis:'section_tracking',state:'measured',unmapped:[],modules:[
+      {m:'2',label:'CTD summaries',counted:2,complete:1,unknownCount:0,pct:50,tone:'warn',sections:[
+        {code:'m2.5',title:'Clinical overview',status:'approved',label:'2.5 Clinical overview'},
+        {code:'m2.7',title:'Clinical summary',status:'drafting',label:'2.7 Clinical summary'},
+      ]},
+    ]});
     expect(currentAccess).toHaveBeenCalledWith(q, { organizationId: 7, userId: 41, programId: PROGRAM });
   });
 
@@ -60,7 +70,7 @@ describe('supporting dossier reads retain their own recorded basis', () => {
       return q.query(sql, params);
     }) };
     expect(await readDossierSupporting(guarded, 7, ACCESS)).toMatchObject({
-      artifactReadiness: { state: 'unavailable', code: 'STORE_UNAVAILABLE' }, sectionTracking: { state: 'read', modules: [] },
+      artifactReadiness: { state: 'unavailable', code: 'STORE_UNAVAILABLE' }, sectionTracking: { basis:'section_tracking',state:'no_sections',modules:[],unmapped:[] },
     });
     guarded.query.mockImplementation(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM concept2cure_artifacts')) throw Object.assign(new Error('secret connection detail'), { code: '08006' });
@@ -74,7 +84,7 @@ describe('supporting dossier reads retain their own recorded basis', () => {
   it.each([
     { projectId: 12 }, { clientWorkspaceId: 3 }, { actor: { userId: 41, role: 'viewer' } },
   ])('refuses an admitted anchor, client or role that changed during the read: %j', async changed => {
-    currentAccess.mockResolvedValue({ ...ACCESS, ...changed });
+    currentAccess.mockResolvedValueOnce(ACCESS).mockResolvedValueOnce({ ...ACCESS, ...changed });
     await expect(supporting()).rejects.toMatchObject({ code: 'PROJECT_ACCESS_CHANGED' });
   });
 
@@ -84,7 +94,7 @@ describe('supporting dossier reads retain their own recorded basis', () => {
       UPDATE projects SET status='archived' WHERE id=11;`);
     const result = await supporting();
     expect(result.artifactReadiness).toMatchObject({ state: 'no_artifacts', sections: [], summary: { totalSections: 0 } });
-    expect(result.sectionTracking).toEqual({ state: 'read', modules: [] });
+    expect(result.sectionTracking).toEqual({ basis:'section_tracking',state:'no_sections',modules:[],unmapped:[] });
     await pg.exec(`UPDATE projects SET status='active',organization_id=8 WHERE id=11;`);
     expect(await supporting()).toEqual(result);
   });

@@ -89,3 +89,50 @@ predicates into the canonical reader, and keep the old HTTP route retired.
 AnA facts contain one artifact source and one tracking source. Preserve all new
 upstream semantic-validation and access tests while updating superseded wire
 expectations. A2.7 remains complete only when the combined tree is verified.
+
+## Concurrent A2.7b integration — current merged contract
+
+This section supersedes the narrower tracking shape and earlier artifact
+`unknown` wording above. It preserves the incoming A2.7 fold and A2.7b's
+stronger recorded-data safeguards in one composition. The combined checks below
+qualify this final contract; older records above qualify their own snapshots.
+
+- Exactly one top-level `artifactReadiness` uses the canonical governed-artifact
+  reader/type/component. Unsupported artifact states are `not_assessed`, never
+  `locked`; the shared weakest-state and summary rules remain authoritative.
+- Exactly one `supportingReadiness.sectionTracking` uses
+  `DossierSectionTracking`, with `basis: 'section_tracking'` and explicit
+  `measured`, `no_sections`, `unavailable` or `unanchored` state. No top-level
+  parallel tracking payload, extra query, second renderer or readiness mean is
+  retained.
+- Successful tracking preserves raw stored code identity, title, selected raw
+  status, observed duplicate statuses and section labels. Known duplicates use
+  deterministic existing advancement rules; a raw alias remains its own record.
+  Any unknown or missing observation withholds the affected module's percentage
+  and tone (`null`), rather than becoming a measured zero or complete result.
+  Unclassifiable/mismatched code/module rows remain visible as `unmapped`.
+- Existing canonical shared rules validate labels, placement, status selection,
+  module counts and figures in both server and client. Missing, malformed or
+  contradictory payloads are unavailable to the screen and AnA. Literal signed
+  states remain distinct from approved and locked states.
+- Each source uses the same request executor and exact admitted program/project/
+  client relationship. Strong accepted-mapping SQL predicates and closing
+  currentness checks remain. Supporting-source schema/query failures return
+  explicit unavailable records with safe fixed reasons and optional
+  `STORE_UNAVAILABLE` / `READ_FAILED` codes. A failed actor/anchor/current-scope
+  check refuses the whole response; no failure selects a new source or anchor.
+
+The incoming dossier screen/HTTP route/registry/catalog/capability retirement,
+step-aware aliases, no-project chooser, canonical history behavior and revised
+validation package remain in place. Stored records, subscriptions, signatures
+and dispatch safeguards remain. A2.7b's legacy compatibility-state tests qualify
+its earlier pre-fold snapshot; the merged product reaches the data through core
+Author and treats the old HTTP endpoints as retired.
+
+The A2.7 and A2.7b test/build/native records qualify their respective snapshots.
+In particular, A2.7b's 163 tests in 14 files and native 31.4-second flow are
+pre-merge evidence. The combined tree passed 294 tests in 27 files, both native
+URL/artifact/tracking flows and the production build. The focused server resolution
+passed 59 tests in five files. Proof is under `slice-A2/A2.7b/merged/`; required
+publication gates still apply. A2.8 (the existing MDX alias to filtered Projects) is next; device-workstream
+remains until its separate A2.10 parity work.

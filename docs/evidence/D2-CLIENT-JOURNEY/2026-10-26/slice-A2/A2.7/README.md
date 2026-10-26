@@ -199,3 +199,31 @@ show the converged tree; preceding native artifacts are preserved under
 
 A2.8: route the existing MDX alias to Projects using the existing device filter.
 The device-workstream screen remains until A2.10's separate parity work.
+
+## Concurrent A2.7b preservation merge
+
+The incoming fold remains implemented: the dossier screens/HTTP routes and
+standalone identities stay retired, and the existing step-aware aliases keep
+bookmarks, project hydration, the Author stage and no-project chooser behavior.
+Data, subscriptions and safeguards remain. The exact current contract is in
+`A2_7_PARITY_RECONCILIATION.md`, under **Concurrent A2.7b integration**.
+
+Artifact status remains one top-level `artifactReadiness`; unknown artifacts
+are `not_assessed`. The single nested `supportingReadiness.sectionTracking`
+now uses the richer `DossierSectionTracking` contract: source basis and explicit
+read state, raw code/title/status and duplicate observations, module counts,
+null percentages/tones for unknown observations, and visible unmapped records.
+Shared label/placement/status/stat guards prevent contradictory facts from
+reaching either the screen or AnA. No parallel reader, tracking wire field,
+renderer or client-computed mean is retained.
+
+The accepted request/program/project/client scope and strong SQL mapping
+predicates remain. Independent supporting-source failures are explicit
+unavailable states with safe fixed reasons/codes; a failed closing scope check
+refuses the full response. The preceding A2.7 qualification records and the
+adjacent A2.7b 163-test/native/build records are pre-merge snapshots. They are
+preserved rather than recounted as merged proof. Combined proof under
+`../A2.7b/merged/` records 294 tests in 27 files, both native URL/artifact/tracking
+flows and the production build passing. The focused server resolution passed
+59 tests across five files. Mandatory publication gates still apply.
+The next planned UI work remains A2.8.

@@ -76,7 +76,7 @@ describe('GET /api/c2c/projects/:id/dossier', () => {
     expect(params).toEqual([[P1], 7]);
     expect(queryMock.mock.calls.filter(([sql]) => isDossier(sql))).toHaveLength(1);
     expect(res.body.supportingReadiness).toEqual({
-      sectionTracking: { state: 'read', modules: [] },
+      sectionTracking: { basis: 'section_tracking', state: 'no_sections', modules: [], unmapped: [] },
     });
     expect(poolQuery).not.toHaveBeenCalled();
   });

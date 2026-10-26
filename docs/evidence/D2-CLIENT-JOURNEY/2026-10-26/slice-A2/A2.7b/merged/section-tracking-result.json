@@ -1,0 +1,36 @@
+{
+  "coreStatus": 200,
+  "fixture": "three synthetic historical rows in explicit local concept_handoff",
+  "moduleCount": 2,
+  "firstModule": {
+    "m": "2",
+    "label": "CTD summaries",
+    "counted": 2,
+    "complete": 1,
+    "unknownCount": 0,
+    "pct": 50,
+    "tone": "warn",
+    "sections": [
+      {
+        "code": "2.5",
+        "title": "Synthetic separate raw-code record",
+        "status": "drafting",
+        "label": "2.5 Synthetic separate raw-code record",
+        "observedStatuses": [
+          "drafting"
+        ]
+      },
+      {
+        "code": "m2.5",
+        "title": "Synthetic signed clinical overview",
+        "status": "signed",
+        "label": "2.5 Synthetic signed clinical overview",
+        "observedStatuses": [
+          "signed"
+        ]
+      }
+    ]
+  },
+  "legacyPageReachedAuthor": true,
+  "homeUnchanged": true
+}
