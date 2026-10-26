@@ -1,0 +1,11 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 4 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 4 exceeds baseline 0 (+4).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx(18,69): error TS2769: No overload matches this call.
+    client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx(48,74): error TS2769: No overload matches this call.
+    client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx(50,57): error TS2769: No overload matches this call.
+    client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx(75,65): error TS2769: No overload matches this call.

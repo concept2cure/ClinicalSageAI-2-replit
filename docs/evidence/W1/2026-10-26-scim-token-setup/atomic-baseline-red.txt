@@ -1,0 +1,161 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > records target organization, actor and reason, with no token material in audit or directory responses 39ms
+   → expected undefined to be 'no-store' // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > rolls back credential creation when a real audit insert fails 11ms
+   → expected 201 to be 503 // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when rotate cannot be recorded 16ms
+   → expected 200 to be 503 // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when update cannot be recorded 16ms
+   → expected 200 to be 503 // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when delete cannot be recorded 13ms
+   → expected 204 to be 503 // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > commits rotation, disable and revocation with their audit entries and confirmed deletion headers 23ms
+   → expected undefined to be 'true' // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > refuses a grant revoked after the route guard, before writing a credential 8ms
+   → expected 201 to be 503 // Object.is equality
+ × server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > reports lost commit confirmation without claiming rollback or revealing the credential 7ms
+   → expected 201 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > records target organization, actor and reason, with no token material in audit or directory responses
+AssertionError: expected undefined to be 'no-store' // Object.is equality
+
+- Expected:
+"no-store"
+
++ Received:
+undefined
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:54:46
+     52|     const created = await add();
+     53|     expect(created.status).toBe(201);
+     54|     expect(created.headers['cache-control']).toBe('no-store');
+       |                                              ^
+     55|     const stored = (await rows())[0];
+     56|     expect(stored.token_hash).toBe(createHash('sha256').update(created…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > rolls back credential creation when a real audit insert fails
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:67:29
+     65|     state.recordFails = true;
+     66|     const response = await add();
+     67|     expect(response.status).toBe(503);
+       |                             ^
+     68|     expect(response.body.code).toBe('SCIM_TOKEN_UNAVAILABLE');
+     69|     expect(response.body).not.toHaveProperty('token');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when rotate cannot be recorded
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when update cannot be recorded
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:76:29
+     74|     const original = await rows(); state.recordFails = true;
+     75|     const response = await mutation(kind);
+     76|     expect(response.status).toBe(503);
+       |                             ^
+     77|     expect(response.body).not.toHaveProperty('token');
+     78|     expect(await rows()).toEqual(original);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when delete cannot be recorded
+AssertionError: expected 204 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 204
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:76:29
+     74|     const original = await rows(); state.recordFails = true;
+     75|     const response = await mutation(kind);
+     76|     expect(response.status).toBe(503);
+       |                             ^
+     77|     expect(response.body).not.toHaveProperty('token');
+     78|     expect(await rows()).toEqual(original);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > commits rotation, disable and revocation with their audit entries and confirmed deletion headers
+AssertionError: expected undefined to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+undefined
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:89:52
+     87|     const revoked = await mutation('delete');
+     88|     expect(revoked.status).toBe(204);
+     89|     expect(revoked.headers['x-audit-row-chained']).toBe('true');
+       |                                                    ^
+     90|     expect(await rows()).toHaveLength(0);
+     91|     expect(state.entries.map(entry => entry.action)).toEqual(['scim_to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > refuses a grant revoked after the route guard, before writing a credential
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:95:34
+     93|   it('refuses a grant revoked after the route guard, before writing a …
+     94|     state.revokeStanding = true;
+     95|     expect((await add()).status).toBe(503);
+       |                                  ^
+     96|     expect(await rows()).toHaveLength(0);
+     97|     expect(state.entries).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > reports lost commit confirmation without claiming rollback or revealing the credential
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/__tests__/security/scim-token-atomic.pglite.test.ts:102:29
+    100|     state.commitReplyLost = true;
+    101|     const response = await add();
+    102|     expect(response.status).toBe(503);
+       |                             ^
+    103|     expect(response.body.code).toBe('SCIM_TOKEN_COMMIT_UNCONFIRMED');
+    104|     expect(response.body.error).not.toMatch(/nothing was changed/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  20:14:34
+   Duration  2.37s (transform 106ms, setup 71ms, import 136ms, tests 1.94s, environment 0ms)

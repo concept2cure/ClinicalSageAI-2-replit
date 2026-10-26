@@ -181,6 +181,7 @@ describe('workspace setup consent and provisioning access changes reach the repo
     const actions = [
       'organization_invitation_accepted', 'organization_invitation_declined',
       'scim_ip_rule_created', 'scim_ip_rule_updated', 'scim_ip_rule_deleted',
+      'scim_token_created', 'scim_token_rotated', 'scim_token_updated', 'scim_token_revoked',
     ];
     const recorded = actions.map((action) => ({ action, target_type: action.startsWith('scim_') ? 'scim_ip_allowlist' : 'organization_invitations' }));
     // Model the action filter the real query sends: an omitted writer action

@@ -60,3 +60,21 @@ the parallel upstream update remain reachable through their canonical surfaces.
 
 Evidence, the consolidation map and verification limits are in
 [the W1/D2 evidence record](../evidence/W1/2026-10-14-discovery-onboarding/README.md).
+
+Enterprise provisioning credentials in `IdentityConsole` use the existing
+`/api/admin/scim-tenants` endpoints. Creation, rotation, enable/disable and
+revocation require an explicit 3–500-character `reason` in the request body;
+unknown request fields and non-integer target identifiers are refused. These
+remain platform-administrator operations. The mutation connection rechecks
+standing, locks the target record to establish its organization, and commits
+with the canonical chained audit row. Neither plaintext credentials nor their
+hashes enter audit metadata or directory responses. These events are included
+in the existing administrative-changes report.
+
+One-time secrets are returned only after confirmed commit and remain in drawer
+memory. A `SCIM_TOKEN_UNAVAILABLE` response means the transaction was refused;
+`SCIM_TOKEN_COMMIT_UNCONFIRMED` means the change may have committed and its
+secret may no longer be recoverable. The console reloads the directory before
+a fresh action. Do not automatically retry an unconfirmed create or rotation.
+Deletion confirms its audit record through `X-Audit-Row-Persisted` and
+`X-Audit-Row-Chained`; other mutations return `auditTrail` with the record.

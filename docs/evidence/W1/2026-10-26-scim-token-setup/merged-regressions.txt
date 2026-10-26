@@ -1,0 +1,250 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > records target organization, actor and reason, with no token material in audit or directory responses 73ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > rolls back credential creation when a real audit insert fails 18ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when rotate cannot be recorded 57ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when update cannot be recorded 24ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > preserves the original credential when delete cannot be recorded 22ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > commits rotation, disable and revocation with their audit entries and confirmed deletion headers 44ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > refuses a grant revoked after the route guard, before writing a credential 14ms
+ ✓ server/__tests__/security/scim-token-atomic.pglite.test.ts > SCIM token changes and audit on real SQL > reports lost commit confirmation without claiming rollback or revealing the credential 12ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 1271ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 413ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 232ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 216ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 393ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 594ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 915ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 550ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 417ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 404ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 487ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 509ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 433ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 444ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > complete discovery review > previews therapeutic, experience and security answers and returns to their existing question steps 539ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the dossier read’s figure, and ignores a stale progress_percent and the detail row 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads a measured 0% 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with nothing to measure is stated as "Not recorded", never left out or drawn as 0 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > Author hands the critical-path question through the project’s existing AnA callback 283ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > every section in review reads 0% on the card and on its rows, with the review counted 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > while the dossier is read the card says so, never "Not recorded" 39ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn
+An update to ProjectHome inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a failed read says it failed and offers Retry, which reads again; no 0 is drawn 138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a 200 without the dossier’s shape is a failed read, not an empty dossier 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > a store the server could not read says why, on the card and the rows 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — one dossier read for the card and the module rows (F23) > an added market is its own line, and the header figure is the home filing’s 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > gives AnA counted section facts and the recorded module update date 5ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > shows read-only section status and a valid update time without changing the editor handoff 201ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > prints home review and draft totals without pooling the added market 8ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > hands the existing critical-path question to AnA without opening a document 18ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > does not turn an unreadable or empty dossier into summary zero counts 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > states missing details and update time honestly, and preserves unknown statuses 8ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > prints prototype-like unknown statuses literally 4ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDossierDetails.test.tsx > the existing dossier details on Author > does not present malformed section details as an empty list 3ms
+ ✓ server/__tests__/security/scim-ip-rule-atomic.pglite.test.ts > SCIM rule and audit atomicity on real SQL > commits the rule with actor, target organization and reason 38ms
+ ✓ server/__tests__/security/scim-ip-rule-atomic.pglite.test.ts > SCIM rule and audit atomicity on real SQL > rolls back a new policy when recording fails 10ms
+ ✓ server/__tests__/security/scim-ip-rule-atomic.pglite.test.ts > SCIM rule and audit atomicity on real SQL > retains the enabled policy if a disable or removal cannot be recorded 20ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > explains rotation and requires a reason before invalidating the previous token 504ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > issues a credential only after collecting its organization and governed reason 175ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > does not claim revocation without confirmation that its audit record was persisted 142ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > disables the selected credential after confirmation and clears its displayed secret 320ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > revokes only after a governed confirmation and reads back the empty directory 129ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > retains a refused form and its reason for correction 136ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > locks duplicate submission and dismissal while recording a credential change 183ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > requires readback after a lost commit response and does not repeat the mutation 122ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > never reveals an unrelated or unaudited successful response 113ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleTokenActions.test.tsx > governed SCIM credential setup > never reveals an unrelated or unaudited successful response 112ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires explicit confirmation to disable a rule and names the unrestricted consequence 450ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > deletes only the selected rule after confirmation and re-reads the real list 203ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > keeps refused changes pending and preserves platform-administrator authorization 143ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > does not claim a successful rule change from an unrelated or malformed response 222ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > SCIM allowlist row controls > requires a governed reason before sending a rule change 199ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx > unconfirmed SCIM mutation recovery > reads the allowlist after a lost commit response without submitting the mutation again 165ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsole.test.tsx > IdentityConsole — real SCIM/SSO admin wiring > lists SCIM tenants, allowlist rules, and the live SAML endpoints 127ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsole.test.tsx > IdentityConsole — real SCIM/SSO admin wiring > issues a token via POST and reveals the plaintext exactly once from the server 343ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsole.test.tsx > IdentityConsole — real SCIM/SSO admin wiring > rotates a token against the real endpoint and reveals the new secret 110ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsole.test.tsx > IdentityConsole — real SCIM/SSO admin wiring > surfaces a 403 honestly as platform-administrator-required (no fixture) 11ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx > a 403 is a refusal, not "didn't respond" and not "no rules" > renders the platform-administrator state when the directory read is refused 94ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx > a 403 is a refusal, not "didn't respond" and not "no rules" > never says the allowlist is not enforced when only the allowlist read is refused 285ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx > a 403 is a refusal, not "didn't respond" and not "no rules" > never says the allowlist is not enforced when the allowlist read fails 21ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx > a 403 is a refusal, not "didn't respond" and not "no rules" > still says so when the allowlist was read and is genuinely empty 15ms
+ ✓ client/src/concept2cure/v2/__tests__/identityConsoleRefusals.test.tsx > a refused write says why, never "HTTP 0" > names the refusal when rotating is refused 103ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 193ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 25ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 74ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 32ms
+stderr | server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant
+{
+  "timestamp": "2026-10-26T20:15:32.142Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 41,
+    "path": "/api/admin/scim-ip-allowlist/11"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > records the actual target organization, policy before/after and reason before committing a PATCH 31ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > records creation and deletion with the same atomic audit contract 8ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the create when the chained audit write fails 4ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the update when the chained audit write fails 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rolls back the delete when the chained audit write fails 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > denies a tenant super_admin membership that has no active platform grant 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "x" before any mutation 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "" before any mutation 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason 42 before any mutation 3ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rejects supplied invalid reason "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" before any mutation 2ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > refuses creating a rule for a missing organization, without a policy or audit write 2ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > does not roll back or claim no change after a lost COMMIT reply, and discards the actual connection 5ms
+ ✓ server/__tests__/security/scim-ip-policy.test.ts > atomic governed SCIM IP policy mutations > rechecks platform standing on the mutation connection before any write 2ms
+stderr | server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-26T20:15:32.394Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-tenants"
+  }
+}
+
+stderr | server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids a tenant membership role of super_admin with no platform grant (403)
+{
+  "timestamp": "2026-10-26T20:15:32.402Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-tenants"
+  }
+}
+
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids non-admins (403) 30ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids a tenant membership role of super_admin with no platform grant (403) 3ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > creates a tenant, returns the token ONCE, stores only a SHA-256 hash 13ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > 400 when organizationId is missing 4ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > rotate issues a fresh token (200) 4ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > disables a tenant via PATCH 3ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > deletes a tenant (204), 404 when missing 5ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before create changes a credential 4ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before rotate changes a credential 3ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before update changes a credential 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > requires a reason before delete changes a credential 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM token change validation > refuses fractional organization ids before generating a credential 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM credential target validation > refuses invalid credential id 0 without a mutation 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM credential target validation > refuses invalid credential id -1 without a mutation 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM credential target validation > refuses invalid credential id 1.5 without a mutation 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM credential target validation > refuses invalid credential id 9007199254740992 without a mutation 2ms
+ ✓ server/__tests__/security/scim-tenants-admin.test.ts > SCIM credential target validation > refuses request fields that attempt to redirect an existing token to another organization 2ms
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403)
+{
+  "timestamp": "2026-10-26T20:15:32.722Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+stderr | server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403)
+{
+  "timestamp": "2026-10-26T20:15:32.730Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 1,
+    "path": "/api/admin/scim-ip-allowlist"
+  }
+}
+
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids non-admins (403) 22ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403) 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > creates a rule with a valid CIDR (201) 12ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > rejects an invalid CIDR (400) 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > 400 when organizationId is missing 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > lists rules (never org-filtered from query) 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > disables a rule via PATCH 3ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > deletes a rule (204), 404 when missing 5ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > requires a reason for every security-policy mutation before writing anything 7ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > records the target organization, actor and reason in the mutation transaction 4ms
+ ✓ server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > refuses the mutation when its chained record cannot commit 2ms
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-26T20:15:34.453Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T20:15:34.454Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-26T20:15:34.455Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[database] Database connection successful
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/compliance-reports/__tests__/review-round-1.test.ts
+{
+  "timestamp": "2026-10-26T20:15:34.479Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41 fix round: no sentence says role changes in general are listed or recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > the SCIM group handler is where the test thinks it is 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the handler records each role change, through the canonical membership writer 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > access-review states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > administrative-changes states the gap while the handler writes no row, and stops once it writes one 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row > P1-49: the administrative changes report says how a SCIM-group role change is listed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > queries invitation consent and SCIM IP-rule events within the selected tenant and period 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > workspace setup consent and provisioning access changes reach the report > keeps the historical IP-rule audit gap and SCIM-token limitation distinct from current recorded rules 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+
+ Test Files  14 passed (14)
+      Tests  137 passed (137)
+   Start at  20:14:58
+   Duration  36.25s (transform 5.18s, setup 984ms, import 8.50s, tests 20.23s, environment 4.31s)
