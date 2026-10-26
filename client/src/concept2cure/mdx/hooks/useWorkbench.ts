@@ -268,7 +268,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     return [
       /* Was "Programs blocked · All programs filing-ready", computed from the
          per-program counts above that could never be non-zero. */
-      { label: 'Programs blocked', metric: '—', meta: 'Blockers are recorded per project, not linked to programs' },
+      { label: 'Projects blocked', metric: '—', meta: 'Blockers are recorded on tracking records, not linked to projects' },
       /* Slice 0: "No critical issues" and "No warnings" in the ok tone read as
          a clean result; nothing on this screen assesses one. Zero is what was
          recorded, so it says that, without a tone. */

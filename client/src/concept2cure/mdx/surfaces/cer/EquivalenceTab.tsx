@@ -63,12 +63,12 @@ export function EquivalenceTab({
   const devices = readEquivalentDevices(profile);
 
   const summary = profileLoading
-    ? 'Loading the program’s device profile…'
+    ? 'Loading the project’s device profile…'
     : profileError
       ? `Device profile unavailable — ${profileError}`
       : devices.length > 0
-        ? `${devices.length} claimed equivalent device${devices.length === 1 ? '' : 's'} on the program record · read-only`
-        : 'No equivalent devices recorded on this program';
+        ? `${devices.length} claimed equivalent device${devices.length === 1 ? '' : 's'} on the project record · read-only`
+        : 'No equivalent devices recorded on this project';
 
   return (
     <>
@@ -81,7 +81,7 @@ export function EquivalenceTab({
           className="section-more"
           onClick={() =>
             onAskAna(
-              `Draft the MDCG 2020-5 equivalence rationale for ${programTitle ?? 'this program'} ` +
+              `Draft the MDCG 2020-5 equivalence rationale for ${programTitle ?? 'this project'} ` +
                 'across the technical, biological and clinical dimensions — write the equivalence section ' +
                 'with write_kit_section and flag every gap in the narrative.',
             )
@@ -169,7 +169,7 @@ export function EquivalenceTab({
           <EmptyState
             icon={I.fileText}
             title="No equivalence claim recorded"
-            hint="Equivalent devices are recorded on the device profile for this program. This tab reads that record; it does not edit it."
+            hint="Equivalent devices are recorded on the device profile for this project. This tab reads that record; it does not edit it."
             regulation="Serves the MDR Annex XIV Part A clinical evaluation, MDCG 2020-5 equivalence"
             testId="equivalence-empty"
           />

@@ -52,7 +52,7 @@ export function PdevContradictionsSurface({
       if (!raw) return { ok: false, reason: 'Name a contradiction to open.' };
       const rows = payload.contradictions;
       if (rows.length === 0) {
-        return { ok: false, reason: 'No contradictions are recorded for this program, so there is nothing to select.' };
+        return { ok: false, reason: 'No contradictions are recorded for this project, so there is nothing to select.' };
       }
       const needle = raw.toLowerCase();
       const exact = rows.filter((c) => c.id.toLowerCase() === needle);

@@ -172,7 +172,7 @@ describe('CerSurface — the CER workbench', () => {
   it('says so when no program is selected, without inventing one', () => {
     mockEmptyTenantFetch();
     renderSurface(null);
-    expect(screen.getByText(/select a CER program to load its evaluation/)).toBeTruthy();
+    expect(screen.getByText(/select a CER project to load its evaluation/)).toBeTruthy();
     /* The old surface defaulted to a fictitious "IV-415 Companion Diagnostic". */
     expect(screen.queryByText(/IV-415/)).toBeNull();
   });

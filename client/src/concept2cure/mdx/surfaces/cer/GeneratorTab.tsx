@@ -183,7 +183,7 @@ export function GeneratorTab({
                   title="Have AnA run the assessment with assess_device_evidence_structure and walk the gaps with you"
                   onClick={() =>
                     onAskAna(
-                      `Run a CER structure assessment for ${program ? program.title : 'this program'} with ` +
+                      `Run a CER structure assessment for ${program ? program.title : 'this project'} with ` +
                         'assess_device_evidence_structure' +
                         (equivClaimed ? ' (equivalence is claimed)' : '') +
                         ' and propose how to close each missing required section.',
@@ -255,7 +255,7 @@ export function GeneratorTab({
                     title={
                       program
                         ? `Export the CER as ${format.toUpperCase()} — assembled from your authored sections`
-                        : `Export is available once a program is open`
+                        : `Export is available once a project is open`
                     }
                     onClick={() => void onExport(format)}
                   >
@@ -310,7 +310,7 @@ export function GeneratorTab({
               <EmptyState
                 icon={I.fileText}
                 title="No CER sections created yet"
-                hint="Sections appear here once the document is scaffolded for this program."
+                hint="Sections appear here once the document is scaffolded for this project."
                 action={{ label: 'Check again', onAct: refreshSections }}
                 regulation="Serves the clinical evaluation report (MDR Annex XIV Part A)"
                 testId="cer-no-sections"
@@ -330,7 +330,7 @@ export function GeneratorTab({
                         <AskAnaChip
                           onAsk={() =>
                             onAskAna(
-                              `Draft the "${s.label}" section of the CER for ${program ? program.title : 'this program'} ` +
+                              `Draft the "${s.label}" section of the CER for ${program ? program.title : 'this project'} ` +
                                 'with write_kit_section — ground it in the included safety signals and the literature corpus, ' +
                                 'and mark every evidence gap in the text rather than papering over it.',
                             )
@@ -407,7 +407,7 @@ export function GeneratorTab({
                 }}
                 onClick={() =>
                   onAskAna(
-                    `Draft the CER for ${program ? program.title : 'this program'} — pull from the included safety signals` +
+                    `Draft the CER for ${program ? program.title : 'this project'} — pull from the included safety signals` +
                       (includedSignalCount > 0 ? ` (${includedSignalCount})` : '') +
                       ', the literature corpus' +
                       (literatureTotal > 0 ? ` (${literatureTotal.toLocaleString()} hits)` : '') +

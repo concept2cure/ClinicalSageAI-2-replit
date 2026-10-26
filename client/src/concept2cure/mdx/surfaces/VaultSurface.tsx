@@ -261,8 +261,8 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
             disabled={uploading || !program?.id}
             title={
               program?.id
-                ? 'File a document into this program’s vault'
-                : 'Uploading is available once a program is open'
+                ? 'File a document into this project’s vault'
+                : 'Uploading is available once a project is open'
             }
             onClick={() => fileRef.current?.click()}
           >

@@ -64,7 +64,7 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
   const liveAvailable = rows !== null && rows.length > 0;
 
   const summary = loading
-    ? 'Loading the GSPR catalog and this program’s mappings…'
+    ? 'Loading the GSPR catalog and this project’s mappings…'
     : liveAvailable && coverage
       ? `${coverage.totalApplicable} ${coverage.scopeUndetermined > 0 ? 'requirements in scope or of undetermined scope' : 'in-scope requirements'} · ` +
         `${coverage.coveragePercent}% decided · ` +

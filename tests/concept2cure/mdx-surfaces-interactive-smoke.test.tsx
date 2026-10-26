@@ -222,7 +222,7 @@ describe('MDX rich-surface interactive smoke', () => {
        complaints, MDR events and CAPAs and requires its id; nothing triages
        signals or the portfolio. */
     expect(askAna).toHaveBeenCalledWith(
-      expect.stringContaining('Triage the open complaints, MDR events and CAPAs for BX-204 CGM (program p-test)'),
+      expect.stringContaining('Triage the open complaints, MDR events and CAPAs for BX-204 CGM (project p-test)'),
     );
     expect(askAna.mock.calls.map((c) => String(c[0])).join('\n')).not.toMatch(/across the portfolio|vigilance signals/);
     expect(container.querySelector('.eng-awareness-head')?.getAttribute('aria-expanded')).toBe('true');

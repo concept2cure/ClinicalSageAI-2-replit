@@ -258,7 +258,7 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
         corrQ.data ? liveCorr ?? [] : null,
         corrQ.isLoading,
         errorMessage(corrQ.error),
-        { idleReason: 'Agency and notified-body correspondence is filed per program.' },
+        { idleReason: 'Agency and notified-body correspondence is filed per project.' },
       ),
       approvals: toDataState<Approval[]>(
         apprQ.data ? liveAppr ?? [] : null,

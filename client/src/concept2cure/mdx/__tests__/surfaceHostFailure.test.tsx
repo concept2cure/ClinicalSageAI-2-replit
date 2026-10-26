@@ -73,7 +73,7 @@ describe('MDX portfolio — a failed load discloses nothing and offers a way out
     const alert = await waitFor(() => screen.getByRole('alert'));
     const shown = alert.textContent ?? '';
 
-    expect(shown).toContain("Couldn't load your device programs");
+    expect(shown).toContain("Couldn't load your device projects");
     /* Nothing recognisably internal survives, in any form: no API route, no
        HTTP-with-path string, no driver code, no relation name. */
     expect(shown).not.toMatch(/\/api\//);

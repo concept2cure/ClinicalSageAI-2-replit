@@ -150,7 +150,7 @@ export interface OfficialFieldsError {
   errorKind: OfficialFieldsErrorKind | null;
 }
 
-const NOT_FOUND_WORDS = 'This program was not found in your organization';
+const NOT_FOUND_WORDS = 'This project was not found in your organization';
 const NOT_PRODUCIBLE_WORDS =
   'The field map for this template is not populated, so there is nothing to preview';
 const FAILED_WORDS = 'The field list could not be loaded';

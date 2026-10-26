@@ -75,7 +75,7 @@ export interface UseEngineeringResult {
   refresh: () => void;
 }
 
-const IDLE = 'The engineering record is held per program.';
+const IDLE = 'The engineering record is held per project.';
 
 /* Shown when the route reports a panel as unavailable. DataGate's error branch
    already titles it "Could not load <label>"; this says the part that matters

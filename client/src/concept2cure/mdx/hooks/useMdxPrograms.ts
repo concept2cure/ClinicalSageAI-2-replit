@@ -243,7 +243,7 @@ export function useMdxPrograms(): UseMdxProgramsResult {
   const rows = Array.isArray(data?.data) ? data.data : null;
   const shapeError =
     data != null && rows === null
-      ? 'The regulatory programs register returned a response this screen could not read.'
+      ? 'The projects register returned a response this screen could not read.'
       : null;
   const programs = useMemo(
     () => (rows ? rows.map(rowToKit).filter((p): p is Program => p !== null) : null),

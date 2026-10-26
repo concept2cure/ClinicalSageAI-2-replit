@@ -1,0 +1,33 @@
+The device-lane test files this part edited, run against the source at 62a46933f (the old wording).
+tests 186  failed 15  passed 171
+
+   tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx :: MDX rich-surface interactive smoke Postmarket: every button click is handler-safe 
+      AssertionError: expected "vi.fn()" to be called with arguments: [ StringContaining{…} ]
+   tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx :: MDX Files tab — root structure renders all five filesystem roots on PathwayPanes(k510) 
+      Error: Unable to find an element with the text: /Test section/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make
+   client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx :: 510(k) surface with no program selected (sample mode off) renders no fixture device, stage, clock or subject name 
+      AssertionError: expected 'WorkspacePredicate · SE · eSTARAudit …' to contain 'No project selected'
+   client/src/concept2cure/mdx/__tests__/k510HonestEmptyState.test.tsx :: overview with an empty tenant (sample mode off) derives the health strip from the empty list, never from MDX_HEALTH 
+      AssertionError: expected 'Device portfolio health0 active progr…' to contain 'Active projects'
+   client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx :: MDX portfolio — a failed load discloses nothing and offers a way out does not render { label: 'a route and a status', status: 500, body: 'nope' } 
+      AssertionError: expected 'Couldn\'t load your device programsTr…' to contain 'Couldn\'t load your device projects'
+   client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx :: MDX portfolio — a failed load discloses nothing and offers a way out does not render { label: 'a driver error', status: 503, body: 'ECONNREFUSED' } 
+      AssertionError: expected 'Couldn\'t load your device programsTr…' to contain 'Couldn\'t load your device projects'
+   client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts :: lookupRecognizedStandards (vendored FDA list, never inferred) refuses an unusable query without issuing a request 
+      AssertionError: expected 'Available once a program is open, or …' to match /project is open, or a product code/
+   client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts :: describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line 404 (the route refused the ident org-scoped) ⇒ not-found 
+      AssertionError: expected { …(2) } to deeply equal { …(2) }
+   client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts :: useEstarOfficialFields 404 (not in this org) is a not-found sentence, never an empty field list 
+      AssertionError: expected 'This program was not found in your or…' to be 'This project was not found in your or…' // Object.is equality
+   client/src/concept2cure/mdx/surfaces/__tests__/CerWorkbench.render.test.tsx :: CerSurface — the CER workbench says so when no program is selected, without inventing one 
+      TestingLibraryElementError: Unable to find an element with the text: /select a CER project to load its evaluation/. This could be because the text is broken up by multiple elements. In this case, you 
+   client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx :: DeviceProfilePanel — honest states says so — and fetches nothing — when no program is selected 
+      TestingLibraryElementError: Unable to find an element with the text: The device profile is held per project. This could be because the text is broken up by multiple elements. In this case, you can pro
+   client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx :: OfficialEstarPanel — survives first paint with no program says so and fetches no field list 
+      AssertionError: expected 'Open a program first — the administra…' to match /Open a project first/
+   client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx :: OfficialEstarPanel — the produce-gate generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 
+      AssertionError: expected 'Open a program first — the administra…' to match /Open a project first/
+   client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx :: OfficialEstarPanel — the field preview a 404 says the program was not found — and offers no retry, which could not succeed 
+      TestingLibraryElementError: Unable to find an element with the text: This project was not found in your organization. This could be because the text is broken up by multiple elements. In this case, yo
+   client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx :: PostmarketSurface — panels that read across projects are not shown (slice 0) asks AnA to triage only what its triage tool reads, for this project 
+      AssertionError: expected 'Triage the open complaints, MDR event…' to contain 'Own infusion pump (project project-ow…'

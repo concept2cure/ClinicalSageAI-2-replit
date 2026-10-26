@@ -153,7 +153,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      that performs it. */
   const newTask = React.useCallback(() => {
     onAskAna(
-      'Create a new task. Walk me through the fields — program, section, summary, label, due date, assignee, ' +
+      'Create a new task. Walk me through the fields — project, section, summary, label, due date, assignee, ' +
                   'and whether an e-signature is required — then file it to the right Kanban column.',
     );
   }, [onAskAna]);
@@ -292,7 +292,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           >
             <div>Task</div>
             <div>Summary</div>
-            <div>Program · §</div>
+            <div>Project · §</div>
             <div>Label</div>
             <div>Due</div>
             <div>Assignee</div>
@@ -478,8 +478,8 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
               </div>
               <div className="val-prog-counts">
                 {p.errs === null ? (
-                  <span className="val-count" title="Blockers are recorded per project and cannot be attributed to this program">
-                    Blockers not linked to this program
+                  <span className="val-count" title="Blockers are recorded on the tracking record and cannot be attributed to this project">
+                    Blockers not linked to this project
                   </span>
                 ) : (
                   <>
