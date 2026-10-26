@@ -89,3 +89,11 @@ save. Confirmed choices refresh the existing inbox badge, and readback retains
 keyboard focus. Defaults are shown only after a valid preferences read.
 Email, push, sound and digest settings from the separate legacy personal
 preferences store remain outside these working in-app controls.
+
+Invitation responses and reporting-role reads/saves in Account also capture the
+validated actor and organization through the canonical bearer helper. A reply
+is applied only while the same bearer and mounted Account owner remain current,
+including after response-body decoding. A changed session cannot inherit a late
+saved acknowledgement, membership refresh or reporting-cache update. Requests
+do not adopt another session or automatically retry a mutation. Server-side
+self-only invitation and current-membership authority remain authoritative.

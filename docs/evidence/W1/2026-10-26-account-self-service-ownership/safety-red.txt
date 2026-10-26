@@ -1,0 +1,14 @@
+Original Account implementation at shared source a54e56337 (before this fix). All ten ownership checks fail. Full log: safety-red.txt.gz. Tokens are synthetic test JWTs.
+
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins Account reads and mutations to the validated captured actor
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before persona while auth context still shows the old owner
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before accept while auth context still shows the old owner
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before decline while auth context still shows the old owner
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/tenant-users/invitations/mine
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/users/me/persona
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after session change
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after unmount
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not refresh memberships or acknowledge a late invitation acceptance for a replaced session
+ FAIL  client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > rechecks ownership after response-body decoding
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
