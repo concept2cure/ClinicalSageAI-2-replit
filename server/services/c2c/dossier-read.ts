@@ -47,7 +47,7 @@
 import { C2C_SECTION_COMPLETE_STATUSES, markCountedSections } from './section-content.js';
 import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
-import { normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
+import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
 
 interface Queryable { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> }
@@ -75,6 +75,8 @@ export interface DossierRow extends DossierCounts {
   documentId: string;
   figure: DossierFigure;
   lastUpdated: string | null;
+  /** Only the governed sections included in this row's counts, in filing order. */
+  sections: Array<{ key: string; label: string; status: string }>;
 }
 
 export interface DossierMarket {
@@ -147,6 +149,15 @@ export function ctdModuleOfKey(key: string): string | null {
 
 const iso = (v: string | Date | null): string | null => (v == null ? null : new Date(v).toISOString());
 const later = (a: string | null, b: string | null) => (a == null ? b : b == null ? a : a > b ? a : b);
+
+/** The same counted rows as the figure, without bodies or a second read.
+ *  Normalize M-prefixed CTD keys for ordering, while preserving their stored
+ *  spelling in the response. Non-CTD filing outlines retain their own keys. */
+function countedSections(rows: readonly SectionRow[]): DossierRow['sections'] {
+  return rows.filter((s) => s.counted)
+    .sort((a, b) => compareSectionCode(normalizeCtdCode(a.section_key) ?? a.section_key, normalizeCtdCode(b.section_key) ?? b.section_key))
+    .map((s) => ({ key: s.section_key, label: s.label?.trim() || s.section_key, status: s.status }));
+}
 
 /** Whether a document is an application (a CTD filing) rather than a filing document class. */
 const isApplication = (docType: string) => filingDocumentClassOf(docType) == null;
@@ -240,24 +251,25 @@ function moduleRows(doc: DocGroup, keep: (key: string) => boolean, agency: strin
     }
     return k;
   };
-  const groups = new Map<string, { module: string | null; heading: string; order: string; c: DossierCounts; last: string | null }>();
+  const groups = new Map<string, { module: string | null; heading: string; order: string; c: DossierCounts; last: string | null; sections: SectionRow[] }>();
   for (const s of doc.sections) {
     if (!keep(s.section_key)) continue;
     const module = ctdModuleOfKey(s.section_key);
     const heading = module ? `M${module}` : rootOf(s.section_key);
     const id = module ? `ctd:${module}` : `root:${heading}`;
-    const g = groups.get(id) ?? { module, heading, order: module ?? `~${heading}`, c: emptyCounts(), last: null };
+    const g = groups.get(id) ?? { module, heading, order: module ?? `~${heading}`, c: emptyCounts(), last: null, sections: [] as SectionRow[] };
     add(g.c, s);
+    g.sections.push(s);
     g.last = later(g.last, iso(s.updated_at));
     groups.set(id, g);
   }
   const market = agency ? ` · ${agency.toUpperCase()} ${doc.docType.toUpperCase()}` : '';
   return [...groups.values()]
-    .sort((a, b) => a.order.localeCompare(b.order, undefined, { numeric: true }))
+    .sort((a, b) => compareSectionCode(a.order, b.order))
     .map((g) => ({
       group: 'module' as const, module: g.module, agency, documentId: doc.id,
       label: (byKey.get(g.heading)?.label?.trim() || (g.module ? `Module ${g.module}` : g.heading)) + market,
-      ...g.c, figure: figureOf(g.c), lastUpdated: g.last,
+      ...g.c, figure: figureOf(g.c), lastUpdated: g.last, sections: countedSections(g.sections),
     }));
 }
 
@@ -273,6 +285,7 @@ function documentRow(doc: DocGroup): DossierRow {
   return {
     group: 'document', module: null, agency: null, documentId: doc.id,
     label: cls?.label ?? doc.title ?? doc.docType, ...c, figure: figureOf(c), lastUpdated: last,
+    sections: countedSections(doc.sections),
   };
 }
 

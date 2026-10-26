@@ -1,0 +1,10 @@
+Node22.23.4; NODE_OPTIONS=--max-old-space-size=4096
+Command: node node_modules/vitest/vitest.mjs run server/services/ana/__tests__/vaccine-unstated-inputs.test.ts server/services/ana/__tests__/pediatric-unstated-inputs.test.ts server/services/ana/__tests__/coa-unstated-inputs.test.ts server/services/ana/__tests__/coa-selection.test.ts server/services/ana/__tests__/stated-input-basis.test.ts server/services/ana/__tests__/stated-input-result-contract.test.ts server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts server/services/ana/__tests__/submission-center-tools.test.ts server/services/ana/__tests__/ivd-lifecycle-tools.test.ts server/services/ana/__tests__/deepening-tools.test.ts server/services/ana/skills/__tests__ server/services/immunogenicity/__tests__ server/services/gcp-operations/__tests__ server/services/ana-biostats/__tests__/refuse-unless-stated-is-one-helper.test.ts server/services/global-ri/__tests__/pediatric-requirements.test.ts tests/biostat/normal-precision-reference.test.ts server/services/__tests__/lumen-context-builder-assumes-no-project-facts.test.ts --reporter=dot
+Exit: 0
+
+·············································
+
+ Test Files  32 passed (32)
+      Tests  1065 passed (1065)
+   Start at  18:45:24
+   Duration  59.29s (transform 10.48s, setup 417ms, import 50.42s, tests 4.01s, environment 3ms)

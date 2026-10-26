@@ -1,0 +1,7 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/vaccine-unstated-inputs.test.ts --reporter=verbose
+Filter: precision; before exact numeric reporting correction.
+
+Test Files  1 failed (1)
+Tests  2 failed | 79 skipped (81)
+Start at  18:32:52
+Duration  8.84s (transform 6.13s, setup 82ms, import 8.50s, tests 22ms, environment 0ms)

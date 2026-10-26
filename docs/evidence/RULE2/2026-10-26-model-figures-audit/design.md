@@ -2,6 +2,13 @@
 > decisions it names (F1–F8) are listed as R-1–R-8 in
 > `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`.
 >
+> **Product direction reaffirmed 2026-10-26:** specialist capabilities converge into
+> the core project workflow screens, tailored to the project's needs. Standardized
+> central services retain their identities. Use the existing canonical placement map
+> `.design/client-journey/INFORMATION_ARCHITECTURE.md`; these engine corrections support
+> those workflows and do not add specialist apps. R-2 source/worksheet availability
+> is a separate question and remains open.
+>
 > | Slice | Status | Evidence |
 > |---|---|---|
 > | S1 | done | `s1-orchestrator-inline-inputs/` |
@@ -10,7 +17,8 @@
 > | S4 | independent safeguards implemented; R-2/F2 policy pending | `s4-nonclinical-engines/` |
 > | S5-0 | done; stated-input labels are independent of R-2 availability | `s5-0-stated-basis/` |
 > | S5a COA/PRO | done | `s5a-coa-pro/` |
-> | S5a pediatric | done; four other clinical families remain queued | `s5a-pediatric/` |
+> | S5a pediatric | done | `s5a-pediatric/` |
+> | S5a vaccine | done; three other clinical families remain queued | `s5a-vaccine/` |
 > | S5a remaining, S5b–S5d, S6–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -502,8 +510,8 @@ evidence are filed under `s5a-coa-pro/`.
 `not_stated`; dependent validation, fit, positioning and strategy conclusions remain
 `not_assessed`. Decisive explicit evidence still determines an answer. Unassessed anchors
 cannot supply a responder threshold. Required context/decision enums and malformed numeric
-evidence use the existing parameter-refusal mechanism. Pediatric is completed below;
-the four other S5a families remain queued. Their read-only inventory is in
+evidence use the existing parameter-refusal mechanism. Pediatric and vaccine are completed below;
+the three other S5a families remain queued. Their read-only inventory is in
 `s5a-coa-pro/queued-clinical-families.md`.
 
 - **S5a (clinical):** `coaProTools`, `doseOptimizationTools`, `pediatricTools`, `vaccineTools`, `rweMethodologyTools`, `pharmacovigilanceTools`.
@@ -524,6 +532,23 @@ false cannot permit adult borrowing; condition and exact class-list matches rema
 reference context. Required context, units, age bands and numerical quantities use the
 existing refusal mechanism. Neonatal birth gestation cannot be inferred. No numerical
 patient-dose calculator or source reader was added; R-2/F2 availability stays open.
+
+**S5a vaccine — What already exists (execution audit):** the six functions in
+`vaccine/vaccine-knowledge.ts` are already reached by `vaccineTools.ts`, the shared
+stated-input wrapper and existing clinical/CMC skills. Extend them and reuse the
+strict readers and canonical refusal. Converge the private inverse-normal approximation
+onto `stats/normal.ts`; no second lot or vaccine calculator is needed. The local history
+is shallow with no vaccine-name deletion matches. Workflow-placement and project-context
+integration follow the canonical client-journey map. Evidence: `s5a-vaccine/`.
+
+**Vaccine execution result:** thirteen boolean input occurrences preserve explicit answers
+and expose absence as `not_stated`. Platform/correlate profiles are reference-only; they
+cannot fill product presentation, marker, threshold, linkage or eligibility. Missing or
+incompatible clinical prerequisites do not select Phase 3 endpoints; pediatric bridging
+does not assume source data. Lot planning discloses defaults, validates the supported
+reciprocal-margin approximation, reuses canonical normal quantiles and reports exact
+input margins/power. Runtime context and recognized aliases are validated. No source
+reader, app or service was added. Dose optimization, RWE and pharmacovigilance remain queued.
 - **S5b (device and diagnostics):**
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.

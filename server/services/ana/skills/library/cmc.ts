@@ -793,7 +793,7 @@ CMC for a biotechnological or biological product (recombinant proteins, monoclon
 6. Potency: a biological assay that reflects the mechanism of action where possible, a reference standard program, and qualification that matures to validation as development proceeds; ask \`explain_cmc_topic\` what is expected at the program's phase.
 7. Stability (ICH Q5C) is in the stability skill; comparability across process changes, in development and after approval (ICH Q5E), is in the comparability and changes skill.
 8. Biosimilars: \`assess_biosimilar_cmc\` for the development strategy and reference product characterisation, \`assess_analytical_similarity_biosimilar\` for assigning attributes to tiers, and \`assess_analytical_similarity\` to run the tiered comparison on the program's data. Report verdicts and statistics as returned.
-9. Vaccines: \`design_vaccine_cmc\` returns a platform-specific plan (drug substance and product definitions, potency paradigm, stability, cell substrate and viral safety expectations).
+9. Vaccines: \`design_vaccine_cmc\` returns a stated-input worksheet and platform references inside the project's CMC workflow. Unknown valence, adjuvant or presentation facts stay unknown; profile examples do not establish the actual formulation or storage. Report reference expectations and ask for missing records/facts. This tool does not compose a biologic Module 3 or establish a product verdict.
 
 ## Pitfalls reviewers raise
 - Cell bank testing incomplete before first-in-human use.

@@ -1329,13 +1329,14 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
 }
 
 function AuthorWorkspace({
-  pid, dossier, onNav, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
+  pid, dossier, onNav, onAsk, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
   /** The project's dossier (GET /:id/dossier), read once for the card and the module rows. */
   dossier: DossierState;
   onNav: (id: string) => void;
+  onAsk: (question: string) => void;
   activityState: DataState<{ activity: ActivityRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
   docs: ListRead;
@@ -1359,7 +1360,7 @@ function AuthorWorkspace({
         <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
         {/* Module completion, from the same dossier read as the card (F23). */}
-        <ModuleCompletion read={dossier} docForModule={docForModule} onOpen={onOpenDoc} />
+        <ModuleCompletion read={dossier} docForModule={docForModule} onOpen={onOpenDoc} onAsk={onAsk} />
 
         {/* Records in this project — REAL: GET /:id/records, every store read
             by its project key (PF-17). A store it cannot read says so. */}
@@ -1863,6 +1864,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
                 pid={pid}
                 dossier={dossier}
                 onNav={onNav}
+                onAsk={ask}
                 activityState={activityState}
                 docs={docsRead}
                 onRetryDocs={reloadDocs}

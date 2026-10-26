@@ -1,0 +1,7 @@
+Node22.23.4; vitest vaccine-unstated-inputs.test.ts --reporter=verbose -t vectoridentifiers
+Compatibility regression during strict normalization, before final vector-alias fix.
+
+Test Files  1 failed (1)
+Tests  1 failed | 82 skipped (83)
+Start at  18:40:48
+Duration  15.59s (transform 9.51s, setup 126ms, import 15.13s, tests 26ms, environment 0ms)

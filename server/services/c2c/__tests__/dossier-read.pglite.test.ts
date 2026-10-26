@@ -97,6 +97,40 @@ beforeEach(async () => {
 const pctOf = (f: { state: string; pct: number | null }) => (f.state === 'measured' ? f.pct : f.state);
 
 describe('one definition of complete, for the header and every module row', () => {
+  it('returns each counted section with its stored label and status, in regulatory order', async () => {
+    await scaffold('doc_home', 'nda', 'fda');
+    await jdb.pool.query(`DELETE FROM c2c_document_sections WHERE document_id = 'doc_home'`);
+    await jdb.pool.query(`INSERT INTO c2c_document_sections
+      (document_id, section_key, parent_key, label, path_order, mandatory, status, content, draft_source, version)
+      VALUES
+      ('doc_home', 'M3', NULL, 'Quality from the filing pack', 0, true, 'todo', '{}', 'template', 1),
+      ('doc_home', '3.2.R.1', 'M3', 'Regional information', 1, true, 'todo', '{}', 'template', 1),
+      ('doc_home', '3.2.A.1', 'M3', 'Appendices', 2, true, 'drafted', '{}', 'template', 1),
+      ('doc_home', '3.2.P.1', 'M3', 'Drug product', 3, true, 'review', '{}', 'template', 1),
+      ('doc_home', '3.2.S.10', 'M3', 'Substance ten', 4, true, 'locked', '{}', 'template', 1),
+      ('doc_home', '3.2.S.2', 'M3', 'Substance two', 5, true, 'approved', '{}', 'template', 1),
+      ('doc_home', 'M1', NULL, 'Administrative', 6, true, 'review', '{}', 'template', 1),
+      ('doc_home', '1.1', 'M1', 'Forms', 7, true, 'todo', '{}', 'template', 1)`);
+
+    const d = await readDossier(jdb.pool as never, ORG, NDA);
+    expect(d.rows.map((r) => r.module)).toEqual(['1', '3']);
+    expect(d.rows[0].sections).toEqual([
+      { key: 'M1', label: 'Administrative', status: 'review' },
+      { key: '1.1', label: 'Forms', status: 'todo' },
+    ]);
+    expect(d.rows[1]).toMatchObject({
+      label: 'Quality from the filing pack', counted: 5, complete: 2, inReview: 1, drafted: 1,
+      sections: [
+        { key: '3.2.S.2', label: 'Substance two', status: 'approved' },
+        { key: '3.2.S.10', label: 'Substance ten', status: 'locked' },
+        { key: '3.2.P.1', label: 'Drug product', status: 'review' },
+        { key: '3.2.A.1', label: 'Appendices', status: 'drafted' },
+        { key: '3.2.R.1', label: 'Regional information', status: 'todo' },
+      ],
+    });
+    expect(d.rows.every((r) => r.sections.length === r.counted)).toBe(true);
+  });
+
   it('every section locked reads 100 on the header and on every row (at head: 100 beside 0)', async () => {
     await scaffold('doc_home', 'nda', 'fda', 'locked');
     const d = await readDossier(jdb.pool as never, ORG, NDA);
@@ -174,6 +208,10 @@ describe('each market on its own line (F22)', () => {
     const emaRows = after.rows.filter((r) => r.documentId === marketDoc);
     expect(emaRows.map((r) => r.module).sort()).toEqual(['1', '3']);
     expect(emaRows.every((r) => r.agency?.toLowerCase() === 'ema')).toBe(true);
+    const emaSections = emaRows.flatMap((r) => r.sections);
+    expect(emaSections.map((s) => s.key).sort()).toEqual(own.filter((s) => isRegionalSectionKey(String(s.section_key))).map((s) => s.section_key).sort());
+    expect(emaSections.every((s) => isRegionalSectionKey(s.key))).toBe(true);
+    expect(after.rows.filter((r) => r.documentId === 'doc_home')).toEqual(before.rows);
   });
 
   it('with two home applications a market says why it has no figure', async () => {
@@ -194,6 +232,9 @@ describe('documents that are not CTD applications', () => {
     const csr = d.rows.filter((r) => r.documentId === 'doc_csr');
     expect(csr).toHaveLength(1);
     expect(csr[0]).toMatchObject({ group: 'document', module: null });
+    const held = await rows(`SELECT section_key, label, status FROM c2c_document_sections WHERE document_id = 'doc_csr'`);
+    expect(csr[0].sections).toHaveLength(csr[0].counted);
+    expect(csr[0].sections).toEqual(expect.arrayContaining(held.map((s) => ({ key: s.section_key, label: s.label, status: s.status }))));
     expect(d.rows.filter((r) => r.documentId === 'doc_home').every((r) => r.group === 'module')).toBe(true);
   });
 
@@ -216,7 +257,9 @@ describe('a figure is measured, empty or unavailable, never a made-up 0', () => 
 
   it("another organization's documents are not read", async () => {
     await scaffold('doc_home', 'nda', 'fda', 'approved');
-    expect((await readDossier(jdb.pool as never, 8, NDA)).home).toEqual({ state: 'no_sections', pct: null });
+    const otherOrg = await readDossier(jdb.pool as never, 8, NDA);
+    expect(otherOrg.home).toEqual({ state: 'no_sections', pct: null });
+    expect(otherOrg.rows).toEqual([]);
   });
 
   it('a store this environment has not provisioned is unavailable, with the reason, and no 0 anywhere', async () => {

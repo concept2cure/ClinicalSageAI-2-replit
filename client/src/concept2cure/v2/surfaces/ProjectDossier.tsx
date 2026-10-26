@@ -39,6 +39,8 @@ export interface DossierRow {
   drafted: number;
   figure: DossierFigure;
   lastUpdated: string | null;
+  /** Counted governed sections. An older response can omit these details. */
+  sections?: Array<{ key: string; label: string; status: string }>;
 }
 
 export interface DossierMarket {
@@ -100,6 +102,15 @@ function figureLine(f: DossierFigure): string {
 
 const marketName = (m: DossierMarket) => `${m.agency.toUpperCase()} · ${m.docType.toUpperCase()}`;
 
+/** Keep an older or malformed detail distinct from an empty section list. */
+const hasSectionDetails = (sections: unknown): sections is NonNullable<DossierRow['sections']> =>
+  Array.isArray(sections) && sections.every((s) => s && typeof s.key === 'string' && typeof s.label === 'string' && typeof s.status === 'string');
+
+const SECTION_STATUS_LABELS = new Map([
+  ['approved', 'Approved'], ['locked', 'Locked'], ['review', 'In review'], ['drafted', 'Drafted'], ['empty', 'Empty'],
+]);
+const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (status || 'Status not recorded');
+
 /** The aside card: the home filing's figure, and each added market's line. */
 export function DossierReadinessCard({ read }: { read: DossierState }) {
   const { state, retry } = read;
@@ -116,6 +127,10 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
     body = <p role="status" aria-busy="true" className="pj-card-note">Reading…</p>;
   } else {
     const added = d.markets.filter((m) => m.scope === 'market');
+    const homeCounts = d.rows.filter((r) => r.agency === null).reduce(
+      (total, r) => ({ inReview: total.inReview + r.inReview, drafted: total.drafted + r.drafted }),
+      { inReview: 0, drafted: 0 },
+    );
     body = (
       <>
         {d.home.state === 'measured' && (
@@ -124,6 +139,9 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
           </div>
         )}
         <p className="pj-card-note" data-testid="pj-dossier-home">{figureLine(d.home)}</p>
+        {d.home.state === 'measured' && (
+          <p className="pj-card-note">{homeCounts.inReview} in review · {homeCounts.drafted} drafted</p>
+        )}
         {added.length > 0 && (
           <ul className="pj-dossier-mkts" aria-label="Each added market">
             {added.map((m) => (
@@ -162,6 +180,8 @@ function ModuleRow({ r, match, onOpen }: {
   const pct = r.figure.state === 'measured' ? r.figure.pct : null;
   const counts = `${r.complete} of ${r.counted} approved or locked${r.inReview ? ` · ${r.inReview} in review` : ''}`;
   const risk = pct != null && pct < 50 ? true : undefined;
+  const updated = r.lastUpdated ? new Date(r.lastUpdated) : null;
+  const hasUpdated = updated && !Number.isNaN(updated.getTime());
   const body = (
     <>
       <span className="pj-lmod-t">{r.label} · {counts}</span>
@@ -169,26 +189,39 @@ function ModuleRow({ r, match, onOpen }: {
       <span className="pj-lmod-pct">{figureValue(r.figure)}</span>
     </>
   );
-  if (!match) return <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>;
-  const { doc, count, n } = match;
-  const which = count > 1 ? `, the newest of ${count} Module ${n} documents` : '';
+  const which = match && match.count > 1 ? `, the newest of ${match.count} Module ${match.n} documents` : '';
   return (
     <div className="pj-lmodrow">
-      <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(doc)}
-        aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${doc.title}${which}`}>
-        {body}
-      </button>
-      <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {doc.title}{which}</span>
+      {match ? (
+        <>
+          <button type="button" className="pj-lmod" data-risk={risk} data-testid="pj-lmod" onClick={() => onOpen(match.doc)}
+            aria-label={`${r.label}: ${counts}, ${figureValue(r.figure)}. Open ${match.doc.title}${which}`}>
+            {body}
+          </button>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">Opens {match.doc.title}{which}</span>
+        </>
+      ) : <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>}
+      <span className="pj-lmod-doc">{hasUpdated ? <>Updated <time dateTime={r.lastUpdated!}>{updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></> : 'Update time not recorded.'}</span>
+      {hasSectionDetails(r.sections) ? (
+        <details className="pj-lmod-sections">
+          <summary>Section status</summary>
+          <p className="pj-card-note">Counted governed sections. Empty headings that hold other sections are not counted.</p>
+          <ul aria-label={`${r.label} section status`}>
+            {r.sections.map((s) => <li key={s.key}><span>{s.key} · {s.label}</span><span>{sectionStatus(s.status)}</span></li>)}
+          </ul>
+        </details>
+      ) : <p className="pj-card-note">Section details unavailable.</p>}
     </div>
   );
 }
 
 /** The Author tab's module rows, from the same read as the card. */
-export function ModuleCompletion({ read, docForModule, onOpen }: {
+export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
   read: DossierState;
   /** The newest of this project's documents in a CTD module, and how many it holds. */
   docForModule: (module: string | null) => { doc: BuiltDocument; count: number; n: number } | null;
   onOpen: (doc: BuiltDocument) => void;
+  onAsk?: (question: string) => void;
 }) {
   const { state, retry } = read;
   const d = state.data;
@@ -215,6 +248,7 @@ export function ModuleCompletion({ read, docForModule, onOpen }: {
   return (
     <section className="pj-sec">
       <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
+      {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
       {body}
     </section>
   );
@@ -231,7 +265,7 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       measuredAt: d.measuredAt,
       home: d.home,
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
-      rows: d.rows.map((r) => ({ label: r.label, module: r.module, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure })),
+      rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
     },
     dossierUnavailable: null,
   };
