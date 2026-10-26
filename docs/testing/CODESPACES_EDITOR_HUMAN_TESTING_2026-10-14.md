@@ -305,6 +305,11 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 109 | Repeat with all pending rows filled manually, and with an exact single-section target. All-filled rows show preserved with zero generated candidates; a selected target never starts other sections. A later retry does not regenerate completed/preserved rows. | Not run | |
 | 110 | With the operator, interrupt the exact saved-section read or return a missing/wrong-code row, then test Stop and a project/account change during a delayed read. Preparation must stop before later candidates; an unreadable section is not shown as preserved. Return only through existing explicit checks/retry controls. | Not run | |
 
+| 111 | For an eligible PMDA, EMA, Health Canada and FDA template, build with AnA using section guidance and stated requirements. Open Review and choose Draft again. With the operator, compare both requests: region, bounded template-reference context, requirements and selected-source receipt must match. No candidate is accepted automatically. | Not run | |
+| 112 | After assembly, edit the build form’s requirements and review an earlier candidate. Its Draft again must retain that candidate’s original inputs. Switch sections and Close/reopen review; each section retains its own inputs, reviewed text and reason. | Not run | |
+| 113 | Discard explicitly, then change Tone, Region, Context and Requirements using the existing controls. Close/reopen or switch away/back before drafting; the chosen values must remain for that section. A standalone draft keeps its existing initial region or FDA default. | Not run | |
+| 114 | Using the operator’s refusal fixture, regenerate an edited candidate and verify its review text/reason and chosen inputs survive. An unknown acceptance outcome or a retired source/project/account still blocks further work through existing controls; input retention must not authorize a write, replace selected sources or revive a late reply. | Not run | |
+
 Cases 68–72 extend the [Authoring refiling version contract](../design/AUTHORING_REFILING_VERSIONS_2026-10-23.md).
 They exercise editable working documents; frozen/sealed Authoring content remains
 immutable under its existing revision policy. The retained legacy version review
@@ -332,6 +337,8 @@ For cases 96–102, use the [source intake ownership and recovery contract](../d
 For cases 103–106, use the [selected-source handoff ownership contract](../design/SELECTED_SOURCE_HANDOFF_OWNERSHIP_2026-10-26.md). Automated component/browser results use synthetic HTTP and remain separate from these human observations. The current project journey is Plan → Evidence → Author → Review → Submit → Respond.
 
 For cases 107–110, use the [assembly queue completion contract](../design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md). Preserved means exact saved text was observed; it does not mean AnA generated, reviewed or accepted that text. Automated synthetic-HTTP regressions do not fill these human observations.
+
+For cases 111–114, use the [regional redraft contract](../design/EDITOR_REGIONAL_REDRAFT_2026-10-26.md). Drafting options are editable review inputs, not evidence that a receiving market or candidate’s scientific content has been validated. These human observations remain separate from automated HTTP fixtures.
 
 For cases 34–37, use the [saved-reference contract](../design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md). The last recorded source selection is historical build intent. Its successful read does not select it or establish current citation support; reuse requires a fresh check and another explicit preview.
 

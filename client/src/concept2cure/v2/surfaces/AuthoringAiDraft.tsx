@@ -52,7 +52,7 @@
  * ordinary outcome (accepted in another tab, or expired), not an error to
  * apologise for, and the only honest recovery is to generate again.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { I } from '../icons';
 import type { FireToast } from '../toast';
 import { AnaActivity } from '../AnaActivity';
@@ -62,9 +62,9 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 
 import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
-import type { AcceptedAttribution, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
+import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
 export { failureOf, createEmptyAiDraftReviewState } from '../editor/authoringDraftTransport';
-export type { AcceptedAttribution, AiDraftMetadata, AiDraftReviewState, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
+export type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewState, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
 
 export interface AuthoringAiDraftProps {
   sectionId: string;
@@ -264,12 +264,11 @@ export function AuthoringAiDraft({
   onClose,
   fireToast,
 }: AuthoringAiDraftProps) {
-  const [tone, setTone] = useState<string>('professional');
-  const [region, setRegion] = useState<string>(initialRegion || 'FDA');
-  const [context, setContext] = useState('');
-  const [requirements, setRequirements] = useState('');
   const review = useAuthoringDraftReview({ sectionId, docId, programId, reviewSession, docSealed, editorDirty,
     onAccepted, onClose, fireToast, describeAcceptFailure });
+  const defaults: AiDraftGenerationInputs = { tone: 'professional', region: initialRegion || 'FDA', context: '', requirements: '' };
+  const { tone, region, context, requirements } = { ...defaults, ...review.state.generationInputs };
+  const setInputs = (next: Partial<AiDraftGenerationInputs>) => review.setGenerationInputs(next, defaults);
   const { draft, body, changeReason, refusal, acceptUnknown, baseChanged, checkedContent } = review.state;
   const { generating, generatingSince, accepting, checking } = review;
   const setBody = (value: string) => review.patch({ body: value });
@@ -360,7 +359,7 @@ export function AuthoringAiDraft({
               Tone
               <select
                 value={tone}
-                onChange={e => setTone(e.target.value)}
+                onChange={e => setInputs({ tone: e.target.value })}
                 disabled={busy}
                 style={{ height: 28 }}
               >
@@ -375,7 +374,7 @@ export function AuthoringAiDraft({
               Region
               <select
                 value={region}
-                onChange={e => setRegion(e.target.value)}
+                onChange={e => setInputs({ region: e.target.value })}
                 disabled={busy}
                 style={{ height: 28 }}
               >
@@ -391,7 +390,7 @@ export function AuthoringAiDraft({
             Context (optional)
             <input
               value={context}
-              onChange={e => setContext(e.target.value)}
+              onChange={e => setInputs({ context: e.target.value })}
               disabled={busy}
               placeholder="What this section needs to establish"
               style={{ height: 28 }}
@@ -401,7 +400,7 @@ export function AuthoringAiDraft({
             Requirements (optional)
             <input
               value={requirements}
-              onChange={e => setRequirements(e.target.value)}
+              onChange={e => setInputs({ requirements: e.target.value })}
               disabled={busy}
               placeholder="Constraints the draft must satisfy"
               style={{ height: 28 }}

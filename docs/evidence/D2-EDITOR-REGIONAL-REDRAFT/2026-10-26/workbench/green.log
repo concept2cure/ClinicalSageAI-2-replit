@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > blocks a source-first structure action when the current detail read admits only sections 903ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > blocks a source-first structure action when the current sections read admits only sections 521ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains FDA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=false) 1444ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains EMA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=true) 1411ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains PMDA drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=false) 1450ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > retains Health Canada drafting inputs and exact sources through chooser, build, review switches and regeneration (consumeDeepLinks=true) 1439ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > does not bind sources after cancelling the actual dirty-work navigation 814ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > refuses source binding while a governed ceremony owns the current editor 370ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not generate through an old open review after a new explicit source handoff 1392ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not adopt a delayed old-selection regeneration into a new selection 1222ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source changes preserve unresolved structural writes > keeps a lost commit held after another source handoff and an explicit clear 1453ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > deferred source navigation retains its original scope > preserves dirty text when the project is left and revisited before the leave decision 378ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a pinned canvas hands a different selected target to the full existing editor > retains dirty work on Stay and preserves exact source intent after an accepted handoff 1186ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  17:10:20
+   Duration  17.31s (transform 2.08s, setup 182ms, import 2.53s, tests 13.99s, environment 430ms)
+

@@ -44,10 +44,10 @@ async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, 
     return !operation.bucket.stopRequested;
   }
   updateSlot(operation, slot, { status: 'drafting', message: undefined });
-  const result = await generateAuthoringDraft({ sectionId: slot.section.id, region,
-    context: slot.referenceContext,
-    ...(slot.sources ? { sources: slot.sources } : {}),
-    ...(operation.bucket.state.requirements.trim() ? { requirements: operation.bucket.state.requirements.trim() } : {}) },
+  const generationInputs = { tone: 'professional', region, context: slot.referenceContext,
+    requirements: operation.bucket.state.requirements.trim() };
+  const result = await generateAuthoringDraft({ sectionId: slot.section.id, ...generationInputs,
+    ...(slot.sources ? { sources: slot.sources } : {}) },
   operation.current);
   if (!operation.current()) {
     updateSlot(operation, slot, { status: 'not-started', message: 'Draft preparation stopped before a candidate could be retained. Retry is explicit.' });
@@ -57,7 +57,7 @@ async function draftSlot(operation: AssemblyOperation, slot: AssemblyDraftSlot, 
     updateSlot(operation, slot, { status: 'failed', message: result.message }); return false;
   }
   updateSlot(operation, slot, { status: 'ready', current: retainedCandidateGuard(operation),
-    review: { draft: result.draft, body: result.draft.generated, changeReason: '', refusal: null } });
+    review: { draft: result.draft, body: result.draft.generated, changeReason: '', refusal: null, generationInputs } });
   return !operation.bucket.stopRequested;
 }
 export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<void> {
