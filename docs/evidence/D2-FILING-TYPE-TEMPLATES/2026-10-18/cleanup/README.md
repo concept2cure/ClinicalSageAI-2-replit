@@ -158,3 +158,40 @@ small-molecule US IND, Module 3 content is composed in CMC / Module 3 (P-28).
   `shared/regulatory/index.ts`, so importing the 6,200-line server record there would ship it to the browser.
 
 C3 first gives the record a place to hold those synonyms, then removes the copies.
+
+## C3 — AnA's chat outlines for the CTD components read the record
+
+**What the duplicate was.** `server/services/ana-ri/document-templates.ts` is what AnA puts into its own prompt when a
+person asks in chat for a CTD document. The orchestrator injects the detected template as "REQUIRED DOCUMENT
+STRUCTURE … use the exact headings below". Eight of its outlines were written by hand:
+
+| Outline | What the hand copy got wrong |
+|---|---|
+| `ctd_2_2_introduction` | Invented subheadings for an undivided 2.2. |
+| `ctd_2_3_qos` | Skipped 2.3.S.5, 2.3.S.6, 2.3.P.4, 2.3.P.6, 2.3.P.7, 2.3.A and 2.3.R. |
+| `ctd_2_4_nonclinical_overview` | "Integrated Summary and Implications for Clinical Use", which is not M4S 2.4.5's heading. |
+| `ctd_2_5_clinical_overview` | No 2.5.6.1–2.5.6.5. |
+| `ctd_2_7_3_efficacy_summary` | "Individual Study Results — Pivotal Trials", "Supportive Data", "Conclusions on Clinical Efficacy": headings in no M4E guideline. |
+| `ctd_2_7_4_safety_summary` | "Deaths and Serious Adverse Events" merged two M4E headings; there were no 2.7.4.5 subdivisions. |
+| `cmc_drug_substance` / `cmc_drug_product` | Their own 3.2.S/3.2.P titles, one level deep. |
+
+**What replaced it.** `ctdRecordTemplateSections(root)` reads each outline from the record:
+- every heading below the root, numbered and titled as the record holds it;
+- the guidance is the served outline's purpose line, from `ctdComponentSections`;
+- the word target is the brief's own `wordCountRange`, and a heading without one carries none.
+
+The QOS keeps its Introduction, from `ctdFrontMatter`, as the served QOS outline does. Detection patterns and drafting
+instructions are not heading copies, so they are unchanged.
+
+**P-47 parity.** Each detected request still gets a structured outline, with required and optional sections,
+guidance and word targets. The outline is now the record's, and the module is 36 lines shorter.
+
+**Red first:** `c3-ana-chat-outlines-red.txt`: 11 of 11 red on trunk `1d26bd1e8`. All 11 pass after.
+
+**Gates:**
+- the 59 test files that name these templates, the detector, the block builder or the orchestrator: 1,230 pass;
+- typecheck: 0 errors;
+- ESLint: no new warnings (the module's existing file-length warning remains).
+
+**Prompt size.** The block for `cmc_drug_product` is now about 10.5k characters, because it carries the record's 30
+Module 3 headings. The orchestrator appends it as it is, with no cap.
