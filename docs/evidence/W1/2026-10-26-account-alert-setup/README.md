@@ -22,7 +22,7 @@ Extend the existing preference component into one controls implementation shared
 
 ## Verification
 
-Pending focused negative/positive tests, Account and inbox integration regressions, and browser checks. The preceding revision's staging and CI remain queued; local verification does not establish hosted deployment.
+Local verification is recorded below. Hosted CI and staging are separate release gates.
 
 ## Results and verification limits
 
@@ -34,3 +34,7 @@ Pending focused negative/positive tests, Account and inbox integration regressio
 - `lint.txt`: only the existing TaskTrayOwner complexity warning. No lint/type/security baseline was widened.
 
 The backend subscription routes, live role/audience filtering and unsupported external-delivery policy remain unchanged. The legacy personal notification-preferences table is not used by these controls. Hosted CI and staging for the preceding revision remain pending separately from local verification.
+
+## Verification after shared-branch merge
+
+Merged upstream `2fd07ac807292c4221468067eaf6807146cfc3a0` into the implementation at `4286f0fe3`. `merged-regressions.txt` records 156 passing checks and one existing notification-tool dynamic-import timeout at 10 seconds; `merged-timeout-recheck.txt` records all four checks in that suite passing on rerun without code or timeout changes (the import check took 9.075 seconds). `merged-build.txt` passes all production build targets. Refreshed browser artifacts pass all four viewport/theme cases. `prepush.txt` records every normal gate passing, including the full-program zero-error typecheck. No hosted deployment is established by these local checks.
