@@ -131,7 +131,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'projects',
     label: 'Filter the portfolio',
     description:
-      'On the Projects portfolio, filter the project list by workstream and/or status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
+      'On the Projects portfolio, filter the project list by workstream, status or client. Omit a param to leave that axis unchanged; pass "all" to clear it.',
     params: [
       {
         name: 'workstream',
@@ -144,6 +144,11 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         required: false,
         description: 'Status filter: "all", "active", "blocked", or "complete".',
         enum: ['all', 'active', 'blocked', 'complete'],
+      },
+      {
+        name: 'clientWorkspaceId',
+        required: false,
+        description: 'An accessible client id from the portfolio client choices, or "all" to clear the client filter.',
       },
     ],
   },

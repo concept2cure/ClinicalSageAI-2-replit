@@ -6,6 +6,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
+import { ProjectClientFilter, portfolioClients, portfolioClientContext, portfolioClientUrl } from './ProjectClientFilter';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -1084,6 +1085,8 @@ interface ProjPortfolioEntry {
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
   activity: string;
+  client_workspace_id?: number | null;
+  client_name?: string | null;
 }
 
 /**
@@ -1123,6 +1126,7 @@ const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
   const [status, setStatus] = useState('all');
+  const [clientWorkspaceId, setClientWorkspaceId] = useState('all');
   const [view, setView] = useState('grid');
   const [q, setQ] = useState('');
   const [wizardOpen, setWizardOpen] = useState(() => {
@@ -1137,8 +1141,14 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      its own, so the retry the failed-load panel offers is a nonce in that list.
      The panel's copy promised a retry it did not have. */
   const [reloadNonce, setReloadNonce] = useState(0);
-  const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects', [reloadNonce]);
+  const portfolioUrl = portfolioClientUrl(clientWorkspaceId);
+  const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId]);
   const projects = live.rows;
+  // Options come from accessible program anchors, not an organization-wide
+  // client directory. The server applies this filter before it pages the list.
+  const clients = useMemo(() => portfolioClients(live.meta), [live.meta]);
+  const clientContext = useMemo(() => portfolioClientContext(clientWorkspaceId, clients, live.meta),
+    [clientWorkspaceId, clients, live.meta]);
   /* The read is one page (50 by default) and the route says when there is
      more (`meta.hasMore`). Ignored, an org with 80 programs read "50 active
      programs", the mean covered 50 and search could not find the 51st. The
@@ -1233,10 +1243,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        by workstream and status" while a search term was also hiding rows would
        describe a screen the user is not looking at, and AnA would answer "which
        programs are at risk?" over a set it had been told was complete. */
-    const filtered = ws !== 'all' || status !== 'all' || needle !== '';
+    const filtered = ws !== 'all' || status !== 'all' || clientContext.active || needle !== '';
     const by = [
       ws !== 'all' ? `workstream "${ws}"` : null,
       status !== 'all' ? `status "${status}"` : null,
+      clientContext.description,
       needle ? `a search for "${q.trim()}"` : null,
     ].filter(Boolean);
     return {
@@ -1253,6 +1264,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         shownInList: list.length,
         workstreamFilter: ws,
         statusFilter: status,
+        ...clientContext.facts,
         searchQuery: q.trim() || null,
         averageReadiness: health[1].n,
         filingWithin60Days: health[2].n,
@@ -1271,13 +1283,13 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       },
       availableActions: [
         'Open a project to enter its project home',
-        'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
+        'Filter the portfolio by workstream (MDX, Biotech, Pharma), status or client',
         'Search the portfolio by project title or code',
         'Switch between the grid and list views',
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health, measuredCover, truncated]);
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, clientContext, q, needle, view, health, measuredCover, truncated]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1358,9 +1370,17 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     'projects.filter': (params) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
+      if (params.clientWorkspaceId && params.clientWorkspaceId !== 'all'
+        && !clients.some(client => String(client.id) === params.clientWorkspaceId)) {
+        return { ok: false, reason: 'That client is not available in this portfolio’s client choices.' };
+      }
       const applied: string[] = [];
       if (params.workstream) { setWs(params.workstream); applied.push(`workstream ${params.workstream}`); }
       if (params.status) { setStatus(params.status); applied.push(`status ${params.status}`); }
+      if (params.clientWorkspaceId) {
+        setClientWorkspaceId(params.clientWorkspaceId);
+        applied.push(params.clientWorkspaceId === 'all' ? 'all clients' : `client ${clients.find(client => String(client.id) === params.clientWorkspaceId)?.name}`);
+      }
       if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
       return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
     },
@@ -1436,6 +1456,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             aria-label="Search projects by title or code"
           />
         </div>
+        <ProjectClientFilter value={clientWorkspaceId} clients={clients} hasMore={clientContext.hasMore} onChange={setClientWorkspaceId} />
         <span style={{ flex: 1 }} />
         <div className="seg">
           <button className={`seg-b${view === 'grid' ? ' on' : ''}`} onClick={() => setView('grid')}>Grid</button>
@@ -1475,8 +1496,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : live.empty ? (
         <EmptyState
           icon={I.folder}
-          title="No projects yet"
-          hint="Create a regulatory project and it appears here — every workstream across MDX, Biotech, and Pharma."
+          title={clientContext.empty.title}
+          hint={clientContext.empty.hint}
         />
       ) : list.length === 0 ? (
         <EmptyState

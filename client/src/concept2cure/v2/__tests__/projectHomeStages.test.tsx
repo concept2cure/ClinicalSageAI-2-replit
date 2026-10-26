@@ -94,6 +94,18 @@ afterEach(() => {
 });
 
 describe('Project home — six steps follow the work', () => {
+  it('names the owning client rather than calling the CRO organization the sponsor', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => url === `/api/c2c/projects/${PID}`
+      ? ok({ id: PID, name: 'BX-410', product_name: 'Torvanib', program_type: 'IND', status: 'active',
+          sponsor_name: 'CRO organization', client_workspace_id: 11, client_name: 'Client Alpha' })
+      : ok({}));
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(screen.getByText('Client Alpha')).toBeTruthy());
+    const client = screen.getByText('Client Alpha').closest('dl');
+    expect(client?.querySelector('dt')?.textContent).toBe('Client');
+    expect(document.querySelector('dl.pj-fact')?.textContent).not.toContain('CRO organization');
+  });
+
   it('the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tabs().length).toBeGreaterThan(0));

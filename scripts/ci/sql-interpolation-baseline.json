@@ -14,7 +14,7 @@
   "server/routes/c2c/ai-editing.ts": 2,
   "server/routes/c2c/documents.ts": 3,
   "server/routes/c2c/project-vault.ts": 7,
-  "server/routes/c2c/projects.ts": 6,
+  "server/routes/c2c/projects.ts": 4,
   "server/routes/chat/send-message.ts": 2,
   "server/routes/chat/threads.ts": 4,
   "server/routes/clinical-operations-routes.ts": 3,

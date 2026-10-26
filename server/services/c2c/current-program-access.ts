@@ -37,19 +37,38 @@ export interface CurrentAccessibleProgramScope {
   reconciliationRequired: boolean;
 }
 
+/** The exact tracking relationship admitted with a program, never chosen again
+ * by a later portfolio join. Kept private to the verified scope's provenance. */
+export interface VerifiedProgramAnchor {
+  readonly programId: string;
+  readonly projectId: number;
+  readonly clientWorkspaceId: number | null;
+}
+
 type ProgramScopeIdentity = {
   organizationId: number; userId: number | undefined; programId?: string | null; forShare?: boolean;
 };
 const verifiedScopes = new WeakMap<CurrentAccessibleProgramScope, {
   executor: ProgramAccessExecutor; organizationId: number; userId: number | undefined; programId: string | null;
+  anchors: readonly VerifiedProgramAnchor[];
 }>();
 
-function rememberScope(q: ProgramAccessExecutor, input: ProgramScopeIdentity, scope: CurrentAccessibleProgramScope): CurrentAccessibleProgramScope {
+function rememberScope(q: ProgramAccessExecutor, input: ProgramScopeIdentity, scope: CurrentAccessibleProgramScope,
+  anchors: readonly VerifiedProgramAnchor[]): CurrentAccessibleProgramScope {
   Object.freeze(scope.actor);
   Object.freeze(scope.programIds);
   Object.freeze(scope);
-  verifiedScopes.set(scope, {executor:q,organizationId:input.organizationId,userId:input.userId,programId:input.programId?.toLowerCase() ?? null});
+  verifiedScopes.set(scope, {executor:q,organizationId:input.organizationId,userId:input.userId,programId:input.programId?.toLowerCase() ?? null,
+    anchors:Object.freeze(anchors.map(anchor => Object.freeze({...anchor})))});
   return scope;
+}
+
+/** The same accepted anchors, accessible only with this scope's actor/executor
+ * provenance. No optional fallback can manufacture a portfolio relationship. */
+export function verifiedProgramAnchors(q: ProgramAccessExecutor, input: ProgramScopeIdentity,
+  scope: CurrentAccessibleProgramScope): readonly VerifiedProgramAnchor[] {
+  assertVerifiedProgramScope(q,input,scope);
+  return verifiedScopes.get(scope)!.anchors;
 }
 
 /** Internal read composition only. A constructed allowlist, different actor or
@@ -69,8 +88,15 @@ export async function requireProgramScopeStillCurrent(q: ProgramAccessExecutor, 
   const current = await getCurrentAccessibleProgramScope(q,input);
   const samePrograms = current.programIds.length === scope.programIds.length &&
     current.programIds.every((id,index) => id === scope.programIds[index]);
+  const previousAnchors = verifiedProgramAnchors(q,input,scope);
+  const currentAnchors = verifiedProgramAnchors(q,input,current);
+  const sameAnchors = previousAnchors.length === currentAnchors.length && currentAnchors.every((anchor,index) => {
+    const previous = previousAnchors[index];
+    return previous.programId === anchor.programId && previous.projectId === anchor.projectId &&
+      previous.clientWorkspaceId === anchor.clientWorkspaceId;
+  });
   if (current.actor.userId !== scope.actor.userId || current.actor.role !== scope.actor.role ||
-      current.reconciliationRequired !== scope.reconciliationRequired || !samePrograms) {
+      current.reconciliationRequired !== scope.reconciliationRequired || !samePrograms || !sameAnchors) {
     throw new ProgramReadAccessError(503,'PROJECT_ACCESS_CHANGED','Current project access changed during the read. No project data was supplied.');
   }
 }
@@ -123,7 +149,8 @@ export async function getCurrentAccessibleProgramScope(q: ProgramAccessExecutor,
 }): Promise<CurrentAccessibleProgramScope> {
   if (input.programId !== undefined && input.programId !== null) {
     const access = await requireCurrentProgramAccess(q,{...input,programId:input.programId});
-    return rememberScope(q,input,{scope:'verified-accessible-programs',actor:access.actor,programIds:[access.programId],reconciliationRequired:false});
+    return rememberScope(q,input,{scope:'verified-accessible-programs',actor:access.actor,programIds:[access.programId],reconciliationRequired:false},
+      [{programId:access.programId,projectId:access.projectId,clientWorkspaceId:access.clientWorkspaceId}]);
   }
   try {
     const actor = await readCurrentProgramActor(q,input);
@@ -137,14 +164,18 @@ export async function getCurrentAccessibleProgramScope(q: ProgramAccessExecutor,
       grouped.set(candidate.programId,group);
     }
     const programIds: string[] = [];
+    const acceptedAnchors: VerifiedProgramAnchor[] = [];
     let reconciliationRequired = false;
     for (const row of programs.rows) {
       if (typeof row.id !== 'string') throw new Error('Program scope identity could not be read');
       const anchors = grouped.get(row.id) ?? [];
       const valid = anchors.length===1 && anchors[0].anchor !== null;
-      if (valid && permitted.has(anchors[0].anchor!.id)) programIds.push(row.id);
+      if (valid && permitted.has(anchors[0].anchor!.id)) {
+        programIds.push(row.id);
+        acceptedAnchors.push({programId:row.id,projectId:anchors[0].anchor!.id,clientWorkspaceId:anchors[0].anchor!.clientWorkspaceId});
+      }
       else if (anchors.some(candidate => candidate.anchor && permitted.has(candidate.anchor.id))) reconciliationRequired=true;
     }
-    return rememberScope(q,input,{scope:'verified-accessible-programs',actor,programIds,reconciliationRequired});
+    return rememberScope(q,input,{scope:'verified-accessible-programs',actor,programIds,reconciliationRequired},acceptedAnchors);
   } catch (error) { return unavailable(error); }
 }

@@ -93,8 +93,10 @@ interface ProgramRow {
   description: string | null;
   product_name: string | null;
   indication: string | null;
-  /** organizations.name — the sponsor of record in this data model. */
+  /** Legacy organization display name, not the regulatory applicant identity. */
   sponsor_name?: string | null;
+  client_workspace_id?: number | null;
+  client_name?: string | null;
   /** Agency-assigned IND / NDA / BLA / MAA number; null until assigned, never invented. */
   application_number?: string | null;
   intended_use: string | null;
@@ -1508,7 +1510,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // Program identity facts (WO-9 Click 1). Read from the row only — never from
   // the navigation handoff, never derived from the title — so what the screen
   // says is what the database holds. Absence is stated, never filled in.
-  const sponsorName = prog?.sponsor_name ?? null;
+  const clientName = prog?.client_name ?? null;
   const applicationNumber = prog?.application_number ?? null;
   const applicationNumberLabel = (() => {
     const t = (prog?.program_type ?? '').toUpperCase();
@@ -1733,7 +1735,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           </div>
           {prog && (
             <section className="pj-facts" aria-label="Project identity">
-              <dl className="pj-fact"><dt>Sponsor</dt><dd>{sponsorName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+              <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               {deviceProgram ? (

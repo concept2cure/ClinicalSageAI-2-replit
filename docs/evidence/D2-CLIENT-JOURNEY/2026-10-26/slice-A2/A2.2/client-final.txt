@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > names what is listed, deduplicated and trimmed, for a refusal AnA can retry from 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > says nothing when nothing is listed — an empty list is never presented as choices 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > lists a long name by its opening words, the ellipsis outside the quotes so the quoted part still matches 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > listedChoices > summarises beyond the cap instead of silently dropping names 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > resolves through the registry — the canonical copy, not the payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > validateDriveAction > drops unknown actions, malformed payloads, and enum violations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > performs through the registered handler and reports the handler outcome 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > reports an honest refusal from the handler, never a fabricated success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a throwing handler is a failure, not a crash 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted surface WITHOUT the handler is unavailable — never performed "at" it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > stashes across the navigate→mount gap and performs on registration (one shot) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > an expired stash never performs, and says so once — never silence 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash replaced by a newer one is told it will not run 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a stash for another surface is not consumed by an unrelated registration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a mounted-but-not-ready surface (retry refusal) holds the directive for the ready signal 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > a retry-held directive still dies at the TTL — held is not forever 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceActions.test.ts > applySurfaceAction > unregistration clears ownership so a stale unmount cannot swallow actions 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > names the owning client rather than calling the CRO organization the sponsor 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no tab says "Not in this release" 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > what Submit will hold is named as coming later, in words, with no button 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "plan" opens Plan, a step again 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "lifecycle" opens Submit too 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > a message typed in the start box survives switching tabs 398ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the steps come first; the start box and the conversations sit beside the step and stay on every step 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program with a recorded blocker shows that blocker, not the no-cause line 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 628ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > a measured 0 draws its empty bar; no sections and an unavailable figure draw none 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > an unavailable figure says so, and why, never "not measured" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the list view draws the same bars 167ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the portfolio mean says how many programs it covers when some are not measured 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > filters on the server before paging and can clear the selection 816ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > offers no redundant selector for one active accessible client 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > keeps a way to clear the filter after a failed read and reports the failure 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > does not describe an empty filtered read as an organization with no projects 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > performs the same client filter through the existing surface action 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > refuses an action for a client outside the authorized choices 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs 127ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "not measured" on its card, never "0% ready" 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for 184ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor 209ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra 57ms
+
+ Test Files  8 passed (8)
+      Tests  59 passed (59)
+   Start at  15:58:20
+   Duration  19.46s (transform 3.34s, setup 988ms, import 6.65s, tests 4.60s, environment 5.37s)
+

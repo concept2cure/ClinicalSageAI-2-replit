@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T16:05:00.268Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T16:05:00.380Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T16:05:00.381Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-10-26T16:05:00.381Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > projects the recorded client on cards and retains page count over 60 programs
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > supplies the recorded client separately from the retained organisation sponsor identity
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > filters inside current access before LIMIT/OFFSET rather than filtering a page
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "0"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "-1"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "71junk"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "1.5"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "2147483648"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "9007199254740992"
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace ""
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > conceals another organisation workspace and an unknown workspace
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > offers minimal active client options across the accessible set, outside the selected page/filter
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses a same-program reanchor observed between card read and response 89ms
+   → {"data":[{"id":"00000000-0000-4000-8000-000000000001","title":"Project 1","ws":"Biotech","code":"P-1","stage":"Planning","status":"active","lead":"Owner","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 26","client_workspace_id":71,"client_name":"Client Alpha","readiness":null,"readinessState":"no_sections"}],"meta":{"count":1,"limit":1,"offset":0,"hasMore":true,"clients":[{"id":71,"name":"Client Alpha"},{"id":72,"name":"Client Beta"}],"clientsHasMore":false,"scope":"verified-accessible-programs","reconciliationRequired":false}}: expected 200 to be 503 // Object.is equality
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > keeps accepted anchors immutable and bound to the evaluated actor and executor
+ ↓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > bounds client options and reports further authorized active choices honestly
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses a same-program reanchor observed between card read and response
+AssertionError: {"data":[{"id":"00000000-0000-4000-8000-000000000001","title":"Project 1","ws":"Biotech","code":"P-1","stage":"Planning","status":"active","lead":"Owner","blocker":null,"due":"—","due_date":null,"activity":"Updated Oct 26","client_workspace_id":71,"client_name":"Client Alpha","readiness":null,"readinessState":"no_sections"}],"meta":{"count":1,"limit":1,"offset":0,"hasMore":true,"clients":[{"id":71,"name":"Client Alpha"},{"id":72,"name":"Client Beta"}],"clientsHasMore":false,"scope":"verified-accessible-programs","reconciliationRequired":false}}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:150:50
+    148|     reanchorAfterCard = true;
+    149|     const res = await list('?limit=1');
+    150|     expect(res.status, JSON.stringify(res.body)).toBe(503);
+       |                                                  ^
+    151|     expect(res.body.error).toBe('PROJECT_ACCESS_CHANGED');
+    152|     expect(res.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  16:04:56
+   Duration  7.30s (transform 2.64s, setup 78ms, import 537ms, tests 6.42s, environment 0ms)
+

@@ -165,6 +165,7 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
       // 510k creates no submission spine. Program anchor preflight → no anchor → insert.
       .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55 }] })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 55, name: 'Fixture client' }] }) // current intake locks the active owned selection
       .mockResolvedValueOnce({ rows: [{ id: 9001 }] })
       .mockResolvedValueOnce({ rows: [] })                    // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                    // COMMIT

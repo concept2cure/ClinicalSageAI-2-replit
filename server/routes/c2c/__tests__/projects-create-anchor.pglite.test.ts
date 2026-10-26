@@ -66,9 +66,11 @@ const transactionStatements: string[] = [];
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: extractTableDdl('migrations/0000_sweet_joseph.sql', [
-      'organizations', 'users', 'organization_users', 'client_workspaces', 'projects', 'audit_logs',
+    prereqSql: [extractTableDdl('migrations/0000_sweet_joseph.sql', [
+      'organizations', 'users', 'organization_users', 'client_workspaces', 'projects', 'audit_logs', 'concept2cure_artifacts',
     ]),
+    extractTableDdl('db/migrations/20260401_project_sharing_visibility.sql', ['project_visibility_settings', 'project_members']),
+    extractTableDdl('db/migrations/20260314_phase12_multi_user_review.sql', ['concept2cure_review_assignments'])].join('\n'),
     migrations: [
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260929_actor_names.sql',
@@ -191,6 +193,18 @@ async function holdings(orgId: number) {
 }
 
 describe('POST /api/c2c/projects — the program and its project record are one creation', () => {
+  it('returns the same client-aware card projection as GET', async () => {
+    const created = await create(ONE_WS, 'P19 projection parity');
+    expect(created.status,JSON.stringify(created.body)).toBe(201);
+    const listed = await request(app).get('/api/c2c/projects').set('x-org',String(ONE_WS));
+    expect(listed.status,JSON.stringify(listed.body)).toBe(200);
+    const card = listed.body.data.find((row: {id:string}) => row.id===created.body.data.id);
+    expect(card).toBeDefined();
+    expect(Object.keys(created.body.data).sort()).toEqual(Object.keys(card).sort());
+    expect(card).toMatchObject({client_workspace_id:1,client_name:'Default Workspace'});
+    expect(created.body.data).toMatchObject({client_workspace_id:1,client_name:'Default Workspace'});
+  });
+
   it.each([
     { programType: 'mdr', productType: 'device', submissionTypeId: 'eu_mdr_techdoc', field: 'euMdrClass', value: 'IIa', column: 'eu_mdr_class', other: 'eu_ivdr_class' },
     { programType: 'ivdr', productType: 'ivd', submissionTypeId: 'eu_ivdr', field: 'euIvdrClass', value: 'D', column: 'eu_ivdr_class', other: 'eu_mdr_class' },

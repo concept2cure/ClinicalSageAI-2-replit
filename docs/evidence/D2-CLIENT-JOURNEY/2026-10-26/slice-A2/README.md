@@ -22,3 +22,29 @@ Red: 12/15 new unit/component cases failed before implementation, including the 
 Green: 15/15 new cases, 74/74 existing cases across eight shell/project/navigation suites, and the focused real-browser flow pass. The browser verifies Plan after the chip, one started document in the filing plan, Plan after reload, and Evidence after Vault→chip (`A2.1/browser-green.txt`, `A2.1/returned-plan.png`). This used the isolated deploy-shaped PostgreSQL database as `app_service` with `RLS_ENFORCE=on`, development-only `ALLOW_DEV_AUTH=1`, and no AI provider. The golden first-session journey now asserts the remembered Plan after Home's project-card return; that longer fixture-dependent journey was not rerun as a whole.
 
 Scoped ESLint: zero errors, existing warnings only. First-open defaults, bare-workId Review fallback and pending-action precedence remain covered. Source: `shellProject.ts`, `ProjectHome.tsx`; proof: `shellProjectStep.test.ts`, `projectHomeStepReturn.test.tsx`, `project-step-return.e2e.ts`.
+
+## A2.2: the owning client in one portfolio projection
+
+Completed the existing GET/201 card projection in `server/services/c2c/project-portfolio.ts`; both callers now carry `client_workspace_id` and `client_name`. Project detail uses its already admitted exact anchor and exposes the same client identity. Project home labels this fact **Client**, leaving the regulatory applicant sponsor concept in its existing forms. No schema or dependency changes were needed.
+
+The list accepts a strict positive-int32 `clientWorkspaceId`, verifies tenant ownership and applies it in SQL before paging. `meta.count` retains its existing page-length meaning. `meta.clients` carries only `{id,name}` from active workspaces attached to currently accessible programs, independently of the current page/filter. It is sorted and bounded to 200 with `clientsHasMore` rather than silently presented as complete. The selector names that limit when applicable. No organization-wide client directory is fetched by this filter.
+
+The canonical program scope retains frozen accepted anchor/client mappings in its existing private WeakMap. Its asserted accessor refuses a fabricated or different-executor scope. Final list revalidation compares those mappings as well as program IDs/actor identity, so a reassociation during a read cannot serve earlier private metadata. The detail route retains its existing initial-parent-admission contract; post-read detail access revalidation was not added in this sub-slice.
+
+The existing `projects.filter` surface action now accepts an authorized client id or `all`, and refuses unknown client choices before changing any other filter. Read errors remain errors, an empty filtered result names the client filter, and the selection can be cleared after a failed read. Workstream/status/search behavior remains unchanged; server pathway counts and their UI belong to A2.3.
+
+The small `ProjectClientFilter.tsx` helper holds the filter's rendering and context formatting. Projects retained its existing seven lint warnings; neither the new helper nor tests add warnings. After that extraction, the four directly affected portfolio suites pass 19/19; the client browser flow and production build are rerun on the final helper.
+
+Red evidence: the new client UI cases failed without the selector/action; the Client fact test failed while the header showed the CRO organization's name as Sponsor; real browser creation returned no `client_workspace_id` in the 201 card before the server restart onto this change. The filed backend red artifact is a partially fixed run: eleven failures on missing fields/filtering/metadata and one passing, already-fixed reanchor case. A separate controlled mutation removes only the anchor comparison from final revalidation; that reanchor test fails (expected 503, received 200), then passes after restoring the implementation. See `A2.2/*red*` and `reanchor-restored-green.txt`.
+
+Green evidence:
+- 312/312 backend tests across 20 existing/new Projects suites. This includes real PGlite SQL with 60 programs, multi-page filtering, foreign/malformed client refusal, private/inactive metadata exclusion, reanchor detection, immutable scope provenance, bounded choices and actual POST/GET card-key parity. PGlite is not a claim of native runtime-role RLS.
+- 59/59 client tests across eight portfolio/navigation suites, including all six new filter cases and the new Client fact case. These are overlapping targeted suites, not a full-suite count.
+- Both focused browser tests pass together (38.4 seconds), using fresh signup, real creators, `app_service`, and RLS on. The client test creates two workspaces/projects, filters to one in the UI, opens its home and verifies the owning Client, then checks the paged API's minimal client options. `client-filter-result.json` and screenshots contain synthetic records only.
+- Production build passed: frontend, server and audit verifier. Existing chunk-size notices remain; no new runtime dependency was added.
+
+The broader backend run initially found a taxonomy fixture that omitted the existing strict workspace-lock row before the anchor result. Corrected only that queued fixture, retained the strict check, then verified the taxonomy suite and the full affected backend set green. SQL interpolation allowances decreased for `projects.ts` from six to four; no allowance was added for the shared helper.
+
+## Remaining sequence
+
+A2.3 (shared pathway classifier, server counts and honest device readiness) is next. A2.4–A2.6 remain as reviewed in the plan. A2.7 and later screen removals retain function-parity and founder-decision prerequisites; no catalog row, feature entitlement, creator or surface was retired here.
