@@ -469,3 +469,40 @@ database only through a migration; these never did.
 - The module tree → the record.
 - `ectd_templates` stays live for tenant rows (S59).
 - Not carried over: their Module 1 contradicts FDA's ("1.0 Cover Letter", "1.2 Introductory Statement").
+
+### S05a — delete the off-applier CTD seed migrations, replaced by the record and `builtin-authoring-templates.ts`
+
+**Applier check first (Rule 1).** The plan grouped `038_gcc_ectd_seeder_service.sql` with these. It is not off every
+applier: `install-fresh` step 6 applies every `db/migrations/*_gcc_*.sql`, and so do the CI psql loops. 038 is
+therefore its own slice (S05b), with the two live-schema baselines that name its objects. The files here are on no
+applier:
+- 100–103 do not match the `*_gcc_*` filter (`install-fresh.mjs:1483`).
+- `_legacy/043` is in a subdirectory the step does not read.
+- None is in `C2C_MIGRATION_FILES`.
+- `scripts/db_migrate.sh` would glob 100–103, but nothing runs it.
+
+**Deleted:**
+- `db/migrations/{100_regulatory_templates,101_complete_template_catalog,102_load_all_templates,103_load_complete_templates}.sql`.
+  Under `db_migrate.sh` the last three would `DELETE FROM ectd_templates` for organisations 1, 6 and 7.
+- `db/migrations/_legacy/043_gcc_ectd_expanded_modules.sql`.
+- `tests/schema-contract/regulatory-templates-cite-q2r2.contract.test.ts`, which read 100.
+
+**Carried over:** the Q2(R2) pin now reads the record: `tests/regulatory/record-cites-q2r2.test.ts`. No brief cites
+Q2(R1), and 3.2.S.4.2/3, 3.2.P.5.2/3 cite Q2(R2). It is green on HEAD, so `s05a-red.txt` shows it failing on a
+planted "Q2(R1)", with the record restored after.
+
+**Changed:** `migrations_manifest.json` drops the five files: the 043 conflict entry, the regulatory group entry and
+the execution order. It was re-synced with `npm run db:sync-manifest` (292 files) and `db:sync-manifest:check` passes.
+No DROP is appended (Rule 1); `ectd_templates` stays.
+
+**Gates:** all exit 0:
+- `ci:migration-drop-safety`, `ci:migration-set-order`, `ci:unkeyed-request-tables`;
+- `check-duplicate-table-ddl`, `check-migration-reachability`, `check-journey-migration-reachability`;
+- the manifest tests and the new pin: 19 pass.
+
+Not green, and not this slice's: `tests/ops/apply-c2c-migrations-manifest.test.mjs` has 8 passing and 2 failing tests.
+- Case 5: `20261014_qms_controlled_authoring_content.sql` is on the applier list without a `to_regclass` guard.
+- Case 10: `20260702_usage_model_credit_ledger.sql` is in both the allowlist and `KNOWN_UNLISTED`.
+
+Neither names a file this slice touched, and neither reads the gcc manifest. Both are reported to their owners (QMS
+authoring; usage ledger).
