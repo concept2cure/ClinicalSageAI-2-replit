@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-26T15:39:57.254093+00:00",
+  "qualifiedCommit": "634be82d7de505eaa153eb871d2f36b863612342",
+  "sourceCommit": "4d8cf50d0",
+  "normalIncoming": "b3661f72d",
+  "checks": [
+    "root-strict-lint",
+    "single-native-canvas",
+    "canvas-path",
+    "editor-integrity",
+    "design-system",
+    "shell-css-collisions",
+    "surface-text-ramp",
+    "repo-health-ceiling",
+    "production-build",
+    "editor-integration"
+  ],
+  "declaredRootInputCount": 50,
+  "inputsCurrent": true,
+  "testCohorts": {
+    "selectedSource": 161,
+    "editorIntegration": 221,
+    "disjointTotal": 382
+  },
+  "browserCases": 44,
+  "humanCasesNotRun": 106,
+  "compilerAndPublication": {
+    "acceptedCodeCommit": "2af4894eebb52fe83ff16a1d14f5796bbab21adc",
+    "typeScriptErrors": 0,
+    "pushReceipt": "canonical-push.json",
+    "gitBlobVerification": "accepted-git-blobs.json"
+  }
+}

@@ -339,7 +339,7 @@ async function createComplaintTx(
         deviceSerial: input.deviceSerial ?? null,
         deviceModel: input.deviceModel ?? null,
         eventDate: input.eventDate ?? null,
-        eventLocationCountry: input.eventLocationCountry ?? null,
+        eventLocationCountry: classification.facts.eventLocationCountry ?? 'unknown',
         eventNarrative: input.eventNarrative,
         patientHarm: input.patientHarm,
         severityAssessment: input.severityAssessment,

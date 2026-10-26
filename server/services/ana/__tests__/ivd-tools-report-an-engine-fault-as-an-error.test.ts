@@ -59,6 +59,25 @@ describe('build_postmarket_report: a fault in the engine', () => {
 });
 
 describe('a real engine refusal through ivdError', () => {
+  it.each([
+    ['determine_assay_cutoff', {}, ['observations']],
+    ['determine_assay_cutoff', { observations: null }, ['observations']],
+    ['assess_scientific_validity', { analyte: 'HER2', clinicalCondition: 'cancer', intendedPurpose: 'diagnosis' }, ['evidence']],
+    ['assess_shelf_life_stability', { maxPercentChange: 10 }, ['points']],
+    ['assess_accelerated_stability', { storageTemperatureC: 5, degradationThreshold: 0.1 }, ['points']],
+  ])('%s asks for missing schema inputs even when its engine throws a TypeError', async (tool, input, missing) => {
+    const out = await run(tool as string, input as Record<string, unknown>);
+    expect(out.status).toBe('needs_parameters');
+    expect(out.error).toBeUndefined();
+    for (const field of missing as string[]) expect(String(out.message)).toContain(field);
+  });
+
+  it('a TypeError with all schema inputs stated remains an engine fault', async () => {
+    const out = await run('determine_assay_cutoff', { observations: [null] });
+    expect(out.status).not.toBe('needs_parameters');
+    expect(out.error).toMatch(/determine_assay_cutoff failed:/);
+  });
+
   it('determine_assay_cutoff with one class of case still asks for both', async () => {
     const out = await run('determine_assay_cutoff', {
       observations: [

@@ -1,0 +1,6 @@
+{
+  "ownedServerPid": 3513,
+  "port": 5216,
+  "ownedServerStopped": true,
+  "scope": "Only this packet's Vite process stopped; no Docker, database, runtime or product files changed"
+}

@@ -1,0 +1,14 @@
+{
+  "tests": [
+    "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+    "client/src/concept2cure/v2/__tests__/authoringSourceDocumentStart.test.tsx",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx",
+    "client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx"
+  ]
+}

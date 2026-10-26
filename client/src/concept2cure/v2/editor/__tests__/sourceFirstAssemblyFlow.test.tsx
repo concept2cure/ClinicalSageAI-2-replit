@@ -72,7 +72,7 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/assembly/preview')) return ok({ success: true, data: plan(input!) });
     if (method === 'POST' && url.endsWith('/assembly/commit')) return commitReply(input!);
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: `Candidate ${url}`, draftId: `draft-${url}`, metadata: {}, check: null } });
-    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM })) });
+    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [priorDoc, targetDoc].map(doc => ({ ...doc, program_id: PROGRAM, readScope: 'document' })) });
     if (pathname === `/api/authoring/docs/${PRIOR}` || pathname === `/api/authoring/docs/${TARGET}`) return ok({ success: true, document: { ...(pathname.endsWith(PRIOR) ? priorDoc : targetDoc), client_program_id: PROGRAM } });
     if (pathname === `/api/authoring/docs/${PRIOR}/sections`) return ok({ success: true, sections: [priorSection] });
     if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections });

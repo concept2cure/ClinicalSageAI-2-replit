@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-26T15:47:05.704Z","pid":4938,"hostname":"21cc6ae857bb","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-26T15:47:05.706Z","pid":4938,"hostname":"21cc6ae857bb","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-26T15:47:05.706Z","pid":4938,"hostname":"21cc6ae857bb","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/capa-governed-transactions.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS
+[database] Database connection successful
+
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS 95ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit 398ms
+{"level":40,"time":"2026-10-26T15:47:06.729Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.744Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"PROJECT_NOT_FOUND"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.766Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"PROJECT_ANCHOR_UNRESOLVED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.787Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_ACTOR_REQUIRED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.809Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.839Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses private, foreign and unanchored programmes and a current viewer with forged admin claims 239ms
+{"level":40,"time":"2026-10-26T15:47:06.901Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:06.957Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > proves the actual schema prevents a second programme anchor instead of inventing an impossible ambiguous fixture 7ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an invalid state transition without changing domain, timeline or audit rows 27ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an MDR backlink to another accessible programme without changing either complaint or the proposed MDR 57ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > holds actor, programme, anchor and private-sharing authority until state, timeline and audit commit together 1551ms
+{"level":40,"time":"2026-10-26T15:47:08.547Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.580Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.621Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.653Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.685Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.713Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.746Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.778Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual timeline-refusal without claiming successful audit 268ms
+{"level":40,"time":"2026-10-26T15:47:08.813Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.841Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.886Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.919Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.951Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:08.982Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:09.012Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:09.042Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual audit-refusal without claiming successful audit 264ms
+{"level":40,"time":"2026-10-26T15:47:09.071Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"commit","code":"08006"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-10-26T15:47:09.223Z","pid":4938,"hostname":"21cc6ae857bb","context":{"organizationId":9,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > reports an actual committed transaction with lost completion as uncertain and provides current authorized readback 87ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes 206ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > verifies the real tenant audit chain and HMAC seals after successful, refused and uncertain operations 5ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  15:47:04
+   Duration  5.24s (transform 1.00s, setup 55ms, import 1.18s, tests 3.78s, environment 0ms)
+

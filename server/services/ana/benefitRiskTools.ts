@@ -504,7 +504,7 @@ export const ASSESS_BR_UNCERTAINTY: AnaTool = {
             affects: {
               type: 'string',
               enum: ['benefit', 'risk', 'both'],
-              description: 'Which side of the balance the uncertainty mainly affects (default "both").',
+              description: 'Which side of the balance the uncertainty mainly affects. If omitted, it is not stated; no affected side is assumed.',
             },
             level: {
               type: 'string',

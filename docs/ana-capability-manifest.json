@@ -14917,7 +14917,7 @@
           "name": "submissionUnder524B",
           "type": "boolean",
           "required": false,
-          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). Default true."
+          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). If omitted, it is not assumed: applicability is undetermined unless the device is explicitly ruled out as a cybe"
         },
         {
           "name": "threatModelProvided",
@@ -14929,7 +14929,7 @@
           "name": "sbomProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is"
+          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known"
         },
         {
           "name": "securityRiskManagementProvided",
@@ -14941,13 +14941,13 @@
           "name": "vulnerabilityHandlingProcess",
           "type": "boolean",
           "required": false,
-          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is reported as not stat"
+          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is"
         },
         {
           "name": "postMarketUpdatePlan",
           "type": "boolean",
           "required": false,
-          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as provi"
+          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is reported as not stated and counts as "
         },
         {
           "name": "handlesSensitiveData",

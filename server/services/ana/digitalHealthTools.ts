@@ -453,7 +453,8 @@ export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether the submission is on/after the Section 524B effective date (March 29, 2023; ' +
-          'FDA refuse-to-accept from October 1, 2023). Default true.',
+          'FDA refuse-to-accept from October 1, 2023). If omitted, it is not assumed: applicability ' +
+          'is undetermined unless the device is explicitly ruled out as a cyber device.',
       },
       threatModelProvided: {
         type: 'boolean',
@@ -466,8 +467,8 @@ export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether a Software Bill of Materials (SBOM) including commercial, open-source, and ' +
-          'off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when ' +
-          '524B applies) gap. ' + CYBER_NOT_STATED_NOTE,
+          'off-the-shelf components is provided [524B(b)(3)]. Missing or unstated is a critical ' +
+          'gap unless 524B is explicitly ruled out. ' + CYBER_NOT_STATED_NOTE,
       },
       securityRiskManagementProvided: {
         type: 'boolean',
@@ -479,14 +480,14 @@ export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes ' +
-          'are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap. ' +
+          'are in place [524B(b)(1)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. ' +
           CYBER_NOT_STATED_NOTE,
       },
       postMarketUpdatePlan: {
         type: 'boolean',
         description:
-          'Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to ' +
-          'flag a (critical when 524B applies) gap. ' + CYBER_NOT_STATED_NOTE,
+          'Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Missing or ' +
+          'unstated is a critical gap unless 524B is explicitly ruled out. ' + CYBER_NOT_STATED_NOTE,
       },
       handlesSensitiveData: {
         type: 'boolean',

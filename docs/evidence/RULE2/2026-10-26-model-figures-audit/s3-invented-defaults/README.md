@@ -6,6 +6,10 @@ derived from an empty input", and "unavailable is not empty".
 **Audit:** `../design.md`, slice S3.
 **Date:** 2026-10-26.
 
+**Review follow-up:** the resumed S3 review corrects the remaining affected-side, cutoff, 524B,
+IVD missing-input and MDR defects. See [`review/README.md`](review/README.md) for the fixes and
+fresh evidence. The red/green counts below describe the original S3 run.
+
 Seven deterministic engines or handlers produced a regulated answer from inputs nobody stated: a benefit-risk
 conclusion, a robustness verdict, a cybersecurity "pass", a 0% sensitivity, an under-reported MDR, a failed tool
 presented as "more details needed", and a nonclinical program declared inadequate. Each one is fixed in place. Nothing
@@ -26,11 +30,11 @@ is rebuilt (Rule 3): every item extends the engine that already exists, and item
 |---|---|---|---|---|
 | 1 | `planBRCommunication` (`benefit-risk/benefit-risk-knowledge.ts`), `plan_br_communication` | `({})` planned `favourable_with_conditions`, with "provides the demonstrated benefit in the indicated population, with manageable, characterized risks" for every audience | An unstated or unknown verdict is refused through `refuseUnlessStated` (the one helper), so AnA answers `needs_parameters` because the conclusion is the sponsor's. An absent message reads "[key … messages not stated]" and is listed in `notStated`. The tool's verdict property no longer advertises a default | 6/6 defect cases fail |
 | 2 | `assessBRUncertainty`, `assess_br_uncertainty` | No margin: assumed 0.15, giving "sensitive given a net margin of approximately 0.15". An unstated level was graded `moderate`. No sources: `moderate` overall, "the conclusion appears insensitive" and "no high-grade residual uncertainty" | No margin, or no sources, gives robustness `not_assessed`, with the reason. An unstated level is `not_stated` (a stated `fragile` still stands). No sources: the grade is `not_assessed`, and nothing is claimed about sensitivity or labeling | 8/8 defect cases fail |
-| 3 | `assessDeviceCybersecurity` (`digital-health/digital-health-knowledge.ts`), `assess_device_cybersecurity` | `({})` returned `pass`, "Threat model provided." and "Section 524B applies" | `true` means present, `false` means missing, and omitted means `not_stated`, counted as a gap. It never passes while anything is unstated. 524B applicability is `undetermined` until both criteria are stated. A missing SBOM, CVD process or patch plan says it is critical if 524B applies. A non-boolean yes/no answer is refused through the shared `statedBoolean` | 9/9 fail |
+| 3 | `assessDeviceCybersecurity` (`digital-health/digital-health-knowledge.ts`), `assess_device_cybersecurity` | `({})` returned `pass`, "Threat model provided." and "Section 524B applies" | `true` means present, `false` means missing, and omitted means `not_stated`, counted as a gap. It never passes while anything is unstated. After review, applicability requires both device criteria and `submissionUnder524B` explicitly true; a stated false rules it out. Missing or unstated SBOM, CVD and patch-plan artifacts remain critical unless 524B is explicitly ruled out. A non-boolean yes/no answer is refused through the shared `statedBoolean` | 9/9 fail in the original S3 run; follow-up proof is in `review/` |
 | 4 | `assessBiomarkerClinicalValidation` (`biomarkers/biomarker-knowledge.ts`) | No diseased subjects gave sensitivity 0; an empty table gave every metric as 0; a null prevalence was read as 0 | **Converged** onto `computeDiagnosticAccuracy` (`stats/clinical-performance.ts`), the one 2×2 engine. An empty stratum is refused (`needs_parameters`), and an all-zero table comes back as an error, never as zero metrics. Exact Clopper–Pearson intervals are added. A null prevalence is not stated, and PPV/NPV are `null` where undefined | 12/12 fail |
 | 5 | MDR reportability: `classify` (`capa-mdr/triageEngine.ts`), intake `requireComplaintAssessments` (`capaMdr.service.ts`), `POST /api/capa-mdr/complaints`, `assess_mdr_reportability` / `create_complaint` | `{patientHarm:'serious_injury'}` gave FDA 30-day, not EU-reportable, no 806 notice. Every unstated fact was read as `false`, and intake stored that classification | An unstated fact is unknown: what it decides is `null`, `missingFacts` names it, and `determinationComplete` is false. A country stated as `unknown` leaves EU vigilance undetermined. Intake refuses a complaint missing any of the four facts (422, naming the field). The AnA handlers ask for each omitted fact. `preliminary_classification` records the facts as stated (json, no new column) | 12/12 fail |
 | 5a | (the critic's residual) a malfunction in the EU | `mdrEuReportable: false`; with this item's first patch it also showed `determinationComplete: true` | This engine does not model whether a malfunction is an EU MDR serious incident (Article 2(65), 87). So in the EU, `mdrEuReportable` is `null` with the reason "not assessed here", and the determination is not complete. An unstated country is listed as missing | 1/1 fails |
-| 6 | `ivdError` (`AnaToolExecutor.ts`) | Every IVD engine failure, a TypeError included, became `needs_parameters` ("more details needed") | Only a message `isStatsParamError` reads as a parameter problem asks the user for more. Anything else is `{error: '<tool> failed: …'}`, the convention `runStatsTool` already applies | 1/1 defect case fails |
+| 6 | `ivdError` (`AnaToolExecutor.ts`) | Every IVD engine failure, a TypeError included, became `needs_parameters` ("more details needed") | Missing schema-required inputs ask the user for the named fields. With those present, TypeErrors remain errors; other parameter messages recognized by `isStatsParamError` ask for inputs. Anything else is `{error: '<tool> failed: …'}` | Original S3: 1/1 defect case fails; follow-up proof in `review/` |
 | 7 | `assess_nonclinical_program` with no `present` | Compared the ICH M3(R2) battery against `[]`: `adequate: false`, with Ames, repeat-dose and safety pharmacology "not present" | `status: 'requirements'`, the `required` battery from `requiredNonclinicalBattery`, `adequate: null`, `gaps: null`, and "No studies were read; this is the requirement list, not a gap analysis." | 2/2 defect cases fail |
 
 Each item's red output is in `red/<item>.txt`, and the green run is in `green/after.txt`.
@@ -60,10 +64,14 @@ Each plan's searches are kept in the workflow journal. In summary:
   - The UI session is told the field contract for any future intake form.
   - The DB suite's fixture (`tests/db/capa-governed-transactions.dbtest.ts`) now states the four facts. That suite needs
     Postgres and was not run in this session.
-- **No reader of `PreliminaryClassification` fields** exists beyond the engine's own tests. The widened
-  `boolean | null` and the added `facts`, `missingFacts` and `determinationComplete` break nothing.
-- **The tool definitions** for items 1, 2, 3 and 5 no longer advertise a default. `docs/ana-capability-manifest.json`
-  is regenerated.
+- **Classification consumers:** `capaMdr.service.ts` stores the whole `PreliminaryClassification`, and AnA's
+  `create_complaint` handler forwards it. No production branch outside `triageEngine.ts` interprets its individual
+  reportability fields. The nullable fields and added `facts`, `missingFacts` and `determinationComplete` are covered
+  by the engine and intake tests; this is not a claim that the object has no consumers.
+- **The tool definitions** for items 1, 2, 3 and 5 describe the changed input contracts. This is not a claim that
+  every optional field in those tools has no default: item 2 still offers category-specific descriptions when no
+  free-text description is supplied. The follow-up review removes the remaining factual defaults for the uncertainty's
+  affected side and the 524B submission date. `docs/ana-capability-manifest.json` is regenerated from these definitions.
 
 ## Proof
 

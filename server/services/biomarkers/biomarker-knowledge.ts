@@ -1779,7 +1779,7 @@ export function assessBiomarkerClinicalValidation(
   const validityEstablished =
     accuracyAdequate &&
     params.independentValidationSet === true &&
-    params.cutoffPrespecified !== false;
+    params.cutoffPrespecified === true;
 
   if (!accuracyAdequate) {
     findings.push({
@@ -1792,12 +1792,13 @@ export function assessBiomarkerClinicalValidation(
         '%) are below a typical 80% threshold; clinical validity is not established at this performance.',
     });
   }
-  if (params.cutoffPrespecified === false) {
+  if (params.cutoffPrespecified !== true) {
     findings.push({
-      severity: 'critical',
-      message:
-        'Cutoff was NOT pre-specified. A data-derived cutoff fitted on the same dataset used to report ' +
-        'performance overstates accuracy (optimism bias). Lock the cutoff, then validate on independent data.',
+      severity: params.cutoffPrespecified === false ? 'critical' : 'warning',
+      message: params.cutoffPrespecified === false
+        ? 'Cutoff was NOT pre-specified. A data-derived cutoff fitted on the same dataset used to report ' +
+          'performance overstates accuracy (optimism bias). Lock the cutoff, then validate on independent data.'
+        : 'Cutoff prespecification is not stated. Confirm it was locked before analyzing the validation data; clinical validity is not established without that fact.',
     });
   }
   if (params.independentValidationSet !== true) {
@@ -1838,7 +1839,9 @@ export function assessBiomarkerClinicalValidation(
     cutoffNote:
       params.cutoffPrespecified === false
         ? 'Cutoff not pre-specified — re-derive and validate on independent data.'
-        : 'Cutoff treated as pre-specified; confirm it was locked before unblinding the validation set.',
+        : params.cutoffPrespecified === true
+          ? 'Cutoff stated as pre-specified; confirm it was locked before unblinding the validation set.'
+          : 'Cutoff prespecification is not stated; confirm it was locked before unblinding the validation set.',
     findings,
     citations: [cite('best'), cite('bq_framework'), cite('clsi_ep12')],
   };

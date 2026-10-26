@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T13:58:15.488Z",
+  "generatedAt": "2026-10-26T16:02:50.907Z",
   "git": {
-    "sha": "35dee390fed45fa97d8272f76a677d0430731629",
+    "sha": "2a9b968c2ff16004c416e3195d0702ed4d119cb3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -203,7 +203,7 @@
       },
       {
         "basename": "probe",
-        "count": 16,
+        "count": 17,
         "paths": [
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
@@ -216,6 +216,7 @@
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/project-files-source-assembly/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/probe.tsx",
           "docs/evidence/MR-10/2026-10-20-builder-study-tagging/browser/probe.tsx",
           "docs/evidence/MR-10/2026-10-20-study-placement/browser/probe.tsx",
           "docs/evidence/MR-10/2026-10-21-applicant-identity/browser/probe.tsx",
@@ -2341,7 +2342,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1168466
+        "bytes": 1168864
       },
       {
         "file": "shared/schema.ts",
@@ -2567,7 +2568,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22219
+        "lines": 22227
       },
       {
         "file": "shared/schema.ts",
@@ -2751,7 +2752,7 @@
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2256
+        "lines": 2261
       },
       {
         "file": "server/services/ana/run-control.ts",
@@ -2807,7 +2808,7 @@
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2098
+        "lines": 2101
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2854,12 +2855,12 @@
         "lines": 1975
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1942
+        "file": "server/services/digital-health/digital-health-knowledge.ts",
+        "lines": 1947
       },
       {
-        "file": "server/services/digital-health/digital-health-knowledge.ts",
-        "lines": 1941
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1942
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -3033,7 +3034,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 174,
+      "duplicateGroups": 175,
       "largeByBytes": 0,
       "largeByLines": 5
     },

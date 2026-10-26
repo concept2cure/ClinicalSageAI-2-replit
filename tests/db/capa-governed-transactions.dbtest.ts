@@ -226,7 +226,8 @@ describe('native CAPA authority and governed writes', () => {
 
   it('commits all eight actual mutation types with the corresponding timeline and chained audit', async () => {
     const before = await snapshot();
-    complaintId = expectCommitted(await call('/complaints', complaintBody()), 201);
+    // Accepted country input may be padded beyond the storage column's varchar(8).
+    complaintId = expectCommitted(await call('/complaints', { ...complaintBody(), eventLocationCountry: '          uS     ' }), 201);
     expectCommitted(await call(`/complaints/${complaintId}/transition`, { to: 'triaged', triageDecision: { rationale: 'Synthetic reviewed decision.' } }));
     mdrId = expectCommitted(await call('/mdr-events', mdrBody()), 201);
     expectCommitted(await call(`/mdr-events/${mdrId}/transition`, { to: 'preparing' }));
@@ -235,6 +236,7 @@ describe('native CAPA authority and governed writes', () => {
     actionId = expectCommitted(await call(`/capa/${capaId}/actions`, { type: 'corrective', description: TAG }), 201);
     expectCommitted(await call(`/capa/actions/${actionId}/transition`, { to: 'in_progress' }));
     const after = await snapshot();
+    expect(after.complaints.find((row: { id: string }) => row.id === complaintId)).toMatchObject({ event_location_country: 'US' });
     expect(after.events.length - before.events.length).toBe(8); expect(after.audit.length - before.audit.length).toBe(8);
     const records = new Set([complaintId, mdrId, capaId, actionId]);
     const rows = after.audit.filter((row: { record_id: string }) => records.has(row.record_id));

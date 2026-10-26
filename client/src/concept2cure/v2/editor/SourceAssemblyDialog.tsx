@@ -2,11 +2,8 @@ import React, { useId, useRef, useState } from 'react';
 import { ASSEMBLY_SOURCE_LIMIT, readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { setEditorTarget } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { captureEditorDraftGuard } from './authoringDraftTransport';
-import { ceremonyOpen } from '../ceremony';
-import { useSourceAssemblyTarget, type SourceAssemblyDialogProps } from './useSourceAssemblyTarget';
+import { captureSourceAssemblyOwner, SOURCE_ASSEMBLY_CONTEXT_CHANGED, useSourceAssemblyTarget, type SourceAssemblyDialogProps } from './useSourceAssemblyTarget';
 export type { SourceAssemblyDialogProps } from './useSourceAssemblyTarget';
 
 /** Original bytes availability belongs to import, not retained-data assembly. */
@@ -14,27 +11,34 @@ export function sourceAssemblyUnavailableReason(source: { dataEligible?: boolean
   return source.dataEligible === false || source.isCurrent === false || source.disposition === 'remove_data' || source.disposition === 'supersede'
     ? 'This source is excluded from active data use.' : null;
 }
+function selectionUnavailable(sources: AssemblySourceSelector[], valid: boolean): string | null {
+  if (sources.length > ASSEMBLY_SOURCE_LIMIT) return `Select up to ${ASSEMBLY_SOURCE_LIMIT} sources to build in the editor. ${sources.length} are selected.`;
+  return valid ? null : 'The selected source identities could not be verified. Refresh the catalogue and select them again.';
+}
 export function SourceAssemblyAction({ programId, sources, titles, onNav, disabled = false, unavailable }: {
   programId: string; sources: AssemblySourceSelector[]; titles?: string[]; onNav?: (id: string) => void;
   disabled?: boolean; unavailable?: string | null;
 }) {
   const reasonId = useId();
   const parsed = readAssemblySourceSelectors(sources);
-  const reason = unavailable ?? (sources.length > ASSEMBLY_SOURCE_LIMIT
-    ? `Select up to ${ASSEMBLY_SOURCE_LIMIT} sources to build in the editor. ${sources.length} are selected.`
-    : !parsed ? 'The selected source identities could not be verified. Refresh the catalogue and select them again.' : null);
+  const reason = unavailable ?? selectionUnavailable(sources, parsed !== null);
   const key = JSON.stringify([programId, sources, disabled, reason ?? null]);
   const scope = useRef({ key });
   if (scope.current.key !== key) scope.current = { key };
+  const renderedScope = scope.current;
+  const renderedCurrent = captureSourceAssemblyOwner({ current: { programId, sources, isCurrent: () => scope.current === renderedScope } }).current;
+  const [launchError, setLaunchError] = useState<object | null>(null);
+  const visibleReason = reason ?? (launchError === renderedScope ? SOURCE_ASSEMBLY_CONTEXT_CHANGED : null);
   const [launch, setLaunch] = useState<{ scope: object; current: () => boolean } | null>(null);
   const start = () => {
-    if (disabled || reason || !parsed) return;
-    const token = scope.current;
-    setLaunch({ scope: token, current: captureEditorDraftGuard({ programId, isCurrent: () => scope.current === token }) });
+    if (scope.current !== renderedScope || disabled || reason || !parsed) return;
+    if (!renderedCurrent()) { setLaunchError(renderedScope); return; }
+    setLaunchError(null);
+    setLaunch({ scope: renderedScope, current: renderedCurrent });
   };
   return <div className="source-work-action">
-    <button type="button" className="btn ghost" disabled={disabled || !!reason} onClick={start} title={reason ?? undefined} aria-describedby={reason ? reasonId : undefined}>{I.penLine} Build in editor</button>
-    {reason && <p className="sec-sub" id={reasonId}>Build in editor: {reason}</p>}
+    <button type="button" className="btn ghost" disabled={disabled || !!reason} onClick={start} title={visibleReason ?? undefined} aria-describedby={visibleReason ? reasonId : undefined}>{I.penLine} Build in editor</button>
+    {visibleReason && <p className="sec-sub" id={reasonId}>Build in editor: {visibleReason}</p>}
     {launch && launch.scope === scope.current && parsed && <SourceAssemblyDialog programId={programId} sources={parsed}
       titles={titles} onNav={onNav} isCurrent={launch.current} onClose={() => setLaunch(null)} />}
   </div>;
@@ -71,20 +75,9 @@ function TargetFields({ target, id, onCreate }: {
 function ScopedSourceAssemblyDialog(props: SourceAssemblyDialogProps) {
   const labelId = useId(); const targetId = useId();
   const target = useSourceAssemblyTarget(props);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const close = props.onClose;
+  const close = target.close;
   const dialogRef = useDialog(close);
   const project = readShellProject();
-  const createRemedy = () => {
-    if (target.invalid || target.opening) return;
-    if (ceremonyOpen()) { setCreateError('Finish or cancel the open governed form, then start a document.'); return; }
-    const current = captureEditorDraftGuard({ programId: props.programId, isCurrent: props.isCurrent });
-    props.onClose();
-    if (!current()) return;
-    setEditorTarget({ docType: null, docId: null, programId: props.programId,
-      sourceDocumentStart: { version: 1, sources: props.sources } }, current);
-    if (current()) props.onNav?.('document-authoring');
-  };
   return <div className="de-bd" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
     <div className="de de-source-import" role="dialog" aria-modal="true" aria-labelledby={labelId} tabIndex={-1} ref={dialogRef} data-testid="source-assembly-dialog">
       <div className="de-h"><div><div className="de-h-eye">Selected sources → document editor</div>
@@ -97,8 +90,7 @@ function ScopedSourceAssemblyDialog(props: SourceAssemblyDialogProps) {
         <p className="de-desc">Opens the selected working document. Preview and build there, with or without AnA. No text is changed by opening it.</p>
         <SelectedSources sources={props.sources} titles={props.titles} />
         <p className="de-desc">The editor verifies the selected source versions before building. Retained readable data can be used when the original file is unavailable.</p>
-        {createError && <div className="de-err" role="alert">{createError}</div>}
-        <TargetFields target={target} id={targetId} onCreate={createRemedy} />
+        <TargetFields target={target} id={targetId} onCreate={target.startDocument} />
         </>}
       </div>
       <div className="de-f"><button type="button" className="de-btn" onClick={close}>Cancel</button>

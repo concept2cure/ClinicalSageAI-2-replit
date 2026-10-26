@@ -1,0 +1,299 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:18:24.097Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:18:24.099Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:18:24.099Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+{
+  "timestamp": "2026-10-26T15:18:24.542Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts
+Created cache directory: /workspace/ClinicalSageAI-2-replit/data/cache
+
+x··x·xx·xxxxstdout | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:18:32.877Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T15:18:32.878Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:18:32.878Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+[database] Database connection successful
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts
+{
+  "timestamp": "2026-10-26T15:18:32.980Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·······x·x···
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with nothing stated > does not pass, and reads no artifact as provided
+AssertionError: expected 'gap' to be 'critical-gap' // Object.is equality
+
+Expected: "critical-gap"
+Received: "gap"
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:65:32
+     63|   it('does not pass, and reads no artifact as provided', () => {
+     64|     const out = assessDeviceCybersecurity({});
+     65|     expect(out.overallVerdict).toBe('critical-gap');
+       |                                ^
+     66|     expect(out.criticalGapCount).toBe(3);
+     67|     for (const id of ARTIFACT_ROWS) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > passes only when every criterion and artifact is stated
+AssertionError: submissionUnder524B: expected 'pass' to be 'gap' // Object.is equality
+
+Expected: "gap"
+Received: "pass"
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:99:43
+     97|     for (const omitted of Object.keys(ALL_STATED)) {
+     98|       const out = assessDeviceCybersecurity(without(omitted));
+     99|       expect(out.overallVerdict, omitted).toBe(
+       |                                           ^
+    100|         ['sbomProvided', 'vulnerabilityHandlingProcess', 'postMarketUp…
+    101|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > keeps a missing SBOM critical while 524B is undetermined
+AssertionError: expected { id: 'CY-SBOM', …(5) } to match object { status: 'missing', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "severity": "critical-gap",
++   "severity": "gap",
+    "status": "missing",
+  }
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:114:33
+    112|   it('keeps a missing SBOM critical while 524B is undetermined', () =>…
+    113|     const out = assessDeviceCybersecurity({ sbomProvided: false });
+    114|     expect(row(out, 'CY-SBOM')).toMatchObject({ status: 'missing', sev…
+       |                                 ^
+    115|     expect(row(out, 'CY-SBOM')?.detail).toContain('undetermined');
+    116|     expect(out.criticalGapCount).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > relays the not-stated reading
+AssertionError: expected { …(12) } to match object { Object (overallVerdict, isCyberDevice) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "isCyberDevice": null,
+-   "overallVerdict": "critical-gap",
++   "overallVerdict": "gap",
+  }
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:124:24
+    122|     const out = await run({});
+    123|     expect(out.status).toBe('computed');
+    124|     expect(out.result).toMatchObject({ overallVerdict: 'critical-gap',…
+       |                        ^
+    125|     expect(JSON.stringify(out.result)).not.toMatch(/Threat model provi…
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > does not tell AnA that an omitted input is true or provided
+AssertionError: submissionUnder524B: expected 'Whether the submission is on/after th…' not to match /Default true/
+
+- Expected:
+/Default true/
+
++ Received:
+"Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). Default true."
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:138:41
+    136|       (ASSESS_DEVICE_CYBERSECURITY.input_schema.properties[name] as { …
+    137|     for (const name of ['includesSoftware', 'networkConnected', 'submi…
+    138|       expect(describes(name), name).not.toMatch(/Default true/);
+       |                                         ^
+    139|       expect(describes(name), name).toContain('it is not assumed');
+    140|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > does not assume the submission date even when the cyber-device criteria are true
+AssertionError: expected { applies: true, …(3) } to match object { applies: null, obligations: [] }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applies": null,
+-   "obligations": [],
++   "applies": true,
++   "obligations": [
++     "Submit a plan to monitor, identify, and address post-market cybersecurity vulnerabilities and exploits, including coordinated vulnerability disclosure and related procedures [524B(b)(1)].",
++     "Design, develop, and maintain processes and procedures to provide a reasonable assurance that the device and related systems are cybersecure, and make available post-market updates and patches to the device and related systems [524B(b)(2)].",
++     "Provide a Software Bill of Materials (SBOM), including commercial, open-source, and off-the-shelf software components [524B(b)(3)].",
++     "Comply with such other requirements as FDA may require to demonstrate a reasonable assurance of safety and effectiveness [524B(b)(4)].",
++   ],
+  }
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:151:29
+    149|     const out = assessDeviceCybersecurity(without('submissionUnder524B…
+    150|     expect(out.isCyberDevice).toBe(true);
+    151|     expect(out.section524B).toMatchObject({ applies: null, obligations…
+       |                             ^
+    152|     expect(out.section524B.rationale).toMatch(/^Undetermined\./);
+    153|     expect(out.section524B.rationale).toContain('submissionUnder524B');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > rules out 524B when the submission explicitly predates it, even if device criteria are unstated
+AssertionError: expected { applies: null, …(3) } to match object { applies: false, obligations: [] }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "applies": false,
++   "applies": null,
+    "obligations": [],
+  }
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:161:8
+    159|   it('rules out 524B when the submission explicitly predates it, even …
+    160|     expect(assessDeviceCybersecurity({ submissionUnder524B: false }).s…
+    161|       .toMatchObject({ applies: false, obligations: [] });
+       |        ^
+    162|   });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > S3 review: 524B inputs and critical artifacts fail closed > grades absent and unstated mandatory artifacts critical unless 524B is explicitly ruled out
+AssertionError: sbomProvided=undefined, submissionUnder524B=true: expected { id: 'CY-SBOM', …(5) } to match object { status: 'not_stated', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "severity": "critical-gap",
++   "severity": "gap",
+    "status": "not_stated",
+  }
+
+ ❯ server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts:174:97
+    172|         for (const submissionUnder524B of [true, undefined, false]) {
+    173|           const out = assessDeviceCybersecurity({ ...ALL_STATED, submi…
+    174|           expect(row(out, id), `${field}=${value}, submissionUnder524B…
+       |                                                                                                 ^
+    175|             status: value === false ? 'missing' : 'not_stated',
+    176|             severity: submissionUnder524B === false ? 'gap' : 'critica…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not invent both benefit and risk or side-specific conclusions
+AssertionError: expected 'both' to be 'not_stated' // Object.is equality
+
+Expected: "not_stated"
+Received: "both"
+
+ ❯ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts:123:34
+    121|       sources: [{ type: 'data_quality', level: 'low' }],
+    122|     });
+    123|     expect(r.sources[0].affects).toBe('not_stated');
+       |                                  ^
+    124|     expect(r.sources[0].impactOnBalance).toMatch(/side.*not stated/i);
+    125|     expect(r.sources[0].impactOnBalance).not.toContain('both benefit a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not advertise a default affected side
+AssertionError: expected 'Which side of the balance the uncerta…' not to match /default/i
+
+- Expected:
+/default/i
+
++ Received:
+"Which side of the balance the uncertainty mainly affects (default \"both\")."
+
+ ❯ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts:141:68
+    139|   it('does not advertise a default affected side', () => {
+    140|     const props = (ASSESS_BR_UNCERTAINTY.input_schema as any).properti…
+    141|     expect(props.sources.items.properties.affects.description).not.toM…
+       |                                                                    ^
+    142|     expect(props.sources.items.properties.affects.description).toConta…
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  10 failed | 15 passed (25)
+   Start at  15:18:21
+   Duration  13.50s (transform 7.22s, setup 88ms, import 12.96s, tests 46ms, environment 0ms)
+

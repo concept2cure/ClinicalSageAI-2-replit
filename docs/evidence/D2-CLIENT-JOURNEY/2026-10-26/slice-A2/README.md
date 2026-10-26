@@ -48,3 +48,9 @@ The broader backend run initially found a taxonomy fixture that omitted the exis
 ## Remaining sequence
 
 A2.3 (shared pathway classifier, server counts and honest device readiness) is next. A2.4–A2.6 remain as reviewed in the plan. A2.7 and later screen removals retain function-parity and founder-decision prerequisites; no catalog row, feature entitlement, creator or surface was retired here.
+
+## Final integration
+
+Merged concurrent work through `e632a364eed588973b8e310076a0a3555f179483`, preserving its editor/source-ownership and regulatory fixes. No source conflicts occurred. The same-project step update retains the existing visit revision/identity used by source-owner guards; a changed project still retires that visit.
+
+On the merged tree: 161/161 selected tests across nine step/editor/source-ownership/portfolio suites passed, both focused real-server browser flows passed together (31.8 seconds), and the production frontend/server/audit-verifier build passed (30.55 seconds). All pre-push gates passed, including no increased per-file lint warning count and the full TypeScript check with zero errors. A test double was corrected to use a distinct, correctly typed executor object with the same query method; the provenance rejection assertion is retained. No type or lint baseline was expanded. Logs are under `integration/`.

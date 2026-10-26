@@ -68,7 +68,7 @@ beforeEach(() => {
     if (method === 'POST' && path === '/api/authoring/docs') return createReply(input!);
     if (path === '/api/authoring/templates') return ok({ success: true, templates: [{ id: TEMPLATE,
       name: 'Regulatory strategy — preparation worksheet', module: null, description: 'Internal shared planning for laboratory and research work.' }] });
-    if (url.pathname === '/api/authoring/docs') return ok({ success: true, documents: records.map(row => ({ ...row, program_id: PROGRAM })) });
+    if (url.pathname === '/api/authoring/docs') return ok({ success: true, documents: records.map(row => ({ ...row, program_id: PROGRAM, readScope: 'document' })) });
     const id = url.pathname.match(/^\/api\/authoring\/docs\/([^/]+)(?:\/sections)?$/)?.[1];
     if (id) {
       if (!path.endsWith(CREATED)) expect(url.searchParams.get('programId')).toBe(PROGRAM);

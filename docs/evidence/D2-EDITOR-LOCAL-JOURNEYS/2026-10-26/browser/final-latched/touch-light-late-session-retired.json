@@ -1,0 +1,78 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "pageWidth": 390,
+  "dialog": {
+    "x": 23.40625,
+    "y": 0,
+    "right": 390,
+    "bottom": 844,
+    "width": 366.59375,
+    "height": 844,
+    "scrollWidth": 366,
+    "clientWidth": 366
+  },
+  "footer": {
+    "x": 24.40625,
+    "y": 767,
+    "right": 390,
+    "bottom": 844,
+    "width": 365.59375,
+    "height": 77,
+    "scrollWidth": 366,
+    "clientWidth": 366
+  },
+  "editorCount": 0,
+  "focusInDialog": false,
+  "controls": [
+    {
+      "label": "",
+      "disabled": false,
+      "bounds": {
+        "x": 326,
+        "y": 18,
+        "right": 370,
+        "bottom": 62,
+        "width": 44,
+        "height": 44,
+        "scrollWidth": 44,
+        "clientWidth": 44
+      }
+    },
+    {
+      "label": "Cancel",
+      "disabled": false,
+      "bounds": {
+        "x": 44.40625,
+        "y": 784,
+        "right": 202.203125,
+        "bottom": 828,
+        "width": 157.796875,
+        "height": 44,
+        "scrollWidth": 158,
+        "clientWidth": 158
+      }
+    },
+    {
+      "label": "Open in editor",
+      "disabled": true,
+      "bounds": {
+        "x": 212.203125,
+        "y": 784,
+        "right": 370,
+        "bottom": 828,
+        "width": 157.796875,
+        "height": 44,
+        "scrollWidth": 158,
+        "clientWidth": 158
+      }
+    }
+  ],
+  "axe": {
+    "violations": [],
+    "incomplete": [],
+    "passes": 14
+  }
+}
