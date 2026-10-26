@@ -10,10 +10,6 @@ export function portfolioClients(meta: Record<string, unknown> | undefined): Por
   ) : [];
 }
 
-export function portfolioClientUrl(value: string): string {
-  return value === 'all' ? '/api/c2c/projects' : `/api/c2c/projects?clientWorkspaceId=${encodeURIComponent(value)}`;
-}
-
 export function portfolioClientContext(value: string, clients: PortfolioClient[], meta: Record<string, unknown> | undefined) {
   const selected = clients.find(client => String(client.id) === value);
   const hasMore = meta?.clientsHasMore === true;

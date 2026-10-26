@@ -102,3 +102,30 @@ describe('useMdxPrograms — productType', () => {
     expect(unset.regulatoryPath).toBeUndefined();
   });
 });
+
+
+describe('device portfolio retains each device filing and states no invented readiness', () => {
+  it('does not read creation progress or stale progress as readiness', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: [
+      row({ progressPercent: 0 }), row({ id: 'stale', progressPercent: 87 }),
+    ] }) });
+    const { result } = renderHook(() => useMdxPrograms());
+    await waitFor(() => expect(result.current.programs).toHaveLength(2));
+    expect(result.current.programs!.map(program => program.readiness)).toEqual([null, null]);
+    expect(result.current.programs!.map(program => program.recordedProgress)).toEqual([0, 87]);
+  });
+
+  it('keeps IDE, regional and unknown device rows, but excludes medicinal filings', async () => {
+    const types = ['IDE', 'device', 'hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx', 'unknown'];
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: [
+      ...types.map((programType, index) => row({ id: `device-${index}`, programType, productType: 'device', regulatoryPath: null })),
+      row({ id: 'drug', programType: 'IND', productType: 'drug', regulatoryPath: '510k' }),
+    ] }) });
+    const { result } = renderHook(() => useMdxPrograms());
+    await waitFor(() => expect(result.current.programs).not.toBeNull());
+    expect(result.current.programs!.map(program => program.pathway)).toEqual([
+      'ide', 'device', 'hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx', 'other',
+    ]);
+    expect(result.current.programs!.some(program => program.id === 'drug')).toBe(false);
+  });
+});

@@ -45,9 +45,17 @@ Green evidence:
 
 The broader backend run initially found a taxonomy fixture that omitted the existing strict workspace-lock row before the anchor result. Corrected only that queued fixture, retained the strict check, then verified the taxonomy suite and the full affected backend set green. SQL interpolation allowances decreased for `projects.ts` from six to four; no allowance was added for the shared helper.
 
+## A2.3 — pathway filters, scoped counts and device readiness
+
+Completed the shared pathway classifier and its SQL projection, server filtering
+and scoped counts, the existing Projects chips/action/context, and null device
+readiness. IDE/regional/Other rows remain visible. Explicit recorded progress is
+preserved separately from readiness. Full evidence, red checks, review findings
+and limits are in [A2.3/README.md](A2.3/README.md). No schema or dependency changed.
+
 ## Remaining sequence
 
-A2.3 (shared pathway classifier, server counts and honest device readiness) is next. A2.4–A2.6 remain as reviewed in the plan. A2.7 and later screen removals retain function-parity and founder-decision prerequisites; no catalog row, feature entitlement, creator or surface was retired here.
+A2.4 (converge creation doors onto the existing Projects wizard) is next. A2.5–A2.6 remain as reviewed in the plan. A2.7 and later screen removals retain function-parity and founder-decision prerequisites; no catalog row, feature entitlement, creator or surface was retired here.
 
 ## Final integration
 

@@ -54,8 +54,8 @@ export interface ValidationSummary { label: string; metric: string; unit?: strin
 /** errs / warns / ok are null when no blocker can be attributed to the program
  *  — see useWorkbenchValidation. Never 0 by default: 0 is a finding.
  *  `readiness` is the project's stored progressPercent, not an assessment; it
- *  is 0 when none is recorded until useMdxPrograms carries that as null. */
-export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number | null; warns: number | null; ok: number | null; status: 'blocked' | 'active' | 'complete'; readiness: number }
+ *  is null when none is recorded. */
+export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number | null; warns: number | null; ok: number | null; status: 'blocked' | 'active' | 'complete'; readiness: number | null }
 /** Slice 0: `project` replaces `prog` and `sect`. A c2c_blockers row names a
  *  project and no program code or section label, so those were always '—'. */
 export interface ValidationRule { id: string; project: string; severity: 'err' | 'warn' | 'ok'; category: string; msg: string; since: string }

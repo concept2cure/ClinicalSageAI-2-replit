@@ -467,14 +467,14 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
               <div className="val-prog-path">{p.pathway}</div>
               <div className="val-prog-path">Recorded progress</div>
               <div className="val-prog-bars">
-                <div
+                {p.readiness !== null && <div
                   className="val-bar"
                   role="img"
                   aria-label={`Recorded progress ${p.readiness}%`}
                 >
                   <div className="val-bar-fill" style={{ width: `${p.readiness}%` }} />
-                </div>
-                <span className="val-bar-pct mono">{p.readiness}%</span>
+                </div>}
+                <span className="val-bar-pct mono">{p.readiness === null ? 'Not recorded' : `${p.readiness}%`}</span>
               </div>
               <div className="val-prog-counts">
                 {p.errs === null ? (

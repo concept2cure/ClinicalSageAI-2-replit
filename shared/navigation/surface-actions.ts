@@ -32,6 +32,7 @@
  * does not exist (the registry test enforces the join).
  */
 
+import { REGULATORY_PATHWAYS } from '../constants/mdx';
 import {
   findNavigationTarget,
   type NavigationParamSpec,
@@ -131,13 +132,19 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'projects',
     label: 'Filter the portfolio',
     description:
-      'On the Projects portfolio, filter the project list by workstream, status or client. Omit a param to leave that axis unchanged; pass "all" to clear it.',
+      'On the Projects portfolio, filter the project list by workstream, pathway or client, or the loaded page by status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
     params: [
       {
         name: 'workstream',
         required: false,
         description: 'Workstream filter: "all", "MDX", "Biotech", or "Pharma".',
         enum: ['all', 'MDX', 'Biotech', 'Pharma'],
+      },
+      {
+        name: 'pathway',
+        required: false,
+        description: 'A pathway key from the portfolio pathway choices, or "all" to clear it.',
+        enum: ['all', ...REGULATORY_PATHWAYS],
       },
       {
         name: 'status',

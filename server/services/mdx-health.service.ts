@@ -15,8 +15,10 @@
 import { pool } from '../db';
 import {
   REGULATORY_PATHWAYS,
+  pathwayForProgram,
   type RegulatoryPathway,
 } from '../../shared/constants/mdx';
+import { isDeviceFamily, workstreamForFilingType } from '../../shared/constants/domain/product-types';
 
 export interface TableHealth {
   /** Schema-qualified name (e.g. 'public.regulatory_programs',
@@ -240,27 +242,18 @@ async function probeTable(
  */
 async function probePathwayCoverage(): Promise<PathwayCoverage[]> {
   try {
-    const result = await pool.query<{ pathway: string; n: number }>(
-      `SELECT regulatory_path AS pathway, COUNT(*)::int AS n
+    const result = await pool.query<{ program_type: string; pathway: string | null; product_type: string; n: number }>(
+      `SELECT program_type, regulatory_path AS pathway, product_type, COUNT(*)::int AS n
          FROM regulatory_programs
-        WHERE regulatory_path IS NOT NULL
-        GROUP BY 1`,
+        GROUP BY 1, 2, 3`,
     );
-    /* Normalize pathway codes to the kit closed-enum
-       (regulatoryPath='510k' → kit pathway='k510'). */
-    const PATH_TO_KIT: Record<string, RegulatoryPathway> = {
-      '510k':    'k510',
-      'de_novo': 'k510',
-      'pma':     'pma',
-      'cer':     'cer',
-      'ivd':     'ivdr',
-      'ivdr':    'ivdr',
-    };
     const counts = new Map<RegulatoryPathway, number>();
-    for (const r of result.rows) {
-      const kit = PATH_TO_KIT[(r.pathway ?? '').toLowerCase()];
-      if (!kit) continue;
-      counts.set(kit, (counts.get(kit) ?? 0) + r.n);
+    for (const row of result.rows) {
+      const workstream = workstreamForFilingType(row.program_type, row.product_type);
+      if (workstream === 'Biotech' || workstream === 'Pharma') continue;
+      const pathway = pathwayForProgram(row.program_type, row.pathway);
+      if (pathway === 'other' && workstream !== 'MDX' && !isDeviceFamily(row.product_type)) continue;
+      counts.set(pathway, (counts.get(pathway) ?? 0) + row.n);
     }
     return REGULATORY_PATHWAYS.map((p) => ({
       pathway:      p,

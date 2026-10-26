@@ -23,11 +23,11 @@ import { useMemo } from 'react';
 import type { DueTone, Program, ProgramPathway, ProgramStatus } from '../data/programs';
 import { useFetchJson } from './useFetchJson';
 import {
-  REGULATORY_PATH_TO_PATHWAY,
-  PROGRAM_TYPE_TO_PATHWAY,
+  pathwayForProgram,
   PHASE_TO_STAGE_IDX,
   STAGE_LABELS,
 } from '../../../../../shared/constants/mdx';
+import { isDeviceFamily, workstreamForFilingType } from '../../../../../shared/constants/domain/product-types';
 
 interface ServerProgramRow {
   id: string;
@@ -59,17 +59,12 @@ interface ListPayload {
   data: ServerProgramRow[];
 }
 
-export function deriveKitPathway(programType: string, regulatoryPath: string | null): ProgramPathway | null {
-  const upper = (programType ?? '').toUpperCase();
-  // EU evaluation is a distinct filing even when the project also records a
-  // US route. Never render its CER/PER sections as that US filing's sections.
-  if (['CER', 'MDR', 'MDR_TD', 'IVDR', 'IVDR_TD'].includes(upper)) {
-    return PROGRAM_TYPE_TO_PATHWAY[upper] ?? null;
-  }
-  if (regulatoryPath && REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()]) {
-    return REGULATORY_PATH_TO_PATHWAY[regulatoryPath.toLowerCase()] as ProgramPathway;
-  }
-  return (PROGRAM_TYPE_TO_PATHWAY[upper] ?? null) as ProgramPathway | null;
+export function deriveKitPathway(programType: string, regulatoryPath: string | null,
+  productType?: string | null): ProgramPathway | null {
+  const workstream = workstreamForFilingType(programType, productType);
+  if (workstream === 'Biotech' || workstream === 'Pharma') return null;
+  const pathway = pathwayForProgram(programType, regulatoryPath);
+  return pathway !== 'other' || workstream === 'MDX' || isDeviceFamily(productType) ? pathway : null;
 }
 
 function deriveKitStatus(status: string | null, phase: string | null): ProgramStatus {
@@ -158,7 +153,7 @@ function deriveCode(row: ServerProgramRow): string {
 }
 
 function rowToKit(row: ServerProgramRow): Program | null {
-  const pathway = deriveKitPathway(row.programType, row.regulatoryPath);
+  const pathway = deriveKitPathway(row.programType, row.regulatoryPath, row.productType);
   if (!pathway) return null;
 
   const status = deriveKitStatus(row.status, row.phase);
@@ -183,7 +178,9 @@ function rowToKit(row: ServerProgramRow): Program | null {
     regulatoryPath: row.regulatoryPath ?? undefined,
     stage,
     stageIdx,
-    readiness:    row.progressPercent ?? 0,
+    // progress_percent is initialized at creation and is not a readiness assessment.
+    readiness:    null,
+    recordedProgress: row.progressPercent ?? null,
     status,
     lead:         row.leadUserName ?? '',
     owners:       deriveOwners(row.teamMembers, row.leadUserName),

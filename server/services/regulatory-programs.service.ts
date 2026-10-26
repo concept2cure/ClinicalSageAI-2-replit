@@ -268,7 +268,7 @@ function toProgramRow(
     phase:                r.phase ?? null,
     priority:             r.priority ?? null,
     targetSubmissionDate: r.targetSubmissionDate ? r.targetSubmissionDate.toISOString() : null,
-    progressPercent:      r.progressPercent ?? 0,
+    progressPercent:      r.progressPercent ?? null,
     completedMilestones:  r.completedMilestones ?? 0,
     totalMilestones:      r.totalMilestones ?? 0,
     leadUserId:           r.leadUserId ?? null,

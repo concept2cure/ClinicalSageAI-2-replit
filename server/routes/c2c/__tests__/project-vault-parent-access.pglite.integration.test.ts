@@ -56,6 +56,8 @@ beforeAll(async () => {
       product_type text, device_class text, regulatory_path text, product_code text, predicate_devices jsonb,
       metadata jsonb DEFAULT '{}', deleted_at timestamptz, progress_percent integer
     );
+    CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer, name text, status text);
+    INSERT INTO client_workspaces VALUES (71,7,'Workspace','active');
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
       owner_id integer, created_by_id integer, settings jsonb, status text, client_workspace_id integer);
     CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
