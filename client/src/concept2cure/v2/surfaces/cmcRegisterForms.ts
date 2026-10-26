@@ -33,6 +33,7 @@
  * is a section Module 3 composition has nothing to say about.
  */
 
+import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
 import type { C2CFormConfig } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
@@ -186,9 +187,17 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
 /* ═══════════ QC testing — POST/PUT /api/cmc/qc-testing ═══════════════════════
    The measurement actually performed against a specification. */
 
-export const QC_SAMPLE_TYPES = [
-  'raw-material', 'in-process', 'finished-product', 'stability', 'reference-standard', 'cleaning-verification',
-];
+/* The register's vocabulary is the server's, imported so the form below reads
+   it and re-exported so this module's importers are unchanged. Two copies of
+   it is how `finished_product` became drug-substance evidence: the form could
+   not produce that value, and nothing else refused it
+   (shared/cmc/qc-sample-types.ts). A bare `export … from` would re-export the
+   name without binding it here, and the form's own use of it would be
+   undefined. */
+/* Copied into a mutable array because the form's `options` takes one. The
+   VALUES are the shared vocabulary's, which is the point; the array's own
+   mutability is a detail of C2CFormConfig. */
+export const QC_SAMPLE_TYPES: string[] = [...SHARED_QC_SAMPLE_TYPES];
 
 export interface QcTestBody {
   sampleId: string;

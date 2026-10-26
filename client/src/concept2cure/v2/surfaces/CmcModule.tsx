@@ -2546,6 +2546,10 @@ interface CapabilityRead {
   resultsOnFile: number;
   assessed: boolean;
   statement: string | null;
+  /** Sample types outside the register's vocabulary, which belong to neither
+   *  material. Named rather than dropped: before 2026-10-26 a result recorded
+   *  against one was silently read as drug substance. */
+  unattributableSampleTypes?: string[];
   sides: Record<'drug_substance' | 'drug_product', { series: CapabilitySeriesRow[]; statements: string[] }>;
 }
 
@@ -2663,6 +2667,14 @@ function CmProcessCapability({ projectId }: { projectId?: string }) {
           </div>
         ) : (
           <>
+            {data.statement && (
+              /* An assessment that produced series can STILL have left results
+                 out. The server's own sentence says which, so a reader is not
+                 left reading a complete-looking table over a partial set. */
+              <div role="status" style={{ padding: '8px 12px', color: 'var(--warning)', fontSize: 11.5 }}>
+                {data.statement}
+              </div>
+            )}
             <table className="reg-tbl">
               <thead>
                 <tr><th>Test</th><th>Criterion</th><th>Batches</th><th>Ppk</th><th>Cpk</th><th>Verdict</th><th>Note</th></tr>

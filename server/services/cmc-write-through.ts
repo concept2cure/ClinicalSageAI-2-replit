@@ -21,6 +21,7 @@
 import type { PoolClient } from 'pg';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
+import { isKnownSampleType } from '../../shared/cmc/qc-sample-types';
 import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
@@ -692,7 +693,18 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
      sections complete on evidence that is not batch data. The composer's
      renderer reads this SAME flag off the payload, so the table and the
      completeness bit can never disagree about what counts. */
-  const isBatchAnalysis = !NON_BATCH_SAMPLE_TYPES.includes(sampleType);
+  /* A sample type the register does not know is attributed to NEITHER side.
+     This read the value as `=== FINISHED_PRODUCT ? product : substance`, so
+     every unrecognised string — `finished_product` with an underscore, a typo,
+     a value from an integration — became drug-SUBSTANCE batch evidence and
+     composed into §3.2.S.4.4. `NON_BATCH_SAMPLE_TYPES` failed the same way
+     inverted: `reference_standard` is not `reference-standard`, so a
+     qualification this mapper exists to exclude would have entered the series.
+     The write now refuses an unknown value (routes.ts `qcTestingBody`); this
+     is the same rule applied to rows already written, because a row recorded
+     before that refusal must not keep composing into the wrong section. */
+  const known = isKnownSampleType(sampleType);
+  const isBatchAnalysis = known && !NON_BATCH_SAMPLE_TYPES.includes(sampleType);
   const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
     sampleId: alias(record, 'sampleId', 'sample_id'),
@@ -717,6 +729,12 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
        never render (and vice versa). */
     isBatchAnalysis,
     batchAnalysisSide: isBatchAnalysis ? (sampleType === FINISHED_PRODUCT ? 'drug_product' : 'drug_substance') : null,
+    /* Why a reader is told, rather than the row quietly vanishing: a result
+       recorded against an unknown sample type IS on file, and a section that
+       simply omitted it would read as a programme with less data than it has.
+       The capability report names these; the section reports its batch
+       analyses missing, which is what they are until the row is corrected. */
+    sampleTypeRecognised: known,
     batchAnalyses: hasResult ? results : null,
     drugSubstanceBatchAnalyses: hasResult && sampleType !== FINISHED_PRODUCT ? results : null,
     drugProductBatchAnalyses: hasResult && sampleType === FINISHED_PRODUCT ? results : null,
