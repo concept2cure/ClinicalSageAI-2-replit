@@ -49,13 +49,7 @@
  */
 
 import { refuseUnlessStated } from '../ana-biostats/computation-engine';
-import { statedBoolean, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
-
-/** Keep the person's answers distinct from unanswered questions; never coerce truthy input. */
-function booleanInputStates(params: object, fields: readonly string[]): Record<string, boolean | 'not_stated'> {
-  const values = params as Record<string, unknown>;
-  return Object.fromEntries(fields.map(field => [field, statedBoolean(field, values[field]) ?? 'not_stated']));
-}
+import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
 
 /** The shared refusal checks the context used by these existing worksheets at runtime. */
 function requireCOAContext(fn: string, params: object, fields: readonly ('coaType' | 'population' | 'conceptOfInterest')[]): void {

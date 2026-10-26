@@ -105,6 +105,12 @@ export function statedBoolean(field: string, value: unknown): boolean | undefine
   );
 }
 
+/** Serialize the stated boolean answers without turning unanswered questions into false. */
+export function booleanInputStates(params: object, fields: readonly string[]): Record<string, boolean | 'not_stated'> {
+  const values = params as Record<string, unknown>;
+  return Object.fromEntries(fields.map(field => [field, statedBoolean(field, values[field]) ?? 'not_stated']));
+}
+
 /** A stated finite number that satisfies `ok`, or undefined when it was not stated. */
 export function statedNumber(field: string, value: unknown, ok: (n: number) => boolean, rule: string): number | undefined {
   if (value === undefined || value === null) return undefined;

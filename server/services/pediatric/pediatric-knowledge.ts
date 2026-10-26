@@ -4,7 +4,8 @@
  * Pure, deterministic decision engines for pediatric drug development strategy.
  * No LLM, no network calls, no database — every function is a closed-form lookup
  * or rule-based computation over the in-code regulatory corpus. Identical input
- * always produces identical output, making results submission-defensible.
+ * always produces identical output. Results are worksheets over stated inputs;
+ * no program source records are read.
  *
  * Domains covered:
  *   1. ICH E11(R1) age classification & developmental pharmacology
@@ -32,6 +33,38 @@
  *
  * @module server/services/pediatric/pediatric-knowledge
  */
+
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+import { getPediatricObligation } from '../global-ri/pediatric-requirements';
+
+const FDA_PLAN = getPediatricObligation('FDA');
+const EMA_PLAN = getPediatricObligation('EMA');
+const THERAPEUTIC_AREAS = ['oncology', 'infectious_disease', 'neurology', 'cardiology', 'endocrinology', 'respiratory',
+  'gastroenterology', 'dermatology', 'immunology', 'rare_disease', 'hematology', 'nephrology', 'psychiatry', 'other'];
+const JURISDICTIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
+const SCALING_METHODS: readonly DoseScalingMethod[] = ['linear_weight', 'allometric_0.75', 'allometric_maturation',
+  'bsa_based', 'age_based', 'pbpk_predicted', 'therapeutic_drug_monitoring'];
+
+/** Check the context each existing worksheet needs through the canonical refusal boundary. */
+function requirePediatricContext(fn: string, params: object, fields: readonly string[]): void {
+  const values = params as Record<string, unknown>;
+  const vocabularies: Record<string, readonly string[]> = {
+    therapeuticArea: THERAPEUTIC_AREAS, adultApprovalStatus: ['pre_approval', 'approved', 'under_review'],
+    targetAgeBand: Object.keys(AGE_BAND_DATA), primaryEliminationRoute: ['renal', 'hepatic', 'mixed', 'unchanged'],
+  };
+  refuseUnlessStated(fn, fields.map(field => {
+    const value = values[field];
+    const vocabulary = vocabularies[field];
+    const arrayVocabulary = field === 'targetAgeBands' ? Object.keys(AGE_BAND_DATA)
+      : field === 'targetJurisdictions' ? JURISDICTIONS : undefined;
+    const ok = arrayVocabulary ? Array.isArray(value) && value.length > 0
+      && value.every(item => typeof item === 'string' && arrayVocabulary.includes(item))
+      : typeof value === 'string' && (vocabulary ? vocabulary.includes(value) : value.trim().length > 0);
+    return { field, value, ok, expected: arrayVocabulary ? `a nonempty list from ${arrayVocabulary.join(', ')}`
+      : vocabulary ? `one of ${vocabulary.join(', ')}` : 'non-empty text' };
+  }), 'assessed');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -130,15 +163,17 @@ export interface AgeClassificationResult {
 }
 
 export interface PIPDesignResult {
+  inputStates: Record<string, boolean | 'not_stated'>;
+  classWaiverReference: { condition: string; basis: 'reference_only' } | null;
   regulatoryFramework: {
     fda: {
-      applies: boolean;
+      applies: boolean | null;
       mechanism: string;
       requirements: string[];
       timeline: string;
     };
     ema: {
-      applies: boolean;
+      applies: boolean | null;
       mechanism: string;
       requirements: string[];
       timeline: string;
@@ -156,7 +191,7 @@ export interface PIPDesignResult {
     designRecommendation: string;
   }>;
   deferralWaiverAssessment: {
-    type: DeferralWaiverType;
+    type: DeferralWaiverType | 'not_assessed';
     justification: string;
     conditions: string[];
   };
@@ -165,19 +200,21 @@ export interface PIPDesignResult {
 }
 
 export interface ExtrapolationResult {
-  feasibility: ExtrapolationLevel;
+  inputStates: Record<string, boolean | 'not_stated'>;
+  conditionReference: { condition: string; basis: 'reference_only'; diseaseSimilarity: string; responseSimilarity: string; examples: string[] } | null;
+  feasibility: ExtrapolationLevel | 'not_assessed';
   diseaseProgressionSimilarity: string;
   drugResponseSimilarity: string;
   rationale: string;
   studyRequirements: {
-    pkStudy: boolean;
-    pdStudy: boolean;
-    efficacyStudy: boolean;
-    safetyStudy: boolean;
+    pkStudy: boolean | null;
+    pdStudy: boolean | null;
+    efficacyStudy: boolean | null;
+    safetyStudy: boolean | null;
     studyDesigns: string[];
   };
   bayesianBorrowing: {
-    applicable: boolean;
+    applicable: boolean | null;
     approach: string;
     priorSource: string;
   };
@@ -207,22 +244,23 @@ export interface FormulationResult {
 }
 
 export interface DoseSelectionResult {
-  recommendedMethod: DoseScalingMethod;
+  inputStates: Record<string, boolean | 'not_stated'>;
+  recommendedMethod: DoseScalingMethod | 'not_assessed';
   scalingRationale: string;
   doseRecommendation: {
     method: string;
     formula: string;
     adjustmentFactors: string[];
     practicalConsiderations: string[];
-  };
+  } | null;
   doseBanding: {
-    recommended: boolean;
+    recommended: boolean | null;
     rationale: string;
     bandingApproach: string;
   };
   safetyConsiderations: string[];
   tdmRecommendation: {
-    recommended: boolean;
+    recommended: boolean | null;
     rationale: string;
     targetRange: string;
   };
@@ -230,17 +268,18 @@ export interface DoseSelectionResult {
 }
 
 export interface PediatricRequirementsResult {
+  inputStates: Record<string, boolean | 'not_stated'>;
   regulatoryObligations: {
     fdaPrea: {
-      required: boolean;
+      required: boolean | null;
       mechanism: string;
       exclusivity: string;
-      timeline: string;
+      timeline: string | null;
     };
     emaPdco: {
-      required: boolean;
+      required: boolean | null;
       mechanism: string;
-      rewards: string;
+      rewards: string | null;
       timeline: string;
     };
   };
@@ -252,13 +291,13 @@ export interface PediatricRequirementsResult {
     additionalSafeguards: string[];
   };
   orphanConsiderations: {
-    applicable: boolean;
+    applicable: boolean | null;
     incentives: string[];
     waiverImplications: string;
   };
   timeline: {
-    pipPspSubmission: string;
-    studyCompletion: string;
+    pipPspSubmission: string | null;
+    studyCompletion: string | null;
     dataSubmission: string;
   };
   references: string[];
@@ -674,20 +713,25 @@ export function designPIP(params: {
   mechanismOfAction?: string;
   condition?: string;
 }): PIPDesignResult {
-  const isClassWaiver = CLASS_WAIVER_CONDITIONS.some(
-    c => params.condition?.toLowerCase().includes(c.toLowerCase().split(' ')[0]) ||
-         params.indication.toLowerCase().includes(c.toLowerCase().split(' ')[0])
-  );
+  requirePediatricContext('designPIP', params, ['drugName', 'therapeuticArea', 'indication', 'targetAgeBands',
+    'adultApprovalStatus', 'routeOfAdministration']);
+  if (params.condition != null) requirePediatricContext('designPIP', params, ['condition']);
+  const inputStates = booleanInputStates(params, ['isOrphan']);
+  const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const classWaiver = CLASS_WAIVER_CONDITIONS.find(condition =>
+    normalize(condition) === normalize(params.condition ?? '') || normalize(condition) === normalize(params.indication));
+  const classWaiverReference: PIPDesignResult['classWaiverReference'] = classWaiver
+    ? { condition: classWaiver, basis: 'reference_only' } : null;
 
   // Determine deferral/waiver
-  let deferralWaiver: { type: DeferralWaiverType; justification: string; conditions: string[] };
-  if (isClassWaiver) {
+  let deferralWaiver: PIPDesignResult['deferralWaiverAssessment'];
+  if (classWaiverReference) {
     deferralWaiver = {
-      type: 'class_waiver',
-      justification: `The condition "${params.indication}" is on the EMA class waiver list (Commission Decision C(2015) 6600) because it does not occur in the pediatric population.`,
-      conditions: ['Waiver applies to all pediatric subsets.'],
+      type: 'not_assessed',
+      justification: `Reference-list match: ${classWaiver}. This lookup does not establish current product or age-subset waiver eligibility.`,
+      conditions: ['Confirm the exact condition, current EMA class list and applicable pediatric subsets with regulatory affairs.'],
     };
-  } else if (params.isOrphan && params.targetAgeBands.length <= 2) {
+  } else if (inputStates.isOrphan === true && params.targetAgeBands.length <= 2) {
     deferralWaiver = {
       type: 'deferral',
       justification: 'Orphan designation with limited pediatric population. Deferral of pediatric studies until adult efficacy and safety data are available. EMA Article 21 / FDA 505B(1).',
@@ -697,7 +741,7 @@ export function designPIP(params: {
         'Post-marketing commitment with defined milestones required.',
       ],
     };
-  } else if (params.adultApprovalStatus === 'pre_approval') {
+  } else if (params.adultApprovalStatus !== 'approved') {
     deferralWaiver = {
       type: 'deferral',
       justification: 'Adult development ongoing. Pediatric studies deferred until sufficient adult safety and efficacy data are available per ICH E11(R1) Section 2.6.',
@@ -707,11 +751,14 @@ export function designPIP(params: {
         'Nonclinical juvenile animal studies may need to proceed in parallel with adult Phase 3.',
       ],
     };
+  } else if (inputStates.isOrphan === 'not_stated' && params.targetAgeBands.length <= 2) {
+    deferralWaiver = { type: 'not_assessed', justification: 'isOrphan was not stated; waiver/deferral eligibility is not assessed.',
+      conditions: ['State orphan designation before assessing the orphan-related deferral branch.'] };
   } else {
     deferralWaiver = {
       type: 'none',
-      justification: 'No waiver or deferral applicable. Full pediatric development required.',
-      conditions: [],
+      justification: 'No orphan/adult-status deferral was identified by these encoded branches. Other waiver grounds and application triggers are not assessed.',
+      conditions: ['Confirm application scope, other waiver grounds and agreed agency decisions before defining the pediatric program.'],
     };
   }
 
@@ -788,30 +835,30 @@ export function designPIP(params: {
   }
 
   return {
+    inputStates,
+    classWaiverReference,
     regulatoryFramework: {
       fda: {
-        applies: true,
-        mechanism: params.adultApprovalStatus === 'approved'
-          ? 'PREA (Pediatric Research Equity Act, 21 USC §355c) — mandatory pediatric studies for new active ingredients, new indications, new dosage forms, new dosing regimens, new routes of administration.'
-          : 'PREA requirement triggered at NDA/BLA submission. Pediatric Study Plan (PSP) must be submitted no later than 60 days after End-of-Phase 2 meeting (21 CFR 314.55).',
+        applies: null,
+        mechanism: `Reference framework: ${FDA_PLAN.program}. Application triggers and waiver facts are needed to assess applicability.`,
         requirements: [
           'Pediatric Study Plan (PSP) agreed with FDA Division',
           'Studies in relevant age groups unless waiver/deferral granted',
           'Extrapolation justified per FDA Extrapolation Guidance (2016)',
           'Pediatric use supplement or labeling update required',
         ],
-        timeline: 'PSP submitted ≤60 days after End-of-Phase 2 meeting. FDA responds within 90 days. Studies completed per agreed deferral milestones.',
+        timeline: FDA_PLAN.timing,
       },
       ema: {
-        applies: true,
-        mechanism: 'EC No 1901/2006 (Paediatric Regulation) — PIP submission to PDCO required for all new marketing authorisations, new indications, new pharmaceutical forms, and new routes of administration.',
+        applies: null,
+        mechanism: `Reference framework: ${EMA_PLAN.program}. Confirm application scope and waiver/deferral status.`,
         requirements: [
           'PIP agreed with PDCO (Paediatric Committee)',
           'Compliance check before MA application (Article 23 verification)',
           'PIP modifications submitted if development plan changes',
           'Results posted in EudraCT regardless of outcome',
         ],
-        timeline: 'PIP should be submitted at end of Phase 1 or early Phase 2 (no later than completion of adult PK studies). PDCO opinion within 120 days (with clock stops). Compliance check at MA application.',
+        timeline: EMA_PLAN.timing,
       },
     },
     pipStructure: {
@@ -821,9 +868,9 @@ export function designPIP(params: {
     },
     requiredStudies,
     deferralWaiverAssessment: deferralWaiver,
-    submissionTiming: params.adultApprovalStatus === 'pre_approval'
-      ? 'FDA: PSP ≤60 days after EoP2 meeting. EMA: PIP at end of Phase 1/early Phase 2.'
-      : 'FDA: Post-marketing requirement (PMR) with agreed milestones. EMA: PIP modification or new PIP for additional indication.',
+    submissionTiming: params.adultApprovalStatus === 'approved'
+      ? 'For a supplemental application, confirm agreed FDA/EMA milestones and whether a new or modified plan is needed.'
+      : `Reference timing if the application triggers a plan duty: FDA: ${FDA_PLAN.timing} EMA: ${EMA_PLAN.timing}`,
     references: [
       'ICH E11(R1): Clinical Investigation of Medicinal Products in the Pediatric Population (2017)',
       'FDA PREA: 21 USC §355c (Pediatric Research Equity Act)',
@@ -851,51 +898,42 @@ export function assessExtrapolation(params: {
   biomarkerAvailable?: boolean;
   condition?: string;
 }): ExtrapolationResult {
-  // Determine disease and response similarity
-  let diseaseSim: 'similar' | 'uncertain' | 'different' = 'uncertain';
-  let responseSim: 'similar' | 'uncertain' | 'different' = 'uncertain';
-
-  // Check known conditions
-  const conditionKey = Object.keys(EXTRAPOLATION_CONDITIONS).find(k =>
-    params.indication.toLowerCase().includes(k.replace(/_/g, ' ')) ||
-    (params.condition && params.condition.toLowerCase().includes(k.replace(/_/g, ' ')))
-  );
-  if (conditionKey) {
-    diseaseSim = EXTRAPOLATION_CONDITIONS[conditionKey].diseaseSimilarity;
-    responseSim = EXTRAPOLATION_CONDITIONS[conditionKey].responseSimilarity;
-  }
-
-  // Override with explicit user input
-  if (params.diseaseProgressionSimilar === true) diseaseSim = 'similar';
-  if (params.diseaseProgressionSimilar === false) diseaseSim = 'different';
-  if (params.drugResponseSimilar === true) responseSim = 'similar';
-  if (params.drugResponseSimilar === false) responseSim = 'different';
-
-  // Neonates always require caution
-  const hasNeonates = params.targetAgeBands.some(b => b === 'preterm_neonate' || b === 'term_neonate');
-  if (hasNeonates && diseaseSim === 'similar') {
-    diseaseSim = 'uncertain';
-  }
+  const { inputStates, diseaseSim, responseSim, conditionReference, knownNoExtrapolation, unansweredPrerequisites } = pediatricExtrapolationContext(params);
 
   // Apply FDA/EMA decision tree
-  let level: ExtrapolationLevel;
+  let level: ExtrapolationResult['feasibility'];
   let rationale: string;
-  const studyReqs = {
+  const studyReqs: ExtrapolationResult['studyRequirements'] = {
     pkStudy: true,
     pdStudy: false,
     efficacyStudy: false,
     safetyStudy: true,
     studyDesigns: [] as string[],
   };
-  const bayesian = {
+  const bayesian: ExtrapolationResult['bayesianBorrowing'] = {
     applicable: false,
     approach: '',
     priorSource: '',
   };
   const evidenceNeeded: string[] = [];
   const precedents: string[] = [];
+  if (inputStates.biomarkerAvailable === 'not_stated') {
+    evidenceNeeded.push('biomarkerAvailable was not stated; confirm a validated biomarker before considering PK/PD bridging.');
+  } else if (inputStates.biomarkerAvailable === false) {
+    evidenceNeeded.push('No validated biomarker was stated as available; do not assume PK/PD bridging can substitute for efficacy evidence.');
+  }
 
-  if (diseaseSim === 'similar' && responseSim === 'similar') {
+  if (!knownNoExtrapolation && unansweredPrerequisites) {
+    level = 'not_assessed';
+    rationale = 'Adult efficacy and both product-specific similarity assessments must be stated before extrapolation can be assessed. Condition reference profiles do not supply those facts.';
+    studyReqs.pkStudy = null;
+    studyReqs.pdStudy = null;
+    studyReqs.efficacyStudy = null;
+    studyReqs.safetyStudy = null;
+    bayesian.applicable = null;
+    bayesian.approach = 'Borrowing is not assessed until its adult-efficacy and similarity prerequisites are stated.';
+    evidenceNeeded.push('State adultEfficacyEstablished, diseaseProgressionSimilar and drugResponseSimilar; no study can be omitted based on an unassessed pathway.');
+  } else if (!knownNoExtrapolation && diseaseSim === 'similar' && responseSim === 'similar') {
     level = 'full_extrapolation';
     rationale = 'Disease progression and drug response are sufficiently similar between adults and the target pediatric population. Full extrapolation of efficacy is supportable per FDA Extrapolation Guidance (2016) and EMA Reflection Paper (EMA/199678/2016). Pediatric PK study to establish dosing + safety monitoring required.';
     studyReqs.studyDesigns.push(
@@ -915,31 +953,9 @@ export function assessExtrapolation(params: {
       'Asthma — ICS/LABA extrapolation with PK bridging for children ≥4 years',
       'Hypertension — ACE inhibitors/ARBs extrapolated with PK study',
     );
-  } else if (diseaseSim === 'similar' && responseSim === 'uncertain') {
-    level = 'partial_extrapolation_pk_pd';
-    rationale = 'Disease is similar but drug response relationship is uncertain in the pediatric population. Partial extrapolation with PK and PD/biomarker study required to confirm drug response similarity.';
-    studyReqs.pdStudy = true;
-    studyReqs.studyDesigns.push(
-      'PK/PD bridging study with pharmacodynamic or biomarker endpoints',
-      'Exposure-response analysis to confirm adult-pediatric PD similarity',
-      'Safety study with age-specific monitoring',
-    );
-    evidenceNeeded.push(
-      'PK data in target pediatric population',
-      'PD biomarker or surrogate endpoint data demonstrating similar drug response',
-      'Exposure-response modeling bridging adult to pediatric data',
-      'Safety data in target population',
-    );
-    bayesian.applicable = true;
-    bayesian.approach = 'Bayesian hierarchical model borrowing adult exposure-response with skeptical pediatric prior.';
-    bayesian.priorSource = 'Adult exposure-response data as informative prior; pediatric PD data to update.';
-    precedents.push(
-      'Type 2 diabetes — metformin PK/PD bridging in adolescents',
-      'IBD — TNF inhibitors PK with biomarker (calprotectin, endoscopy) endpoints',
-    );
-  } else if (diseaseSim === 'uncertain' && responseSim === 'similar') {
+  } else if (!knownNoExtrapolation && diseaseSim === 'uncertain' && responseSim === 'similar') {
     level = 'partial_extrapolation_pk_efficacy';
-    rationale = 'Drug response is expected to be similar based on mechanism of action, but disease presentation or progression may differ in the pediatric population. PK study plus a controlled efficacy study with potentially modified endpoints required.';
+    rationale = 'Drug response was stated as similar, but neonatal disease similarity remains uncertain under the age-specific caution. PK study plus a controlled efficacy study with potentially modified endpoints is the reference planning approach.';
     studyReqs.efficacyStudy = true;
     studyReqs.studyDesigns.push(
       'PK study for dosing',
@@ -962,7 +978,9 @@ export function assessExtrapolation(params: {
     );
   } else {
     level = 'no_extrapolation_full_program';
-    rationale = 'Both disease progression and drug response are uncertain or different in the pediatric population relative to adults. A full pediatric clinical development program (PK + efficacy + safety) is required. Extrapolation is not supportable.';
+    rationale = inputStates.adultEfficacyEstablished === false
+      ? 'Adult efficacy was explicitly not established; adult-efficacy extrapolation and borrowing are not supportable. Plan independent pediatric efficacy, PK and safety evidence.'
+      : 'At least one product-specific similarity was explicitly assessed as different; extrapolation is not supported by these stated facts. Plan independent pediatric efficacy, PK and safety evidence.';
     studyReqs.pdStudy = true;
     studyReqs.efficacyStudy = true;
     studyReqs.studyDesigns.push(
@@ -979,8 +997,8 @@ export function assessExtrapolation(params: {
       'Pediatric-specific endpoint validation if adult endpoints are not applicable',
     );
     bayesian.applicable = false;
-    bayesian.approach = 'Limited applicability of adult data borrowing. Non-informative or weakly informative priors recommended if Bayesian design used.';
-    bayesian.priorSource = 'Minimal adult data borrowing justified; pediatric data must stand independently.';
+    bayesian.approach = 'No adult-efficacy borrowing is supported by these stated facts; any independent Bayesian pediatric design needs a separately justified prior.';
+    bayesian.priorSource = 'No adult efficacy borrowing is justified by this assessment; pediatric efficacy evidence must stand independently.';
     precedents.push(
       'Pediatric oncology — most pediatric tumors require independent programs',
       'Neonatal sepsis — disease pathophysiology distinct from adult sepsis',
@@ -989,6 +1007,8 @@ export function assessExtrapolation(params: {
   }
 
   return {
+    inputStates,
+    conditionReference,
     feasibility: level,
     diseaseProgressionSimilarity: diseaseSim,
     drugResponseSimilarity: responseSim,
@@ -1023,6 +1043,23 @@ export function selectFormulation(params: {
   };
   proposedExcipients?: string[];
 }): FormulationResult {
+  requirePediatricContext('selectFormulation', params, ['targetAgeBands', 'routeOfAdministration']);
+  if (params.drugProperties != null) {
+    refuseUnlessStated('selectFormulation', [{ field: 'drugProperties', value: params.drugProperties,
+      ok: typeof params.drugProperties === 'object' && !Array.isArray(params.drugProperties),
+      expected: 'an object of stated drug properties' }], 'assessed');
+  }
+  refuseUnlessStated('selectFormulation', [{ field: 'routeOfAdministration', value: params.routeOfAdministration,
+    ok: ['oral', 'parenteral', 'topical', 'inhaled', 'rectal', 'nasal'].includes(params.routeOfAdministration),
+    expected: 'oral, parenteral, topical, inhaled, rectal or nasal' }], 'assessed');
+  statedOneOf('drugProperties.solubility', params.drugProperties?.solubility, ['high', 'low']);
+  statedOneOf('drugProperties.stability', params.drugProperties?.stability, ['stable', 'unstable_solution']);
+  const taste = statedOneOf('drugProperties.tasteProfile', params.drugProperties?.tasteProfile, ['neutral', 'bitter', 'unpleasant']);
+  if (params.proposedExcipients != null) {
+    refuseUnlessStated('selectFormulation', [{ field: 'proposedExcipients', value: params.proposedExcipients,
+      ok: Array.isArray(params.proposedExcipients) && params.proposedExcipients.every(item => typeof item === 'string' && item.trim().length > 0),
+      expected: 'a list of nonempty excipient names' }], 'assessed');
+  }
   const recommendations: FormulationResult['recommendedFormulations'] = [];
   const youngestBand = getYoungestBand(params.targetAgeBands);
   const isBitter = params.drugProperties?.tasteProfile === 'bitter' || params.drugProperties?.tasteProfile === 'unpleasant';
@@ -1042,7 +1079,7 @@ export function selectFormulation(params: {
           switch (form) {
             case 'oral_solution':
               rationale = 'Flexible dosing; suitable for dose titration and nasogastric/orogastric tube administration.';
-              evidence = isBitter
+              evidence = taste === undefined ? 'tasteProfile was not stated; product-specific palatability is not assessed.' : isBitter
                 ? 'Taste masking required (sweeteners, flavoring). May require co-administration with food/drink.'
                 : 'Generally well accepted in liquid form. Age-appropriate flavoring recommended.';
               if (band === 'adolescent') suitability = 'acceptable';
@@ -1181,6 +1218,8 @@ export function selectFormulation(params: {
     palatabilityRequirements: palatabilityReqs,
     dosingDeviceRequirements: deviceReqs,
     emaReflectionPaperGuidance: [
+      ...(params.proposedExcipients == null
+        ? ['proposedExcipients was not stated; any returned neonatal excipient cautions are reference information, not an assessment of a product excipient list.'] : []),
       'EMA/CHMP/QWP/805880/2012 Rev. 2: Pharmaceutical Development of Medicines for Paediatric Use.',
       'Formulation should enable flexible, accurate dosing across the weight/age range of the target population.',
       'Multiple strengths/formulations may be needed to cover the full pediatric age range.',
@@ -1217,18 +1256,32 @@ export function selectPediatricDose(params: {
   pbpkAvailable?: boolean;
   scalingMethodPreference?: DoseScalingMethod;
 }): DoseSelectionResult {
+  requirePediatricContext('selectPediatricDose', params, ['targetAgeBand', 'adultDoseUnit', 'primaryEliminationRoute']);
+  refuseUnlessStated('selectPediatricDose', ['adultDose', 'adultWeight'].map(field => {
+    const value = params[field as 'adultDose' | 'adultWeight'];
+    return { field, value, ok: typeof value === 'number' && Number.isFinite(value) && value > 0, expected: 'a finite positive number' };
+  }), 'assessed');
+  statedNumber('childWeight', params.childWeight, value => value > 0, 'a finite positive number');
+  statedNumber('childBSA', params.childBSA, value => value > 0, 'a finite positive number');
+  statedNumber('childAge', params.childAge, value => value >= 0 && value < 18, 'a finite pediatric age from 0 to below 18 years');
+  const inputStates = booleanInputStates(params, ['narrowTherapeuticIndex', 'pbpkAvailable']);
+  const preference = statedOneOf('scalingMethodPreference', params.scalingMethodPreference, SCALING_METHODS);
   const band = params.targetAgeBand;
   const data = AGE_BAND_DATA[band];
 
   // Determine recommended scaling method
-  let method: DoseScalingMethod;
-  if (params.scalingMethodPreference) {
-    method = params.scalingMethodPreference;
-  } else if (params.pbpkAvailable) {
+  let method: DoseSelectionResult['recommendedMethod'];
+  if (preference) {
+    method = preference === 'pbpk_predicted' && inputStates.pbpkAvailable !== true ? 'not_assessed' : preference;
+  } else if (inputStates.pbpkAvailable === true) {
     method = 'pbpk_predicted';
+  } else if (inputStates.pbpkAvailable === 'not_stated') {
+    method = 'not_assessed';
   } else if (band === 'preterm_neonate' || band === 'term_neonate') {
     method = 'allometric_maturation';
-  } else if (params.narrowTherapeuticIndex) {
+  } else if (inputStates.narrowTherapeuticIndex === 'not_stated') {
+    method = 'not_assessed';
+  } else if (inputStates.narrowTherapeuticIndex === true) {
     method = 'therapeutic_drug_monitoring';
   } else if (params.primaryEliminationRoute === 'hepatic' && (band === 'infant' || band === 'child')) {
     method = 'allometric_maturation';
@@ -1247,6 +1300,10 @@ export function selectPediatricDose(params: {
   const practicalConsiderations: string[] = [];
 
   switch (method) {
+    case 'not_assessed':
+      formula = '';
+      scalingRationale = 'The dosing method is not assessed until its deciding PBPK/therapeutic-index facts are stated. A PBPK preference requires a qualified model stated as available.';
+      break;
     case 'linear_weight':
       formula = `Pediatric dose = Adult dose × (Child weight / ${params.adultWeight} kg)`;
       scalingRationale = 'Linear weight-based scaling suitable for adolescents where organ maturation is complete and body composition is similar to adults. Simple and widely used, but may over-predict dose in younger/smaller children.';
@@ -1323,13 +1380,14 @@ export function selectPediatricDose(params: {
   }
 
   // Dose banding
-  const doseBandingRecommended = (band === 'child' || band === 'infant') && method !== 'therapeutic_drug_monitoring';
+  const doseBandingRecommended = (band === 'child' || band === 'infant')
+    ? method === 'not_assessed' ? null : method !== 'therapeutic_drug_monitoring' : false;
   const doseBandResult = {
     recommended: doseBandingRecommended,
-    rationale: doseBandingRecommended
+    rationale: doseBandingRecommended === null ? 'Dose banding is not assessed until a dosing method is determined.' : doseBandingRecommended
       ? 'Dose banding (grouping continuous weight-based doses into discrete dose levels) is recommended for practical administration and to reduce dosing errors. Weight bands should be derived from population PK modeling to ensure exposures remain within the therapeutic range across the band.'
       : 'Dose banding not primary approach for this combination of age band and dosing method.',
-    bandingApproach: doseBandingRecommended
+    bandingApproach: doseBandingRecommended === null ? 'State the facts needed to determine the dosing method before selecting dose bands.' : doseBandingRecommended
       ? 'Derive dose bands from population PK simulations: (1) simulate exposures at multiple weights, (2) identify weight ranges where a single dose maintains AUC within ±20-25% of target, (3) validate via population PK re-simulation with the banded doses.'
       : 'Individual dose calculation recommended.',
   };
@@ -1358,7 +1416,7 @@ export function selectPediatricDose(params: {
       'Monitor growth velocity; dose adjustments needed as weight increases.',
     );
   }
-  if (params.narrowTherapeuticIndex) {
+  if (inputStates.narrowTherapeuticIndex === true) {
     safetyConsiderations.push(
       'Narrow therapeutic index: start at conservative dose and titrate with TDM.',
       'Increased PK variability in pediatrics makes empiric dosing insufficient for NTI drugs.',
@@ -1367,8 +1425,10 @@ export function selectPediatricDose(params: {
 
   // TDM recommendation
   const tdmRec = {
-    recommended: params.narrowTherapeuticIndex || method === 'therapeutic_drug_monitoring',
-    rationale: params.narrowTherapeuticIndex
+    recommended: inputStates.narrowTherapeuticIndex === true || method === 'therapeutic_drug_monitoring' ? true
+      : inputStates.narrowTherapeuticIndex === 'not_stated' ? null : false,
+    rationale: inputStates.narrowTherapeuticIndex === 'not_stated' && method !== 'therapeutic_drug_monitoring'
+      ? 'narrowTherapeuticIndex was not stated; monitoring need is not assessed.' : inputStates.narrowTherapeuticIndex === true
       ? 'Narrow therapeutic index drug — TDM essential for safe and effective dosing in the pediatric population.'
       : band === 'preterm_neonate' || band === 'term_neonate'
       ? 'Neonatal PK highly variable — TDM recommended for drugs with significant toxicity risk.'
@@ -1383,9 +1443,10 @@ export function selectPediatricDose(params: {
   );
 
   return {
+    inputStates,
     recommendedMethod: method,
     scalingRationale,
-    doseRecommendation: {
+    doseRecommendation: method === 'not_assessed' ? null : {
       method: method.replace(/_/g, ' '),
       formula,
       adjustmentFactors,
@@ -1420,32 +1481,33 @@ export function assessPediatricRequirements(params: {
   hasAdultApproval: boolean;
   targetJurisdictions: Jurisdiction[];
 }): PediatricRequirementsResult {
-  const isOrphan = params.isOrphan ?? false;
+  requirePediatricContext('assessPediatricRequirements', params, ['drugName', 'therapeuticArea', 'indication',
+    'targetAgeBands', 'targetJurisdictions']);
+  const inputStates = booleanInputStates(params, ['isOrphan', 'isNewMolecularEntity', 'hasAdultApproval']);
+  const isOrphan = inputStates.isOrphan;
+  const adultApproval = inputStates.hasAdultApproval;
+  const { emaRewards, ...orphanConsiderations } = orphanPediatricGuidance(isOrphan);
+  const fdaRequested = params.targetJurisdictions.includes('FDA');
   const hasNeonates = params.targetAgeBands.some(b => b === 'preterm_neonate' || b === 'term_neonate');
   const hasYoungChildren = params.targetAgeBands.some(b => b === 'infant' || b === 'child');
 
   // FDA PREA
-  const fdaPrea = {
-    required: params.isNewMolecularEntity || !params.hasAdultApproval,
-    mechanism: params.isNewMolecularEntity
-      ? 'PREA (21 USC §355c): All applications for new active ingredients, new indications, new dosage forms, new dosing regimens, or new routes of administration must contain a pediatric assessment unless waived or deferred.'
-      : params.hasAdultApproval
-      ? 'FDA may issue a Written Request (21 USC §355a) for voluntary pediatric studies in exchange for 6 months exclusivity. PREA applies if a new indication or dosage form is being sought.'
-      : 'PREA triggered at NDA/BLA submission.',
-    exclusivity: 'Pediatric Exclusivity: 6 months of additional market exclusivity (patent extension) for all formulations/indications of the active moiety upon completion of FDA-requested pediatric studies, regardless of outcome. For orphan drugs, pediatric exclusivity extends the 7-year orphan exclusivity by 6 months.',
-    timeline: params.hasAdultApproval
+  const fdaPrea: PediatricRequirementsResult['regulatoryObligations']['fdaPrea'] = {
+    required: !fdaRequested ? false : inputStates.isNewMolecularEntity === true && isOrphan === false ? true : null,
+    mechanism: !fdaRequested ? 'FDA is outside the requested jurisdictions.'
+      : `Reference: ${FDA_PLAN.program}. NME status and adult approval alone do not settle other application triggers or orphan exceptions; confirm application scope and any waiver/deferral.`,
+    exclusivity: `Conditional reference incentive; eligibility is not assessed here. ${FDA_PLAN.incentive}`,
+    timeline: adultApproval === 'not_stated' ? null : adultApproval
       ? 'PMR (Post-Marketing Requirement): milestones agreed with FDA. Typically 1-3 years for initial PK study, 3-5 years for full pediatric program.'
-      : 'PSP submitted ≤60 days after EoP2 meeting. FDA review: 90 days. Studies completed before or after adult approval per agreed deferral schedule.',
+      : FDA_PLAN.timing,
   };
 
   // EMA PDCO
-  const emaPdco = {
-    required: params.targetJurisdictions.includes('EMA'),
-    mechanism: 'EC No 1901/2006: PIP required for all new MAs, new indications, new pharmaceutical forms, new routes. PIP agreed with PDCO. Compliance verified at MA application (Article 23). Failure to comply = MA cannot be granted.',
-    rewards: isOrphan
-      ? 'Orphan pediatric: 2 additional years of market exclusivity (12 total instead of 10) if all PIP measures completed AND results reflected in SmPC. No separate PUMA pathway for orphans.'
-      : 'PUMA (Paediatric Use Marketing Authorisation): 8 years data exclusivity + 10 years marketing protection for approved pediatric-only indications. SPC extension: 6-month extension of SPC for products with completed PIP and approved pediatric indication in SmPC.',
-    timeline: 'PIP submitted at end of Phase 1 / early Phase 2. PDCO opinion: 120 days (with clock stops). Compliance check at MA submission. PIP modifications as development evolves.',
+  const emaPdco: PediatricRequirementsResult['regulatoryObligations']['emaPdco'] = {
+    required: params.targetJurisdictions.includes('EMA') ? null : false,
+    mechanism: `Reference: ${EMA_PLAN.program}. Applicability needs application-trigger and waiver facts not represented by these inputs.`,
+    rewards: emaRewards,
+    timeline: EMA_PLAN.timing,
   };
 
   // Ethical requirements
@@ -1472,35 +1534,20 @@ export function assessPediatricRequirements(params: {
   };
 
   // Orphan considerations
-  const orphanConsiderations = {
-    applicable: isOrphan,
-    incentives: isOrphan
-      ? [
-          'FDA: 7 years orphan exclusivity + 6 months pediatric exclusivity = 7.5 years total.',
-          'EMA: 10 years orphan market exclusivity + 2 years for completed PIP = 12 years. Alternatively, regular pediatric rewards may also apply.',
-          'FDA: Tax credits for qualified clinical testing expenses (Orphan Drug Act §45C).',
-          'FDA: Reduced or waived application fees for orphan products.',
-          'EMA: Fee reductions for PIPs involving orphan medicinal products.',
-          'Protocol assistance from FDA (OOPD) and EMA (COMP/PDCO) for pediatric development of orphan drugs.',
-        ]
-      : ['Not applicable — product does not have orphan designation.'],
-    waiverImplications: isOrphan
-      ? 'Orphan-designated products are NOT automatically exempt from PREA or PIP requirements. However, the small patient population may justify modified study designs (single-arm, Bayesian, extrapolation-heavy) and smaller sample sizes. FDA may issue a partial waiver if pediatric studies are impossible or highly impracticable.'
-      : 'No orphan-specific waiver implications.',
-  };
 
   // Timeline
   const timeline = {
-    pipPspSubmission: params.hasAdultApproval
+    pipPspSubmission: adultApproval === 'not_stated' ? null : adultApproval
       ? 'As soon as feasible for supplemental application. EMA: PIP modification if existing PIP needs amending.'
       : 'FDA: PSP ≤60 days after EoP2 meeting. EMA: PIP at end of Phase 1 / early Phase 2 (before adult Phase 3 starts).',
-    studyCompletion: params.hasAdultApproval
+    studyCompletion: adultApproval === 'not_stated' ? null : adultApproval
       ? 'Per PMR/PIP milestones. Typical: PK study within 1-2 years, efficacy/safety studies within 2-5 years.'
       : 'Deferral typically allows pediatric studies to start after adult approval. Stepwise approach: oldest pediatric age group first, then younger. Complete within agreed timeline (typically 2-7 years post-adult approval).',
     dataSubmission: 'FDA: Pediatric supplement or labeling update within 120 days of study completion. EMA: Compliance check at MA or variation application. Results must be submitted within 6 months of study completion regardless of outcome (Article 46 of Regulation EC 1901/2006).',
   };
 
   return {
+    inputStates,
     regulatoryObligations: { fdaPrea, emaPdco },
     ethicalRequirements: ethicalReqs,
     orphanConsiderations,
@@ -1525,11 +1572,71 @@ export function assessPediatricRequirements(params: {
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+function pediatricExtrapolationContext(params: Parameters<typeof assessExtrapolation>[0]) {
+  requirePediatricContext('assessExtrapolation', params, ['indication', 'therapeuticArea', 'targetAgeBands']);
+  if (params.condition != null) requirePediatricContext('assessExtrapolation', params, ['condition']);
+  const inputStates = booleanInputStates(params, ['diseaseProgressionSimilar', 'drugResponseSimilar',
+    'adultEfficacyEstablished', 'biomarkerAvailable']);
+  let diseaseSim: 'similar' | 'uncertain' | 'different' | 'not_stated' = inputStates.diseaseProgressionSimilar === 'not_stated'
+    ? 'not_stated' : inputStates.diseaseProgressionSimilar ? 'similar' : 'different';
+  const responseSim = inputStates.drugResponseSimilar === 'not_stated'
+    ? 'not_stated' : inputStates.drugResponseSimilar ? 'similar' : 'different';
+
+  // Check known conditions
+  const conditionKey = Object.keys(EXTRAPOLATION_CONDITIONS).find(k =>
+    params.indication.toLowerCase().includes(k.replace(/_/g, ' ')) ||
+    (params.condition && params.condition.toLowerCase().includes(k.replace(/_/g, ' ')))
+  );
+  const conditionReference: ExtrapolationResult['conditionReference'] = conditionKey
+    ? { condition: conditionKey, basis: 'reference_only', ...EXTRAPOLATION_CONDITIONS[conditionKey] } : null;
+
+  // Neonates always require caution
+  const hasNeonates = params.targetAgeBands.some(b => b === 'preterm_neonate' || b === 'term_neonate');
+  if (hasNeonates && diseaseSim === 'similar') {
+    diseaseSim = 'uncertain';
+  }
+  const knownNoExtrapolation = [inputStates.adultEfficacyEstablished, inputStates.diseaseProgressionSimilar, inputStates.drugResponseSimilar].includes(false);
+  const unansweredPrerequisites = [inputStates.adultEfficacyEstablished, diseaseSim, responseSim].includes('not_stated');
+  return { inputStates, diseaseSim, responseSim, conditionReference, knownNoExtrapolation, unansweredPrerequisites };
+}
+
+function orphanPediatricGuidance(isOrphan: boolean | 'not_stated'): PediatricRequirementsResult['orphanConsiderations'] & { emaRewards: string | null } {
+  return {
+    emaRewards: isOrphan === 'not_stated' ? null : isOrphan
+      ? 'Orphan pediatric reference: eligibility and completion of all agreed PIP measures must be confirmed before assessing the potential 2-year reward; no product entitlement is determined here.'
+      : `Conditional reference rewards; eligibility is not assessed here. ${EMA_PLAN.incentive}`,
+    applicable: isOrphan === 'not_stated' ? null : isOrphan,
+    incentives: isOrphan === 'not_stated' ? ['isOrphan was not stated; orphan-specific incentives are not assessed.'] : isOrphan
+      ? [
+          'Reference only: orphan exclusivity and pediatric rewards depend on the applicable market, legal eligibility and completion of requested studies; this worksheet does not determine entitlement.',
+          'Potential fee reductions, protocol assistance and other incentives require their own eligibility checks.',
+        ]
+      : ['Orphan designation was explicitly ruled out; no orphan-specific incentives apply on that stated basis.'],
+    waiverImplications: isOrphan === 'not_stated' ? 'isOrphan was not stated; orphan-related waiver implications are not assessed.' : isOrphan
+      ? 'Confirm the applicable PREA orphan exception and any molecularly targeted oncology provisions with regulatory affairs; this worksheet does not contain those facts. EMA PIP applicability must be assessed separately.'
+      : 'No orphan-specific waiver implications.',
+  };
+}
+
+function readPediatricAge(ageValue: number, ageUnit: Parameters<typeof classifyPediatricAge>[0]['ageUnit'], gestationalAge?: number): number | undefined {
+  const ageValid = typeof ageValue === 'number' && Number.isFinite(ageValue) && ageValue >= 0
+    && (ageUnit !== 'weeks_gestational' || ageValue > 0)
+    && (ageUnit !== 'years' || ageValue < 18) && (ageUnit !== 'months' || ageValue < 216)
+    && (ageUnit !== 'days' || ageValue < 18 * 365.25);
+  refuseUnlessStated('classifyPediatricAge', [
+    { field: 'ageValue', value: ageValue, ok: ageValid, expected: 'a finite nonnegative pediatric age below 18 years (positive for gestational weeks)' },
+    { field: 'ageUnit', value: ageUnit, ok: ['weeks_gestational', 'days', 'months', 'years'].includes(ageUnit),
+      expected: 'weeks_gestational, days, months or years' },
+  ], 'classified');
+  return statedNumber('gestationalAge', gestationalAge, value => value > 0, 'finite positive gestational weeks');
+}
+
 function resolveAgeBand(
   ageValue: number,
   ageUnit: 'weeks_gestational' | 'days' | 'months' | 'years',
   gestationalAge?: number,
 ): PediatricAgeBand {
+  const gestation = readPediatricAge(ageValue, ageUnit, gestationalAge);
   if (ageUnit === 'weeks_gestational') {
     return ageValue < 37 ? 'preterm_neonate' : 'term_neonate';
   }
@@ -1550,7 +1657,9 @@ function resolveAgeBand(
 
   // Check gestational age for neonates
   if (ageDays <= 27) {
-    if (gestationalAge !== undefined && gestationalAge < 37) {
+    refuseUnlessStated('classifyPediatricAge', [{ field: 'gestationalAge', value: gestationalAge,
+      ok: gestation !== undefined, expected: 'stated gestational weeks at birth for a neonate' }], 'classified');
+    if (gestation! < 37) {
       return 'preterm_neonate';
     }
     return 'term_neonate';

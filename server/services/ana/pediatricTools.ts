@@ -11,8 +11,8 @@
  *
  * Every function is a closed-form lookup or rule-based computation over an
  * in-code regulatory corpus — no LLM, no network, no database. Identical
- * input always produces identical output, making results reproducible and
- * submission-defensible. Handlers live in AnaToolExecutor.ts
+ * input always produces identical output. These are stated-input worksheets;
+ * no program source records are read. Handlers live in AnaToolExecutor.ts
  * (registerToolHandler) and dynamic-import `../pediatric/pediatric-knowledge`.
  *
  * Tools:
@@ -29,7 +29,10 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network.';
+  'Deterministic worksheet over stated inputs; no LLM, network or program source-record read. ' +
+  'Unanswered booleans remain not_stated; dependent conclusions remain not_assessed or null. ' +
+  'Report those states and ask for the missing facts. Reference profiles do not establish product evidence, ' +
+  'waiver grants, regulatory applicability or incentive entitlement.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool 1: Classify Pediatric Age
@@ -54,7 +57,7 @@ export const CLASSIFY_PEDIATRIC_AGE: AnaTool = {
       },
       gestationalAge: {
         type: 'number',
-        description: 'Gestational age in weeks at birth. Required for neonates (ageUnit = days) to distinguish preterm (<37 weeks) from term (≥37 weeks) neonates. Optional for other age units.',
+        description: 'Stated gestational weeks at birth. Required whenever postnatal age converts to 0–27 days, including fractional months/years; no term birth is assumed. Optional for older children.',
       },
     },
     required: ['ageValue', 'ageUnit'],
@@ -161,11 +164,11 @@ export const ASSESS_PEDIATRIC_EXTRAPOLATION: AnaTool = {
       },
       diseaseProgressionSimilar: {
         type: ['boolean', 'null'],
-        description: "Whether disease progression is similar between adults and the target pediatric population. true = similar, false = different, null = uncertain/unknown. The engine has built-in knowledge for common conditions; set null to use the internal assessment.",
+        description: 'Stated product-specific disease-progression similarity between adults and the target pediatric population: true = similar, false = different, null or omitted = not_stated. Condition references do not fill this fact.',
       },
       drugResponseSimilar: {
         type: ['boolean', 'null'],
-        description: "Whether the exposure-response relationship is similar. true = similar, false = different, null = uncertain/unknown. Set null to use the engine's internal assessment based on the condition and therapeutic area.",
+        description: 'Stated product-specific exposure-response similarity: true = similar, false = different, null or omitted = not_stated. A missing assessment cannot select a PK/PD bridge or a full program.',
       },
       mechanismOfAction: {
         type: 'string',
@@ -181,7 +184,7 @@ export const ASSESS_PEDIATRIC_EXTRAPOLATION: AnaTool = {
       },
       condition: {
         type: 'string',
-        description: 'Specific condition name for matching against the internal extrapolation knowledge base (e.g., "hypertension", "asthma", "crohn_disease", "hiv").',
+        description: 'Condition name for reference context only (e.g., hypertension, asthma, crohn_disease, hiv). A reference profile cannot establish product similarity or adult efficacy.',
       },
     },
     required: ['indication', 'therapeuticArea', 'targetAgeBands', 'adultEfficacyEstablished'],
@@ -267,7 +270,7 @@ export const SELECT_PEDIATRIC_DOSE: AnaTool = {
       },
       adultDose: {
         type: 'number',
-        description: 'Approved or anticipated adult dose (numeric value).',
+        description: 'Stated adult dose for context. This tool supplies method/formula guidance and does not calculate a numeric pediatric dose from it.',
       },
       adultDoseUnit: {
         type: 'string',
@@ -279,15 +282,15 @@ export const SELECT_PEDIATRIC_DOSE: AnaTool = {
       },
       childWeight: {
         type: 'number',
-        description: 'Target child weight in kg. Used for weight-based and allometric calculations.',
+        description: 'Optional stated child weight in kg for context; current output is a reference formula, not a numerical dose calculation.',
       },
       childAge: {
         type: 'number',
-        description: 'Child age in years (or fraction of years). Used for maturation factor estimation.',
+        description: 'Optional stated pediatric age in years, below 18. The current tool does not calculate an individual maturation factor from this value.',
       },
       childBSA: {
         type: 'number',
-        description: 'Child body surface area in m². Used for BSA-based scaling. Standard adult BSA = 1.73 m².',
+        description: 'Optional stated child BSA in m². The current tool returns BSA formula guidance without numerically evaluating it; the reference adult BSA is 1.73 m².',
       },
       primaryEliminationRoute: {
         type: 'string',

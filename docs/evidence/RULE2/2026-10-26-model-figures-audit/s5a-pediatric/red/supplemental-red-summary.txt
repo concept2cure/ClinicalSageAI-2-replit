@@ -1,0 +1,7 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/pediatric-unstated-inputs.test.ts --reporter=verbose
+Filter: -t supplemental; after initial corrections, before supplementary fixes.
+
+Test Files  1 failed (1)
+Tests  7 failed | 17 passed | 114 skipped (138)
+Start at  17:51:16
+Duration  8.61s (transform 5.90s, setup 74ms, import 8.27s, tests 32ms, environment 0ms)

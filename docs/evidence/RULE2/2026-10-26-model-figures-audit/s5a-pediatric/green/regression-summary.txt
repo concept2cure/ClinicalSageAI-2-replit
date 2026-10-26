@@ -1,0 +1,10 @@
+Node 22.23.4; NODE_OPTIONS=--max-old-space-size=4096
+Command: node node_modules/vitest/vitest.mjs run server/services/ana/__tests__/pediatric-unstated-inputs.test.ts server/services/ana/__tests__/coa-unstated-inputs.test.ts server/services/ana/__tests__/coa-selection.test.ts server/services/ana/__tests__/stated-input-basis.test.ts server/services/ana/__tests__/stated-input-result-contract.test.ts server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts server/services/ana/__tests__/submission-center-tools.test.ts server/services/ana/__tests__/ivd-lifecycle-tools.test.ts server/services/ana/__tests__/deepening-tools.test.ts server/services/ana/skills/__tests__ server/services/immunogenicity/__tests__ server/services/gcp-operations/__tests__ server/services/ana-biostats/__tests__/refuse-unless-stated-is-one-helper.test.ts server/services/global-ri/__tests__/pediatric-requirements.test.ts --reporter=dot
+Exit: 0
+
+········································
+
+ Test Files  29 passed (29)
+      Tests  957 passed (957)
+   Start at  17:55:20
+   Duration  61.88s (transform 10.91s, setup 448ms, import 52.78s, tests 4.27s, environment 3ms)

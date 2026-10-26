@@ -1,0 +1,11 @@
+{
+  "changedTools": [
+    "assess_pediatric_extrapolation",
+    "assess_pediatric_requirements",
+    "classify_pediatric_age",
+    "design_pediatric_investigation",
+    "select_pediatric_dose",
+    "select_pediatric_formulation"
+  ],
+  "toolsAdded": 0
+}
