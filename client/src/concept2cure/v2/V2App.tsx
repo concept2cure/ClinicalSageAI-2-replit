@@ -75,7 +75,7 @@ import { LaunchScopeGate } from './LaunchScopeGate';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment, resolveSegmentId,
+import { getAction, getSegment, resolveSegmentId, shellSegment,
   effortForMode,
 } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
@@ -150,6 +150,8 @@ interface Prefs {
    */
   anaRunPolicy: AnaRunPolicy;
   segment: string;
+  /** True once the person chose a lane; until then the lane follows the organisation's client type. */
+  segmentChosen?: boolean;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
   /** AnA Live Drive toggle — while on, turns opt in to applied navigation. */
@@ -954,8 +956,10 @@ export function V2App() {
      handler — lands on that type's default screen, which is always in the
      launch scope (registryModel SEGMENTS; shellNav.test.tsx). The account
      menu's choice used to go Home and the top bar's to the default screen. */
+  const segment = shellSegment(prefs.segment, prefs.segmentChosen === true, tenantClientType);
   const chooseSegment = (id: string) => {
     set('segment', id);
+    set('segmentChosen', true);
     nav(getSegment(id)?.defaultSurface ?? 'home');
   };
 
@@ -1133,7 +1137,7 @@ export function V2App() {
   const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
   const welcome =
     anaChat.messages.length === 0 && !prefs.welcomeDismissed
-      ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
+      ? welcomeFor(tenantClientType ?? segment, firstName)
       : null;
 
   let body: React.ReactNode;
@@ -1142,7 +1146,7 @@ export function V2App() {
       <Home
         onNav={nav}
         onAsk={ask}
-        segment={prefs.segment}
+        segment={segment}
         mode={prefs.anaMode}
         setMode={(m) => set('anaMode', m)}
         welcome={welcome}
@@ -1158,7 +1162,7 @@ export function V2App() {
         key={bodyKey}
         surface={ctxSurface}
         onNav={nav}
-        segment={prefs.segment}
+        segment={segment}
         liveDrive={liveDriveBridge}
         shellChat={anaChat}
         engine={{ mode: prefs.anaMode, setMode: (m) => set('anaMode', m) }}
@@ -1166,7 +1170,7 @@ export function V2App() {
     );
   } else if (view) {
     const V = view.component;
-    body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
+    body = <V key={bodyKey} surface={ctxSurface} onAsk={ask} onNav={nav} segment={segment} />;
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
@@ -1263,7 +1267,7 @@ export function V2App() {
         onNav={nav}
         collapsed={prefs.railCollapsed}
         setCollapsed={(v) => set('railCollapsed', v)}
-        segment={prefs.segment}
+        segment={segment}
         setSegment={chooseSegment}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
@@ -1279,7 +1283,7 @@ export function V2App() {
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}
-          segment={prefs.segment}
+          segment={segment}
           onSegment={chooseSegment}
           onNav={nav}
           onAsk={ask}

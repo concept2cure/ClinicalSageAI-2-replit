@@ -355,6 +355,17 @@ export const SEGMENT_ALIASES: Record<string, string> = {
 };
 export const resolveSegmentId = (id: string) => SEGMENT_ALIASES[id] ?? id;
 export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === resolveSegmentId(id));
+/**
+ * The shell's lane. A lane the person chose wins; otherwise it is the organisation's own
+ * client type (`organizations.client_type`), and the stored default only when the
+ * organisation's is not known yet or names no lane. The lane used to be the browser's
+ * default alone, so a device company saw the biopharma rail and "Tailored for
+ * biopharma" in New project (the slice 0 launch walk).
+ */
+export function shellSegment(stored: string, chosen: boolean, tenantClientType: string | null): string {
+  if (chosen || !tenantClientType) return stored;
+  return getSegment(tenantClientType) ? resolveSegmentId(tenantClientType) : stored;
+}
 
 /**
  * Client-category selector at the top of the rail — the client-type axis of the

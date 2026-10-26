@@ -48,6 +48,7 @@ import {
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
 import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
+import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
 
 /* ── Window global owned by this surface (the app shell sets it to auto-open
@@ -326,7 +327,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
   const [tabSeg, setTabSeg] = useState<string | null>(null);
   const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
-  const segLabel = SEG_LABELS[uiSeg] || uiSeg;
+  const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
   const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }

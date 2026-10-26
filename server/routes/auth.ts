@@ -119,6 +119,7 @@ import {
 import { runWithTenantScope } from '../db/tenantStore';
 import { signInLimits } from '../middleware/sign-in-limits';
 import { markResetLinkRefused, passwordResetLimits } from '../middleware/password-reset-limits';
+import { clientTypeForSignup } from '../../shared/regulatory/client-type-profiles';
 
 const router = Router();
 
@@ -906,6 +907,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       defaultMarkets,
     } = parsed.data;
     const email = parsed.data.email.trim().toLowerCase();
+    const signupClientType = clientTypeForSignup(industryMode, mdxSpecialization);
 
     // Enforce enterprise password policy (NIST 800-63B), against what the
     // account will be: this address, this name, this organisation.
@@ -1016,7 +1018,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         // Fixed here rather than by changing the column default: that is a
         // migration against existing rows, and it wants the same sign-off as
         // the other held migrations.
-        .values({ name: companyName, slug, industryMode, stripeCustomerId, tier: 'free' })
+        .values({
+          name: companyName,
+          slug,
+          industryMode,
+          // The category the shell and AnA read; left at its default when the industry names none.
+          ...(signupClientType ? { clientType: signupClientType } : {}),
+          stripeCustomerId,
+          tier: 'free',
+        })
         .returning();
 
       const passwordHash = await bcrypt.hash(password, PASSWORD_HASH_COST);
