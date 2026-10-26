@@ -6,24 +6,25 @@
  * skeleton, a Schedule of Activities, a trial-registry record and a CRF shell
  * from one structured object, and already serves every one of them at
  * `GET /api/study-design/:studyId/<projection>`. This module is the protocol
- * author's way in. It is a READER:
+ * author's way in. Projection reads preserve their source:
  *
  *   • it adds no route and no second exporter — every fetch below is the
  *     existing study-design endpoint, and the download is the engine's own
  *     JSON, byte for byte, not a client-side re-render of it;
- *   • it writes nothing. Nothing here generates into the protocol's sections.
- *     That is a later step of the design document's order of work and no
- *     control on this screen implies it;
+ *   • blank CRFs can enter the existing preview/reason/fingerprint intake to
+ *     create a separate editor working copy. Nothing writes back into the
+ *     source protocol or design;
  *   • it papers over nothing. Every projection already reports `gaps` and a
  *     per-section / per-field status when the design object lacks the content,
  *     and those are rendered as what they are. A projection with gaps is never
  *     drawn as a completed document.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest } from '@/lib/queryClient';
 import { downloadText, safeFileName } from '../download';
 import { INDUSTRY_PROJECTIONS } from './ProtocolDevIndustryProjections';
+import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 
 type Obj = Record<string, unknown>;
 const str = (v: unknown): string => (v == null ? '' : String(v));
@@ -140,12 +141,16 @@ function crfView(doc: Obj): View {
     standard: str(doc.standard),
     percent: pct(doc.completeness),
     gaps: (Array.isArray(doc.gaps) ? doc.gaps : []) as string[],
-    note: `${str(counts.forms ?? asRows(doc.forms).length)} form(s) projected from the Schedule of Activities.`,
+    note: `${str(counts.forms ?? asRows(doc.forms).length)} blank form(s) projected from the saved design. The percentage describes design grounding, not CRF validation. Review response choices, repeat rules, edit checks and standards versions before use. Completed patient records remain original records.`,
     entries: asRows(doc.forms).map((f) => ({
       key: str(f.name),
       label: str(f.name),
       status: str(f.origin),
-      text: `${asRows(f.items).length} item(s)${f.cdashDomain ? ' · CDASH ' + str(f.cdashDomain) : ''}.`,
+      text: [
+        `${asRows(f.items).length} item(s)${f.cdashDomain ? ' · CDASH domain hint ' + str(f.cdashDomain) : ''}.`,
+        `Visits: ${Array.isArray(f.visitIds) && f.visitIds.length ? f.visitIds.join(', ') : 'not visit-scheduled in this projection'}.`,
+        ...asRows(f.items).map((item, i) => `${i + 1}. ${str(item.prompt)} · ${str(item.type)}${item.units ? ' · ' + str(item.units) : ''}${item.cdashVar ? ' · CDASH hint ' + str(item.cdashVar) : ''} · source: ${str(item.derivedFrom)}${item.placeholder ? ' · unresolved placeholder' : ''}`),
+      ].join('\n'),
       gaps: f.note ? [str(f.note)] : [],
     })),
   };
@@ -262,30 +267,48 @@ function ProjectionBody({ view }: { view: View }) {
   );
 }
 
+function CrfEditorAction({ projectionId, programId, hasNavigation, disabled, onOpen }: {
+  projectionId: string; programId?: string; hasNavigation: boolean; disabled: boolean; onOpen: () => void;
+}) {
+  if (projectionId !== 'crf' || !programId || !hasNavigation) return null;
+  return <PG.Btn icon="fileText" variant="outline" disabled={disabled} onClick={onOpen}>Open blank CRFs in editor</PG.Btn>;
+}
+
 export interface ProjectionsPanelProps {
   studyId: string;
   /** Names the file the author downloads. */
   designTitle: string;
+  programId?: string;
+  onNav?: (id: string) => void;
 }
 
 /**
  * The projections, one open at a time. Nothing is fetched until the
  * author asks for one, and a refusal is shown as a refusal.
  */
-export function ProjectionsPanel({ studyId, designTitle }: ProjectionsPanelProps) {
+export function ProjectionsPanel(props: ProjectionsPanelProps) {
+  return <ScopedProjectionsPanel key={`${props.studyId}:${props.programId ?? ''}`} {...props} />;
+}
+
+function ScopedProjectionsPanel({ studyId, designTitle, programId, onNav }: ProjectionsPanelProps) {
   const [open, setOpen] = useState<ProjectionSpec | null>(null);
   const [payload, setPayload] = useState<Obj | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const request = useRef(0);
+  useEffect(() => () => { request.current++; }, []);
 
   const show = async (spec: ProjectionSpec) => {
+    const captured = ++request.current;
     setOpen(spec); setPayload(null); setError(null); setBusy(true);
     try {
-      setPayload(await loadProjection(studyId, spec));
+      const result = await loadProjection(studyId, spec);
+      if (captured === request.current) setPayload(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (captured === request.current) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      if (captured === request.current) setBusy(false);
     }
   };
 
@@ -319,14 +342,19 @@ export function ProjectionsPanel({ studyId, designTitle }: ProjectionsPanelProps
           <div className="pd-pane-h">
             <div><h3 className="pd-pane-t" style={{ fontSize: 13 }}>{open.label}</h3><div className="pd-pane-s">{open.of}</div></div>
             <div className="pde-actions">
+              <CrfEditorAction projectionId={open.id} programId={programId} hasNavigation={!!onNav} disabled={!payload || busy || !!error} onOpen={() => setImportOpen(true)} />
               <PG.Btn icon="download" variant="outline" disabled={!payload} onClick={save}>Download (JSON)</PG.Btn>
             </div>
           </div>
           {busy && <div role="status" className="scaf-note">Projecting…</div>}
           {error && <div className="pde-refusal" role="alert">{error}</div>}
+          {open.id === 'crf' && !programId && <div className="pde-note">Select a target project to open these blank forms in the document editor.</div>}
           {payload && !error && <ProjectionBody view={open.normalize(payload)} />}
         </section>
       )}
+      {importOpen && programId && onNav && <SourceImportDialog programId={programId}
+        source={{ kind: 'study-design-crf', studyId }} title={`${designTitle} — blank CRFs`}
+        onClose={() => setImportOpen(false)} onOpenDocument={(docId, code) => openImportedDocument(docId, programId, onNav, code)} />}
     </div>
   );
 }

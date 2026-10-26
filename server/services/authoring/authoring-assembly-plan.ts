@@ -25,6 +25,7 @@ export interface AssemblyTemplate {
   /** Server-read immutable source and guide metadata, not accepted from a client. */
   metadataFor: (code: string) => Record<string, unknown>;
   guidanceFor: (code: string) => string | undefined;
+  draftingModeFor?: (code: string) => 'narrative' | 'manual' | undefined;
 }
 
 export function parseAssemblyInput(raw: unknown, commit = false): AssemblyPreviewInput | AssemblyCommitInput {
@@ -96,14 +97,20 @@ function currentSections(rows: AssemblyStoredSection[]): Map<string, AssemblySto
   return map;
 }
 
+function rowDrafting(template: AssemblyTemplate, code: string) {
+  if (template.draftingModeFor?.(code) === 'manual') return { aiDraftable: false,
+    aiDraftableReason: 'This section requires manual source preparation; retain the original outputs, forms and signed records.' };
+  return { aiDraftable: template.aiDraftable, aiDraftableReason: template.aiDraftableReason };
+}
+
 function plannedRow(row: TemplateSectionSeed, saved: AssemblyStoredSection | undefined, ordering: number, template: AssemblyTemplate): AssemblyPlanRow {
   const content = saved ? saved.content ?? '' : row.content;
   const gaps = content.trim() ? [] : ['No authored text is stored for this section.'];
   const draftingGuidance = template.guidanceFor(row.code);
   return { code: saved?.code ?? row.code, title: saved?.title ?? row.title, content,
     ordering: saved?.order_index ?? ordering, disposition: saved ? 'preserve' : 'append',
-    ...(saved ? { existingSectionId: saved.id } : {}), aiDraftable: template.aiDraftable,
-    aiDraftableReason: template.aiDraftableReason, ...(draftingGuidance ? { draftingGuidance } : {}), gaps };
+    ...(saved ? { existingSectionId: saved.id } : {}), ...rowDrafting(template, row.code),
+    ...(draftingGuidance ? { draftingGuidance } : {}), gaps };
 }
 
 export function buildAssemblyPlan(doc: AssemblyDocument, existing: AssemblyStoredSection[], template: AssemblyTemplate, input: AssemblyPreviewInput, sources?: AssemblySourceManifest): AssemblyPlan {

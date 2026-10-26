@@ -356,18 +356,43 @@ describe('retained assembly candidates and recovery', () => {
     expect(view.result.current.reviewSessions[SECTION].isCurrent()).toBe(true);
     expect(view.result.current.reviewSessions[SECTION].state).toMatchObject({ body: 'Retained edits while dirty', changeReason: 'Review reason' });
   });
-  it('refuses a batch above 20 and makes its exact-section retry remedy reachable', async () => {
-    const rows = Array.from({ length: 21 }, (_, index) => ({ ...row(`3.2.S.${index + 1}`), ordering: index }));
+});
+
+describe('bounded full-report candidate continuation', () => {
+  it('prepares at most 20 per explicit action and resumes all retained pending candidates', async () => {
+    const rows = Array.from({ length: 41 }, (_, index) => ({ ...row(`3.2.S.${index + 1}`), ordering: index }));
     const sections = rows.map((item, index) => ({ ...saved(`section-${index}`, item.code), order_index: index }));
     configure(plan(rows), sections);
     const view = mount(); await preview(view);
     act(() => { view.result.current.setReason('Prepare missing narratives.'); view.result.current.setWithAna(true); });
     await act(async () => { await view.result.current.build(); });
-    expect(view.result.current.message).toContain('exceeds 20');
-    expect(apiRequest.mock.calls.some(call => String(call[1]).endsWith('/ai/draft'))).toBe(false);
-    act(() => view.result.current.chooseTarget('3.2.S.1'));
+    expect(view.result.current.slots.filter(slot => slot.status === 'ready')).toHaveLength(20);
+    expect(view.result.current.slots.filter(slot => slot.status === 'not-started')).toHaveLength(21);
+    expect(view.result.current.message).toMatch(/21.*(?:remain|not.started)/i);
+    act(() => { const session = view.result.current.reviewSessions['section-0']; session.update({ ...session.state, body: 'Retained reviewer edits', changeReason: 'Human review reason' }); });
     await act(async () => { await view.result.current.retryDrafts(); });
-    expect(view.result.current.slots.filter(slot => slot.status === 'ready')).toHaveLength(1);
-    expect(apiRequest.mock.calls.filter(call => String(call[1]).endsWith('/ai/draft'))).toHaveLength(1);
+    expect(view.result.current.slots.filter(slot => slot.status === 'ready')).toHaveLength(40);
+    expect(view.result.current.slots.filter(slot => slot.status === 'not-started')).toHaveLength(1);
+    expect(view.result.current.reviewSessions['section-0'].state).toMatchObject({ body: 'Retained reviewer edits', changeReason: 'Human review reason' });
+    await act(async () => { await view.result.current.retryDrafts(); });
+    expect(view.result.current.slots.filter(slot => slot.status === 'ready')).toHaveLength(41);
+    const drafts = apiRequest.mock.calls.filter(call => String(call[1]).endsWith('/ai/draft'));
+    expect(drafts).toHaveLength(41);
+    expect(new Set(drafts.map(call => call[1])).size).toBe(41);
+    expect(apiRequest.mock.calls.filter(call => String(call[1]).endsWith('/assembly/commit'))).toHaveLength(1);
+    expect(apiRequest.mock.calls.some(call => String(call[1]).endsWith('/ai/draft/accept'))).toBe(false);
+  });
+  it('retains the exact-section continuation choice after the first bounded batch', async () => {
+    const rows = Array.from({ length: 22 }, (_, index) => ({ ...row(`3.2.S.${index + 1}`), ordering: index }));
+    configure(plan(rows), rows.map((item, index) => ({ ...saved(`section-${index}`, item.code), order_index: index })));
+    const view = mount(); await preview(view);
+    act(() => { view.result.current.setReason('Prepare missing narratives.'); view.result.current.setWithAna(true); });
+    await act(async () => { await view.result.current.build(); });
+    expect(view.result.current.slots.filter(slot => slot.status === 'ready')).toHaveLength(20);
+    act(() => view.result.current.chooseTarget('3.2.S.22'));
+    await act(async () => { await view.result.current.retryDrafts(); });
+    expect(view.result.current.slots.find(slot => slot.section.code === '3.2.S.22')?.status).toBe('ready');
+    expect(view.result.current.slots.find(slot => slot.section.code === '3.2.S.21')?.status).toBe('not-started');
+    expect(apiRequest.mock.calls.filter(call => String(call[1]).endsWith('/ai/draft'))).toHaveLength(21);
   });
 });

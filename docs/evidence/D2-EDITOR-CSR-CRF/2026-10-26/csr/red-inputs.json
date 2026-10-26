@@ -1,0 +1,155 @@
+{
+  "capturedUtc": "2026-10-26T20:03:04.508031+00:00",
+  "inputs": [
+    {
+      "path": "server/services/market-specs/document-template-library.ts",
+      "sha256": "3c786da1ae4d1c2be040880ca85ad2a4dab44dd5970118196caa42a2ba6a9579",
+      "snapshot": "red-00-document-template-library.ts.gz"
+    },
+    {
+      "path": "server/services/regulatory/templateCatalog.ts",
+      "sha256": "679c00ebc2582d29adaf570a100c8d528cfd195cc765bd1f36437582f3e2f33a",
+      "snapshot": "red-01-templateCatalog.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/builtin-authoring-templates.ts",
+      "sha256": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+      "snapshot": "red-02-builtin-authoring-templates.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/ind-template-types.ts",
+      "sha256": "51d946c9dc97babb7ac09ff149220bb5d0239f63fc30295f6b4b50523ef7602c",
+      "snapshot": "red-03-ind-template-types.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/ind-template-outlines-m4-m5.ts",
+      "sha256": "4d59db0cf1bc7b6f6fa579f850930203bcab4b81c22f1c177180cf70db76e643",
+      "snapshot": "red-04-ind-template-outlines-m4-m5.ts.gz"
+    },
+    {
+      "path": "server/services/ind/ctd/csr-e3-guidance.ts",
+      "sha256": "e8dc8a7ce4421f005ac006bdbfb9f51bec746e09c330bd9719aaaa2555f810a3",
+      "snapshot": "red-05-csr-e3-guidance.ts.gz"
+    },
+    {
+      "path": "server/services/ana/saved-template-review.ts",
+      "sha256": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+      "snapshot": "red-06-saved-template-review.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "sha256": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+      "snapshot": "red-07-authoring-template-guidance.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "042299ceb5e3b467bbcc1508eb7dd40b8b089775b64ced126ed47e0ffab97e25",
+      "snapshot": "red-08-authoring-draft-template.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-sections.ts",
+      "sha256": "38077467589bc226d55bd9c515ca3d6af2f2cced2d3144478a8ffaa0e3b31b7c",
+      "snapshot": "red-09-authoring-template-sections.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-plan.ts",
+      "sha256": "0f5360ec15d93ce19a114540c623176b3ba87618544a3b3f0eb66d23d0e3a8f5",
+      "snapshot": "red-10-authoring-assembly-plan.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-source.ts",
+      "sha256": "9b88fa8db2a9868506a0f549bba81dcabc13349b602bd31e01cbe2e3df4c5bf2",
+      "snapshot": "red-11-authoring-assembly-source.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "350968ceb81b53c28ccf0a4cc5eb9f7dfe5c6463af229d4ccccfbb4c7504798f",
+      "snapshot": "red-12-assemblyDraftQueue.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+      "snapshot": "red-13-AuthoringAssemblyBuild.tsx.gz"
+    },
+    {
+      "path": "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+      "sha256": "98d83db3aa560e61088409ddc6b3230777061a2af7d17ec76c4748631b94c9d7",
+      "snapshot": "red-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+      "sha256": "11530ea774ab278f5c788a82925fc6aa88bf4df0de57f093f71a31478b8fcc53",
+      "snapshot": "red-15-authoringAssemblyDraftSafety.pglite.test.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+      "sha256": "8aa98d5291e625baa4d1d1e50d7635c7b4a296dd9f0c370c1a90803e0ca965a1",
+      "snapshot": "red-16-authoringAssemblyBuild.test.tsx.gz"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-template-preparation.test.ts",
+      "sha256": "1d51c5335bcb2b0f18e300c1f1c435594d843f7f5a9b29a3bbd7c4b97990c85e",
+      "snapshot": "red-17-document-template-preparation.test.ts.gz"
+    },
+    {
+      "path": "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "sha256": "8cd50512ff2a9ca9de8cfc8949059ceb41c48f31ff53067cad717d65d302fa28",
+      "snapshot": "red-18-document-template-library.test.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_template-editor-fixture.ts",
+      "sha256": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+      "snapshot": "red-19-_template-editor-fixture.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-canvas-fixture.ts",
+      "sha256": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+      "snapshot": "red-20-_authoring-canvas-fixture.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-record-fixture.ts",
+      "sha256": "328fd5edc28a4f7d18baeeae35ca92efa333c03fb6680dde380abac91e038006",
+      "snapshot": "red-21-_authoring-record-fixture.ts.gz"
+    },
+    {
+      "path": "shared/authoring/assembly.ts",
+      "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+      "snapshot": "red-22-assembly.ts.gz"
+    },
+    {
+      "path": "shared/authoring/recorded-template-source.ts",
+      "sha256": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+      "snapshot": "red-23-recorded-template-source.ts.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "red-24-vitest.config.ts.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "red-25-setup.ts.gz"
+    },
+    {
+      "path": "eslint.config.js",
+      "sha256": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+      "snapshot": "red-26-eslint.config.js.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "red-27-package.json.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+      "snapshot": "red-28-package-lock.json.gz"
+    },
+    {
+      "path": "server/services/market-specs/crf-authoring-templates.ts",
+      "sha256": "9be8ee27c41bd3634f04bd7cba9340c4ce6e260bbb9a985ca113f792b3b1f0d3",
+      "snapshot": "red-29-crf-authoring-templates.ts.gz"
+    }
+  ]
+}

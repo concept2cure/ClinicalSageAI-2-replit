@@ -9,6 +9,13 @@ export class TemplateGuidanceError extends Error {
   constructor(readonly status: 403 | 404 | 503, message: string) { super(message); }
 }
 
+function checkedDraftingModes(rows: Array<Record<string, unknown>>) {
+  if (rows.some(row => row.drafting_mode !== undefined && row.drafting_mode !== 'narrative' && row.drafting_mode !== 'manual')) {
+    throw new TemplateGuidanceError(503, 'The section template drafting mode could not be verified.');
+  }
+  return rows;
+}
+
 function assemblyTemplateId(metadata: Record<string, unknown>, source: unknown, docId: string): unknown {
   if (metadata.assembly === undefined) return undefined;
   const receipt = metadata.assembly as Record<string, unknown> | null;
@@ -37,8 +44,8 @@ function recordedGuide(metadata: unknown, templateId: unknown, sectionId: string
   if (!source || typeof source !== 'object' || !('id' in source) || source.id !== selectedId) throw new TemplateGuidanceError(503, 'The saved template guidance identity could not be verified.');
   const guide = metadata.templateGuidance;
   if (!guide || typeof guide !== 'object' || !('guidance_text' in guide) || typeof guide.guidance_text !== 'string') throw new TemplateGuidanceError(503, 'Saved template guidance could not be read.');
-  return [{ ...guide, id: `${sectionId}:template`, template_id: selectedId, template_source: source,
-    guidance_note: 'Reference guidance as recorded when this section was created. Confirm current requirements and applicability; it is not authored evidence.' }];
+  return checkedDraftingModes([{ ...guide, id: `${sectionId}:template`, template_id: selectedId, template_source: source,
+    guidance_note: 'Reference guidance as recorded when this section was created. Confirm current requirements and applicability; it is not authored evidence.' }]);
 }
 
 export interface SavedTemplateGuidanceRead {
@@ -61,13 +68,13 @@ export async function templateGuidanceAfterAccess(q: RequestSqlClient, identity:
   if (typeof templateId !== 'string') return { authority: 'current-reference', rows: [] };
   const own = await q.query(`SELECT tg.* FROM template_guidance tg
     WHERE tg.template_id=$1 AND tg.tenant_id=$2 AND tg.section_code=$3 ORDER BY tg.section_code`, [templateId, tenantId, code]);
-  if (own.rows.length) return { authority: 'current-reference', rows: own.rows };
+  if (own.rows.length) return { authority: 'current-reference', rows: checkedDraftingModes(own.rows) };
   try {
     const global = await q.query(`SELECT ts.content_guidance AS guidance_text, ts.required_elements AS compliance_checklist,
       ts.source_reference, ts.section_code, ts.section_title AS section_name
       FROM intelligence.template_sections ts JOIN intelligence.document_templates t ON t.id=ts.template_id AND t.status='active'
       WHERE ts.template_id=$1 AND ts.section_code=$2 ORDER BY ts.ordering`, [templateId, code]);
-    return { authority: 'current-reference', rows: global.rows };
+    return { authority: 'current-reference', rows: checkedDraftingModes(global.rows) };
   } catch {
     throw new TemplateGuidanceError(503, 'The reference template guidance store could not be read.');
   }

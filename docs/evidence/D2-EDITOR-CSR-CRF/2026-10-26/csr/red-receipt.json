@@ -1,0 +1,26 @@
+{
+  "startedUtc": "2026-10-26T20:03:04.508374+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+    "--testNamePattern=full CSR|saved manual section|unknown present saved drafting|explicit narrative section|at most 20|exact-section continuation",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 1,
+  "elapsedSeconds": 15.059,
+  "sourceDrift": [],
+  "testSummary": [
+    "Test Files  3 failed (3)",
+    "Tests  9 failed | 91 skipped (100)",
+    "Duration  14.61s (transform 4.13s, setup 149ms, import 3.87s, tests 9.75s, environment 374ms)"
+  ],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "939184e86b460eeffc35d92bc85db33a09e88d032562af1ccf618ef0a08968e9"
+}

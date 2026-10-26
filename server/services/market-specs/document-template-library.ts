@@ -24,8 +24,9 @@
  * @module server/services/market-specs/document-template-library
  */
 
-import { e3TopLevel, type E3Section } from '../ind/ctd/index.js';
-import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
+import type { E3Section } from '../ind/ctd/index.js';
+import { e3SectionSummary, e3SectionDraftingMode, ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
+import { CRF_AUTHORING_TEMPLATES } from './crf-authoring-templates';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
@@ -48,6 +49,8 @@ export interface TemplateSection {
   /** What this section is for (concise, factual). */
   purpose: string;
   required: boolean;
+  /** Explicit section preparation policy, recorded with saved template guidance. */
+  drafting_mode?: 'narrative' | 'manual';
   /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
   subsections?: TemplateSection[];
   /** Headings a correction replaced, so a document bound to an earlier outline still resolves to this section (2026-10-19). */
@@ -102,9 +105,9 @@ function withBasis(t: Omit<DocumentTemplateStructure, 'regulatoryBasis'> & { bas
   return { ...t, regulatoryBasis: basisLabel(t.basis) };
 }
 
-/** One ICH E3 top-level heading as a template section, its purpose the tree's own one-line summary. */
+/** Every numbered E3 heading uses the same record and source-preparation policy. */
 function e3TemplateSection(s: E3Section): TemplateSection {
-  return { number: s.number, heading: s.title, purpose: e3SectionSummary(s), required: s.applies === 'always' };
+  return { number: s.number, heading: s.title, purpose: e3SectionSummary(s), required: s.applies === 'always', drafting_mode: e3SectionDraftingMode(s.number) };
 }
 
 /**
@@ -440,8 +443,9 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     families: ['ectd'],
     ctdSection: '5.3.5.1',
     regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports (canonical tree: server/services/ind/ctd/csr-e3-guidance.ts, with a basis per section)',
-    sections: e3TopLevel().map(e3TemplateSection),
+    sections: ICH_E3_GUIDANCE.map(e3TemplateSection),
   },
+  ...CRF_AUTHORING_TEMPLATES,
   ...EXISTING_BIOTECH_COMPONENT_OUTLINES,
 ];
 

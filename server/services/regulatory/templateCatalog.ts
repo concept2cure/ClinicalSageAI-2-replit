@@ -67,6 +67,11 @@ const EU_SPECIFIC_TEMPLATES: CatalogTemplateEntry[] = [
 // ─── Catalog Registry ─────────────────────────────────────────────────────────
 
 const TEMPLATE_SETS: Record<string, CatalogTemplateEntry[]> = {
+  clinical_documents: [
+    { id: 'clinical_study_report', title: 'Clinical Study Report', description: 'Full ICH E3 working report; original outputs and appendices require manual source preparation', sectionCode: '5.3.5.1', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'blank_crf', title: 'Blank CRF design/specification', description: 'Working design for blank case report forms; not completed subject records', format: 'mixed', aiDraftable: true, category: 'clinical' },
+    { id: 'crf_annotation_worksheet', title: 'CRF annotation worksheet', description: 'Working annotation planning from verified source specifications', format: 'mixed', aiDraftable: true, category: 'clinical' },
+  ],
   ctd: CTD_TEMPLATES,
   device: DEVICE_TEMPLATES,
   eu_specific: EU_SPECIFIC_TEMPLATES,

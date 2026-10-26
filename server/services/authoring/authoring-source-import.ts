@@ -1,4 +1,4 @@
-import { isWorkflowSourceKind } from '../../../shared/authoring/source-import';
+import { isWorkflowSourceKind, studyDesignImportId } from '../../../shared/authoring/source-import';
 /**
  * Pull an exact source into the existing authoring store. Source identities,
  * bytes and provenance come from the server; no pasted source receipt is
@@ -302,17 +302,23 @@ async function saveWorkingCopy(work: ImportWork): Promise<SourceImportOutcome> {
 }
 
 interface WorkflowInput { programId: string; source: WorkflowImportSource; previewOnly: boolean; expectedFingerprint?: string; reason?: string; associationReason?: string }
+const workflowInteger = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
 
-function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
-  const validId = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
-  if (selected.kind === 'protocol' && validId(selected.documentId)) return { kind: 'protocol', documentId: Number(selected.documentId) };
-  if ((selected.kind === 'ivd-assessment' || selected.kind === 'ivd-document') && typeof selected.documentId === 'string' && UUID.test(selected.documentId)) return { kind: selected.kind, documentId: selected.documentId.toLowerCase() };
-  if (selected.kind !== 'csr' || !validId(selected.jobId)) return abort(400, 'SOURCE_REQUIRED', 'Choose an exact saved protocol or CSR output.');
+function csrWorkflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
+  if (selected.kind !== 'csr' || !workflowInteger(selected.jobId)) return abort(400, 'SOURCE_REQUIRED', 'Choose an exact saved workflow source.');
   const selection = selected.sectionNumbers;
   if (selection === undefined) return { kind: 'csr', jobId: Number(selected.jobId) };
   if (!Array.isArray(selection) || !selection.length || selection.length > MAX_SECTIONS
     || selection.some(v => typeof v !== 'string' || !/^\d+(?:\.\d+)*$/.test(v))) return abort(400, 'SOURCE_REQUIRED', 'Choose valid saved CSR section numbers.');
   return { kind: 'csr', jobId: Number(selected.jobId), sectionNumbers: [...new Set(selection as string[])].sort() };
+}
+
+function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
+  if (selected.kind === 'protocol' && workflowInteger(selected.documentId)) return { kind: 'protocol', documentId: Number(selected.documentId) };
+  const studyId = studyDesignImportId(selected.studyId);
+  if (selected.kind === 'study-design-crf' && studyId) return { kind: 'study-design-crf', studyId };
+  if ((selected.kind === 'ivd-assessment' || selected.kind === 'ivd-document') && typeof selected.documentId === 'string' && UUID.test(selected.documentId)) return { kind: selected.kind, documentId: selected.documentId.toLowerCase() };
+  return csrWorkflowSelector(selected);
 }
 
 function workflowReason(value: unknown, code: string): string {
