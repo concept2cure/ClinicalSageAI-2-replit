@@ -40,6 +40,19 @@ export const ICH_E3_GUIDANCE: readonly E3Section[] = Object.freeze([
   ...E3_APPENDIX_SECTIONS,
 ]);
 
+/** Original outputs/appendices and the generated contents page require source preparation. */
+export function e3SectionDraftingMode(number: string): 'narrative' | 'manual' {
+  return number === '3' || /^(14|15|16)(?:\.|$)/.test(number) ? 'manual' : 'narrative';
+}
+
+/** Historical saved guides retain this exact canonical reference even without a policy field. */
+export function e3ReferenceDraftingMode(reference: unknown): 'narrative' | 'manual' | undefined {
+  const prefix = 'server/services/ind/ctd/csr-e3-guidance.ts#';
+  if (typeof reference !== 'string' || !reference.startsWith(prefix)) return undefined;
+  const section = BY_NUMBER.get(reference.slice(prefix.length));
+  return section ? e3SectionDraftingMode(section.number) : undefined;
+}
+
 const BY_NUMBER: ReadonlyMap<string, E3Section> = new Map(ICH_E3_GUIDANCE.map((s) => [s.number, s]));
 
 /** "§12.2", "E3 12.2", " 12.2 " → "12.2"; null when it is not an E3 number. */

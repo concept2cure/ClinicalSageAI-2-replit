@@ -1,6 +1,6 @@
 /** A working copy keeps its exact original dependency through later exports.
  * Keeping extracted data permits renditions; withdrawing data does not. */
-import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
+import { isWorkflowImportOrigin, studyDesignImportId, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { isDeepStrictEqual } from 'node:util';
 import { authorizeAuthoringProgram } from './authoring-program-access';
 import type { AuthoringActor } from './authoring-documents';
@@ -12,12 +12,17 @@ import type { Queryable } from './authoring-evidence';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HASH = /^[0-9a-f]{64}$/i;
 
-function hasWorkflowIdentity(source: WorkflowImportOrigin): boolean {
+function workflowIdentityMatches(source: WorkflowImportOrigin): boolean {
   const ivd = source.kind === 'ivd-assessment' || source.kind === 'ivd-document';
-  const idValid = ivd ? UUID.test(source.id) : /^[1-9]\d*$/.test(source.id);
-  const selectionId = source.selection?.kind === 'csr' ? source.selection.jobId : source.selection?.documentId;
-  return idValid && HASH.test(source.fingerprint)
-    && source.selection?.kind === source.kind && String(selectionId) === source.id
+  const study = source.kind === 'study-design-crf';
+  const idValid = study ? typeof source.id === 'string' && studyDesignImportId(source.id) === source.id : ivd ? UUID.test(source.id) : /^[1-9]\d*$/.test(source.id);
+  const selectionId = source.selection?.kind === 'study-design-crf' ? source.selection.studyId
+    : source.selection?.kind === 'csr' ? source.selection.jobId : source.selection?.documentId;
+  return idValid && source.selection?.kind === source.kind && String(selectionId) === source.id;
+}
+
+function hasWorkflowIdentity(source: WorkflowImportOrigin): boolean {
+  return workflowIdentityMatches(source) && HASH.test(source.fingerprint)
     && Array.isArray(source.sectionOrigins) && source.sectionOrigins.length > 0
     && source.sectionOrigins.every(s => typeof s.code === 'string' && HASH.test(s.contentSha256) && ['machine', 'template', 'unknown'].includes(s.originalAuthorship))
     && Array.isArray(source.gaps) && source.gaps.every(g => typeof g === 'string');

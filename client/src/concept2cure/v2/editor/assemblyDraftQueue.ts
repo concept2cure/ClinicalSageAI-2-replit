@@ -68,19 +68,16 @@ export async function runAssemblyDrafts(operation: AssemblyOperation): Promise<v
   if (pending.some(slot => !slot.draftRegion || !['FDA', 'EMA', 'PMDA', 'Health Canada'].includes(slot.draftRegion))) {
     operation.update({ phase: 'stopped', message: 'Structure is saved. The template does not establish an AnA drafting region, so no candidate was generated.' }); return;
   }
-  if (pending.length > 20) {
-    operation.update({ phase: 'stopped', message: 'Structure is saved. This selection exceeds 20 candidate sections. Choose one exact template section for AnA preparation; no truncated batch was generated.' }); return;
-  }
   operation.update({ phase: 'drafting', message: 'Preparing section candidates sequentially. Nothing is accepted automatically.' });
-  for (const slot of pending) {
+  for (const slot of pending.slice(0, 20)) {
     if (!(await draftSlot(operation, slot, slot.draftRegion!))) break;
   }
   if (bucket.token !== operation.token) return;
   const selected = bucket.state.slots.filter(slot => slot.sourceSelectionKey === assemblySelectionKey(bucket.state.sourceSelection));
   const ready = selected.filter(slot => slot.status === 'ready').length;
   const preserved = selected.filter(slot => slot.status === 'preserved').length;
-  const remaining = selected.some(slot => ['not-started', 'failed'].includes(slot.status));
+  const remaining = selected.filter(slot => ['not-started', 'failed'].includes(slot.status)).length;
   const preservation = preserved ? `${preserved} saved section${preserved === 1 ? '' : 's'} preserved. ` : '';
   const completion = ready ? 'Review and accept each section separately in the existing editor.' : 'No candidate is awaiting review.';
-  operation.update({ phase: remaining ? 'stopped' : 'built', message: `${ready} candidate${ready === 1 ? '' : 's'} retained for individual review. ${preservation}${remaining ? 'Preparation stopped; retry failed or not-started sections explicitly.' : completion}` });
+  operation.update({ phase: remaining ? 'stopped' : 'built', message: `${ready} candidate${ready === 1 ? '' : 's'} retained for individual review. ${preservation}${remaining ? `${remaining} failed or not-started candidates remain. Continue explicitly to prepare up to 20; nothing is accepted automatically.` : completion}` });
 }

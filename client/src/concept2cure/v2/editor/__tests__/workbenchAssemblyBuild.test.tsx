@@ -312,7 +312,7 @@ describe('assembly late results preserve current work and scope', () => {
     expect(aiCalls()).toHaveLength(0);
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
     expect(screen.getByLabelText('Document assembly').textContent).toMatch(/confirmed saved.*Context changed before drafting/i);
-    expect((screen.getByRole('button', { name: 'Retry remaining candidates' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Prepare next candidates (up to 20)' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('retains edits typed during the confirmed build refresh and does not begin later generation', async () => {
@@ -381,7 +381,7 @@ describe('saved text does not starve later assembly candidates in the existing p
       expect(aiCalls().map(([, url]) => url)).toEqual([`/api/authoring/sections/${SECOND}/ai/draft`]);
       preserveProtocol();
       draftReply = sectionId => ok({ success: true, draft: { content: `Retained candidate for ${sectionId}.`, draftId: `draft-${sectionId}`, metadata: {} } });
-      fireEvent.click(screen.getByRole('button', { name: 'Retry remaining candidates' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Prepare next candidates (up to 20)' }));
     }
     const candidates = await screen.findByTestId('assembly-candidates');
     const preserved = within(candidates).getByText(`${emptySection.code} ${emptySection.title}`).closest('li')!;
@@ -405,7 +405,7 @@ describe('saved text does not starve later assembly candidates in the existing p
     expect(assemblyCalls('commit')).toHaveLength(1);
     expect(apiRequest.mock.calls.some(([, url]) => String(url).endsWith('/accept'))).toBe(false);
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
-    expect(screen.queryByRole('button', { name: 'Retry remaining candidates' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Prepare next candidates (up to 20)' })).toBeNull();
     expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
   });
 

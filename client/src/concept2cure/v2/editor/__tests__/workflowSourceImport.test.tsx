@@ -43,6 +43,26 @@ beforeEach(() => {
 afterEach(() => { cleanup(); clearEditorTarget(); authService.endSession(null); clearAuthToken(); clearShellProject(); localStorage.clear(); sessionStorage.clear(); });
 
 describe('stored workflow intake', () => {
+  it('previews exact saved-design blank CRFs, creates a reasoned copy and opens only its saved section', async () => {
+    const savedSource: WorkflowImportSource = { kind: 'study-design-crf', studyId: 'sd_actual' };
+    const origin = { ...preview.origin, kind: 'study-design-crf' as const, id: savedSource.studyId, selection: savedSource,
+      conversion: 'study-design-crf-projection' as const,
+      sectionOrigins: [{ ...preview.origin.sectionOrigins[0], code: 'crf.form.001', originalAuthorship: 'template' as const }] };
+    const sourcePreview = { ...preview, origin, sections: [{ code: 'crf.form.001', title: 'Blank demographics', contentSha256: hash }] };
+    const copy = { ...created, origin, doc: { ...created.doc, provenance: { source: 'import', importSource: { ...origin, reason: 'Review saved clinical output', warnings: [] } } },
+      sections: [{ ...created.sections[0], code: 'crf.form.001', title: 'Blank demographics', content: 'Participant identifier: [blank]' }] };
+    apiRequest.mockResolvedValueOnce(ok(sourcePreview)).mockResolvedValueOnce(ok(copy));
+    const onOpenDocument = vi.fn(); render(dialog({ source: savedSource, title: 'Blank CRFs', onOpenDocument }));
+    await screen.findByTestId('workflow-import-preview');
+    reason(); associate(); fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
+    await screen.findByRole('button', { name: 'Open working copy' });
+    expect(apiRequest.mock.calls[0][2]).toEqual({ programId: PID, source: savedSource, previewOnly: true });
+    expect(apiRequest.mock.calls[1][2]).toMatchObject({ source: savedSource, expectedFingerprint: hash, reason: 'Review saved clinical output' });
+    fireEvent.click(screen.getByRole('button', { name: 'Open working copy' }));
+    expect(onOpenDocument).toHaveBeenCalledWith(DOC, 'crf.form.001');
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { kind: 'study-design-crf', studyId: 'sd_other' })).toBeNull();
+    expect(readWorkflowPreview({ success: true, data: sourcePreview }, PID, { kind: 'study-design-crf', studyId: 'sd_actual\n' })).toBeNull();
+  });
   it('previews an exact saved IVD document and opens only the confirmed Authoring document id', async () => {
     const savedSource: WorkflowImportSource={kind:'ivd-document',documentId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'};
     const origin={...preview.origin,kind:'ivd-document' as const,id:savedSource.documentId,selection:savedSource,conversion:'ivd-document-snapshot' as const,

@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "artifact": "ui-red-source/client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx.gz",
+      "sourceSha256": "62f627be14175f5c84cfd9dc90a10827ac94a78261baefc3dc099f4216da79a3",
+      "gzipSha256": "f2d47c5aa6cb4edccb38e753f438584d262a1fcf9002ca5f8b125772891a75d8"
+    },
+    {
+      "artifact": "ui-red-source/client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx.gz",
+      "sourceSha256": "e401498a349201e0bc8d99cee14a6148c3dd750be3483c3e5fcd14f217b417c9",
+      "gzipSha256": "ba72d32ab0c15192c053d774956a715e0b5bda4dc2313c84f0e4bc8cf1e4a0e8"
+    },
+    {
+      "artifact": "catalog-red-source/server/services/authoring/__tests__/crf-authoring-templates.test.ts.gz",
+      "sourceSha256": "576eb7ecce97f6f9d863a04f837be23bd60d21a838b84b1d6070d0ebf2eb2094",
+      "gzipSha256": "1e11a41dfc4fc9825308230ef0a0a4c133e552e83e516264059790d7631629c2"
+    },
+    {
+      "artifact": "catalog-red-source/server/services/authoring/builtin-authoring-templates.ts.gz",
+      "sourceSha256": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+      "gzipSha256": "57c0dcb18f43526cd1a432c0a64b73f2b7ad39cac8532e9f6f762cacc34f0bbb"
+    },
+    {
+      "artifact": "catalog-red-source/server/services/market-specs/document-template-library.ts.gz",
+      "sourceSha256": "3c786da1ae4d1c2be040880ca85ad2a4dab44dd5970118196caa42a2ba6a9579",
+      "gzipSha256": "408b6141c4c412fc016a541040330d902af66c25eebbec3d32f311154732671a"
+    },
+    {
+      "artifact": "catalog-red-source/server/services/regulatory/templateCatalog.ts.gz",
+      "sourceSha256": "679c00ebc2582d29adaf570a100c8d528cfd195cc765bd1f36437582f3e2f33a",
+      "gzipSha256": "82b27bd8856bddeaa69665cf40ac04f0ad7b3ce4c868923e9ba30519f860bba3"
+    }
+  ]
+}

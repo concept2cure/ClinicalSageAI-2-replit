@@ -79,6 +79,8 @@ export function getDocumentPreparationQuestion(topic: PreparationTopic): Prepara
 
 const PROFILES: Record<string, PreparationTopic[]> = {
   clinical_study_report: ['data_cutoff', 'statistical_results', 'safety'],
+  blank_crf: ['estimands', 'safety', 'local_requirements'],
+  crf_annotation_worksheet: ['estimands', 'data_cutoff', 'local_requirements'],
   clinical_overview: ['statistical_results', 'safety', 'quality'],
   clinical_summary: ['statistical_results', 'data_cutoff', 'safety'],
   protocol: ['estimands', 'safety', 'quality'],

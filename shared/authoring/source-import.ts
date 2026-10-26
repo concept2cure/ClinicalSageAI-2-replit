@@ -6,10 +6,19 @@ export type BinaryImportSource =
 export type WorkflowImportSource =
   | { kind: 'protocol'; documentId: number }
   | { kind: 'csr'; jobId: number; sectionNumbers?: string[] }
+  | { kind: 'study-design-crf'; studyId: string }
   | { kind: 'ivd-assessment'; documentId: string }
   | { kind: 'ivd-document'; documentId: string };
 
 export type AuthoringImportSource = BinaryImportSource | WorkflowImportSource;
+
+/** Exact PRM study identities are bounded strings, rather than UUIDs. */
+export function studyDesignImportId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const id = value.trim();
+  if (!id || id.length > 100 || Array.from(value).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) return null;
+  return id;
+}
 
 export interface BinaryImportOrigin {
   kind: BinaryImportSource['kind'];
@@ -44,7 +53,7 @@ export interface WorkflowImportOrigin {
   selection: WorkflowImportSource;
   gaps: string[];
   version: string | null;
-  conversion: 'protocol-structure' | 'ich-e3-sections' | 'ivd-assessment-snapshot' | 'ivd-document-snapshot';
+  conversion: 'protocol-structure' | 'ich-e3-sections' | 'ivd-assessment-snapshot' | 'ivd-document-snapshot' | 'study-design-crf-projection';
   sourceScope: { level: 'organization' | 'program' | 'project'; programId: string | null; projectId: number | null };
   association: { mode: 'recorded' | 'explicit'; reason: string | null };
   sectionOrigins: WorkflowSectionOrigin[];
@@ -73,10 +82,10 @@ export interface AuthoringSourceImportPreviewData {
 }
 
 export function isWorkflowSourceKind(kind: unknown): kind is WorkflowImportSource['kind'] {
-  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document';
+  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document' || kind === 'study-design-crf';
 }
 export const WORKFLOW_SOURCE_LABELS: Readonly<Record<WorkflowImportSource['kind'], string>> = {
-  protocol: 'protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document',
+  protocol: 'protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document', 'study-design-crf': 'blank CRF shell',
 };
 
 export function isWorkflowImportOrigin(origin: AuthoringImportOrigin): origin is WorkflowImportOrigin {

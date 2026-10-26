@@ -5,6 +5,7 @@ import { createScopedLogger } from '../../utils/logger';
 const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
+import { studyDesignImportId } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
 import { requireCsrJobAccess, readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { canAccessReportProject } from '../report-os/project-access';
@@ -50,6 +51,11 @@ function sourceOrigin(code: string, sourceRowId: string, content: string, author
 
 function validateInput(input: WorkflowMaterializationInput): void {
   if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target project are required.');
+  if (input.source.kind === 'study-design-crf') {
+    const id = input.source.studyId;
+    if (typeof id !== 'string' || studyDesignImportId(id) !== id) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved study design.');
+    return;
+  }
   const id = input.source.kind === 'csr' ? input.source.jobId : input.source.documentId;
   if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
     if (typeof id !== 'string' || !UUID.test(id)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved IVD record.');
@@ -249,6 +255,10 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
 export async function materializeWorkflowSource(input: WorkflowMaterializationInput, q: Queryable): Promise<MaterializedWorkflowSource> {
   validateInput(input);
   try {
+    if (input.source.kind === 'study-design-crf') {
+      const { materializeStudyDesignCrfSource } = await import('./study-design-crf-source');
+      return await materializeStudyDesignCrfSource({ ...input, source: input.source }, q);
+    }
     if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
       const { materializeIvdWorkflowSource } = await import('./ivd-workflow-source');
       return await materializeIvdWorkflowSource({ ...input, source: input.source }, q);

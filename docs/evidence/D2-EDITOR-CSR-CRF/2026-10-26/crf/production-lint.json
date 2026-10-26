@@ -1,0 +1,51 @@
+{
+  "startedAt": "2026-10-26T20:11:33.406418+00:00",
+  "argv": [
+    "./node_modules/.bin/eslint",
+    "shared/authoring/source-import.ts",
+    "server/services/authoring/study-design-crf-source.ts",
+    "server/services/authoring/authoring-source-import.ts",
+    "server/services/authoring/workflow-source-import.ts",
+    "server/services/authoring/import-source-references.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "--max-warnings=0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.133,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "source-freeze.json",
+  "sourcesBefore": {
+    "shared/authoring/source-import.ts": "9ed5d414d727b23b25f3b6e988a9149ff77109e692d8b66fb6ef62b2219e24e7",
+    "server/services/authoring/authoring-source-import.ts": "741dafba58e728c398cd69235257b70a9bf711eb03c288f72730775bf3612340",
+    "server/services/authoring/workflow-source-import.ts": "66ed1e536bc0dea39d1aa89d8ea654c5ce02da724a8f3e25db7b5d4ac85c4957",
+    "server/services/authoring/import-source-references.ts": "1ab46accb9a4baf6a38ac7636acc4c1b342f34f378337f4a155e9b5f53b0a711",
+    "server/services/authoring/workflow-import-governance.ts": "ed5358709282730b5c140b79b9386600a30691a6373d41669a0d97b0c4d89715",
+    "server/services/authoring/study-design-crf-source.ts": "150bcbe4863989a060c03b7d7193662b5bb4cc9cf09da16de30c71c31455a2f0",
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/study-design/study-design-repository.ts": "5643011144d91aefa25795f8901f5f1d2e8b0cd29abb9a6365b3b153d08f89eb",
+    "shared/authoring/plain-text-html.ts": "683497ab49c9af3a97cc88b2dbb6091e88796012b1a0ab0947a1e1696feec10f",
+    "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts": "6d99a88dc6e60018127405fce4820e56079a7a274864bedbb6f39b6fddf9117f",
+    "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts": "0d70805e7bd05ca9accd1919a6dbd0270651827e37b1d9e9048559dccda2153f",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "cca85ebc842b4707ee7d54c72b8f685a589ef1dd6ba88893c16ba4a157bed713"
+  },
+  "sourcesAfter": {
+    "shared/authoring/source-import.ts": "9ed5d414d727b23b25f3b6e988a9149ff77109e692d8b66fb6ef62b2219e24e7",
+    "server/services/authoring/authoring-source-import.ts": "741dafba58e728c398cd69235257b70a9bf711eb03c288f72730775bf3612340",
+    "server/services/authoring/workflow-source-import.ts": "66ed1e536bc0dea39d1aa89d8ea654c5ce02da724a8f3e25db7b5d4ac85c4957",
+    "server/services/authoring/import-source-references.ts": "1ab46accb9a4baf6a38ac7636acc4c1b342f34f378337f4a155e9b5f53b0a711",
+    "server/services/authoring/workflow-import-governance.ts": "ed5358709282730b5c140b79b9386600a30691a6373d41669a0d97b0c4d89715",
+    "server/services/authoring/study-design-crf-source.ts": "150bcbe4863989a060c03b7d7193662b5bb4cc9cf09da16de30c71c31455a2f0",
+    "server/services/study-design/crf-shell.ts": "fffe43d583bebb7c2e754c8640a04f8f0814d637929ce1aeb27e1f1808943e24",
+    "server/services/study-design/study-design-repository.ts": "5643011144d91aefa25795f8901f5f1d2e8b0cd29abb9a6365b3b153d08f89eb",
+    "shared/authoring/plain-text-html.ts": "683497ab49c9af3a97cc88b2dbb6091e88796012b1a0ab0947a1e1696feec10f",
+    "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts": "6d99a88dc6e60018127405fce4820e56079a7a274864bedbb6f39b6fddf9117f",
+    "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts": "0d70805e7bd05ca9accd1919a6dbd0270651827e37b1d9e9048559dccda2153f",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "cca85ebc842b4707ee7d54c72b8f685a589ef1dd6ba88893c16ba4a157bed713"
+  },
+  "sourceDrift": [],
+  "rawOutput": "production-lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}
