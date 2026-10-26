@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·········x·····
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/appMentions.test.tsx > the @ menu offers only what this viewer can open > a locked feature does not take one of the eight places from an available one
+AssertionError: expected 2 to be 8 // Object.is equality
+
+- Expected
++ Received
+
+- 8
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/appMentions.test.tsx:182:50
+    180|     render(<Host onSend={vi.fn()} />);
+    181|     type(screen.getByLabelText('Message') as HTMLTextAreaElement, '@');
+    182|     expect(screen.getAllByRole('option').length).toBe(8);
+       |                                                  ^
+    183|   });
+    184| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  21:50:55
+   Duration  2.27s (transform 584ms, setup 183ms, import 730ms, tests 528ms, environment 658ms)
+
