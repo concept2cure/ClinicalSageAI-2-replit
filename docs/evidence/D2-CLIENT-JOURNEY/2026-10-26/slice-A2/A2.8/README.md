@@ -161,3 +161,13 @@ guards, Projects pathway/client filtering and the real MDX destination shell.
 These selections overlap earlier proof and are not added to its total. The
 production client/server/audit-verifier build passes (frontend **23.70 seconds**).
 Results are in `merged/account-*.log.gz`; final normal publication gates still apply.
+
+## Accepted publication
+
+The final combined source was accepted on `concept2cure-v2` as `a6e39b7ee1ddc5c94cc222cd451d6ef4bb4014a3`.
+All mandatory publication gates passed, including full TypeScript (**zero
+errors, unchanged zero baseline**) and no increased lint warnings. The accepted
+log is `merged/accepted-push.log.gz`. A fresh remote-ref check matched this commit,
+the working tree was clean, and all eight qualified A2.8 source/test hashes still
+matched. This final evidence-only follow-up adds the accepted log; it changes no
+production source. Local test app/database processes are stopped. A2.9 is next.
