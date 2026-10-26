@@ -150,8 +150,30 @@ export function ctdComponentSections(root: string): TemplateSection[] {
 }
 
 /** A Module 2 component's template: its root's headings to the record's depth, with the basis and limits stated. */
+/**
+ * An unnumbered heading the guideline gives a component (the QOS's Introduction),
+ * as front matter: its purpose is the root brief's element that opens with
+ * `opensWith`, attributed, and it is required as its root is. The number is the
+ * platform's code for it, never an ICH M4 code.
+ */
+export function ctdFrontMatter(root: string, number: string, heading: string, opensWith: string): TemplateSection {
+  const brief = BRIEFED.get(root);
+  if (!brief) throw new Error(`The ICH M2–M5 record holds no brief for ${root}.`);
+  const own = brief.keyContentElements.find((k) => k.startsWith(opensWith));
+  return {
+    number,
+    heading,
+    purpose: own ? `From the ${root} brief: ${own}.` : `An unnumbered heading of ${root} ${brief.title}; the record holds no brief of its own for it. Draft it to the ${root} brief.`,
+    required: brief.requiredFor.length > 0,
+  };
+}
+
 export function ctdComponentTemplate(input: {
   id: string; registryId: string; root: string; title: string; guideline: string;
+  /** Unnumbered headings before the numbered ones (ctdFrontMatter). */
+  frontMatter?: TemplateSection[];
+  /** Limits of this component beyond the record's, said to the author. */
+  limitations?: string[];
 }): DocumentTemplateStructure {
   // The note counts what the rows say, never one provenance for the whole outline
   // (3a review, 2026-10-25: it claimed an extract for 36 of 49 Clinical Summary headings that had none).
@@ -173,7 +195,9 @@ export function ctdComponentTemplate(input: {
     outlineLimitations: [
       'A heading the record briefs is required when its brief names a submission (IND, NDA or BLA); any other heading takes its nearest brief’s flag, a platform rule the record does not state; a heading the guideline makes conditional is not required. Scale content to the development phase: an early IND does not need a complete marketing dossier.',
       'ICH M4 sets how the section is organised, not which studies or data a product must have. Confirm applicability and the receiving agency’s regional requirements.',
+      ...(input.limitations ?? []),
     ],
+    ...(input.frontMatter?.length ? { frontMatter: input.frontMatter } : {}),
     sections: ctdComponentSections(input.root),
   };
 }

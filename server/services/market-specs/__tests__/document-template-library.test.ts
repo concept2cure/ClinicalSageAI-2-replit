@@ -202,12 +202,19 @@ describe('document template library — lookups', () => {
 });
 
 describe('document template library — existing biotech structures are reachable honestly', () => {
+  // drug_substance and drug_product read the one ICH M2–M5 record since 2026-10-25 (D2 cleanup C2),
+  // not the project blueprint's copies: pinned in tests/regulatory/ctd-component-outlines.test.ts.
   const projected = [
     ['statistical_analysis_plan', 'ICH_SAP'],
     ['informed_consent', 'ICH_ICF'],
-    ['drug_substance', 'ICH_M3_DS'],
-    ['drug_product', 'ICH_M3_DP'],
   ] as const;
+
+  it.each([['drug_substance', '3.2.S'], ['drug_product', '3.2.P']] as const)('%s reads the record\'s %s subtree, not a project blueprint copy', (id, root) => {
+    const t = getDocumentTemplate(id)!;
+    expect(t.outlineSource).toEqual({ kind: 'document-outline', registryId: id === 'drug_substance' ? 'ICH_M3_DS' : 'ICH_M3_DP', record: `CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:${root}` });
+    expect(t.basis?.confidence).toBe('recall');
+    expect(t.outlineLimitations?.join(' ')).toMatch(/CMC \/ Module 3/);
+  });
 
   it.each(projected)('%s reads the existing %s project blueprint rather than another heading tree', (id, registryId) => {
     const t = getDocumentTemplate(id);

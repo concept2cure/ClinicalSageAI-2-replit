@@ -36,7 +36,7 @@ import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
 import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
 import { lifecycleRecordOutlineFor } from './lifecycle-record-outlines';
-import { ctdComponentTemplate } from './ctd-component-outlines';
+import { ctdComponentTemplate, ctdFrontMatter } from './ctd-component-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
@@ -112,6 +112,10 @@ function e3TemplateSection(s: E3Section): TemplateSection {
  * flag is a platform expectation, not proof of a present agency requirement.
  * Never turn project-bootstrap's default CTD fallback into a document outline.
  */
+/** The quality outlines are headings; composing their content is the CMC lane's (P-28). */
+const QUALITY_COMPOSITION_LIMIT =
+  'These are the CTD quality headings only. For a small-molecule US IND, Module 3 content is composed in CMC / Module 3 from its registers (P-28); elsewhere it is authored here from verified source records.';
+
 const PROJECT_OUTLINE_LIMITATIONS = [
   'The required flags describe the existing platform scaffold; they do not establish mandatory agency content.',
   'This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.',
@@ -204,8 +208,10 @@ const EXISTING_BIOTECH_COMPONENT_OUTLINES: DocumentTemplateStructure[] = [
   ...namedProjectOutline('informed_consent', 'ICH_ICF', undefined, [
     'The existing consent scaffold is US-oriented. Confirm the country, site, language and ethics-approved template. Executed participant consent forms remain site records; this outline is for a specimen form.',
   ]),
-  ...namedProjectOutline('drug_substance', 'ICH_M3_DS', '3.2.S'),
-  ...namedProjectOutline('drug_product', 'ICH_M3_DP', '3.2.P'),
+  // Module 3's drug substance and drug product: read from the ICH M2–M5 record since
+  // 2026-10-25 (D2 cleanup C2), where they were the project blueprint's copies.
+  ctdComponentTemplate({ id: 'drug_substance', registryId: 'ICH_M3_DS', root: '3.2.S', title: 'Module 3.2.S — Drug Substance', guideline: 'ICH M4Q(R1) — CTD Quality', limitations: [QUALITY_COMPOSITION_LIMIT] }),
+  ctdComponentTemplate({ id: 'drug_product', registryId: 'ICH_M3_DP', root: '3.2.P', title: 'Module 3.2.P — Drug Product', guideline: 'ICH M4Q(R1) — CTD Quality', limitations: [QUALITY_COMPOSITION_LIMIT] }),
   withBasis({
     id: 'dsur',
     title: 'Development Safety Update Report (DSUR)',
@@ -243,20 +249,14 @@ const SMPC_PURPOSE: Record<string, string> = {
 
 export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
   // ── CTD Module 2 summaries (ICH M4) ─────────────────────────────────────────
-  {
-    id: 'quality_overall_summary',
-    title: 'Quality Overall Summary (QOS)',
-    families: ['ectd'],
-    ctdSection: '2.3',
-    regulatoryBasis: 'ICH M4Q(R1) — CTD Quality',
-    sections: [
-      { number: '2.3.Intro', heading: 'Introduction', purpose: 'Proprietary name, nonproprietary name, dosage form, strength, route, and proposed indication.', required: true },
-      { number: '2.3.S', heading: 'Drug Substance', purpose: 'Summary of general information, manufacture, characterisation, control, reference standards, container closure, and stability for each drug substance.', required: true },
-      { number: '2.3.P', heading: 'Drug Product', purpose: 'Summary of description/composition, development, manufacture, control of excipients and product, reference standards, container closure, and stability.', required: true },
-      { number: '2.3.A', heading: 'Appendices', purpose: 'Facilities and equipment, adventitious agents safety evaluation, and other appendices.', required: false },
-      { number: '2.3.R', heading: 'Regional Information', purpose: 'Region-specific quality information (e.g. process validation scheme, medical devices).', required: false },
-    ],
-  },
+  // The Quality Overall Summary is read from the ICH M2–M5 record since 2026-10-25
+  // (D2 cleanup C2): a five-heading hand copy before, with its Introduction coded
+  // 2.3.Intro while the project blueprint coded it 2.3.I.
+  ctdComponentTemplate({
+    id: 'quality_overall_summary', registryId: 'ICH_QOS', root: '2.3', title: 'Quality Overall Summary (QOS)', guideline: 'ICH M4Q(R1) — CTD Quality',
+    frontMatter: [ctdFrontMatter('2.3', '2.3.I', 'Introduction', '2.3.Introduction')],
+    limitations: [QUALITY_COMPOSITION_LIMIT],
+  }),
   // The Nonclinical Overview, Clinical Overview and Clinical Summary are read
   // from the ICH M2–M5 record to its depth (ctd-component-outlines.ts). They were
   // hand copies of their first level until 2026-10-20: a Clinical Summary had no

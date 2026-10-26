@@ -1,0 +1,67 @@
+# C2 red, on 1d9f68643 (trunk): the QOS, drug substance and drug product templates before they read the one record — 2026-10-25
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_QOS serves every heading the record holds below 2.3, in CTD order
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_OVERVIEW serves every heading the record holds below 2.4, in CTD order
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_OVERVIEW serves every heading the record holds below 2.5, in CTD order
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_SUMMARY serves every heading the record holds below 2.6, in CTD order
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_SUMMARY serves every heading the record holds below 2.7, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_M3_DS serves every heading the record holds below 3.2.S, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_M3_DP serves every heading the record holds below 3.2.P, in CTD order
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_QOS: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_OVERVIEW: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_OVERVIEW: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_NONCLIN_SUMMARY: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_CLIN_SUMMARY: every heading is the record’s wording for its number (no second heading tree)
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_M3_DS: every heading is the record’s wording for its number (no second heading tree)
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > ICH_M3_DP: every heading is the record’s wording for its number (no second heading tree)
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the headings the hand copies did not have are there, nested under their parents
+ × tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the QOS keeps its unnumbered Introduction as front matter, coded as the project blueprint codes it
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the component template id serves the same tree as the registry id
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a Module 2 component is the record’s subtree, to its depth > the outline names the record it is read from and does not claim a checked text
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_QOS: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_NONCLIN_OVERVIEW: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_CLIN_OVERVIEW: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_NONCLIN_SUMMARY: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_CLIN_SUMMARY: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_M3_DS: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > ICH_M3_DP: no purpose is empty, and an attributed line is in the brief it names
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > a section’s purpose is the record’s own words, attributed > a benefit-risk subdivision carries what the 2.5.6 brief says of it
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_QOS: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_NONCLIN_OVERVIEW: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_CLIN_OVERVIEW: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_NONCLIN_SUMMARY: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_CLIN_SUMMARY: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_M3_DS: the picker document holds every node of the served outline
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > the Authoring picker carries the whole component > ICH_M3_DP: the picker document holds every node of the served outline
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_QOS: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_NONCLIN_OVERVIEW: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_CLIN_OVERVIEW: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_NONCLIN_SUMMARY: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_CLIN_SUMMARY: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_M3_DS: every section resolves, asked by code + title, by title or by code
+ × tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > ICH_M3_DP: every section resolves, asked by code + title, by title or by code
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > a title the outline holds more than once is listed, never resolved to the first
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > AnA drafts every section of a component outline from the record > a code asked with another title still carries the mismatch note
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > a heading the record makes conditional is not served as required
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > a line from a brief is attached only to the heading it is about, never to a sibling or a parent
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_QOS: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_NONCLIN_OVERVIEW: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_CLIN_OVERVIEW: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_NONCLIN_SUMMARY: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_CLIN_SUMMARY: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_M3_DS: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > ICH_M3_DP: a heading the record holds no brief for never claims a brief states its content
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > the outline basis counts what was matched, and does not claim it for every heading
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > the record says which headings a search extract showed, and which are numbered by pattern
+ ✓ tests/regulatory/ctd-component-outlines.test.ts > 3a review: a flag, a purpose or a basis says only what the record says > the 2.6 Tables and Figures leaves carry the type the record gives the same heading
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  10 failed | 54 passed (64)
