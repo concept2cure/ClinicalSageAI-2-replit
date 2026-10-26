@@ -1,0 +1,6 @@
+   sample_type    |  stored_side   | count 
+------------------+----------------+-------
+ finished_product | drug_substance |     7
+ finished-product | drug_product   |     6
+(2 rows)
+

@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/qc-sample-type-attribution.test.ts > an unrecognised sample type is attributed to neither material > does not make `finished_product` drug-substance evidence
+ × server/services/cmc/__tests__/qc-sample-type-attribution.test.ts > an unrecognised sample type is attributed to neither material > does not let `reference_standard` into the batch-analysis series
+ × server/services/cmc/__tests__/qc-sample-type-attribution.test.ts > an unrecognised sample type is attributed to neither material > attributes nothing for an absent or empty sample type
+      Tests  3 failed | 8 passed (11)

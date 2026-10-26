@@ -1,0 +1,2 @@
+ × server/services/cmc/__tests__/qc-sample-type-attribution.test.ts > a row written before the fix stops composing into the wrong section > is evidence for neither material, whatever decision is stored beside it
+      Tests  1 failed | 15 passed (16)

@@ -26,7 +26,7 @@
  *
  * @module server/services/cmc/recorded-capability
  */
-import { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT } from '../../../shared/cmc/qc-sample-types';
+import { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT, isKnownSampleType } from '../../../shared/cmc/qc-sample-types';
 import { parseAcceptanceCriterion } from './recorded-stability';
 import {
   assessProcessCapability,
@@ -34,6 +34,15 @@ import {
 } from './process-capability';
 
 /** The QC payload shape this reads — the canonical `qc_result` source payload. */
+/** A result the register cannot attribute: its sample type is outside the
+ *  vocabulary, so it belongs to neither §3.2.S.4.4 nor §3.2.P.5.4. Named by the
+ *  reports that would otherwise simply omit it. */
+export function unattributableSampleType(p: RecordedQcResult): string | null {
+  const raw = String(p?.sampleType ?? '').trim();
+  if (!raw) return '(none recorded)';
+  return isKnownSampleType(raw) ? null : raw;
+}
+
 export interface RecordedQcResult {
   testMethod?: unknown;
   sampleType?: unknown;
@@ -194,6 +203,17 @@ export function isBatchAnalysisFor(
   if (String((p as { status?: unknown })?.status ?? '').trim().toLowerCase() === 'retired') return false;
   if (p?.isBatchAnalysis === false) return false;
   if (NON_BATCH_SAMPLE_TYPES.includes(type)) return false;
+  /* A sample type outside the register's vocabulary is evidence for NEITHER
+     material, whatever decision is stored beside it.
+     The mapper used to read any unrecognised value as drug substance, so rows
+     written before 2026-10-26 carry `batchAnalysisSide: 'drug_substance'` on a
+     sample type nothing can interpret — seven of them, all `finished_product`,
+     were measured that way on a real database. Fixing the mapper corrects new
+     writes and leaves those rows composing into §3.2.S.4.4 for ever, because
+     the stored decision is honoured below. So the vocabulary is checked HERE
+     too, where the route and the composer both read, and a stored decision is
+     trusted only when it is one the vocabulary could have produced. */
+  if (!isKnownSampleType(type)) return false;
   const decided = typeof p?.batchAnalysisSide === 'string' ? p.batchAnalysisSide : null;
   if (decided) return decided === side;
   return side === 'drug_product' ? type === FINISHED_PRODUCT : type !== FINISHED_PRODUCT;
