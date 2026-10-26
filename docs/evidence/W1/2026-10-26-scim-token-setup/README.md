@@ -37,3 +37,9 @@ Implementation and focused negative/positive tests are recorded below. Hosted re
 The API intentionally tightens existing mutation bodies: integrations must now supply `reason`; creation accepts `organizationId` and optional `label`, updates accept `enabled`, and rotation/revocation accept only `reason`. Existing endpoint paths, platform standing and SCIM bearer format remain canonical. This completes the token audit gap from the prior inventory, without exposing deployment-managed SAML settings or inert personal preferences as working controls. Hosted release remains separate from local verification.
 
 `typecheck-test-options-red.txt` records TypeScript catching unsupported Testing Library query options in the added tests. Those options were removed (role names already match strings exactly); the subsequent full-program gate passes with zero errors.
+
+## Final consolidation
+
+Merged canonical upstream `df1a3cc250a90e3cd69bde4e27af32d50579c665` into the token implementation without conflicts (`81c22db4f`). The integration changes include project/editor work and preserve this slice's existing identity owner. `merged-regressions.txt` records 137 passing tests across 14 suites, including the current Project Home readiness and dossier-details components. `merged-build.txt` records the passing combined production build. Browser checks were rebuilt and repeated against the merged source. `atomic-baseline-red.txt` shows all eight real-SQL token atomicity checks fail against the original router, which was restored immediately after the negative control.
+
+`prepush.txt` records all repository pre-push gates passing on the merged implementation, including zero TypeScript errors. No lint, type or security baseline was widened.
