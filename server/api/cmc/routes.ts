@@ -2783,6 +2783,10 @@ router.get('/register-history/:register/:id', async (req, res) => {
       data: {
         register: target.register,
         recordId,
+        /* Which store answered. The specification register's history comes from
+           its own revision log, and a reader must never be left to infer the
+           difference from a per-row marker that means two things. */
+        store: history.store,
         entries,
         /* A record with more acts than one read returns loses its OLDEST,
            possibly its create — so the reader is told, rather than shown a

@@ -21,7 +21,10 @@ import {
   type LifecycleComponent,
 } from '../ind/ctd/index.js';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11.js';
-import { getDocumentTemplate } from '../market-specs/document-template-library.js';
+import { getDocumentTemplate, type TemplateSection as OutlineSection } from '../market-specs/document-template-library.js';
+import { ctdComponentSections, ctdFrontMatter } from '../market-specs/ctd-component-outlines.js';
+import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
+import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings.js';
 import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import {
   FDA_FORMAL_MEETING_TIMELINES,
@@ -270,6 +273,34 @@ function pbrerTemplateSections(): TemplateSection[] {
   }))];
 }
 
+/**
+ * A CTD component's chat outline, from the one ICH M2–M5 record (D2 cleanup C3,
+ * 2026-10-26): every heading below `root` (or `root` itself, when the record
+ * divides it no further), numbered and titled as the record holds it, its
+ * guidance the outline's own purpose line and its word target the brief's
+ * `wordCountRange` where the record gives one. These outlines were written by
+ * hand until then, with headings in no ICH M4 guideline ("Conclusions on
+ * Clinical Efficacy") and QOS headings missing.
+ */
+function ctdRecordTemplateSections(root: string): TemplateSection[] {
+  const flat = (list: OutlineSection[]): OutlineSection[] => list.flatMap((x) => [x, ...flat(x.subsections ?? [])]);
+  const below = flat(ctdComponentSections(root));
+  const brief = CTD_AUTHORING_GUIDANCE[root];
+  const rows = below.length
+    ? below
+    : [{ number: root, heading: ichHeadingTitle(root) ?? root, purpose: brief ? `${brief.keyContentElements.slice(0, 3).join('; ')}.` : '', required: true }];
+  return rows.map((r) => {
+    const range = CTD_AUTHORING_GUIDANCE[r.number]?.wordCountRange;
+    return { heading: `${r.number} ${r.heading}`, code: r.number, required: r.required, guidance: r.purpose, ...(range ? { targetWords: range } : {}) };
+  });
+}
+
+/** The QOS's unnumbered Introduction, as the served QOS outline holds it (document-template-library.ts). */
+function ctdRecordIntroduction(): TemplateSection {
+  const intro = ctdFrontMatter('2.3', '2.3.I', 'Introduction', '2.3.Introduction');
+  return { heading: intro.heading, required: intro.required, guidance: intro.purpose };
+}
+
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
 
   // ── CTD Module 2 ───────────────────────────────────────────────────────────
@@ -290,12 +321,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.6,
     draftingInstructions: 'Draft a concise ICH CTD Section 2.2 Introduction. Keep it to 1–2 pages. State the pharmacological class, proposed indication, route of administration, and regulatory pathway. Do NOT copy from other sections — this is a standalone overview.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH M4Q(R1)', 'FDA NDA/BLA Format and Content Guidance'],
-    sections: [
-      { heading: 'Pharmacological Class and Mode of Action', required: true, targetWords: [100, 200], guidance: 'State the pharmacological class, INN/USAN, mechanism of action, and receptor/target affinity.' },
-      { heading: 'Proposed Indication and Route of Administration', required: true, targetWords: [80, 150], guidance: 'State the proposed indication(s), dosage form(s), and route(s) of administration.' },
-      { heading: 'Regulatory Pathway', required: true, targetWords: [60, 120], guidance: 'Identify the regulatory pathway (NDA 505(b)(1), 505(b)(2), BLA 351(a), 351(k), MAA, etc.) and submission type (original, supplement, etc.).' },
-      { heading: 'Development Program Overview', required: false, targetWords: [100, 200], guidance: 'Brief summary of the nonclinical and clinical development program supporting this application.' },
-    ],
+    sections: ctdRecordTemplateSections('2.2'),
   },
 
   ctd_2_3_qos: {
@@ -314,20 +340,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.6,
     draftingInstructions: 'Draft an ICH CTD Quality Overall Summary (Section 2.3). This must be self-contained, summarizing all Module 3 CMC data. Cover drug substance characterization, manufacturing, controls, and stability; then drug product formulation, manufacturing process, controls, container closure, and stability. Use paragraph format with tables where ICH M4Q requires them.',
     regulatoryReferences: ['ICH M4Q(R1)', 'ICH Q1A–Q14 series', 'FDA CMC Guidance Documents'],
-    sections: [
-      { heading: '2.3.S Drug Substance', required: true, code: '2.3.S', targetWords: [400, 800], guidance: 'Summarize drug substance characterization (structure, physicochemical properties, biological activity), manufacture (process, controls, validation), specifications, reference standards, container closure, and stability.' },
-      { heading: '2.3.S.1 General Information', required: true, code: '2.3.S.1', targetWords: [150, 300], guidance: 'INN/USAN, chemical structure, molecular formula and weight, stereochemistry, physicochemical properties.' },
-      { heading: '2.3.S.2 Manufacture', required: true, code: '2.3.S.2', targetWords: [200, 400], guidance: 'Manufacturer(s), manufacturing process overview, critical steps and controls, process controls, and reprocessing steps.' },
-      { heading: '2.3.S.3 Characterization', required: true, code: '2.3.S.3', targetWords: [150, 300], guidance: 'Structure elucidation, physicochemical and biological characterization, impurity profile.' },
-      { heading: '2.3.S.4 Control of Drug Substance', required: true, code: '2.3.S.4', targetWords: [200, 400], guidance: 'Specification (acceptance criteria), analytical procedures, validation, batch analyses, justification of specification.' },
-      { heading: '2.3.S.7 Stability', required: true, code: '2.3.S.7', targetWords: [200, 400], guidance: 'Stability summary and conclusions, post-approval stability protocol, storage conditions, shelf life.' },
-      { heading: '2.3.P Drug Product', required: true, code: '2.3.P', targetWords: [400, 800], guidance: 'Summarize drug product description, formulation development, manufacture, specifications, container closure, and stability.' },
-      { heading: '2.3.P.1 Description and Composition', required: true, code: '2.3.P.1', targetWords: [100, 200], guidance: 'Dosage form, composition, container closure description.' },
-      { heading: '2.3.P.2 Pharmaceutical Development', required: true, code: '2.3.P.2', targetWords: [200, 400], guidance: 'Formulation development rationale, excipient selection, manufacturing process development, microbiological attributes.' },
-      { heading: '2.3.P.3 Manufacture', required: true, code: '2.3.P.3', targetWords: [150, 300], guidance: 'Manufacturing process and controls, critical steps, process validation.' },
-      { heading: '2.3.P.5 Control of Drug Product', required: true, code: '2.3.P.5', targetWords: [200, 400], guidance: 'Specifications, analytical procedures, validation, batch analyses, characterization of impurities.' },
-      { heading: '2.3.P.8 Stability', required: true, code: '2.3.P.8', targetWords: [200, 400], guidance: 'Stability summary, post-approval protocol, storage conditions, shelf life.' },
-    ],
+    sections: [ctdRecordIntroduction(), ...ctdRecordTemplateSections('2.3')],
   },
 
   ctd_2_4_nonclinical_overview: {
@@ -347,13 +360,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.6,
     draftingInstructions: 'Draft an ICH CTD Nonclinical Overview (Section 2.4). This is an integrated expert narrative — NOT a summary of individual studies. Synthesize pharmacology, PK/ADME, and toxicology findings to support the clinical program. Address species relevance, safety margins, and how nonclinical data support the proposed clinical indication and dosing.',
     regulatoryReferences: ['ICH M4S(R2)', 'ICH S7A/S7B (safety pharmacology)', 'ICH S9 (oncology)', 'FDA Pharmacology/Toxicology Guidance'],
-    sections: [
-      { heading: 'Overview of Nonclinical Testing Strategy', required: true, targetWords: [200, 400], guidance: 'Rationale for the nonclinical program, species selection, GLP status, and relationship to the clinical program.' },
-      { heading: 'Pharmacology', required: true, targetWords: [300, 600], guidance: 'Primary pharmacodynamics (mechanism, potency, selectivity), secondary pharmacodynamics (off-target effects), and safety pharmacology (CNS, CV, respiratory — ICH S7A/S7B).' },
-      { heading: 'Pharmacokinetics', required: true, targetWords: [300, 600], guidance: 'ADME characterization across species. Highlight metabolite relevance, plasma protein binding, tissue distribution, and exposure multiples relative to clinical dose.' },
-      { heading: 'Toxicology', required: true, targetWords: [400, 800], guidance: 'Repeat-dose toxicity (species, duration, NOAEL, major findings), genotoxicity package, reproductive/developmental toxicity (ICH S5), carcinogenicity (if applicable), special studies (photosafety, immunotoxicity). Calculate safety margins at human MRHD.' },
-      { heading: 'Integrated Summary and Implications for Clinical Use', required: true, targetWords: [200, 400], guidance: 'Synthesize nonclinical findings as they relate to the clinical starting dose, dose escalation, clinical monitoring, and labeling. Identify residual nonclinical uncertainties and how they will be addressed.' },
-    ],
+    sections: ctdRecordTemplateSections('2.4'),
   },
 
   ctd_2_5_clinical_overview: {
@@ -373,15 +380,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.55,
     draftingInstructions: 'Draft an ICH CTD Clinical Overview (Section 2.5). This is the most critical Module 2 document — reviewers read it first. It must be a stand-alone integrated benefit-risk narrative. Cover the development program rationale, clinical pharmacology, efficacy, safety, benefit-risk assessment, and post-market plans. Write at expert level. Avoid repeating what the summaries say — synthesize and interpret.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E3 (CSR format)', 'ICH E8 (GCP design)', 'FDA Benefit-Risk Framework Guidance'],
-    sections: [
-      { heading: '2.5.1 Product Development Rationale', required: true, code: '2.5.1', targetWords: [400, 700], guidance: 'Disease background, unmet medical need, mechanism rationale, and overview of the clinical program design.' },
-      { heading: '2.5.2 Overview of Biopharmaceutics', required: true, code: '2.5.2', targetWords: [200, 400], guidance: 'BA/BE studies, dissolution, food effect, and formulation bridging logic linking clinical to commercial formulation.' },
-      { heading: '2.5.3 Overview of Clinical Pharmacology', required: true, code: '2.5.3', targetWords: [300, 600], guidance: 'PK characterization (dose-proportionality, accumulation, variability), PD, DDI, special populations, PK/PD relationships supporting the proposed dose and label.' },
-      { heading: '2.5.4 Overview of Efficacy', required: true, code: '2.5.4', targetWords: [600, 1200], guidance: 'Pivotal trial results with confidence intervals and p-values, primary and key secondary endpoints, subgroup consistency, clinical meaningfulness, and comparison to active comparators if applicable.' },
-      { heading: '2.5.5 Overview of Safety', required: true, code: '2.5.5', targetWords: [600, 1200], guidance: 'Overall exposure dataset, adverse events by severity/relatedness, deaths, serious AEs, discontinuations, lab abnormalities, vital signs, special population safety, and identified safety signals.' },
-      { heading: '2.5.6 Benefits and Risks Conclusions', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
-      { heading: '2.5.7 Literature References', required: false, code: '2.5.7', targetWords: [50, 100], guidance: 'Key published literature cited in this overview.' },
-    ],
+    sections: ctdRecordTemplateSections('2.5'),
   },
 
   // ICH M4E numbers the clinical summaries 2.7.3 efficacy, 2.7.4 safety, 2.7.5
@@ -405,14 +404,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.6,
     draftingInstructions: 'Draft an ICH CTD Section 2.7.3 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Section 2.7.3 summarises; the integrated analyses themselves (the ISE, 21 CFR 314.50(d)(5)(v)) are filed in 5.3.5.3 and cross-referenced. Conclusions must align with the Overview of Efficacy in Section 2.5.4.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E9(R1) (estimands)', 'ICH E17 (multi-regional trials)'],
-    sections: [
-      { heading: 'Background and Overview of Clinical Efficacy Studies', required: true, targetWords: [200, 400], guidance: 'List of clinical studies providing efficacy data, organized by study type (dose-finding, pivotal, supportive).' },
-      { heading: 'Individual Study Results — Pivotal Trials', required: true, targetWords: [800, 1500], guidance: 'For each pivotal trial: design, population (inclusion/exclusion criteria, demographics), primary endpoint results (LS mean, OR, HR, etc.) with 95% CI and p-value, key secondary results, and clinical context.' },
-      { heading: 'Individual Study Results — Supportive Trials', required: false, targetWords: [300, 600], guidance: 'Summary of supportive/phase 2 trial results contributing to the efficacy profile.' },
-      { heading: 'Analyses Across Studies', required: true, targetWords: [300, 600], guidance: 'Pooled analyses, subgroup consistency (pre-specified and exploratory), dose-response, time-to-response, durability.' },
-      { heading: 'Supportive Data', required: false, targetWords: [200, 400], guidance: 'PK/PD and biomarker data supporting efficacy mechanism, complementary endpoints, Quality of Life outcomes.' },
-      { heading: 'Conclusions on Clinical Efficacy', required: true, targetWords: [200, 400], guidance: 'Synthesis linking all efficacy data to the proposed indication. State what the evidence establishes and any residual uncertainties.' },
-    ],
+    sections: ctdRecordTemplateSections('2.7.3'),
   },
 
   ctd_2_7_4_safety_summary: {
@@ -433,18 +425,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.6,
     draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals. Section 2.7.4 summarises; the integrated analyses themselves (the ISS, 21 CFR 314.50(d)(5)(vi)) are filed in 5.3.5.3 and cross-referenced, and the benefit-risk weighing belongs in 2.5.6. Code events in MedDRA, one MedDRA version across every pooled study.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E1 (extent of population exposure)', 'ICH E2A (clinical safety data management)', 'MedDRA (ICH M1)'],
-    sections: [
-      { heading: 'Exposure to the Drug', required: true, targetWords: [200, 400], guidance: 'Overall safety database: total subjects exposed, exposure duration, dose groups, special populations. Comparison of safety population to efficacy population.' },
-      { heading: 'Adverse Events', required: true, targetWords: [600, 1200], guidance: 'Overall incidence of AEs, deaths, SAEs, and discontinuations due to AEs. Common AEs (≥X%) by MedDRA SOC and PT. Dose-response and dose-duration relationships. Relationship to treatment.' },
-      { heading: 'Deaths and Serious Adverse Events', required: true, targetWords: [300, 600], guidance: 'Listing and analysis of all deaths and SAEs. Causality assessment. Comparison of treatment vs. control event rates.' },
-      { heading: 'Other Significant Adverse Events', required: true, targetWords: [300, 600], guidance: 'AEs leading to withdrawal, AEs of special interest (AESIs), potential drug reactions, immune-mediated events, identified safety signals from clinical data.' },
-      { heading: 'Clinical Laboratory Evaluations', required: true, targetWords: [200, 400], guidance: 'Clinically significant laboratory abnormalities (hematology, chemistry, urinalysis). Shift tables where relevant.' },
-      { heading: 'Vital Signs, Physical Findings, and Safety-Related Observations', required: true, targetWords: [150, 300], guidance: 'ECG, weight, BP, HR findings. Post-baseline changes of clinical significance.' },
-      { heading: 'Safety in Special Populations', required: true, targetWords: [200, 400], guidance: 'Safety data for renally impaired, hepatically impaired, elderly, pediatric (if applicable), sex-based differences, race/ethnicity.' },
-      { heading: 'Safety in Overdose', required: false, targetWords: [100, 200], guidance: 'Data from overdose cases, management approach.' },
-      { heading: 'Post-marketing Safety Data', required: false, targetWords: [100, 200], guidance: 'Spontaneous reports, PSUR data, or real-world evidence if available.' },
-      { heading: 'Conclusions on Clinical Safety', required: true, targetWords: [200, 400], guidance: 'Summary of the safety profile. Identified risks and proposed risk management. Residual uncertainties to be addressed post-marketing.' },
-    ],
+    sections: ctdRecordTemplateSections('2.7.4'),
   },
 
   // ── Investigational New Drug (IND) ────────────────────────────────────────
@@ -507,15 +488,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.65,
     draftingInstructions: 'Draft an ICH M4Q(R1)-compliant Module 3.2.S Drug Substance section. Organize exactly per the 3.2.S.1–3.2.S.7 structure. Each subsection must be complete and self-contained. Reference applicable ICH quality guidelines (Q1A–Q14) where they apply.',
     regulatoryReferences: ['ICH M4Q(R1)', 'ICH Q3A (impurities)', 'ICH Q6A (specifications)', 'ICH Q7 (GMP for APIs)', 'ICH Q11 (development/manufacture)'],
-    sections: [
-      { heading: '3.2.S.1 General Information', required: true, code: '3.2.S.1', targetWords: [150, 300], guidance: 'INN/USAN, chemical name (IUPAC), CAS number, molecular formula/weight, structural formula, physicochemical properties (pKa, logP, solubility, polymorphism).' },
-      { heading: '3.2.S.2 Manufacture', required: true, code: '3.2.S.2', targetWords: [400, 800], guidance: 'Manufacturer(s) name and address; manufacturing process description (synthetic route with reaction schemes, reagents, solvents, in-process controls, critical process parameters); manufacturing process development summary; controls of critical steps and intermediates; process validation.' },
-      { heading: '3.2.S.3 Characterization', required: true, code: '3.2.S.3', targetWords: [300, 600], guidance: 'Structure elucidation (spectroscopic evidence: NMR, IR, MS, X-ray crystallography if applicable); physicochemical characterization; biological activity characterization (for biologics); impurities — synthetic impurities, degradation products, residual solvents (ICH Q3A, Q3C).' },
-      { heading: '3.2.S.4 Control of Drug Substance', required: true, code: '3.2.S.4', targetWords: [400, 800], guidance: 'Specification table (with acceptance criteria and ICH Q6A justification); analytical procedures; validation of analytical procedures (ICH Q2(R2)); batch analyses (≥3 production or pilot-scale batches); justification for specification — link each criterion to clinical or stability data.' },
-      { heading: '3.2.S.5 Reference Standards or Materials', required: true, code: '3.2.S.5', targetWords: [100, 200], guidance: 'Primary and working reference standard characterization, qualification, storage, and use.' },
-      { heading: '3.2.S.6 Container Closure System', required: true, code: '3.2.S.6', targetWords: [100, 200], guidance: 'Description of primary and secondary packaging; materials of construction; compatibility; extractables/leachables if applicable.' },
-      { heading: '3.2.S.7 Stability', required: true, code: '3.2.S.7', targetWords: [300, 600], guidance: 'Stability summary and conclusions (ICH Q1A): conditions tested, batches, duration, degradation pathway; post-approval stability protocol; proposed storage conditions, shelf life, and retest period with scientific justification.' },
-    ],
+    sections: ctdRecordTemplateSections('3.2.S'),
   },
 
   cmc_drug_product: {
@@ -536,16 +509,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     minConfidence: 0.65,
     draftingInstructions: 'Draft an ICH M4Q(R1)-compliant Module 3.2.P Drug Product section. Cover formulation development logic, manufacturing process, controls, container closure system, and stability. Demonstrate that each excipient choice and specification criterion is scientifically justified.',
     regulatoryReferences: ['ICH M4Q(R1)', 'ICH Q3B (drug product impurities)', 'ICH Q6A (specifications)', 'ICH Q8(R2) (pharmaceutical development)', 'ICH Q10 (pharmaceutical QS)'],
-    sections: [
-      { heading: '3.2.P.1 Description and Composition', required: true, code: '3.2.P.1', targetWords: [150, 300], guidance: 'Dosage form, route of administration; quantitative composition per unit dose; list of all components (active and excipients with function); container closure system description.' },
-      { heading: '3.2.P.2 Pharmaceutical Development', required: true, code: '3.2.P.2', targetWords: [400, 800], guidance: 'Formulation development (ICH Q8): excipient selection, compatibility studies, formulation optimization, impact of polymorphism. Manufacturing process development (CPPs, CQAs, QTPP). Microbiological attributes. Compatibility with reconstitution diluents / devices if applicable.' },
-      { heading: '3.2.P.3 Manufacture', required: true, code: '3.2.P.3', targetWords: [300, 600], guidance: 'Manufacturer(s); batch formula; manufacturing process description (flow diagram + narrative); controls of critical steps; process validation/evaluation — CPPs and CQA linkages; excipient qualification.' },
-      { heading: '3.2.P.4 Control of Excipients', required: true, code: '3.2.P.4', targetWords: [100, 200], guidance: 'Specifications for non-compendial excipients; compendial compliance for compendial excipients; novel excipients.' },
-      { heading: '3.2.P.5 Control of Drug Product', required: true, code: '3.2.P.5', targetWords: [400, 800], guidance: 'Specification table with acceptance criteria and basis; analytical procedures; validation (ICH Q2(R2)); batch analyses for multiple batches including pivotal clinical and commercial-scale; characterization of impurities and degradation products; justification of specifications.' },
-      { heading: '3.2.P.6 Reference Standards or Materials', required: false, code: '3.2.P.6', targetWords: [80, 150], guidance: 'Reference to 3.2.S.5 if same; any drug product-specific reference standards.' },
-      { heading: '3.2.P.7 Container Closure System', required: true, code: '3.2.P.7', targetWords: [150, 300], guidance: 'Container closure components, materials, quality standards, extractables/leachables study summary, suitability demonstration.' },
-      { heading: '3.2.P.8 Stability', required: true, code: '3.2.P.8', targetWords: [300, 600], guidance: 'Stability summary and conclusions (ICH Q1A/Q1E): conditions, batches, duration, degradation pathways; in-use stability; photostability (ICH Q1B); post-approval stability protocol; proposed storage conditions, shelf life, and scientific justification.' },
-    ],
+    sections: ctdRecordTemplateSections('3.2.P'),
   },
 
   // ── Device — 510(k) / PMA ─────────────────────────────────────────────────

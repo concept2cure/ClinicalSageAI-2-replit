@@ -1,0 +1,4 @@
+TypeError: trendClaim is not a function
+TypeError: trendClaim is not a function
+TypeError: trendClaim is not a function
+TypeError: trendClaim is not a function

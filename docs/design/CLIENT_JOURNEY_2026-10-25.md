@@ -246,3 +246,44 @@ The what-exists critic also found Home's setup checklist offered to administrato
 
 Not fixed here, seen on the way: the editor's draft request reads "Draft preparation Target Product Profile …" (the
 section's code is spliced into the sentence). Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/first-session/`.
+
+## Pass 7 — the CMC work area says what to do, and reaches what we built (done, 2026-10-26)
+
+Passes 1–5 reorganised the way IN and touched no work area. Opened as a client, CMC /
+Module 3 was still nine nouns in a tab strip: *"I was very dismayed to see the CMC UI and
+the lack of features we have built that are not showing."* Two complaints, both true.
+
+What already existed: the rail reaches CMC under *Work areas* (`RAIL_CORE`, pass 1) and
+the Author step offers it where it composes (`ProjectHome.tsx` `ProjectDocuments`,
+`cmcComposes`) — the navigation was never the gap. `CMC_NAV` held nine `{id, label, icon}`
+entries and the only sentence beside each was its screen's own `CmHead meta`, which says
+what the screen HOLDS, not what to do on it. `StageBand` (`ProjectStages.tsx`, pass 2)
+already renders "what this step is / what to do now / next step" over `LifecycleStage`
+`{id, label, icon, blurb, now}`, and `RecordHistoryPanel` (`cmcRecordHistory.tsx`,
+2026-10-18) already renders one register record's §11.10(e) history with honest states.
+Sixteen registers had that panel; specifications did not.
+
+A reachability sweep over all 99 CMC routes against every file in `client/src` found three
+built capabilities with no screen — stability trending, process capability, and the
+specification revision log. The first is the sharpest: the Stability tab's own AnA starter
+has offered "Show every study trending toward a limit" the whole time, with the
+deterministic answer reachable only in chat.
+
+What changed: `CmcNavItem` gains `blurb` and `now`, rendered by **`StageBand`** rather than
+a second band, with the destinations in the order the work is done so "Next" reads as the
+path through Module 3; `now` keeps the steps' rule (guidance, never a claim about the
+program) under a test. The three engines get doors on the screens they belong to —
+a Trend action per stability study, `CmProcessCapability` on Batch records, and the
+specification's history **through the one panel**, by giving its existing route the envelope
+`register-history` answers (`readSpecificationHistory`) plus the actor's name, tenant
+ownership and fail-closed 503; `store` travels with every payload because `sealed: false`
+means different things in the two stores. Specifications and Batch records gained the
+`openProgramAction(nav)` door their "Open a program" empty states told clients to use.
+And a specification's limits can be edited at all: `buildSpecUpdate` encoded only objects
+while the create encodes four `jsonb` columns unconditionally, so a plain criterion edit
+answered 500 — the encoding now follows the column.
+
+Not done, and why: `POST /sections/:p/:k/refresh` stays without a client caller, recorded
+in the reachability test with the door that serves it (`/build-section/:p/:k`, which also
+bridges the compile to its governed artifact); converging the two is its own change.
+Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass7/`.

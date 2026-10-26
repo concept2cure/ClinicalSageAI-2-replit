@@ -35,11 +35,23 @@ export interface RecordHistoryEntry {
   signatureMeaning: string | null;
   seq: number | null;
   sealed: boolean;
+  /** Where this act's reason is, when this store does not hold it. */
+  reasonElsewhere?: string | null;
 }
+
+/**
+ * Which store answered, as the server names it. The two attest differently and
+ * a row's `sealed: false` means something different in each — "predates the
+ * sealed ledger" in the chain, "not a chain position at all" in a revision log
+ * — so the panel reads this rather than marking every unsealed row the same
+ * way and telling the reader something untrue about half of them.
+ */
+type RecordHistoryStore = 'audit_chain' | 'specification_revision_log';
 
 interface RecordHistoryPayload {
   register: string;
   recordId: string;
+  store?: RecordHistoryStore;
   entries: RecordHistoryEntry[];
   /** True when the record has more acts than one read returns — the missing
    *  ones are the oldest, which may include the create. */
@@ -112,7 +124,30 @@ function Actor({ entry }: { entry: RecordHistoryEntry }) {
   );
 }
 
-function HistoryRows({ entries }: { entries: RecordHistoryEntry[] }) {
+/**
+ * What a row that carries no chain position means, in the terms of the store it
+ * came from. Said per store because one sentence cannot be true of both: in the
+ * chain, no position means the row predates the sealed ledger; in the
+ * specification's revision log, no row has one and saying "unsealed" would
+ * assert something about a date that is not what is being read.
+ */
+const UNCHAINED: Record<RecordHistoryStore, { label: string; title: string }> = {
+  audit_chain: {
+    label: 'unsealed',
+    title:
+      'This row carries no chain position, so it predates the sealed ledger. It is shown because it is part ' +
+      'of what happened to the record.',
+  },
+  specification_revision_log: {
+    label: 'revision log',
+    title:
+      'Recorded in this specification’s own revision log, which holds each change with both values. It is not ' +
+      'a position on the tenant’s hash chain; the signature that approved a version is, and is shown on the ' +
+      'governed-actions record.',
+  },
+};
+
+function HistoryRows({ entries, store }: { entries: RecordHistoryEntry[]; store: RecordHistoryStore }) {
   return (
     <table className="reg-tbl">
       <thead>
@@ -141,19 +176,78 @@ function HistoryRows({ entries }: { entries: RecordHistoryEntry[] }) {
               {!entry.sealed && (
                 <span
                   style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--warning)' }}
-                  title="This row carries no chain position, so it predates the sealed ledger. It is shown because it is part of what happened to the record."
+                  title={UNCHAINED[store].title}
                 >
-                  unsealed
+                  {UNCHAINED[store].label}
                 </span>
               )}
             </td>
             <td><Actor entry={entry} /></td>
             <td><Changed entry={entry} /></td>
-            <td style={{ color: 'var(--text-300)', fontSize: 11.5 }}>{entry.reason ?? '—'}</td>
+            <td style={{ color: 'var(--text-300)', fontSize: 11.5 }}>
+              {/* A dash beside "Specification approved" reads as an approval
+                  given with no reason. Where the reason is recorded elsewhere,
+                  say so; a dash is only for an act that captured none. */}
+              {entry.reason ?? (entry.reasonElsewhere ? <em>{entry.reasonElsewhere}</em> : '—')}
+            </td>
           </tr>
         ))}
       </tbody>
     </table>
+  );
+}
+
+/**
+ * Why no change is on screen — loading, a failed read, or nothing recorded.
+ *
+ * The three are kept apart deliberately and asserted separately
+ * (`__tests__/cmcRecordHistory.test.tsx`): an empty §11.10(e) trail and a trail
+ * that could not be READ are indistinguishable to an inspector, and only one of
+ * them is a claim this panel may make. Extracted from the panel when the second
+ * store's wording took it past the complexity cap; the branches are unchanged.
+ */
+function HistoryNotShown({ loading, error, status, store, note }: {
+  loading: boolean;
+  error: unknown;
+  status: number | null | undefined;
+  store: RecordHistoryStore;
+  note: string | null;
+}) {
+  if (loading) {
+    return <EmptyState icon={I.history} title="Reading this record's change history…" busy testId="cmc-history-loading" />;
+  }
+  if (error) {
+    const unreachable = status === 503;
+    return (
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title={
+          unreachable
+            ? 'The audit store could not be reached, so this record’s change history was not read.'
+            : 'This record’s change history could not be read.'
+        }
+        hint={
+          unreachable
+            ? 'Nothing is being claimed about what changed. Try again, and report it if it persists.'
+            : `The server answered ${status ?? 'no status'}. Nothing is being claimed about what changed.`
+        }
+        testId="cmc-history-error"
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon={I.history}
+      title={
+        store === 'audit_chain'
+          ? 'No chained act is recorded against this record.'
+          : 'No change is recorded against this specification.'
+      }
+      /* The server's own note, which says WHY a record may carry none. */
+      hint={note ?? undefined}
+      testId="cmc-history-empty"
+    />
   );
 }
 
@@ -167,60 +261,54 @@ export interface RecordHistoryPanelProps {
 }
 
 /**
+ * Where one record's history is read from.
+ *
+ * Sixteen registers are served by one namespace over the tenant's hash chain.
+ * The specification register is not: it has its own revision log, and the route
+ * that reads it has existed since the register was written
+ * (`server/api/cmc/specificationRoutes.ts`). That route now answers the same
+ * envelope as the chain route, so this panel reads both and the product has one
+ * history UI rather than a second one for the register an inspector asks about
+ * first.
+ */
+function historyPathFor(registerPath: string, recordId: string | number): string {
+  const id = encodeURIComponent(String(recordId));
+  return registerPath === 'specifications'
+    ? `/api/cmc/specifications/${id}/history`
+    : `/api/cmc/register-history/${registerPath}/${id}`;
+}
+
+/**
  * The record's chained history, read live. Nothing here is cached and nothing
  * is seeded: an empty table means the server returned no act for this record,
  * and it says so in the server's own words.
  */
 export function RecordHistoryPanel({ registerPath, recordId, subject, onClose }: RecordHistoryPanelProps) {
-  const path = `/api/cmc/register-history/${registerPath}/${encodeURIComponent(String(recordId))}`;
+  const path = historyPathFor(registerPath, recordId);
   const { data, loading, error, status } = useLiveData<RecordHistoryPayload>(path, [path], isHistoryPayload);
   const entries = data?.entries ?? [];
+  /* The server names its own store. An older deployment that does not is read
+     as the chain, which is what every register but one is. */
+  const store: RecordHistoryStore = data?.store ?? 'audit_chain';
+  /* "chained act" is the chain's word and would be a false claim about a
+     revision-log row, which is not chained. */
+  const noun = store === 'audit_chain' ? 'chained act' : 'recorded change';
 
   return (
     <div className="pj-card" style={{ marginTop: 12 }} data-testid="cmc-record-history">
       <div className="pj-card-h">
         <span className="t">Change history — {subject}</span>
         <span className="s">
-          {loading ? 'reading the ledger…' : error ? 'not read' : `${entries.length} chained act(s)`}
+          {loading ? 'reading the record…' : error ? 'not read' : `${entries.length} ${noun}(s)`}
         </span>
         <button className="nda-open" onClick={onClose}>
           {I.close} Close
         </button>
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>
-        {loading ? (
+        {loading || error || entries.length === 0 ? (
           <div style={{ padding: 12 }}>
-            <EmptyState icon={I.history} title="Reading this record's change history…" busy testId="cmc-history-loading" />
-          </div>
-        ) : error ? (
-          <div style={{ padding: 12 }}>
-            {/* A failed read is never rendered as a record with no changes: an
-                empty §11.10(e) trail and a trail that could not be read are
-                indistinguishable to a reader, and only one of them is true. */}
-            <EmptyState
-              tone="error"
-              icon={I.alertTriangle}
-              title={
-                status === 503
-                  ? 'The audit store could not be reached, so this record’s change history was not read.'
-                  : 'This record’s change history could not be read.'
-              }
-              hint={
-                status === 503
-                  ? 'Nothing is being claimed about what changed. Try again, and report it if it persists.'
-                  : `The server answered ${status ?? 'no status'}. Nothing is being claimed about what changed.`
-              }
-              testId="cmc-history-error"
-            />
-          </div>
-        ) : entries.length === 0 ? (
-          <div style={{ padding: 12 }}>
-            <EmptyState
-              icon={I.history}
-              title="No chained act is recorded against this record."
-              hint={data?.note ?? undefined}
-              testId="cmc-history-empty"
-            />
+            <HistoryNotShown loading={loading} error={error} status={status} store={store} note={data?.note ?? null} />
           </div>
         ) : (
           <>
@@ -233,7 +321,7 @@ export function RecordHistoryPanel({ registerPath, recordId, subject, onClose }:
                 earlier ones, which may include when it was first recorded, are not.
               </div>
             )}
-            <HistoryRows entries={entries} />
+            <HistoryRows entries={entries} store={store} />
           </>
         )}
       </div>

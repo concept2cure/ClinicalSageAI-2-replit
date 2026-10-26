@@ -1,8 +1,7 @@
 /**
  * IND narrative module authoring — transcription-safe drafting of CTD Module 2
- * clinical summaries (e.g. 2.5 Clinical Overview, 2.7 Clinical Summaries),
- * shared between the AnA server tool-chain and the Document Studio client
- * affordance (roadmap item E11).
+ * clinical summaries (e.g. 2.5 Clinical Overview, 2.7 Clinical Summaries) for
+ * AnA's plan_ind_module_authoring (roadmap item E11).
  *
  * An IND Module 2 narrative is largely a TRANSCRIPTION of structured source
  * facts and figures (doses, n, exposure, percentages, durations) into prose. The
@@ -19,26 +18,65 @@
  *      draft can never be sealed or exported, and AI-authored prose carries the
  *      determinism pedigree (the required_strings are the deterministic anchor).
  *
- * Deterministic, dependency-free, framework-free. Advisory only — clinical
- * conclusions are the sponsor's.
+ * One record (D2 cleanup C4a, 2026-10-26). The sections were a hand copy in
+ * shared/ana/: 2.5.1–2.5.6 and 2.7.1–2.7.4, so a plan had no 2.5.7, 2.7.5 or
+ * 2.7.6, and its 2.7.1 header lacked "and Associated Analytical Methods" — the
+ * header a verify step then required the document to contain. They are now
+ * the headings the ICH M2–M5 record holds directly below 2.5 and 2.7. No client
+ * code read the shared copy, so it moved here, beside the record it reads.
  *
- * @module shared/ana/ind-module-authoring
+ * Deterministic, framework-free. Advisory only — clinical conclusions are the
+ * sponsor's.
+ *
+ * @module server/services/ana/ind-module-authoring
  */
+
+import { ctdRecordSubtree } from '../market-specs/ctd-component-outlines';
 
 export type IndModuleProvenance = 'live' | 'sample' | 'not_assessed';
 
 /**
- * The IND Module 2 narrative sections E11 templates. `id` is stable; `header` is
- * the verbatim numbered section heading the authored document must contain — it
- * doubles as a `required_strings` entry for `verify_docx_against_source`.
+ * The IND Module 2 narrative sections E11 templates. `code` is the section's
+ * CTD code, the id a fact names; `header` is the verbatim numbered section
+ * heading the authored document must contain — it doubles as a
+ * `required_strings` entry for `verify_docx_against_source`.
  */
 export interface IndModuleSection {
-  /** Stable id (used in tests + the client affordance). */
-  id: string;
-  /** Verbatim section header emitted into the .docx and verified. */
+  /** The CTD code, as the record holds it (e.g. "2.5.4"). */
+  code: string;
+  /** Verbatim section header emitted into the .docx and verified: the code and the record's title. */
   header: string;
   /** The governing CTD reference (e.g. "ICH M4E — CTD 2.5"). */
   reference: string;
+  /** The id a fact named for this section before it was read from the record, still accepted. */
+  formerId?: string;
+}
+
+/** The ids the hand copy gave its sections; a caller that learned them keeps working. */
+const FORMER_IDS: Readonly<Record<string, string>> = {
+  '2.5.1': 'product_development_rationale',
+  '2.5.2': 'overview_biopharmaceutics',
+  '2.5.3': 'overview_clinical_pharmacology',
+  '2.5.4': 'overview_efficacy',
+  '2.5.5': 'overview_safety',
+  '2.5.6': 'benefits_and_risks_conclusions',
+  '2.7.1': 'summary_biopharmaceutic_studies',
+  '2.7.2': 'summary_clinical_pharmacology',
+  '2.7.3': 'summary_clinical_efficacy',
+  '2.7.4': 'summary_clinical_safety',
+};
+
+/** The headings the record holds directly below `root`, in CTD order. */
+function moduleSections(root: string): IndModuleSection[] {
+  const depth = root.split('.').length + 1;
+  return ctdRecordSubtree(root)
+    .filter((h) => h.code.split('.').length === depth)
+    .map((h) => ({
+      code: h.code,
+      header: `${h.code} ${h.title}`,
+      reference: `ICH M4E — CTD ${h.code}`,
+      ...(FORMER_IDS[h.code] ? { formerId: FORMER_IDS[h.code] } : {}),
+    }));
 }
 
 /**
@@ -47,21 +85,9 @@ export interface IndModuleSection {
  */
 export const IND_MODULE_TEMPLATES: Readonly<Record<string, readonly IndModuleSection[]>> = {
   /** CTD 2.5 — Clinical Overview (ICH M4E). */
-  '2.5': [
-    { id: 'product_development_rationale', header: '2.5.1 Product Development Rationale', reference: 'ICH M4E — CTD 2.5.1' },
-    { id: 'overview_biopharmaceutics', header: '2.5.2 Overview of Biopharmaceutics', reference: 'ICH M4E — CTD 2.5.2' },
-    { id: 'overview_clinical_pharmacology', header: '2.5.3 Overview of Clinical Pharmacology', reference: 'ICH M4E — CTD 2.5.3' },
-    { id: 'overview_efficacy', header: '2.5.4 Overview of Efficacy', reference: 'ICH M4E — CTD 2.5.4' },
-    { id: 'overview_safety', header: '2.5.5 Overview of Safety', reference: 'ICH M4E — CTD 2.5.5' },
-    { id: 'benefits_and_risks_conclusions', header: '2.5.6 Benefits and Risks Conclusions', reference: 'ICH M4E — CTD 2.5.6' },
-  ],
-  /** CTD 2.7 — Clinical Summary (ICH M4E), efficacy/safety summaries. */
-  '2.7': [
-    { id: 'summary_biopharmaceutic_studies', header: '2.7.1 Summary of Biopharmaceutic Studies', reference: 'ICH M4E — CTD 2.7.1' },
-    { id: 'summary_clinical_pharmacology', header: '2.7.2 Summary of Clinical Pharmacology Studies', reference: 'ICH M4E — CTD 2.7.2' },
-    { id: 'summary_clinical_efficacy', header: '2.7.3 Summary of Clinical Efficacy', reference: 'ICH M4E — CTD 2.7.3' },
-    { id: 'summary_clinical_safety', header: '2.7.4 Summary of Clinical Safety', reference: 'ICH M4E — CTD 2.7.4' },
-  ],
+  '2.5': moduleSections('2.5'),
+  /** CTD 2.7 — Clinical Summary (ICH M4E). */
+  '2.7': moduleSections('2.7'),
 };
 
 /** The module ids this template supports (e.g. "2.5", "2.7"). */
@@ -107,7 +133,7 @@ export interface IndModuleAuthoringPlan {
   requiredStrings: string[];
   /** Provenance carried through to the sealability gate. */
   provenance: IndModuleProvenance;
-  /** Sections present in the template that received no source fact (informational). */
+  /** CTD codes of the template's sections that received no source fact (informational). */
   sectionsWithoutFacts: string[];
 }
 
@@ -151,8 +177,9 @@ export function deriveIndRequiredStrings(input: {
   return out;
 }
 
-function factsFor(sectionId: string, facts: readonly IndSourceFact[] = []): IndSourceFact[] {
-  return facts.filter((f) => f.sectionId === sectionId && typeof f.value === 'string' && f.value.trim().length > 0);
+function factsFor(section: IndModuleSection, facts: readonly IndSourceFact[] = []): IndSourceFact[] {
+  return facts.filter((f) => (f.sectionId === section.code || f.sectionId === section.formerId)
+    && typeof f.value === 'string' && f.value.trim().length > 0);
 }
 
 /**
@@ -177,9 +204,9 @@ export function buildIndModuleAuthoringPlan(input: IndModuleAuthoringInput): Ind
     lines.push(`## ${section.header}`);
     lines.push(`_${section.reference}_`);
     lines.push('');
-    const sectionFacts = factsFor(section.id, input.facts);
+    const sectionFacts = factsFor(section, input.facts);
     if (sectionFacts.length === 0) {
-      sectionsWithoutFacts.push(section.id);
+      sectionsWithoutFacts.push(section.code);
       lines.push(
         `[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. ` +
           `Provide structured source facts for "${section.header}" before sealing.]`,

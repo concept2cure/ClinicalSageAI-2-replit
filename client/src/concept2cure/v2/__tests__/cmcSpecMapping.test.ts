@@ -26,9 +26,16 @@ describe('cmcSpec mapping', () => {
     justification: 'Rationale for the acidic/basic variant limits.',
   };
 
+  /* 2026-10-25: these two cases used integer ids — 42 and '7' — and
+     `quality_specifications.id` is a **uuid**. So they asserted a contract the
+     column cannot produce, and pinned the defect instead of catching it:
+     `specRowFromApi` parsed the id with `Number()`, every real row became NaN,
+     and Edit, Approve and History on the Specifications tab were dead in the
+     product. A fixture whose shape the column cannot hold is a test that passes
+     over the case it exists to cover. See `cmcSpecRowIdentity.test.ts`. */
   it('specRowFromApi maps a persisted row onto the display contract null-safe', () => {
     const row: QualitySpecApiRow = {
-      id: 42,
+      id: 'c0ffee00-0000-4000-8000-000000000042',
       project_id: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
       material_type: 'Drug product',
       material_name: 'Aggregates',
@@ -39,7 +46,7 @@ describe('cmcSpec mapping', () => {
       approval_status: 'approved',
     };
     expect(specRowFromApi(row)).toEqual({
-      id: 42,
+      id: 'c0ffee00-0000-4000-8000-000000000042',
       attr: 'Aggregates',
       material: 'Drug product',
       method: 'SEC-MALS',
@@ -53,7 +60,7 @@ describe('cmcSpec mapping', () => {
 
   it('tolerates jsonb delivered as a JSON string (legacy rows)', () => {
     const row: QualitySpecApiRow = {
-      id: '7',
+      id: 'c0ffee00-0000-4000-8000-000000000007',
       material_type: 'Drug substance',
       material_name: 'Endotoxin',
       acceptance_criteria: '{"release":"<= 0.5 EU/mg","shelf":"<= 0.5 EU/mg"}',
@@ -62,7 +69,7 @@ describe('cmcSpec mapping', () => {
       approval_status: null,
     };
     const mapped = specRowFromApi(row);
-    expect(mapped.id).toBe(7);
+    expect(mapped.id).toBe('c0ffee00-0000-4000-8000-000000000007');
     expect(mapped.release).toBe('<= 0.5 EU/mg');
     expect(mapped.method).toBe('LAL');
     expect(mapped.ich).toBe('ICH Q6A');
@@ -71,7 +78,7 @@ describe('cmcSpec mapping', () => {
 
   it('flags a missing analytical method (noMethod) rather than inventing one', () => {
     const row: QualitySpecApiRow = {
-      id: 1,
+      id: 'c0ffee00-0000-4000-8000-000000000011',
       material_type: 'Drug substance',
       material_name: 'Appearance',
       acceptance_criteria: {},
@@ -93,7 +100,7 @@ describe('cmcSpec mapping', () => {
 
     // Simulate what the backend persists and returns from SELECT *.
     const persisted: QualitySpecApiRow = {
-      id: 100,
+      id: 'c0ffee00-0000-4000-8000-000000000100',
       project_id: projectId,
       material_type: body.materialType,
       material_name: body.materialName,
@@ -125,7 +132,7 @@ describe('cmcSpec mapping', () => {
   it('specRowsFromApi is tolerant of a non-array payload', () => {
     expect(specRowsFromApi(null)).toEqual([]);
     expect(specRowsFromApi(undefined)).toEqual([]);
-    expect(specRowsFromApi([{ id: 1, material_type: 'Drug substance', material_name: 'x' }])).toHaveLength(1);
+    expect(specRowsFromApi([{ id: 'c0ffee00-0000-4000-8000-000000000001', material_type: 'Drug substance', material_name: 'x' }])).toHaveLength(1);
   });
 
   it('asProjectUuid passes UUIDs and rejects numeric/blank ids', () => {

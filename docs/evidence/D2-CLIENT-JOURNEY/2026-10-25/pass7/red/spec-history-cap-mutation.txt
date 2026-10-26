@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/specification-history.test.ts > the read asks the database the right question > binds the specification, the tenant and the cap, in that order
+ × server/services/cmc/__tests__/specification-history.test.ts > the read asks the database the right question > asks for one more row than it shows, so a longer history is known to be longer
+ × server/services/cmc/__tests__/specification-history.test.ts > the read is capped, and says when it capped > reports that earlier changes exist rather than showing a history that begins in the middle
+      Tests  3 failed | 21 passed (24)

@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/cmcAssessmentHonesty.test.ts > the trend panel claims a trend only where the engine establishes one > does not call an insignificant slope a trend, even with a crossing projected
+ × client/src/concept2cure/v2/__tests__/cmcAssessmentHonesty.test.ts > the trend panel claims a trend only where the engine establishes one > counts for the toast exactly what the table marks
+ × client/src/concept2cure/v2/__tests__/cmcAssessmentHonesty.test.ts > the panel’s rule is the composer’s rule > branches on significance first, exactly as §3.2.S.7 is written
+      Tests  3 failed | 9 passed (12)

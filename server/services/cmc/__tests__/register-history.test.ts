@@ -232,7 +232,14 @@ describe('readRegisterHistory', () => {
   });
 
   it('is empty for a record with no chained act, and says nothing more', async () => {
-    expect(await readRegisterHistory(clientOf([]), params)).toEqual({ entries: [], earlierActsNotShown: false });
+    /* `store` is part of "says nothing more": a payload names which store
+       answered, so a reader is never left to infer from a per-row marker
+       whether an unsealed row predates the chain or was never on it. */
+    expect(await readRegisterHistory(clientOf([]), params)).toEqual({
+      store: 'audit_chain',
+      entries: [],
+      earlierActsNotShown: false,
+    });
   });
 
   it('presents the acts oldest first, however the read ordered them', async () => {

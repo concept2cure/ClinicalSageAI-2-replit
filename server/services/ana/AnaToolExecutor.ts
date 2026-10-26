@@ -154,7 +154,7 @@ import {
   listIndModules,
   type IndModuleProvenance,
   type IndSourceFact,
-} from 'shared/ana/ind-module-authoring.js';
+} from './ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
@@ -15841,58 +15841,19 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     ctx?.organizationId,
   );
 
+  // The served Clinical Overview, read from the ICH M2–M5 record (D2 cleanup C4a).
+  const { clinicalOverviewOutline } = await import('./clinical-overview-outline.js');
   return JSON.stringify({
     structure: {
       title: `Clinical Overview (Module 2.5) — ${productName} for ${indication}`,
       ich_reference: 'ICH M4E(R2)',
-      sections: [
-        {
-          number: '2.5.1',
-          title: 'Product Development Rationale',
-          guidance:
-            'Background on the disease, current therapeutic options, unmet medical need, scientific rationale for this product. Cite key external references. Typically 2-3 pages.',
-        },
-        {
-          number: '2.5.2',
-          title: 'Overview of Biopharmaceutics',
-          guidance:
-            'Summary of biopharmaceutic studies — formulation development, bioavailability, food effect, in vitro/in vivo correlations.',
-          cite_from_module: '2.7.1',
-        },
-        {
-          number: '2.5.3',
-          title: 'Overview of Clinical Pharmacology',
-          guidance:
-            'PK/PD profile, dose-response, special populations (renal/hepatic/elderly/pediatric), drug-drug interactions.',
-          cite_from_module: '2.7.2',
-        },
-        {
-          number: '2.5.4',
-          title: 'Overview of Efficacy',
-          guidance:
-            'Efficacy across pivotal studies — primary/secondary endpoints, key subgroups, sensitivity analyses, robustness, durability of effect.',
-          cite_from_module: '2.7.3',
-        },
-        {
-          number: '2.5.5',
-          title: 'Overview of Safety',
-          guidance:
-            'Safety pool — exposure, AEs, SAEs, deaths, special-interest events, lab abnormalities, risk minimization measures, contraindications/warnings.',
-          cite_from_module: '2.7.4',
-        },
-        {
-          number: '2.5.6',
-          title: 'Benefits and Risks Conclusions',
-          guidance:
-            'Integrated benefit-risk assessment. State the conclusion explicitly. Address residual uncertainties and post-approval commitments. Typically 3-5 pages.',
-        },
-      ],
+      sections: clinicalOverviewOutline(),
     },
     project_artifacts: projectArtifacts,
     ...(artifactsUnavailable ? { project_artifacts_unavailable: artifactsUnavailable } : {}),
     ...(!sourced.ok ? { clinical_data: { status: sourced.status, message: sourced.message } } : {}),
     next_step:
-      'Use this outline to draft each subsection inline. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
+      'Use this outline to draft each subsection inline, to its guidance and target_words. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
   });
 });
 

@@ -1,0 +1,54 @@
+{
+    "success": true,
+    "data": {
+        "register": "specification",
+        "recordId": "b4e61bbf-5ebb-4c13-8da1-43dae4e6ba3d",
+        "store": "specification_revision_log",
+        "entries": [
+            {
+                "at": "2026-10-25T21:42:38.024Z",
+                "act": "created",
+                "label": "Specification recorded",
+                "actorId": 1,
+                "actor": "JM Smith",
+                "actorRef": "user:1",
+                "reason": null,
+                "changed": {},
+                "changedFields": [],
+                "signatureRef": null,
+                "signatureMeaning": null,
+                "seq": null,
+                "sealed": false
+            },
+            {
+                "at": "2026-10-25T21:45:12.154Z",
+                "act": "updated",
+                "label": "Specification edited",
+                "actorId": 1,
+                "actor": "JM Smith",
+                "actorRef": "user:1",
+                "reason": null,
+                "changed": {
+                    "justification": {
+                        "from": null,
+                        "to": "Widened to the revalidated AM-114 range (REV-2026-031)."
+                    },
+                    "acceptance_criteria": {
+                        "from": "95.0 - 105.0 %",
+                        "to": "90.0 - 110.0 %"
+                    }
+                },
+                "changedFields": [
+                    "justification",
+                    "acceptance_criteria"
+                ],
+                "signatureRef": null,
+                "signatureMeaning": null,
+                "seq": null,
+                "sealed": false
+            }
+        ],
+        "earlierActsNotShown": false,
+        "note": null
+    }
+}

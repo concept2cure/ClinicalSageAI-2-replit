@@ -21,6 +21,12 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { inRefusableTransaction, isRefusal, refuse } from '../../services/vault/vault-refusal.js';
 import { isApprovedSpecification } from '../../services/cmc/signed-record';
+/* The specification register's history, read into the same shape the other
+   sixteen registers' history is read into, so the product has one history
+   panel (services/cmc/register-history.ts). */
+import { MissingAuditStore, readSpecificationHistory } from '../../services/cmc/register-history';
+import { setTenantContextTx } from '../../services/tenant/governed-tenant-context';
+import { isUuid } from '../../middleware/uuidParam';
 
 const router = express.Router();
 
@@ -78,23 +84,66 @@ const approveSpecSchema = governedSignatureSchema;
  * approvalStatus is intentionally absent from the map: approval can ONLY happen
  * via the governed POST /:id/approve endpoint, never through the ungoverned PUT.
  */
+/**
+ * The columns this register writes, and which of them are `jsonb`.
+ *
+ * `test_parameters`, `acceptance_criteria`, `test_methods` and
+ * `regulatory_basis` are jsonb; `material_type`, `material_name` and
+ * `justification` are text. The distinction is not cosmetic — see below.
+ */
+const SPEC_COLUMNS: Record<string, { column: string; json: boolean }> = {
+  materialType: { column: 'material_type', json: false },
+  materialName: { column: 'material_name', json: false },
+  testParameters: { column: 'test_parameters', json: true },
+  acceptanceCriteria: { column: 'acceptance_criteria', json: true },
+  testMethods: { column: 'test_methods', json: true },
+  justification: { column: 'justification', json: false },
+  regulatoryBasis: { column: 'regulatory_basis', json: true },
+};
+
+/**
+ * The SET clause for an edit.
+ *
+ * ── The asymmetry this fixes (2026-10-25) ────────────────────────────────────
+ * This encoded a value only when it was an OBJECT:
+ *
+ *     values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+ *
+ * while the create, three screens away in the same file, encodes the four jsonb
+ * columns unconditionally. So a caller that sends a plain string for one of
+ * them could CREATE a specification and then not EDIT it: the new value reached
+ * a jsonb column as raw text, Postgres answered 22P02 (`Token "-" is
+ * invalid`), and the route returned `500 Failed to update specification ·
+ * Operation failed`.
+ *
+ * ── Who that caller is, stated precisely ─────────────────────────────────────
+ * NOT the Specifications tab. `specUpdateBody` always sends
+ * `{release, shelf}`, `{method}` and `{ich}` objects, so the form took the
+ * object branch and worked. (What WAS broken from the tab is a different
+ * defect, fixed in the same change: `CmcSpecRow.id` was typed `number` and
+ * `Number()` of a uuid is NaN, so Edit, Approve and History all addressed
+ * `/api/cmc/specifications/NaN`.) This branch is reached by any other caller
+ * of the same route — an AnA tool, a script, an integration — and it is those
+ * that could create a row they could not then edit.
+ *
+ * The encoding now follows the COLUMN, as the create does, so the two agree.
+ * A scalar persisted this way is also now READ rather than rendered as a blank
+ * limit (`specRowFromApi`'s `scalar`, client/src/.../cmcSpec.ts): a 500 that
+ * becomes a silently empty acceptance criterion would be a worse trade than the
+ * 500 was. Covered by `__tests__/specification-update-encoding.test.ts`.
+ *
+ * So the encoding follows the COLUMN, not the value's JavaScript type, exactly
+ * as the create does. `justification` stays text and is never encoded — doing
+ * that would store a quoted string and show the quotes to the next reader.
+ */
 function buildSpecUpdate(data: Record<string, any>): { updates: string[]; values: any[] } {
-  const fieldMap: Record<string, string> = {
-    materialType: 'material_type',
-    materialName: 'material_name',
-    testParameters: 'test_parameters',
-    acceptanceCriteria: 'acceptance_criteria',
-    testMethods: 'test_methods',
-    justification: 'justification',
-    regulatoryBasis: 'regulatory_basis',
-  };
   const updates: string[] = [];
   const values: any[] = [];
-  for (const [key, col] of Object.entries(fieldMap)) {
+  for (const [key, { column, json }] of Object.entries(SPEC_COLUMNS)) {
     const val = data[key];
     if (val === undefined) continue;
-    updates.push(`${col} = $${values.length + 1}`);
-    values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+    updates.push(`${column} = $${values.length + 1}`);
+    values.push(json ? JSON.stringify(val ?? null) : val);
   }
   return { updates, values };
 }
@@ -516,38 +565,98 @@ router.post('/:id/approve', async (req, res) => {
   }
 });
 
-// GET /api/cmc/specifications/:id/history - Audit trail for a specification
+/**
+ * GET /api/cmc/specifications/:id/history — every recorded change to one
+ * specification, oldest first, each with the fields that moved and both values.
+ *
+ * ── What changed on 2026-10-25, and why ─────────────────────────────────────
+ * The route is as old as the register and NO screen in the product had ever
+ * called it (measured: a reachability sweep over all 99 CMC routes against
+ * every client source file). So the one register an inspector asks about first
+ * — the limits a batch is released against — was the only register whose
+ * changes could not be read in the product, while the other sixteen gained the
+ * §11.10(e) panel on 2026-10-18.
+ *
+ * It answered `{ data: specification_audit_log rows }`: raw snapshots, the
+ * actor as a bare id string, and no diff. Reaching it from the existing panel
+ * would have meant a second payload shape and a second mapper in the client —
+ * two history UIs, drifting. It now answers the SAME envelope as
+ * `GET /api/cmc/register-history/:register/:id`, with `store` naming which
+ * store answered, so one panel renders both and neither is rebuilt.
+ *
+ * Changing the shape breaks no caller, because it had none.
+ *
+ * Fail closed, as the chain reader does: a store that cannot be read is 503
+ * and never an empty history, and another tenant's specification is a 404 —
+ * that it exists is not this caller's to learn.
+ */
 router.get('/:id/history', async (req, res) => {
+  const { id } = req.params;
+  const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  if (!tenantId) {
+    return res.status(403).json({ success: false, error: 'Tenant context required' });
+  }
+  const orgId = Number(tenantId);
+  /* A malformed id is a bad request, not a server failure. `id` goes into a
+     uuid column, so anything else raises 22P02 and reached the client as a 500
+     the user read as "Operation failed" — the same shape of mistake the
+     register's own NaN ids made, and the one this panel exists to make
+     visible. 404, like any other id this tenant does not hold. */
+  if (!isUuid(id)) {
+    return res.status(404).json({ success: false, error: 'No such specification in this organization.' });
+  }
+  let client: PoolClient | undefined;
   try {
-    const { id } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      return res.status(403).json({ success: false, error: 'Tenant context required' });
-    }
-    const pool = getPool();
-
-
-    const result = await pool.query(
-      `SELECT sal.* FROM specification_audit_log sal
-       JOIN quality_specifications qs ON qs.id = sal.specification_id
-       WHERE sal.specification_id = $1 AND qs.tenant_id = $2
-       ORDER BY sal.created_at DESC`,
-      [id, tenantId]
+    client = await getPool().connect();
+    await client.query('BEGIN');
+    /* `public.actor_name` resolves a name only within the calling scope's
+       organisation, so the tenant GUC must be set before the read or every
+       act reads as an unnamed account. */
+    await setTenantContextTx(client, orgId);
+    const owned = await client.query(
+      'SELECT 1 AS present FROM quality_specifications WHERE id = $1 AND tenant_id = $2 LIMIT 1',
+      [id, orgId],
     );
-
-    res.json({
+    /* `rows.length`, never `rowCount`: the driver the route tests run against
+       does not set `rowCount` on a SELECT, so `rowCount === 0` was false for a
+       row that IS there and `=== 0` was never true for one that is not — the
+       owning tenant read 404 for its own specification, and the contract test
+       (tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts)
+       caught it. `rows` is what every driver fills. */
+    if (owned.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'No such specification in this organization.' });
+    }
+    const history = await readSpecificationHistory(client, { orgId, specificationId: id });
+    await client.query('COMMIT');
+    return res.json({
       success: true,
-      data: result.rows,
-      count: result.rows.length,
-      timestamp: new Date().toISOString(),
+      data: {
+        register: 'specification',
+        recordId: id,
+        store: history.store,
+        entries: history.entries,
+        earlierActsNotShown: history.earlierActsNotShown,
+        note:
+          history.entries.length === 0
+            ? 'No change is recorded against this specification. Its revision log begins when the ' +
+              'specification was first recorded here; one imported from another system carries no earlier history.'
+            : null,
+      },
     });
   } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => undefined);
+    if (error instanceof MissingAuditStore) {
+      return res.status(503).json({ success: false, error: 'AUDIT_TABLE_MISSING' });
+    }
     console.error('[CMC Specs] Error fetching specification history:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch specification history',
       message: 'Operation failed',
     });
+  } finally {
+    client?.release();
   }
 });
 

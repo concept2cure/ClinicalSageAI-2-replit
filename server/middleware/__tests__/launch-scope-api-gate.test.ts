@@ -429,7 +429,6 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
     '/api/cmc/module3-os/uploaded-sources/p-1',
     '/api/cmc/module3-os/section-labels',
-    '/api/cmc/projects/p-1/process-capability',
     '/api/cmc/stability/studies',
     '/api/cmc/status',
   ];
@@ -453,6 +452,11 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
         '/api/cmc/specifications/7/approve',
         '/api/cmc/batch-records/7/release',
         '/api/cmc/quality/qbd/p-1',
+        /* Withheld until 2026-10-25 with the registry's own note — "deliberately
+           so for /projects/:id/process-capability UNTIL A LAUNCH SCREEN CALLS
+           IT". The Batch records tab calls it now (CmProcessCapability in
+           CmcModule.tsx), so it moved out of NOT_LAUNCH above and is served. */
+        '/api/cmc/projects/p-1/process-capability',
         '/api/cmc/module3-os/compile/p-1',
         '/api/cmc/module3-os/guard/final-export/p-1',
         '/api/cmc/module3-os/place-into-submission/p-1',

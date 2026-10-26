@@ -1,0 +1,10 @@
+ × server/api/cmc/__tests__/specification-update-encoding.test.ts > an edit encodes each column the way the column is typed > describes every column the edit can write 9ms
+ × server/api/cmc/__tests__/specification-update-encoding.test.ts > an edit encodes each column the way the column is typed > marks exactly the jsonb columns as json 2ms
+ × server/api/cmc/__tests__/specification-update-encoding.test.ts > an edit encodes each column the way the column is typed > no longer decides by the value’s JavaScript type 16ms
+ × server/api/cmc/__tests__/specification-update-encoding.test.ts > an edit encodes each column the way the column is typed > encodes the same columns the create encodes 2ms
+ × server/api/cmc/__tests__/specification-update-encoding.test.ts > an edit encodes each column the way the column is typed > leaves justification as text, so a reader never sees its quotes 1ms
+ ✓ server/api/cmc/__tests__/specification-update-encoding.test.ts > the encoding rule itself > makes a plain limit valid JSON for a jsonb column 1ms
+ ✓ server/api/cmc/__tests__/specification-update-encoding.test.ts > the encoding rule itself > still encodes a structured criterion 0ms
+ ✓ server/api/cmc/__tests__/specification-update-encoding.test.ts > the encoding rule itself > writes SQL NULL rather than the string "null" when a field is cleared 0ms
+ ✓ server/api/cmc/__tests__/specification-update-encoding.test.ts > the encoding rule itself > does not quote a text value 0ms
+      Tests  5 failed | 4 passed (9)
