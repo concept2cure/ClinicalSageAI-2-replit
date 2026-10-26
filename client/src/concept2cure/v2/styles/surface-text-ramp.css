@@ -18,7 +18,7 @@
  * Stylesheets outside the v2/, mdx/ and pdev/ trees are owned by v2 because
  * V2App is the root shell that mounts the other shells inside itself.
  *
- * Sources (33):
+ * Sources (31):
  *   client/src/concept2cure/_shared/components/EsignModal.css
  *   client/src/concept2cure/_shared/components/governed-confirm-dialog.css
  *   client/src/concept2cure/quality/app.css
@@ -39,8 +39,6 @@
  *   client/src/concept2cure/v2/styles/licensing-enforcement.css
  *   client/src/concept2cure/v2/styles/misc-surfaces-v2.css
  *   client/src/concept2cure/v2/styles/onboarding-review.css
- *   client/src/concept2cure/v2/styles/project-home-v2.css
- *   client/src/concept2cure/v2/styles/project-home-v2.css
  *   client/src/concept2cure/v2/styles/project-home-v2.css
  *   client/src/concept2cure/v2/styles/protocol-dev-editing.css
  *   client/src/concept2cure/v2/styles/pyramid-v2.css

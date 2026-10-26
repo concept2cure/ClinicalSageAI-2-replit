@@ -1,0 +1,39 @@
+{
+  "startedAt": "2026-10-26T20:41:14.107702+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 6.422,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "red-inputs.json",
+  "sourcesBefore": {
+    "server/services/ana-ri/open-document.ts": "1dfdb161b8d683d57129fefcaf7408840f3e057b62e2bd989348f63b4eb0c9c8",
+    "server/services/authoring/authoring-draft-template.ts": "806a1167678157d4b2cbe14f0d2e4f3501d20690c7ae159a700f14ca08ad6c6b",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "ae4061f23efb7c6fd2ada0e278036edaa85f2dc4e834cc37752357b3ff8e7fc3",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369"
+  },
+  "sourcesAfter": {
+    "server/services/ana-ri/open-document.ts": "1dfdb161b8d683d57129fefcaf7408840f3e057b62e2bd989348f63b4eb0c9c8",
+    "server/services/authoring/authoring-draft-template.ts": "806a1167678157d4b2cbe14f0d2e4f3501d20690c7ae159a700f14ca08ad6c6b",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-template-guidance.ts": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts": "ae4061f23efb7c6fd2ada0e278036edaa85f2dc4e834cc37752357b3ff8e7fc3",
+    "server/services/ana/__tests__/_saved-document-critique-fixture.ts": "fecb8813d3a4d8a9099bd00e3fd7ab01771fd5e09a941ef55e5d14af61818369"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "fe507de7d7986b7e25cf955413cbf3b7af2763551dde493ed89e0f174c4b67f0",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  10 failed (10)",
+    "Duration  5.55s (transform 1.91s, setup 88ms, import 2.75s, tests 2.47s, environment 0ms)"
+  ]
+}

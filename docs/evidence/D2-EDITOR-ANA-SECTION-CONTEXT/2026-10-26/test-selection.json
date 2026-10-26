@@ -1,0 +1,26 @@
+{
+  "tests": [
+    "client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx",
+    "server/middleware/__tests__/lazy-request-db-client.test.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+    "server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts",
+    "server/routes/ana-ri/__tests__/stream-project-anchor.test.ts",
+    "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts",
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts",
+    "server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts",
+    "server/routes/chat/__tests__/send-message-model-calls.test.ts",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts",
+    "server/services/ana-ri/__tests__/chat-context-latency.test.ts",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts",
+    "server/services/ana/__tests__/assembled-template-oversight.pglite.test.ts",
+    "server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts",
+    "server/services/ana/__tests__/saved-template-oversight.pglite.test.ts",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+  ]
+}

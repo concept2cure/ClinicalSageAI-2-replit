@@ -1,0 +1,18 @@
+{
+  "files": [
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts",
+    "server/routes/ana-ri/stream.ts",
+    "server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts",
+    "server/routes/chat/open-document-context.ts",
+    "server/routes/chat/send-message.ts",
+    "server/services/ana-ri/__tests__/open-document-earlier-outline.test.ts",
+    "server/services/ana-ri/__tests__/open-document-prompt-context.test.ts",
+    "server/services/ana-ri/__tests__/open-document-section.pglite.test.ts",
+    "server/services/ana-ri/__tests__/open-document-turn.test.ts",
+    "server/services/ana-ri/chat-context-builder.ts",
+    "server/services/ana-ri/context-blocks.ts",
+    "server/services/ana-ri/open-document.ts",
+    "server/services/ana-ri/saved-open-template.ts",
+    "server/services/authoring/authoring-draft-template.ts"
+  ]
+}

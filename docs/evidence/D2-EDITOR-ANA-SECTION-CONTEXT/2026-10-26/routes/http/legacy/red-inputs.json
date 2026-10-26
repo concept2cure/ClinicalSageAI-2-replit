@@ -1,0 +1,19 @@
+{
+  "files": {
+    "server/routes/ana-ri/__tests__/stream-saved-section-context.pglite.test.ts": "ec2c5c0d3213b8c4df70c314b93bb9e50edad1674bdac881098710884a9c6a77",
+    "server/routes/ana-ri/__tests__/support/stream-route-harness.ts": "772b820e7ebdece87665c7c4fde95a35d528e198be357b9c0455d55059d0d381",
+    "server/routes/ana-ri/stream.ts": "add31b206eebb76d3f471cb5df87e51c12fe6401e788b28f8a243cd3950d906f",
+    "server/services/ana-ri/chat-context-builder.ts": "5cbc40aeaf04422a25c366f5aede3dbbba15e11e7cf88ee07f0a113c581e4005",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/ana/saved-template-review.ts": "c940769329ca1356fa8117f9e75f443dde6d0729855f4e77d4f0681ecfbacc65",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "server/services/authoring/authoring-permissions.ts": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+    "server/services/authoring/authoring-program-access.ts": "6920b7d28ab8de450d13555234615cbd8f2efce7a491bc1a2a2c347756ddb7e1",
+    "server/services/ind/ctd/csr-e3-guidance.ts": "7c12637883c6fbf63366e64c81c1d36a5a163c5e70e0cf912678ee69a29936d5",
+    "server/services/lumen-context/sections.ts": "fc1b2e25534d1fe4b7f0f64747d8ce37bbf41a99c569360e80c8c84923cc73e0",
+    "server/services/ana-ri/orchestrator.ts": "b447921cd7d37d4b06263bdbd3bcf293b65e52da93142a9c8dc69e2ca27389bc",
+    "server/services/ana-ri/persona.ts": "9cc761d99e549cf351c3b5636e8083106a73c7067601856b82622be178779d3e",
+    "server/services/ana-ri/context-blocks.ts": "bde1d8949cb82e655552f4fb75a563310c795720452dde22c5ad522ee5c786c2"
+  }
+}

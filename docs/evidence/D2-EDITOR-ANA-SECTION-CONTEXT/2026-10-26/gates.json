@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-10-26T20:59:17.752097+00:00",
+  "argv": [
+    "python3",
+    "docs/evidence/D2-EDITOR-ANA-SECTION-CONTEXT/2026-10-26/run-gates.py"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 3.368,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "production-freeze.json",
+  "sourcesBefore": {
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "scripts/audits/repo-health-scan.mjs": "e8d22533437776f754d54a2d34b48f47e20d53eb9a63f28210aa5b984d82de6b",
+    "scripts/ci/eslint-warning-baseline.json": "10ffa5f874a0c932373b0ed2295f840545fbcb0658fd6d4c6ff0487481f87650",
+    "server/routes/ana-ri/stream.ts": "add31b206eebb76d3f471cb5df87e51c12fe6401e788b28f8a243cd3950d906f",
+    "server/routes/chat/open-document-context.ts": "9403b23a37645106c7ba041fd2fc2d41fc41a6ee3aeb8f5f4fbae3103ba80075",
+    "server/routes/chat/send-message.ts": "d4f5573a307f5b86e62f2534af50c47743c7ab457f3b7f2a4f82433b1919bdaf",
+    "server/services/ana-ri/chat-context-builder.ts": "5cbc40aeaf04422a25c366f5aede3dbbba15e11e7cf88ee07f0a113c581e4005",
+    "server/services/ana-ri/context-blocks.ts": "bde1d8949cb82e655552f4fb75a563310c795720452dde22c5ad522ee5c786c2",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "sourcesAfter": {
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "scripts/audits/repo-health-scan.mjs": "e8d22533437776f754d54a2d34b48f47e20d53eb9a63f28210aa5b984d82de6b",
+    "scripts/ci/eslint-warning-baseline.json": "10ffa5f874a0c932373b0ed2295f840545fbcb0658fd6d4c6ff0487481f87650",
+    "server/routes/ana-ri/stream.ts": "add31b206eebb76d3f471cb5df87e51c12fe6401e788b28f8a243cd3950d906f",
+    "server/routes/chat/open-document-context.ts": "9403b23a37645106c7ba041fd2fc2d41fc41a6ee3aeb8f5f4fbae3103ba80075",
+    "server/routes/chat/send-message.ts": "d4f5573a307f5b86e62f2534af50c47743c7ab457f3b7f2a4f82433b1919bdaf",
+    "server/services/ana-ri/chat-context-builder.ts": "5cbc40aeaf04422a25c366f5aede3dbbba15e11e7cf88ee07f0a113c581e4005",
+    "server/services/ana-ri/context-blocks.ts": "bde1d8949cb82e655552f4fb75a563310c795720452dde22c5ad522ee5c786c2",
+    "server/services/ana-ri/open-document.ts": "13f45982b2eb4967c5b9846176ba3a80d60b7b81e421a4efa6b67e8d315a65f3",
+    "server/services/ana-ri/saved-open-template.ts": "959c4b12066ab2aa49d980e4e39ae5610fdee1330e49abd3d65000e1459075fb",
+    "server/services/authoring/authoring-draft-template.ts": "897cb654b852f3482f22730043e3e69d579b899f67e20f5d5e72335daef9f991",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vite.config.ts": "9c8443714b624adcf02845ee2023c5cf5f636112d4b905aa8e5dee08bde596c4",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "sourceDrift": [],
+  "rawOutput": "gates.log.gz",
+  "rawGzipSha256": "2e1787df027235a8ee599cbd93c41057d4c9924a453d73a4bbb6eee8aef5f58f",
+  "testSummary": []
+}
