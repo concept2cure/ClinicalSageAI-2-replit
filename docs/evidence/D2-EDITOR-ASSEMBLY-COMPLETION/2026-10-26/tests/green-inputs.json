@@ -1,0 +1,64 @@
+{
+  "capturedUtc": "2026-10-26T16:08:06.284054+00:00",
+  "inputs": [
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/assemblyDraftQueueCompletion.test.tsx",
+      "sha256": "cc96c2fd7e056db4ce7fab7ca48f75cc538f2c8f422ae5b3be2bc60007ac96d1",
+      "snapshot": "green-source-assemblyDraftQueueCompletion.test.tsx.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "c01804b5dfbf2d32fbdbbf9b50cfc84a9c6a8e9a0bbac66f1d849b7d764153f3",
+      "snapshot": "green-source-assemblyDraftQueue.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildState.ts",
+      "sha256": "5c3fb65d8af478633fe1ce02d84ec3c4bf989707e653c157bb447cc2998f33c0",
+      "snapshot": "green-source-assemblyBuildState.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts",
+      "sha256": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+      "snapshot": "green-source-useAuthoringAssemblyBuild.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
+      "sha256": "526f06509355b3defe84c00b4318548325cd8c4618b4da85dd13a46351e7b806",
+      "snapshot": "green-source-assemblyBuildTransport.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+      "sha256": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+      "snapshot": "green-source-authoringDraftTransport.ts.txt.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblySourceSelection.ts",
+      "sha256": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+      "snapshot": "green-source-assemblySourceSelection.ts.txt.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "green-source-vitest.config.ts.txt.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "green-source-setup.ts.txt.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "green-source-package.json.txt.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+    },
+    {
+      "path": "docs/design/ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md",
+      "sha256": "f33c66805a0108df509180a02d50f1aadd89713d3298076097c001dedc19d4ae",
+      "snapshot": "green-source-ASSEMBLY_QUEUE_COMPLETION_2026-10-26.md.txt.gz"
+    }
+  ]
+}

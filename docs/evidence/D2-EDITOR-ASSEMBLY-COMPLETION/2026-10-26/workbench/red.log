@@ -1,0 +1,605 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > offers a build disclosure for the exact open saved document
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > keeps the selected build and exact template through metadata search, with AnA false
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > keeps the selected build and exact template through metadata search, with AnA true
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds template search and selection when the current editor has unsaved changes
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > previews and builds without AnA in the exact document while preserving the selected editor and saved text
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > assembles only the explicitly selected template section and keeps the current saved editor selected
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a lost response commit and requires an explicit saved-record check before a deliberate new preview
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a wrong document commit and requires an explicit saved-record check before a deliberate new preview
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > holds a malformed rows commit and requires an explicit saved-record check before a deliberate new preview
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > refuses Back while the commit is pending and releases a confirmed structure normally
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > refuses Back and an exact linked-section replacement while the commit remains unknown
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > retains uncertainty when the actual host recovery read is 503 after a verified inspection
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > retains uncertainty when the actual host recovery read is malformed after a verified inspection
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > refuses a direct project switch without replaying it after the commit finishes
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks account ownership before applying a delayed actual host recovery read
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks bearer ownership before applying a delayed actual host recovery read
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > structural assembly retains the actual editor host > checks refresh ownership before applying a delayed actual host recovery read
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly follows the current server edit decision > stops a previewed build when current server edit authority is refused
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > retains text typed while a structural commit is pending and does not start AnA afterwards
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > retains edits typed during the confirmed build refresh and does not begin later generation
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after project round trip
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after account change
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after organization change
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly late results preserve current work and scope > suppresses a delayed confirmed build after unmount
+ × client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > preserves newly saved text and prepares the later candidate after initial saved-row race 5920ms
+   → expected '3.2.P.8.2 Post-approval stability pro…' to contain 'Post-approval stability protocol · pr…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ed"[39m
+      [36m>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"ed-tree"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-t"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+            [36m>[39m
+              [0mDocument tree[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-m"[39m
+            [36m>[39m
+              [0m1 document · all[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+          [36m>[39m
+            [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-vol"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0mM3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mAssembly working document[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                  [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [36m>[39m
+                  [0m1[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mExisting stability summary[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mPost-approval stability protocol[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mStability data[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</aside>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"ed-doc"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"ed-doc-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-crumbs"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sep-first"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"doc-title"[39m
+                [33mtitle[39m=[32m"Assembly working document"[39m
+              [36m>[39m
+                [0mAssembly working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"here"[39m
+              [36m>[39m
+                [0m3.2.P.8.1[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Save and sign"[39m
+              [33mclass[39m=[32m"ed-doc-commit"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary"[39m
+                [33mdata-testid[39m=[32m"save-section"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSaved[0m
+       ...
+ × client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > preserves newly saved text and prepares the later candidate after explicit retry after refusal 5694ms
+   → expected '3.2.P.8.2 Post-approval stability pro…' to contain 'Post-approval stability protocol · pr…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ed"[39m
+      [36m>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"ed-tree"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-t"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+            [36m>[39m
+              [0mDocument tree[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-m"[39m
+            [36m>[39m
+              [0m1 document · all[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+          [36m>[39m
+            [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-vol"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0mM3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mAssembly working document[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                  [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [36m>[39m
+                  [0m1[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mExisting stability summary[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mPost-approval stability protocol[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mStability data[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</aside>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"ed-doc"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"ed-doc-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-crumbs"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sep-first"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"doc-title"[39m
+                [33mtitle[39m=[32m"Assembly working document"[39m
+              [36m>[39m
+                [0mAssembly working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"here"[39m
+              [36m>[39m
+                [0m3.2.P.8.1[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Save and sign"[39m
+              [33mclass[39m=[32m"ed-doc-commit"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary"[39m
+                [33mdata-testid[39m=[32m"save-section"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSaved[0m
+       ...
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > starts exact empty sections sequentially and never accepts generated candidates automatically
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > keeps candidate edits and stated reasons across review switches and asks before leaving dirty editor work
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > retains an already reviewed candidate when the next queued section completes
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > reports a provider refusal truthfully and retains the completed candidate without an automatic retry
+ ↓ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > refuses retained candidate navigation when a governed ceremony opens during its exact read
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > preserves newly saved text and prepares the later candidate after initial saved-row race
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > automatic AnA preparation retains individual review in the existing panel > preserves newly saved text and prepares the later candidate after explicit retry after refusal
+AssertionError: expected '3.2.P.8.2 Post-approval stability pro…' to contain 'Post-approval stability protocol · pr…'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ed"[39m
+      [36m>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"ed-tree"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-t"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+            [36m>[39m
+              [0mDocument tree[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-tree-m"[39m
+            [36m>[39m
+              [0m1 document · all[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note"[39m
+            [33mstyle[39m=[32m"padding: 10px 12px; font-size: 12px;"[39m
+          [36m>[39m
+            [0mThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and project types with no rule pack — fall here.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-vol"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"font-weight: 600;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0mM3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mAssembly working document[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                  [33mstyle[39m=[32m"margin-left: auto;"[39m
+                [36m>[39m
+                  [0m1[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mdata-active[39m=[32m"true"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.1[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mExisting stability summary[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.2[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mPost-approval stability protocol[0m
+                [36m</span>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"ed-tree-row"[39m
+                [33mstyle[39m=[32m"padding-left: 22px;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-num"[39m
+                [36m>[39m
+                  [0m3.2.P.8.3[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ed-lbl"[39m
+                [36m>[39m
+                  [0mStability data[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</aside>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"ed-doc"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"ed-doc-h"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ed-crumbs"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sep-first"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"doc-title"[39m
+                [33mtitle[39m=[32m"Assembly working document"[39m
+              [36m>[39m
+                [0mAssembly working document[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"sep"[39m
+              [36m>[39m
+                [0m›[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"here"[39m
+              [36m>[39m
+                [0m3.2.P.8.1[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33maria-label[39m=[32m"Save and sign"[39m
+              [33mclass[39m=[32m"ed-doc-commit"[39m
+              [33mrole[39m=[32m"group"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary"[39m
+                [33mdata-testid[39m=[32m"save-section"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"height: 30px;"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSaved[0m
+       ...
+
+Expected: "Post-approval stability protocol · preserved"
+Received: "3.2.P.8.2 Post-approval stability protocol · failedSaved text now exists. It was preserved; no new candidate was generated."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx:458:55
+    456|     const candidates = await screen.findByTestId('assembly-candidates'…
+    457|     const preserved = within(candidates).getByText(`${emptySection.cod…
+    458|     await waitFor(() => expect(preserved.textContent).toContain(`${emp…
+       |                                                       ^
+    459|     expect(within(preserved).getByText('Saved text now exists. It was …
+    460|     expect(within(candidates).queryByRole('button', { name: `Review ${…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 29 skipped (31)
+   Start at  16:05:53
+   Duration  15.57s (transform 2.32s, setup 146ms, import 2.88s, tests 11.62s, environment 499ms)
+

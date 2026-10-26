@@ -17,7 +17,7 @@ export interface AssemblyTemplate extends AuthoringTemplate { id: string; name: 
 export type AssemblyBuildPhase = 'idle' | 'outline' | 'previewing' | 'previewed' | 'building' | 'unknown' | 'checking' | 'checked' | 'built' | 'drafting' | 'stopped';
 export interface AssemblyDraftSlot {
   section: AssemblySection;
-  status: 'not-started' | 'drafting' | 'ready' | 'failed' | 'accepted';
+  status: 'not-started' | 'drafting' | 'ready' | 'failed' | 'accepted' | 'preserved';
   message?: string;
   review: AiDraftReviewState;
   current?: () => boolean;

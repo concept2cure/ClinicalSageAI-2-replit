@@ -1,0 +1,22 @@
+{
+  "sha256": {
+    "README.md": "0c00af24f3263f9838c4990c2d08e351753660f5cf4b4baca31fceeab4fc0773",
+    "final-green-source-snapshot.json.gz": "e17aea400c5b267ccdf1253d08b008ff0fa05cc8082a21115ef78ff285da1a53",
+    "final-green.json": "07b427ea613e5b0f68113fc5fab355bd5a36862bf59f900a527110a53e9e09b7",
+    "final-green.log": "6fdef243ff2ffb845f6b5c56c55d9f216fff1f5e9fb304b48e20b84a812f0974",
+    "final-source-freeze.json": "1edf9b93853fc54b847810e29b1f990a3893e926116cb7523a1ed8b5dea2e0ff",
+    "final-strict-lint-source-snapshot.json.gz": "75553171bf4c88bf414ca6fcc1785f033ca90c12ac91542343f727f4a42584b9",
+    "final-strict-lint.json": "7caa97d4964b03a8da0241197f4924f033a737531a95f88b4be644865e86787a",
+    "final-strict-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "green-source-snapshot.json.gz": "8e518376e93b50b8663b5316305365d0bd1291e378526dfa6debd936e8dab830",
+    "green.json": "1a229c9fabdd4bce8249be93345264f1b26e18de01805a541d52ce91d9435109",
+    "green.log": "2346c7ff03a978d9cc586b1915a7b60790f37ac22e398cae2437c953d07e7997",
+    "red-source-snapshot.json.gz": "4f8e166fdbbe082341cdfc732e7584ba2b460df1d1216a831d7e63949d12539f",
+    "red.json": "a680a94bfd52adb9fac13bafb6e9d4429e3fc9f594b7df142123d97197400906",
+    "red.log": "d18faf5070937003b9cddecaa2ba8d67e513babd0ec95794151f490c9f2532f7",
+    "run-check.py": "6b99a1000fcab464cdd8a38e128ebd04d0b10fce43a31df58b895f15605779c6",
+    "strict-lint-source-snapshot.json.gz": "ffac719bac297725466aa7f3db363f70c20dc327fdb306499ad5541bacd65b41",
+    "strict-lint.json": "0c6730c981de8a20cded177d7c03449f9ded53ae5966586d28299d310b7a2032",
+    "strict-lint.log": "fced8bd0d497334aa8eeed49afb570e260eb05f5e453ef5ae6732d1aa1dd0851"
+  }
+}

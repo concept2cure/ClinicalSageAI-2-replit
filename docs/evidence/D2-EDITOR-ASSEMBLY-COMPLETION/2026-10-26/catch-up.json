@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-26T16:03:35.703008+00:00",
+  "start": "05214cb6744cbe8fed001491655e835b0c1401ca",
+  "fetchedHead": "2a9b968c2ff16004c416e3195d0702ed4d119cb3",
+  "method": "normal fetch followed by git merge --ff-only origin/concept2cure-v2",
+  "incoming": "3 commits, 29 files; no queue/state/controller/test overlap",
+  "workingTreeBefore": "clean"
+}
