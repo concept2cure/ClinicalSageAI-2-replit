@@ -1,5 +1,5 @@
 {
-  "head": "a1946af7ee85e16fce30f88b787250ab5e567f62",
+  "head": "96ac4c4a3394d6725097229d7d97b1e43160e2a2",
   "files": {
     "server/routes/authoring.router.ts": "e3ead64714604191d6419bba4f82d09e01be658e1771e20c1a1fd6e876f5b22b",
     "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
@@ -54,6 +54,14 @@
     "client/src/concept2cure/v2/surfaces/DiscoveryQuestions.tsx": "9eb180557e6a3ab15ea46109419d472fa64e223823d728afe2d7b0833099bd81",
     "client/src/concept2cure/v2/surfaces/Onboarding.tsx": "195c3fd48e337c1d6af0c43452c5c95c9c2873eb08f0149bffb9c65a28831db4",
     "client/src/concept2cure/v2/surfaces/OnboardingSecurity.tsx": "1f720ee9c3e94d66f229b54f8e9478f905758dd9a7c30c47c550ba8e18e25a7d",
-    "client/src/concept2cure/v2/useOnboardingDiscovery.ts": "23413ecb4af4828b23ed6499459c7c2465728de1e7a9d8269917c71c3ab12201"
+    "client/src/concept2cure/v2/useOnboardingDiscovery.ts": "23413ecb4af4828b23ed6499459c7c2465728de1e7a9d8269917c71c3ab12201",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "1c2515002761a9925e3492f638afd7cee63c2e2c36355113607ad6e739bf32be",
+    "client/src/concept2cure/v2/surfaces/ProjectDossier.tsx": "d125c48bfd74789c8be3a8cfad7f98bb37faa75723d8abdf4d9ea3045569026c",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "bb5a92f3c98bba0b279cbcb2827a4d3d9812fac77dba3bc08f9aef8b9d959651",
+    "server/services/ana/skills/library/clinical.ts": "6e5dc77f5bda09cd8e357892a1e5edfc8dd7e0f3a185427695e79c321c9d8a43",
+    "server/services/ana/skills/library/cmc.ts": "ceea2573233a2b8ddfb2513ccedc920d04a59a11b1a15395f08f48c5d298ffe9",
+    "server/services/ana/vaccineTools.ts": "b0ef36698d29e96683481f6d4c2f7594fb80148802524bc10d44f2982ac708a0",
+    "server/services/c2c/dossier-read.ts": "f819c8738747f5e85746aebe593319dba3a4b8603a8f98f2e20d706ca2661377",
+    "server/services/vaccine/vaccine-knowledge.ts": "34ad63d5ac154539102f18f5f2c066e7cf8bf5c9dac6e95ab95034bb93b85129"
   }
 }

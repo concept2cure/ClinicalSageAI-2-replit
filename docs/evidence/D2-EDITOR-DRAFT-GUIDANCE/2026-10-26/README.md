@@ -67,3 +67,20 @@ The full client/server build passes (`build-post-merge.json`, 19.049s), with no 
 The first normal source push was stopped before publication by one TypeScript error: Express declares route parameters as string|string[], while the new adapter accepts string. The exact failed receipt/raw output is retained under `publication-attempt1/`. The existing actual route value is normalized with `String(sectionId)`, matching the turn/candidate identity handling already in use. No compiler baseline was changed. The affected 57 HTTP/adapter cases pass with this final expression (`type-fix-tests.json`), no drift. The combined run/build and normal push checks are repeated after synchronization.
 
 A fresh fetch also found the current dossier-details/AnA handoff and unstated-vaccine-fact corrections through `5e7e36ca1`. Their runtime files do not overlap the draft-guidance edits. The current handoff/map was read; it keeps the same core project workflow and editor ownership. Root retains all incoming history with a normal merge.
+
+
+## Release successor qualification
+
+After the scalar parameter correction and normal integration of current dossier/vaccine work, **221/221 tests across 14 suites pass again** (`release-integration.json`), with no drift across all 62 declared inputs. `release-gates.json` passes all seven existing editor/UI/size checks; `release-lint.json` reports no new errors/warnings. These final receipts supersede the earlier code/input epochs without replacing them. The normal TypeScript gate is retried with baseline 0 unchanged; its actual result is recorded after completion.
+
+
+The release successor's full client/server build passes (`release-build.json`), with no declared input drift. Read-only verification matches all 62 source/config/test/migration/CSS input blobs at the final merged code before the normal retry.
+
+
+## Accepted canonical publication
+
+Normal direct source publication succeeded at **`96ac4c4a3394d6725097229d7d97b1e43160e2a2`**, including original source `62d1b6f5119c89923d0bb2c38b577ee07e0e063d` and scalar type correction `ee0bfd83e6ba683755f1bfa00f82bf94c62bf37e`. `publication-code.json` and raw output retain all normal hooks, **zero TypeScript errors**, no lint errors/warning growth, and unchanged repository-size ceilings 56 /114. The first compiler refusal remains archived under `publication-attempt1/`; no baseline, hook or type check was bypassed.
+
+Fresh authenticated fetch found **0 ahead /0 behind**. `accepted-code-verification.json` matches all **62 actual Git input blobs** and verifies both source and type-correction ancestry at the accepted canonical revision. The artifact manifest hashes the full evidence packet, including historical failures, fixture corrections and final receipts. Final normal documentation publication carries this proof and local testing handoff; the final read-only verifier checks its accepted revision without creating a recursive receipt.
+
+All **130 human cases remain Not run**. This work qualifies local automated draft-context behavior, not native PostgreSQL scheduling/RLS, live model consumption/competence, agency acceptance, deployment or full editor-action parity. Drafts still pass through the existing editor, explicit acceptance/save controls and signature requirements.

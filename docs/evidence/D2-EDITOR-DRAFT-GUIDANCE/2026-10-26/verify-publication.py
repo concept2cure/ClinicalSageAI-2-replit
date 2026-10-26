@@ -31,6 +31,8 @@ for name, expected in inputs.items():
     assert digest((root / name).read_bytes()) == expected, name
 source = json.loads((packet / 'source-commit.json').read_text())['head']
 subprocess.run(['git', 'merge-base', '--is-ancestor', source, revision], cwd=root, check=True)
+correction = json.loads((packet / 'type-fix-commit.json').read_text())['head']
+subprocess.run(['git', 'merge-base', '--is-ancestor', correction, revision], cwd=root, check=True)
 artifacts = None
 if args.require_artifacts:
     manifest = json.loads(git('show', f'{revision}:{relative}/artifact-manifest.json'))['files']
@@ -44,6 +46,7 @@ if args.require_artifacts:
     artifacts = len(manifest) + 1
 result = {'atUtc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
           'verifiedRevision': revision, 'sourceCommit': source,
+          'typeCorrectionCommit': correction, 'typeCorrectionIsAncestor': True,
           'qualifiedGitInputBlobs': len(inputs), 'allQualifiedInputsMatch': True,
           'publishedEvidenceArtifacts': artifacts, 'sourceCommitIsAncestor': True}
 if args.receipt:
