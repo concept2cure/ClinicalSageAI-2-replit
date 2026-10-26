@@ -1,5 +1,5 @@
 /**
- * `/api/device-projects` — the three writes were org-scoped and nothing else.
+ * `/api/device-projects` — the original writes were org-scoped and nothing else.
  *
  * A device project is the spine an FDA submission is assembled against. Any
  * authenticated member of the organization — a read-only viewer included —
@@ -85,7 +85,6 @@ function runChain(path: string, method: 'get' | 'post' | 'put' | 'delete') {
 
 function makeReq(role: string, overrides: Record<string, unknown> = {}) {
   const req = createMockRequest({
-    // POST additionally requires a workspace; the other two ignore it.
     body: { deviceName: 'BX-204 CGM', clientWorkspaceId: 4, ...(overrides.body as object) },
     ...overrides,
   }) as any;
@@ -99,7 +98,6 @@ function makeReq(role: string, overrides: Record<string, unknown> = {}) {
 }
 
 const WRITES: Array<['post' | 'put' | 'delete', string]> = [
-  ['post', '/'],
   ['put', '/:id'],
   ['delete', '/:id'],
 ];

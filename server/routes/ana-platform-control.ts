@@ -7,7 +7,6 @@
  * - Manage projects and compliance configurations
  * - Toggle platform features and modules
  * - Configure AI behavior per organization
- * - Run onboarding workflows
  * - Analyze usage and generate optimization recommendations
  *
  * All endpoints require an active paid subscription.
@@ -17,7 +16,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { anaPlatformController, AnaAction } from '../services/ana-platform-controller';
+import { anaPlatformController } from '../services/ana-platform-controller';
 import { requireRole } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger';
 
@@ -39,9 +38,8 @@ const SETTINGS_NOT_SAVED = 'The settings could not be saved.';
 /*
  * IAM-20 (security review 2026-10-01): every write below changes
  * organisation-wide configuration (settings, AI configuration, compliance
- * defaults, module toggles, onboarding) or creates a project outside the
- * Projects app, and /execute dispatches any of them. Behind the session gate
- * alone, any member could do all of it. Writes need the owner or admin role,
+ * defaults and module toggles). Behind the session gate alone, any member
+ * could change these settings. Writes need the owner or admin role,
  * as tenant-config's settings writes do; the role is the one requireRole reads
  * from the membership on every request. Reads are unchanged.
  */
@@ -170,28 +168,6 @@ router.post('/modules/toggle', async (req: Request, res: Response) => {
 // ── Project Management ────────────────────────────────────
 
 /**
- * POST /api/ana/platform/projects
- * Create a new project with Ana-configured defaults
- */
-router.post('/projects', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
-
-  const { name, description, submissionType, therapeuticArea, targetAgency, complianceFrameworks } = req.body;
-  if (!name) return res.status(400).json({ error: 'Project name required' });
-
-  const result = await anaPlatformController.createProject(orgId, {
-    name,
-    description,
-    submissionType,
-    therapeuticArea,
-    targetAgency,
-    complianceFrameworks,
-  });
-  res.status(result.success ? 201 : result.error?.includes('limit') ? 402 : 403).json(result);
-});
-
-/**
  * PATCH /api/ana/platform/projects/:projectId
  * Update project configuration
  */
@@ -242,34 +218,6 @@ router.patch('/compliance', async (req: Request, res: Response) => {
   }
 });
 
-// ── Onboarding ────────────────────────────────────────────
-
-/**
- * POST /api/ana/platform/onboard
- * Run full organization onboarding (sets defaults, creates starter project, enables modules)
- * Body: { therapeuticArea, primaryAgency, submissionType, companySize? }
- */
-router.post('/onboard', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
-
-  const { therapeuticArea, primaryAgency, submissionType, companySize } = req.body;
-  if (!therapeuticArea || !primaryAgency || !submissionType) {
-    return res.status(400).json({ error: 'therapeuticArea, primaryAgency, and submissionType are required' });
-  }
-
-  try {
-    const result = await anaPlatformController.onboardOrganization(
-      orgId,
-      { therapeuticArea, primaryAgency, submissionType, companySize },
-      req
-    );
-    res.status(result.success ? 200 : 403).json(result);
-  } catch (err) {
-    notSaved(res, 'onboard', 'Onboarding did not complete.', err);
-  }
-});
-
 // ── Usage & Recommendations ───────────────────────────────
 
 /**
@@ -282,46 +230,6 @@ router.get('/usage', async (req: Request, res: Response) => {
 
   const result = await anaPlatformController.analyzeUsage(orgId);
   res.status(result.success ? 200 : 403).json(result);
-});
-
-// ── Agentic Action Executor ───────────────────────────────
-
-/**
- * POST /api/ana/platform/execute
- * Execute an arbitrary agentic action. This is Ana's primary autonomous
- * control endpoint — she can dispatch any action through this route.
- *
- * Body: AnaAction { id, category, action, description, parameters, requiresConfirmation }
- */
-router.post('/execute', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (!orgId) return res.status(400).json({ error: 'Organization ID required' });
-
-  const action = req.body as AnaAction;
-  if (!action.category || !action.action) {
-    return res.status(400).json({ error: 'Action must include category and action name' });
-  }
-
-  // HITL breakpoint — if the action requires confirmation, return a confirmation request
-  if (action.requiresConfirmation) {
-    return res.status(200).json({
-      success: true,
-      action: 'confirmation_required',
-      result: {
-        pendingAction: action,
-        message: `Ana requests confirmation to: ${action.description}`,
-        confirmEndpoint: '/api/ana/platform/execute',
-        instructions: 'Resend this action with requiresConfirmation: false to confirm',
-      },
-    });
-  }
-
-  try {
-    const result = await anaPlatformController.executeAction(orgId, action, req);
-    res.status(result.success ? 200 : 403).json(result);
-  } catch (err) {
-    notSaved(res, 'execute', 'The action could not be completed.', err);
-  }
 });
 
 export default router;

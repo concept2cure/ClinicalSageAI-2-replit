@@ -13,7 +13,7 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.8 are implemented. Incoming A2.7's alias,
+**Implementation status:** A2.1–A2.9 are implemented. Incoming A2.7's alias,
 parity and retirement qualification is in
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md` and
 `A2_7_PARITY_RECONCILIATION.md`. Concurrent A2.7b adds stronger recorded-tracking
@@ -24,7 +24,7 @@ the production client/server/audit-verifier build. Merged proof is under
 A2.8 resolves `mdx` to Projects with the existing MDX filter, through the same
 destination/action owner. Its red/green routing, native portfolio and scope
 regression proof is in `slice-A2/A2.8/README.md`. The device-workstream shell,
-target and catalogue remain for A2.10. Next is A2.9 (retire uncalled creators).
+target and catalogue remain for A2.10. A2.9 retirement is complete; A2.10 per-function parity checks are next.
 The inventory below describes
 discovery-time behavior.
 
@@ -724,6 +724,17 @@ real filtered portfolio/open-project reachability. Preserve existing Projects
 filter lifetime rather than introduce another persistence store or router.
 
 ### A2.9 Retire the uncalled creators, and fix the unchecked workspace write by deleting it
+
+Implemented 2026-10-26: 12 enumerated POSTs and three dead AnA controller methods
+retired; 50 retained HTTP registrations and 11 retained method bodies remain
+byte-identical. Canonical wizard/intake, data and the two explicitly deferred
+internal PM writers remain. The source guard runs in CI and normal pre-push,
+with red-first actual-source and planted-writer proofs. Qualification: 307
+tests in 21 suites, 20 native PostgreSQL audit/role checks, the real wizard/Create
+browser flow and production build. Existing-owner inventory and limits:
+`A2_9_PROJECT_CREATION_RETIREMENT.md`; evidence:
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`.
+Next: A2.10's per-function parity checks, without automatic shell removal.
 
 - **Delete these handlers, not their routers:**
   - `concept2cure.ts:1047-1135`, :1934-1990

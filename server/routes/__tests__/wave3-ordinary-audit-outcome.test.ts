@@ -3,19 +3,14 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const h = vi.hoisted(() => {
-  class JourneyError extends Error {}
   class MarketError extends Error {}
   class AdmissionRefusal extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } }
   return {
-    createJourney: vi.fn(), updateStage: vi.fn(), createPosition: vi.fn(),
+    createPosition: vi.fn(),
     logAction: vi.fn(), exportLineage: vi.fn(), recordDecision: vi.fn(), readDecisionAttempt: vi.fn(), actor: vi.fn(),
-    JourneyError, MarketError, AdmissionRefusal,
+    MarketError, AdmissionRefusal,
   };
 });
-vi.mock('../../services/program-journey/program-journey-service', () => ({
-  createProgramJourney: h.createJourney, updateJourneyStage: h.updateStage,
-  listProgramJourneys: vi.fn(), ProgramJourneyValidationError: h.JourneyError,
-}));
 vi.mock('../../services/market-access/market-access-service', () => ({
   createMarketAccessPosition: h.createPosition, listMarketAccessPositions: vi.fn(),
   MarketAccessValidationError: h.MarketError,
@@ -31,12 +26,9 @@ vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ resolvePlatformAdmi
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: vi.fn() }));
 vi.mock('../../services/audit/audited-export.js', () => ({ breakForTenant: vi.fn() }));
 
-import journey from '../program-journey.routes';
 import market from '../market-access.routes';
 import lineage from '../decision-lineage';
 
-const JOURNEY = { id: 'journey-1', seg: 'pharma', code: 'REAL-1', current: 'ind' };
-const STAGE = { journey_id: 'journey-1', stage_id: 'ind', status: 'active', pct: 40 };
 const POSITION = {
   id: 'position-1', program: 'REAL-1', market: 'Germany', payer: 'G-BA', mechanism: null,
   code: null, status: 'review', decision_date: null, note: null,
@@ -51,7 +43,6 @@ function app(actor: { organizationId?: unknown; id?: unknown } = { organizationI
   a.use((req: Request, _res: Response, next: NextFunction) => {
     Object.assign(req, { user: actor }); next();
   });
-  a.use('/api/program-journey', journey);
   a.use('/api/market-access', market);
   a.use('/api/decision-lineage', lineage);
   return a;
@@ -60,8 +51,6 @@ function app(actor: { organizationId?: unknown; id?: unknown } = { organizationI
 beforeEach(() => {
   vi.clearAllMocks();
   h.logAction.mockReset().mockResolvedValue(SUCCESS);
-  h.createJourney.mockReset().mockResolvedValue(JOURNEY);
-  h.updateStage.mockReset().mockResolvedValue(STAGE);
   h.createPosition.mockReset().mockResolvedValue(POSITION);
   h.exportLineage.mockReset().mockResolvedValue({
     data: 'actual,lineage\nrecord,1\n', contentType: 'text/csv', filename: 'actual-lineage.csv',
@@ -121,10 +110,6 @@ describe('decision attempts have a real persistence and exact readback contract'
 });
 
 const MUTATIONS = [
-  { path: '/api/program-journey', body: { seg: 'pharma', code: 'REAL-1', currentStage: 'ind' },
-    status: 201, writer: h.createJourney, action: 'PROGRAM_JOURNEY_RECORDED' },
-  { path: '/api/program-journey/journey-1/stages/ind', body: { status: 'active', pct: 40 },
-    status: 200, writer: h.updateStage, action: 'PROGRAM_JOURNEY_STAGE_ADVANCED' },
   { path: '/api/market-access', body: { program: 'REAL-1', market: 'Germany', payer: 'G-BA' },
     status: 201, writer: h.createPosition, action: 'MARKET_ACCESS_POSITION_CREATED' },
 ];

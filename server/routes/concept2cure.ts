@@ -38,7 +38,6 @@ import {
   getUserId,
   logAuditEntry,
   auditTrailFromEntry,
-  logConcept2cureError,
   normalizeConnectedApps,
   normalizeKnowledge,
   paramStr,
@@ -78,38 +77,18 @@ import {
   concept2cureReviewTasks,
   projectActivities,
 } from '../../shared/schema';
-import * as crypto from 'crypto';
 import {
   applyProjectSharingState,
   canManageProject,
   canUseProject,
   getProjectSharingState,
 } from '../services/project-sharing-access';
-import { readCsrProjectActor } from '../services/csr/project-scope';
-import { canCreateProgram } from '../services/c2c/program-access';
 import { installProjectSharingRoutes } from './c2c/project-sharing';
 
+// A2.9 (2026-10-26): creation and duplication use Projects.tsx intake and
+// POST /api/c2c/projects; this router keeps existing records and their safeguards.
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
-
-/** Creation uses the established open-role project policy; changing existing records still uses their write ACL. */
-const currentProjectCreator: RequestHandler = async (req, res, next) => {
-  try {
-    // Unlike read/export admission, creation requires an active tenant even
-    // during the pending-deletion data-return window.
-    const actor = await readCsrProjectActor(pool, getOrganizationId(req), getUserId(req));
-    const role = String(actor.role).trim().toLowerCase();
-    if (!canCreateProgram({ orgRole: role })) {
-      throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot create a project.');
-    }
-    req.userRole = role;
-    next();
-  } catch (error) {
-    const refusal = (error as { status?: number })?.status === 403 && !(error instanceof ProjectAdmissionRefusal)
-      ? new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.') : error;
-    sendProjectAdmissionError(res, refusal);
-  }
-};
 
 function sendProjectAdmissionError(res: Response, error: unknown) {
   const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(
@@ -173,21 +152,11 @@ const SubmissionTypeEnum = z
   .max(50)
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
-// Registry-driven instruction builder replaces hardcoded templates.
-// Works for every application type in the Global Document Registry.
-import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
 import { resolveActorNames } from '../services/tenant/actor-names';
 import { legacyIbTemplate } from './concept2cure-ib-template.js';
 import { clientIpKey } from '../utils/client-ip';
 
-function generateDefaultCustomInstructions(
-  submissionType: string,
-  product?: string | null,
-  projectName?: string
-): string {
-  return buildInstructionsFromLegacyType(submissionType, product, projectName);
-}
-const createProjectSchema = z.object({
+const updateProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(200, 'Name too long'),
   submissionType: SubmissionTypeEnum,
   description: z.string().max(2000, 'Description too long').optional(),
@@ -212,9 +181,7 @@ const createProjectSchema = z.object({
   productClass: z.string().max(50).optional(),
   dossierStandard: z.string().max(20).optional(),
   lifecycleStage: z.string().max(30).optional(),
-});
-
-const updateProjectSchema = createProjectSchema.partial();
+}).partial();
 
 const ownershipPreferencesSchema = z
   .object({
@@ -1003,420 +970,6 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 });
 
 /**
- * Returns submission-type-aware suggested actions for display after project creation.
- */
-function getSuggestedActionsForType(
-  submissionType: string
-): Array<{ id: string; label: string; command: string }> {
-  const base = [
-    { id: 'add-docs', label: 'Add Documents', command: '/upload' },
-    { id: 'readiness', label: 'Run Readiness Check', command: '/readiness' },
-  ];
-
-  const upperType = (submissionType ?? '').toUpperCase();
-
-  // Device submissions
-  if (['510K', 'PMA', 'DE_NOVO'].includes(upperType)) {
-    return [...base, { id: 'predicates', label: 'Find Predicates', command: '/predicates' }];
-  }
-
-  // Drug submissions
-  if (['IND', 'NDA', 'BLA', 'ANDA'].includes(upperType)) {
-    return [
-      ...base,
-      { id: 'clinical-review', label: 'Review Clinical Data', command: '/clinical' },
-    ];
-  }
-
-  // EU submissions
-  if (['MAA', 'IVDR'].includes(upperType)) {
-    return [...base, { id: 'regulatory-path', label: 'Map Regulatory Path', command: '/pathway' }];
-  }
-
-  // Default (EUA or unknown)
-  return [...base, { id: 'strategy', label: 'Define Strategy', command: '/strategy' }];
-}
-
-/**
- * POST /api/concept2cure/projects
- * Create a new project with tenant isolation.
- *
- * @security Bearer token required
- * @body {name, submissionType, description?, customInstructions?}
- */
-router.post('/projects', currentProjectCreator, async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const clientWorkspaceId = await resolveClientWorkspaceId(req);
-    const data = createProjectSchema.parse(req.body);
-
-    // Auto-populate custom instructions based on registry entry or submission type
-    if (!data.customInstructions) {
-      data.customInstructions = generateDefaultCustomInstructions(
-        data.submissionType,
-        data.product,
-        data.name
-      );
-    }
-
-    // Sanitize user input
-    const sanitizedData = {
-      name: sanitizeContent(data.name),
-      description: data.description ? sanitizeContent(data.description) : null,
-      customInstructions: sanitizeContent(data.customInstructions),
-    };
-
-    // Insert into database with tenant context
-    const newProject = await db.transaction(async tx => {
-      const [newProject] = await tx
-        .insert(projects)
-        .values({
-          organizationId,
-          clientWorkspaceId,
-          name: sanitizedData.name,
-          description: sanitizedData.description,
-          type: 'concept2cure',
-          status: 'planning',
-          createdById: userId,
-          ownerId: userId,
-          metadata: {
-            submissionType: data.submissionType,
-            registryId: data.registryId ?? null,
-            applicationFamily: data.applicationFamily ?? null,
-            applicationType: data.applicationType ?? null,
-            agency: data.agency ?? data.targetAgency ?? null,
-            country: data.country ?? null,
-            productClass: data.productClass ?? null,
-            dossierStandard: data.dossierStandard ?? null,
-            lifecycleStage: data.lifecycleStage ?? null,
-            targetSubmissionDate: data.targetSubmissionDate,
-            sponsor: data.sponsor,
-            product: data.product,
-            region: data.region,
-            pinned: data.pinned ?? false,
-            targetAgency: data.targetAgency ?? null,
-            color: data.color ?? null,
-          },
-          settings: {
-            customInstructions: sanitizedData.customInstructions,
-            ownership: {
-              chatHistory: [],
-              documentInventory: [],
-              vaultLinkedFilesEvidence: [],
-              projectInstructions: sanitizedData.customInstructions || '',
-              reusableSnippetsKnowledge: [],
-              reports: [],
-              reviewState: 'draft',
-              approvals: [],
-              readinessState: 'not_started',
-              activityHistory: [],
-              currentWorkbenchContext: '',
-            },
-          },
-        })
-        .returning();
-
-      await tx
-        .insert(projectVisibilitySettings)
-        .values({
-          organizationId,
-          projectId: newProject.id,
-          visibility: 'private',
-          updatedById: userId,
-        })
-        .onConflictDoNothing();
-
-      await tx
-        .insert(projectMembers)
-        .values({
-          organizationId,
-          projectId: newProject.id,
-          userId,
-          role: 'owner',
-          status: 'active',
-          invitedById: userId,
-          acceptedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [projectMembers.projectId, projectMembers.userId],
-          set: {
-            role: 'owner',
-            status: 'active',
-            invitedById: userId,
-            acceptedAt: new Date(),
-            updatedAt: new Date(),
-          },
-        });
-      return newProject;
-    });
-
-    const projectId = `proj_${newProject.id}`;
-
-    // Log audit entry for 21 CFR Part 11 compliance
-    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', projectId, null, {
-      name: sanitizedData.name,
-      submissionType: data.submissionType,
-      organizationId,
-    });
-
-    // Create initial AnA conversation thread for the project
-    const initialThreadId = `thread_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-
-    // Transform response
-    const sharing = {
-      visibility: 'private' as const,
-      members: [
-        {
-          userId,
-          role: 'owner' as const,
-          status: 'active' as const,
-          addedById: userId,
-          addedAt: new Date().toISOString(),
-        },
-      ],
-      legacyFallbackApplied: false,
-    };
-
-    const response = {
-      id: projectId,
-      name: newProject.name,
-      submissionType: data.submissionType,
-      registryId: data.registryId ?? null,
-      applicationFamily: data.applicationFamily ?? null,
-      applicationType: data.applicationType ?? null,
-      description: newProject.description,
-      sponsor: data.sponsor,
-      product: data.product,
-      region: data.region,
-      agency: data.agency ?? data.targetAgency ?? null,
-      dossierStandard: data.dossierStandard ?? null,
-      conversations: [],
-      ownership: buildProjectOwnership([], normalizeProjectSettings(newProject.settings)),
-      sharing,
-      status: newProject.status,
-      organizationId: newProject.organizationId,
-      pinned: (newProject.metadata as any)?.pinned ?? false,
-      targetAgency: (newProject.metadata as any)?.targetAgency ?? null,
-      createdAt: newProject.createdAt,
-      updatedAt: newProject.updatedAt,
-      initialThreadId,
-      suggestedActions: getSuggestedActionsForType(data.submissionType),
-    };
-
-    logger.info('Created new project', {
-      projectId,
-      name: newProject.name,
-      organizationId,
-    });
-
-    // Post-creation: initialize intelligence profile and CTD sections (blocking)
-    await Promise.allSettled([
-      // Create intelligence profile
-      (async () => {
-        try {
-          const { getOrCreateProfile } = await import(
-            '../services/intelligence/project-intelligence-service.js'
-          );
-          await getOrCreateProfile(newProject.id, organizationId);
-          logger.info('Auto-created intelligence profile', { projectId });
-        } catch (err) {
-          logger.error('[projects] Failed to auto-create intelligence profile:', err);
-        }
-      })(),
-      // Initialize sections based on registry (or fallback to IND for backward compat)
-      (async () => {
-        try {
-          const { bootstrapFromRegistry } = await import(
-            '../services/regulatory/projectBootstrapFromRegistry.js'
-          );
-          const bootstrapResult = await bootstrapFromRegistry({
-            registryId: data.registryId,
-            submissionType: data.submissionType,
-            product: data.product,
-            projectName: data.name,
-          });
-
-          if (bootstrapResult && bootstrapResult.sections.length > 0) {
-            const client = await pool.connect();
-            try {
-              await client.query('BEGIN');
-              let inserted = 0;
-              for (const section of bootstrapResult.sections) {
-                await client.query(
-                  `INSERT INTO project_sections
-                     (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
-                   VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
-                   ON CONFLICT DO NOTHING`,
-                  [
-                    organizationId,
-                    newProject.id,
-                    section.sectionCode,
-                    section.module,
-                    section.title,
-                    section.estimatedHours,
-                    section.priority,
-                    JSON.stringify(section.metadata),
-                  ]
-                );
-                inserted++;
-              }
-              await client.query('COMMIT');
-              logger.info('Auto-initialized sections from registry', {
-                projectId,
-                registryId: bootstrapResult.entry.id,
-                sectionsInserted: inserted,
-                usedDeepAdapter: bootstrapResult.usedDeepAdapter,
-              });
-            } catch (err) {
-              await client.query('ROLLBACK');
-              throw err;
-            } finally {
-              client.release();
-            }
-
-            // Persist the blueprint's milestones as canonical board tasks.
-            // `bootstrapResult.milestones` was computed and then thrown away,
-            // so every new project began with a populated section tree and a
-            // completely empty task board (assessment D22). Deterministic
-            // task_id (project + milestone id) keeps this idempotent;
-            // best-effort so a milestone failure never fails project creation.
-            // 2026-09-28: one transaction, each milestone with its task.create
-            // row, all or none (tasking/blueprint-milestones). It was one
-            // pool.query per milestone and no row: board tasks nobody was
-            // recorded as creating.
-            try {
-              const { seedBlueprintMilestones } = await import(
-                '../services/tasking/blueprint-milestones.js'
-              );
-              const milestonesInserted = (
-                await seedBlueprintMilestones({
-                  organizationId,
-                  projectId: newProject.id,
-                  userId,
-                  registryId: bootstrapResult.entry.id,
-                  milestones: bootstrapResult.milestones ?? [],
-                })
-              ).length;
-              if (milestonesInserted > 0) {
-                logger.info('Seeded blueprint milestones onto the task board', {
-                  projectId,
-                  registryId: bootstrapResult.entry.id,
-                  milestonesInserted,
-                });
-              }
-            } catch (milestoneErr) {
-              logger.warn('Blueprint milestone seeding failed (non-fatal)', {
-                projectId,
-                error:
-                  milestoneErr instanceof Error ? milestoneErr.message : String(milestoneErr),
-              });
-            }
-          } else {
-            // Fallback: use legacy IND sections if registry bootstrap returned nothing
-            const { getAllINDSections } = await import(
-              '../../services/regulatory/ind-ectd-sections.js'
-            );
-            const allSections = getAllINDSections();
-            const client = await pool.connect();
-            try {
-              await client.query('BEGIN');
-              let inserted = 0;
-              for (const section of allSections) {
-                await client.query(
-                  `INSERT INTO project_sections
-                     (organization_id, project_id, section_code, module, title, status, estimated_hours, priority, metadata)
-                   VALUES ($1, $2, $3, $4, $5, 'not_started', $6, $7, $8)
-                   ON CONFLICT DO NOTHING`,
-                  [
-                    organizationId,
-                    newProject.id,
-                    section.code,
-                    section.module,
-                    section.title,
-                    section.estimatedHours,
-                    section.required ? 'high' : 'medium',
-                    JSON.stringify({
-                      required: section.required,
-                      requiredForAmendment: section.requiredForAmendment,
-                      aiDraftable: section.aiDraftable,
-                      authoringMode: section.authoringMode,
-                      role: section.role,
-                      regulatoryRef: section.regulatoryRef,
-                      format: section.format,
-                      parentCode: section.parentCode,
-                      depth: section.depth,
-                    }),
-                  ]
-                );
-                inserted++;
-              }
-              await client.query('COMMIT');
-              logger.info('Auto-initialized CTD sections (legacy fallback)', {
-                projectId,
-                sectionsInserted: inserted,
-              });
-            } catch (err) {
-              await client.query('ROLLBACK');
-              throw err;
-            } finally {
-              client.release();
-            }
-          }
-        } catch (err) {
-          logger.error('[projects] Failed to auto-initialize sections:', err);
-        }
-      })(),
-      // Create initial AnA conversation thread with onboarding message
-      (async () => {
-        try {
-          const productName = data.product || newProject.name;
-          const submissionLabel = data.submissionType || 'regulatory';
-          const onboardingContent = `I've set up your ${submissionLabel} project for ${productName}. What would you like to work on first?\n\nI can help you map your CTD structure, identify predicate devices, run a readiness assessment, or start drafting sections.`;
-
-          await pool.query(
-            `INSERT INTO ai_threads (id, organization_id, project_id, title, created_by, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-            [
-              initialThreadId,
-              organizationId,
-              newProject.id,
-              `${productName} — Getting Started`,
-              userId,
-            ]
-          );
-
-          await pool.query(
-            `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'assistant', $2)`,
-            [initialThreadId, onboardingContent]
-          );
-
-          logger.info('Auto-created initial AnA thread', { projectId, threadId: initialThreadId });
-        } catch (err: any) {
-          if (err?.code !== '42P01') {
-            logger.error('[projects] Failed to auto-create initial AnA thread:', err);
-          } else {
-            logger.warn(
-              '[projects] ai_threads/ai_messages table missing — skipping onboarding thread'
-            );
-          }
-        }
-      })(),
-    ]).catch(() => {}); // guard: each task logs its own failure
-
-    return sendSuccess(res.status(201), response, { auditTrail: auditTrailFromEntry(auditOutcome) });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
-    }
-    logConcept2cureError('create project', error, {
-      organizationId: req.tenantContext?.organizationId,
-    });
-    return sendError(res, 500, 'Failed to create project');
-  }
-});
-
-/**
  * PUT /api/concept2cure/projects/:id
  * Update a project with tenant isolation.
  *
@@ -1918,87 +1471,6 @@ router.post('/projects/:id/export', projectRecordAdmission(false), async (req: R
   } catch (error: any) {
     logger.error('Failed to export project', { error: error.message });
     return sendError(res, 500, 'Failed to export project');
-  }
-});
-
-/**
- * POST /api/concept2cure/projects/:id/duplicate
- * Clone-as-template: copies name / description / metadata / settings /
- * type / clientWorkspaceId into a new project row. Strips conversations
- * and audit so the copy starts clean. Audited as DUPLICATE on both
- * source and copy ids.
- *
- * Body (optional): { name?: string }   — defaults to "Copy of <orig>"
- */
-router.post('/projects/:id/duplicate', currentProjectCreator, projectRecordAdmission(false), async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-    const rawId = String(req.params.id ?? '');
-    const numericId = parseIntegerProjectId(rawId);
-    if (numericId === null) {
-      return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
-    }
-
-    const [existing] = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
-      .limit(1);
-    if (!existing) {
-      return sendError(res, 404, 'Project not found');
-    }
-
-    const overrideName =
-      typeof req.body?.name === 'string' && req.body.name.trim().length > 0
-        ? sanitizeContent(req.body.name.trim()).slice(0, 200)
-        : `Copy of ${existing.name}`;
-
-    // Copy reusable project configuration, never source memberships, decisions,
-    // document pointers, programme identity or a previous transfer intent.
-    const sourceMetadata = normalizeProjectSettings(existing.metadata);
-    const sourceSettings = normalizeProjectSettings(existing.settings);
-    const metadata: Record<string, unknown> = {};
-    for (const key of ['submissionType', 'registryId', 'applicationFamily', 'applicationType', 'agency', 'country',
-      'productClass', 'dossierStandard', 'lifecycleStage', 'targetSubmissionDate', 'sponsor', 'product', 'region', 'targetAgency', 'color']) {
-      if (sourceMetadata[key] !== undefined) metadata[key] = sourceMetadata[key];
-    }
-    const created = await db.transaction(async tx => {
-      const [copy] = await tx.insert(projects).values({
-        organizationId,
-        clientWorkspaceId: existing.clientWorkspaceId,
-        createdById: userId,
-        ownerId: userId,
-        name: overrideName,
-        description: existing.description,
-        type: existing.type,
-        status: 'active',
-        metadata,
-        settings: { customInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
-          ownership: { chatHistory: [], documentInventory: [], vaultLinkedFilesEvidence: [],
-            projectInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
-            reusableSnippetsKnowledge: [], reports: [], reviewState: 'draft', approvals: [],
-            readinessState: 'not_started', activityHistory: [], currentWorkbenchContext: '' } },
-      }).returning();
-      await tx.insert(projectVisibilitySettings).values({ organizationId, projectId: copy.id, visibility: 'private', updatedById: userId });
-      await tx.insert(projectMembers).values({ organizationId, projectId: copy.id, userId, role: 'owner', status: 'active', invitedById: userId, acceptedAt: new Date() });
-      return copy;
-    });
-
-    const auditOutcome = await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
-    return sendSuccess(res, {
-      id: `proj_${created.id}`,
-      name: created.name,
-      description: created.description,
-      status: created.status,
-      organizationId: created.organizationId,
-      sourceProjectId: rawId,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
-  } catch (error: any) {
-    logger.error('Failed to duplicate project', { error: error.message });
-    return sendError(res, 500, 'Failed to duplicate project');
   }
 });
 

@@ -73,21 +73,17 @@ describe('AnA platform control route org binding', () => {
 /**
  * IAM-20 (2026-10-01): every write in this router changes organisation-wide
  * configuration (settings, AI configuration, compliance defaults, module
- * toggles, onboarding) or creates a project outside the Projects app, and
- * /execute dispatches any of them. Behind the session gate alone, any member
- * of the organisation could do all of it. Writes now need the owner or admin
+ * toggles). Behind the session gate alone, any member of the organisation
+ * could change them. Retained writes need the owner or admin
  * role, the same as tenant-config's settings writes; reads are unchanged.
  */
 describe('AnA platform control: writes need the owner or admin role', () => {
   const WRITES: Array<[method: 'patch' | 'post', path: string, controller: keyof typeof mockController]> = [
     ['patch', '/settings', 'updateSettings'],
     ['post', '/modules/toggle', 'toggleModule'],
-    ['post', '/projects', 'createProject'],
     ['patch', '/projects/7', 'updateProject'],
     ['patch', '/ai-config', 'configureAI'],
     ['patch', '/compliance', 'setComplianceDefaults'],
-    ['post', '/onboard', 'onboardOrganization'],
-    ['post', '/execute', 'executeAction'],
   ];
 
   async function appAs(role: string) {
@@ -151,8 +147,6 @@ describe('AnA platform control: a settings write that is refused is not reported
     ['post', '/modules/toggle', 'toggleModule', { moduleId: 'm', enabled: true }],
     ['patch', '/ai-config', 'configureAI', { defaultModel: 'm' }],
     ['patch', '/compliance', 'setComplianceDefaults', { frameworks: ['FDA'] }],
-    ['post', '/onboard', 'onboardOrganization', { therapeuticArea: 'a', primaryAgency: 'FDA', submissionType: 'NDA' }],
-    ['post', '/execute', 'executeAction', { category: 'settings', action: 'x', parameters: {} }],
   ];
 
   async function adminApp() {
@@ -192,5 +186,37 @@ describe('AnA platform control: a settings write that is refused is not reported
     expect(res.body).toMatchObject({ success: false });
     expect(typeof res.body.error).toBe('string');
     expect(res.text).not.toContain('probe');
+  });
+});
+
+/** A2.9: even an administrator cannot revive alternate project creation. */
+describe('retired AnA platform creation and arbitrary dispatch routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const fn of Object.values(mockController)) fn.mockResolvedValue({ success: true, result: {} });
+  });
+
+  it.each([
+    ['/projects', { name: 'Old alternate creator' }],
+    ['/onboard', { therapeuticArea: 'Oncology', primaryAgency: 'FDA', submissionType: 'IND' }],
+    ['/execute', { category: 'project', action: 'create', parameters: { name: 'Old alternate creator' }, requiresConfirmation: false }],
+    ['/execute', { category: 'project', action: 'create', parameters: { name: 'Old alternate creator' }, requiresConfirmation: true }],
+  ])('%s no longer creates, mutates defaults or proposes a confirmation', async (path, body) => {
+    const { default: router } = await import('../../routes/ana-platform-control');
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      (req as any).tenantContext = { organizationId: 42 };
+      (req as any).user = { id: 7, role: 'admin', roles: ['admin'] };
+      (req as any).userId = 7;
+      next();
+    });
+    app.use('/api/ana/platform', router);
+    const res = await request(app).post(`/api/ana/platform${path}`).send(body);
+    expect(res.status).toBe(404);
+    expect(res.body.result?.pendingAction).toBeUndefined();
+    for (const method of ['createProject', 'onboardOrganization', 'executeAction', 'updateSettings', 'toggleModule'] as const) {
+      expect(mockController[method]).not.toHaveBeenCalled();
+    }
   });
 });

@@ -637,6 +637,10 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:program-ownership-single-source:selftest && npm run ci:program-ownership-single-source
 
+      - name: Project creation has one canonical intake and bounded deferred writers
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:project-creation-owners:selftest && npm run ci:project-creation-owners
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the

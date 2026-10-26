@@ -15,7 +15,7 @@
  *
  * Fix round: the connector for Claude (P1-47, ADR-0014 §10) is its owner's
  * setting. An administrator naming `claudeConnector` on the controller's doors
- * (PATCH /settings, /ai-config, POST /execute) or on PATCH
+ * (PATCH /settings and /ai-config) or on PATCH
  * /api/organizations/:id/settings is refused, stores nothing and writes no row.
  *
  * Mounted as production mounts them: SCIM at /scim/v2 under the system scope
@@ -468,14 +468,6 @@ describe('the connector for Claude is not a general setting on these doors (P1-4
     ],
     ['PATCH /api/ana/platform/ai-config', () => request(app).patch('/api/ana/platform/ai-config').set(asAdmin()).send(CONNECTOR)],
     [
-      'POST /api/ana/platform/execute (settings)',
-      () => request(app).post('/api/ana/platform/execute').set(asAdmin()).send(execute('settings', CONNECTOR)),
-    ],
-    [
-      'POST /api/ana/platform/execute (ai_config)',
-      () => request(app).post('/api/ana/platform/execute').set(asAdmin()).send(execute('ai_config', CONNECTOR)),
-    ],
-    [
       'PATCH /api/organizations/:id/settings (with a reason)',
       () =>
         request(app)
@@ -501,14 +493,23 @@ describe('the connector for Claude is not a general setting on these doors (P1-4
     expect(await auditCount(), 'a row was written for a change that was not made').toBe(rowsBefore);
   });
 
+  it.each(['settings', 'ai_config'])('the retired arbitrary execute door cannot change %s settings', async category => {
+    const before = await settingsOf();
+    const rowsBefore = await auditCount();
+    const res = await request(app).post('/api/ana/platform/execute').set(asAdmin()).send(execute(category, CONNECTOR));
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(await settingsOf()).toEqual(before);
+    expect(await auditCount()).toBe(rowsBefore);
+  });
+
   it('control: the same administrator, on the same doors, still changes another setting', async () => {
     const viaController = await request(app).patch('/api/ana/platform/settings').set(asAdmin()).send({ defaultModel: 'dbp149-control' });
     expect(viaController.status, JSON.stringify(viaController.body)).toBe(200);
-    const viaExecute = await request(app)
-      .post('/api/ana/platform/execute')
+    const viaSettings = await request(app)
+      .patch('/api/ana/platform/settings')
       .set(asAdmin())
-      .send(execute('settings', { weeklyDigestEnabled: true }));
-    expect(viaExecute.status, JSON.stringify(viaExecute.body)).toBe(200);
+      .send({ weeklyDigestEnabled: true });
+    expect(viaSettings.status, JSON.stringify(viaSettings.body)).toBe(200);
     const viaOrganizations = await request(app)
       .patch(`/api/organizations/${ORG}/settings`)
       .set(asAdmin())

@@ -1,0 +1,258 @@
+{
+  "base": "a54e56337c0028c53d20276b5441681feddf67b4",
+  "scope": "TypeScript AST: app/router explicit literal HTTP registrations and class method bodies; no runtime/database claim",
+  "routes": [
+    {
+      "file": "server/bootstrap/register-advanced-platform-routes.ts",
+      "before": 2,
+      "after": 1,
+      "removed": [
+        "server/bootstrap/register-advanced-platform-routes.ts POST /api/workspace/projects"
+      ],
+      "added": [],
+      "retained": [
+        {
+          "route": "server/bootstrap/register-advanced-platform-routes.ts GET /api/workspace/projects",
+          "registrationSha256": "807d32514f9977327ecba2a3719218c86b844e7e473eb93f84d3ca484b2960cc",
+          "handlerSha256": [
+            "719cbcddc746d31e157bfc886df577768e9097a5e81f104396713a170b26b8dc",
+            "8ebcb94f6e1c7197beb213aa83a98450d9de2f27dcdb76a34a7f330638e79a28"
+          ],
+          "byteIdentical": true
+        }
+      ]
+    },
+    {
+      "file": "server/routes/ctd-onboarding.ts",
+      "before": 6,
+      "after": 5,
+      "removed": [
+        "server/routes/ctd-onboarding.ts POST /projects"
+      ],
+      "added": [],
+      "retained": [
+        {
+          "route": "server/routes/ctd-onboarding.ts GET /projects",
+          "registrationSha256": "b75c0400e5e4f80c40e60c1a2b7addbcebaf10b0cbb8b94fd2653f020a42706a",
+          "handlerSha256": [
+            "beb65c504fdb54b8fa1e04379ddaedd6c24f6aeb41578e7f65e85531a3b05d2e"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ctd-onboarding.ts GET /projects/:id",
+          "registrationSha256": "97313c09f07c0feadb8093f598e2da09127a73ce5f7e4c34562d31ef6b20eef7",
+          "handlerSha256": [
+            "c53c2fea069fe95c92508f781232a6d9cf93b4ba8feb7552e46d42a09d5b75fa"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ctd-onboarding.ts POST /projects/:id/upload",
+          "registrationSha256": "9d8af8a515aef5f003f15be0def7d86c75782737adfc9da53f2a1f9fe3389b50",
+          "handlerSha256": [
+            "1b28e383c1ef3076d8265f433929c7dc0fd0f3a9f73ca2f0ae5967f8e967727a",
+            "8b13d9b1c40ee4dad7671e18b6d960671fd2260af52d2599c1404cdad8b9877e"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ctd-onboarding.ts POST /projects/:id/validate",
+          "registrationSha256": "f13fb04e4bdcf1bb9227e8fed6b16718118a1d0b1cec122ded0e7e3ab68436b5",
+          "handlerSha256": [
+            "8b182f89a3f4ed02d69f7c4fad2ff8d7e22578459c6687d70275c61ea1803f02"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ctd-onboarding.ts POST /projects/:id/detect-section",
+          "registrationSha256": "a04a8255fa495e43004083885bd4bf1ec2fefc7f7fd5c2f039695a5c8179b141",
+          "handlerSha256": [
+            "9881c5023324e5b2f9283e3b9a667491555bc471afa750975ec70775b57bd00d"
+          ],
+          "byteIdentical": true
+        }
+      ]
+    },
+    {
+      "file": "server/routes/ana-platform-control.ts",
+      "before": 12,
+      "after": 9,
+      "removed": [
+        "server/routes/ana-platform-control.ts POST /projects",
+        "server/routes/ana-platform-control.ts POST /onboard",
+        "server/routes/ana-platform-control.ts POST /execute"
+      ],
+      "added": [],
+      "retained": [
+        {
+          "route": "server/routes/ana-platform-control.ts GET /settings",
+          "registrationSha256": "43ba3c7f0f776a1c7ef841f07c8951ed8b4b71899069d55f724d9ed1c39602bc",
+          "handlerSha256": [
+            "d968626dcf084d93c42f182d947b6182f39ce95f1b52a8b6a2c113083d5c6363"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts PATCH /settings",
+          "registrationSha256": "0b75dca20608d603686d351cd0d394f17076ec6a006d805dc016a0d1287e609c",
+          "handlerSha256": [
+            "f5a7d0a549ac70c75f9e7028d46c9fe27187676250e254cd80620af08b430044"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts GET /capabilities",
+          "registrationSha256": "4e0c6eb5447caa55769c7aad474b7a48ff770e86e96f45cee9a5dbc07e754f38",
+          "handlerSha256": [
+            "eb941aba4b1c3c3d20f5feee3f0927ea8ff26ee339acec0f6ba120e9a80791e3"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts GET /entitlements",
+          "registrationSha256": "80bc3ac40cf36876db0a49ea7a415e5b57b9e02e21e9e5f18671c000f2898fe4",
+          "handlerSha256": [
+            "6dab0eb342136dd65e80bbcab7e448e937ca0b17497cc76f34b03d1cb15fc38f"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts POST /modules/toggle",
+          "registrationSha256": "f69b6f60d45e9830889322ed364ff636cdbf7c9eda6ab9fa2b94bdb966ca44f9",
+          "handlerSha256": [
+            "377de9f3197403199e4cefdb0c2a2ed2dec752045d19e298d1d38c792301450a"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts PATCH /projects/:projectId",
+          "registrationSha256": "d3634d24e170939f1bd26ceb11bde55aa9512ce936697f1e2038454a1111d60b",
+          "handlerSha256": [
+            "69e8287c74f60fd24d593263502c4c3b108a9a4fec01f7f1f52eeacc2b0bc93f"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts PATCH /ai-config",
+          "registrationSha256": "09b4fd066da898d2b1de141acde90f606d3d765d78854a13fee60b187ea11dbd",
+          "handlerSha256": [
+            "007be345f51ab3d2bedf1939d800bf3b8489e6c96fbe09420a00110c6fb523b5"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts PATCH /compliance",
+          "registrationSha256": "4eea7c8a544e15d0f10ac66af3d7c82a87bc9ac1ce93abccf67cb8a90ee7b833",
+          "handlerSha256": [
+            "02e1e9aba44f634ea637cb9192d5a1d2c2a427c00cfbd2d9d586773040e0c303"
+          ],
+          "byteIdentical": true
+        },
+        {
+          "route": "server/routes/ana-platform-control.ts GET /usage",
+          "registrationSha256": "c0cffc000fc58fbcd53a8e99e889ebd1735ca0f20136d3d237a2ce12b72689b5",
+          "handlerSha256": [
+            "0f65a3dbe6acd9287dcb4b5b73e0b9abacee93534539335133b076668b9dee21"
+          ],
+          "byteIdentical": true
+        }
+      ]
+    },
+    {
+      "file": "server/routes/program-journey.routes.ts",
+      "before": 3,
+      "after": 1,
+      "removed": [
+        "server/routes/program-journey.routes.ts POST /",
+        "server/routes/program-journey.routes.ts POST /:id/stages/:stageId"
+      ],
+      "added": [],
+      "retained": [
+        {
+          "route": "server/routes/program-journey.routes.ts GET /",
+          "registrationSha256": "c8eaa192f38e46ec58fdb5f2ff96fa6a4886a23cc05147738718c122edea606d",
+          "handlerSha256": [
+            "f21d514477621d9c845672ee1d1d9f949c791e92ec8e5bf83d11a8e6b54259c6"
+          ],
+          "byteIdentical": true
+        }
+      ]
+    }
+  ],
+  "controller": {
+    "file": "server/services/ana-platform-controller.ts",
+    "before": 14,
+    "after": 11,
+    "removed": [
+      "createProject",
+      "onboardOrganization",
+      "executeAction"
+    ],
+    "retained": [
+      {
+        "method": "verifyPaidAccess",
+        "bodySha256": "c2bbb1c5218efe1ccbc6232949f7203e89ed28264cadc015bf9a78e7bf18ea2c",
+        "byteIdentical": true
+      },
+      {
+        "method": "getSettings",
+        "bodySha256": "71dd965956b7c3e0489348c946283c7de1221ae1b0142bd47945207ca6c4b7df",
+        "byteIdentical": true
+      },
+      {
+        "method": "updateSettings",
+        "bodySha256": "6bb5d68ca532f58a86d16c0f6c6e34f343aab313ccc7ecf875952afb7c468225",
+        "byteIdentical": true
+      },
+      {
+        "method": "writeSettings",
+        "bodySha256": "16c34c6a15b39235555c4637e0283cc4c831fe2042838c8bc9c418ebe79dc18b",
+        "byteIdentical": true
+      },
+      {
+        "method": "listCapabilities",
+        "bodySha256": "bacbe5873a0413db27df2bb12d0c24c6ed57098dcb886653ead9fb9bd64229d6",
+        "byteIdentical": true
+      },
+      {
+        "method": "toggleModule",
+        "bodySha256": "b2e2e0f16681d81dd25bb4eeadcb1de64d44bb28e761c1f24a9693e2d60d9360",
+        "byteIdentical": true
+      },
+      {
+        "method": "updateProject",
+        "bodySha256": "e6183be11cc81ba470f5cb4f4ea33279c51bd0fb3ca39b86ca902a9934995616",
+        "byteIdentical": true
+      },
+      {
+        "method": "configureAI",
+        "bodySha256": "5e1222c15e1afe475a116c9b5f43289a421960937a79f8f1aec00daa428b245f",
+        "byteIdentical": true
+      },
+      {
+        "method": "setComplianceDefaults",
+        "bodySha256": "893ef98a06afd57c748f40ab8126beb0c4fbca26ec695b7cdeb929d59bfe9d99",
+        "byteIdentical": true
+      },
+      {
+        "method": "analyzeUsage",
+        "bodySha256": "61014024055aa5b9cbaaf8300f4d96736d917ce6d33edf1ba7f70de3c9068031",
+        "byteIdentical": true
+      },
+      {
+        "method": "auditLog",
+        "bodySha256": "f37c72aad2b61b2c971373c87f763b155dde5b0244f4b55730b72366340f5411",
+        "byteIdentical": true
+      }
+    ]
+  },
+  "summary": {
+    "removedPostRegistrations": 7,
+    "retainedRegistrations": 16,
+    "allRetainedRegistrationsByteIdentical": true,
+    "removedControllerMethods": 3,
+    "retainedControllerMethods": 11,
+    "allRetainedControllerBodiesByteIdentical": true
+  }
+}

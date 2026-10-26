@@ -1,6 +1,6 @@
 /**
- * POST /api/device-projects does not invent a risk class, and the two class
- * vocabularies come from the module that governs them (2026-10-12 review).
+ * The alternate POST /api/device-projects is retired in A2.9. The retained PUT
+ * still uses the governed declared-class vocabularies and supports withdrawal.
  *
  * ── What it did ─────────────────────────────────────────────────────────────
  * The handler destructured `deviceClass = 'II'`. A create that did not state a
@@ -76,64 +76,30 @@ app.use('/api/device-projects', deviceProjectsRouter);
 const create = (body: Record<string, unknown>) =>
   request(app).post('/api/device-projects').send({ deviceName: 'Catheter', clientWorkspaceId: 4, ...body });
 
-const storedClass = () => (H.inserted.at(-1)!.metadata as Record<string, unknown>).deviceClass;
-
 beforeEach(() => {
   H.inserted = [];
   H.updated = [];
   H.existing = undefined;
 });
 
-describe('a create that states no class', () => {
-  it('stores no class, rather than Class II', async () => {
-    const res = await create({});
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(storedClass(), 'the class nobody determined').toBeNull();
-  });
-
-  it('is not refused, because a device project precedes its classification', async () => {
-    expect((await create({})).status).toBe(201);
-    expect((await create({ deviceClass: '' })).status, 'nor is an empty one').toBe(201);
-    expect(storedClass()).toBeNull();
+describe('the retired alternate device creator', () => {
+  it.each([{}, { deviceClass: 'III' }, { deviceClass: 'IV' }])('cannot write with payload %j', async body => {
+    // Stated and unstated classes now enter through canonical project intake.
+    const res = await create(body);
+    expect(res.status).toBe(404);
+    expect(H.inserted).toEqual([]);
   });
 });
 
-describe('a create that states one', () => {
-  it('stores exactly what was stated', async () => {
-    expect((await create({ deviceClass: 'III' })).status).toBe(201);
-    expect(storedClass()).toBe('III');
-  });
-
-  it('accepts the MDR classes a Class I device actually declares', async () => {
-    /* Is, Im and Ir: sterile, measuring, reusable surgical. Each is a Class I
-       device whose notified body is involved for that one aspect (Art 52(7)),
-       and each was refused by the hand-written list. */
-    for (const cls of ['Is', 'Im', 'Ir']) {
-      const res = await create({ deviceClass: cls });
-      expect(res.status, `${cls}: ${JSON.stringify(res.body)}`).toBe(201);
-      expect(storedClass()).toBe(cls);
-    }
-  });
-
-  it('accepts every class the governed vocabulary holds, so the route and the platform agree', async () => {
-    for (const cls of MDR_DECLARED_CLASSES) {
-      expect((await create({ deviceClass: cls })).status, cls).toBe(201);
-    }
-    for (const cls of ['I', 'II', 'III']) {
-      expect((await create({ deviceClass: cls })).status, cls).toBe(201);
-    }
-  });
-
-  it('refuses a class neither regulator has', async () => {
-    const res = await create({ deviceClass: 'IV' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/deviceClass must be one of/);
-  });
-});
-
-describe('withdrawing a class that was stated in error', () => {
+describe('retained updates preserve the stated-class rules', () => {
   beforeEach(() => {
     H.existing = { id: 51, organizationId: 9, metadata: { deviceClass: 'II', manufacturer: 'Acme' } };
+  });
+
+  it.each([...new Set([...MDR_DECLARED_CLASSES, 'I', 'II', 'III'])])('accepts stated class %s on an existing record', async deviceClass => {
+    const res = await request(app).put('/api/device-projects/51').send({ deviceClass });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect((H.updated.at(-1)!.metadata as Record<string, unknown>).deviceClass).toBe(deviceClass);
   });
 
   it('is possible, by patching it to null', async () => {

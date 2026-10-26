@@ -1,0 +1,49 @@
+{
+  "base": "a54e56337c0028c53d20276b5441681feddf67b4",
+  "sha256": {
+    ".github/workflows/ci.yml": "4f969e682f76c563c3a0e067b68c23ce81f600e68ce7611db8fc26829102c879",
+    ".husky/pre-push": "65dfa385a6d1710d0c0450fe1c40668c6411f7b4fb429ec79ab9543d982b2ff7",
+    "scripts/ci/check-project-creation-owners.mjs": "6d9f2d557a8e05f64e57b2fb59baa48e779538dd4b83236dda7894588cf746ce",
+    "server/__tests__/routes/ana-platform-control.test.ts": "7f0147f9c8a06d5f0d692d69271f436779e91742bcf8a8d057012743826efe99",
+    "server/bootstrap/register-advanced-platform-routes.ts": "94b3b2c7ee6c3e76fd2e255c4d2e3b942642a1bb86ea9a3371be35cefa39c54c",
+    "server/routes/__tests__/ctd-project-creator-retired.test.ts": "e67956743233701421058172aa635454b4feaf8ae9f218e20b295f6a2d78341f",
+    "server/routes/__tests__/device-projects-class-not-invented.test.ts": "3f996ebbc0f043a561eb55e8658b0f2156786f3efff4c5f67eac74acbe65a35e",
+    "server/routes/__tests__/o01-core-project-audits.pglite.test.ts": "0bdb95b5a5ee0f49042d988016ff2ec2b26ea1a1c0f575ada76a10f9b15f92f0",
+    "server/routes/__tests__/program-journey-read.test.ts": "eb954ed3dc5f9185caad481de588fdeead43da10ee20d3b83f2d3b417d500813",
+    "server/routes/__tests__/projects-management-quota-not-recorded-is-403.test.ts": "10e5a388b244b92db3bdbc732210836e88641d4e4d04ec9a0d91b49804d23883",
+    "server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts": "a542dd45bb0dc15bbbd756a6976012c35517cb0b5683bff6db912236397ead6d",
+    "server/routes/ana-platform-control.ts": "ce014bc8a0114fc1929e12e175e4cb580c9c78509f44b95e415f9a917a627986",
+    "server/routes/concept2cure.ts": "98ef97d887730c30ed515b5940ccf0fbafc6bbc4a1ec8827ec37ce556cf8e68b",
+    "server/routes/ctd-onboarding.ts": "83970a5920494f6d35b781f41b4194f85f354187d925749611a77d57419e9437",
+    "server/routes/device-projects.ts": "2e3f4f90e327c0175c93677cd884cd6a8901af10e6c194dfb933c80a47bb8644",
+    "server/routes/program-journey.routes.ts": "e88bb7e02daa9e5a0f835247b145bab2e0dff65ff68e26e03502ee79060b0938",
+    "server/routes/project-hierarchy.ts": "2b053f449af4047f09eb22ba8757628b7ce2a9130e4f31812656aa069f09cb22",
+    "server/routes/projects-management.ts": "4e0d279c06454e5ee58ccc45ef5e6637ef3040c389df819e8e33d58be8be98cc",
+    "server/services/__tests__/ana-platform-project-creator-retired.test.ts": "2602cb5e9bc48b7937b321eedbbcc46118a3a040f73c7f865e02bf912def05e6",
+    "server/services/ana-platform-controller.ts": "7b81c19912c64edf92b0ec909dd1349d8b05006312f56e694c711a95a8297bbd",
+    "tests/ci/project-creation-owners.contract.test.ts": "eb250841110f256e974f2fb5202dbf42e0bc9419e5d21e2f453dedec793f8dab",
+    "tests/db/role-config-change-audit.dbtest.ts": "c0adb86dd8bcaf1e25d66597f2fea86e2472dc83146bde5b1f80e4da096ed019",
+    "tests/routes/concept2cure.test.ts": "05755222129099790f0c25ac0ec21d4d79e43c0ff67765bb788f4019f57464f1",
+    "tests/routes/device-projects-governed-writes.test.ts": "f4290e619498e221257448cf341e5350818bbcbaba8cbdfdcc556c09ceb26d0e",
+    "tests/routes/project-hierarchy-creator-retirement.test.ts": "0bee02253089fa58be9cf03c376df5971a7c4f9469dffd9b1d9b783b243d09e4",
+    "tests/routes/projects-management-tenant-boundary.test.ts": "e0b1565b9be59393c3e25c3d3c676a19362705742de9be299f8a24bff0ca7e13"
+  },
+  "deleted": [
+    "server/services/__tests__/ana-create-project-refuses-an-unrecorded-project-limit.test.ts"
+  ],
+  "focusedRegression": {
+    "tests": 307,
+    "suites": 21
+  },
+  "nativePostgreSQL": {
+    "tests": 20,
+    "mockedPg": false,
+    "runtimeNonSuperuser": true,
+    "runtimeBypassRls": false
+  },
+  "nativeBrowser": {
+    "passed": 1,
+    "durationSeconds": 14.4
+  },
+  "build": "passed; frontend21.65s"
+}
