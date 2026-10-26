@@ -1,0 +1,7 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/pediatric-unstated-inputs.test.ts --reporter=verbose
+Behavioral baseline: 49211250 before production changes.
+
+Test Files  1 failed (1)
+Tests  100 failed | 14 passed (114)
+Start at  17:43:49
+Duration  8.92s (transform 5.93s, setup 75ms, import 8.30s, tests 108ms, environment 0ms)
