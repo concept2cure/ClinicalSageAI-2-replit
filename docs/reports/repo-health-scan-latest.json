@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T04:24:06.027Z",
+  "generatedAt": "2026-10-26T05:40:55.106Z",
   "git": {
-    "sha": "a9593ef98e5ec7a05d06a64e5f1d12740b30a873",
+    "sha": "a40acd714054695e7c9d05fd92c62f29db26d507",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2875,7 +2875,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1874
+        "lines": 1875
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
