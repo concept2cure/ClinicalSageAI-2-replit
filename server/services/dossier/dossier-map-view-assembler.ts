@@ -116,15 +116,24 @@ export async function assembleProjectDossierMap(
 ): Promise<DossierTrackedModule[]> {
   // One bulk, project-scoped query: every tracked section for THIS project (double-scoped
   // to the caller's org), excluding a soft-deleted (archived) project.
-  const { rows } = await db.query(
-    `SELECT ps.section_code, ps.module, ps.title, ps.status
+  const query = admitted
+    ? `SELECT ps.section_code, ps.module, ps.title, ps.status
        FROM project_sections ps
        JOIN projects p ON p.id = ps.project_id
       WHERE ps.organization_id = $1
         AND p.organization_id = $1
         AND ps.project_id = $2
         AND p.status IS DISTINCT FROM 'archived' AND p.status IS DISTINCT FROM 'deleted'
-        ${admitted ? 'AND p.regulatory_program_id=$3 AND p.client_workspace_id IS NOT DISTINCT FROM $4' : ''}`,
+        AND p.regulatory_program_id=$3 AND p.client_workspace_id IS NOT DISTINCT FROM $4`
+    : `SELECT ps.section_code, ps.module, ps.title, ps.status
+       FROM project_sections ps
+       JOIN projects p ON p.id = ps.project_id
+      WHERE ps.organization_id = $1
+        AND p.organization_id = $1
+        AND ps.project_id = $2
+        AND p.status IS DISTINCT FROM 'archived' AND p.status IS DISTINCT FROM 'deleted'`;
+  const { rows } = await db.query(
+    query,
     admitted ? [orgId, projectId, admitted.programId, admitted.clientWorkspaceId] : [orgId, projectId],
   );
   const sections = rows as Array<{ section_code: string; module: string; title: string; status: string }>;

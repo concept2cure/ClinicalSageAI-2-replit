@@ -123,6 +123,12 @@ The following are overlapping checks, not a summed unique test count.
 - Full TypeScript zero-baseline check and all mandatory pre-push gates are
   required for publication; no bypass or type/lint baseline expansion is used.
   The full pre-integration TypeScript run passed with **zero errors**.
+  The first push's SQL guard rejected interpolation of the tracking reader's
+  fixed optional clause. It was replaced by two fixed parameterized query
+  forms, without a scanner exception. The SQL gate passes and all **34 backend
+  tests** pass again; accepted anchor/client predicates and bound values remain.
+  The post-correction client/server/audit-verifier build also passes (Vite
+  **21.80 seconds**).
 
 ## Concurrent integration
 
