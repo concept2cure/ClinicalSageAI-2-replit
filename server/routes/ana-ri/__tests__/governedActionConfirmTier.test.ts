@@ -143,10 +143,12 @@ describe('the confirm tier runs on a yes', () => {
     expect(executed).toHaveLength(0);
   });
 
-  it('a read is still not something this route runs', async () => {
-    const res = await post({ command: 'list_projects', params: {} });
+  it.each(['list_projects', 'create_project'])('refuses a read or retired writer %s before dispatch or audit writes', async command => {
+    const res = await post({ command, params: {}, confirm: true });
     expect(res.status).toBe(400);
+    expect(res.body.code ?? res.body.error?.code ?? JSON.stringify(res.body)).toMatch(/NOT_A_GOVERNED_COMMAND/);
     expect(executed).toHaveLength(0);
+    expect(audits).toHaveLength(0);
   });
 });
 

@@ -113,7 +113,7 @@ describe('510(k) surface with a program whose predicate service is unreachable',
 describe('overview with an empty tenant (sample mode off)', () => {
   it('derives the health strip from the empty list, never from MDX_HEALTH', () => {
     stubFetch(() => 200);
-    const { container } = wrap(<Overview programs={[]} onOpenProgram={() => {}} onAskAna={() => {}} />);
+    const { container } = wrap(<Overview programs={[]} onOpenProgram={() => {}} onAskAna={() => {}} onNewProject={() => {}} />);
     const text = container.textContent ?? '';
     expect(text).not.toContain('Down 3 pts');
     expect(text).not.toContain('9 510(k) · 4 PMA');

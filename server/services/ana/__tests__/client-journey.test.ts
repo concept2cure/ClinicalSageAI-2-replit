@@ -96,11 +96,12 @@ describe('resolveClientJourneyStage — license → submission', () => {
 });
 
 describe('describeClientJourney — guidance tied to real capabilities', () => {
-  it('welcome stages point at the onboarding questionnaire', () => {
+  it('welcome stages point at the canonical New project wizard', () => {
     for (const stage of ['just_licensed', 'onboarding'] as const) {
       const j = describeClientJourney(stage);
-      expect(j.anaOffer).toContain('start_intelligence_flow');
-      expect(j.anaOffer).toContain('project_setup');
+      expect(j.anaOffer).toContain('navigate_to');
+      expect(j.anaOffer).toContain('projects.new-project');
+      expect(j.anaOffer).not.toContain('project_setup');
       expect(j.nextMilestone.length).toBeGreaterThan(0);
     }
   });
@@ -175,7 +176,7 @@ describe('get_client_journey — tool wiring', () => {
     const handler = getToolHandler('get_client_journey')!;
     const result = JSON.parse(await handler({ segment: 'biotech' }, {}));
     expect(result.stage).toBe('just_licensed');
-    expect(result.anaOffer).toContain('project_setup');
+    expect(result.anaOffer).toContain('projects.new-project');
     expect(result.segment).toBe('biotech');
   });
 

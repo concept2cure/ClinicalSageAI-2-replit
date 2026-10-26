@@ -114,6 +114,13 @@ export function assertUngovernedActionId(id: string): void {
 
 export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
   {
+    id: 'projects.new-project',
+    surfaceId: 'projects',
+    label: 'Open New project',
+    description:
+      'Open the existing New project wizard. The person chooses a filing type and client workspace, reviews the project and presses Create. This action opens intake only; it creates no record. If already open, preserve the current wizard and its inputs.',
+  },
+  {
     id: 'projects.open-program',
     surfaceId: 'projects',
     label: 'Open a project',

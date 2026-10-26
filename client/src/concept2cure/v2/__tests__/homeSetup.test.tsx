@@ -20,7 +20,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 vi.mock('@/services/portal/authService', () => ({ useAuth: () => auth }));
 
 import { Home } from '../surfaces/Surfaces';
-import { __resetSurfaceActionBus } from '../surfaceActions';
+import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../surfaceActions';
 import { companyDetailsState } from '../surfaces/HomeSetup';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
@@ -64,6 +64,10 @@ describe('Home: set up your organisation', () => {
     expect(onNav).toHaveBeenCalledWith('admin-console');
     fireEvent.click(within(section).getByRole('button', { name: /Create your first project/ }));
     expect(onNav).toHaveBeenCalledWith('projects');
+    const openWizard = vi.fn(() => ({ ok: true as const }));
+    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
+    expect(openWizard).toHaveBeenCalledOnce();
+    expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 
   it('a failed read is "Could not be checked", never to do or done', async () => {

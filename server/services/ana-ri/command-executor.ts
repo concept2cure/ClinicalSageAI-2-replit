@@ -294,92 +294,6 @@ async function persistGovernedCommandArtifact(
 // 1. PROJECT OPERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Create a new project */
-export async function createProject(
-  ctx: CommandContext,
-  params: {
-    name: string;
-    description?: string;
-    submissionType?: string;
-    therapeuticArea?: string;
-    targetAgency?: string;
-    phase?: string;
-  }
-): Promise<CommandResult> {
-  try {
-    /* 2026-10-15: this wrote projects.submission_type, which projects does not
-       have, and left out client_workspace_id and type (both NOT NULL), so every
-       call failed. The submission type is metadata, as POST
-       /api/concept2cure/projects records it. The workspace decides who can see
-       the project (program-project-anchor.ts), so it is the organization's own
-       workspace, or its only one — never picked from several. */
-    const { DEFAULT_WORKSPACE_MARKER } = await import('../c2c/organization-default-workspace.js');
-    const ws = await pool.query(
-      `SELECT count(*)::int AS workspace_count,
-              min(id) FILTER (WHERE (metadata ->> $2) = 'true') AS default_workspace_id,
-              min(id) AS first_workspace_id
-         FROM client_workspaces WHERE organization_id = $1`,
-      [ctx.organizationId, DEFAULT_WORKSPACE_MARKER]
-    );
-    const wsRow = ws.rows[0] ?? {};
-    const workspaceCount = Number(wsRow.workspace_count ?? 0);
-    const workspaceId =
-      wsRow.default_workspace_id != null ? Number(wsRow.default_workspace_id)
-        : workspaceCount === 1 ? Number(wsRow.first_workspace_id) : null;
-    if (workspaceId === null) {
-      return {
-        success: false,
-        action: 'create_project',
-        message:
-          workspaceCount === 0
-            ? `Project "${params.name}" was not created: this organization has no client workspace to hold it.`
-            : `Project "${params.name}" was not created: this organization has ${workspaceCount} client workspaces and none is marked as its own, and the workspace decides who can see the project, so it is not chosen here. Create it from the Projects page, which names the workspace.`,
-        error: 'CLIENT_WORKSPACE_AMBIGUOUS',
-      };
-    }
-    const metadata: Record<string, string> = {};
-    if (params.submissionType) metadata.submissionType = params.submissionType;
-    if (params.targetAgency) metadata.targetAgency = params.targetAgency;
-    const result = await pool.query(
-      `INSERT INTO projects (organization_id, client_workspace_id, name, description, type, status,
-        therapeutic_area, metadata, created_by_id, owner_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'concept2cure', 'active', $5, $6::json, $7, $7, NOW(), NOW())
-       RETURNING id, name, status`,
-      [
-        ctx.organizationId,
-        workspaceId,
-        params.name,
-        params.description || '',
-        params.therapeuticArea || null,
-        JSON.stringify(metadata),
-        ctx.userId,
-      ]
-    );
-    const project = result.rows[0];
-    const typeLabel = params.submissionType ? ` (${params.submissionType.toUpperCase()})` : '';
-    const areaLabel = params.therapeuticArea ? ` in ${params.therapeuticArea}` : '';
-    return {
-      success: true,
-      action: 'create_project',
-      data: {
-        projectId: project.id,
-        name: project.name,
-        status: project.status,
-        submissionType: params.submissionType,
-      },
-      message: `Created project "${params.name}"${typeLabel}${areaLabel} — ID: ${project.id}, status: active.`,
-    };
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : 'unknown error';
-    return {
-      success: false,
-      action: 'create_project',
-      message: `Failed to create project "${params.name}": ${errMsg}.`,
-      error: errMsg,
-    };
-  }
-}
-
 /** List user's projects */
 export async function listProjects(ctx: CommandContext): Promise<CommandResult> {
   try {
@@ -4743,7 +4657,6 @@ export async function assessDiagnosticsValidation(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
-  | 'create_project'
   | 'list_projects'
   | 'update_project'
   | 'create_artifact'
@@ -4840,12 +4753,6 @@ export interface CommandDefinition {
 }
 
 export const COMMAND_REGISTRY: CommandDefinition[] = [
-  {
-    name: 'create_project',
-    description: 'Create a new regulatory project',
-    parameters: 'name, submissionType?, therapeuticArea?, description?',
-    example: '"Create an IND project for our oncology compound"',
-  },
   {
     name: 'list_projects',
     description: 'List all projects in the organization',
@@ -5404,7 +5311,8 @@ export function buildCommandContextForPrompt(): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ParsedCommand {
-  command: CommandName;
+  // Untrusted JSON names remain strings until the dispatcher checks membership.
+  command: string;
   params: Record<string, unknown>;
 }
 
@@ -5418,8 +5326,8 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
   while ((match = regex.exec(responseText)) !== null) {
     try {
       const parsed = JSON.parse(match[1].trim());
-      if (parsed.command && COMMAND_REGISTRY.some(c => c.name === parsed.command)) {
-        commands.push({ command: parsed.command as CommandName, params: parsed.params || {} });
+      if (typeof parsed.command === 'string' && parsed.command.trim()) {
+        commands.push({ command: parsed.command, params: parsed.params || {} });
       }
     } catch {
       /* skip malformed */
@@ -5442,7 +5350,6 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
  * platform control surface.
  */
 export const COMMAND_HANDLERS: Record<string, any> = {
-  create_project: createProject,
   list_projects: listProjects,
   // updateProject now takes (ctx, params), the contract dispatch actually uses —
   // no cast needed. The previous cast masked a (ctx, projectId, updates)
@@ -5638,7 +5545,16 @@ export async function executeCommands(
   const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
-    const handler = commandMap[cmd.command];
+    const handler = Object.hasOwn(commandMap, cmd.command) ? commandMap[cmd.command] : undefined;
+    if (!handler) {
+      results.push({
+        success: false,
+        action: cmd.command,
+        message: 'This command is not registered and was not run.',
+        error: 'COMMAND_NOT_REGISTERED',
+      });
+      continue;
+    }
     if (handler) {
       // ── Part 11 gate: governed record-altering commands fail closed unless
       // this dispatch carries a valid sign-off. Tiered — reason-for-change

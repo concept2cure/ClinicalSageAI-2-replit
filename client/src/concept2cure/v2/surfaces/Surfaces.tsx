@@ -30,6 +30,7 @@ import type { OnboardingWelcome } from '../onboardingWelcome';
 import { HomeConversations, HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
 import { HomeSetup } from './HomeSetup';
 import { useLiveRows } from '../dataConnect';
+import { openNewProject } from '../surfaceActions';
 
 /* ════════════ Home — where a client starts ════════════
    docs/design/CLIENT_JOURNEY_2026-10-25.md. Its sections, in the order a
@@ -165,12 +166,8 @@ export function Home({
     upload.clear();
     onNav('conversation-thread');
   };
-  /* Open the wizard, not the portfolio behind it. Projects.tsx reads this
-     flag on mount and opens the wizard. */
-  const newProject = () => {
-    try { (window as any).__C2C_NEW_PROJECT = true; } catch { /* noop */ }
-    onNav('projects');
-  };
+  // The existing action bus carries the wizard opener across navigation/mount.
+  const newProject = () => { openNewProject(onNav); };
 
   return (
     <div className="landing home-start">

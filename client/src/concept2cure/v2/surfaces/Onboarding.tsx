@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { openNewProject } from '../surfaceActions';
 import {
   LIC_ARCHETYPES,
   LIC_DTC,
@@ -889,7 +890,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                 {outcome.checkout === 'ready' && outcome.checkoutUrl && <button type="button" className="sp-primary" onClick={() => window.location.assign(outcome.checkoutUrl!)}>Continue to secure checkout</button>}
                 <button
                   className={outcome.checkout === 'ready' ? 'sp-ask' : 'sp-primary'}
-                  onClick={() => { window.__C2C_NEW_PROJECT = true; onNav('projects'); }}
+                  onClick={() => openNewProject(onNav)}
                 >
                   {I.folder} Create your first project
                 </button>

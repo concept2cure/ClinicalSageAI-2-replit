@@ -105,7 +105,7 @@ const FILES = walk(CLIENT);
    with no reader is not fenced, it is gone — and it belongs here, where the
    test is that it stays gone, rather than in FENCED, where an entry that
    outlives its reader silently re-authorises the next one. */
-const ELIMINATED = ['C2C_API', 'C2C_SIGNED', 'C2C_AUTHORING'];
+const ELIMINATED = ['C2C_API', 'C2C_SIGNED', 'C2C_AUTHORING', '__C2C_NEW_PROJECT'];
 
 /**
  * Ghosts that still exist, confined to files that DECLARE them and degrade

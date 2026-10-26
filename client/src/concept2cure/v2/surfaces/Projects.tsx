@@ -29,6 +29,7 @@ import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue
 import {
   listedChoices,
   notifySurfaceActionReady,
+  openNewProject,
   useSurfaceActionHandlers,
   type DirectiveProgram,
 } from '../surfaceActions';
@@ -52,15 +53,6 @@ import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-cl
 import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
 import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
-
-/* ── Window global owned by this surface (the app shell sets it to auto-open
-   the wizard on navigation). C2C_PROJECT / __C2C_SEGMENT / C2C are declared by
-   sibling surfaces and merge into the global Window type. ── */
-declare global {
-  interface Window {
-    __C2C_NEW_PROJECT?: boolean;
-  }
-}
 
 /* ════ New Project Wizard (registry-driven, persists to regulatory_programs) ══ */
 
@@ -1133,10 +1125,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [clientWorkspaceId, setClientWorkspaceId] = useState('all');
   const [view, setView] = useState('grid');
   const [q, setQ] = useState('');
-  const [wizardOpen, setWizardOpen] = useState(() => {
-    if (window.__C2C_NEW_PROJECT) { window.__C2C_NEW_PROJECT = false; return true; }
-    return false;
-  });
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   // Real program portfolio — GET /api/c2c/projects projects one field per real
   // regulatory_programs column (server/routes/c2c/projects.ts). Fixture-free:
@@ -1227,7 +1216,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           'wizard\'s own state, which this surface does not hold.',
         availableActions: [
           'Explain what a filing type commits the project to',
-          'Cancel the wizard and go back to the portfolio',
         ],
       };
     }
@@ -1330,6 +1318,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const wizardGuard = () =>
     wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
   useSurfaceActionHandlers('projects', {
+    'projects.new-project': () => {
+      if (wizardOpen) return { ok: true, detail: 'The new-project wizard is already open.' };
+      setWizardOpen(true);
+      return { ok: true, detail: 'Opened the new-project wizard.' };
+    },
     'projects.open-program': (params, { program }) => {
       const guarded = wizardGuard();
       if (guarded) return guarded;
@@ -1434,7 +1427,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>
-          <button className="btn primary" onClick={() => setWizardOpen(true)}>{I.plus} New project</button>
+          <button className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
         </div>
       </div>
 

@@ -536,3 +536,10 @@ export function applySurfaceAction(
   navigate(directive.surfaceId);
   return { status: 'stashed' };
 }
+
+/** Every creation door reaches the same wizard through the existing bus. */
+export function openNewProject(navigate: (surfaceId: string) => void): SurfaceActionOutcome {
+  const resolved = resolveSurfaceAction('projects.new-project', {});
+  if (!resolved.ok) return { status: 'unavailable', reason: resolved.error };
+  return applySurfaceAction(resolved.directive, navigate);
+}

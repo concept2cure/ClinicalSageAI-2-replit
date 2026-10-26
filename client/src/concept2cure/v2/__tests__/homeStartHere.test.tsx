@@ -27,7 +27,7 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { Home } from '../surfaces/Surfaces';
-import { __resetSurfaceActionBus } from '../surfaceActions';
+import { __resetSurfaceActionBus, registerSurfaceActionHandlers } from '../surfaceActions';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
 
@@ -81,8 +81,10 @@ describe('Home, in the order a client reads it', () => {
     await screen.findByTestId('home-projects');
     fireEvent.click(screen.getByRole('button', { name: 'New project' }));
     expect(onNav).toHaveBeenCalledWith('projects');
-    expect(window.__C2C_NEW_PROJECT).toBe(true);
-    window.__C2C_NEW_PROJECT = false;
+    const openWizard = vi.fn(() => ({ ok: true as const }));
+    registerSurfaceActionHandlers('projects', { 'projects.new-project': openWizard });
+    expect(openWizard).toHaveBeenCalledOnce();
+    expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 
   it('your tasks opens the task board', async () => {

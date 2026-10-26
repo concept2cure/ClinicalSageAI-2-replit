@@ -1027,7 +1027,6 @@
    "correspondence.ingest",
    "create_artifact",
    "create_milestone",
-   "create_project",
    "create_review_thread",
    "create_submission_package",
    "create_task",

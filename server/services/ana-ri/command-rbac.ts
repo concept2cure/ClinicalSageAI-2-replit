@@ -134,7 +134,6 @@ export interface CommandAuthorization {
  */
 export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization>> = {
   // ── Projects ────────────────────────────────────────────────────────────
-  create_project: { effect: 'write', object: 'project', minRole: 'member' },
   update_project: { effect: 'write', object: 'project', minRole: 'member' },
   list_projects: { effect: 'read', object: 'project' },
 
