@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-26T15:25:12.421206+00:00",
+  "argv": [
+    "node",
+    "docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/browser/final-matrix.mjs",
+    "--output=final"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "node": "v22.23.3",
+  "exit": 0,
+  "rawSha256": "ff31da8e3d791df91997050384911ae4ebc37eadfa3598ffc86003fbf5d68783"
+}

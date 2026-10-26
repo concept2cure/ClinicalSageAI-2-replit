@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-26T15:08:16.239274+00:00",
+  "exitCode": 0,
+  "files": {
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "59a661da6132d50932f0a3c1add6e077ec8712b835a963e5467ef05108361d72",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "a40c0a87b30a2d7dc4f5131ccbf404ad11d84384b323069a63ceff15ffa4033a",
+    "client/src/concept2cure/v2/editorTarget.ts": "491700804c22d4fffcadeb032ab4b60f9294b9581e9493fc266e512c3021f6af"
+  },
+  "counts": [
+    {
+      "file": "SourceAssemblyDialog.tsx",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "useSourceAssemblyTarget.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "editorTarget.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

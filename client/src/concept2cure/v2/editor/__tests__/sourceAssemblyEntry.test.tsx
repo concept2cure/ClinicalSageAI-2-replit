@@ -23,13 +23,14 @@ const PROGRAM = '11111111-1111-4111-8111-111111111191';
 const OTHER = '11111111-1111-4111-8111-111111111192';
 const DOC = '22222222-2222-4222-8222-222222222191';
 const VAULT = '33333333-3333-4333-8333-333333333191';
-const documentRow = { id: DOC, title: 'Selected working document', program_id: PROGRAM, status: 'DRAFT' };
+const documentRow = { id: DOC, title: 'Selected working document', program_id: PROGRAM, status: 'DRAFT', readScope: 'document' };
 const source = { id: 12, title: 'Retained study source', checksum: 'ab'.repeat(32), extractionStatus: 'extracted',
   textAvailable: true, isCurrent: true, dataEligible: true, originalFileAvailable: false };
 const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
 const user = (id = '191', organizationId = '19') => ({ id, organizationId, organizationName: null,
   email: 'source-entry@example.test', displayName: 'Synthetic author', firstName: 'Synthetic', lastName: 'Author',
   roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false });
+const bearer = (visit = 'initial', id = '191', organizationId = '19') => `fixture.${btoa(JSON.stringify({ userId: Number(id), organizationId: Number(organizationId), visit }))}.synthetic`;
 let sources: typeof source[];
 let documents: () => Response | Promise<Response>;
 const selectors = () => [{ kind: 'data-room' as const, sourceId: source.id, expectedChecksum: source.checksum }];
@@ -44,7 +45,7 @@ function deferred<T>() { let resolve!: (value: T) => void; return { promise: new
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget(); __resetCeremonies();
   vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: user() })));
-  await authService.adoptSession('synthetic-source-entry');
+  await authService.adoptSession(bearer());
   publishShellProject({ id: PROGRAM, title: 'Original project' });
   sources = [source];
   documents = () => ok({ success: true, documents: [documentRow] });
@@ -192,7 +193,7 @@ describe('source chooser late results stay in the original context', () => {
     if (change === 'project round trip') act(() => { publishShellProject({ id: OTHER }); publishShellProject({ id: PROGRAM }); });
     if (change === 'account change' || change === 'organization change') {
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: change === 'account change' ? user('192') : user('191', '20') })));
-      await act(async () => { await authService.adoptSession('synthetic-replacement'); });
+      await act(async () => { await authService.adoptSession(bearer('replacement', change === 'account change' ? '192' : '191', change === 'organization change' ? '20' : '19')); });
     }
     if (change === 'unmount') view.unmount();
     await act(async () => { pending.resolve(ok({ success: true, documents: [documentRow] })); await pending.promise; });
@@ -242,7 +243,7 @@ describe('source publisher ownership before receiver mount', () => {
       publishShellProject({ id: OTHER }); publishShellProject({ id: PROGRAM });
     } else {
       vi.stubGlobal('fetch', vi.fn(async () => ok({ authenticated: true, user: change === 'account change' ? user('192') : change === 'organization change' ? user('191', '20') : user() })));
-      await authService.adoptSession('synthetic-later-session');
+      await authService.adoptSession(bearer('later-session', change === 'account change' ? '192' : '191', change === 'organization change' ? '20' : '19'));
     }
     expect(peekEditorTarget()).toBeNull();
     expect(mutations()).toHaveLength(0);

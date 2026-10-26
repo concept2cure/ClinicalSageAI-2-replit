@@ -1,0 +1,53 @@
+{
+  "utc": "2026-10-26T15:34:43.599310+00:00",
+  "status": "clear within approved bounded scope",
+  "sourceFreeze": "source-freeze.json",
+  "sourceFreezeSha256": "86857aa14792f24fc55bb60cfd5ea07748108bc2c47d80fca9086498cb79c8f0",
+  "productionOwners": [
+    "editor/SourceAssemblyDialog.tsx",
+    "editor/useSourceAssemblyTarget.ts",
+    "editorTarget.ts",
+    "editor/assemblySourceIntent.ts"
+  ],
+  "findings": [
+    {
+      "finding": "Post-Close owner/ceremony/latest callback mismatch",
+      "disposition": "resolved; actual component Open and New document cases pass"
+    },
+    {
+      "finding": "Unadopted/raw bearer read or retained launcher; absent projection",
+      "disposition": "resolved; captured header/refresh, exact projection and synchronous retained-control cases pass"
+    },
+    {
+      "finding": "Freshly minted channel receiver loses original sender, accepts copied/unowned payload or altered selectors",
+      "disposition": "resolved; existing private channel ownership reaches genuine copied reads and consumed receiver only"
+    },
+    {
+      "finding": "Consumed receiver revives after observed invalidity or throws on unavailable parent",
+      "disposition": "resolved for assembly and source-document starts by one shared private one-way guard"
+    }
+  ],
+  "finalTests": {
+    "suites": 7,
+    "cases": 161,
+    "focusedOwnership": 46,
+    "focusedReceiver": 14,
+    "alignedLegacy": 101,
+    "exitCode": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0
+  },
+  "limits": [
+    "Bounded declared inputs, not exhaustive dependency closure",
+    "Synthetic HTTP/users/records; actual client/auth/shell/component/channel implementations",
+    "No human, native backend RLS/concurrency, provider or agency acceptance claimed"
+  ],
+  "ownerActions": {
+    "productionEdits": false,
+    "gitMutations": false,
+    "compilerOrBuildOrGlobalGates": false
+  }
+}
