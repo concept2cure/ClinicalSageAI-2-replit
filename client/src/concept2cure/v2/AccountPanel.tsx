@@ -557,7 +557,7 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
               Account
             </div>
             <div className="de-h-s">
-              Your profile, invitations, reporting role and account security. Your organisation&rsquo;s administrators manage membership and access role.
+              Your profile, invitations, reporting role, alert choices and account security. Your organisation&rsquo;s administrators manage membership and access role.
             </div>
           </div>
           <button type="button" className="de-x" onClick={onClose} aria-label="Close">

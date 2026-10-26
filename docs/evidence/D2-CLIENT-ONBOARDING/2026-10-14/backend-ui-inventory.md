@@ -88,3 +88,12 @@ report includes these events. See the [token setup evidence](../../W1/2026-10-26
 for verification and hosted-release limits. This follow-up does not change the
 historical scope of the October 14 inventory or imply that deployment-managed
 SAML settings and inert personal preferences have acquired working controls.
+
+Personal in-app alert choices are also now reached from Account through the
+same controls the inbox uses: `NotificationPreferenceSettings` and the existing
+MDX notification-subscriptions API. Actor-bound requests, exact saved-record
+confirmation and cross-host inbox count refresh complete that setup handoff.
+See the [Account alert setup evidence](../../W1/2026-10-26-account-alert-setup/README.md).
+This uses the already-consumed MDX subscription store; it does not expose the
+inert email, sound or digest fields in `/api/users/me/notifications` as working
+controls.

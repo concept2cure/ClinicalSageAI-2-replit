@@ -1,0 +1,141 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 246ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 109ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 88ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 69ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 73ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 73ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 35ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 35ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 58ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 41ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 46ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 5ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 226ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > opens a saved report using its validated run resource instead of an arbitrary action URL 228ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > does not offer a report link for a malformed or unrelated resource 48ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a failed notifications read is an alert, not "No unread messages" 29ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a genuinely empty inbox still says so 23ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed unread-count read is not shown as zero waiting 15ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed my-work read is not shown as zero waiting either 20ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when every count loads and nothing is waiting, there is no badge 11ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a real count still shows as a number 9ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows 120ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when unsaved work owns the canvas 50ms
+stderr | client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when account work owns the canvas 43ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates 44ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > refuses a same-tick bearer replacement before React sees the account change 30ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > retires the old drawer and its pending reads when the actor changes 28ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > notification setup refresh ownership > refreshes counts for current-recipient preference changes and ignores a different organization 13ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > replaces a no-project dossier URL with Projects and no pending Author action 208ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > hydrates a copied project URL before deciding scope, then applies Author once 259ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > applies imperative legacy navigation once and writes one canonical history entry 150ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > keeps the features address without a project or alias action 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > browser Back returns to Projects rather than an alias history entry 135ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > project destination in the real shell > a reload on the canonical URL restores the chosen step without replaying the alias 118ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX entry reaches the global Projects filter > copies a legacy link in StrictMode with project=false and applies MDX once 167ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX entry reaches the global Projects filter > copies a legacy link in StrictMode with project=true and applies MDX once 180ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx > MDX entry reaches the global Projects filter > imperative MDX navigation filters the already mounted Projects view once 143ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 183ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 47ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 40ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write 167ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it 113ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account 111ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 136ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 129ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > blocks duplicate writes and drops a reply after the settings close 121ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > resolves every NAVIGATION_TARGETS id to a real surface view (never the scaffold) 4ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > every target opens in the release, or resolves to a surface the launch scope can lock for AnA 1ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > "biopharma" opens Projects, where a project is opened and created, not a screen outside the release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > the retained MDX handle reaches admitted Projects while the device portfolio remains registered 1ms
+ ✓ client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > aliases only point AT real views — a dangling alias is drift in the other direction 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps the bare base path to home 2ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > maps every registry id to itself 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > resolves deep-link aliases to their canonical surfaces 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > /concept2cure/features is Subscription & features (section 12: no id with "app" in the address bar) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > ignores trailing segments and query strings 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > surfaceIdFromLocation > treats non-base locations as home 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > writes /concept2cure/features for apps, and the id itself for every other surface 3ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > locationForSurface (the path the shell writes) > every address it writes reads back to the same surface 4ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/mdx resolves to Projects, including copied-link parameters 1ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > /concept2cure/pdev resolves to itself — it is a real surface id now 0ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts > the retired kit paths still land somewhere real > neither falls through to home 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual task_update producer preference from its labelled mounted control 369ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual schedule_milestone_slip producer preference from its labelled mounted control 161ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 119ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 123ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 22ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > takes dossier links without an open project to the existing Projects door 2ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > takes both old dossier ids to Author, including a project with no documents 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > uses the shared target scope for normal and aliased destinations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > keeps the public Subscription & features address and global places usable 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > reaches the existing MDX Projects filter with project open=false 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > reaches the existing MDX Projects filter with project open=true 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > retains the device portfolio destination until its separate parity fold 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > keeps the raw URL id until its requested action has been applied 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDestination.test.ts > one destination for a project-scoped visit > does not treat inherited object properties as aliases or stage actions 1ms
+
+ Test Files  8 passed (8)
+      Tests  89 passed (89)
+   Start at  21:35:54
+   Duration  13.42s (transform 2.02s, setup 497ms, import 3.92s, tests 5.60s, environment 2.36s)

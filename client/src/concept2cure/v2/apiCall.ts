@@ -57,7 +57,7 @@ export function apiCall<T = any>(
 ): Promise<ApiResult<T>>;
 // eslint-disable-next-line no-redeclare -- TypeScript overload preserves the existing non-null three-argument contract.
 export function apiCall<T = any>(
-  method: ApiRequestMethod, url: string, body: unknown, current: () => boolean,
+  method: ApiRequestMethod, url: string, body: unknown, current: () => boolean, headers?: Record<string, string>,
 ): Promise<ApiResult<T> | null>;
 /** An optional owner guard discards obsolete handoffs; existing calls retain
  * exactly their normalized result and never acquire a retry policy. */
@@ -67,10 +67,11 @@ export async function apiCall<T = any>(
   url: string,
   body?: unknown,
   current?: () => boolean,
+  headers?: Record<string, string>,
 ): Promise<ApiResult<T> | null> {
   if (current && !current()) return null;
   try {
-    const res = await apiRequest(method, url, body);
+    const res = headers ? await apiRequest(method, url, body, headers) : await apiRequest(method, url, body);
     if (current && !current()) return null;
     const parsed = await parseBody(res);
     return current && !current() ? null : { ok: res.ok, status: res.status, body: parsed, networkError: false };
