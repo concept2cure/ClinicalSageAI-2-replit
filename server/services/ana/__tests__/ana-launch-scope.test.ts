@@ -61,11 +61,17 @@ describe('the inventory', () => {
 });
 
 describe('governedToolsetFor, the one toolset every chat door composes', () => {
-  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'run_rbm_assessment', 'write_kit_section', 'create_clinical_study', 'build_sae_line_listing'];
+  // write_kit_section and create_clinical_study were hidden examples until the
+  // device surfaces joined the launch catalog (62a8d5e7f); they are kept now.
+  // prepare_meeting_package (agency-meetings) and create_tmf (etmf), still outside
+  // the catalog, take their places.
+  const HIDDEN = ['create_iacuc_protocol', 'record_grant_award', 'run_rbm_assessment', 'prepare_meeting_package', 'create_tmf', 'build_sae_line_listing'];
   const KEPT = [
     'search_literature', // knowledge
     'lookup_fda_guidance', // knowledge
     'create_qms_document', // quality (launch)
+    'write_kit_section', // device-510k (launch since 62a8d5e7f)
+    'create_clinical_study', // device-clinical-studies (launch since 62a8d5e7f)
     'list_vault_documents', // vault (launch)
     'update_protocol_section', // protocol-dev (launch)
     'navigate_to', // AnA's hands
