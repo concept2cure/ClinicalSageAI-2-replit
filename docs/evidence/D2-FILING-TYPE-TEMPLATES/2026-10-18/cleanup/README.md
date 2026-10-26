@@ -379,3 +379,185 @@ defect it names. All pass after.
   without these changes.
 - typecheck: 0 errors.
 - ESLint ratchet `--since origin/concept2cure-v2`: no file changed its warning count.
+
+## C5/C6 — the duplicates inventory, executed slice by slice
+
+**The inventory.** Workflow `wf_0f8a9a31-23c`: six read-only sweep lenses (content, names, routes, client, AnA, dead code
+with history), 194 candidate files, seven area verifiers that re-derived each candidate's reachability and P-47 parity,
+and a planner that ordered 60 slices (`S01`–`S60`), five founder-decision slices (`GF-1`–`GF-6`) and twelve handoffs to
+the client-journey session (`H1`–`H12`). The plan is filed beside this README as `inventory-plan.md`. Each slice below
+is one commit; its red file is `sNN-red.txt`.
+
+### S01 — `ci:unkeyed-request-tables`: the stale `ectd.module_structure` entry
+
+**Cause:** D1 (`3c394edb3`) deleted `server/api/ectd/routes.ts`, the last server reader of `ectd.module_structure`
+(`git grep module_structure -- server` returns nothing). The gate fails on a stale baseline entry, and it runs in CI
+(`ci.yml`), not in the pre-push hook, so D1 pushed green and left this red.
+
+**Change:** the entry is removed from `scripts/ci/unkeyed-request-tables-baseline.json` and `total` goes from 90 to 89.
+The tables stay (Rule 1).
+
+**Red first:** `s01-red.txt` (exit 1, "Stale baseline entries … ectd.module_structure"). After: exit 0, 89 baselined.
+
+### S02 — delete the MDX `TemplatesSurface`, replaced by Authoring → New document → Start from
+
+**What already exists:** `AuthoringCreateExport.tsx` with `AuthoringTemplatePicker.tsx`, reading
+`GET /api/authoring/templates` (`builtin-authoring-templates.ts`). The earlier generation of this surface,
+`mdx/surfaces/TemplatesSurface.tsx`, was deleted in `e5a74a4df`. `62a8d5e7f` (2026-10-23) moved this one out of
+`Workbench.tsx` into its own file with a new hook, and nothing outside tests imported either.
+
+**Deleted:** `mdx/workbench/TemplatesSurface.tsx`, `mdx/hooks/useWorkbenchTemplates.ts`, their two tests, the
+`TemplatesSurface` case of `workbenchNoFixtures.test.tsx`, and `interface Template` in `mdx/data/workbench.ts` (no other
+user). The `.tpl-*` CSS is the client-journey session's (H10).
+
+**P-47 parity:**
+- List the organisation's templates → the picker's search and list (`authoringTemplateSearch.test.tsx`).
+- A failed read is a failure, never an empty library → `authoringTemplateSearch.test.tsx:169` ("keeps a http / network
+  / malformed failure separate from an empty list").
+- "New template" (a prompt to AnA) → any AnA turn; a real template is created in `TemplateLibrary.tsx`
+  (`templateLibraryReal.test.tsx`).
+- No user ever reached this surface.
+
+**Red first:** `s02-red.txt`: `ci:check-client-reachability` listed three files. After: one, `workflowDecisionService.ts`,
+from the 2026-10-23 device integration and outside this lens; it is reported, not deleted here.
+
+**Gates:** the four affected client test files, 64 pass.
+
+### S03 — delete repo-root template, policy and data files nothing loads
+
+**Deleted (16 files):**
+- `templates/module2_summary.docx.j2` and `templates/forms/form{1571,1572,3674}.docx.j2`;
+- `templates/workflows/ind-workflow.yaml`;
+- `templates/ectd/{fda,ema,hc,pmda}_template.xml` and `templates/ectd/0000/index.xml`;
+- `policy/reg/{fda,ema,pmda}.json`;
+- `server/data/{regulatory-document-requirements-matrix,ich-guidelines-comprehensive,global-regulatory-authorities}.json`.
+
+`templates/forms/acroforms/` (the live FDA forms the form fill reads, copied by the Dockerfile) and
+`templates/authoring/` are kept.
+
+**Proof of no reader:** `s03-red.txt`. Full-path greps find no code reader. The only reader was a test case that read
+`fda_template.xml` itself. `Dockerfile.optimized:217` says "the rest of templates/ is not read by the server". The
+`server/data` JSON lost its reader on 2026-10-15 (`64da63f28`). `prove-module-unused.mjs` does not apply: it takes no
+file arguments, and its `--controls` run fails on an unrelated control (reported).
+
+**Changed:**
+- `fda-module1-numbering.test.ts`: the "reference FDA backbone template" case and its helper go. The packager's
+  Module 1 placement is proven by the same file's other cases.
+- Comments in `registryCoverage.ts`, `market-submission-specs.ts` and `check-image-runtime-assets.mjs` no longer name
+  the deleted files.
+
+**P-47 parity:** none of these files was loaded, so no function is lost:
+- Module 1 → `shared/regulatory/regional-module1.ts`;
+- Modules 2–5 → the record;
+- backbones → the eCTD compile;
+- forms → `ind-form-fill-service.ts`;
+- authorities → `market-submission-specs.ts`.
+
+**Gates:** `fda-module1-numbering` and `registryCoverage`, 207 pass; `check-image-runtime-assets`, exit 0.
+
+### S04 — delete the laptop-only CTD seed scripts
+
+**Deleted:** `scripts/seed-ectd-templates.js`, `scripts/create-complete-ectd-templates.cjs`,
+`scripts/add-ind-templates.js`, `scripts/populate-ectd-modules.js`.
+
+**Proof of no caller:** `s04-red.txt`. No npm script, workflow, hook, `.replit` or Makefile names them. The only mention
+is a header comment in `scripts/seed-mdx-templates.mjs`, now reworded. Under Rule 1, reference data reaches a deployed
+database only through a migration; these never did.
+
+**P-47 parity:**
+- CTD outlines → `builtin-authoring-templates.ts` (`builtin-authoring-templates.test.ts`).
+- The module tree → the record.
+- `ectd_templates` stays live for tenant rows (S59).
+- Not carried over: their Module 1 contradicts FDA's ("1.0 Cover Letter", "1.2 Introductory Statement").
+
+### S05a — delete the off-applier CTD seed migrations, replaced by the record and `builtin-authoring-templates.ts`
+
+**Applier check first (Rule 1).** The plan grouped `038_gcc_ectd_seeder_service.sql` with these. It is not off every
+applier: `install-fresh` step 6 applies every `db/migrations/*_gcc_*.sql`, and so do the CI psql loops. 038 is
+therefore its own slice (S05b), with the two live-schema baselines that name its objects. The files here are on no
+applier:
+- 100–103 do not match the `*_gcc_*` filter (`install-fresh.mjs:1483`).
+- `_legacy/043` is in a subdirectory the step does not read.
+- None is in `C2C_MIGRATION_FILES`.
+- `scripts/db_migrate.sh` would glob 100–103, but nothing runs it.
+
+**Deleted:**
+- `db/migrations/{100_regulatory_templates,101_complete_template_catalog,102_load_all_templates,103_load_complete_templates}.sql`.
+  Under `db_migrate.sh` the last three would `DELETE FROM ectd_templates` for organisations 1, 6 and 7.
+- `db/migrations/_legacy/043_gcc_ectd_expanded_modules.sql`.
+- `tests/schema-contract/regulatory-templates-cite-q2r2.contract.test.ts`, which read 100.
+
+**Carried over:** the Q2(R2) pin now reads the record: `tests/regulatory/record-cites-q2r2.test.ts`. No brief cites
+Q2(R1), and 3.2.S.4.2/3, 3.2.P.5.2/3 cite Q2(R2). It is green on HEAD, so `s05a-red.txt` shows it failing on a
+planted "Q2(R1)", with the record restored after.
+
+**Changed:** `migrations_manifest.json` drops the five files: the 043 conflict entry, the regulatory group entry and
+the execution order. It was re-synced with `npm run db:sync-manifest` (292 files) and `db:sync-manifest:check` passes.
+No DROP is appended (Rule 1); `ectd_templates` stays.
+
+**Gates:** all exit 0:
+- `ci:migration-drop-safety`, `ci:migration-set-order`, `ci:unkeyed-request-tables`;
+- `check-duplicate-table-ddl`, `check-migration-reachability`, `check-journey-migration-reachability`;
+- the manifest tests and the new pin: 19 pass.
+
+Not green, and not this slice's: `tests/ops/apply-c2c-migrations-manifest.test.mjs` has 8 passing and 2 failing tests.
+- Case 5: `20261014_qms_controlled_authoring_content.sql` is on the applier list without a `to_regclass` guard.
+- Case 10: `20260702_usage_model_credit_ledger.sql` is in both the allowlist and `KNOWN_UNLISTED`.
+
+Neither names a file this slice touched, and neither reads the gcc manifest. Both are reported to their owners (QMS
+authoring; usage ledger).
+
+### S06 — delete dead server CTD modules, replaced by the record path
+
+**Deleted:**
+- `server/config/regulatory_config.js` and `.d.ts`. Re-exported by `server/config/index.ts` and imported by nothing.
+  Its CTD pattern was malformed and never matched.
+- `server/utils/ichSchema.js`, `server/utils/validateZip.js` and `tests/unit/validate-ich-structure.js`, which only
+  import each other.
+- `server/services/documents/ArtifactSkeletonGenerator.ts`, reached only through the `server/services/index.ts`
+  barrel and its `'documents.skeleton'` registry entry.
+- `server/services/regulatory/registry/adapters/usIndFromExistingSections.ts`. Its only caller,
+  `getUSIndSectionBlueprint`, had none, and goes with it. `US_IND_TASK_BLUEPRINT` stays.
+
+**Proof:** `s06-red.txt`. Every name's remaining mentions are a barrel, a registry map entry, a baseline entry or the
+deleted test. The unreferenced-modules baseline loses `validateZip.js` (75 → 74). `yup` stays for a dependency pass.
+
+**P-47 parity:** no function had a caller.
+- CTD heading lookups → `ichHeadingTitle` (`ich-m4-headings.test.ts`).
+- eCTD structure validation → `ectd-structural-validator.ts` (`submission-orchestrator.test.ts`).
+- Skeletons → the Authoring picker's outlines (`builtin-authoring-templates.test.ts`).
+- The US IND outline → the `ind:fda` pack scaffold (`c2c-project-scaffold.contract.test.ts`).
+
+**Gates:**
+- `ci:unreferenced-modules`: 74, at baseline;
+- `service-registry-names-only-existing-modules` and the route-bundle tests pass;
+- typecheck: 0 errors.
+
+### S07 — delete dead exports inside live CTD files
+
+**Deleted:**
+- **`server/services/regional-ctd-templates.ts`:** `getAllRegionalTemplates`, `getModule1Sections`,
+  `getSupportedAgencies` and `getMultiAgencyCTDStructure` (a hand-typed Module 2 list). Also the default export that
+  re-exposed them; every importer of the file uses named imports.
+- **`server/services/templateService.ts`:** `initializeDefaultTemplates`.
+- **`services/regulatory/ind-ectd-sections.ts`:** `getAIDraftableSections`, `getSectionsForPyramidTask` and
+  `pyramidToECTDMap`. `buildINDPackageDefinition` and `INDPackageDefinition` lose `export`; they are used only inside
+  the file.
+- **`services/regulatory/pyramids/ind-pyramid.ts`:** `IB_BINDINGS` loses `export`.
+
+**Proof:** `s07-red.txt`. Each symbol's only references are its definition, a use inside its own file, or the unused
+default export.
+
+**Not deleted, correcting the plan:** `docx/templateRegistry.ts` `indTemplate` ('ind-fda').
+- It is registered in the map that the tool registry reads (`server/services/tools/index.ts`:
+  `documents.list_templates`, and `documents.generate_docx` with `templateId`).
+- That registry is loaded by `/api/cortex-unified` and the MCP server, so the template is reachable.
+- It is a heading copy ("Nonclinical Summaries", "2.7 … required: false"), so it moves to Tier C as a convergence onto
+  the record, not a deletion.
+
+**P-47 parity:** none of the deleted functions had a caller.
+- Module 1 → `regional-module1.ts`;
+- Modules 2–5 → the record;
+- IND sections → `getAllINDSections` and `getRequiredSections` (kept).
+
+**Gates:** typecheck: 0 errors. The 22 test files that name these modules: 383 pass.

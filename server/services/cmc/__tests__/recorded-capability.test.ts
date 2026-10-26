@@ -17,10 +17,21 @@ import {
   isBatchAnalysisFor,
 } from '../recorded-capability';
 
-/** A canonical qc_result payload as the write-through mapper stores it. */
+/**
+ * A canonical qc_result payload as the write-through mapper stores it.
+ *
+ * `sampleType` was `'drug-substance'`, which is NOT a value this register can
+ * hold: the vocabulary is raw-material, in-process, finished-product,
+ * stability, reference-standard, cleaning-verification
+ * (shared/cmc/qc-sample-types.ts). It passed because the old rule read
+ * anything that was not `finished-product` as drug substance — the same rule
+ * that silently made `finished_product` drug-substance evidence on a real
+ * database. A fixture outside the column's vocabulary teaches the next reader
+ * a contract the product does not have, so it is a real sample type now.
+ */
 const qc = (over: Record<string, unknown> = {}) => ({
   testMethod: 'AM-001 assay',
-  sampleType: 'drug-substance',
+  sampleType: 'raw-material',
   isBatchAnalysis: true,
   batchAnalysisSide: 'drug_substance',
   batchNumber: 'B-001',
@@ -122,7 +133,19 @@ describe('isBatchAnalysisFor — one gate, shared with the mapper and the compos
     const legacy = (sampleType: string) => ({ testMethod: 'AM-001 assay', sampleType });
     expect(isBatchAnalysisFor(legacy('finished-product'), 'drug_product')).toBe(true);
     expect(isBatchAnalysisFor(legacy('finished-product'), 'drug_substance')).toBe(false);
-    expect(isBatchAnalysisFor(legacy('drug-substance'), 'drug_substance')).toBe(true);
+    expect(isBatchAnalysisFor(legacy('raw-material'), 'drug_substance')).toBe(true);
+    expect(isBatchAnalysisFor(legacy('in-process'), 'drug_substance')).toBe(true);
+  });
+
+  it('attributes a sample type the register cannot hold to NEITHER side', () => {
+    /* The seven rows measured on a real database carried `finished_product`
+       — an underscore, not a value the form can produce — and every one was
+       read as drug-substance evidence, stored that way, and composed into
+       §3.2.S.4.4 (docs/evidence/.../pass8/). The stored decision is honoured
+       only when the vocabulary could have produced it. */
+    const foreign = { testMethod: 'AM-001 assay', sampleType: 'finished_product', batchAnalysisSide: 'drug_substance' };
+    expect(isBatchAnalysisFor(foreign, 'drug_substance')).toBe(false);
+    expect(isBatchAnalysisFor(foreign, 'drug_product')).toBe(false);
   });
 
   it('keeps a finished-product result out of the drug substance’s capability series', () => {

@@ -28,7 +28,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 
 import { TasksSurface } from '../Workbench';
-import { TemplatesSurface } from '../TemplatesSurface';
 
 const noop = () => {};
 
@@ -76,16 +75,6 @@ describe('Workbench panels read live, and say so when they cannot', () => {
     expect(empty.querySelector('.c2c-empty-action')?.textContent).toBe('New task');
     expect(screen.getAllByText('New task')).toHaveLength(2);
     expect(screen.queryByTestId('workbench-no-tasks-error')).toBeNull();
-  });
-
-  it('reports a FAILED template read as a failure, never as an empty library', async () => {
-    vi.stubGlobal('fetch', serve(null));
-    render(<TemplatesSurface onAskAna={noop} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('workbench-no-templates-error')).toBeTruthy();
-    });
-    expect(screen.queryByText('No templates yet')).toBeNull();
   });
 
   it('renders no row a live read did not return — the example sets are gone', async () => {

@@ -91,10 +91,9 @@ export { MultiAgentCouncilService } from './multi-agent-council';
 // PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export {
-  ArtifactSkeletonGenerator,
-  artifactSkeletonGenerator,
-} from './documents/ArtifactSkeletonGenerator';
+// ArtifactSkeletonGenerator was re-exported here, its only importer; deleted
+// 2026-10-26 with no caller (D2 cleanup S06). Skeletons are the Authoring
+// picker's outlines (authoring/builtin-authoring-templates.ts).
 
 // ECTDScaffoldingService was re-exported here, its only importer; it was deleted
 // 2026-10-15 with no caller (no route, tool or job reached it).
@@ -146,7 +145,7 @@ export const SERVICE_REGISTRY = {
   'infra.notify': 'notify',
 
   // Phase 6 - eCTD Co-Author + Document Drafting
-  'documents.skeleton': 'documents/ArtifactSkeletonGenerator',
+  // 'documents.skeleton': removed 2026-10-26 with ArtifactSkeletonGenerator (deleted).
   // 'ectd.scaffolding': removed 2026-10-15 with ECTDScaffoldingService (deleted).
   'export.hash': 'export/ReleaseHashGenerator',
   'collaboration.council': 'multi-agent-council',

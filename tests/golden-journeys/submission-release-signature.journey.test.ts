@@ -639,8 +639,17 @@ describe('Journey B phase 2 — the Part 11 release-signature gate', () => {
           expect((await jdb.pool.query('SELECT * FROM audit_logs ORDER BY id')).rows).toEqual(priorAudit.rows);
           expect((await jdb.pool.query('SELECT * FROM submission_orchestrator_steps ORDER BY id')).rows).toEqual(priorSteps.rows);
           expect(res.body.signatureId).toBeUndefined();
-          const code = state === 'locked' ? 'ACCOUNT_LOCKED' : state === 'inactive' ? 'ACCOUNT_INACTIVE' : 'PASSWORD_VERIFICATION_FAILED';
-          return { blocked: res.status === (state === 'locked' ? 423 : 401) && res.body.code === code, status: res.status, code: res.body.code, priorHistoryPreserved: true };
+          // A suspended account is refused at program access, before the signer
+          // re-verification runs: prepareOrchestratorRelease → readCsrProjectActor
+          // admits only an active account (u.status = 'active'). So it never
+          // reaches reverifySigner's ACCOUNT_INACTIVE; nothing is written either
+          // way, which the three assertions above prove (2026-10-26: this pinned
+          // the later gate's 401 and read the earlier gate's 403 as "allowed").
+          const expected = state === 'locked' ? { status: 423, code: 'ACCOUNT_LOCKED' }
+            : state === 'inactive' ? { status: 403, error: 'CSR_PROJECT_ACCESS_DENIED' }
+            : { status: 401, code: 'PASSWORD_VERIFICATION_FAILED' };
+          const refusedAs = 'code' in expected ? res.body.code === expected.code : res.body.error === expected.error;
+          return { blocked: res.status === expected.status && refusedAs, status: res.status, code: res.body.code ?? res.body.error, priorHistoryPreserved: true };
         } finally {
           if (state === 'locked') await jdb.pool.query('UPDATE users SET locked_until=NULL WHERE id=$1', [APPROVER.id]);
           if (state === 'inactive') await jdb.pool.query(`UPDATE users SET status='active' WHERE id=$1`, [APPROVER.id]);

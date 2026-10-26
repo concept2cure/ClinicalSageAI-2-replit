@@ -1,0 +1,8 @@
+S04 proof of no caller, on 0f0705fc8: every path name searched over the repo (excluding docs/):
+  seed-ectd-templates.js:
+    0f0705fc8:scripts/seed-mdx-templates.mjs:6: * The existing eCTD seed (scripts/seed-ectd-templates.js,
+  create-complete-ectd-templates.cjs:
+    0f0705fc8:scripts/seed-mdx-templates.mjs:7: * scripts/create-complete-ectd-templates.cjs) loads pharma IND/NDA
+  add-ind-templates.js:
+  populate-ectd-modules.js:
+No package.json script, .github workflow, .husky hook, .replit or Makefile names any of them (the only mentions are a header comment in seed-mdx-templates.mjs).
