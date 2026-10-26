@@ -81,7 +81,7 @@ describe('artifact facts carried into the existing Author workflow', () => {
     p.sections[0] = { ...p.sections[0], status: 'not_assessed', unknownCount: 1, draftCount: 0, lastUpdated: null as any };
     p.summary = { totalSections: 1, readySections: 0, inProgressSections: 0, draftSections: 0, notAssessedSections: 1 };
     mount(read(p));
-    expect(within(panel()).getByRole('cell', { name: 'Not assessed', exact: true })).toBeTruthy();
+    expect(within(panel()).getByRole('cell', { name: 'Not assessed' })).toBeTruthy();
     expect(panel().textContent).toContain('0 / 1 / 1 / 0 / 1');
     expect(panel().textContent).toContain('Update time not recorded.');
   });

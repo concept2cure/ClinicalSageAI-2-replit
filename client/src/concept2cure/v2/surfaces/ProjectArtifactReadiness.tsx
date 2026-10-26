@@ -57,7 +57,7 @@ export function ArtifactSectionStatus({ read }: { read: DossierState }) {
     body = <p role="status" aria-busy="true">Reading artifact section status…</p>;
   } else if (!artifacts) {
     body = <p className="pj-card-note">Artifact section status is unavailable.</p>;
-  } else if (artifacts.state === 'unavailable' || artifacts.state === 'unanchored') {
+  } else if (artifacts.sections === null) {
     body = <p className="pj-card-note">{artifacts.reason}</p>;
   } else if (artifacts.state === 'no_artifacts') {
     body = <p className="pj-card-note">No sectioned artifacts yet. Artifacts with a recorded CTD section appear here.</p>;

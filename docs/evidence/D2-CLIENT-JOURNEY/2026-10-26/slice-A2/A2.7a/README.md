@@ -92,6 +92,11 @@ increment. Full A2.7 alias/fold work follows verified function parity.
   source review passed after the consistency correction. Final targeted
   rechecks and normal pre-push checks are required before publication; no
   hook bypass is used.
+- The first publication gate caught a nullable-union narrowing error in the
+  panel and two unsupported Testing Library query options in tests. Publication
+  was refused. The panel now narrows on the source's nullable sections, and
+  those test options were removed; **36 affected tests pass**. The zero-error
+  TypeScript baseline is retained.
 
 ## Remaining A2.7 work
 
