@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T20:01:05.377300+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 17.135,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ui-red-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx": "62f627be14175f5c84cfd9dc90a10827ac94a78261baefc3dc099f4216da79a3",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx": "e401498a349201e0bc8d99cee14a6148c3dd750be3483c3e5fcd14f217b417c9"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx": "62f627be14175f5c84cfd9dc90a10827ac94a78261baefc3dc099f4216da79a3",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx": "e401498a349201e0bc8d99cee14a6148c3dd750be3483c3e5fcd14f217b417c9"
+  },
+  "sourceDrift": [],
+  "rawOutput": "ui-red.log.gz",
+  "rawGzipSha256": "fc7cbcf2fc335c78bbba020646c11ada348df1acb4d2a6639cdd55d21ea5345b",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  3 failed (3)",
+    "Duration  16.46s (transform 181ms, setup 129ms, import 219ms, tests 15.54s, environment 421ms)"
+  ]
+}

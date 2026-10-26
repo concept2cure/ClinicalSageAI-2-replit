@@ -53,7 +53,7 @@ describe('assembleProjectDossierMap', () => {
     await section(ORG, p, 'm2.7', 'M2', 'Clinical Summary', 'drafting');
     await section(ORG, p, 'm3.2.S.1', 'M3', 'General Information', 'not_started');
 
-    const rows = await assembleProjectDossierMap(ORG, p) as any[];
+    const rows = await assembleProjectDossierMap(pool, ORG, p) as any[];
     expect(rows.map((r) => r.m)).toEqual(['2', '3']);         // only tracked modules, ordered
 
     const m2 = rows[0];
@@ -77,14 +77,14 @@ describe('assembleProjectDossierMap', () => {
     await section(ORG, sibling, 'm2.5', 'M2', 'Clinical Overview', 'signed');    // other project
     await section(ORG, sibling, 'm4.2.1', 'M4', 'Pharmacology', 'approved');     // other project only
 
-    const rows = await assembleProjectDossierMap(ORG, target) as any[];
+    const rows = await assembleProjectDossierMap(pool, ORG, target) as any[];
     expect(rows.map((r) => r.m)).toEqual(['2']);              // sibling's M4 never appears
     expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);
     expect(rows[0].pct).toBe(0);                              // drafting ≠ complete — NOT the sibling's 'signed'
     expect(rows[0].tone).toBe('idle');                        // would be 'ok' if org-wide contaminated it
 
     // And the sibling, read on its own id, is fully complete — proving the scope cuts both ways.
-    const sibRows = await assembleProjectDossierMap(ORG, sibling) as any[];
+    const sibRows = await assembleProjectDossierMap(pool, ORG, sibling) as any[];
     expect(sibRows.map((r) => r.m)).toEqual(['2', '4']);
     expect(sibRows[0].pct).toBe(100);
     expect(sibRows[0].tone).toBe('ok');
@@ -95,7 +95,7 @@ describe('assembleProjectDossierMap', () => {
     await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'drafting');
     await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'signed');   // more advanced wins
 
-    const rows = await assembleProjectDossierMap(ORG, p) as any[];
+    const rows = await assembleProjectDossierMap(pool, ORG, p) as any[];
     expect(rows).toHaveLength(1);
     expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);           // one chip, not two
     expect(rows[0].pct).toBe(100);                                          // signed counts complete
@@ -106,15 +106,15 @@ describe('assembleProjectDossierMap', () => {
     const archived = await project(ORG, 'archived');
     await section(ORG, archived, 'm4.2.1', 'M4', 'Pharmacology', 'approved');
 
-    expect(await assembleProjectDossierMap(ORG, archived)).toEqual([]);   // archived → nothing
+    expect(await assembleProjectDossierMap(pool, ORG, archived)).toEqual([]);   // archived → nothing
   });
 
   it('returns [] for a project with no tracked sections, and never crosses tenants', async () => {
     const p = await project(ORG);
     await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'approved');
     // Right project id but wrong org → nothing (double-scoped org + project).
-    expect(await assembleProjectDossierMap(OTHER, p)).toEqual([]);
+    expect(await assembleProjectDossierMap(pool, OTHER, p)).toEqual([]);
     // Empty project id space → nothing.
-    expect(await assembleProjectDossierMap(ORG, 999999)).toEqual([]);
+    expect(await assembleProjectDossierMap(pool, ORG, 999999)).toEqual([]);
   });
 });

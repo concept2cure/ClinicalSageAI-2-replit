@@ -665,6 +665,8 @@ async function seedUnscoped(): Promise<{ seeded: number; total: number }> {
       .insert(anaCapabilityRegistry)
       .values({
         capabilityKey: cap.capabilityKey,
+        // Its read functions now live on project Author; keep the old identity inactive.
+        isActive: cap.capabilityKey !== 'dossier-mapping',
         category: cap.category,
         name: cap.name,
         description: cap.description,
@@ -685,6 +687,11 @@ async function seedUnscoped(): Promise<{ seeded: number; total: number }> {
       seeded++;
     }
   }
+
+  // ON CONFLICT preserves existing installs, including previously active rows.
+  // Reapply this retirement on every boot without deleting outcome history.
+  await db.update(anaCapabilityRegistry).set({ isActive: false })
+    .where(eq(anaCapabilityRegistry.capabilityKey, 'dossier-mapping'));
 
   // Existing rows are skipped by onConflictDoNothing above, so refresh their
   // governance contract from the code source of truth (governanceFor) too.

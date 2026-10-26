@@ -282,7 +282,7 @@ function TabBody(props: BodyProps) {
   switch (tab) {
     case 'soa': return <SoaTab doc={doc} canWrite={canWrite} onError={onError} onEdit={onEdit} />;
     case 'study-design':
-      return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
+      return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} onNav={onNav} />;
     case 'derivation':
       return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
     case 'compliance': return <ComplianceTab doc={doc} />;

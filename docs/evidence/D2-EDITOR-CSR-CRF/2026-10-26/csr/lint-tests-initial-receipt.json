@@ -1,0 +1,19 @@
+{
+  "startedUtc": "2026-10-26T20:07:54.035119+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+    "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 1,
+  "elapsedSeconds": 1.304,
+  "sourceDrift": [],
+  "testSummary": [],
+  "rawOutput": "lint-tests-initial.log.gz",
+  "rawGzipSha256": "36e8b38c650d968a663a7b82b40deb7d71ad4ef7c23de1decc17f89940496249"
+}

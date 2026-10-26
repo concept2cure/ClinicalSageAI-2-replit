@@ -117,7 +117,6 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
   { id: 'vault', label: 'Vault', description: 'The project document vault.', scope: 'project', group: 'project' },
-  { id: 'dossier-map', label: 'Dossier Map', description: 'The CTD/dossier structure map for the project.', scope: 'project', group: 'project' },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
   { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },

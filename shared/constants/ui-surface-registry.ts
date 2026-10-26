@@ -717,26 +717,7 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE, 'motion-discipline'],
     notes: 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.',
   },
-  {
-    id: 'dossier-map',
-    label: 'Dossier map',
-    navTier: 'project',
-    layoutMode: 'dossier-map',
-    icon: 'network',
-    group: 'submission',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): DossierMap reads the map.
-    // 2026-09-29: '/api/rim' and '/api/global-ri' removed. DossierMap calls
-    // neither; they are the hidden Registrations and Global RI apps, and the
-    // claim made both answer as launch in production.
-    apiPrefixes: ['/api/dossier-map'],
-    anaToolFamilies: ['global_ri_dossier'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: deferredSurfaceDescription('dossier-map'),
-  },
+
   {
     id: 'investigator-brochure',
     label: "Investigator's Brochure",

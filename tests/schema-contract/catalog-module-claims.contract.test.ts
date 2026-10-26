@@ -119,6 +119,19 @@ afterAll(async () => {
 });
 
 describe('Apps catalog module descriptions', () => {
+  it('keeps folded dossier identities deprecated across replay without deleting their rows', async () => {
+    await pg.exec(`INSERT INTO available_modules (module_id, name, description, category, metadata)
+      VALUES ('dossier', 'Existing dossier', '', 'Documents', '{}'),
+             ('dossier-map', 'Existing dossier map', '', 'Documents', '{}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{}'`);
+    const source = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+    await pg.exec(source);
+    await pg.exec(source);
+    const result = await pg.query<{ module_id: string; deprecated: string }>(`SELECT module_id, metadata->>'deprecated' AS deprecated
+      FROM available_modules WHERE module_id IN ('dossier', 'dossier-map') ORDER BY module_id`);
+    expect(result.rows).toEqual([{ module_id: 'dossier', deprecated: 'true' }, { module_id: 'dossier-map', deprecated: 'true' }]);
+  });
+
   it('replays every catalog writer in the deploy set, in deploy order', () => {
     expect(CATALOG_MIGRATIONS.length).toBeGreaterThanOrEqual(13);
     // The pair whose order decided the defect: the honest rewrite, then the

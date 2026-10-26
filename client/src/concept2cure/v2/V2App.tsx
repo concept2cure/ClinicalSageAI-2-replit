@@ -78,7 +78,8 @@ import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
 import { getAction, getSegment, resolveSegmentId, shellSegment,
   effortForMode,
 } from './registryModel';
-import { locationForSurface, surfaceIdFromLocation } from './routing';
+import { destinationFor, locationForSurface, surfaceSegmentFromLocation } from './routing';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -135,7 +136,7 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { restoreShellProject, useShellProjectInUrl } from './shellProject';
+import { readShellProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -309,7 +310,10 @@ export function V2App() {
       return next;
     });
 
-  const activeId = surfaceIdFromLocation(location);
+  const openProject = useShellProject();
+  const requestedId = surfaceSegmentFromLocation(location);
+  const destination = destinationFor(requestedId, Boolean(openProject));
+  const activeId = destination.surfaceId;
   /* Demonstration mode — 'demo' while a started demonstration is live. It
      rides every opted-in turn (so a question asked mid-demo and the resumed
      stops keep the demo budgets), and drops on take-over, toggle-off, or
@@ -338,10 +342,25 @@ export function V2App() {
      click does, never a second router. */
   const nav = React.useCallback(
     (id: string) => {
-      setLocation(locationForSurface(id));
+      const next = destinationFor(id, Boolean(readShellProject()));
+      const resolved = next.applies ? resolveSurfaceAction(next.applies.actionId, next.applies.params) : null;
+      // The validated bus stashes or performs first; this single canonical
+      // write handles both outcomes without recursively resolving the alias.
+      if (resolved?.ok) applySurfaceAction(resolved.directive, () => {});
+      setLocation(locationForSurface(next.surfaceId));
     },
     [setLocation]
   );
+  React.useEffect(() => {
+    if (requestedId === activeId || surfaceSegmentFromLocation(window.location.pathname) !== requestedId) return;
+    const requested = destinationFor(requestedId, Boolean(readShellProject()));
+    const resolved = requested.applies ? resolveSurfaceAction(requested.applies.actionId, requested.applies.params) : null;
+    if (resolved?.ok) applySurfaceAction(resolved.directive, () => {});
+    // Preserve copied-link parameters and fragments. The canonical address is
+    // the one-shot marker, so a data refresh cannot reset a later chosen step.
+    const canonical = locationForSurface(activeId) + window.location.search + window.location.hash;
+    setLocation(canonical, { replace: true });
+  }, [location, requestedId, activeId, setLocation]);
   /* True from a drive_state{enabled} until the person takes over — read by the
      follow-the-work effect below, which fires AFTER turn_end has already
      released the reducer's `active` (drafts persist post-`done`). */

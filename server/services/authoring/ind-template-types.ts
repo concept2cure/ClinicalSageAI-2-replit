@@ -7,6 +7,7 @@ export interface IndTemplateOutlineSection {
   content: '';
   ordering: number;
   guidance: {
+    drafting_mode?: 'narrative' | 'manual';
     guidance_text: string;
     regulatory_references: string[];
     compliance_checklist: string[];

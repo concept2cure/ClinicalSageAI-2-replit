@@ -1009,7 +1009,6 @@ function getSuggestedActionsForType(
   submissionType: string
 ): Array<{ id: string; label: string; command: string }> {
   const base = [
-    { id: 'dossier-map', label: 'Start Dossier Map', command: '/dossier' },
     { id: 'add-docs', label: 'Add Documents', command: '/upload' },
     { id: 'readiness', label: 'Run Readiness Check', command: '/readiness' },
   ];

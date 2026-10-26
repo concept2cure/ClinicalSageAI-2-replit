@@ -247,9 +247,19 @@ describe('the real registry, launch scope on', () => {
     for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
       expect(await refused(p), p).toBe(false);
     }
-    // The dossier map left the launch scope on 2026-10-08 (always empty for a
-    // program created in the product); its read is refused with it.
-    expect(await refused('/api/dossier-map'), '/api/dossier-map').toBe(true);
+  });
+
+  it('keeps the retired dossier APIs unclaimed and refused under production enforcement', async () => {
+    const prefixes = buildPrefixMap();
+    const productionGate = moduleEntitlementGate(prefixes, { launchScope: 'on', unattributed: 'enforce' });
+    for (const path of ['/api/dossier-map', '/api/dossier-readiness/42']) {
+      // A2.7 removed the mounts and registry rows. In production these unknown
+      // endpoints stay refused; development's report mode reaches a 404.
+      expect(launchScopeApiVerdict(path, prefixes, NEVER_GATED), path).toBe('unmapped');
+      const { res, passed } = await run(productionGate, path);
+      expect(passed, path).toBe(false);
+      expect(res.statusCode, path).toBe(403);
+    }
   });
 
   /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.

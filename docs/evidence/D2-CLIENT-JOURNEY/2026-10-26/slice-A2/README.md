@@ -72,7 +72,7 @@ limits and native browser checks are in [A2.5/README.md](A2.5/README.md).
 
 ## Remaining sequence
 
-A2.6 is complete: counted section details and regulatory order extend the existing read; Author shows read-only status and module dates, home review/draft totals, and the critical-path AnA handoff. Evidence is in [A2.6/README.md](A2.6/README.md). A2.7 is next and begins with legacy artifact-rollup, artifact-count and per-section-date parity reconciliation before any screen removal. Later folds retain founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
+A2.6 is complete: counted section details, regulatory order, module dates, home review/draft totals and the critical-path AnA handoff extend the existing read. A2.7 then carries the actual artifact rollups/counts/section dates and legacy tracked module view onto Author before folding the standalone dossier screens/routes and identities. String aliases carry Author or the no-project chooser through one resolver; stored data and subscriptions remain. Evidence and qualification limits are in [A2.7/README.md](A2.7/README.md). A2.8 (MDX alias to filtered Projects) is next. Later folds retain their own parity and founder-decision prerequisites.
 
 ## Final integration
 

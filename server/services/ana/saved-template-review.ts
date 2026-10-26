@@ -9,7 +9,7 @@ const MAX_REFERENCE_BYTES = 8 * 1024 * 1024;
 const MAX_REFERENCE_ITEMS = 20_000;
 const PART_CHARS = 400;
 const SOURCE_FIELDS = ['entryId', 'version', 'sha256', 'kind', 'aiDraftable', 'authoringMode', 'originalFormat', 'limitations'] as const;
-const STRING_FIELDS = ['guidance_text', 'source_reference', 'guidance_note'] as const;
+const STRING_FIELDS = ['guidance_text', 'source_reference', 'guidance_note', 'drafting_mode'] as const;
 const LIST_FIELDS = ['regulatory_references', 'compliance_checklist', 'common_pitfalls'] as const;
 type SourceVerification = 'full-recorded' | 'identity-only';
 type ReferenceFields = Record<string, string | string[]>;
@@ -195,7 +195,7 @@ function jsonHasContent(text: string): boolean {
 
 function hasGuidance(fields: ReferenceFields): boolean {
   return Object.entries(fields).some(([field, value]) => {
-    if (field === 'guidance_note') return false;
+    if (field === 'guidance_note' || field === 'drafting_mode') return false;
     if (field === 'examples' || field === 'ai_prompts') return typeof value === 'string' && jsonHasContent(value);
     return Array.isArray(value) ? value.some(text => text.trim().length > 0) : value.trim().length > 0;
   });

@@ -13,10 +13,10 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.6 complete. A2.6 evidence is under
-`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.6/README.md`.
-Next is A2.7, beginning with the legacy artifact-rollup parity reconciliation
-recorded in that evidence; the inventory below describes discovery-time behavior.
+**Implementation status:** A2.1–A2.7 complete. A2.7 evidence is under
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md`.
+The parity reconciliation is in `A2_7_PARITY_RECONCILIATION.md`.
+Next is A2.8 (MDX alias to filtered Projects); the inventory below describes discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 
@@ -580,6 +580,18 @@ reconciliation before A2.7 can remove a screen. No deletion is authorized by A2.
   - A ProjectDossier test: AnA facts list sections, `lastUpdated` renders, and the card shows in-review. **Red.**
 
 ### A2.7 Complete `DEEP_LINK_ALIASES` with a step and the no-project rule, and fold `dossier` and `dossier-map` onto Author
+
+**Completed 2026-10-26.** The current reconciliation addendum takes precedence
+over discovery assumptions below. Author now preserves all three distinct
+bases: governed sections, artifact rollups/counts/section dates, and legacy
+`project_sections` module completion/labels. Exact accepted access is revalidated.
+The old screens and HTTP routes are folded; the existing tracking assembler is
+retained internally because it owns the surviving read. Alias stage actions and
+no-project destinations share the resolver, with native URL and return proof.
+Both the catalog writer and its packaging writer were amended in place: keeping
+obsolete packaging references would fail the fresh-database unknown-module guard.
+No stored data, subscription, signature or dispatch gate was removed. Validation
+docs distinguish historical results from revised URS-SUBC-009a (not formally executed).
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.

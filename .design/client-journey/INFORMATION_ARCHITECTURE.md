@@ -1282,11 +1282,12 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-A2.1–A2.6 are complete, including the existing RegistryPicker's filing guidance and shared Ask AnA prompt,
-and ProjectDossier's counted section facts, visible status, module update time, home review/draft totals and
-critical-path question. The next change is **A2.7**, specified in `SLICE_A2_PLAN.md`: reconcile the remaining
-legacy artifact-rollup, artifact-count and per-section-date parity, then complete step-aware aliases and the
-no-project rule. A2.6 authorizes no screen removal; A2.7 retains the plan's reachable-function proof requirement.
+A2.1–A2.7 are complete. Project Author now preserves governed section detail, artifact rollups/counts/section
+dates, and tracked CTD module completion on their own recorded bases. Dossier bookmarks reach Author through
+the shared step-aware resolver, or Projects when no project is selected. The standalone dossier screens/routes
+and identities are folded with parity and native reachability proof in `slice-A2/A2.7/`; data and subscriptions
+remain. The next change is **A2.8**, specified in `SLICE_A2_PLAN.md`: route the existing MDX alias to Projects
+with the existing device-workstream filter. It does not retire the device-workstream screen (A2.10).
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

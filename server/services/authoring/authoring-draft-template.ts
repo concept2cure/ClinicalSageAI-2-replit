@@ -2,6 +2,7 @@
 import type { RequestSqlClient } from '../../db/requestDb';
 import { AnaProjectScopeError } from '../ana/project-scope-admission';
 import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-template-review';
+import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
 
 export const MAX_DRAFT_TEMPLATE_REFERENCE_BYTES = 16 * 1024;
 const WRITING_REGIONS: Record<string, string> = { US: 'FDA', CA: 'Health Canada', EU: 'EMA', JP: 'PMDA' };
@@ -36,8 +37,8 @@ function recordedWritingRegion(source: Record<string, unknown> | null): string |
   return typeof region === 'string' ? WRITING_REGIONS[region] ?? null : null;
 }
 
-function admitDraftReference(source: Record<string, unknown> | null, requestedRegion: unknown) {
-  if (source?.aiDraftable === false || source?.kind === 'preparation' || source?.authoringMode === 'manual') {
+function admitDraftReference(source: Record<string, unknown> | null, requestedRegion: unknown, sectionManual: boolean) {
+  if (sectionManual || source?.aiDraftable === false || source?.kind === 'preparation' || source?.authoringMode === 'manual') {
     throw new DraftTemplateReferenceError(409, 'TEMPLATE_NOT_DRAFTABLE',
       'The recorded template requires manual preparation. Use the original form, dataset or signed record and the manual editor; nothing was drafted.');
   }
@@ -51,7 +52,9 @@ function admitDraftReference(source: Record<string, unknown> | null, requestedRe
 
 function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateScope, requestedRegion: unknown) {
   const { references, selected, source, templateId } = effectiveReference(review, scope.sectionId);
-  const { region, recordedRegion } = admitDraftReference(source, requestedRegion);
+  const sectionManual = references.some(reference => reference.fields.drafting_mode === 'manual' ||
+    (reference.authority === 'recorded' && e3ReferenceDraftingMode(reference.fields.source_reference) === 'manual'));
+  const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual);
   const reference = {
     kind: 'saved-section-template-reference', sectionId: scope.sectionId, sectionCode: scope.code, templateId,
     ...(!selected?.assembly ? { parentTemplateId: review.template.id } : {}),
