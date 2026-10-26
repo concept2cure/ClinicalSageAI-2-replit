@@ -1,0 +1,11 @@
+# Rule 2 S3 red, item nonclinical-program: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/ana/__tests__/assess-nonclinical-program-without-studies-returns-the-requirement-list.test.ts > assess_nonclinical_program — no studies read is not a program that lacks them > with no studies, returns the required battery with adequate and gaps null, and says it is not a gap analysis 22ms
+   → expected '{"status":"assessed","engine":"determ…' not to match /not present|Missing (?:rodent|non-rod…/
+ × server/services/ana/__tests__/assess-nonclinical-program-without-studies-returns-the-requirement-list.test.ts > assess_nonclinical_program — no studies read is not a program that lacks them > an empty study list is read the same way: nothing was compared 5ms
+   → expected '{"status":"assessed","engine":"determ…' not to match /not present/
+ ✓ server/services/ana/__tests__/assess-nonclinical-program-without-studies-returns-the-requirement-list.test.ts > assess_nonclinical_program — no studies read is not a program that lacks them > the requirement list still follows the program context 3ms
+ ✓ server/services/ana/__tests__/assess-nonclinical-program-without-studies-returns-the-requirement-list.test.ts > assess_nonclinical_program — no studies read is not a program that lacks them > still asks for the clinical duration first 2ms
+ ✓ server/services/ana/__tests__/assess-nonclinical-program-without-studies-returns-the-requirement-list.test.ts > assess_nonclinical_program — no studies read is not a program that lacks them > with studies listed, it still compares them against the battery 2ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)

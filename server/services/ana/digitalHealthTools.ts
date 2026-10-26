@@ -411,6 +411,10 @@ export const DESIGN_SAMD_CLINICAL_VALIDATION: AnaTool = {
 // 6. assess_device_cybersecurity
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** An omitted artifact input is not stated (2026-10-26): it was read as provided. */
+const CYBER_NOT_STATED_NOTE =
+  'Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as provided.';
+
 export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
   name: 'assess_device_cybersecurity',
   description:
@@ -435,13 +439,15 @@ export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether the device can connect to the internet / a network / other devices or cloud. ' +
-          'One of the "cyber device" criteria under Section 524B. Default true.',
+          'One of the "cyber device" criteria under Section 524B. Leave it out if it is not known: it ' +
+          'is not assumed, and the cyber-device status is undetermined unless includesSoftware is false.',
       },
       includesSoftware: {
         type: 'boolean',
         description:
           'Whether the device includes or relies on validated software. One of the "cyber device" ' +
-          'criteria under Section 524B. Default true.',
+          'criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the ' +
+          'cyber-device status is undetermined unless networkConnected is false.',
       },
       submissionUnder524B: {
         type: 'boolean',
@@ -453,32 +459,34 @@ export const ASSESS_DEVICE_CYBERSECURITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust ' +
-          'boundaries, update path, and connected systems is provided. Set false to flag a gap.',
+          'boundaries, update path, and connected systems is provided. Set false to flag a gap. ' +
+          CYBER_NOT_STATED_NOTE,
       },
       sbomProvided: {
         type: 'boolean',
         description:
           'Whether a Software Bill of Materials (SBOM) including commercial, open-source, and ' +
           'off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when ' +
-          '524B applies) gap.',
+          '524B applies) gap. ' + CYBER_NOT_STATED_NOTE,
       },
       securityRiskManagementProvided: {
         type: 'boolean',
         description:
           'Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety ' +
-          'risk) is provided. Set false to flag a gap.',
+          'risk) is provided. Set false to flag a gap. ' + CYBER_NOT_STATED_NOTE,
       },
       vulnerabilityHandlingProcess: {
         type: 'boolean',
         description:
           'Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes ' +
-          'are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap.',
+          'are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap. ' +
+          CYBER_NOT_STATED_NOTE,
       },
       postMarketUpdatePlan: {
         type: 'boolean',
         description:
           'Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to ' +
-          'flag a (critical when 524B applies) gap.',
+          'flag a (critical when 524B applies) gap. ' + CYBER_NOT_STATED_NOTE,
       },
       handlesSensitiveData: {
         type: 'boolean',

@@ -5771,8 +5771,23 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
     if (input.maxClinicalDurationWeeks == null) {
       return JSON.stringify({ status: 'needs_parameters', message: 'maxClinicalDurationWeeks is required.' });
     }
-    const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
+    const { assessNonclinicalProgram, requiredNonclinicalBattery } = await import('../preclinical/nonclinical-program-requirements.js');
     const present = Array.isArray(input.present) ? input.present : [];
+    // Rule 2 audit S3 (2026-10-26): with no studies this compared the battery
+    // against [] and answered adequate: false, every study due "not present".
+    // Nothing read is not nothing held: answer with the requirement list only.
+    if (present.length === 0) {
+      return JSON.stringify({
+        status: 'requirements',
+        engine: 'deterministic',
+        adequate: null,
+        required: requiredNonclinicalBattery(input as any),
+        gaps: null,
+        message: 'No studies were read; this is the requirement list, not a gap analysis.',
+        instruction:
+          "Report the required battery verbatim, with each study's timing and ICH reference. No studies were read, so none was compared: do not say the program lacks, or holds, any study.",
+      });
+    }
     const result = assessNonclinicalProgram(
 
       input as any,
@@ -6708,8 +6723,13 @@ function ivdComputed(result: unknown, instruction: string): string {
 
 function ivdError(name: string, err: any): string {
   const message = err?.message || 'unknown error';
-  // The throw-based engines phrase their message as the parameter problem.
-  return JSON.stringify({ status: 'needs_parameters', tool: name, message });
+  // Only a message isStatsParamError reads as a parameter problem (the stats
+  // tools' test) asks the user for more. Anything else, such as a fault in the
+  // engine or a failed import, is the tool failing and says so.
+  if (isStatsParamError(message)) {
+    return JSON.stringify({ status: 'needs_parameters', tool: name, message });
+  }
+  return JSON.stringify({ error: `${name} failed: ${message}` });
 }
 
 registerToolHandler('screen_signal_panel', async (input: Record<string, unknown>) => {
@@ -6908,21 +6928,35 @@ function capaToolFailure(tool: string, error: unknown): string {
 
 registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
   try {
-    const { classify } = await import('../capa-mdr/triageEngine.js');
+    const { classify, unstatedTriageFacts, describeTriageFacts } = await import('../capa-mdr/triageEngine.js');
+    // classify refuses a harm it cannot read (needs_parameters below). Each event
+    // fact was read as false here (`=== true`) and an omitted country as outside
+    // the EU, so { patientHarm: 'serious_injury' } came back a 30-day, non-EU
+    // report with no 806 notice. Every omitted fact is asked for instead.
     const result = classify({
       patientHarm: input.patientHarm as any,
-      isMalfunction: input.isMalfunction === true,
-      eventLocationCountry: typeof input.eventLocationCountry === 'string' ? input.eventLocationCountry : null,
-      anticipatesCorrection: input.anticipatesCorrection === true,
-      trendThresholdCrossed: input.trendThresholdCrossed === true,
+      isMalfunction: input.isMalfunction as boolean | undefined,
+      eventLocationCountry: input.eventLocationCountry as string | undefined,
+      anticipatesCorrection: input.anticipatesCorrection as boolean | undefined,
+      trendThresholdCrossed: input.trendThresholdCrossed as boolean | undefined,
       eventNarrative: typeof input.eventNarrative === 'string' ? input.eventNarrative : null,
     });
+    const unstated = unstatedTriageFacts(input);
+    if (unstated.length > 0) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        tool: 'assess_mdr_reportability',
+        missing: unstated,
+        message: `Ask the user for ${describeTriageFacts(unstated)}. An unstated fact is never read as false; a country nobody knows is stated as "unknown".`,
+      });
+    }
     return JSON.stringify({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction:
-        'Report the reportability determination verbatim: FDA MDR, EU MDR vigilance, 806 notice, suggested jurisdiction/report-type/severity, and the rationale.',
+        'Report the reportability determination verbatim: FDA MDR, EU MDR vigilance, 806 notice, suggested jurisdiction/report-type/severity, and the rationale. ' +
+        'When determinationComplete is false, say which parts are not determined and name missingFacts; a null is not determined, never "not reportable".',
     });
   } catch (err: any) {
     return JSON.stringify({ status: 'needs_parameters', tool: 'assess_mdr_reportability', message: err?.message || 'invalid input' });
@@ -6991,6 +7025,19 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
         'ask the user; the reportability classification is computed from the harm, so it is never assumed',
     });
   }
+  // So are the event facts it turns on: each was read as false when omitted,
+  // and an omitted country as outside the EU.
+  const { unstatedTriageFacts, describeTriageFacts } = await import('../capa-mdr/triageEngine.js');
+  const unstatedFacts = unstatedTriageFacts(input);
+  if (unstatedFacts.length > 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      missing: unstatedFacts,
+      message:
+        `${describeTriageFacts(unstatedFacts)} — required; ask the user. ` +
+        'An unstated fact is never read as false; a country nobody knows is stated as "unknown"',
+    });
+  }
   try {
     const { createComplaint } = await import('../capa-mdr/capaMdr.service.js');
     const complaint = await createComplaint(organizationId, {
@@ -7001,10 +7048,10 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       eventNarrative: String(input.eventNarrative),
       patientHarm: input.patientHarm as any,
       severityAssessment: input.severityAssessment as any,
-      isMalfunction: input.isMalfunction === true,
-      anticipatesCorrection: input.anticipatesCorrection === true,
-      trendThresholdCrossed: input.trendThresholdCrossed === true,
-      eventLocationCountry: typeof input.eventLocationCountry === 'string' ? input.eventLocationCountry : null,
+      isMalfunction: input.isMalfunction as boolean,
+      anticipatesCorrection: input.anticipatesCorrection as boolean,
+      trendThresholdCrossed: input.trendThresholdCrossed as boolean,
+      eventLocationCountry: input.eventLocationCountry as string,
       deviceModel: typeof input.deviceModel === 'string' ? input.deviceModel : null,
       deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
       deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,

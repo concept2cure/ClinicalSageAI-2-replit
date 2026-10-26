@@ -1,0 +1,8 @@
+# Rule 2 S3 red, item ivd-error: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > is reported as the tool failing, not as "more details are needed" 25ms
+   → a TypeError inside the engine was read as a parameter problem: expected 'needs_parameters' not to be 'needs_parameters' // Object.is equality
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > build_postmarket_report: a fault in the engine > still asks for parameters when the engine names the parameter problem 2ms
+ ✓ server/services/ana/__tests__/ivd-tools-report-an-engine-fault-as-an-error.test.ts > a real engine refusal through ivdError > determine_assay_cutoff with one class of case still asks for both 19ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)

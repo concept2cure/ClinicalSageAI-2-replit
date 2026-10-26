@@ -246,13 +246,15 @@ router.post('/complaints', async (req: Request, res: Response) => {
       deviceSerial: body.deviceSerial ?? null,
       deviceModel: body.deviceModel ?? null,
       eventDate: parseDate(body.eventDate),
-      eventLocationCountry: body.eventLocationCountry ?? null,
+      // The event facts go as sent: the service refuses an unstated one (422)
+      // rather than read it as false, or an unstated country as outside the EU.
+      eventLocationCountry: body.eventLocationCountry,
       eventNarrative: body.eventNarrative,
       patientHarm: body.patientHarm,
       severityAssessment: body.severityAssessment,
-      isMalfunction: body.isMalfunction === true,
-      anticipatesCorrection: body.anticipatesCorrection === true,
-      trendThresholdCrossed: body.trendThresholdCrossed === true,
+      isMalfunction: body.isMalfunction,
+      anticipatesCorrection: body.anticipatesCorrection,
+      trendThresholdCrossed: body.trendThresholdCrossed,
       createdBy: getUserId(req),
     }, callerOf(req));
     res.status(201).json(mutationBody(row));

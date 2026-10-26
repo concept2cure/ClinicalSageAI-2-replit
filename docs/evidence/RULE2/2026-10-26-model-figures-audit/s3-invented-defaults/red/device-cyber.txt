@@ -1,0 +1,22 @@
+# Rule 2 S3 red, item device-cyber: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with nothing stated > does not pass, and reads no artifact as provided 12ms
+   → expected 'pass' to be 'gap' // Object.is equality
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with nothing stated > leaves the cyber-device status undetermined instead of applying 524B 2ms
+   → expected true to be null
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > reads true as present and false as missing 6ms
+   → expected { …(11) } to match object { isCyberDevice: true, …(3) }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > passes only when every criterion and artifact is stated 2ms
+   → expected { …(11) } to match object { overallVerdict: 'pass', …(1) }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > decides "not a cyber device" from one criterion stated false 2ms
+   → expected { …(11) } to match object { isCyberDevice: false, …(2) }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assessDeviceCybersecurity with stated inputs > says a missing SBOM is critical only if 524B applies while that is undetermined 2ms
+   → expected { id: 'CY-SBOM', …(5) } to match object { status: 'missing', severity: 'gap' }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > relays the not-stated reading 4ms
+   → expected { …(11) } to match object { overallVerdict: 'gap', …(1) }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > refuses a yes/no answer that is not a boolean instead of reading it 1ms
+   → sbomProvided: expected { status: 'computed', …(3) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/device-cybersecurity-reads-an-omitted-input-as-not-stated.test.ts > assess_device_cybersecurity tool > does not tell AnA that an omitted input is true or provided 2ms
+   → includesSoftware: expected 'Whether the device includes or relies…' not to match /Default true/
+ Test Files  1 failed (1)
+      Tests  9 failed (9)

@@ -1,0 +1,22 @@
+# Rule 2 S3 red, item br-uncertainty: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > does not assess robustness and prints no margin when netBalanceEstimate is omitted 11ms
+   → expected 'sensitive' to be 'not_assessed' // Object.is equality
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > reads a null margin as not stated, not as 0 2ms
+   → expected 'sensitive' to be 'not_assessed' // Object.is equality
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > control: a stated margin still gives a verdict and prints the margin 1ms
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > reports the level as not stated instead of grading it moderate 1ms
+   → expected 'moderate' to be 'not_stated' // Object.is equality
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > keeps a fragile verdict that the stated levels already reach 1ms
+   → expected 'moderate' to be 'not_stated' // Object.is equality
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > grades nothing and claims no insensitivity or labeling conclusion 1ms
+   → expected 'moderate' to be 'not_assessed' // Object.is equality
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > control: fully stated inputs keep the existing verdict and wording 1ms
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty handler > returns not_assessed through the tool envelope when no margin is stated 3ms
+   → expected 'sensitive' to be 'not_assessed' // Object.is equality
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > says an omitted net margin leaves robustness not assessed 2ms
+   → expected 'Net benefit-risk margin from the bala…' to match /Without it, robustness is not assesse…/
+ × server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > no longer tells the model an omitted level defaults to moderate 1ms
+   → expected 'Magnitude of the uncertainty (default…' not to match /default/i
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
