@@ -43,7 +43,7 @@ function provenanceLine(p: Extract<VaultCoverageShape, { state: 'available' }>['
   if (p.source === 'rule_pack') {
     return `Required list from the ${(p.docType ?? '').toUpperCase()} rule pack for ${p.agency ?? 'the agency'}, version ${p.packVersion ?? 'unrecorded'}.`;
   }
-  return `Required list is the ICH CTD baseline, not this program's own: ${p.reason ?? 'no rule pack applies.'}`;
+  return `Required list is the ICH CTD baseline, not this project's own: ${p.reason ?? 'no rule pack applies.'}`;
 }
 
 function MissingLine({ code }: { code: string }) {

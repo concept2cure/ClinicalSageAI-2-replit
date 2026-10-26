@@ -238,7 +238,7 @@ describe('3 — the program the report runs over', () => {
     });
     renderCanvas();
     const picker = await screen.findByTestId('rc-program-picker');
-    expect(picker.textContent).toMatch(/Which program is the report for\?/);
+    expect(picker.textContent).toMatch(/Which project is the report for\?/);
     expect(screen.queryByText(/C2C-001/)).toBeNull();
     answer = overview();
     fireEvent.click(screen.getByRole('button', { name: /HLV-333/ }));

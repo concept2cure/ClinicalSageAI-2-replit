@@ -53,9 +53,9 @@ describe('Projects — a truncated portfolio read', () => {
     portfolio(true);
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><Projects {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
-    const note = await screen.findByText(/Showing the first 2 programs/);
+    const note = await screen.findByText(/Showing the first 2 projects/);
     expect(note.textContent).toMatch(/cover these only/);
-    expect(document.querySelector('.pj-summary')?.textContent).toContain('2+ active programs');
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('2+ active projects');
     await waitFor(() => expect(seen.ctx?.summary).toMatch(/first 2 .*more exist/));
     expect((seen.ctx?.facts as { portfolioTruncated?: unknown }).portfolioTruncated).toBe(true);
   });
@@ -65,7 +65,7 @@ describe('Projects — a truncated portfolio read', () => {
     render(<Projects {...props()} />);
     await screen.findAllByText('Program 1');
     expect(screen.queryByText(/Showing the first/)).toBeNull();
-    expect(document.querySelector('.pj-summary')?.textContent).toContain('2 active programs');
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('2 active projects');
     expect(document.querySelector('.pj-summary')?.textContent).not.toContain('2+');
   });
 });

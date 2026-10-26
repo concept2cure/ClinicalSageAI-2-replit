@@ -10,7 +10,7 @@ interface WorkflowGuidance {
 
 const GUIDANCE: Readonly<Record<string, WorkflowGuidance>> = {
   projects: {
-    when: 'You are starting a program or organizing its filing work, people and tasks.',
+    when: 'You are starting a project or organizing its filing work, people and tasks.',
     start: 'Create or select a project and record its product, filing type and target markets.',
     next: 'Inside the project, follow Evidence → Author → Review → Submit → Respond.',
   },
@@ -40,7 +40,7 @@ const GUIDANCE: Readonly<Record<string, WorkflowGuidance>> = {
     next: 'Review the generated sections and place approved filing copies in Submission Center.',
   },
   reporting: {
-    when: 'You need a report or analysis of program records, quality activity or filing work.',
+    when: 'You need a report or analysis of project records, quality activity or filing work.',
     start: 'Open Reporting & analytics and select the report and relevant records.',
     next: 'Review the report’s evidence, gaps and blockers before using or sharing it.',
   },

@@ -411,7 +411,7 @@ export function DocumentCanvas({
             {programId ? (
               <span className="dcv-project">{I.folder} {programLineFor(program, programState)}</span>
             ) : (
-              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
+              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a project</span>
             )}
             {state === 'ready' && (
               <span data-testid="dc-progress">

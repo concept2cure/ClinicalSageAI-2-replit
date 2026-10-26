@@ -436,7 +436,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   }, [programs, pid]);
 
   const prog = programs.find(p => p.projectId === pid) || null;
-  const progLabel = prog ? (prog.code || prog.indication || ('Program ' + prog.projectId)) : '';
+  const progLabel = prog ? (prog.code || prog.indication || ('Project ' + prog.projectId)) : '';
 
   /* Continuity briefing — POST /api/orchestration/continuity (REAL). */
   const continuity = useLivePost<Continuity>('/api/orchestration/continuity', pid);
@@ -578,7 +578,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
            a retry cannot change either; anything else is a failure to answer,
            which a retry can. */
         portfolio.status === 401 ? (
-          <EmptyState tone="error" icon={I.lock} title="Couldn't load the portfolio rollup" hint="Your session has expired. Sign in again to see your organization's programs." />
+          <EmptyState tone="error" icon={I.lock} title="Couldn't load the portfolio rollup" hint="Your session has expired. Sign in again to see your organization's projects." />
         ) : portfolio.status === 403 ? (
           <EmptyState tone="error" icon={I.lock} title="Couldn't load the portfolio rollup" hint={portfolio.error} />
         ) : (
@@ -586,15 +586,15 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the portfolio rollup"
-            hint="The rollup could not be read, so no programs are shown. This is not an empty portfolio."
+            hint="The rollup could not be read, so no projects are shown. This is not an empty portfolio."
             retry={() => setPortfolioEpoch((n) => n + 1)}
           />
         )
       ) : programs.length === 0 ? (
         <EmptyState
           icon={Ico.folder || I.fileText}
-          title="No programs in this organization yet"
-          hint="Programs appear here attention-ranked by readiness and open critical blockers as your org creates them."
+          title="No projects in this organization yet"
+          hint="Projects appear here attention-ranked by readiness and open critical blockers as your org creates them."
         />
       ) : (
         <div className="ac-port">
@@ -618,7 +618,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         </div>
       )}
       <div className="ac-port-gap">
-        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
+        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every project in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
       {/* Role lens -- jobs across client types. It filters the program's
@@ -644,7 +644,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 {continuity.loading ? 'Loading the continuity briefing…'
                   : continuity.error ? 'Continuity briefing unavailable right now.'
                   : cont ? cont.summary
-                  : 'No continuity briefing yet for this program.'}
+                  : 'No continuity briefing yet for this project.'}
               </p>
               <div className="ac-lead-actions">
                 <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' — the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
@@ -670,7 +670,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 <EmptyState
                   icon={Ico.history || I.clock}
                   title="No continuity briefing yet"
-                  hint="AnA assembles what changed, what's newly ready, and what needs attention once this program has recent activity to summarize."
+                  hint="AnA assembles what changed, what's newly ready, and what needs attention once this project has recent activity to summarize."
                 />
               ) : (
                 <>
@@ -732,7 +732,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   <EmptyState
                     icon={I.sparkles}
                     title="No recommendations yet"
-                    hint="AnA surfaces next-best actions here as the program accrues documents, validations, tasks, and blockers."
+                    hint="AnA surfaces next-best actions here as the project accrues documents, validations, tasks, and blockers."
                   />
                 ) : recs.length === 0 ? (
                   <div className="ac-empty">No open actions for this lens.</div>

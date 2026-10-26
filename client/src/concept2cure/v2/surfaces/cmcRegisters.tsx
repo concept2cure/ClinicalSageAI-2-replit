@@ -274,9 +274,9 @@ interface RegisterCardProps<T> {
  * which is the claim that was wrong.
  */
 const SCOPE_NOTE: Record<RegisterScope | 'program-none', { testId: string; text: string; title?: string }> = {
-  program: { testId: 'register-scope-program', text: '· this program' },
-  'program-none': { testId: 'register-scope-no-program', text: '· all programs — open one to narrow' },
-  organization: { testId: 'register-scope-organization', text: '· all programs' },
+  program: { testId: 'register-scope-program', text: '· this project' },
+  'program-none': { testId: 'register-scope-no-program', text: '· all projects — open one to narrow' },
+  organization: { testId: 'register-scope-organization', text: '· all projects' },
 };
 
 function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasProgram: boolean }) {
@@ -428,7 +428,7 @@ export function RegisterCard<T>({
   const submitCreate = async (values: Record<string, string>) => {
     if (!create) return;
     if (create.needsProject && !projectId) {
-      fireToast('Open a program first — this record is filed per project.', 'error');
+      fireToast('Open a project first — this record is filed per project.', 'error');
       return;
     }
     try {
@@ -449,7 +449,7 @@ export function RegisterCard<T>({
         `${create.subject.charAt(0).toUpperCase() + create.subject.slice(1)} saved.` +
           (projectId
             ? ''
-            : ' Not linked to a program — it will not feed a Module 3 build until a program links it.'),
+            : ' Not linked to a project — it will not feed a Module 3 build until a project links it.'),
       );
     } catch (e) {
       fireToast(cmcWriteThrew(create.subject, e), 'error');
@@ -494,7 +494,7 @@ export function RegisterCard<T>({
             className="nda-open cm-reg-add"
             onClick={() => setCreating(true)}
             disabled={create.needsProject && !projectId}
-            title={create.needsProject && !projectId ? 'Open a program to file this record' : ''}
+            title={create.needsProject && !projectId ? 'Open a project to file this record' : ''}
           >
             {I.plus} {create.label}
           </button>

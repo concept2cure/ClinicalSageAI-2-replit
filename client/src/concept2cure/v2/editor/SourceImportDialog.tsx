@@ -78,7 +78,7 @@ function WorkflowPreview({ preview }: { preview: AuthoringSourceImportPreviewDat
       {s.model ? ` · Recorded model name: ${s.model}; qualification evidence not recorded` : ' · Model not recorded'}</li>)}</ul>
     {preview.gaps.length > 0 && <div><strong>Recorded gaps</strong><ul>{preview.gaps.map((gap, i) => <li key={i}>{gap}</li>)}</ul></div>}
     {preview.warnings.length > 0 && <ul>{preview.warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>}
-    {preview.association.required && <p>This source has no recorded program association. An explicit association reason is required for this target.</p>}
+    {preview.association.required && <p>This source has no recorded project association. An explicit association reason is required for this target.</p>}
   </div>;
 }
 

@@ -94,7 +94,7 @@ function sourceLine(src: RequiredSectionSource): string {
     return `Required sections from rule pack ${src.docType ?? ''}:${src.agency ?? ''} ${src.packVersion ?? ''}`.replace(/\s+/g, ' ').trim();
   }
   if (src.source === 'not_applicable') return src.reason ?? 'No CTD required-section set applies.';
-  return `Required sections are the generic ICH baseline, not this program's outline. ${src.reason ?? ''}`.trim();
+  return `Required sections are the generic ICH baseline, not this project's outline. ${src.reason ?? ''}`.trim();
 }
 
 function ModuleRow({ m }: { m: ModuleReadiness }) {

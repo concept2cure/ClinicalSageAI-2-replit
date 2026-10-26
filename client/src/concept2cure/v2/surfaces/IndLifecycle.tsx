@@ -457,12 +457,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           : null
       : matched
         ? rows.length > 1
-          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
+          ? `Showing the open project's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
           : null
         : shellProject
-          ? `The open program (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
+          ? `The open project (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
           : rows.length > 1
-            ? `Showing ${checklist.productName ?? checklist.code} — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization. Open a program to scope this screen to it.`
+            ? `Showing ${checklist.productName ?? checklist.code} — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization. Open a project to scope this screen to it.`
             : null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
@@ -561,7 +561,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         summary: sentSubmissionId
           ? 'IND lifecycle: the submission this screen was opened from has no IND checklist. Do not use another submission for drafting or filing.'
           : shellProject
-          ? 'IND lifecycle: the open program has no matching IND checklist. Do not use another program\'s submission for drafting or filing.'
+          ? 'IND lifecycle: the open project has no matching IND checklist. Do not use another project\'s submission for drafting or filing.'
           : 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
       };
     }
@@ -580,7 +580,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
               `${clock.safeToProceed === true ? 'safe to proceed' : clock.onHold === true ? 'ON HOLD' : clock.safeToProceed === null ? 'clearance not determined' : 'not yet cleared'}.`
             : ` FDA receipt has NOT been recorded, so the 312.40(b) 30-day period has not started; ` +
-              `${clock.daysUntilThirtyDay} day(s) is a projection from the program's target submission date, not a clearance.`
+              `${clock.daysUntilThirtyDay} day(s) is a projection from the project's target submission date, not a clearance.`
           : clockState.state === 'computing'
             ? ' The 30-day clock projection is still being computed.'
             : clockState.state === 'not-computed'
@@ -625,7 +625,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               onHold: clockFromReceipt ? clock.onHold : null,
               rationale: clockFromReceipt
                 ? clock.rationale
-                : 'FDA receipt has not been recorded, so the 21 CFR 312.40(b) 30-day period has not started; the date is projected from the program’s target submission date.',
+                : 'FDA receipt has not been recorded, so the 21 CFR 312.40(b) 30-day period has not started; the date is projected from the project’s target submission date.',
             }
           : null,
         targetSubmissionDateRecorded: Boolean(targetReceiptDate),
@@ -718,7 +718,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the IND checklist"
-          hint="The org's IND checklist (21 CFR 312) didn't respond — this is your program's Module 1 forms and eCTD section state. Sign in and retry, or check the service is reachable."
+          hint="The org's IND checklist (21 CFR 312) didn't respond — this is your project's Module 1 forms and eCTD section state. Sign in and retry, or check the service is reachable."
         />
       </div>
     );
@@ -739,9 +739,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             ? 'The submission you opened this from has no IND checklist in this organization, so no forms or letters can be built for it here. Another IND is not shown in its place.'
             : shellProject
             ? (openProgramType && openProgramType !== 'IND'
-                ? `${programRecord.data?.name ?? shellProject.title ?? 'The open program'} is a ${openProgramType} program, and the IND lifecycle covers IND programs. `
-                : 'No IND checklist is linked to the open program. Set up or link its IND submission; another program\'s filing is not used here. ') +
-              'An IND submission is shown for a program only when its record names that program — it is never matched to a program by name.'
+                ? `${programRecord.data?.name ?? shellProject.title ?? 'The open project'} is a ${openProgramType} project, and the IND lifecycle covers IND projects. `
+                : 'No IND checklist is linked to the open project. Set up or link its IND submission; another project\'s filing is not used here. ') +
+              'An IND submission is shown for a project only when its record names that project — it is never matched to a project by name.'
             : 'No Investigational New Drug application is provisioned for this organization yet. Once an IND is set up, its Module 1 forms (1571 / 1572 / 3674), eCTD section state, and 30-day safe-to-proceed clock appear here.'}
         />
       </div>
@@ -1235,7 +1235,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               <>
                 Once you file, the 30-day safe-to-proceed clock runs from FDA
                 receipt absent a clinical hold (312.40(b)). Set a target
-                submission date on the program to project it here.
+                submission date on the project to show the projection here.
               </>
             ) : (
               <>
@@ -1294,7 +1294,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             }
           },
         }}
-        secondary="Live from this program's IND checklist — readiness checks the full required set, including missing sections."
+        secondary="Live from this project's IND checklist — readiness checks the full required set, including missing sections."
       />
 
       <div className="indl-grid">
@@ -1356,7 +1356,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               {R.moduleProgress.length === 0 && (
                 <div className="scaf-note" style={{ margin: '4px 0 10px' }}>
                   No eCTD sections have been placed into this submission's filing yet.
-                  Sections appear here — scoped to this program — once they're added to
+                  Sections appear here — scoped to this project — once they're added to
                   the submission's sequence. (Documents in the authoring workspace that
                   aren't placed into this filing are intentionally not shown.)
                 </div>
@@ -1549,13 +1549,13 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   <span className="indl-proj">
                     FDA receipt has not been recorded for this IND, so the
                     312.40(b) 30-day period has not started. The date above is
-                    projected from the program's target submission date — it is
+                    projected from the project's target submission date — it is
                     a plan, not a clearance to proceed.
                   </span>
                 )
               ) : clockState.state === 'computing' ? (
                 <span role="status">
-                  Computing the 30-day clock from the program's target
+                  Computing the 30-day clock from the project's target
                   submission date…
                 </span>
               ) : clockState.state === 'not-computed' ? (
@@ -1570,9 +1570,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 </>
               ) : (
                 <>
-                  No target submission date is recorded for this program, so
+                  No target submission date is recorded for this project, so
                   there is nothing to project. Set a target submission date on
-                  the regulatory program and the 30-day clock projects from it.
+                  the project and the 30-day clock projects from it.
                 </>
               )}
             </p>

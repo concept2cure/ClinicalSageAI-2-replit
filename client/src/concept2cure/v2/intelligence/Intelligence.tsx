@@ -203,7 +203,7 @@ export function ValidationSummaryPanel({ v }: { v?: ValidationSummary | null }) 
 export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
   const [query, setQuery] = React.useState('');
   const term = query.trim().toLowerCase();
-  const runTool = (name: string) => onAsk(`Run ${name} for this program`);
+  const runTool = (name: string) => onAsk(`Run ${name} for this project`);
 
   /* Counted from the catalog rendered below, not asserted.
      The strapline used to read its numbers from a separate INTEL_STATS constant

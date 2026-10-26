@@ -78,7 +78,7 @@ export function CmcRegisterLinks({ onRecovered }: { onRecovered?: () => void }) 
         {read.error && <EmptyState tone="error" icon={null} title="Couldn’t verify the saved records’ Module 3 links" hint="The link record could not be read. Register saves remain recorded; dossier linkage is unknown until this check succeeds." retry={() => setRevision((n) => n + 1)} />}
         {pending.length > 0 && <ul style={{ margin: 0, paddingLeft: 20 }}>
           {pending.map((row) => <li key={`${row.register}:${row.recordId}`} style={{ marginBottom: 8 }}>
-            <b>{row.label}</b> — {row.state === 'unfiled' ? 'no program recorded; edit the record to file it under its program' : row.state === 'outdated' ? 'the dossier source is older than the saved record' : 'the saved record has no dossier source'}.
+            <b>{row.label}</b> — {row.state === 'unfiled' ? 'no project recorded; edit the record to file it under its project' : row.state === 'outdated' ? 'the dossier source is older than the saved record' : 'the saved record has no dossier source'}.
             {row.retryable && <button type="button" className="nda-open" style={{ marginLeft: 8 }} disabled={retrying !== null} onClick={() => void retry(row)}>{retrying === `${row.register}:${row.recordId}` ? 'Retrying…' : 'Retry Module 3 link'}</button>}
           </li>)}
         </ul>}

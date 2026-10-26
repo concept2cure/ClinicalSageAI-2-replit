@@ -241,7 +241,7 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
           <div className="pj-card-b">
             <EmptyState
               icon={I.sigma}
-              title="Open a program to analyse its quality design"
+              title="Open a project to analyse its quality design"
               hint="CQAs, CPPs, the control strategy and the ICH check are all derived from one project's own specifications, methods, impurity profiles, stability and process records."
               action={openProgramAction(nav)}
               regulation="Serves the quality design record (ICH Q8, Q9 and Q10)"
@@ -294,8 +294,8 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
           icon={I.sigma}
           title={
             qbd.code === 'CMC_MODALITY_NOT_ESTABLISHED'
-              ? 'This program’s drug substance is not established yet'
-              : 'Quality attributes are not derived here for this program'
+              ? 'This project’s drug substance is not established yet'
+              : 'Quality attributes are not derived here for this project'
           }
           hint={qbd.error}
           regulation="Serves the CTD Module 3 record (ICH Q8, Q11)"

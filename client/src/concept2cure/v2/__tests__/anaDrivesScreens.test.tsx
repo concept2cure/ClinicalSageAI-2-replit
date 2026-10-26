@@ -242,9 +242,9 @@ describe('Vault — AnA operates the real surface', () => {
       folder = applySurfaceAction(directive('vault.open-folder', { folder: 'Module 3' }), vi.fn());
     });
     expect(search.status).toBe('failed');
-    expect(search.reason).toMatch(/^No program is open/);
+    expect(search.reason).toMatch(/^No project is open/);
     expect(folder.status).toBe('failed');
-    expect(folder.reason).toMatch(/^No program is open/);
+    expect(folder.reason).toMatch(/^No project is open/);
   });
 
   it('vault.open-folder refuses an unknown folder honestly', async () => {
@@ -354,9 +354,9 @@ describe('Projects — AnA opens a real program', () => {
       unknown = applySurfaceAction(directive('projects.open-program', { program: 'ZZ-999' }), vi.fn());
     });
     expect(unknown.status).toBe('failed');
-    expect(unknown.reason).toContain('No program named');
+    expect(unknown.reason).toContain('No project named');
     // The refusal names what the portfolio lists, so AnA's next try is a real program.
-    expect(unknown.reason).toMatch(/Programs listed: "BX-204 — /);
+    expect(unknown.reason).toMatch(/Projects listed: "BX-204 — /);
     expect((window as any).C2C_PROJECT?.id).toBe(PID);
   });
 

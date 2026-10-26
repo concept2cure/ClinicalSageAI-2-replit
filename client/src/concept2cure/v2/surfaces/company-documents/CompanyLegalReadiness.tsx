@@ -27,7 +27,7 @@ export function CompanyLegalReadiness(props: CompanyLegalReadinessProps) {
     key={companyLegalOwner(session, `${sequenceId}:${requirement?.id ?? 'new'}:${profile.revision}`)} profile={profile} token={token} canManage={canManage}
     onSaved={save} requirement={requirement} target={data.target} onCancel={() => setEditing(null)} />;
   return <section aria-label="Company legal companion readiness"><h4>Legal companion completeness</h4>
-    <p className="company-hint">Requirements are evaluated against this sequence’s recorded program, agency and filing type. A library entry alone does not count as a placed companion.</p>
+    <p className="company-hint">Requirements are evaluated against this sequence’s recorded project, agency and filing type. A library entry alone does not count as a placed companion.</p>
     <button type="button" className="btn ghost small" disabled={resource.loading} onClick={resource.retry}>Refresh legal companion checks</button>
     {resource.loading && <p role="status">Checking current legal versions, reviews and sequence placements…</p>}
     {resource.error && <p className="company-error" role="alert">{resource.error}</p>}

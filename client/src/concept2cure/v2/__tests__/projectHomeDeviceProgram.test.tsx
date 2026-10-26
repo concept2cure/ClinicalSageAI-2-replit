@@ -74,7 +74,7 @@ describe('project home — device program', () => {
   it('shows class, regulatory path, product code, regulation, panel, predicate and flags from the row', async () => {
     mockProgram(deviceProgram());
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('Device class')).toBeTruthy();
     expect(facts.getByText('Class II')).toBeTruthy();
     expect(facts.getByText('Product code')).toBeTruthy();
@@ -95,7 +95,7 @@ describe('project home — device program', () => {
   it('states absence for a device field the row lacks — never a placeholder', async () => {
     mockProgram(deviceProgram({ product_code: null, predicate_devices: [], device_flags: [] }));
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('Product code')).toBeTruthy();
     expect(facts.getByText('Predicate')).toBeTruthy();
     expect(facts.getAllByText('not recorded').length).toBeGreaterThanOrEqual(2);
@@ -106,7 +106,7 @@ describe('project home — device program', () => {
   it('publishes the product type onto the open shell project so the shell can follow it', async () => {
     mockProgram(deviceProgram());
     render(<ProjectHome {...props()} />);
-    await screen.findByRole('region', { name: /program identity/i });
+    await screen.findByRole('region', { name: /project identity/i });
     /* The product type is published from a useEffect (ProjectHome's
        `updateShellProject({ productType })`), which runs after the commit that
        draws the region. Asserting synchronously once the region appears raced
@@ -120,7 +120,7 @@ describe('project home — drug program is unchanged', () => {
   it('renders the drug facts and no device block', async () => {
     mockProgram(drugProgram());
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('IND number')).toBeTruthy();
     expect(facts.getByText('000512')).toBeTruthy();
     expect(facts.getByText('Vorelinib')).toBeTruthy();

@@ -68,7 +68,7 @@ describe('Insights — the open program', () => {
     answer = overview(null, { programId: PROGRAM, state: 'unanchored' });
     renderCanvas();
     expect(await screen.findByText(/BX-256 has no readiness or reports here yet/)).toBeTruthy();
-    expect(screen.queryByText('No program readiness yet')).toBeNull();
+    expect(screen.queryByText('No project readiness yet')).toBeNull();
   });
 
   it('with no program open, the organisation view is read as before', async () => {

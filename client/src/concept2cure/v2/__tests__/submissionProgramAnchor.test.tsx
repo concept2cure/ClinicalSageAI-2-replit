@@ -95,7 +95,7 @@ describe('a submission with no project is anchored from its header', () => {
     fireEvent.change(screen.getByLabelText('Project'), { target: { value: BX204 } });
     fireEvent.change(screen.getByLabelText(/Reason for anchoring/), { target: { value: `  ${REASON}  ` } });
     fireEvent.click(screen.getByRole('button', { name: 'Anchor submission' }));
-    await waitFor(() => expect(document.body.textContent).toContain('BX-204 (NDA 212345) is now anchored to Program BX-204 — server-confirmed.'));
+    await waitFor(() => expect(document.body.textContent).toContain('BX-204 (NDA 212345) is now anchored to Project BX-204 — server-confirmed.'));
     expect(anchorCalls().map((c) => c[2])).toEqual([{ programId: BX204, reason: REASON }]);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Anchor to a project' })).toBeNull());
   });

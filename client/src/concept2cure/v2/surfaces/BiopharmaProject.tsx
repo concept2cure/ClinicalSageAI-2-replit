@@ -308,7 +308,7 @@ export function CsrWorkflow(props: SurfaceViewProps) {
   const programId = shellProgramId(selected);
   const numericProject = selected && /^\d+$/.test(String(selected.id)) && Number.isSafeInteger(Number(selected.id)) && Number(selected.id) > 0 ? String(selected.id) : null;
   const path = programId ? `/api/csr-workflow/board?programId=${encodeURIComponent(programId)}` : numericProject ? `/api/csr-workflow/board?projectId=${numericProject}` : selected ? null : '/api/csr-workflow/board';
-  if (!path) return <EmptyState icon={I.layers} title="Select a program for CSR work" hint="The selected context does not identify a program or project." />;
+  if (!path) return <EmptyState icon={I.layers} title="Select a project for CSR work" hint="The selected context does not identify a project." />;
   // Remount on scope changes: data and assistant context from the old program
   // disappear before the next read, and old in-flight replies are discarded.
   return <CsrWorkflowBoard key={path} {...props} boardPath={path} targetProgramId={programId} targetProgramName={selected?.title} />;

@@ -238,12 +238,12 @@ describe('CMC tells AnA the Module 3 question figures it shows, and only those',
       module3QuestionsNotCounted: 1, module3OverdueLettersNotCounted: 0,
     });
     await waitFor(() => expect(seen!.facts?.earlierCmcFileNotClosed).toBe(4));
-    expect(seen!.summary).toMatch(/On this program, 2 Module 3 agency questions are overdue on 1 letter, and 3 are outstanding/);
+    expect(seen!.summary).toMatch(/On this project, 2 Module 3 agency questions are overdue on 1 letter, and 3 are outstanding/);
     expect(seen!.summary).toMatch(/1 letter the user cannot open is not counted/);
     expect(seen!.summary).toMatch(/1 outstanding question carries no CTD section and is not counted/);
     expect(seen!.summary).toMatch(/The earlier CMC question file \(organization-wide, read-only\) holds 4 questions not closed there; they are not counted, and nothing moves them onto a letter/);
     // The figure on screen is the same number.
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     expect((label.closest('.reg-kpi') as HTMLElement).querySelector('.reg-kpi-v')?.textContent).toBe(String(seen!.facts!.module3QuestionsOverdue));
     // No surface action is registered for questions: CMC opens letters, it does not work them.
     expect(seen!.availableActions!.some((a) => /agency question|information request|draft/i.test(a))).toBe(false);

@@ -119,7 +119,7 @@ describe('IndLifecycle — 30-day clock from the RECORDED target date only', () 
     expect(await screen.findByText('No target date set')).toBeTruthy();
     expect(screen.getByText('No target date')).toBeTruthy(); // the clock chip
     expect(document.body.textContent).toContain(
-      'No target submission date is recorded for this program',
+      'No target submission date is recorded for this project',
     );
     // Nothing is projected from an invented offset: no 14-days-out receipt date.
     const invented = fmt(new Date(Date.now() + 14 * 86400000).toISOString());
@@ -287,7 +287,7 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     // button hands its generic prompt to AnA — nothing else.
     const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')! as HTMLElement;
     fireEvent.click(within(briefingCard).getByText('Draft with AnA'));
-    expect(p.onAsk).toHaveBeenCalledWith('Draft the Pre-IND briefing book for this program in the editor.');
+    expect(p.onAsk).toHaveBeenCalledWith('Draft the Pre-IND briefing book for this project in the editor.');
     // No POST fired from asking AnA.
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-lifecycle/briefing-book')).toBe(false);
   });

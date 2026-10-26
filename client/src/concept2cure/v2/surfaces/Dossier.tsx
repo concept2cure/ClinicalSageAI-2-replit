@@ -85,9 +85,9 @@ export function Dossier({ onNav }: SurfaceViewProps) {
     if (projectId == null) {
       return {
         summary:
-          'Dossier readiness is scoped to one program and no program with a numeric project id is open, ' +
+          'Dossier readiness is scoped to one project and no project with a numeric project id is open, ' +
           'so there is no section readiness on screen — this is not an empty dossier.',
-        availableActions: ['Open a program, then its per-CTD-section readiness appears here'],
+        availableActions: ['Open a project, then its per-CTD-section readiness appears here'],
       };
     }
     if (state === 'loading' || state === 'idle') {
@@ -97,14 +97,14 @@ export function Dossier({ onNav }: SurfaceViewProps) {
       return {
         summary:
           'The governed artifact store is not provisioned in this environment, so no CTD-section readiness ' +
-          'can be rolled up — the screen is empty for that reason, not because the program has no artifacts.',
+          'can be rolled up — the screen is empty for that reason, not because the project has no artifacts.',
       };
     }
     if (state === 'error' || !payload) {
       return {
         summary:
           'Dossier readiness could not be read, so this screen is showing no CTD sections because of a ' +
-          'failure, not because the program has none.',
+          'failure, not because the project has none.',
         availableActions: ['Retry the dossier-readiness read'],
       };
     }
@@ -125,7 +125,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
         })),
       },
       availableActions: [
-        'Read per-CTD-section readiness rolled up from the program\u2019s governed artifacts',
+        'Read per-CTD-section readiness rolled up from the project\u2019s governed artifacts',
         'Open a section to work on its artifacts',
       ],
     };
@@ -140,7 +140,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
           <h1 className="dsr-title">Dossier</h1>
           <p className="dsr-sub">
             The document-first workspace — per-CTD-section readiness rolled up
-            from the program’s governed artifacts.
+            from the project’s governed artifacts.
           </p>
         </div>
       </div>
@@ -149,8 +149,8 @@ export function Dossier({ onNav }: SurfaceViewProps) {
         {projectId == null ? (
           <EmptyState
             icon={I.folder}
-            title="Open a program to see its dossier readiness"
-            hint="Per-CTD-section readiness is rolled up from the program's governed artifacts. Open a program with a numeric project id, then its section states appear here."
+            title="Open a project to see its dossier readiness"
+            hint="Per-CTD-section readiness is rolled up from the project's governed artifacts. Open a project with a numeric project id, then its section states appear here."
           />
         ) : state === 'loading' ? (
           <EmptyState icon={I.folder} title="Loading section readiness…" />

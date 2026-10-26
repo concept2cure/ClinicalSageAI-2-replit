@@ -64,14 +64,14 @@ beforeEach(() => {
 describe('Submission Center — the Program column reads the program by its key', () => {
   it('names the linked program from the program record', async () => {
     render(<SubmissionCenter onAsk={vi.fn()} />);
-    await waitFor(() => expect(programCell('BX-256 · systemic lupus').textContent).toMatch(/Program BX-256/));
+    await waitFor(() => expect(programCell('BX-256 · systemic lupus').textContent).toMatch(/Project BX-256/));
   });
 
   it('says a submission with no program has none, and does not borrow a program code from its product name', async () => {
     render(<SubmissionCenter onAsk={vi.fn()} />);
     await waitFor(() => expect(subRow('BX-204 (NDA 212345')).toBeTruthy());
-    await waitFor(() => expect(programCell('BX-204 (NDA 212345').textContent).toMatch(/No program recorded/i));
-    expect(programCell('BX-204 (NDA 212345').textContent).not.toMatch(/Program BX-204/);
+    await waitFor(() => expect(programCell('BX-204 (NDA 212345').textContent).toMatch(/No project recorded/i));
+    expect(programCell('BX-204 (NDA 212345').textContent).not.toMatch(/Project BX-204/);
   });
 
   it('labels the product name as the product, not as a program', async () => {

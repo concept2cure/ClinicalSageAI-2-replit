@@ -75,7 +75,7 @@ it('separates failed and malformed source lists from a confirmed empty list and 
   await screen.findByRole('alert');
   expect(screen.queryByText(/No supporting JSON sources/)).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Reload clinical sources' }));
-  await screen.findByText('No supporting JSON sources are listed for this program.');
+  await screen.findByText('No supporting JSON sources are listed for this project.');
   expect(screen.getByText(/source list reached its limit/)).toBeTruthy();
 });
 
@@ -110,7 +110,7 @@ it('discards a late former-program preview and clears busy state on the program 
   fireEvent.click(screen.getByRole('button', { name: 'Preview clinical tables' }));
   await waitFor(() => expect(busy).toHaveBeenCalledWith(true));
   view.rerender(<CsrSourceInputControls {...props} programId={OTHER} />);
-  await screen.findByText('No supporting JSON sources are listed for this program.');
+  await screen.findByText('No supporting JSON sources are listed for this project.');
   await act(async () => { finish(); await pending; });
   expect(screen.queryByLabelText('Clinical table preview')).toBeNull();
   expect(selection.mock.calls.some(([value]) => value !== null)).toBe(false);

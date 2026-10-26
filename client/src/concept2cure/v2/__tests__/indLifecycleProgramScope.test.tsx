@@ -89,7 +89,7 @@ describe('IndLifecycle — program scoping', () => {
 
     expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
     const note = screen.getByTestId('indl-scope-note');
-    expect(note.textContent).toMatch(/open program's IND \(BX-701 IND\)/);
+    expect(note.textContent).toMatch(/open project's IND \(BX-701 IND\)/);
     expect(note.textContent).toMatch(/1 other IND/);
   });
 
@@ -103,7 +103,7 @@ describe('IndLifecycle — program scoping', () => {
     render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
-    expect(screen.getByText(/No IND checklist is linked to the open program/)).toBeTruthy();
+    expect(screen.getByText(/No IND checklist is linked to the open project/)).toBeTruthy();
     expect(screen.queryByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeNull();
   });
 
@@ -112,7 +112,7 @@ describe('IndLifecycle — program scoping', () => {
     render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeTruthy();
-    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a program to scope/);
+    expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a project to scope/);
   });
 
   /* LX-22 part 2b: a checklist row carries its submission's project
@@ -129,7 +129,7 @@ describe('IndLifecycle — program scoping', () => {
 
     expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
     const note = screen.getByTestId('indl-scope-note').textContent ?? '';
-    expect(note).toMatch(/open program's IND \(BX-701 IND \(program 2\)\)/);
+    expect(note).toMatch(/open project's IND \(BX-701 IND \(program 2\)\)/);
     expect(note).not.toMatch(/matched by name/i);
   });
 
@@ -160,7 +160,7 @@ describe('IndLifecycle — program scoping', () => {
 
     expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: /BX-701 — Initial IND/ })).toBeNull();
-    expect(document.body.textContent).toMatch(/never matched to a program by name/);
+    expect(document.body.textContent).toMatch(/never matched to a project by name/);
   });
 
   it('a BLA program is told its own type, and is not shown a same-named legacy IND', async () => {
@@ -172,7 +172,7 @@ describe('IndLifecycle — program scoping', () => {
     render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByText('No IND checklist yet')).toBeTruthy();
-    expect(await screen.findByText(/BX-301 is a BLA program/)).toBeTruthy();
+    expect(await screen.findByText(/BX-301 is a BLA project/)).toBeTruthy();
     expect(screen.queryByRole('heading', { name: /BX-301 — Initial IND/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/22%|ready to file/i);
   });

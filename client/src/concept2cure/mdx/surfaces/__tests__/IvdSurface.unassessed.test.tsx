@@ -89,7 +89,7 @@ describe('IvdSurface — an unassessed GSPR matrix is not a zero score', () => {
        nothing" into "never asked" — which the gate renders as "choose or
        create a program", the one instruction that cannot help a user who has
        one open. Invisible while a fixture stood in for null. */
-    expect(text).not.toMatch(/Choose or create a program/i);
+    expect(text).not.toMatch(/Choose or create a project/i);
   });
 
   it('still reports a real zero — an assessed device that meets nothing says so', async () => {

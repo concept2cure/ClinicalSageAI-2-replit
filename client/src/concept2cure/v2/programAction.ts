@@ -41,7 +41,7 @@
 export const OPEN_PROGRAM_EVENT = 'c2c:open-program';
 
 /** The single label for this action across the product. */
-export const OPEN_PROGRAM_LABEL = 'Choose or create a program';
+export const OPEN_PROGRAM_LABEL = 'Choose or create a project';
 
 /** The single destination: programs are both opened and created there. */
 export const OPEN_PROGRAM_SURFACE = 'mission-control';

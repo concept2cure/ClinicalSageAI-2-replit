@@ -371,7 +371,7 @@ describe('entry points', () => {
     respond({ success: true, data: { tier: 'standard', leadProgram: null } });
     const onNav = vi.fn();
     render(<InsightsCanvas onNav={onNav} segment="pharma" surface={{ id: 'insights', label: 'Reporting & analytics' } as never} />);
-    await screen.findByText('No program readiness yet');
+    await screen.findByText('No project readiness yet');
     fireEvent.click(screen.getByRole('button', { name: 'Audit & compliance reports' }));
     expect(onNav).toHaveBeenCalledWith('compliance-reports');
   });

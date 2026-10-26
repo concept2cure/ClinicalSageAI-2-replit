@@ -98,13 +98,13 @@ afterEach(() => {
 
 /* ══════════════════ Overview — the per-program figure ══════════════════ */
 
-describe('CmOverview — Module 3 questions overdue on this program', () => {
+describe('CmOverview — Module 3 questions overdue on this project', () => {
   it('a positive count is a button that opens the Module 3 questions', async () => {
     wire({ module3: module3([m3Question('3.2.P.7'), m3Question('3.2.S.4.1')]) });
     const setTab = vi.fn();
     (window as unknown as CmWindow).__cmSetTab = setTab;
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
-    const kpi = await screen.findByRole('button', { name: /Module 3 questions overdue on this program/ });
+    const kpi = await screen.findByRole('button', { name: /Module 3 questions overdue on this project/ });
     expect(within(kpi).getByText('2')).toBeTruthy();
     expect(kpi.getAttribute('title')).toMatch(/agency questions/i);
     fireEvent.click(kpi);
@@ -116,7 +116,7 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
     wire({ module3: module3([m3Question('3.2.P.7', { state: 'approved', outstanding: false, overdue: false, letter: letterOf({ overdue: true }) })]) });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     const tile = label.closest('.reg-kpi') as HTMLElement;
     await waitFor(() => expect(within(tile).getByText('0')).toBeTruthy());
     expect(label.closest('button')).toBeNull();
@@ -127,7 +127,7 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
     wire({ module3: 'error' });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     await waitFor(() => expect(label.textContent).toMatch(/not established/i));
     const tile = label.closest('.reg-kpi') as HTMLElement;
     expect(within(tile).getByText('—')).toBeTruthy();
@@ -141,8 +141,8 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
     wire({});
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
-    expect(label.textContent).toMatch(/counted per program; open one/);
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
+    expect(label.textContent).toMatch(/counted per project; open one/);
     expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('—')).toBeTruthy();
     expect(module3Reads()).toEqual([]);
   });
@@ -167,7 +167,7 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
       earlier: earlier([earlierRow()], { total: 5, notClosed: 3 }),
     });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     await waitFor(() => expect(label.textContent).toMatch(/2 outstanding questions with no CTD section not counted/));
     expect(label.textContent).toMatch(/1 overdue letter with no question or section not counted/);
     expect(label.textContent).not.toMatch(/3 not counted/);
@@ -189,7 +189,7 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
   it('a zero is green only as an all-clear: never over letters withheld from this person', async () => {
     wire({ module3: module3([], { withheld: 1 }) });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     await waitFor(() => expect(label.textContent).toMatch(/1 letter you cannot open not counted/));
     const tile = label.closest('.reg-kpi') as HTMLElement;
     expect(within(tile).getByText('0')).toBeTruthy();
@@ -199,7 +199,7 @@ describe('CmOverview — Module 3 questions overdue on this program', () => {
   it('a zero over a measured, complete figure is green', async () => {
     wire({ module3: module3([]) });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     const tile = label.closest('.reg-kpi') as HTMLElement;
     await waitFor(() => expect(tile.getAttribute('data-tone')).toBe('ok'));
   });
@@ -218,7 +218,7 @@ describe('CmOverview — what the server counts is said as what it is', () => {
     wire({ module3: payload });
     const nav = vi.fn();
     inModule(<CmOverview ask={vi.fn()} nav={nav} />);
-    const label = await screen.findByText(/^Module 3 questions overdue on this program/, { selector: '.reg-kpi-l' });
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
     await waitFor(() => expect(label.textContent).toMatch(/1 letter overdue on other questions, Module 3's answered/));
     expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('0')).toBeTruthy();
     expect(label.textContent).not.toMatch(/on 1 letter/);
@@ -309,7 +309,7 @@ describe('CmPathway — the program\'s Module 3 questions, read from the letters
     setProject(undefined);
     wire({});
     inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
-    expect(await screen.findByText('Open a program to see its agency questions')).toBeTruthy();
+    expect(await screen.findByText('Open a project to see its agency questions')).toBeTruthy();
     expect(module3Reads()).toEqual([]);
   });
 
@@ -356,7 +356,7 @@ describe('CmPathway — the program\'s Module 3 questions, read from the letters
   it('a failed read is an error, never the empty list', async () => {
     wire({ module3: 'error' });
     inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
-    expect(await screen.findByText("Couldn't read this program's agency questions")).toBeTruthy();
+    expect(await screen.findByText("Couldn't read this project's agency questions")).toBeTruthy();
     expect(screen.queryByText(/No Module 3 questions are recorded/)).toBeNull();
   });
 
@@ -370,8 +370,8 @@ describe('CmPathway — the program\'s Module 3 questions, read from the letters
     });
     const nav = vi.fn();
     inModule(<CmPathway ask={() => {}} nav={nav} />);
-    expect(await screen.findByText(/2 letters on this program are restricted from you/)).toBeTruthy();
-    expect(screen.getByText(/1 outstanding question on this program carries no CTD section/)).toBeTruthy();
+    expect(await screen.findByText(/2 letters on this project are restricted from you/)).toBeTruthy();
+    expect(screen.getByText(/1 outstanding question on this project carries no CTD section/)).toBeTruthy();
     expect(screen.getByText(/Record each question's CTD section on its letter in Communication\./)).toBeTruthy();
     expect(screen.getByText(/1 overdue letter has no question recorded and no section linked/)).toBeTruthy();
     const bare = screen.getByText(/IR 9/).closest('li') as HTMLElement;
@@ -382,15 +382,15 @@ describe('CmPathway — the program\'s Module 3 questions, read from the letters
   it('an empty program says where questions are recorded', async () => {
     wire({ module3: module3([]) });
     inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
-    expect(await screen.findByText("No Module 3 questions are recorded on this program's letters")).toBeTruthy();
+    expect(await screen.findByText("No Module 3 questions are recorded on this project's letters")).toBeTruthy();
   });
 
   it('an empty list over letters withheld from this person speaks only for the letters read', async () => {
     wire({ module3: module3([], { withheld: 1 }) });
     inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
-    expect(await screen.findByText(/1 letter on this program is restricted from you/)).toBeTruthy();
+    expect(await screen.findByText(/1 letter on this project is restricted from you/)).toBeTruthy();
     expect(screen.getByText('No Module 3 questions are recorded on the letters read here')).toBeTruthy();
-    expect(screen.queryByText("No Module 3 questions are recorded on this program's letters")).toBeNull();
+    expect(screen.queryByText("No Module 3 questions are recorded on this project's letters")).toBeNull();
   });
 
   it('as the server counts them: a letter overdue on its other questions is said, and its approved answer is not overdue', async () => {
@@ -425,7 +425,7 @@ describe('CmPathway — the earlier CMC question file, read-only history', () =>
   it('renders nothing when the file holds nothing', async () => {
     wire({ module3: module3([]), earlier: earlier([]) });
     inModule(<CmPathway ask={() => {}} nav={vi.fn()} />);
-    await screen.findByText("No Module 3 questions are recorded on this program's letters");
+    await screen.findByText("No Module 3 questions are recorded on this project's letters");
     await waitFor(() => expect(calls().some(([m, u]) => m === 'GET' && u === EARLIER_PATH)).toBe(true));
     await act(async () => {});
     expect(screen.queryByText(/Earlier CMC question file/)).toBeNull();

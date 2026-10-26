@@ -129,7 +129,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // ─── ui-v2 additions: project ─────────────────────────────────────────────
   {
     id: 'program-journey',
-    label: 'Program journey',
+    label: 'Project journey',
     navTier: 'project',
     layoutMode: 'program-journey',
     group: 'workspace',

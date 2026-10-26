@@ -519,7 +519,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
                     <span className="dc-820-l">{e.label}</span>
                     <span className="dc-820-ref mono">{e.ref}</span>
                     <span className="dc-820-note">Not tracked in this store</span>
-                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' — ' + e.label + ' — for this program?')}>Set up</button>
+                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' — ' + e.label + ' — for this project?')}>Set up</button>
                   </>
                 ) : (
                   <>

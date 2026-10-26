@@ -122,7 +122,7 @@ describe('the NDA cockpit never tells AnA an unassessed risk is clear', () => {
     });
     renderCockpit();
     await settled();
-    expect(seen!.summary).toMatch(/failed read, not a clean program/i);
+    expect(seen!.summary).toMatch(/failed read, not a clean project/i);
     expect(seen!.facts).toBeUndefined();
   });
 

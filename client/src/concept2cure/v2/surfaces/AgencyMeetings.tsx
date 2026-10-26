@@ -346,18 +346,18 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       },
       { key: 'cat', label: 'Category', type: 'text', placeholder: 'e.g. Type B', half: true },
       {
-        key: 'program', label: 'Program', type: 'select',
+        key: 'program', label: 'Project', type: 'select',
         options: programOptions,
         // Prefer the programme the user already has open — it is almost always
         // the one they are requesting the meeting for.
         default: programOptions.find((o) => program && o.includes(program)) ?? programOptions[0],
         required: true,
         desc: portfolio.loading
-          ? 'Loading your programmes…'
+          ? 'Loading your projects…'
           : portfolio.error
-            ? 'Your programmes could not be read, so none are listed here. Retry, or create the meeting once the list loads.'
+            ? 'Your projects could not be read, so none are listed here. Retry, or create the meeting once the list loads.'
             : programOptions.length === 0
-              ? 'No programmes are recorded for your organization yet. Create one in Projects and it appears here.'
+              ? 'No projects are recorded for your organization yet. Create one in Projects and it appears here.'
               : undefined,
       },
       {
@@ -521,7 +521,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
           <div className="reg-eyebrow">Platform · agency interactions</div>
           <h1 className="reg-title">Meetings &amp; briefing books</h1>
           <p className="reg-sub">
-            The regulator interactions that gate a program — Pre-IND, INTERACT,
+            The regulator interactions that gate a project — Pre-IND, INTERACT,
             Type A/B/C/D, EOP2, pre-NDA/BLA, device Q-Sub, EMA Scientific
             Advice. Each is built around a briefing book and resolves to minutes
             and commitments that flow into the dossier.
@@ -538,7 +538,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
                 onAsk(
                   program
                     ? `Draft a Pre-IND meeting request and briefing book for ${program}`
-                    : 'Draft a Pre-IND meeting request and briefing book for my programme',
+                    : 'Draft a Pre-IND meeting request and briefing book for my project',
                 )
               }
             >

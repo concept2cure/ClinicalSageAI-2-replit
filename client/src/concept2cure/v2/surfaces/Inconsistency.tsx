@@ -735,7 +735,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     return {
       summary:
         verdict === 'not-assessed'
-          ? `Submission gate for ${progCode}: NOT ASSESSED — no contradiction scan has ever reported on this program. That is the absence of a result, not a clean result; consistency across the ${filingLabel} dossier is unknown until a scan runs.`
+          ? `Submission gate for ${progCode}: NOT ASSESSED — no contradiction scan has ever reported on this project. That is the absence of a result, not a clean result; consistency across the ${filingLabel} dossier is unknown until a scan runs.`
           : verdict === 'blocked'
             ? `Submission gate for ${progCode}: BLOCKED — ${blockingN} unresolved contradiction(s) carry a blocks-promotion authority. The filing is held until resolved.`
             : verdict === 'clear-with-open-items'

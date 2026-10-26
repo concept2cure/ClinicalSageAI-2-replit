@@ -30,7 +30,7 @@ export function CompanyCorrespondenceVariants({ sequenceId, value, onChange }: {
     <label className="company-field"><span>Correspondence stationery for this output</span><select value={value} disabled={!active || state.loading} onChange={event => onChange(event.target.value)}>
       <option value="">Saved organization presentation preference</option>{active && state.rows.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
     </select></label>
-    <p className="company-hint">An explicitly selected published variant applies to this correspondence only. Program, market, language and subsidiary restrictions are checked against the recorded filing. The organization default is unchanged.</p>
+    <p className="company-hint">An explicitly selected published variant applies to this correspondence only. Project, market, language and subsidiary restrictions are checked against the recorded filing. The organization default is unchanged.</p>
     {active && state.next && <button type="button" className="btn ghost small" disabled={state.loading} onClick={() => void fetchPage(state.next!)}>Load more published variants</button>}
     {active && state.loading && <p role="status">Reading published stationery…</p>}
     {active && state.error && <p role="alert">{state.error} <button type="button" className="btn ghost small" onClick={() => setEpoch(previous => previous + 1)}>Retry stationery variants</button></p>}

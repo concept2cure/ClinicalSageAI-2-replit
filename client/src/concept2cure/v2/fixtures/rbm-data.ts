@@ -106,7 +106,7 @@ export const RBM_NAV: RbmNavItem[] = [
 // destination — not a live count — so nothing fabricated is shown; the cards are
 // navigation affordances into the real surfaces.
 export const RBM_LINKS: Record<string, RbmLinkDef> = {
-  project: { surface: 'projects', label: 'Project management', value: 'Program & project home', note: 'Scoped to this program; posture rolls up to the project home.' },
+  project: { surface: 'projects', label: 'Project management', value: 'Project home', note: 'Scoped to this project; posture rolls up to the project home.' },
   vault: { surface: 'vault', label: 'Vault', value: 'Monitoring reports & CAPAs', note: 'Monitoring reports, CAPAs and site-visit records filed to the DMS.' },
   tasks: { surface: 'tasks', label: 'Tasking', value: 'Unified task board', note: 'Monitoring actions are tracked on the RBM monitoring plan; they are not pushed to the org-wide task board.' },
   biostats: { surface: 'biostatistics', label: 'Biostatistics', value: 'Estimand & power impact', note: 'Breached QTLs route here for ICH E9(R1) estimand and power/sample-size impact.' },

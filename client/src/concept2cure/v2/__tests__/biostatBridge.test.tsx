@@ -208,7 +208,7 @@ describe('Biostatistics — study design bridge', () => {
     expect(designRow('BX-204 pivotal in T2D').textContent).toContain('85%');
     expect(designRow('BX-204 OS study').textContent).toContain('30%');
     // The list is scoped to the open program, and says so.
-    expect(screen.getByText(/program BX-204/)).toBeTruthy();
+    expect(screen.getByText(/project BX-204/)).toBeTruthy();
     const listCall = apiRequest.mock.calls.find((c) => String(c[1]).startsWith('/api/biostat-bridge/designs?'));
     expect(listCall![1]).toContain(encodeURIComponent(PROGRAM.id));
   });
