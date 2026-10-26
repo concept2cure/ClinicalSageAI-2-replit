@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "submissionId": 1,
+        "dimension": "subject-counts",
+        "leftRef": "\u00a72.7.3 Table 4",
+        "rightRef": "CSR-0042 \u00a710.1",
+        "status": "conflict",
+        "detail": "p_value: \u00a72.7.3 Table 4 gives 0.001; CSR-0042 \u00a710.1 gives 0.03.",
+        "organizationId": 2,
+        "createdBy": 1,
+        "createdAt": "2026-10-26T11:32:49.794Z",
+        "updatedAt": "2026-10-26T11:32:49.794Z",
+        "deletedAt": null
+    }
+]

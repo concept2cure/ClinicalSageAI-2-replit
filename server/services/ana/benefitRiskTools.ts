@@ -472,7 +472,8 @@ export const ASSESS_BR_UNCERTAINTY: AnaTool = {
         type: 'number',
         description:
           'Net benefit-risk margin from the balance assessment (e.g., from assess_benefit_risk_balance). ' +
-          'A smaller absolute margin makes the conclusion more sensitive/fragile.',
+          'A smaller absolute margin makes the conclusion more sensitive/fragile. ' +
+          'Without it, robustness is not assessed; no margin is assumed.',
       },
       sources: {
         type: 'array',
@@ -508,7 +509,9 @@ export const ASSESS_BR_UNCERTAINTY: AnaTool = {
             level: {
               type: 'string',
               enum: ['low', 'moderate', 'high'],
-              description: 'Magnitude of the uncertainty (default "moderate").',
+              description:
+                'Magnitude of the uncertainty. If omitted, the source is reported with no stated level and the ' +
+                'overall grade and robustness it would decide are not assessed; no level is assumed.',
             },
           },
           required: ['type'],
@@ -546,7 +549,9 @@ export const PLAN_BR_COMMUNICATION: AnaTool = {
       verdict: {
         type: 'string',
         enum: ['favourable', 'favourable_with_conditions', 'indeterminate', 'unfavourable'],
-        description: 'The benefit-risk verdict to communicate (default "favourable_with_conditions").',
+        description:
+          'The benefit-risk conclusion to communicate. It is the sponsor\'s: pass only the conclusion the user ' +
+          'has stated; do not choose or infer one. Without it the tool returns needs_parameters.',
       },
       keyBenefitMessages: {
         type: 'array',

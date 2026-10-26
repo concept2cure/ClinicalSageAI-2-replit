@@ -1,0 +1,5 @@
+# Rule 2 S3 red, item 5a (EU malfunction, the critic's residual): the added case after item 5's first patch, before the fix.
+
+ × server/services/capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts > classify: an unstated fact is unknown, never false > a malfunction in the EU leaves EU vigilance not assessed, not "not reportable" 11ms
+   → expected { fdaReportable: true, …(11) } to match object { fdaReportable: true, …(3) }
+      Tests  1 failed | 12 passed (13)

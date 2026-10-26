@@ -50,7 +50,7 @@ const call = (path: string, body?: unknown, identity = token) => {
   const operation = body === undefined ? request(app).get(BASE + path) : request(app).post(BASE + path).send(body);
   return operation.set('Authorization', `Bearer ${identity}`);
 };
-const complaintBody = (programId = program) => ({ programId, source: 'internal', channel: 'web_form', receivedAt: '2026-10-14T12:00:00Z', eventNarrative: TAG, patientHarm: 'none', severityAssessment: 'minor', createdBy: String(otherUser) });
+const complaintBody = (programId = program) => ({ programId, source: 'internal', channel: 'web_form', receivedAt: '2026-10-14T12:00:00Z', eventNarrative: TAG, patientHarm: 'none', severityAssessment: 'minor', isMalfunction: false, anticipatesCorrection: false, trendThresholdCrossed: false, eventLocationCountry: 'US', createdBy: String(otherUser) });
 const capaBody = (programId = program) => ({ programId, title: TAG, type: 'corrective', source: 'nonconformance', createdBy: String(otherUser) });
 const mdrBody = () => ({ programId: program, sourceComplaintId: complaintId, jurisdiction: 'us_fda', usFdaReportType: 'initial_30day', decisionDate: '2026-10-14T12:00:00Z', eventNarrative: TAG });
 

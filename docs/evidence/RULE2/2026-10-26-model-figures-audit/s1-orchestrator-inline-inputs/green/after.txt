@@ -1,0 +1,34 @@
+# Rule 2 S1 green, after the change: the new test, the moved foreign-program cases (now development-only) and the Module 3 refusal suite. The 12-file orchestrator neighbourhood (128 tests) also passes.
+
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline csrInputs on POST /runs, before anything is read, and names the route to use 52ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline nonclinicalStudies on POST /runs, before anything is read, and names the route to use 10ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline clinicalStudyData on POST /runs, before anything is read, and names the route to use 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData in a Mode A body too 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a Mode A ctdProgramId: the extractor’s rows are not a record 8ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses csrInputs on the regenerate route: the same door one level down 8ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses nonclinicalStudies on the regenerate route: the same door one level down 7ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData on the regenerate route: the same door one level down 6ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses projectId on the regenerate route: the same door one level down 12ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > does not refuse EMPTY arrays: they carry no figures 13ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > runs a plain Mode A body, reading the project’s own records 8ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > keeps the fixture door open in development 13ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses an inaccessible project before loading any private input arrays or starting a run 37ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses inline cmcSources on POST /runs, before anything is read or written 10ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > refuses it on the regenerate route too — the same door one level down 6ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > does not refuse an EMPTY array — it carries no Module 3 either way 7ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > CMC data cannot be supplied in the request > keeps the fixture door open in development 8ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > asks the gate for THIS program, under THIS organization, and carries the sources when it opens 8ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 when the gate refuses, and never reads the sources 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > says WHY it carried none, in the gate’s own words 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands the refusal to the run, so m3.compose records WHY it skipped 7ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > hands no refusal when the gate opened — the step has nothing to explain 5ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a gate that cannot be evaluated carries none and reads as unknown, never as an empty program 4ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > carries NO Module 3 for a program outside the composition boundary, though the gate opened, and says why 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > a boundary that cannot be evaluated carries none and reads as unknown 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > Mode A carries Module 3 only when the program’s export gate is open > does not ask the gate at all when no CMC program is named 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > the standalone QOS route is gone > POST /m2/qos is not routed — the QOS is composed from records, not from a request body 3ms
+ ✓ server/routes/__tests__/orchestrator-module3-governed.test.ts > m3.refine’s model path is unreachable from a request > useAI cannot be set through the run route 4ms
+ ✓ server/routes/__tests__/orchestrator-foreign-ctd-program-is-refused.test.ts > a CTD program outside the organization > is 422 CTD_PROGRAM_NOT_FOUND, and no run starts 42ms
+ ✓ server/routes/__tests__/orchestrator-foreign-ctd-program-is-refused.test.ts > a CTD program outside the organization > any other assembly failure is still a 500 that carries no error text 9ms
+ Test Files  3 passed (3)
+      Tests  30 passed (30)

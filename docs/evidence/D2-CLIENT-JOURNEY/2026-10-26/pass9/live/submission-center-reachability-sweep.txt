@@ -1,0 +1,76 @@
+claimed prefixes:
+  submission-center      /api/submissions
+  submission-center      /api/region-profiles
+  submission-center      /api/510k/estar/submissions
+  submission-center      /api/510k/estar/assemble
+  submission-center      /api/c2c/projects
+  submission-center      /api/c2c/actions/sign
+  gateway-transmittals   /api/mdx/gateways/transmittals
+  ectd-compile           /api/ectd-compile
+  ectd-compile           /api/ectd/export
+  ectd-compile           /api/ectd/validate
+  ectd-compile           /api/submission-orchestrator/runs
+  ectd-compile           /api/submission-orchestrator/csr/readiness
+  ectd-compile           /api/submission-orchestrator/csr/sources
+  ectd-compile           /api/submission-orchestrator/csr/source-preview
+  ectd-compile           /api/submission-orchestrator/csr/source-contract
+  ind-checklist          /api/ind-checklist
+  ind-checklist          /api/ind-forms
+  ind-checklist          /api/ind-master-data/sponsors
+  ind-checklist          /api/ind-lifecycle/clock
+  ind-checklist          /api/ind-lifecycle/cover-letter
+  ind-checklist          /api/ind-lifecycle/briefing-book
+  ind-checklist          /api/ind-lifecycle/loa
+  ind-checklist          /api/ind-lifecycle/right-of-reference
+  ind-checklist          /api/ind-lifecycle/annual-report
+  ind-checklist          /api/ind-lifecycle/amendment-plan
+  ind-checklist          /api/ind-lifecycle/amendment
+  dispatch-readiness     /api/submissions/sequences
+
+routes under those prefixes: 83; with no client caller: 43
+
+── dispatch-readiness (42)
+     GET /api/submissions/capabilities                                    /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/validation-rules                                /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/market-specs                                    /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/market-specs/:specId                            /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/market-specs/:specId/validate                  /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/document-templates                              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/document-templates/:templateId                  /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/requirements                                    /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/requirements/:type                              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/requirements/:type/assess                      /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/designations                                    /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/designations/:id/assess                        /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/change-categories                               /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/change-categories/classify                     /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/per/structure                            /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/per/assess                              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/classify                                /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/reviewer-checklist                       /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/risk-management/structure                /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/risk-management/assess                  /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/biocompatibility                        /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/software/classify                       /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/blueprint                               /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/global-strategy                          /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/timeline                                 /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/udi/validate                            /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/electrical-safety                       /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/sterilization                           /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/regulatory-capabilities                         /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/combination-product/assess                     /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/qms/structure                            /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/qms/assess                              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/device/labeling                                /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/device/cer/:reportId/assess-stored              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/:id/plan                                       /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/:id/provenance                                  /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/:id/sections/generate                          /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/sequences/:seqId/pathway-readiness              /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     GET /api/submissions/sequences/:seqId/technical-file                 /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/sequences/:seqId/technical-file/assemble       /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/programs/:programId/technical-file/export      /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+     POST /api/submissions/sequences/:seqId/freeze                        /home/user/ClinicalSageAI-2-replit/routes/submissions.ts
+── gateway-transmittals (1)
+     POST /api/mdx/gateways/transmittals/:id/findings                     /home/user/ClinicalSageAI-2-replit/routes/mdx-submission-gateway.ts

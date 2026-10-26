@@ -245,8 +245,12 @@ export const complaints = pgTable(
     severityAssessment: varchar('severity_assessment', { length: 24 }).notNull(),
 
     // Preliminary classification — populated by triageEngine on intake.
-    // Shape: { fdaReportable: bool, mdrEuReportable: bool, requires806Notice: bool,
-    //          rationale: string, autoComputed: bool, computedAt: ISO }
+    // Shape: PreliminaryClassification (server/services/capa-mdr/triageEngine.ts):
+    //   { fdaReportable, mdrEuReportable, requires806Notice: bool | null, …,
+    //     facts (the event facts as stated; a country stated as 'unknown' is null),
+    //     missingFacts, determinationComplete, rationale, autoComputed, computedAt: ISO }
+    // A row with no `facts` was classified before 2026-10-26, when an unstated
+    // fact was read as false: it cannot show which facts were stated.
     preliminaryClassification: json('preliminary_classification'),
 
     // Triage decision — set by triageEngine when status moves to 'triaged'

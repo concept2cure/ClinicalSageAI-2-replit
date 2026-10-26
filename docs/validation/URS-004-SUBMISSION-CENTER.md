@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-004 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-004 (`tests/validation/oq/submission-center/run.mjs`) |
@@ -17,6 +17,7 @@
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/submissions.ts`, `server/services/submission-service/submission-service.ts`, `server/services/ectd/leaf-document-tables.ts`, `server/routes/c2c/actions.ts`, `server/routes/dossier-map.routes.ts`, `server/routes/ectd-compile.ts` and the `SubmissionCenter`, `EctdCompile`, `PublishingCenter`, `DossierMap` surfaces. |
 | 0.2 | 2026-09-27 | W3 | URS-SUBC-004: the placed document must belong to the submission's own project. The product refuses another project's document since PF-11 (2026-09-26, `39dfd9b7`); OQ-SUBC-04 (OQ-004 v0.4) verifies it. |
 | 0.3 | 2026-10-15 | D2 | URS-SUBC-013 is new: the signed Shadow Review waiver (decision P-34, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Tested by OQ-004 OQ-SUBC-15 (v0.5). |
+| 0.4 | 2026-10-26 | D2 | URS-SUBC-014 is new: a submission run takes no clinical or nonclinical figures from the request (CLAUDE.md Rule 2; Rule 2 audit S1, `docs/evidence/RULE2/2026-10-26-model-figures-audit/`). Tested by OQ-004 OQ-SUBC-16 (v0.6). |
 
 ## 1. Intended use
 
@@ -39,6 +40,7 @@ The Submission Center plans, assembles, validates and dispatches a regulatory su
 | URS-SUBC-011 | The Submission Center, eCTD Compile and Publishing surfaces render the organisation's submissions and the open program's sequence. | none | medium | `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx`, `EctdCompile.tsx`, `PublishingCenter.tsx` |
 | URS-SUBC-012 | Transmit requires a signature action id and a dispatched, gate-clear sequence; without a configured gateway it reports `transmitted:false` with the reason and never fabricates an acknowledgement. | §11.10(e) | high | `server/routes/submissions.ts:1644-1680` |
 | URS-SUBC-013 | A Shadow Review waiver is offered only while the sequence has no completed Shadow Review, is not frozen, and its newest run failed within 24 hours because every AI provider failed or was overloaded (`provider_unavailable`, `provider_overloaded`); a missing configuration or any other failure is not an outage. It is recorded only with a Part 11 signature on `ectd-sequence:<id>` with intent `shadow-waiver` and the meaning responsibility or approval, by someone who did not author the sequence; without one it is refused and nothing is recorded. An active waiver clears the dispatch verdict's Shadow Review presence gate as *not assessed*, naming the signature; it lapses when the leaves change, and it never clears an open critical finding. | §11.10(e) §11.50 §11.70 §11.200 | high | `server/services/ectd/shadow-review-waiver.ts`, `server/services/ectd/assess-dispatch-readiness.ts`, `server/routes/submissions.ts` (`POST /sequences/:seqId/shadow-review/waive`) |
+| URS-SUBC-014 | A submission run's clinical and nonclinical inputs come from the record, never from the request. Outside development, `POST /api/submission-orchestrator/runs` and `POST /api/submission-orchestrator/runs/:runId/regenerate` refuse, before anything is read or a run starts: a non-empty `csrInputs`, `nonclinicalStudies` or `clinicalStudyData` (400 `INLINE_RUN_INPUTS_REFUSED`, naming the field); a `ctdProgramId` (400 `CTD_PROGRAM_INPUTS_REFUSED`); and a regenerate that names a `projectId` (400 `REGENERATE_MODE_A_UNSUPPORTED`). Each refusal names `POST /api/submission-orchestrator/runs/for-program` and does not echo the figures it refused. Empty arrays are not refused. | none | high | `server/routes/submission-orchestrator.ts` (`refusedInlineRunInputs`), `server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts` |
 
 ## 3. Assumptions and constraints
 

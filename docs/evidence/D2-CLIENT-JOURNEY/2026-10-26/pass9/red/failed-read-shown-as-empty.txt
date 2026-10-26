@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/submissionConsistency.test.tsx > a failed read is the failure, never an absence of conflicts > reports the status the server gave and claims nothing
+ × client/src/concept2cure/v2/__tests__/submissionConsistency.test.tsx > a failed read is the failure, never an absence of conflicts > treats a 200 of the wrong shape as a failure too
+      Tests  2 failed | 12 passed (14)

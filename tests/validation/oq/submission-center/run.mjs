@@ -427,5 +427,45 @@ await step(
   },
 );
 
+await step(
+  {
+    id: 'OQ-SUBC-16',
+    urs: ['URS-SUBC-014'],
+    title: 'A submission run takes no clinical or nonclinical figures from the request',
+    action: 'POST /api/submission-orchestrator/runs with a non-empty csrInputs; then with a projectId and a ctdProgramId',
+    expected:
+      'inline csrInputs 400 INLINE_RUN_INPUTS_REFUSED naming the field and /runs/for-program, without the refused figure; ' +
+      'ctdProgramId 400 CTD_PROGRAM_INPUTS_REFUSED',
+  },
+  async (ctx) => {
+    const { api, expect } = ctx;
+    const code = (r) => r.json?.error?.code ?? r.json?.error ?? '';
+    /* No applicationNumber: outside development the refusal comes before the
+       body is parsed, and on a development server, where inline inputs are a
+       fixture door by design, the incomplete body is refused as invalid and no
+       run starts. */
+    const inline = await api('POST', '/api/submission-orchestrator/runs', {
+      csrInputs: [{ studyId: 'OQ-301', protocolNumber: 'OQ-301', phase: '3', studyDesign: 'randomized', primaryEndpoint: 'ORR', primaryResult: 'ORR 42% (OQ figure)', sampleSize: 312 }],
+    });
+    const program = await api('POST', '/api/submission-orchestrator/runs', { projectId: 1, ctdProgramId: 77 });
+    /* A deviation only on a development server, which this run knows from its
+       own sign-in (dev-login is answered only there). Anywhere else a missing
+       refusal is a failure of the control, never a deviation (S1 review). */
+    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' && ctx.auth.method === 'dev-login') {
+      ctx.deviation(
+        `not executed — this is a development server (dev-login), which allows inline run inputs by design (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}). ` +
+          'The refusal is a production control; observe it under the W3 posture.',
+        { inline: inline.json, program: program.json },
+      );
+    }
+    expect(inline.status === 400 && code(inline) === 'INLINE_RUN_INPUTS_REFUSED', `inline csrInputs: expected 400 INLINE_RUN_INPUTS_REFUSED, got ${inline.status} ${code(inline)}`, inline.json);
+    expect(inline.json?.field === 'csrInputs', 'the refusal names the field', inline.json);
+    expect(String(inline.json?.message ?? '').includes('/api/submission-orchestrator/runs/for-program'), 'the refusal names the route to use', inline.json);
+    expect(!JSON.stringify(inline.json ?? {}).includes('OQ figure'), 'the refusal echoes the refused figure', inline.json);
+    expect(program.status === 400 && code(program) === 'CTD_PROGRAM_INPUTS_REFUSED', `ctdProgramId: expected 400 CTD_PROGRAM_INPUTS_REFUSED, got ${program.status} ${code(program)}`, program.json);
+    return `inline 400 ${code(inline)}; ctdProgramId 400 ${code(program)}`;
+  },
+);
+
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

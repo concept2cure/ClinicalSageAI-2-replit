@@ -140,6 +140,34 @@ export function compareLabelledFigures(
   const leftFacts = extractNumericalFacts(left.text);
   const claimLabels = [...new Set(leftFacts.map((f) => f.label))].sort();
 
+  /* ── The claim yields no figure this engine recognises ───────────────────
+   * Then the loop below never runs, and the comparison returns
+   * `{ findings: [], notCompared: [] }` — which every caller reads as
+   * "compared, nothing to flag". It is the opposite: nothing was compared.
+   *
+   * `notCompared` exists precisely for that distinction — the route's own
+   * comment says "an empty array is 'nothing compared' as often as 'no
+   * conflict'" — and the one case where it matters most defeated it. Measured
+   * against the running app on 2026-10-26: a check of "A total of 248 subjects
+   * were randomised." against "In total 251 subjects were randomised to
+   * treatment." answered `200 []` with `X-Consistency-Not-Compared: 0`, over
+   * two numbers that plainly disagree. (The extractor wants `N = 248` or
+   * `randomised: 248`; widening what it recognises is its own change. What is
+   * NOT acceptable is reporting silence as agreement.)
+   *
+   * One entry per source, so a reader sees it against each thing the claim was
+   * supposed to be checked against. */
+  if (claimLabels.length === 0) {
+    for (const source of right) {
+      notCompared.push({
+        rightRef: source.ref,
+        label: '(no figure recognised)',
+        reason: 'the claim states no figure this engine recognises, so nothing was compared against this source',
+      });
+    }
+    return { findings, notCompared };
+  }
+
   for (const source of right) {
     const rightFacts = extractNumericalFacts(source.text);
     for (const label of claimLabels) {

@@ -4,8 +4,10 @@
 >
 > | Slice | Status | Evidence |
 > |---|---|---|
-> | S2 | done | `s2-nonclinical-drafts/` |
-> | S1, S3–S14 | queued | — |
+> | S1 | done | `s1-orchestrator-inline-inputs/` |
+> | S2 | done, with its review fixes | `s2-nonclinical-drafts/` |
+> | S3 | done | `s3-invented-defaults/` |
+> | S4–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -647,6 +649,10 @@ Move the `deepening-tools.test.ts` cases. Red: a retirement test.
 **`generate_spl` / `generate_spl_xml`:** decision F5.
 
 ### S13. Delete the dead request-body routes (inventory-plan S13 as written)
+
+> **Added 2026-10-26 (S1 review):** `POST /runs/:runId/regenerate` has no client caller. Outside development, S1 refuses
+> every body it could carry except one with every array empty, which re-runs every step over nothing. Refuse it outside
+> development, or retire it, with `POST /runs/for-program` as the replacement.
 
 - **Delete:** `/m2/nonclinical`, `/m2/clinical`, `/m2/clinical-overview`, `/csr/tabulate` and `/validate/hardened` (`submission-orchestrator.ts:918-1094`), and the schemas only they use.
 - **Keep:** `NonclinicalStudySchema`, `CSRInputSchema` and `StudyDataSchema` while Mode B uses them in development; `csr-readiness-launch-claim.test.ts`.

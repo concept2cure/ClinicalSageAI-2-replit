@@ -47,6 +47,9 @@ import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
+/* The Truth Engine's recorded cross-document checks, which had no screen: the
+   route's own comment said no browser client called it. */
+import { SubmissionConsistency } from './SubmissionConsistency';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
@@ -1282,7 +1285,8 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
   };
 
   return (
-    <div className="pj-card">
+    <>
+      <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Validation · sequence {seq.sequenceNumber}</span>
         <span className="s">dispatch readiness · validation</span>
@@ -1408,7 +1412,13 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
           </>
         )}
       </div>
-    </div>
+      </div>
+      {/* Validation asks whether the package is well formed; this asks whether
+          it agrees with itself. The recorded checks were readable only through
+          AnA until now, so a reviewer could be told in chat that a figure
+          disagrees with its source and find nothing about it on the screen. */}
+      <SubmissionConsistency submissionId={sub.id} />
+    </>
   );
 }
 

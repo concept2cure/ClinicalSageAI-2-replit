@@ -32,6 +32,7 @@ vi.mock('../../services/capa-mdr/capaMdr.service', () => {
 });
 
 import capaMdrRoutes from '../capa-mdr';
+import { ComplaintAssessmentRequired } from '../../services/capa-mdr/capaMdr.service';
 
 const app = express();
 app.use(express.json());
@@ -74,14 +75,33 @@ describe('complaint intake requires the assessments the classification is comput
   });
 
   it('records the assessments it was given, as given', async () => {
+    const facts = { isMalfunction: false, anticipatesCorrection: true, trendThresholdCrossed: false, eventLocationCountry: 'DE' };
     const res = await request(app)
       .post('/api/capa-mdr/complaints')
-      .send({ ...BODY, patientHarm: 'serious_injury', severityAssessment: 'serious' });
+      .send({ ...BODY, patientHarm: 'serious_injury', severityAssessment: 'serious', ...facts });
     expect(res.status).toBe(201);
     expect(H.createComplaint).toHaveBeenCalledWith(
       3,
-      expect.objectContaining({ patientHarm: 'serious_injury', severityAssessment: 'serious' }),
+      expect.objectContaining({ patientHarm: 'serious_injury', severityAssessment: 'serious', ...facts }),
       { userId:7 },
     );
+  });
+
+  it('passes an unstated event fact on unread for the service to refuse, not as false', async () => {
+    // The route read each omitted fact as false (`=== true`) and an omitted
+    // country as null, so the service never saw one missing.
+    H.createComplaint.mockRejectedValueOnce(new ComplaintAssessmentRequired('anticipatesCorrection', ['true', 'false']));
+    const res = await request(app)
+      .post('/api/capa-mdr/complaints')
+      .send({ ...BODY, patientHarm: 'serious_injury', severityAssessment: 'serious' });
+    expect(H.createComplaint).toHaveBeenCalledWith(
+      3,
+      expect.objectContaining({
+        isMalfunction: undefined, anticipatesCorrection: undefined, trendThresholdCrossed: undefined, eventLocationCountry: undefined,
+      }),
+      { userId:7 },
+    );
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/anticipatesCorrection/);
   });
 });

@@ -30,18 +30,18 @@ const VIGILANCE_ENTITY_TYPES = ['complaint', 'mdr_event', 'capa_record', 'capa_a
 export const ASSESS_MDR_REPORTABILITY: AnaTool = {
   name: 'assess_mdr_reportability',
   description:
-    'Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.',
+    'Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. All four event facts are required; an omitted one returns needs_parameters naming it: ask the user, never assume false. A country nobody knows is stated as "unknown": then determinationComplete is false, what it decides is null and missingFacts names it; say that part is not determined, never that it is not reportable. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.',
   input_schema: {
     type: 'object',
     properties: {
       patientHarm: { type: 'string', enum: HARM_LEVELS, description: 'The harm level of the event.' },
-      isMalfunction: { type: 'boolean', description: 'Was this a device malfunction (that could recur and cause harm)?' },
-      eventLocationCountry: { type: 'string', description: 'ISO country code where the event occurred (drives EU applicability).' },
-      anticipatesCorrection: { type: 'boolean', description: 'Does the manufacturer anticipate a correction/removal (806)?' },
-      trendThresholdCrossed: { type: 'boolean', description: 'Has a trend reporting threshold been crossed?' },
+      isMalfunction: { type: 'boolean', description: 'Was this a device malfunction (that could recur and cause harm)? Required: ask the user; never assume false.' },
+      eventLocationCountry: { type: 'string', description: 'ISO 3166-1 alpha-2 code of the country where the event occurred (drives EU applicability), or "unknown". Required.' },
+      anticipatesCorrection: { type: 'boolean', description: 'Does the manufacturer anticipate a correction/removal (806)? Required: ask the user; never assume false.' },
+      trendThresholdCrossed: { type: 'boolean', description: 'Has a trend reporting threshold been crossed? Required: ask the user; never assume false.' },
       eventNarrative: { type: 'string', description: 'Optional free-text description (currently informational).' },
     },
-    required: ['patientHarm'],
+    required: ['patientHarm', 'isMalfunction', 'eventLocationCountry', 'anticipatesCorrection', 'trendThresholdCrossed'],
   },
 };
 
@@ -79,7 +79,7 @@ export const READ_VIGILANCE_TIMELINE: AnaTool = {
 export const CREATE_COMPLAINT: AnaTool = {
   name: 'create_complaint',
   description:
-    'Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling.',
+    'Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling. The event facts isMalfunction, anticipatesCorrection, trendThresholdCrossed and eventLocationCountry are required too: ask the user, never assume false; a country nobody knows is "unknown".',
   input_schema: {
     type: 'object',
     properties: {
@@ -94,15 +94,18 @@ export const CREATE_COMPLAINT: AnaTool = {
         description: 'The harm the complaint reports. Required — the reportability classification is computed from it; ask the user rather than assume "none".',
       },
       severityAssessment: { type: 'string', enum: SEVERITY_LEVELS, description: 'The intake severity assessment. Required; ask the user.' },
-      isMalfunction: { type: 'boolean' },
-      anticipatesCorrection: { type: 'boolean' },
-      trendThresholdCrossed: { type: 'boolean' },
-      eventLocationCountry: { type: 'string' },
+      isMalfunction: { type: 'boolean', description: 'Was this a device malfunction (that could recur and cause harm)? Required: ask the user.' },
+      anticipatesCorrection: { type: 'boolean', description: 'Is a correction/removal (806) anticipated? Required: ask the user.' },
+      trendThresholdCrossed: { type: 'boolean', description: 'Has a trend reporting threshold been crossed? Required: ask the user.' },
+      eventLocationCountry: { type: 'string', description: 'ISO 3166-1 alpha-2 code of the country of the event, or "unknown". Required.' },
       deviceModel: { type: 'string' },
       deviceUdiDi: { type: 'string' },
       deviceLot: { type: 'string' },
     },
-    required: ['programId', 'source', 'channel', 'receivedAt', 'eventNarrative', 'patientHarm', 'severityAssessment'],
+    required: [
+      'programId', 'source', 'channel', 'receivedAt', 'eventNarrative', 'patientHarm', 'severityAssessment',
+      'isMalfunction', 'anticipatesCorrection', 'trendThresholdCrossed', 'eventLocationCountry',
+    ],
   },
 };
 
