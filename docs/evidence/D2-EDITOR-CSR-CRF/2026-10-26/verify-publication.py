@@ -11,7 +11,7 @@ relative=packet.relative_to(root).as_posix()
 def git(*argv): return subprocess.check_output(['git',*argv],cwd=root)
 def sha(data): return hashlib.sha256(data).hexdigest()
 revision=git('rev-parse',args.revision).decode().strip()
-inputs=json.loads((packet/'final-qualified-inputs.json').read_text())['files']
+inputs=json.loads((packet/'release-qualified-inputs.json').read_text())['files']
 for name,expected in inputs.items():
  assert sha(git('show',f'{revision}:{name}'))==expected,name
  assert sha((root/name).read_bytes())==expected,name
