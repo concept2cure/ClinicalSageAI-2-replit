@@ -15,7 +15,7 @@ import { useLiveData } from '../dataConnect';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { useOnboardingDiscovery } from '../useOnboardingDiscovery';
 import { DISCOVERY_FIELD_LABELS } from '@shared/types/onboarding-discovery';
-import { DiscoveryQuestions, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS } from './DiscoveryQuestions';
+import { DiscoveryQuestions, DiscoveryAnswersReview, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS } from './DiscoveryQuestions';
 import { OnboardingSecurity } from './OnboardingSecurity';
 import { DiscoveryNextSteps } from './DiscoveryNextSteps';
 import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
@@ -677,6 +677,17 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     setStep((current) => current + 1);
   };
 
+  const handoffPending = useRef(false);
+  const saveAndNavigate = (id: string) => {
+    if (handoffPending.current || discovery.busy || activating) return;
+    if (!discovery.dirty) { onNav(id); return; }
+    handoffPending.current = true;
+    const handoffOrg = getOrgId();
+    void discovery.save(false).then((saved) => {
+      if (saved && mounted.current && String(getOrgId()) === String(handoffOrg)) onNav(id);
+    }).finally(() => { handoffPending.current = false; });
+  };
+
   /* WHAT ANA SEES HERE. Identity stays off the wire: invite addresses, the
      contact's name/email, the failed-invite strings (which may embed addresses)
      and the Stripe checkout URL are never published. After activation the
@@ -882,7 +893,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                     Two rows about one fact, disagreeing, is worse than either. */}
               </div>
               <OnboardingInvitations invitations={outcome.invitations} />
-              <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
+              <DiscoveryNextSteps assessment={discovery.assessment} onNav={saveAndNavigate} />
               <div
                 className="cm-pushbar"
                 style={{ justifyContent: 'center', marginTop: 16 }}
@@ -956,7 +967,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
 
               {step === 1 && <DiscoveryQuestions discovery={discovery} section="context" />}
               {step === 2 && <DiscoveryQuestions discovery={discovery} section="project" />}
-              {step === 7 && <OnboardingSecurity discovery={discovery} onNav={onNav} />}
+              {step === 7 && <OnboardingSecurity discovery={discovery} onNav={saveAndNavigate} />}
               {step === 3 && (
                 <div className="ob-models">
                   <button
@@ -1204,16 +1215,12 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
 
               {step === 9 && (
                 <div className="ob-review">
-                  <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
+                  <DiscoveryNextSteps assessment={discovery.assessment} onNav={saveAndNavigate} />
                   <div className="ob-rev-row">
                     <span className="k">Discovery questions</span>
                     <span className="v">{discovery.assessment.completionPercent}% answered{discovery.record?.completedAt && !discovery.dirty ? ' · saved as complete' : ' · completed on activation'}</span>
                   </div>
-                  <div className="ob-discovery-summary">
-                    {(['companyGoal', 'projectName', 'projectGoal', 'successCriteria'] as const).map((field) => <div className="ob-rev-row" key={field}>
-                      <span className="k">{DISCOVERY_FIELD_LABELS[field]}</span><span className="v">{discovery.answers[field] || 'Not answered'}</span>
-                    </div>)}
-                  </div>
+                  <DiscoveryAnswersReview answers={discovery.answers} onEdit={setStep} disabled={activating || discovery.busy} />
                   {(
                     [
                       ['Organization', org.name || '—'],

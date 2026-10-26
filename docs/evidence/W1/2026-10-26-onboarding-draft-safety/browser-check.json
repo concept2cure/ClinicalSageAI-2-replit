@@ -1,0 +1,37 @@
+{
+  "basis": "Actual DiscoveryAnswersReview React component and canonical source CSS; synthetic completeDiscovery test answers. No production API or account tested.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "reviewAction": true,
+      "screenshot": "review-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "reviewAction": true,
+      "screenshot": "review-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "reviewAction": true,
+      "screenshot": "review-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "reviewAction": true,
+      "screenshot": "review-390-dark.png"
+    }
+  ]
+}
