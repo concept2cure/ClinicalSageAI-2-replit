@@ -225,6 +225,9 @@ describe('ProjectHome — the Review tab shows this filing’s reviews', () => {
     expect(boardCalls().length).toBeGreaterThanOrEqual(2);
   });
 
+});
+
+describe('ProjectHome — the Review tab: its empty state and its doors', () => {
   it('an empty board says so in words', async () => {
     serve(() => ok(board([])));
     render(<ProjectHome {...props()} />);

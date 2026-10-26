@@ -19,7 +19,7 @@ Every change renames or rewrites something that exists. Nothing is built beside 
 
 ## Tests
 
-- **The guard.** `client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx` checks that:
+- **The guard.** `client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx`, with `clientNamesSlice1Features.test.tsx` and their shared `clientNamesSlice1.shared.ts`, checks that:
   - no client-visible label, door, *Coming later* line, catalogue phase or address uses a word from section 9's "Not
     in client copy" list or names a folded feature as live;
   - each job's door name is written only in `projectDoors.ts`.

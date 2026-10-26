@@ -1413,6 +1413,13 @@ const ARCHIVE_REASON_MAX = 1000;
  * store, so this panel offers none of the board's controls (move, archive,
  * sign): it says what the store records and opens the screen that owns it.
  */
+/** The place another store's work lives: a project's page is named by its project. */
+function homeLabel(home: TaskItem['home'], project: string | null): string | null {
+  if (!home) return null;
+  if (home.surface === 'project-home') return home.programTitle || project || 'its project';
+  return HOME_LABEL[home.surface] ?? getSurfaceMeta(home.surface).label;
+}
+
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
   if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
@@ -1431,9 +1438,7 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
   const project = t.project ? projLabel(t.project) : null;
-  const home = !t.home ? null
-    : t.home.surface === 'project-home' ? t.home.programTitle || project || 'its project'
-    : HOME_LABEL[t.home.surface] ?? getSurfaceMeta(t.home.surface).label;
+  const home = homeLabel(t.home, project);
   const dialogRef = useDialog(onClose);
   return (
     <div className="tb-detail-bd" onClick={onClose}>

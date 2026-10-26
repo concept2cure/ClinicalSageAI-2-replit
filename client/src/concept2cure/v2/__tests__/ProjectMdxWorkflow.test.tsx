@@ -79,6 +79,9 @@ describe('project MDX workflow', () => {
     expect(workflow.querySelector('[data-status="done"], [data-status="approved"], [role="progressbar"]')).toBeNull();
   });
 
+});
+
+describe('project MDX workflow — doors and headings', () => {
   it('states an unreadable additional-filing list and never offers a locked feature', () => {
     const p = props();
     render(<ProjectMdxWorkflow {...p} marketsState="unavailable" available={() => false} />);
