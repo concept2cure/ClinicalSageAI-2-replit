@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { isLaunchWalkDoor } from './launch-walk-doors';
 
 /**
  * Slice 0's evidence walk (.design/client-journey/INFORMATION_ARCHITECTURE.md,
@@ -26,11 +27,6 @@ import { expect, test, type Page } from '@playwright/test';
 type Visit = { from: string; via: string; url: string; launchLock: boolean; licenceLock: string | null };
 
 const SEARCHES = ['vault', 'submission', 'readiness', 'protocol', 'cmc', 'quality', 'report', 'task', 'audit', 'ind', 'device', 'label', 'communication'];
-
-/** A door leaves the step and names the place it opens: "… in Vault", "… on the review board". */
-const DOOR = /\b(in|on|to)\s+(the\s+)?[A-Z][\w &/().-]*$|\bin the protocol workspace$|^Open\b|^See\b|^Check what stops sending$/;
-/** Buttons that change records or open a form; the walk never presses them. */
-const NOT_A_DOOR = /^(Assign|Create|Add a market|Delete|Remove|Send|Save|Approve|Sign|Upload|Attach|Revoke|Invite|Start|Run|Generate|Draft|Compile|Export|Download|Work with AnA|Prepare this work with AnA|Ask AnA)/;
 
 async function signUpFreshOrganisation(page: Page, industryMode: 'biotech' | 'medtech') {
   const stamp = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -148,7 +144,7 @@ async function walkPalette(page: Page, visits: Visit[], term: string) {
 async function stepDoors(page: Page): Promise<string[]> {
   const names = await page.locator('main button, [role="main"] button').evaluateAll((els) =>
     els.map((el) => (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim()));
-  return [...new Set(names.filter((n) => n && n.length < 120 && DOOR.test(n) && !NOT_A_DOOR.test(n)))];
+  return [...new Set(names.filter(isLaunchWalkDoor))];
 }
 
 async function walkProjectSteps(page: Page, visits: Visit[], projectUrl: string) {
