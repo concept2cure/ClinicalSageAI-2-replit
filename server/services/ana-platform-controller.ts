@@ -7,10 +7,8 @@
  *   1. READ & MODIFY organization settings (branding, preferences, defaults)
  *   2. MANAGE project configuration (templates, defaults, compliance frameworks)
  *   3. CONTROL feature access & module activation per organization
- *   4. EXECUTE platform actions on behalf of clients (create projects, configure
- *      pipelines, set default templates, assign compliance frameworks)
- *   5. MONITOR & OPTIMIZE usage patterns with proactive recommendations
- *   6. CONFIGURE client-specific AI behavior (system prompts, guardrails, models)
+ *   4. MONITOR & OPTIMIZE usage patterns with proactive recommendations
+ *   5. CONFIGURE client-specific AI behavior (system prompts, guardrails, models)
  *
  * Security model:
  *   - All actions require an active paid subscription (paymentStatus === 'active')
@@ -19,13 +17,12 @@
  *     tenant_settings_changed row, with the requesting user as actor, commit
  *     together or not at all (P1-49). Other mutations are audit-logged as
  *     ana:<action>
- *   - HITL breakpoints for destructive actions (delete, downgrade, billing)
  *   - Organization-scoped — Ana cannot cross tenant boundaries
  */
 
 import type { Request } from 'express';
 import { db } from '../db';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import {
   organizations,
   projects,
@@ -54,17 +51,7 @@ export type AnaActionCategory =
   | 'ai_config'       // AI model, prompt, guardrail config
   | 'compliance'      // regulatory framework management
   | 'usage'           // usage analysis & optimization
-  | 'onboarding';     // guided setup & provisioning
-
-export interface AnaAction {
-  id: string;
-  category: AnaActionCategory;
-  action: string;
-  description: string;
-  requiresConfirmation: boolean;  // HITL breakpoint
-  parameters: Record<string, unknown>;
-  timestamp: string;
-}
+  | 'onboarding';
 
 export interface AnaActionResult {
   success: boolean;
@@ -233,8 +220,8 @@ class AnaPlatformController {
    * The connector for Claude is the owner's setting, with one door of its own
    * (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10), and the
    * connector reads it live. Every arbitrary-key write here comes through this
-   * method (PATCH /settings, /ai-config through configureAI, and /execute for
-   * settings and ai_config), and an administrator reaches all of them, so a
+   * method (PATCH /settings, /ai-config through configureAI, and /compliance
+   * through setComplianceDefaults), and an administrator reaches them all, so a
    * patch that names the key is refused whole: nothing is written and nothing
    * is recorded. Until 2026-10-01 (P1-49 fix round) it was written and recorded
    * as an ordinary tenant_settings_changed.
@@ -370,71 +357,6 @@ class AnaPlatformController {
     });
   }
 
-  // ── Project Management ──────────────────────────────────
-
-  /**
-   * Create a new project with Ana-configured defaults.
-   */
-  async createProject(orgId: number, config: {
-    name: string;
-    description?: string;
-    submissionType?: string;
-    therapeuticArea?: string;
-    targetAgency?: string;
-    complianceFrameworks?: string[];
-  }): Promise<AnaActionResult> {
-    const access = await this.verifyPaidAccess(orgId);
-    if (!access.authorized) {
-      return { success: false, action: 'create_project', error: access.reason };
-    }
-
-    // Check project limits
-    const existingProjects = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(projects)
-      .where(eq(projects.organizationId, orgId));
-
-    // 2026-10-15: was `maxProjects || 10`, so an unrecorded limit (and a
-    // recorded 0) became 10. As atomicQuotaService does, an unrecorded limit
-    // refuses the create.
-    const maxProjects: number | null | undefined = access.org!.maxProjects;
-    if (maxProjects == null) return { success: false, action: 'create_project', error: 'The project limit is not recorded for this organization, so nothing was created.' };
-    if (Number(existingProjects[0]?.count ?? 0) >= maxProjects) {
-      return {
-        success: false,
-        action: 'create_project',
-        error: `Project limit reached (${maxProjects}). Upgrade your plan for more projects.`,
-      };
-    }
-
-    const settings = (access.org!.settings || {}) as OrgSettings;
-
-    const [project] = await db
-      .insert(projects)
-      .values({
-        organizationId: orgId,
-        name: config.name,
-        description: config.description || '',
-        status: 'active',
-        therapeuticArea: config.therapeuticArea || '',
-        submissionType: config.submissionType || settings.defaultSubmissionType || 'NDA',
-        targetAgencies: config.targetAgency ? [config.targetAgency] : (settings.defaultComplianceFrameworks || ['FDA']),
-      } as any)
-      .returning();
-
-    await this.auditLog(orgId, 'create_project', {
-      projectId: project.id,
-      projectName: config.name,
-      actor: 'ana:platform-controller',
-    });
-
-    return {
-      success: true,
-      action: 'create_project',
-      result: { project },
-    };
-  }
-
   /**
    * Update project configuration.
    */
@@ -511,86 +433,6 @@ class AnaPlatformController {
     }, via);
   }
 
-  // ── Onboarding & Provisioning ───────────────────────────
-
-  /**
-   * Run full organization onboarding — sets up defaults, creates starter project,
-   * enables recommended modules based on tier.
-   */
-  async onboardOrganization(orgId: number, profile: {
-    therapeuticArea: string;
-    primaryAgency: string;
-    submissionType: string;
-    companySize?: 'startup' | 'mid' | 'large' | 'pharma';
-  }, via: Request): Promise<AnaActionResult> {
-    const access = await this.verifyPaidAccess(orgId);
-    if (!access.authorized) {
-      return { success: false, action: 'onboard', error: access.reason };
-    }
-
-    const results: AnaActionResult[] = [];
-
-    // 1. Set organization defaults
-    const settingsResult = await this.updateSettings(orgId, {
-      defaultComplianceFrameworks: [profile.primaryAgency],
-      defaultSubmissionType: profile.submissionType,
-      anaProactiveMode: true,
-      anaConfirmDestructive: true,
-      notifyOnRegulatoryChanges: true,
-      notifyOnComplianceAlerts: true,
-      weeklyDigestEnabled: true,
-      enableDeepResearch: true,
-      enableAutoExtraction: true,
-      enableSafetyNarrative: true,
-    }, via);
-    results.push(settingsResult);
-
-    // 2. Create starter project
-    const projectResult = await this.createProject(orgId, {
-      name: `${profile.therapeuticArea} — ${profile.submissionType} Submission`,
-      description: `Auto-provisioned by Ana for ${profile.primaryAgency} ${profile.submissionType} submission workflow`,
-      submissionType: profile.submissionType,
-      therapeuticArea: profile.therapeuticArea,
-      targetAgency: profile.primaryAgency,
-    });
-    results.push(projectResult);
-
-    // 3. Enable tier-appropriate modules
-    const tier = access.org!.tier || 'standard';
-    const modulesToEnable = ['deep_research', 'gap_analysis', 'safety_narrative', 'intelligent_reports', 'document_generation', 'change_impact', 'ana_proactive', 'auto_extraction'];
-
-    if (tier === 'professional' || tier === 'enterprise') {
-      modulesToEnable.push('statistical_defensibility', 'cmc_blueprint', 'multi_agency_export');
-    }
-    if (tier === 'enterprise') {
-      modulesToEnable.push('e_signatures');
-    }
-
-    const modulesResult = await this.updateSettings(orgId, {
-      enabledModules: modulesToEnable,
-      disabledModules: [],
-    }, via);
-    results.push(modulesResult);
-
-    await this.auditLog(orgId, 'onboard_organization', {
-      profile,
-      tier,
-      modulesEnabled: modulesToEnable,
-      actor: 'ana:platform-controller',
-    });
-
-    return {
-      success: results.every(r => r.success),
-      action: 'onboard',
-      result: {
-        settingsConfigured: settingsResult.success,
-        starterProjectCreated: projectResult.success,
-        modulesActivated: modulesToEnable.length,
-        tier,
-      },
-    };
-  }
-
   // ── Usage Analysis & Recommendations ────────────────────
 
   /**
@@ -643,48 +485,6 @@ class AnaPlatformController {
         optimizationScore: Math.min(100, 60 + (recommendations.length === 0 ? 40 : 40 - recommendations.length * 5)),
       },
     };
-  }
-
-  // ── Execute Agentic Action ──────────────────────────────
-
-  /**
-   * Main entry point for Ana's agentic actions. Routes to the appropriate
-   * handler based on the action category and name.
-   */
-  async executeAction(orgId: number, action: AnaAction, via: Request): Promise<AnaActionResult> {
-    const access = await this.verifyPaidAccess(orgId);
-    if (!access.authorized) {
-      return { success: false, action: action.action, error: access.reason };
-    }
-
-    switch (action.category) {
-      case 'settings':
-        return this.updateSettings(orgId, action.parameters as Partial<OrgSettings>, via);
-      case 'project':
-        if (action.action === 'create') {
-          return this.createProject(orgId, action.parameters as any);
-        }
-        if (action.action === 'update' && action.parameters.projectId) {
-          const { projectId, ...updates } = action.parameters;
-          return this.updateProject(orgId, projectId as number, updates);
-        }
-        return { success: false, action: action.action, error: 'Unknown project action' };
-      case 'feature':
-        if (action.parameters.moduleId && typeof action.parameters.enabled === 'boolean') {
-          return this.toggleModule(orgId, action.parameters.moduleId as string, action.parameters.enabled, via);
-        }
-        return { success: false, action: action.action, error: 'Missing moduleId or enabled flag' };
-      case 'ai_config':
-        return this.configureAI(orgId, action.parameters as any, via);
-      case 'compliance':
-        return this.setComplianceDefaults(orgId, action.parameters as any, via);
-      case 'onboarding':
-        return this.onboardOrganization(orgId, action.parameters as any, via);
-      case 'usage':
-        return this.analyzeUsage(orgId);
-      default:
-        return { success: false, action: action.action, error: `Unknown action category: ${action.category}` };
-    }
   }
 
   // ── Audit Logging ───────────────────────────────────────

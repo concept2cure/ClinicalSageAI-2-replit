@@ -15,7 +15,7 @@
  *
  * Fix round: the connector for Claude (P1-47, ADR-0014 §10) is its owner's
  * setting. An administrator naming `claudeConnector` on the controller's doors
- * (PATCH /settings, /ai-config, POST /execute) or on PATCH
+ * (PATCH /settings, /ai-config) or on PATCH
  * /api/organizations/:id/settings is refused, stores nothing and writes no row.
  *
  * Mounted as production mounts them: SCIM at /scim/v2 under the system scope
@@ -424,6 +424,21 @@ describe('the AnA platform controller writes settings through the tenant setting
     expect(stored.anaToolPolicy).toEqual(SEEDED_SETTINGS.anaToolPolicy);
   });
 
+  it.each([
+    { path: 'ai-config', body: { defaultModel: 'dbp149-direct-model' }, expected: { defaultModel: 'dbp149-direct-model' } },
+    { path: 'compliance', body: { frameworks: ['FDA', 'EMA'] }, expected: { defaultComplianceFrameworks: ['FDA', 'EMA'] } },
+  ])('direct $path settings use the same audited writer', async ({ path, body, expected }) => {
+    const previousIds = new Set((await auditRows('tenant_settings_changed')).map(row => row.id));
+    const res = await request(app).patch(`/api/ana/platform/${path}`).set(asAdmin()).send(body);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await settingsOf()).toMatchObject(expected);
+    const added = (await auditRows('tenant_settings_changed')).filter(row => !previousIds.has(row.id));
+    expect(added).toHaveLength(1);
+    expect(added[0].xmin).toBe((await one('SELECT xmin::text AS x FROM organizations WHERE id = $1', [ORG]))?.x);
+    await expectChainedOnOwnChain(added[0]);
+    expect((await settingsOf()).anaToolPolicy).toEqual(SEEDED_SETTINGS.anaToolPolicy);
+  });
+
   it('a module toggle is recorded by the same writer', async () => {
     const res = await request(app)
       .post('/api/ana/platform/modules/toggle')
@@ -449,14 +464,6 @@ describe('the AnA platform controller writes settings through the tenant setting
 describe('the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10)', () => {
   const asAdmin = () => auth(accessToken(user.admin, ORG, 'admin'));
   const CONNECTOR = { claudeConnector: { enabled: true } };
-  const execute = (category: string, parameters: object) => ({
-    id: 'dbp149-connector',
-    category,
-    action: 'update',
-    description: 'dbp149 administrator attempt',
-    requiresConfirmation: false,
-    parameters,
-  });
   const auditCount = async () =>
     Number((await one('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id = $1', [ORG]))?.n);
 
@@ -467,14 +474,6 @@ describe('the connector for Claude is not a general setting on these doors (P1-4
       () => request(app).patch('/api/ana/platform/settings').set(asAdmin()).send({ ...CONNECTOR, defaultModel: 'dbp149-beside' }),
     ],
     ['PATCH /api/ana/platform/ai-config', () => request(app).patch('/api/ana/platform/ai-config').set(asAdmin()).send(CONNECTOR)],
-    [
-      'POST /api/ana/platform/execute (settings)',
-      () => request(app).post('/api/ana/platform/execute').set(asAdmin()).send(execute('settings', CONNECTOR)),
-    ],
-    [
-      'POST /api/ana/platform/execute (ai_config)',
-      () => request(app).post('/api/ana/platform/execute').set(asAdmin()).send(execute('ai_config', CONNECTOR)),
-    ],
     [
       'PATCH /api/organizations/:id/settings (with a reason)',
       () =>
@@ -504,11 +503,11 @@ describe('the connector for Claude is not a general setting on these doors (P1-4
   it('control: the same administrator, on the same doors, still changes another setting', async () => {
     const viaController = await request(app).patch('/api/ana/platform/settings').set(asAdmin()).send({ defaultModel: 'dbp149-control' });
     expect(viaController.status, JSON.stringify(viaController.body)).toBe(200);
-    const viaExecute = await request(app)
-      .post('/api/ana/platform/execute')
+    const viaDirectSettings = await request(app)
+      .patch('/api/ana/platform/settings')
       .set(asAdmin())
-      .send(execute('settings', { weeklyDigestEnabled: true }));
-    expect(viaExecute.status, JSON.stringify(viaExecute.body)).toBe(200);
+      .send({ weeklyDigestEnabled: true });
+    expect(viaDirectSettings.status, JSON.stringify(viaDirectSettings.body)).toBe(200);
     const viaOrganizations = await request(app)
       .patch(`/api/organizations/${ORG}/settings`)
       .set(asAdmin())

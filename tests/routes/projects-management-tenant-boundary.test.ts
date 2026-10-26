@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createMockRequest,
   createMockResponse,
-  expectStatus,
 } from '../setup';
 
 const mockDb = {
@@ -101,76 +100,9 @@ describe('projects-management tenant boundary', () => {
     );
   });
 
-  it('rejects create when payload organizationId mismatches authenticated tenant', async () => {
-    const routerModule = await import('../../server/routes/projects-management');
-    const router = routerModule.default;
-    const layer = router.stack.find(
-      (l: any) => l.route?.path === '/' && l.route?.methods?.post
-    );
-    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
-
-    const req = createMockRequest({
-      body: {
-        name: 'Tenant Boundary Project',
-        type: 'regulatory_submission',
-        priority: 'medium',
-        organizationId: 999,
-      },
-    }) as any;
-    req.ip = '127.0.0.1';
-    req.get = vi.fn(() => 'vitest');
-    req.user = { organizationId: 1 };
-    req.tenantContext = {
-      organizationId: 1,
-      clientWorkspaceId: 1,
-    };
-    req.headers = {
-      'x-organization-id': '1',
-      'x-client-workspace-id': '1',
-    };
-
-    const res = createMockResponse();
-    await handler(req, res);
-
-    expectStatus(res, 403);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: 'organizationId in payload does not match authenticated tenant',
-      })
-    );
-  });
-
-  it('allows create when payload organizationId matches authenticated tenant', async () => {
-    const routerModule = await import('../../server/routes/projects-management');
-    const router = routerModule.default;
-    const layer = router.stack.find(
-      (l: any) => l.route?.path === '/' && l.route?.methods?.post
-    );
-    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
-
-    const req = createMockRequest({
-      body: {
-        name: 'Tenant Safe Project',
-        type: 'regulatory_submission',
-        priority: 'medium',
-        organizationId: 1,
-      },
-    }) as any;
-    req.ip = '127.0.0.1';
-    req.get = vi.fn(() => 'vitest');
-    req.user = { organizationId: 1 };
-    req.tenantContext = {
-      organizationId: 1,
-      clientWorkspaceId: 1,
-    };
-    req.headers = {
-      'x-organization-id': '1',
-      'x-client-workspace-id': '1',
-    };
-
-    const res = createMockResponse();
-    await handler(req, res);
-
-    expectStatus(res, 201);
+  it('does not register the retired legacy project creator', async () => {
+    const router = (await import('../../server/routes/projects-management')).default;
+    expect(router.stack.some((layer: any) => layer.route?.path === '/' && layer.route?.methods?.post)).toBe(false);
+    expect(mockDb.insert).not.toHaveBeenCalled();
   });
 });

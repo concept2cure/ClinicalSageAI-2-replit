@@ -1282,7 +1282,7 @@ a policy; a widened CHECK on a table another file also defines is conditional on
 ## 8. Order of work
 
 **2026-10-26 continuation:** the central-service direction above governs every slice without resetting this order.
-A2.1–A2.8 are implemented. Project Author preserves governed section detail, artifact counts/states/section
+A2.1–A2.9 are implemented. Project Author preserves governed section detail, artifact counts/states/section
 dates and the old map's recorded tracking modules on their own bases. Incoming A2.7 folds dossier bookmarks
 through the shared step-aware resolver onto Author, or Projects without a selection; standalone screens,
 HTTP routes and identities are retired while stored data/subscriptions remain. Its native/retirement proof
@@ -1297,7 +1297,10 @@ Its red/green routing and native portfolio proof is in `slice-A2/A2.8/README.md`
 the reconciled concurrent changes pass 398 tests in 30 suites, both native flows
 and the production build (`slice-A2/A2.8/merged/`). Earlier source qualifications remain separate;
 the existing device-workstream shell, target and catalogue remain for A2.10.
-Next is **A2.9** (`SLICE_A2_PLAN.md`), retiring the uncalled project creators while keeping canonical intake.
+A2.9 retires twelve duplicate HTTP writes and their unreachable creation helpers while preserving core intake,
+stored readers/updates and the two deferred internal rule/quota owners. Its source-owner/retained-route contract,
+427-test regression, 20 real database audit checks, native wizard/12-404 flow and build are recorded in
+`slice-A2/A2.9/`. Next is **A2.10** (`SLICE_A2_PLAN.md`), each remaining fold gated by function parity.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.
