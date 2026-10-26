@@ -1,0 +1,25 @@
+# Rule 2 S1 red: orchestrator-inline-run-inputs-refused.test.ts on trunk b5b44678b, before the change. 9 of 9 refusal cases fail (each started a run or a regenerate); the 3 what-stays-open cases pass.
+
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline csrInputs on POST /runs, before anything is read, and names the route to use 86ms
+   → {"runId":"run-1","status":"complete","steps":[],"outputs":{"m3SectionCount":0,"m3Refusal":null,"csrTableSets":0,"m23":null,"m24":null,"m25":null,"m27":null}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline nonclinicalStudies on POST /runs, before anything is read, and names the route to use 9ms
+   → {"runId":"run-1","status":"complete","steps":[],"outputs":{"m3SectionCount":0,"m3Refusal":null,"csrTableSets":0,"m23":null,"m24":null,"m25":null,"m27":null}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses inline clinicalStudyData on POST /runs, before anything is read, and names the route to use 9ms
+   → {"runId":"run-1","status":"complete","steps":[],"outputs":{"m3SectionCount":0,"m3Refusal":null,"csrTableSets":0,"m23":null,"m24":null,"m25":null,"m27":null}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData in a Mode A body too 8ms
+   → {"runId":"run-1","status":"complete","steps":[],"outputs":{"m3SectionCount":0,"m3Refusal":null,"csrTableSets":0,"m23":null,"m24":null,"m25":null,"m27":null}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses a Mode A ctdProgramId: the extractor’s rows are not a record 8ms
+   → {"runId":"run-1","status":"complete","steps":[],"outputs":{"m3SectionCount":0,"m3Refusal":null,"csrTableSets":0,"m23":null,"m24":null,"m25":null,"m27":null}}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses csrInputs on the regenerate route: the same door one level down 7ms
+   → {"runId":"run-2","supersededRunId":"run-0","status":"complete","regenerated":[],"steps":[]}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses nonclinicalStudies on the regenerate route: the same door one level down 5ms
+   → {"runId":"run-2","supersededRunId":"run-0","status":"complete","regenerated":[],"steps":[]}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses clinicalStudyData on the regenerate route: the same door one level down 5ms
+   → {"runId":"run-2","supersededRunId":"run-0","status":"complete","regenerated":[],"steps":[]}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > outside development, a run takes no clinical or nonclinical figures from the request > refuses projectId on the regenerate route: the same door one level down 10ms
+   → {"runId":"run-2","supersededRunId":"run-0","status":"complete","regenerated":[],"steps":[]}: expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > does not refuse EMPTY arrays: they carry no figures 6ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > runs a plain Mode A body, reading the project’s own records 6ms
+ ✓ server/routes/__tests__/orchestrator-inline-run-inputs-refused.test.ts > what stays open > keeps the fixture door open in development 8ms
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed (12)

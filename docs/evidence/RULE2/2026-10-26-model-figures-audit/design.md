@@ -4,8 +4,9 @@
 >
 > | Slice | Status | Evidence |
 > |---|---|---|
-> | S2 | done | `s2-nonclinical-drafts/` |
-> | S1, S3–S14 | queued | — |
+> | S1 | done | `s1-orchestrator-inline-inputs/` |
+> | S2 | done, with its review fixes | `s2-nonclinical-drafts/` |
+> | S3–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
