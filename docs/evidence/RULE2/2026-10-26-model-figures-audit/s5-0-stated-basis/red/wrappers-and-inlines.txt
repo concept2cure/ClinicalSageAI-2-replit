@@ -1,0 +1,206 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:24.785Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T16:34:24.786Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:24.787Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:25.259Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > successful record-backed computations > keeps the recorded shelf-life source distinct from a stated-data estimate 29ms
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > successful record-backed computations > keeps a successful comparison of profiles on file distinct from pasted profiles 12ms
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > successful record-backed computations > query_rim_patterns_by_domain does not claim its stored patterns were conversation inputs 15ms
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > successful record-backed computations > summarize_rim_intelligence does not claim its stored patterns were conversation inputs 1ms
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > lookup and structure answers > the curated currency registry is not a worksheet over facts supplied in the conversation 5ms
+ ✓ server/services/ana/__tests__/record-readers-do-not-use-stated-input-basis.test.ts > lookup and structure answers > PLLR keeps its unassessed product statements and structure basis 42ms
+stdout | server/services/ana/__tests__/stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:39.190Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-26T16:34:39.191Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:39.191Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/stated-input-basis.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/stated-input-basis.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/stated-input-basis.test.ts
+{
+  "timestamp": "2026-10-26T16:34:39.288Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_fih_dose' reports a stated worksheet basis 16ms
+   → expected 'Report these numbers verbatim. Do NOT…' to match /(?:no|none|not).*record/i
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'classify_tox_findings' reports a stated worksheet basis 11ms
+   → expected 'Report these classifications only aga…' to match /program.*product.*verdict/i
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'estimate_shelf_life' reports a stated worksheet basis 3ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_analytical_method_validation' reports a stated worksheet basis 8ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_mdr_reportability' reports a stated worksheet basis 26ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'characterize_pk' reports a stated worksheet basis 7ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_concentration_qtc' reports a stated worksheet basis 5ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_ddi_risk' reports a stated worksheet basis 6ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'select_exposure_response_dose' reports a stated worksheet basis 6ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_sample_size' reports a stated worksheet basis 112ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_assurance' reports a stated worksheet basis 7ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'determine_assay_cutoff' reports a stated worksheet basis 11ms
+   → expected undefined to be 'stated' // Object.is equality
+ × server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > discloses that arithmetic defaults are defaults, not inputs the person stated 1ms
+   → expected 'Report these numbers verbatim. Do NOT…' to match /default|assum(?:ed|ption)/i
+ ✓ server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > does not add calculator metadata to an exact IVD parameter refusal 1ms
+ ✓ server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > does not add calculator metadata to a real engine fault 7ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_fih_dose' reports a stated worksheet basis
+AssertionError: expected 'Report these numbers verbatim. Do NOT…' to match /(?:no|none|not).*record/i
+
+- Expected:
+/(?:no|none|not).*record/i
+
++ Received:
+"Report these numbers verbatim. Do NOT recompute or round differently. State which derivation is limiting (limitedBy) and surface any warnings. This is a calculation from the NOAEL you stated; it was not read from the program's studies and is not the program's starting dose. Do not use it as governed content."
+
+ ❯ server/services/ana/__tests__/stated-input-basis.test.ts:54:29
+     52|     expect(out.appliesTo).toBe('the inputs stated in this conversation…
+     53|     expect(out.instruction).toMatch(/stated/i);
+     54|     expect(out.instruction).toMatch(/(?:no|none|not).*record/i);
+       |                             ^
+     55|     expect(out.instruction).toMatch(/program.*product.*verdict/i);
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'classify_tox_findings' reports a stated worksheet basis
+AssertionError: expected 'Report these classifications only aga…' to match /program.*product.*verdict/i
+
+- Expected:
+/program.*product.*verdict/i
+
++ Received:
+"Report these classifications only against the findings stated in this conversation. A pathologist adjudicates the final adversity call; surface any escalated or indeterminate findings. No study records were read; this worksheet is not the program's target-organ assessment or governed Module 2.4 content."
+
+ ❯ server/services/ana/__tests__/stated-input-basis.test.ts:55:29
+     53|     expect(out.instruction).toMatch(/stated/i);
+     54|     expect(out.instruction).toMatch(/(?:no|none|not).*record/i);
+     55|     expect(out.instruction).toMatch(/program.*product.*verdict/i);
+       |                             ^
+     56|   });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'estimate_shelf_life' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_analytical_method_validation' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_mdr_reportability' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'characterize_pk' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_concentration_qtc' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'assess_ddi_risk' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'select_exposure_response_dose' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_sample_size' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'compute_assurance' reports a stated worksheet basis
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > 'determine_assay_cutoff' reports a stated worksheet basis
+AssertionError: expected undefined to be 'stated' // Object.is equality
+
+- Expected:
+"stated"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/stated-input-basis.test.ts:51:23
+     49|     const out = await run(tool, input);
+     50|     expect(out.status).toBe(status ?? 'computed');
+     51|     expect(out.basis).toBe('stated');
+       |                       ^
+     52|     expect(out.appliesTo).toBe('the inputs stated in this conversation…
+     53|     expect(out.instruction).toMatch(/stated/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/ana/__tests__/stated-input-basis.test.ts > the shared wrappers and inline calculator envelopes > discloses that arithmetic defaults are defaults, not inputs the person stated
+AssertionError: expected 'Report these numbers verbatim. Do NOT…' to match /default|assum(?:ed|ption)/i
+
+- Expected:
+/default|assum(?:ed|ption)/i
+
++ Received:
+"Report these numbers verbatim. Do NOT recompute or round differently. State which derivation is limiting (limitedBy) and surface any warnings. This is a calculation from the NOAEL you stated; it was not read from the program's studies and is not the program's starting dose. Do not use it as governed content."
+
+ ❯ server/services/ana/__tests__/stated-input-basis.test.ts:61:29
+     59|     const out = await run('compute_fih_dose', { speciesNoaels: [{ spec…
+     60|     expect(out.mrsd.safetyFactor).toBe(10);
+     61|     expect(out.instruction).toMatch(/default|assum(?:ed|ption)/i);
+       |                             ^
+     62|     expect(out.instruction).not.toMatch(/every input was stated/i);
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  13 failed | 8 passed (21)
+   Start at  16:34:22
+   Duration  19.14s (transform 11.83s, setup 99ms, import 18.45s, tests 339ms, environment 0ms)
