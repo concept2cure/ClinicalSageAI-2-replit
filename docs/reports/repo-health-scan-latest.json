@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T03:14:36.002Z",
+  "generatedAt": "2026-10-26T04:24:06.027Z",
   "git": {
-    "sha": "79d9913f103d6f2cf7343cf7d2fc0e880438c1f0",
+    "sha": "a9593ef98e5ec7a05d06a64e5f1d12740b30a873",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2341,7 +2341,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1166405
+        "bytes": 1167550
       },
       {
         "file": "shared/schema.ts",
@@ -2384,6 +2384,10 @@
         "bytes": 187116
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 179868
+      },
+      {
         "file": "server/routes/c2c/artifacts.ts",
         "bytes": 172271
       },
@@ -2410,10 +2414,6 @@
       {
         "file": "server/routes/report-os.ts",
         "bytes": 153031
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 151308
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2449,7 +2449,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 136039
+        "bytes": 136298
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2461,7 +2461,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 128124
+        "bytes": 128616
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2505,7 +2505,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 118593
+        "bytes": 118583
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2533,7 +2533,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 111660
+        "bytes": 111654
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2567,7 +2567,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22210
+        "lines": 22224
       },
       {
         "file": "shared/schema.ts",
@@ -2646,6 +2646,10 @@
         "lines": 3197
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3141
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
@@ -2671,7 +2675,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 2817
+        "lines": 2821
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2696,10 +2700,6 @@
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2605
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2747,7 +2747,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2258
+        "lines": 2265
       },
       {
         "file": "server/services/ana/run-control.ts",
