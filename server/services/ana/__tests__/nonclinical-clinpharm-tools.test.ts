@@ -124,29 +124,24 @@ describe('select_exposure_response_dose handler', () => {
 });
 
 describe('draft_nonclinical_overview_m2_4 handler', () => {
-  it('returns needs_parameters without studies', async () => {
-    const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
-    const out = JSON.parse(await handler({ studies: [] }));
-    expect(out.status).toBe('needs_parameters');
-  });
-
-  it('drafts the M2.4 overview with gaps and an adversity profile', async () => {
+  // Rule 2 audit S2 (2026-10-26): it composed from studies[] the model wrote.
+  // The composer (buildEnrichedM24) is tested in preclinical/__tests__/
+  // nonclinical-m24-adapter.test.ts; the refusal and the outline in
+  // nonclinical-drafts-refuse-model-figures.test.ts.
+  it('does not compose from studies supplied in the call', async () => {
     const handler = getToolHandler('draft_nonclinical_overview_m2_4')!;
     const out = JSON.parse(
-      await handler({
-        studies: [
-          { studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' },
-          { studyType: 'genotox', studyTitle: 'Ames', keyFindings: 'Negative' },
-        ],
-        findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
-        drugSubstanceName: 'BX-115',
-      }),
+      await handler(
+        {
+          studies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' }],
+          findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
+          drugSubstanceName: 'BX-115',
+        },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
     );
-    expect(out.status).toBe('drafted');
-    expect(out.sectionKey).toBe('2.4');
-    expect(out.content).toMatch(/NONCLINICAL OVERVIEW/);
-    expect(out.gaps).toContain('primary pharmacology studies');
-    expect(out.toxProfile.adaptive).toContain('hepatocellular hypertrophy');
+    expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true, projectId: 9 });
+    expect(out.status).not.toBe('drafted');
   });
 });
 
@@ -205,19 +200,18 @@ describe('draft_quality_overall_summary_m2_3 handler', () => {
 });
 
 describe('draft_nonclinical_summaries_m2_6 handler', () => {
-  it('drafts the M2.6 summaries with tables', async () => {
+  // Rule 2 audit S2: as M2.4. The composer's tables are tested in
+  // preclinical/__tests__/m26-nonclinical-summaries.test.ts.
+  it('does not compose from studies supplied in the call', async () => {
     const handler = getToolHandler('draft_nonclinical_summaries_m2_6')!;
     const out = JSON.parse(
-      await handler({
-        studies: [
-          { studyType: 'pharmacology', studyId: 'PD-1', species: 'rat', keyFindings: 'engaged' },
-          { studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' },
-        ],
-      }),
+      await handler(
+        { studies: [{ studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' }] },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
     );
-    expect(out.status).toBe('drafted');
-    expect(out.sectionKey).toBe('2.6');
-    expect(Array.isArray(out.tables)).toBe(true);
+    expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true });
+    expect(out.tables).toBeUndefined();
   });
 });
 
@@ -403,7 +397,7 @@ describe('draft_clinical_summary_m2_7 handler', () => {
 // tool result, although their text points at them (M2.7: "… are tabulated
 // below"); the M2.5 handler already returned them. A draft carries the tables
 // its narrative refers to.
-describe('the M2.4 and M2.7 drafts return the tables their text refers to', () => {
+describe('the M2.7 draft returns the tables its text refers to', () => {
   it('M2.7', async () => {
     csrRecords.rows = [
       { studyId: 'X-301', protocolNumber: 'X-301', phase: '3', studyDesign: 'randomized, double-blind', primaryEndpoint: 'ORR',
@@ -421,14 +415,5 @@ describe('the M2.4 and M2.7 drafts return the tables their text refers to', () =
     expect(JSON.stringify(out.tables)).toContain('X-301');
   });
 
-  it('M2.4', async () => {
-    const out = JSON.parse(
-      await getToolHandler('draft_nonclinical_overview_m2_4')!({
-        studies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' }],
-        drugSubstanceName: 'BX-115',
-      }),
-    );
-    expect(out.status).toBe('drafted');
-    expect(Array.isArray(out.tables)).toBe(true);
-  });
+  // M2.4's tables: preclinical/__tests__/nonclinical-m24-adapter.test.ts (Rule 2 audit S2).
 });

@@ -1,0 +1,101 @@
+# Rule 2 S2 red: nonclinical-drafts-refuse-model-figures.test.ts on trunk (94d960fff), before the change. 8 of 8 fail.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer 83ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them 7ms
+   → expected { status: 'drafted', …(9) } to match object { ok: false, …(2) }
+(9 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 1ms
+   → expected undefined to be 'needs_data' // Object.is equality
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer 27ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them 3ms
+   → expected { status: 'drafted', …(8) } to match object { ok: false, …(2) }
+(8 matching properties omitted from actual)
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded 1ms
+   → expected undefined to be 'needs_data' // Object.is equality
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them 2ms
+   → expected [ 'studies', 'findings', …(2) ] to not include 'studies'
+ × server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them 1ms
+   → expected [ 'studies', 'findings', …(2) ] to not include 'studies'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > refuses studies written in the call: none of their figures reaches the answer
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > refuses studies written in the call: none of their figures reaches the answer
+AssertionError: expected undefined to be false // Object.is equality
+- Expected:
+false
++ Received:
+undefined
+ ❯ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts:40:20
+     38|   it('refuses studies written in the call: none of their figures reach…
+     39|     const out = await run(tool, { studies: MODEL_STUDIES, findings: [{…
+     40|     expect(out.ok).toBe(false);
+       |                    ^
+     41|     expect(out.ignoredSuppliedFigures).toBe(true);
+     42|     expect(JSON.stringify(out)).not.toContain('50 mg/kg/day');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with no project open and figures supplied, asks for the project and uses none of them
+AssertionError: expected { status: 'drafted', …(9) } to match object { ok: false, …(2) }
+(9 matching properties omitted from actual)
+- Expected
++ Received
+-   "ignoredSuppliedFigures": true,
+-   "ok": false,
+-   "status": "needs_project",
++   "status": "drafted",
+ ❯ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts:48:17
+     46|   it('with no project open and figures supplied, asks for the project …
+     47|     const out = await run(tool, { studies: MODEL_STUDIES }, { organiza…
+     48|     expect(out).toMatchObject({ ok: false, status: 'needs_project', ig…
+       |                 ^
+     49|   });
+     50|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_overview_m2_4 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded
+AssertionError: expected undefined to be 'needs_data' // Object.is equality
+- Expected:
+"needs_data"
++ Received:
+undefined
+ ❯ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts:53:42
+     51|   it('with a project open and nothing supplied, answers with the recor…
+     52|     const out = await run(tool, {});
+     53|     expect(out.nonclinical_data?.status).toBe('needs_data');
+       |                                          ^
+     54|     expect(numbers(out.structure.sections)).toEqual(ctdRecordSubtree(r…
+     55|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > draft_nonclinical_summaries_m2_6 > with no project open and figures supplied, asks for the project and uses none of them
+AssertionError: expected { status: 'drafted', …(8) } to match object { ok: false, …(2) }
+(8 matching properties omitted from actual)
+- Expected
++ Received
+-   "ignoredSuppliedFigures": true,
+-   "ok": false,
+-   "status": "needs_project",
++   "status": "drafted",
+ ❯ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts:48:17
+     46|   it('with no project open and figures supplied, asks for the project …
+     47|     const out = await run(tool, { studies: MODEL_STUDIES }, { organiza…
+     48|     expect(out).toMatchObject({ ok: false, status: 'needs_project', ig…
+       |                 ^
+     49|   });
+     50|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_overview_m2_4' takes no studies or findings, and says not to pass them
+ FAIL  server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts > the tool definitions ask for no figures > 'draft_nonclinical_summaries_m2_6' takes no studies or findings, and says not to pass them
+AssertionError: expected [ 'studies', 'findings', …(2) ] to not include 'studies'
+ ❯ server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts:61:36
+     59|   it.each([DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIE…
+     60|     const props = (def.input_schema as { properties: Record<string, un…
+     61|     expect(Object.keys(props)).not.toContain('studies');
+       |                                    ^
+     62|     expect(Object.keys(props)).not.toContain('findings');
+     63|     expect((def.input_schema as { required?: string[] }).required ?? […
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  08:34:17
+   Duration  18.91s (transform 13.05s, setup 123ms, import 18.25s, tests 133ms, environment 0ms)

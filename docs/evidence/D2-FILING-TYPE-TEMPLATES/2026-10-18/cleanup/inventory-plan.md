@@ -573,6 +573,7 @@ This is urgent: `/api/v1/drafting/*` is served in production as infrastructure.
   - `m26-nonclinical-summaries.ts:110-160` uses `heading()` and `notComposedGap('2.6', …)` from S32.
   - `nonclinical/m26-m4-view.ts`: `M26_SUBSECTIONS` (`:105-111`) and `M4_GROUPS` (`:115-117`) labels come from `ichFiledHeadingTitle`.
   - The `draft_nonclinical_overview_m2_4` and `draft_nonclinical_summaries_m2_6` handlers load `loadNonclinicalStudiesForProject(ctx project)` and refuse `studies` or `findings` supplied in the call, in the style of `cmc-quality-summary-tool.ts` `MODEL_SUPPLIED_CMC_REFUSAL`.
+    **Superseded 2026-10-26 by Rule 2 S2** (`docs/evidence/RULE2/2026-10-26-model-figures-audit/s2-nonclinical-drafts/`): nothing maps a project to a `ctdProgramId`, so this load cannot run. The handlers now refuse supplied figures and answer with the record's outline until a nonclinical store is chosen (founder decision R-1). The other bullets stand.
   - Delete `nonclinical-summary.routes.ts` `POST /document` (`:94+`), which has no client. `GET /` stays for `Nonclinical.tsx`.
 - **Red:** a supplied `studies[]` is refused; headings equal the record.
 - **Tests:** `m26-nonclinical-summaries.test.ts`, `m26-m4-view.test.ts`, `m26-introduction-not-assumed-written.test.ts`, `nonclinical-clinpharm-tools.test.ts`, `nonclinical-m24-adapter.test.ts`, `nonclinical-summary-read.test.ts`.

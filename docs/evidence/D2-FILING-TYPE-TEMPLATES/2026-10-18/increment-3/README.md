@@ -223,3 +223,14 @@ All pass after.
 
 **What a person sees:** in a project with completed CSR builds, AnA's 2.5 and 2.7 composers compose. In one with none,
 they say so. A person who may not read the project is told so, and no outline is built from it.
+
+## h. 3b Slice 2: AnA's 2.4 and 2.6 drafts stop composing from model-written studies
+
+This is the same change as Rule 2 audit slice S2. Its evidence, with "What already exists", the red, the green and the gates, is in
+`docs/evidence/RULE2/2026-10-26-model-figures-audit/s2-nonclinical-drafts/`.
+
+- The project boundary that Slice 1 wrote for 2.5/2.7 is now one module, `ana/record-source-project.ts`, with two consumers.
+- The 2.5 outline helper is now `ana/ctd-component-outline.ts`, which serves 2.4, 2.5 and 2.6 from the record.
+
+**What a person sees:** a 2.4 or 2.6 request returns the record's ICH M4S outline and says no nonclinical study is recorded against the project. Studies typed in the conversation are refused and named as not used.
+

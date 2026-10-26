@@ -46,6 +46,11 @@ describe('buildEnrichedM24', () => {
     // Pharmacology is the only missing required category here.
     expect(summary.gaps).toContain('primary pharmacology studies');
     expect(summary.gaps).not.toContain('repeat-dose toxicology');
+    // The tables the narrative refers to. Moved here from the AnA handler's
+    // test (Rule 2 audit S2, 2026-10-26), which no longer composes from studies
+    // supplied in the call.
+    expect(Array.isArray(summary.tables)).toBe(true);
+    expect(summary.tables.length).toBeGreaterThan(0);
   });
 
   it('adds the target-organ adversity profile when findings are supplied', () => {
