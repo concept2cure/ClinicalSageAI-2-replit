@@ -61,7 +61,8 @@ function expressionTable(node, bindings) {
   node = unwrap(node);
   if (!node) return undefined;
   if (ts.isIdentifier(node)) return bindings.get(node.text);
-  if (ts.isPropertyAccessExpression(node)) return tableName(node.name.text);
+  const member = memberName(node);
+  if (member) return tableName(member);
   if (ts.isStringLiteralLike(node)) return tableName(node.text);
   return undefined;
 }
@@ -104,8 +105,8 @@ export function findProjectInserts(text, file = 'server/example.ts') {
   }
   function visit(node) {
     learnBinding(node, bindings);
-    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
-      const verb = node.expression.name.text;
+    if (ts.isCallExpression(node)) {
+      const verb = memberName(node.expression);
       if (['insert', 'insertInto'].includes(verb)) {
         const table = expressionTable(node.arguments[0], bindings);
         if (table) add(node, table, 'ORM');
@@ -164,25 +165,34 @@ function memberName(node) {
   return '';
 }
 
-/** The workspace creator wrote other stores, so a PM-only insert scan is insufficient. */
-export function findRetiredCreatorRegistrations(text, file) {
-  const paths = RETIRED_CREATORS.get(file);
-  if (!paths) return [];
+/** Shared registration syntax for retired POSTs and retained-route contracts. */
+export function findRouteRegistrations(text, file) {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const sites = [];
+  const methods = new Set(['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'all']);
   function visit(node) {
-    if (ts.isCallExpression(node) && memberName(node.expression) === 'post') {
+    const method = ts.isCallExpression(node) ? memberName(node.expression) : '';
+    if (ts.isCallExpression(node) && methods.has(method)) {
       let argument = unwrap(node.arguments[0]);
       const receiver = unwrap(node.expression).expression;
       if (receiver && ts.isCallExpression(receiver) && memberName(receiver.expression) === 'route') argument = unwrap(receiver.arguments[0]);
-      if (argument && ts.isStringLiteralLike(argument) && paths.includes(argument.text)) {
-        sites.push(`${file}:${source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1}: retired POST ${argument.text}; use Projects -> POST /api/c2c/projects.`);
+      if (argument && ts.isStringLiteralLike(argument)) {
+        sites.push({ file, line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1, method, path: argument.text });
       }
     }
     ts.forEachChild(node, visit);
   }
   visit(source);
   return sites;
+}
+
+/** The workspace creator wrote other stores, so a PM-only insert scan is insufficient. */
+export function findRetiredCreatorRegistrations(text, file) {
+  const paths = RETIRED_CREATORS.get(file);
+  if (!paths) return [];
+  return findRouteRegistrations(text, file)
+    .filter(site => site.method === 'post' && paths.includes(site.path))
+    .map(site => `${file}:${site.line}: retired POST ${site.path}; use Projects -> POST /api/c2c/projects.`);
 }
 
 export function repositoryRetiredCreatorRegistrations(root = ROOT) {
@@ -210,6 +220,12 @@ export function projectCreationOwnerSelfTest() {
     'const pm = projects as any; db.insert(pm).values({})',
     'db.insert(<typeof projects>projects).values({})',
     "db.query('INSERT INTO ONLY projects (name) VALUES ($1)')",
+    'const p = schema.projects; db["insert"](p).values({});',
+    'db.insert(schema["projects"]).values({});',
+    'db["insert"](schema["regulatoryPrograms"]).values({});',
+    'import { regulatoryPrograms as programs } from "./schema"; db.insert(programs).values({});',
+    'db.insert(schema.projects).values({});',
+    'db.query(sql`INSERT INTO ${schema.projects} (id) VALUES (${id})`);',
   ];
   const good = [
     '// db.insert(projects).values({name})',
@@ -220,7 +236,7 @@ export function projectCreationOwnerSelfTest() {
   ];
   for (const source of bad) {
     const sites = findProjectInserts(source);
-    if (!sites.length || !checkProjectWriterOwners(sites, []).length) throw new Error(`Missed planted writer: ${source}`);
+    if (sites.length !== 1 || checkProjectWriterOwners(sites, []).length !== 1) throw new Error(`Missed or double-counted planted writer: ${source}`);
   }
   for (const source of good) if (findProjectInserts(source).length) throw new Error(`Flagged a read/comment: ${source}`);
   const sites = WRITER_OWNERS.map(owner => ({ ...owner, line: 1, kind: 'SQL' }));

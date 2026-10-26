@@ -97,7 +97,7 @@ function makeReq(role: string, overrides: Record<string, unknown> = {}) {
   return req;
 }
 
-const WRITES: Array<['post' | 'put' | 'delete', string]> = [
+const WRITES: Array<['put' | 'delete', string]> = [
   ['put', '/:id'],
   ['delete', '/:id'],
 ];

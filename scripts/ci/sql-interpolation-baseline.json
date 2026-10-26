@@ -169,7 +169,7 @@
   "server/services/memory-consolidation-job.ts": 3,
   "server/services/notifications/notification-service.ts": 18,
   "server/services/precedent-engine.ts": 7,
-  "server/services/program-journey/program-journey-service.ts": 2,
+  "server/services/program-journey/program-journey-service.ts": 1,
   "server/services/project-rollup-service.ts": 2,
   "server/services/projects/contextual-ingest.ts": 1,
   "server/services/protocol-amendments/protocol-amendments-service.ts": 2,

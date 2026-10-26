@@ -619,7 +619,7 @@ observations, null dependent figures and unmapped rows, alongside one canonical
 states with safe fixed reasons/codes; failed scope currentness refuses the whole
 response. Both pre-merge snapshots remain historical. The combined tree passed
 294 tests across 27 files, two native flows and the production build; proof is in
-`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is recorded below; A2.9 is next.
+`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 and A2.9 are recorded below; A2.10 is next.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.
@@ -729,9 +729,9 @@ Implemented 2026-10-26: 12 enumerated POSTs and three dead AnA controller method
 retired; 50 retained HTTP registrations and 11 retained method bodies remain
 byte-identical. Canonical wizard/intake, data and the two explicitly deferred
 internal PM writers remain. The source guard runs in CI and normal pre-push,
-with red-first actual-source and planted-writer proofs. Qualification: 307
-tests in 21 suites, 20 native PostgreSQL audit/role checks, the real wizard/Create
-browser flow and production build. Existing-owner inventory and limits:
+with red-first actual-source and planted-writer proofs. Qualification: 523
+tests in 33 suites, 24 native PostgreSQL audit/role checks, both real Create/refusal
+browser flows and production build. Existing-owner inventory and limits:
 `A2_9_PROJECT_CREATION_RETIREMENT.md`; evidence:
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`.
 Next: A2.10's per-function parity checks, without automatic shell removal.
@@ -749,6 +749,64 @@ Next: A2.10's per-function parity checks, without automatic shell removal.
 - **For each deletion:** the history search, the replacement named (Projects wizard → `POST /api/c2c/projects`), and the reachability test (`projects-create-anchor.pglite.test.ts:184-191` plus A2.4's door contract). Each route's tests go with it.
 - **The gate:** a contract test under `tests/ci/`. The only `INSERT INTO regulatory_programs` in `server/` is in `c2c/projects.ts`, and every `INSERT INTO projects` site is on an allowlist with a reason (the anchor writer). Shown failing on today's ten sites, and on a planted insert.
 - **Rule 1:** no store retires. These tables have other readers.
+
+### What already exists (A2.9 continuation, 2026-10-26)
+
+Checked from `1f6a8bf7`, under launch row D2. This continues the accepted
+central-service direction; it does not add a project service or store.
+
+- `client/src/concept2cure/v2/surfaces/Projects.tsx` owns the existing wizard and
+  `projects.new-project` action. `server/routes/c2c/projects.ts` is the only
+  shipped `regulatory_programs` insert and owns the canonical create, scaffold,
+  audit and accepted client/project-anchor flow. `program-project-anchor.ts`
+  owns the accompanying `projects` insert. A2.4/A2.8 native flows already reach
+  the wizard and recorded device/drug project workflows.
+- `concept2cure.ts` still has POST `/projects` and `/projects/:id/duplicate`,
+  each inserting only a legacy project. Its GET, update, sharing, artifact and
+  governed-work routes are live and retained. The old create schema also
+  shapes the retained update schema, so it must not be blindly removed.
+- `device-projects.ts` POST `/` inserts a legacy device project;
+  `projects-management.ts` POST `/` selects/creates a default client workspace
+  then calls `atomicQuotaService`; `project-hierarchy.ts` POST `/:id/children`
+  inserts a child project. Their read/update/delete routes have other callers
+  and remain. Existing route tests must replace old creation expectations
+  with retirement/no-write checks and preserve unrelated safeguards.
+- `register-advanced-platform-routes.ts` inline POST `/api/workspace/projects`
+  writes IND/510(k)/CER stores, accepts a body client id without membership
+  verification and invents default sponsor/phase. Its aggregate GET remains.
+- `ana-platform-control.ts` POST `/projects`, `/onboard`, `/execute` reach
+  `ana-platform-controller.ts.createProject`, directly or through onboarding/
+  dispatch. Only that private creation chain is retired; independent settings,
+  module/configuration, usage and controlled write safeguards remain.
+- `ctd-onboarding.ts` POST `/projects` calls `createCTDProject` in
+  `ctd-ingestion-service.ts`. `program-journey.routes.ts` POST `/` and
+  `/:id/stages/:stageId` write the separate journey stores. Their GET readers
+  and existing stored rows remain. Service writers must be traced for other
+  callers before removing them.
+- Global shipped-source SQL/ORM search found nine direct insert sites: one
+  canonical program insert; five legacy project inserts to retire; and the
+  canonical anchor plus `rules-engine/actions/index.ts` and
+  `atomicQuotaService.js`. The latter two are explicitly retained by A2.9's
+  pre-existing exception pending their own caller/functional trace. They need
+  narrow, reasoned ownership entries, not an unscoped exemption.
+- Existing proof includes `projects-create-anchor.pglite.test.ts`,
+  `projects-create.test.ts`, `projectCreationDoors.contract.test.ts`, canonical
+  client/scoped list tests, device/project-management governance tests,
+  `ana-platform-control.test.ts`, journey read/service tests and the native
+  creation/plan browser flows. No second creator is needed.
+- Deleted-history search over all eight route/registrar paths returned no
+  deletion commits. The earlier discovery additionally traces the last legacy
+  concept2cure create caller to deleted commit `2895218b8`; the canonical wizard
+  is its reachable replacement. All current callers will be checked again.
+
+Retire only the listed uncalled HTTP write handlers and unreachable private
+creation helpers after caller review. Preserve readers/stores and separately
+retained rule/quota owners. Add a source contract that rejects unowned program/
+project insert sites, missing owner reasons or extra inserts at an allowed
+owner, with deliberately planted failures. Prove removed endpoints cannot write
+and prove canonical creation still yields the program, anchor, scaffold and
+audit with accepted scope. Route retirement does not confer support for legacy
+specialist stores on the canonical wizard or retire their existing records.
 
 ### A2.10 Close the remaining folds, each gated by its parity row (A.2's closing step)
 

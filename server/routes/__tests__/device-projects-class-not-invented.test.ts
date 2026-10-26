@@ -88,6 +88,7 @@ describe('the retired alternate device creator', () => {
     const res = await create(body);
     expect(res.status).toBe(404);
     expect(H.inserted).toEqual([]);
+    expect(H.updated).toEqual([]);
   });
 });
 

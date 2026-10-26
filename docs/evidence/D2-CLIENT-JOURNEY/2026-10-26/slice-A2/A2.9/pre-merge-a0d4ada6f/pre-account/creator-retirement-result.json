@@ -1,0 +1,58 @@
+{
+  "canonicalCreateStatus": 201,
+  "acceptedAnchor": true,
+  "createdProjectReached": true,
+  "projectCountBefore": 1,
+  "projectCountAfter": 1,
+  "retired": [
+    {
+      "path": "/api/concept2cure/projects",
+      "status": 404
+    },
+    {
+      "path": "/api/concept2cure/projects/1/duplicate",
+      "status": 404
+    },
+    {
+      "path": "/api/device-projects",
+      "status": 404
+    },
+    {
+      "path": "/api/projects",
+      "status": 404
+    },
+    {
+      "path": "/api/project-hierarchy/1/children",
+      "status": 404
+    },
+    {
+      "path": "/api/workspace/projects",
+      "status": 404
+    },
+    {
+      "path": "/api/ctd/projects",
+      "status": 404
+    },
+    {
+      "path": "/api/ana/platform/projects",
+      "status": 404
+    },
+    {
+      "path": "/api/ana/platform/onboard",
+      "status": 404
+    },
+    {
+      "path": "/api/ana/platform/execute",
+      "status": 404
+    },
+    {
+      "path": "/api/program-journey",
+      "status": 404
+    },
+    {
+      "path": "/api/program-journey/1/stages/plan",
+      "status": 404
+    }
+  ],
+  "uncheckedWorkspaceClientRefused": true
+}

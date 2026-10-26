@@ -1300,8 +1300,8 @@ the existing device-workstream shell, target and catalogue remain for A2.10.
 A2.9 retires 12 alternate creation POSTs and three dead controller methods while
 preserving canonical intake, all 50 retained HTTP registrations, data and the
 two explicitly deferred internal writers. A red-first bounded-writer/retired-route
-contract runs in CI and pre-push; 307 focused tests, 20 native PostgreSQL checks,
-the canonical Create browser flow and build pass (`slice-A2/A2.9/README.md`).
+contract runs in CI and pre-push; 523 focused tests, 24 native PostgreSQL checks,
+both canonical Create/refusal browser flows and build pass (`slice-A2/A2.9/README.md`).
 Next is **A2.10** (`SLICE_A2_PLAN.md`), whose remaining folds keep their per-function
 parity and admission prerequisites; no shell is removed by this creator retirement.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on

@@ -19,7 +19,12 @@ Concept2cure history. Prior consolidation commits include `8b192f1e7`,
 anchor, door and native wizard tests supply the reachable replacement proof;
 this slice adds no project service, store, route or grant.
 
-## Verification
+## Pre-merge continuation verification
+
+The following results qualify the continuation before reconciling concurrent
+A2.9 work through `a0d4ada6f`. Its independent qualification is preserved intact
+in `pre-merge-a0d4ada6f/`. The source hashes and counts in each snapshot belong
+to that snapshot. Final combined qualification is recorded separately below.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
@@ -108,3 +113,60 @@ added to 307. The combined production client/server/audit-verifier build passes
 (frontend **20.68 seconds**). Results are `account-integration.log.gz` and
 `account-build.log.gz`. Normal publication gates, including full TypeScript and
 the no-new-warning check, still apply to the final combined tree.
+
+## Concurrent A2.9 reconciliation
+
+The first normal push passed every gate, including full TypeScript with zero
+errors and a net reduction of 12 lint warnings, then met concurrent A2.9 work
+on the remote (`gates-ref-race.log.gz`). No forced push or bypass was used.
+Both versions retire the same 12 HTTP creators and retain the same canonical
+intake. Their useful assertions and source guards are reconciled onto one
+canonical checker, with independent pre-merge evidence preserved. The duplicate
+incoming detector is removed after carrying its assertions into the shared owner.
+
+The incoming removal of now-uncalled CTD/journey creation helpers is retained:
+no production caller remains, readers/records/stores stay, and the existing SQL
+interpolation allowance is narrowed from two to one. This extends the dead-writer
+cleanup; it does not retire a table or the remaining journey shell. The earlier
+continuation's retained-service statements describe its pre-merge choice.
+
+## Final combined qualification
+
+The combined selection passes **523 tests in 33 suites**, partitioned without
+overlap by file: 161 server cases/16 files (`merged/server.log.gz`), 39 contract
+cases/one file (`merged/contract.log.gz`), and 323 canonical/client/service/Account
+cases/16 files (`merged/remaining.log.gz`). The exact union is
+`merged/test-files.txt`. No test count from an earlier snapshot is added again.
+
+The one checker/allowlist now covers **25 planted writer forms**, exact-one-site
+checks, all 12 retired POSTs and 17 retained-route checks. Bracketed ORM methods
+and targets were demonstrated red before correction
+(`merged/contract-red.log.gz`). CI and pre-push still invoke that same checker.
+The 50 retained HTTP bodies and retained CTD/journey service bodies are unchanged
+from the continuation source; `merged/retained-server-proof.json` records the
+static comparison. The earlier 11-method controller preservation proof remains.
+
+Native PostgreSQL passes **24 cases** on the same non-superuser/NOBYPASSRLS
+runtime role with enforcement on (`merged/native-db.log.gz`). It includes the
+stale execute confirmation/category matrix and direct AI/compliance settings
+writes with their actual same-transaction audit rows. The incoming delta-based
+audit assertion respects existing append-only history rather than requiring an
+empty historic audit log.
+
+Both Chromium flows pass together in **18.8 seconds**, with release and RLS
+enforcement on (`merged/browser.log.gz`). Canonical intake returns 201 and its
+accepted anchor, the real dossier read returns 200 with five governed module
+rows, and Author is reached. All 12 legacy requests refuse writes and the
+canonical portfolio remains unchanged after the probes. Seven return 404; the
+three AnA paths and two journey paths return **403 `LAUNCH_SCOPE`** before the
+router. The initial imported browser expectation of 404 for every path failed
+under normal enforcement (`merged/browser-policy-red.log.gz`); the corrected
+test accepts only router 404 or the explicit `LAUNCH_SCOPE` refusal. No release,
+auth, role or entitlement guard changed. Router/AST tests independently prove
+handler absence, so the policy refusal is not presented as that proof.
+
+Selected results/screenshots are in `merged/`; the canonical Author screenshot
+was inspected. No token or trace archive is included. The combined production
+client/server/audit-verifier build passes (frontend **23.05 seconds**,
+`merged/build.log.gz`). `merged/source-proof.json` pins the merge parents and
+qualified source/test/gate hashes. Mandatory final publication gates still apply.

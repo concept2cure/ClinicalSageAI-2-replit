@@ -220,8 +220,8 @@ class AnaPlatformController {
    * The connector for Claude is the owner's setting, with one door of its own
    * (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10), and the
    * connector reads it live. Every arbitrary-key write here comes through this
-   * method (PATCH /settings and /ai-config through configureAI), and an
-   * administrator reaches both, so a
+   * method (PATCH /settings, /ai-config through configureAI, and /compliance
+   * through setComplianceDefaults), and an administrator reaches them all, so a
    * patch that names the key is refused whole: nothing is written and nothing
    * is recorded. Until 2026-10-01 (P1-49 fix round) it was written and recorded
    * as an ordinary tenant_settings_changed.

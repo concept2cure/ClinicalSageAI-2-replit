@@ -1,0 +1,62 @@
+{
+  "server/routes/concept2cure.ts": {
+    "retainedRouteCount": 20,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/routes/device-projects.ts": {
+    "retainedRouteCount": 3,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/routes/projects-management.ts": {
+    "retainedRouteCount": 4,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/routes/project-hierarchy.ts": {
+    "retainedRouteCount": 7,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/routes/ana-platform-control.ts": {
+    "retainedRouteCount": 9,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/routes/program-journey.routes.ts": {
+    "retainedRouteCount": 1,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/bootstrap/register-advanced-platform-routes.ts": {
+    "retainedRouteCount": 6,
+    "allRetainedRouteTextIdenticalToContinuationHEAD": true
+  },
+  "server/services/ctd-ingestion-service.ts": {
+    "removedFunctions": [
+      "createCTDProject",
+      "generateInitialGaps"
+    ],
+    "retainedFunctions": [
+      "m1Section",
+      "listCTDProjects",
+      "getCTDProjectStatus",
+      "uploadCTDDocument",
+      "detectCTDSection",
+      "validateCTDCompleteness",
+      "recalculateCompletion"
+    ],
+    "allRetainedFunctionTextIdenticalToContinuationHEAD": true
+  },
+  "server/services/program-journey/program-journey-service.ts": {
+    "removedFunctions": [
+      "asArray",
+      "asObject",
+      "clampPct",
+      "parseOverlayEntry",
+      "createProgramJourney",
+      "updateJourneyStage"
+    ],
+    "retainedFunctions": [
+      "toView",
+      "listProgramJourneys",
+      "deleteProgramJourney"
+    ],
+    "allRetainedFunctionTextIdenticalToContinuationHEAD": true
+  }
+}
