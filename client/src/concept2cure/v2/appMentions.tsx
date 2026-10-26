@@ -41,7 +41,9 @@
  * runs only when `onKeyDown` returns false.
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { findCallableApp, searchCallableApps, type CallableApp } from '@shared/navigation/callable-apps';
+import { CALLABLE_APPS, findCallableApp, searchCallableApps, type CallableApp } from '@shared/navigation/callable-apps';
+import { useSurfaceAvailable } from './surfaceAvailable';
+import { DEEP_LINK_ALIASES } from './registryModel';
 import { searchSlashCommands, type SlashCommand } from '@shared/ana/slash-commands';
 import { I } from './icons';
 
@@ -108,8 +110,18 @@ export function insertMention(value: string, start: number, caretEnd: number, it
 
 /** How many skills the `/` menu lists after the commands. */
 const SKILLS_LISTED = 6;
+/** How many features the `@` menu lists. */
+const APPS_LISTED = 8;
 
-function itemsFor(token: MentionToken, skills?: SkillMentionSource): MentionItem[] {
+/**
+ * The features the `@` menu offers: those this viewer can open, by the rail's
+ * rule (useSurfaceAvailable), asked of the surface each navigation id opens
+ * (DEEP_LINK_ALIASES: `tasking` opens `tasks`). Until 2026-10-25 it offered
+ * every callable feature, about forty outside the release, and choosing one
+ * ended on "not in this release" (D2 client journey, slice 0). Filtered before
+ * the eight are taken, so a locked feature never holds an available one's place.
+ */
+function itemsFor(token: MentionToken, skills: SkillMentionSource | undefined, available: (surfaceId: string) => boolean): MentionItem[] {
   if (token.kind === 'slash') {
     const commands: MentionItem[] = searchSlashCommands(token.query).map((cmd) => ({ kind: 'slash', key: cmd.name, cmd }));
     const found: MentionItem[] = (skills?.search(token.query) ?? [])
@@ -117,7 +129,10 @@ function itemsFor(token: MentionToken, skills?: SkillMentionSource): MentionItem
       .map((skill) => ({ kind: 'skill', key: `skill:${skill.key}`, skill }));
     return [...commands, ...found];
   }
-  return searchCallableApps(token.query).map((app) => ({ kind: 'app', key: app.id, app }));
+  return searchCallableApps(token.query, CALLABLE_APPS.length)
+    .filter((app) => available(DEEP_LINK_ALIASES[app.id] ?? app.id))
+    .slice(0, APPS_LISTED)
+    .map((app) => ({ kind: 'app', key: app.id, app }));
 }
 
 export interface AppMentionsApi {
@@ -145,7 +160,8 @@ export function useAppMentions(
   const [token, setToken] = useState<(MentionToken & { caret: number }) | null>(null);
   const [active, setActive] = useState(0);
 
-  const items = useMemo(() => (token ? itemsFor(token, skills) : []), [token, skills]);
+  const available = useSurfaceAvailable();
+  const items = useMemo(() => (token ? itemsFor(token, skills, available) : []), [token, skills, available]);
   const open = token !== null && items.length > 0;
 
   const sync = useCallback((el: HTMLTextAreaElement | null) => {

@@ -153,3 +153,33 @@ describe('Account menu — Master Administration licensing entry', () => {
     expect(menuItems()).not.toContain('Licensing');
   });
 });
+
+/* Codebase coverage (slice 0 of .design/client-journey/INFORMATION_ARCHITECTURE.md):
+   an engineering view of the surface registry, not a customer capability, and
+   outside the release. It was in every member's menu, and under the launch
+   scope it opened a "not in this release" lock. It is offered beside Licensing
+   to the platform's administrators, and only when it can be opened. */
+describe('Account menu — Codebase coverage', () => {
+  const coverageLocked = { id: 'coverage', label: 'Codebase coverage', entitled: false, source: 'launch-scope' as const, requiredTier: null };
+
+  it('is not offered to a member or an organisation administrator', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: false })));
+    const { menuItems } = await openAccountMenu();
+    expect(menuItems()).not.toContain('Codebase coverage');
+  });
+
+  it('is offered to a platform administrator when it can be opened', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: true })));
+    const { menuItems, onNav } = await openAccountMenu();
+    expect(menuItems()).toContain('Codebase coverage');
+    fireEvent.click(screen.getByRole('menuitem', { name: /Codebase coverage/ }));
+    expect(onNav).toHaveBeenCalledWith('coverage');
+  });
+
+  it('is not offered, even to a platform administrator, when the release locks it', async () => {
+    mockNav(async () => ok(payload({ platformAdmin: true, surfaces: [coverageLocked] })));
+    const { menuItems } = await openAccountMenu();
+    expect(menuItems()).toContain('Licensing');
+    expect(menuItems()).not.toContain('Codebase coverage');
+  });
+});

@@ -33,6 +33,7 @@ import {
   resolveSegmentId,
 } from './registryModel';
 import { flagAllowsSurface } from './clinicalRegulatoryGraphFlag';
+import { PJ_LIFECYCLE } from './fixtures/project-home-data';
 import {
   isLaunchScopeLocked,
   isLocked,
@@ -44,6 +45,7 @@ import { NavUnlockPanel } from './NavUnlockPanel';
 import { AccountPanel } from './AccountPanel';
 import { OrganizationAccess } from './OrganizationAccess';
 import { applySurfaceAction } from './surfaceActions';
+import { useSurfaceAvailable } from './surfaceAvailable';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
@@ -339,6 +341,7 @@ function AccountMenu({
   onSegment: (id: string) => void;
   onLogout: () => void;
 }) {
+  const available = useSurfaceAvailable();
   const items: AccountItem[] = [
     // Each person's own account, first, as in Claude's account menu (P-25).
     { label: 'Account', ic: 'user', action: 'account' },
@@ -361,6 +364,12 @@ function AccountMenu({
     // every customer org admin opened seven tabs that each refused them. The
     // guard still re-checks every read and write; this only decides the offer.
     ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    /* An engineering view of the surface registry, not a customer capability,
+       and outside the release. It was in every member's menu, where the launch
+       scope turned it into a "not in this release" lock (slice 0 of
+       .design/client-journey/INFORMATION_ARCHITECTURE.md). Beside Licensing,
+       for the platform's administrators, and only when it can be opened. */
+    ...(platformAdmin && available('coverage') ? [{ label: 'Codebase coverage', ic: 'grid', to: 'coverage' }] : []),
     /* Where a member's request for a locked module lands. Without this entry the
        lock panel's one instruction — "ask an administrator" — points at nobody:
        the request is recorded, and the person who can approve it has no way to
@@ -374,7 +383,6 @@ function AccountMenu({
     { sep: true },
     { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
-    { label: 'Codebase coverage', ic: 'grid', to: 'coverage' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
@@ -630,6 +638,9 @@ interface CmdKItem {
    * carries no row for the id (navEntitlements.tsx rules 1 and 2).
    */
   lock?: NavSurfaceEntitlement;
+  /** A screen action asked of the destination as it opens: a rail place's
+   *  (Tasks opens on everyone's tasks), or a project step's. */
+  applies?: { actionId: string; params: Record<string, string> };
 }
 
 export function CmdK({
@@ -657,6 +668,8 @@ export function CmdK({
      and the palette behaves exactly as it did before this gate existed. */
   const { verdictFor } = useNavEntitlements();
   const isOrgAdmin = isOrgAdminRole(user?.roles);
+  /** The open project, whose steps the palette lists. */
+  const project = useShellProject();
   /** The locked destination the human just activated from the palette. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
@@ -712,10 +725,34 @@ export function CmdK({
     // NOTE(Phase 3): the kit also searches filings, documents, conversations,
     // pathways, people and templates from its fixture files — those categories
     // join as their surface families port.
+    /* ⌘K reaches what a person can already see; it is not a catalogue (slice 0
+       of .design/client-journey/INFORMATION_ARCHITECTURE.md, section 2). "Jump
+       to" listed the first eight registry rows (Plan & features, Artifacts
+       center, a locked Regulatory workspace among them); it lists the places,
+       as the rail does, by the rail's own rule. */
+    const places: CmdKItem[] = RAIL_CORE
+      .filter((s) => flagAllowsSurface(s.id) && !isLaunchScopeLocked(verdictFor(s.target ?? s.id)))
+      .map((s) => ({
+        ...navResult({ id: s.target ?? s.id, label: s.label, icon: s.icon }),
+        applies: 'applies' in s && s.applies ? { actionId: s.applies.actionId, params: { ...s.applies.params } } : undefined,
+      }));
+    /* The open project's six steps, each opening the project on it through the
+       validated action AnA and the rest of the product use. */
+    const steps: CmdKItem[] = project
+      ? PJ_LIFECYCLE.map((step) => ({
+          id: `step:${step.id}`,
+          kind: 'nav',
+          label: step.label,
+          hint: project.code || project.title || 'This project',
+          icon: step.icon,
+          applies: { actionId: 'project-home.set-stage', params: { stage: step.id } },
+        }))
+      : [];
     if (!q.trim()) {
       return [
         { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...UI_SURFACES.slice(0, 8).map(navResult),
+        ...places,
+        ...(steps.length ? [{ id: '_hd_project', kind: 'header', label: 'This project' }, ...steps] : []),
         { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
         { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
         { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
@@ -731,12 +768,21 @@ export function CmdK({
       }));
     }
     const results: CmdKItem[] = [];
+    const stepHits = steps.filter((st) => st.label.toLowerCase().includes(term));
+    if (stepHits.length) {
+      results.push({ id: '_hd_project', kind: 'header', label: 'This project' });
+      results.push(...stepHits);
+    }
     // Match across every meaningful field, not just label/notes: the kebab id
     // (de-hyphenated so "submission center" matches "submission-center"), the
     // domain group, and the AnA tool families the surface exposes. Cap high —
     // .cmdk-list scrolls (app.css) — so ⌘K reaches the full ~99-surface registry
     // rather than stopping at the first 8 label/notes hits.
     const navs = UI_SURFACES.filter((s) => {
+      /* A surface outside the release is not listed: it was, as a "not in this
+         release" lock nobody can open (slice 0). A licence lock still is: its
+         unlock panel says what to do. */
+      if (isLaunchScopeLocked(verdictFor(s.id))) return false;
       const haystack = [
         s.label,
         s.notes ?? '',
@@ -778,7 +824,7 @@ export function CmdK({
     return results;
     /* `verdictFor` is memoised by the provider on the payload, so this list
        rebuilds once — when the verdicts land — and not on every render. */
-  }, [q, term, isCmd, verdictFor]);
+  }, [q, term, isCmd, verdictFor, project]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
 
@@ -796,7 +842,12 @@ export function CmdK({
         onClose();
         return;
       }
-      if (it.kind === 'nav') onNav(it.id);
+      if (it.kind === 'nav' && it.applies) {
+        const res = resolveSurfaceAction(it.applies.actionId, it.applies.params);
+        const target = it.id.startsWith('step:') ? 'project-home' : it.id;
+        if (res.ok) applySurfaceAction(res.directive, () => onNav(target));
+        else onNav(target);
+      } else if (it.kind === 'nav') onNav(it.id);
       else if (it.kind === 'action') onAct(it.id);
       else onAsk(q.trim());
       onClose();

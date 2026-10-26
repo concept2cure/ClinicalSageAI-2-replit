@@ -1,0 +1,169 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+x·xx·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Jump to" lists the places, in the rail's order
+AssertionError: expected [ 'Projects', 'Plan & features', …(6) ] to deeply equal [ 'Home', 'Projects', 'Tasks', …(5) ]
+
+- Expected
++ Received
+
+  [
+-   "Home",
+    "Projects",
+-   "Tasks",
+-   "Communication",
+-   "Vault",
+-   "CMC / Module 3",
+-   "Quality",
+-   "Reporting & analytics",
++   "Plan & features",
++   "Artifacts center",
++   "Project home",
++   "Document editor & authoring",
++   "Regulatory workspace",
++   "Vault (DMS)",
++   "Review & approval",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:106:34
+    104|     serve();
+    105|     await mount();
+    106|     expect(rowsUnder('Jump to')).toEqual([
+       |                                  ^
+    107|       'Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'CMC / Mo…
+    108|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > a surface outside the release is not listed; a licence lock still is, with its reason
+AssertionError: expected <button type="button" …(4)>…(4)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-label="Submission twin — not in this release"
+  class="cmdk-item"
+  data-locked="true"
+  title="Submission twin — not in this release"
+  type="button"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-layers"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+      />
+      <path
+        d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+      />
+      <path
+        d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+      />
+    </svg>
+  </span>
+  <span
+    class="lbl"
+  >
+    Submission twin
+  </span>
+  <span
+    aria-hidden="true"
+    class="nav-lic"
+    data-lic="off"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-lock"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        height="11"
+        rx="2"
+        ry="2"
+        width="18"
+        x="3"
+        y="11"
+      />
+      <path
+        d="M7 11V7a5 5 0 0 1 10 0v4"
+      />
+    </svg>
+  </span>
+  <span
+    class="hint"
+  >
+    not in this release
+  </span>
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:125:71
+    123|     await mount();
+    124|     search('submission');
+    125|     expect(screen.queryByRole('button', { name: /Submission twin/ })).…
+       |                                                                       ^
+    126|     expect(screen.getByRole('button', { name: 'Submission center — not…
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > with a project open, its steps are listed, and a step opens the project on it
+AssertionError: expected [] to deeply equal [ 'Plan', 'Evidence', 'Author', …(3) ]
+
+- Expected
++ Received
+
+- [
+-   "Plan",
+-   "Evidence",
+-   "Author",
+-   "Review",
+-   "Submit",
+-   "Respond",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx:133:39
+    131|     serve();
+    132|     const { onNav } = await mount();
+    133|     expect(rowsUnder('This project')).toEqual(['Plan', 'Evidence', 'Au…
+       |                                       ^
+    134|     search('evid');
+    135|     fireEvent.click(screen.getByRole('button', { name: /^Evidence/ }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  02:15:39
+   Duration  3.09s (transform 986ms, setup 166ms, import 1.22s, tests 651ms, environment 812ms)
+
