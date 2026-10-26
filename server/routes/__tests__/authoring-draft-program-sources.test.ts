@@ -70,6 +70,8 @@ beforeEach(() => {
   vi.clearAllMocks(); program = PROGRAM;
   h.query.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    // The canonical reference-size aggregate returns one zero row on an empty audit set.
+    if (s.includes('AS reference_bytes')) return { rowCount: 1, rows: [{ reference_bytes: 0 }] };
     if (s.includes('d.status')) return { rowCount: 1, rows: [{ status: null }] };
     if (s.includes('authoring_sections')) return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', code: '3.2.S', title: 'Drug Substance', content: '', module: 'M3', product_code: 'ABC', client_program_id: program }] };
     return { rowCount: 0, rows: [] };

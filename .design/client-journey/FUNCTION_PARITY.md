@@ -204,9 +204,9 @@ The labeling-pi registry entry must claim /api/labeling-smpc. Any re-keying amen
 #### From `dossier` (safe to fold)
 Repoint every onNav('dossier') caller: `Nonclinical.tsx:799`, `NdaCockpit.tsx:633,684`, `AgencyMeetings.tsx:662` and `BiopharmaJourney.tsx:162,169`.
 
-- [ ] Readiness for each CTD section. From `Dossier.tsx:64,174-187`. Goes to: section rows under each ModuleCompletion module on the Author step, from dossier-read's own section rows, with lastUpdated printed. Not real today.
-- [ ] Summary counts. From `Dossier.tsx:168-173`. Goes to: in-review and drafted totals on DossierReadinessCard. Not real today.
-- [ ] AnA reads section readiness. From `Dossier.tsx:84-133`. Goes to: section rows in dossierFacts. Not real today.
+- [ ] Readiness for each CTD section. Partially carried in A2.6: `ProjectDossier.tsx` shows counted governed section key, label and status under each module, with the module's lastUpdated. The legacy screen instead rolls up `concept2cure_artifacts` and shows artifact counts and per-section dates; those semantics still need reconciliation before removal. Module dates are not per-section dates.
+- [x] Summary counts. A2.6: in-review and drafted totals on DossierReadinessCard sum the server's home rows only; added-market rows stay separate. No new percentage is computed. Proof: `projectDossierDetails.test.tsx`, `projectHomeReadiness.test.tsx` and native `project-dossier-details.e2e.ts`.
+- [ ] AnA reads section readiness. Partially carried in A2.6: each module's counted governed section rows and module date are in dossierFacts. Missing/malformed section detail is null. The legacy artifact-rollup facts remain part of the reconciliation above.
 
 #### From `program-journey`
 Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared constant before the file is deleted.
@@ -231,9 +231,9 @@ Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared
 #### From `dossier-map` (safe to fold)
 In one change, delete /api/dossier-map, DossierMap.tsx, the registry and nav entries and the catalogue row, and repoint the "Start Dossier Map" action and capability.
 
-- [ ] Section chips under each module. From `DossierMap.tsx:223-233`. Goes to: the same section rows in ModuleCompletion. Not real today.
-- [ ] Ask AnA for the critical path to filing. From `DossierMap.tsx:180-183`. Goes to: optionally, a suggestion in the Author step's AnA box. Not real today.
-- [ ] AnA reads module completeness and the section lists. From `DossierMap.tsx:100-170`. Goes to: section lists in dossierFacts. Not real today.
+- [ ] Section chips under each module. A2.6 provides the same visible function as read-only counted governed section details in ModuleCompletion, without duplicating Vault's editable tree. Before removal, reconcile the legacy endpoint's artifact-derived completion semantics with this governed read; the old screen/route remain.
+- [x] Ask AnA for the critical path to filing. A2.6: ModuleCompletion on Author calls the existing onAsk with the exact question. Native `project-dossier-details.e2e.ts` proves the conversation prefill without a model request or dossier write.
+- [ ] AnA reads module completeness and the section lists. A2.6 includes server figures, each row's counted sections, agency and module update date in dossierFacts. Governed-section facts are verified; legacy artifact-derived semantics still need the reconciliation above before removal.
 
 #### From `haq-manager`
 Retire the second HAQ store (`server/routes/c2c/haq-sessions.ts`, which has no client caller) in the same change.

@@ -210,7 +210,7 @@ function sectionReferences(sectionId: string, read: SavedTemplateGuidanceRead, t
 }
 
 /** Assembly authority comes from the existing receipt validator, never a parent fallback. */
-function assemblySource(metadata: Record<string, unknown>, read: SavedTemplateGuidanceRead, programId: string) {
+function assemblySource(metadata: Record<string, unknown>, read: SavedTemplateGuidanceRead, programId: string | null) {
   const receipt = metadata.assembly;
   if (!object(receipt) || receipt.programId !== programId || read.authority !== 'recorded' || read.rows.length !== 1) {
     throw new Error('The assembled section reference could not be verified.');
@@ -238,8 +238,8 @@ function hasReferenceIdentity(templateId: string | null, metadata: Record<string
   return false;
 }
 
-/** Called only after current whole-document view admission, on its pinned tenant connection. */
-export async function savedTemplateReview(q: RequestSqlClient, scope: { tenantId: number; documentId: string; programId: string },
+/** Caller admits current access to every explicitly requested section on its tenant connection. */
+export async function savedTemplateReview(q: RequestSqlClient, scope: { tenantId: number; documentId: string; programId: string | null },
   header: Record<string, unknown>, sections: Array<{ sectionId: string; code: string | null }>): Promise<SavedTemplateReview> {
   const { tenantId, documentId, programId } = scope;
   const { id, source, template } = documentTemplate(header);

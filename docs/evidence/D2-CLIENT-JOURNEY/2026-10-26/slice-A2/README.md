@@ -72,7 +72,7 @@ limits and native browser checks are in [A2.5/README.md](A2.5/README.md).
 
 ## Remaining sequence
 
-A2.6 (complete the existing ProjectDossier facts and module details) is next. A2.7 and later screen removals retain function-parity and founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
+A2.6 is complete: counted section details and regulatory order extend the existing read; Author shows read-only status and module dates, home review/draft totals, and the critical-path AnA handoff. Evidence is in [A2.6/README.md](A2.6/README.md). A2.7 is next and begins with legacy artifact-rollup, artifact-count and per-section-date parity reconciliation before any screen removal. Later folds retain founder-decision prerequisites. A2.4 retired the separate AnA creator in favor of the tested canonical wizard; no catalog row, feature entitlement or surface was retired.
 
 ## Final integration
 

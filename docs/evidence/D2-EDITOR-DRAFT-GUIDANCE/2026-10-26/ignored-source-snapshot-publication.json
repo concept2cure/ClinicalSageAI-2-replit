@@ -1,0 +1,807 @@
+{
+  "missingArtifacts": [
+    {
+      "artifact": "http/baseline-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/lint-initial-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/lint-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/green-initial-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/baseline-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/lint-initial-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/green-initial-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/green-initial-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/red-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/green-initial-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/green-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/lint-initial-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/lint-initial-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/lint-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/green-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/green-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/red-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/green-initial-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/green-initial-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/green-initial-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/lint-initial-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/green-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/green-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/red-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/lint-initial-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/red-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/baseline-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/green-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/green-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/lint-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/green-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/baseline-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/lint-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/green-initial-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/red-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/green-initial-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/green-initial-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/green-initial-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/lint-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/red-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/lint-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/baseline-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/green-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/lint-initial-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/lint-initial-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/baseline-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/lint-initial-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/green-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/green-initial-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/lint-initial-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/lint-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/lint-initial-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/baseline-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/red-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/lint-initial-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/baseline-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/green-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/baseline-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/red-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/red-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/green-initial-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/lint-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/lint-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/red-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/lint-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/baseline-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/green-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/baseline-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/baseline-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/lint-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/baseline-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/green-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/green-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/baseline-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/red-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/green-initial-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/green-initial-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/lint-initial-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/lint-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/red-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/lint-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/baseline-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/lint-initial-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/lint-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/red-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/lint-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/lint-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/baseline-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/green-initial-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/lint-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/green-initial-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/baseline-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/lint-initial-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/baseline-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/red-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/green-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/lint-initial-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/red-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/green-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/lint-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/green-initial-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/green-initial-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/lint-initial-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/lint-initial-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/green-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/baseline-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/green-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/lint-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/red-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/lint-initial-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/red-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/red-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/red-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    },
+    {
+      "artifact": "http/green-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/setup-unrun/red-19-20260727_authoring_object_permissions.sql.gz",
+      "canonicalSource": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sourceSha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02"
+    },
+    {
+      "artifact": "http/setup-unrun/red-25-20260809_source_attribution_draft_candidates.sql.gz",
+      "canonicalSource": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sourceSha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77"
+    },
+    {
+      "artifact": "http/setup-unrun/red-18-20260725_authoring_signature_freeze_binding.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sourceSha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175"
+    },
+    {
+      "artifact": "http/setup-unrun/red-31-20260906c_draft_candidate_assertions.sql.gz",
+      "canonicalSource": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sourceSha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88"
+    },
+    {
+      "artifact": "http/setup-unrun/red-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sourceSha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249"
+    },
+    {
+      "artifact": "http/setup-unrun/red-26-20260921_audit_logs_chain_seq.sql.gz",
+      "canonicalSource": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sourceSha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833"
+    },
+    {
+      "artifact": "http/setup-unrun/red-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+      "canonicalSource": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sourceSha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb"
+    },
+    {
+      "artifact": "http/setup-unrun/red-17-20260725_authoring_signatures_and_workflow.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sourceSha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338"
+    },
+    {
+      "artifact": "http/setup-unrun/red-14-20260921_authoring_document_provenance.sql.gz",
+      "canonicalSource": "migrations/20260921_authoring_document_provenance.sql",
+      "sourceSha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87"
+    },
+    {
+      "artifact": "http/setup-unrun/red-13-20260727_authoring_document_program_scope.sql.gz",
+      "canonicalSource": "migrations/20260727_authoring_document_program_scope.sql",
+      "sourceSha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf"
+    },
+    {
+      "artifact": "http/setup-unrun/red-15-20260725_authoring_document_loop_tables.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sourceSha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a"
+    },
+    {
+      "artifact": "http/setup-unrun/red-23-20260730_authoring_subsystem_schema.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sourceSha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "artifact": "http/setup-unrun/red-29-20260908_span_lineage_machine_draft.sql.gz",
+      "canonicalSource": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sourceSha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179"
+    },
+    {
+      "artifact": "http/setup-unrun/red-20-20260730_authoring_runtime_ddl.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sourceSha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7"
+    },
+    {
+      "artifact": "http/setup-unrun/red-30-20260814i_draft_candidate_generator.sql.gz",
+      "canonicalSource": "migrations/20260814i_draft_candidate_generator.sql",
+      "sourceSha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3"
+    },
+    {
+      "artifact": "http/setup-unrun/red-27-20260926_ana_turn_records.sql.gz",
+      "canonicalSource": "migrations/20260926_ana_turn_records.sql",
+      "sourceSha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3"
+    },
+    {
+      "artifact": "http/setup-unrun/red-16-20260725_authoring_audit_trail.sql.gz",
+      "canonicalSource": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sourceSha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c"
+    },
+    {
+      "artifact": "http/setup-unrun/red-21-20260730_authoring_comments_router_columns.sql.gz",
+      "canonicalSource": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sourceSha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "artifact": "http/setup-unrun/red-24-20260803_document_span_lineage.sql.gz",
+      "canonicalSource": "db/migrations/20260803_document_span_lineage.sql",
+      "sourceSha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada"
+    }
+  ],
+  "ignoreRules": [
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-initial-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/baseline-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/lint-initial-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/red-24-20260803_document_span_lineage.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/green-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-19-20260727_authoring_object_permissions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-25-20260809_source_attribution_draft_candidates.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-18-20260725_authoring_signature_freeze_binding.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-31-20260906c_draft_candidate_assertions.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-28-20260907_span_lineage_accepted_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-26-20260921_audit_logs_chain_seq.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-22-20260817_doc_revisions_immutable_ledger.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-17-20260725_authoring_signatures_and_workflow.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-14-20260921_authoring_document_provenance.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-13-20260727_authoring_document_program_scope.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-15-20260725_authoring_document_loop_tables.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-23-20260730_authoring_subsystem_schema.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-29-20260908_span_lineage_machine_draft.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-20-20260730_authoring_runtime_ddl.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-30-20260814i_draft_candidate_generator.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-27-20260926_ana_turn_records.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-16-20260725_authoring_audit_trail.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-21-20260730_authoring_comments_router_columns.sql.gz",
+    ".gitignore:144:*.sql.gz\tdocs/evidence/D2-EDITOR-DRAFT-GUIDANCE/2026-10-26/http/setup-unrun/red-24-20260803_document_span_lineage.sql.gz"
+  ],
+  "verifiedAsTrackedMigrationSource": true,
+  "databaseExports": false,
+  "action": "Explicitly git add -f only these known evidence artifacts; no hook bypass or forced branch update"
+}

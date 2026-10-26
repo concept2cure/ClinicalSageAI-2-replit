@@ -1,13 +1,15 @@
 /** Real authoring HTTP + PGlite writes; only gateway and retrieval are synthetic.
  * Proves saved-base rejection before candidate consumption and fresh project
  * admission. It does not qualify a live model, native-PG scheduling or RLS. */
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { AUTHOR, AUTHORING_ACCESS_DDL, ORG, PREREQ, PROGRAM, asToken, makeApp, mint } from './_authoring-canvas-fixture';
 import { newTrace, tappedPool } from './_authoring-record-fixture';
+import type { RecordedTemplateSource } from '../../../shared/authoring/recorded-template-source';
+import { loadTurnRecord, verifyStoredTurnRecord } from '../../services/ana/turn-record-verify';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -44,6 +46,9 @@ vi.mock('../../services/authoring/authoring-draft-sources.js', async importOrigi
 
 const DOC = 'a5510000-0000-4000-8000-000000000001';
 const UNBOUND_DOC = 'a5510000-0000-4000-8000-000000000002';
+const TEMPLATE = 'a5510000-0000-4000-8000-000000000003';
+const PARENT_TEMPLATE = 'a5510000-0000-4000-8000-000000000004';
+const OTHER_PROGRAM = 'a5510000-0000-4000-8000-000000000005';
 const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
@@ -56,6 +61,8 @@ beforeAll(async () => {
     prereqSql: PREREQ + AUTHORING_ACCESS_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260921_authoring_document_provenance.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
@@ -74,7 +81,6 @@ beforeAll(async () => {
       'migrations/20260906c_draft_candidate_assertions.sql',
     ],
     testOnlySql: `
-      ALTER TABLE authoring_documents ADD COLUMN IF NOT EXISTS client_program_id uuid;
       INSERT INTO authoring_documents (id,title,module,status,created_by,tenant_id,client_program_id) VALUES
         ('${DOC}','Assembly target','M2','draft','${AUTHOR.id}',${ORG},'${PROGRAM}'),
         ('${UNBOUND_DOC}','Standalone target','M2','draft','${AUTHOR.id}',${ORG},NULL);
@@ -90,7 +96,9 @@ beforeEach(async () => {
   h.searches = [];
   h.prompts = [];
   await jdb.pglite.exec(`UPDATE users SET status='active'; UPDATE projects SET owner_id=${AUTHOR.id},created_by_id=${AUTHOR.id};
-    UPDATE project_visibility_settings SET visibility='org_public';`);
+    UPDATE project_visibility_settings SET visibility='org_public';
+    UPDATE authoring_documents SET template_id=NULL,provenance=NULL;`);
+  trace.failOn = null;
 });
 
 async function section(doc = DOC): Promise<string> {
@@ -103,6 +111,42 @@ async function section(doc = DOC): Promise<string> {
 const generate = (id: string, body: Record<string, unknown> = {}) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft`)).send(body);
 const accept = (id: string, draftId: string) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft/accept`)).send({ draftId });
 const parked = async (draftId: string) => (await jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE id=$1', [draftId])).rows.length;
+
+const templateSource = (changes: Partial<RecordedTemplateSource> = {}): RecordedTemplateSource => ({
+  id: TEMPLATE, entryId: 'registry:US_IND', version: 1, sha256: 'a'.repeat(64), kind: 'narrative',
+  aiDraftable: true, authoringMode: 'ai_draft', originalFormat: 'docx', limitations: ['Use only verified study results.'],
+  filingContext: { registryId: 'US_IND', region: 'US', agency: 'FDA' }, ...changes,
+});
+const regionalSource = (region: 'CA' | 'EU' | 'JP') => templateSource({ entryId: `registry:${region}_TEST`,
+  filingContext: { registryId: `${region}_TEST`, region, agency: { CA: 'Health Canada', EU: 'EMA', JP: 'PMDA' }[region] } });
+const assemblyMetadata = (source: RecordedTemplateSource, guide = 'Exact assembled section reference.') => ({
+  templateSource: source, templateGuidance: { guidance_text: guide }, assembly: {
+    version: 1, docId: DOC, programId: PROGRAM, templateId: source.id, templateSnapshot: source.sha256, fingerprint: 'b'.repeat(64),
+  },
+});
+
+async function recordGuidance(id: string, metadata: unknown, source: RecordedTemplateSource | null = templateSource(), doc = DOC) {
+  if (source) await jdb.pglite.query('UPDATE authoring_documents SET template_id=$1,provenance=$2::jsonb WHERE id=$3',
+    [source.id, JSON.stringify({ source: 'template', templateSource: source }), doc]);
+  await jdb.pglite.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,tenant_id,metadata)
+    VALUES($1,$2,'CREATE',$3,$4,$5::jsonb)`, [doc, id, AUTHOR.email, ORG, JSON.stringify(metadata)]);
+}
+const savedMetadata = (source: unknown, guidance = 'Exact saved section instructions.') => ({
+  templateSource: source, templateGuidance: { guidance_text: guidance, compliance_checklist: ['Keep the study identity.'] },
+});
+
+async function expectDraftRefusal(id: string, code: string, status = 409) {
+  const mark = trace.stmts.length;
+  // A malformed source selection would otherwise fail at the next boundary.
+  const response = await generate(id, { sources: {} });
+  expect(response.status, JSON.stringify(response.body)).toBe(status);
+  expect(response.body.error.code).toBe(code);
+  expect(h.prompts).toEqual([]);
+  expect(h.searches).toEqual([]);
+  expect(trace.stmts.slice(mark).some(row => /(?:FROM vault\.|INSERT INTO (?:ana_turn_records|authoring_ai_draft_candidates)|UPDATE authoring_sections)/i.test(row.sql))).toBe(false);
+  expect((await jdb.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE section_id=$1', [id])).rows).toEqual([]);
+  expect((await jdb.pglite.query<{ content: string }>('SELECT content FROM authoring_sections WHERE id=$1', [id])).rows[0].content).toBe('');
+}
 
 describe('assembly AnA candidates retain their exact saved base', () => {
   it('captures the saved section, ignores client base claims and scopes retrieval to its admitted project', async () => {
@@ -216,5 +260,161 @@ describe('saved-base and Vault receipt controls coexist', () => {
     expect(statements.some(row => /UPDATE authoring_sections/.test(row.sql))).toBe(false);
     expect(statements.some(row => row.sql === 'ROLLBACK')).toBe(true);
     expect((await jdb.pglite.query<{ content: string }>('SELECT content FROM authoring_sections WHERE id=$1', [id])).rows[0].content).toBe('');
+  }, T);
+});
+
+describe('the existing section draft uses its admitted saved template reference', () => {
+  it('sends earliest recorded guidance despite a renamed heading/current reference and seals the actual prompt', async () => {
+    const id = await section();
+    const source = templateSource();
+    const guide = 'Retained guidance: distinguish the assay validation cohort from the clinical cohort.';
+    await recordGuidance(id, savedMetadata(source, guide));
+    await recordGuidance(id, savedMetadata(source, 'Later CREATE guidance must not replace the original.'));
+    await jdb.pglite.query("UPDATE authoring_sections SET title='Renamed device worksheet' WHERE id=$1", [id]);
+    await jdb.pglite.query(`INSERT INTO authoring_templates(id,template_name,template_type,tenant_id)
+      VALUES($1,'Current template','regulatory',$2) ON CONFLICT DO NOTHING`, [TEMPLATE, ORG]);
+    await jdb.pglite.query(`INSERT INTO template_guidance(template_id,section_name,section_code,guidance_text,tenant_id)
+      SELECT $1,'Current reference',code,'Current reference must not replace saved guidance.',$2 FROM authoring_sections WHERE id=$3`, [TEMPLATE, ORG, id]);
+    const inputs = { tone: 'concise', region: 'FDA', context: 'Validated diagnostic assay.', requirements: 'Keep uncertainty explicit.' };
+    const response = await generate(id, inputs);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const prompt = h.prompts[0];
+    expect(prompt).toContain(guide);
+    expect(prompt).toContain(source.limitations[0]);
+    expect(prompt).toContain('Renamed device worksheet');
+    expect(prompt).toContain(inputs.context);
+    expect(prompt).toContain(inputs.requirements);
+    expect(prompt).not.toContain('Later CREATE guidance');
+    expect(prompt).not.toContain('Current reference must');
+    expect(prompt).toMatch(/reference[^\n]*(?:not|never)[^\n]*evidence/i);
+    expect(prompt).not.toContain('compliance-ready');
+    const candidate = (await jdb.pglite.query<{ generator: { promptSha256: string }; sources: unknown }>(
+      'SELECT generator,sources FROM authoring_ai_draft_candidates WHERE id=$1', [response.body.draft.draftId])).rows[0];
+    expect(candidate.generator.promptSha256).toBe(createHash('sha256').update(prompt).digest('hex'));
+    expect(JSON.stringify(candidate.sources)).not.toContain(guide);
+    const stored = await loadTurnRecord(jdb.pool as never, ORG, response.body.draft.turnRecord.id);
+    expect(stored).toBeTruthy();
+    expect(verifyStoredTurnRecord(stored!).ok).toBe(true);
+    const body = JSON.parse(stored!.recordText) as { modelInput: Array<{ text: { sha256: string } }>; request: { typed: { sha256: string } } };
+    expect(stored!.texts.get(body.modelInput[0].text.sha256)).toBe(prompt);
+    expect(JSON.parse(stored!.texts.get(body.request.typed.sha256)!)).toMatchObject(inputs);
+    expect(h.searches).toHaveLength(1);
+    expect((await jdb.pglite.query<{ content: string }>('SELECT content FROM authoring_sections WHERE id=$1', [id])).rows[0].content).toBe('');
+  }, T);
+
+  it('uses the assembled section’s Japanese source rather than its different manual FDA parent', async () => {
+    const id = await section();
+    const source = regionalSource('JP');
+    const parent = templateSource({ id: PARENT_TEMPLATE, aiDraftable: false, kind: 'preparation', authoringMode: 'manual', limitations: ['Parent-only official form limit.'] });
+    await recordGuidance(id, assemblyMetadata(source, 'Japanese section-specific clinical evidence guidance.'), parent);
+    const response = await generate(id);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.draft.metadata.region).toBe('PMDA');
+    expect(h.prompts[0]).toContain('Japanese section-specific clinical evidence guidance.');
+    expect(h.prompts[0]).toContain(source.id);
+    expect(h.prompts[0]).not.toContain(parent.limitations[0]);
+    expect(h.prompts[0]).not.toContain(parent.id);
+  }, T);
+
+  it.each([{ region: 'JP', writing: 'PMDA' }, { region: 'CA', writing: 'Health Canada' }, { region: 'EU', writing: 'EMA' }] as const)(
+    'derives $writing only when the saved $region section request omits region', async ({ region, writing }) => {
+      const id = await section(); const source = regionalSource(region);
+      await recordGuidance(id, savedMetadata(source), source);
+      const response = await generate(id);
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+      expect(response.body.draft.metadata.region).toBe(writing);
+      expect(h.prompts[0]).toContain(source.filingContext!.registryId!);
+      expect(h.prompts[0]).toContain(`Generate professional ${writing}`);
+    }, T);
+
+  it.each(['JP', 'CA', 'EU'] as const)('refuses an explicit FDA conflict with saved %s scope before retrieval/model', async region => {
+    const id = await section(); const source = regionalSource(region);
+    await recordGuidance(id, savedMetadata(source), source);
+    const mark = trace.stmts.length;
+    const response = await generate(id, { region: 'FDA' });
+    expect(response.status, JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error.code).toBe('TEMPLATE_REGION_MISMATCH');
+    expect(h.searches).toEqual([]); expect(h.prompts).toEqual([]);
+    expect(trace.stmts.slice(mark).some(row => /INSERT INTO (?:ana_turn_records|authoring_ai_draft_candidates)/i.test(row.sql))).toBe(false);
+  }, T);
+});
+
+describe('recorded section reference refusals precede source selection', () => {
+  it.each([{ aiDraftable: false }, { kind: 'preparation' }, { authoringMode: 'manual' }] as const)(
+    'honors a recorded automatic-drafting limit %j before selected-source reads', async limit => {
+      const id = await section(); const source = templateSource(limit);
+      await recordGuidance(id, savedMetadata(source), source);
+      await expectDraftRefusal(id, 'TEMPLATE_NOT_DRAFTABLE');
+    }, T);
+
+  it('refuses an otherwise well-formed assembly receipt for a different saved program', async () => {
+    const id = await section(); const metadata = assemblyMetadata(templateSource()); metadata.assembly.programId = OTHER_PROGRAM;
+    await recordGuidance(id, metadata, null);
+    await expectDraftRefusal(id, 'TEMPLATE_REFERENCE_UNAVAILABLE', 503);
+  }, T);
+
+  it('refuses an assembly receipt on a standalone section instead of inventing a program', async () => {
+    const id = await section(UNBOUND_DOC); const metadata = assemblyMetadata(templateSource()); metadata.assembly.docId = UNBOUND_DOC;
+    await recordGuidance(id, metadata, null, UNBOUND_DOC);
+    await expectDraftRefusal(id, 'TEMPLATE_REFERENCE_UNAVAILABLE', 503);
+  }, T);
+
+  it.each([{ templateGuidance: null }, { templateGuidance: { guidance_text: 17 } }, { templateSource: { id: OTHER_PROGRAM } }])(
+    'refuses malformed present saved metadata %j rather than dropping its reference', async change => {
+      const id = await section(); await recordGuidance(id, { ...savedMetadata(templateSource()), ...change });
+      await expectDraftRefusal(id, 'TEMPLATE_REFERENCE_UNAVAILABLE', 503);
+    }, T);
+});
+
+describe('legacy and reference-only scope stays honest in the same draft route', () => {
+  it('keeps legacy identity-only guidance useful without inventing complete source fields', async () => {
+    const id = await section();
+    await jdb.pglite.query('UPDATE authoring_documents SET template_id=$1 WHERE id=$2', [TEMPLATE, DOC]);
+    await recordGuidance(id, savedMetadata({ id: TEMPLATE }, 'Historical section reference.'), null);
+    const response = await generate(id);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.draft.metadata.region).toBe('FDA');
+    expect(h.prompts[0]).toContain('Historical section reference.');
+    expect(h.prompts[0]).toContain('identity-only');
+    expect(h.prompts[0]).not.toContain('registry:US_IND');
+    expect(h.prompts[0]).not.toMatch(/"aiDraftable"\s*:\s*true/);
+  }, T);
+
+  it('honors an explicit legacy partial-source limit without upgrading its verification', async () => {
+    const id = await section();
+    await jdb.pglite.query('UPDATE authoring_documents SET template_id=$1 WHERE id=$2', [TEMPLATE, DOC]);
+    await recordGuidance(id, savedMetadata({ id: TEMPLATE, aiDraftable: false }), null);
+    await expectDraftRefusal(id, 'TEMPLATE_NOT_DRAFTABLE');
+  }, T);
+
+  it.each([undefined, 'EMA'])('keeps GLOBAL guidance separate from the %s writing preference', async region => {
+    const id = await section(); const source = templateSource({ entryId: 'component:shared-plan',
+      filingContext: { registryId: null, region: 'GLOBAL', agency: 'Reference standards' } });
+    await recordGuidance(id, savedMetadata(source, 'Shared laboratory plan guidance.'), source);
+    const response = await generate(id, region ? { region } : {});
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.draft.metadata.region).toBe(region ?? 'FDA');
+    expect(h.prompts[0]).toContain('Shared laboratory plan guidance.');
+    expect(h.prompts[0]).toMatch(/GLOBAL[\s\S]*(?:not|no)[\s\S]*jurisdiction/i);
+  }, T);
+
+  it('allows ad-hoc drafting with an honest unverified reference state', async () => {
+    const response = await generate(await section());
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.draft.metadata.region).toBe('FDA');
+    expect(h.prompts[0]).toMatch(/not-recorded|unverified|unconfirmed/i);
+  }, T);
+
+  it('retains an empty exact guidance gap without substituting another section', async () => {
+    const id = await section(); await recordGuidance(id, savedMetadata(templateSource(), ''));
+    const response = await generate(id);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(h.prompts[0]).toMatch(/not-recorded|unavailable|missing|no recorded/i);
+  }, T);
+
+  it('refuses a mandatory non-ASCII reference exceeding 16 KiB instead of clipping limits', async () => {
+    const id = await section(); const source = templateSource({ limitations: ['資料'.repeat(4000)] });
+    await recordGuidance(id, savedMetadata(source), source);
+    await expectDraftRefusal(id, 'TEMPLATE_REFERENCE_TOO_LARGE');
   }, T);
 });

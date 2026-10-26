@@ -3390,7 +3390,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Lay out a phased vaccine clinical development program (Phase 1-3). Returns the efficacy-vs-immunobridging decision based on whether a validated correlate exists and whether a field-efficacy trial is feasible, the reference efficacy success criterion (FDA COVID-19 paradigm: point estimate >= 50% with the CI lower bound > 30%), per-phase objectives and sample sizes, immunogenicity endpoint definitions (seroconversion, seroresponse, seroprotection, GMT/GMC, GMR), the safety database size and follow-up duration, the >=3 consecutive-lot consistency requirement, and accelerated-approval eligibility (21 CFR 601 Subpart E). Use when the user needs to plan a vaccine clinical program, define immunogenicity endpoints, decide between an efficacy trial and immunobridging, or size the safety database. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Lay out a phased vaccine clinical development program (Phase 1-3). Returns the efficacy-vs-immunobridging decision based on whether a validated correlate exists and whether a field-efficacy trial is feasible, the reference efficacy success criterion (FDA COVID-19 paradigm: point estimate >= 50% with the CI lower bound > 30%), per-phase objectives and sample sizes, immunogenicity endpoint definitions (seroconversion, seroresponse, seroprotection, GMT/GMC, GMR), the safety database size and follow-up duration, the >=3 consecutive-lot consistency reference expectation, and unassessed accelerated-approval eligibility with conditional guidance. Use when the user needs to plan a vaccine clinical program, define immunogenicity endpoints, decide between an efficacy trial and immunobridging, or size the safety database. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -3412,13 +3412,13 @@
           "name": "hasEstablishedCorrelate",
           "type": "boolean",
           "required": false,
-          "description": "Whether a validated immune correlate of protection exists (enables immunobridging). Default false."
+          "description": "Stated validated-correlate availability. Omitted/null remains not_stated; it cannot select a pathway or endpoint."
         },
         {
           "name": "efficacyFeasible",
           "type": "boolean",
           "required": false,
-          "description": "Whether a field-efficacy trial is feasible (adequate disease incidence, ethics, logistics). Default true."
+          "description": "Stated field-efficacy feasibility (incidence, ethics, logistics). Omitted/null remains not_stated. Explicit false must not select an efficacy Phase 3."
         },
         {
           "name": "targetPopulation",
@@ -3436,7 +3436,7 @@
           "name": "diseaseSeriousness",
           "type": "string",
           "required": false,
-          "description": "Seriousness of the target disease (default \"serious\"). \"pandemic\" scales the safety database and Phase 3 size upward."
+          "description": "Stated disease seriousness. If omitted, seriousness-dependent safety sizing remains unassessed. Reference ranges do not establish a project sample size."
         },
         {
           "name": "framework",
@@ -5950,7 +5950,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Build a platform-tailored vaccine CMC development plan. Given the technology platform (mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, or DNA) and product attributes, returns the drug-substance and drug-product definitions, adjuvant strategy and constituent-material controls (21 CFR 610.15), the potency-assay paradigm and release tests (21 CFR 610.10/.12/.13/.14), the ICH Q5C stability program, reference-standard strategy, cell-substrate (ICH Q5D) and viral-safety (ICH Q5A(R2)) expectations, key CMC risks, and ICH Q5E comparability guidance. Use when the user needs to plan vaccine chemistry, manufacturing, and controls, choose a potency assay, design a stability program, or understand platform-specific CMC risks. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a platform-tailored vaccine CMC development plan. Given the technology platform (mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, or DNA) and product attributes, returns the drug-substance and drug-product definitions, adjuvant strategy and constituent-material controls (21 CFR 610.15), the potency-assay paradigm and release tests (21 CFR 610.10/.12/.13/.14), the ICH Q5C stability program, reference-standard strategy, cell-substrate (ICH Q5D) and viral-safety (ICH Q5A(R2)) expectations, key CMC risks, and ICH Q5E comparability guidance. Use when the user needs to plan vaccine chemistry, manufacturing, and controls, choose a potency assay, design a stability program, or understand platform-specific CMC risks. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5978,31 +5978,31 @@
           "name": "multivalent",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product contains multiple valences/serotypes (default inferred false)."
+          "description": "Stated multivalent status. Omitted/null remains not_stated; no monovalent product is assumed."
         },
         {
           "name": "numberOfValences",
           "type": "number",
           "required": false,
-          "description": "Number of valences/serotypes if multivalent (default 2 when multivalent is true)."
+          "description": "Stated positive integer valence count. No count is invented when multivalent is true; a count above 1 contradicts multivalent:false."
         },
         {
           "name": "adjuvanted",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is adjuvanted. If omitted, defaults to true for protein subunit, inactivated, and VLP platforms and false otherwise."
+          "description": "Stated added-adjuvant status. Omitted/null remains not_stated regardless of platform; no self-adjuvancy is inferred."
         },
         {
           "name": "adjuvantName",
           "type": "string",
           "required": false,
-          "description": "Specific adjuvant if known (e.g. \"aluminium hydroxide\", \"AS01\", \"MF59\", \"CpG 1018\"). If omitted, a platform-typical adjuvant is suggested."
+          "description": "Specific adjuvant if known (e.g. \"aluminium hydroxide\", \"AS01\", \"MF59\", \"CpG 1018\"). If omitted, the actual adjuvant name stays unknown; platform examples remain references. A name contradicts adjuvanted:false."
         },
         {
           "name": "lyophilized",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug product is lyophilized (affects residual-moisture control and in-use stability). If omitted, inferred from the platform cold-chain profile."
+          "description": "Whether the drug product is lyophilized (affects residual-moisture control and in-use stability). If omitted, presentation-dependent controls remain unassessed; cold-chain references do not fill the fact."
         },
         {
           "name": "framework",
@@ -9909,7 +9909,7 @@
         "id": "governance",
         "label": "Governance & data"
       },
-      "description": "Design a manufacturing lot-to-lot consistency (equivalence) study. Returns the equivalence design across the (default 3) consecutive lots, the equivalence margin on the GMT ratio (default 0.5-2.0, i.e. two-fold), the full set of pairwise two-one-sided-test (TOST) comparisons, a closed-form per-group and total sample-size estimate (from the assumed log-titer SD, target power, and margin), the potency-consistency expectation (21 CFR 610.10), the immunogenicity readout, the acceptance logic (every pairwise CI within the margin), and the stated assumptions. Use when the user needs to plan a 3-lot consistency study, choose equivalence margins, or estimate the sample size for demonstrating lot consistency. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a manufacturing lot-to-lot consistency (equivalence) study. Returns the equivalence design across the (default 3) consecutive lots, the equivalence margin on the GMT ratio (default 0.5-2.0, i.e. two-fold), the full set of pairwise two-one-sided-test (TOST) comparisons, a closed-form per-group and total sample-size estimate (from the assumed log-titer SD, target power, and margin), the potency-consistency expectation (21 CFR 610.10), the immunogenicity readout, the acceptance logic (every pairwise CI within the margin), and the stated assumptions. Use when the user needs to plan a 3-lot consistency study, choose equivalence margins, or estimate the sample size for demonstrating lot consistency. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -9919,7 +9919,7 @@
           "name": "numberOfLots",
           "type": "number",
           "required": false,
-          "description": "Number of consecutive manufacturing lots to compare (default 3; clamped to 2-5). The conventional pre-licensure expectation is >= 3."
+          "description": "Planned number of consecutive lots (integer 2–5; illustrative default 3, disclosed in defaultsApplied). Invalid values are refused. The conventional pre-licensure expectation is >= 3."
         },
         {
           "name": "immunogenicityMarker",
@@ -9949,13 +9949,13 @@
           "name": "equivalenceMarginUpper",
           "type": "number",
           "required": false,
-          "description": "Upper equivalence margin on the GMT ratio (default 2.0). Symmetric to the lower bound in log space."
+          "description": "Upper ratio margin above 1 (illustrative default 2). This approximation supports reciprocal log-symmetric bounds only; lower must equal 1 / upper."
         },
         {
           "name": "targetPower",
           "type": "number",
           "required": false,
-          "description": "Target power per pairwise comparison, 0-1 (default 0.90; clamped 0.5-0.99)."
+          "description": "Target planning power per comparison (supported 0.5–0.99; illustrative default 0.90). Invalid values are refused, not clamped."
         },
         {
           "name": "framework",
@@ -14649,10 +14649,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify and assess a proposed immune correlate of protection (CoP). Returns the CoP type using the Plotkin & Gilbert (2012) nomenclature — mechanistic vs non-mechanistic, absolute vs relative — matches the pathogen against known correlates (influenza HAI 1:40, hepatitis B anti-HBs 10 mIU/mL, measles/meningococcal/diphtheria/tetanus/rabies neutralizing thresholds, pneumococcal IgG/OPA), assesses threshold and surrogate-endpoint usability against the Prentice/Qin (2007) framework, lists bridging applications (lot consistency, comparability, population extrapolation, strain change), and flags validation gaps. Use when the user asks whether an immune marker can serve as a correlate/surrogate endpoint, what threshold applies, or whether immunobridging or accelerated approval is supportable. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the stated mechanism/protection flags for an immune correlate and show separate known-correlate references. Missing flags leave classification unassessed; reference entries do not supply the actual marker, threshold or efficacy linkage. Returns the stated marker/threshold, Prentice validation requirements and conditional bridging-use guidance. Surrogate validation, product eligibility and agency acceptance are not determined. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
-      "renderer": "findings-list",
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -14665,7 +14665,7 @@
           "name": "immuneMarker",
           "type": "string",
           "required": false,
-          "description": "Proposed immune marker (e.g. \"HAI titer\", \"neutralizing antibody\", \"SBA\", \"OPA\", \"anti-HBs\"). If omitted, a known marker for the pathogen is used when available."
+          "description": "Proposed immune marker (e.g. \"HAI titer\", \"neutralizing antibody\", \"SBA\", \"OPA\", \"anti-HBs\"). If omitted, the actual marker remains unknown; a pathogen reference does not supply it."
         },
         {
           "name": "proposedThreshold",
@@ -14677,7 +14677,7 @@
           "name": "protectionMechanismKnown",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker is the causal protective effector (mechanistic). Combined with markerDirectlyProtective to classify the CoP. If both are omitted, the known-correlate registry classification is used."
+          "description": "Whether the marker is the causal protective effector (mechanistic). Combined with markerDirectlyProtective to classify the stated CoP. If either flag is omitted, classification stays not_assessed."
         },
         {
           "name": "markerDirectlyProtective",
@@ -14689,13 +14689,13 @@
           "name": "hasEfficacyDataLinkingMarker",
           "type": "boolean",
           "required": false,
-          "description": "Whether an efficacy dataset links the marker to clinical protection (supports Prentice criteria). If omitted, inferred true when a known correlate matches the pathogen."
+          "description": "Whether an efficacy dataset links the marker to clinical protection (supports Prentice criteria). If omitted, stays not_stated; a known-correlate match is reference information, not product efficacy evidence."
         },
         {
           "name": "intendedUse",
           "type": "string",
           "required": false,
-          "description": "Intended regulatory use of the correlate (default \"immunobridging\")."
+          "description": "Stated intended use; if omitted, no intended-use assessment is selected. Returned guidance is conditional reference information."
         },
         {
           "name": "framework",
@@ -17311,7 +17311,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess a vaccine technology platform and how to leverage prior platform knowledge. Returns the platform development implications, the strength of platform prior knowledge (high/moderate/emerging), specific prior-knowledge leverage points (licensed-product reference, same-backbone/new-antigen abbreviated package, Vaccine/Platform Master File eligibility), nonclinical and CMC leverage (WHO TRS 927, ICH Q5E), population suitability with replicating-platform cautions, and the key platform risks. Covers mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, and DNA. Use when the user is choosing a platform, asking how much prior knowledge transfers to a new antigen, or whether a platform master file applies. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess a vaccine technology platform and how to leverage prior platform knowledge. Returns the platform development implications, the strength of platform prior knowledge (high/moderate/emerging), specific prior-knowledge leverage points (licensed-product reference, same-backbone/new-antigen abbreviated package, Vaccine/Platform Master File eligibility), nonclinical and CMC leverage (WHO TRS 927, ICH Q5E), population suitability with replicating-platform cautions, and the key platform risks. Covers mRNA, viral vector, protein subunit, live-attenuated, inactivated, conjugate, VLP, and DNA. Use when the user is choosing a platform, asking how much prior knowledge transfers to a new antigen, or whether a platform master file applies. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -17327,19 +17327,19 @@
           "name": "priorLicensedProductOnPlatform",
           "type": "boolean",
           "required": false,
-          "description": "Whether a product on this platform is already licensed (anchors referenceable safety/CMC knowledge). Default false."
+          "description": "Stated prior licensing status; omitted/null stays not_stated. The existence and reuse of accessible supporting evidence still need assessment."
         },
         {
           "name": "sameBackboneDifferentAntigen",
           "type": "boolean",
           "required": false,
-          "description": "Whether this product uses the same platform backbone with a new antigen/transgene/sequence (supports an abbreviated antigen-specific nonclinical package). Default false."
+          "description": "Whether this product uses the same platform backbone with a new antigen/transgene/sequence (may support evidence-based reuse). Omitted/null stays not_stated and cannot select a full or abbreviated product package."
         },
         {
           "name": "intendedPopulation",
           "type": "string",
           "required": false,
-          "description": "Intended population (default \"general\"). Drives replicating-platform safety cautions for immunocompromised/pregnant populations."
+          "description": "Stated intended population. If omitted, suitability remains unassessed. Viral-vector replication properties are not determined by this broad platform category."
         },
         {
           "name": "framework",
@@ -29101,7 +29101,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build a special-population vaccine development strategy. For pediatric, pregnancy/maternal, elderly, or immunocompromised populations (or all), returns the per-population strategy, dosing approach, endpoint, and safety considerations, plus the age de-escalation approach (PREA / 21 CFR 601.27 — start in older children and step down to infants), the maternal-immunization approach (DART first, gestational-age window, transplacental transfer endpoint), the bridging approach, and platform/population safety cautions (e.g. live-attenuated contraindicated in immunocompromised/pregnant populations). Use when the user needs a pediatric, maternal, elderly, or immunocompromised vaccine strategy, age de-escalation plan, or dosing approach for a special population. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a special-population vaccine development strategy. For pediatric, pregnancy/maternal, elderly, or immunocompromised populations (or all), returns the per-population strategy, dosing approach, endpoint, and safety considerations, plus the age de-escalation approach (PREA / 21 CFR 601.27 — start in older children and step down to infants), the maternal-immunization approach (DART first, gestational-age window, transplacental transfer endpoint), the bridging approach, and platform/population safety cautions (e.g. live-attenuated contraindicated in immunocompromised/pregnant populations). Use when the user needs a pediatric, maternal, elderly, or immunocompromised vaccine strategy, age de-escalation plan, or dosing approach for a special population. Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -29117,19 +29117,19 @@
           "name": "platform",
           "type": "string",
           "required": false,
-          "description": "Vaccine technology platform (mrna, viral_vector, protein_subunit, live_attenuated, inactivated, conjugate, vlp, dna; free text accepted). Drives replicating-platform cautions. Defaults to protein_subunit if omitted."
+          "description": "Vaccine technology platform (mrna, viral_vector, protein_subunit, live_attenuated, inactivated, conjugate, vlp, dna; free text accepted). Drives replicating-platform cautions. If omitted, platform-specific safety/dosing remains unassessed; "
         },
         {
           "name": "adultDataAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether adult/adolescent immunogenicity data exist to bridge from (relevant to pediatric strategy). Default false."
+          "description": "Stated adult/adolescent source-data availability. Omitted/null stays not_stated; pediatric bridging requires actual adequate source evidence."
         },
         {
           "name": "hasCorrelate",
           "type": "boolean",
           "required": false,
-          "description": "Whether a validated correlate of protection exists (enables immunobridging across populations). Default false."
+          "description": "Stated validated-correlate availability. Omitted/null stays not_stated; no population bridge or correlate-based endpoint is selected from an unanswered flag."
         },
         {
           "name": "diseaseSeriousness",
