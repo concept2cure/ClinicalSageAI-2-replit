@@ -97,6 +97,14 @@ increment. Full A2.7 alias/fold work follows verified function parity.
   was refused. The panel now narrows on the source's nullable sections, and
   those test options were removed; **36 affected tests pass**. The zero-error
   TypeScript baseline is retained.
+- All normal pre-push gates passed on `4d0296a0`, including **0 TypeScript
+  errors** and no per-file lint-warning increase. The ref update was rejected
+  because the shared branch advanced. Concurrent SCIM work through `4334c3fc`
+  merged cleanly with no overlapping source edits. Related combined dossier
+  and identity suites pass **69 tests in 8 files**; incoming SCIM security
+  suites pass **25 tests in 2 files**. These are overlapping integration
+  selections, not an additional full-suite total. Publication uses the normal
+  gates again on the merged tree.
 
 ## Remaining A2.7 work
 

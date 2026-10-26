@@ -17,5 +17,27 @@
   },
   "build": "client, server, audit verifier passed",
   "independentReview": "passed",
-  "legacyScreensAndTrackingSource": "retained"
+  "legacyScreensAndTrackingSource": "retained",
+  "typecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "commit": "4d0296a0",
+    "mergedTreeCheck": "required before publication"
+  },
+  "prepush": "all gates passed before remote advancement rejected publication",
+  "mergedRemote": "4334c3fc",
+  "mergedRegression": {
+    "passed": 94,
+    "files": 10,
+    "runs": [
+      {
+        "passed": 69,
+        "files": 8
+      },
+      {
+        "passed": 25,
+        "files": 2
+      }
+    ]
+  }
 }
