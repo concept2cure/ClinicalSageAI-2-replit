@@ -1,4 +1,4 @@
-import { statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
+import { statedInputEnvelope, statedInputResult, STATED_DOSE_NOTE } from './stated-input-result.js';
 import { readOnlyToolRefusal } from './read-only-turn.js';
 /**
  * AnA Tool Executor — Agentic Orchestration Loop
@@ -1083,7 +1083,7 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
       count: patterns.length,
       patterns,
     };
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 // RIM intelligence summary — aggregate domain counts, top patterns, date range.
@@ -1148,7 +1148,7 @@ registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, 
       oldestPattern: oldest,
       newestPattern: newest,
     };
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 // 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
@@ -3967,7 +3967,7 @@ registerToolHandler('critique_draft', async (input) => {
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
     register: precisionRegister(input.register),
   });
-  return JSON.stringify({
+  return JSON.stringify(statedInputEnvelope({
     status: 'computed',
     engine: 'deterministic',
     score: report.score,
@@ -3981,7 +3981,7 @@ registerToolHandler('critique_draft', async (input) => {
       report.verdict === 'pass'
         ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
         : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
-  });
+  }));
 });
 
 registerToolHandler('verify_revision', async (input) => {
@@ -3997,7 +3997,7 @@ registerToolHandler('verify_revision', async (input) => {
     { text: originalText, audience, documentType, register },
     { text: revisedText, audience, documentType, register },
   );
-  return JSON.stringify({
+  return JSON.stringify(statedInputEnvelope({
     status: 'computed',
     engine: 'deterministic',
     register: result.register,
@@ -4007,7 +4007,7 @@ registerToolHandler('verify_revision', async (input) => {
       : result.improved
         ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
         : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
-  });
+  }));
 });
 
 registerToolHandler('critique_document', async (input, ctx) => {
@@ -4023,7 +4023,7 @@ registerToolHandler('critique_document', async (input, ctx) => {
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
     register: precisionRegister(input.register),
   });
-  return JSON.stringify({
+  return JSON.stringify(statedInputEnvelope({
     status: 'computed',
     engine: 'deterministic',
     scope: 'provided_text',
@@ -4034,7 +4034,7 @@ registerToolHandler('critique_document', async (input, ctx) => {
     sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
     instruction:
       'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
-  });
+  }));
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
@@ -5448,7 +5448,7 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
     }
 
     const c = result.computation;
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       sampleSize: {
@@ -5480,7 +5480,7 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
       interpretation: result.interpretation,
       instruction:
         'Report these numbers verbatim. Do NOT recompute or round differently. State which assumptions were defaults (prefilledDefaults) so the user can override them.',
-    });
+    }));
   } catch (err: any) {
     const refusal = biostatsRefusal(err);
     if (refusal) return refusal;
@@ -5548,13 +5548,13 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
     const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
 
     const result = selectExposureResponseDose(normalized as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       instruction:
         'Report the optimized dose, MTD, and per-dose predictions verbatim. When belowMtd is true, frame the selection as Project Optimus dose optimization rather than dosing to the MTD.',
-    });
+    }));
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/required|supply/.test(message)) {
@@ -5775,7 +5775,7 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
 
       present as any,
     );
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'assessed',
       engine: 'deterministic',
       adequate: null,
@@ -5785,7 +5785,7 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
       gaps: result.gaps,
       instruction:
         'Report the required battery and comparisons against the studies you listed. No recorded studies were read, so this is not a program adequacy or readiness verdict. Only studies due at or before the target phase are compared; note later-due studies.',
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `Nonclinical program assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -5797,12 +5797,12 @@ registerToolHandler('assess_concentration_qtc', async (input: Record<string, unk
     const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
 
     const result = assessConcentrationQtc(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       instruction: 'Report the upper 90% bound and the TQT verdict verbatim. State the confidence flag.',
-    });
+    }));
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/must be|required/.test(message)) {
@@ -5830,7 +5830,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
       result.accumulation = mod.accumulation(Number(acc.halfLifeHours), Number(acc.dosingIntervalHours));
     }
     result.instruction = 'Report the slope, 90% CI, proportionality verdict, and accumulation ratio verbatim.';
-    return JSON.stringify(result);
+    return JSON.stringify(statedInputEnvelope(result));
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/required|must be/.test(message)) {
@@ -5846,12 +5846,12 @@ registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) =>
     const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
 
     const result = assessDdiRisk(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       instruction: 'Report the computed R-values, thresholds, and the clinical-study recommendation verbatim.',
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `DDI risk assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -5914,7 +5914,7 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
       verdict: r.judgment?.overallVerdict,
       actionRecommendation: r.judgment?.actionRecommendation,
     });
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       label: input.label,
@@ -5925,7 +5925,7 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
         ? { title: result.comparisonDocument.title, content: result.comparisonDocument.content }
         : undefined,
       instruction: 'Report both scenarios\' engine-computed N and power and the recommendation verbatim.',
-    });
+    }));
   } catch (err: any) {
     const refusal = biostatsRefusal(err);
     if (refusal) return refusal;
@@ -5943,7 +5943,7 @@ registerToolHandler('assess_statistical_defensibility', async (input: Record<str
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
     }
     const j = result.judgment;
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'assessed',
       engine: 'deterministic',
       sampleSize: result.computation?.adjustedTotal ?? result.computation?.sampleSize.total,
@@ -5962,7 +5962,7 @@ registerToolHandler('assess_statistical_defensibility', async (input: Record<str
         : undefined,
       interpretation: result.interpretation,
       instruction: 'Report the verdict, per-dimension scores and escalation reasons verbatim. Do not soften or invent scores.',
-    });
+    }));
   } catch (err: any) {
     const refusal = biostatsRefusal(err);
     if (refusal) return refusal;
@@ -5981,7 +5981,7 @@ registerToolHandler('analyze_missing_data_impact', async (input: Record<string, 
     const normalized = validation.normalizedInput;
     const base = computationEngine.computeEnhanced(normalized);
     const impact = computationEngine.computeMissingDataImpact(normalized, base);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       baselineSampleSize: base.adjustedTotal ?? base.sampleSize.total,
@@ -5989,7 +5989,7 @@ registerToolHandler('analyze_missing_data_impact', async (input: Record<string, 
       missingDataImpact: impact,
       assumptions: { missingDataMethod: normalized.missingDataMethod, expectedMissingRate: normalized.expectedMissingRate },
       instruction: 'Report the effective sample size, power reduction, adjusted power, bias risk and recommendation verbatim.',
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `Missing-data impact analysis failed: ${err?.message || 'unknown error'}` });
   }
@@ -6062,14 +6062,14 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
 
     const result = assessAnalyticalSimilarity(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       persisted: false,
       instruction:
         'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.' + BLA_UNSAVED_DISCLOSURE,
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -6083,14 +6083,14 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
     const { assessComparability } = await import('../biologics/comparability.js');
 
     const result = assessComparability(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       persisted: false,
       instruction:
         'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -6104,14 +6104,14 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
 
     const result = assessImmunogenicity(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       persisted: false,
       instruction:
         'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -6125,14 +6125,14 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
 
     const result = assessBlaFilingRisk(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       ...result,
       persisted: false,
       instruction:
         'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.' + BLA_UNSAVED_DISCLOSURE,
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
   }
@@ -6348,7 +6348,7 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
       figures: input.figures as any,
       tolerance: input.tolerance as any,
     });
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result: report,
@@ -6358,7 +6358,7 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
         report,
         'Report these conflicts and values verbatim. A cross-document number mismatch (especially enrolment N or dose) is a recurring reviewer finding — surface each conflict, its sources, and the consensus.',
       ),
-    });
+    }));
   } catch (err: any) {
     const refusal = biostatsRefusal(err);
     if (refusal) return refusal;
@@ -6701,7 +6701,7 @@ registerToolHandler('explain_resolution_plan', async (input: Record<string, unkn
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ivdComputed(result: unknown, instruction: string): string {
-  return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction });
+  return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction }));
 }
 
 function ivdError(name: string, err: any, input: Record<string, unknown>): string {
@@ -6941,14 +6941,14 @@ registerToolHandler('assess_mdr_reportability', async (input: Record<string, unk
         message: `Ask the user for ${describeTriageFacts(unstated)}. An unstated fact is never read as false; a country nobody knows is stated as "unknown".`,
       });
     }
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction:
         'Report the reportability determination verbatim: FDA MDR, EU MDR vigilance, 806 notice, suggested jurisdiction/report-type/severity, and the rationale. ' +
         'When determinationComplete is false, say which parts are not determined and name missingFacts; a null is not determined, never "not reportable".',
-    });
+    }));
   } catch (err: any) {
     return JSON.stringify({ status: 'needs_parameters', tool: 'assess_mdr_reportability', message: err?.message || 'invalid input' });
   }
@@ -16556,20 +16556,25 @@ function isStatsParamError(message: string): boolean {
   );
 }
 
-/** Wrap a deterministic stats computation in the standard tool envelope. */
+/**
+ * Calculators use a stated-input basis by default. Record readers, curated
+ * lookups and structure-only callers explicitly opt out of that claim.
+ */
 async function runStatsTool(
   label: string,
   compute: () => unknown | Promise<unknown>,
-  engine: 'deterministic' | 'seeded-monte-carlo' = 'deterministic'
+  engine: 'deterministic' | 'seeded-monte-carlo' = 'deterministic',
+  options: { statedInputs?: boolean } = {}
 ): Promise<string> {
   try {
     const result = await compute();
-    return JSON.stringify({
+    const envelope = {
       status: 'computed',
       engine,
       result,
       instruction: STATS_VERBATIM,
-    });
+    };
+    return JSON.stringify(options.statedInputs === false ? envelope : statedInputEnvelope(envelope));
   } catch (err: any) {
     const refusal = biostatsRefusal(err);
     if (refusal) return refusal;
@@ -16883,7 +16888,7 @@ registerToolHandler('check_regulatory_currency', async (input: Record<string, un
       asOf,
       facts: annotated,
     };
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('guidance_change_radar', async (input: Record<string, unknown>) =>
@@ -16896,7 +16901,7 @@ registerToolHandler('guidance_change_radar', async (input: Record<string, unknow
     });
     const highestSeverity = drifts.length > 0 ? drifts[0].severity : null;
     return { driftCount: drifts.length, highestSeverity, drifts };
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 // Submission intelligence (Tier 1.3/1.4) — precedent benchmarking + package
@@ -17187,13 +17192,13 @@ registerToolHandler('score_predicate_adequacy', async (input: Record<string, unk
       candidates: input.candidates as any[],
       options: typeof input.currentYear === 'number' ? { currentYear: input.currentYear } : undefined,
     });
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction:
         'Present the ranked candidates with score + band, lead with the recommended predicate, surface each candidate\'s concerns and unknownFactors, and report the disclaimer. This is a screening aid, not a determination of substantial equivalence.',
-    });
+    }));
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/required|non-empty|identifier/i.test(message)) {
@@ -17358,12 +17363,12 @@ registerToolHandler('assess_batch_poolability', async (input: Record<string, unk
   try {
     const { assessBatchPoolability } = await import('../cmc/shelf-life-poolability.js');
     const result = assessBatchPoolability(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction: 'Lead with the decision (pooled vs minimum-of-batches) and the recommended shelfLife; report the slope/intercept F-tests verbatim. Single-attribute estimate.',
-    });
+    }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|requires|at least|distinct|direction|finite|batchId/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18075,12 +18080,12 @@ registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>
   try {
     const { assessBenefitRisk } = await import('../regulatory/benefit-risk.js');
     const result = assessBenefitRisk(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction: 'Report the weighted benefit/risk, net, and favorability with the per-item contributions and the disclaimer. This is a decision aid, NOT a regulatory determination.',
-    });
+    }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|non-empty|needs a name|cannot all be zero|\[0,100\]|threshold/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18093,12 +18098,12 @@ registerToolHandler('estimate_shelf_life', async (input: Record<string, unknown>
   try {
     const { estimateShelfLife } = await import('../cmc/shelf-life.js');
     const result = estimateShelfLife(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction: 'Report the estimated shelfLife, the regression, and the notes verbatim. If exceedsEvaluatedRange is true, do not extrapolate beyond justified limits. Single-batch/attribute estimate, not multi-batch poolability.',
-    });
+    }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|requires|at least|distinct|direction|finite|vary/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18111,7 +18116,7 @@ registerToolHandler('model_markov_cohort', async (input: Record<string, unknown>
   try {
     const { runMarkovModel } = await import('../heor/markov-model.js');
     const result = runMarkovModel(input as any);
-    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report total discounted cost and QALYs verbatim; note the start-of-cycle / first-cycle-undiscounted conventions.' });
+    return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction: 'Report total discounted cost and QALYs verbatim; note the start-of-cycle / first-cycle-undiscounted conventions.' }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must|sum to 1|index-aligned|at least|cycles|discount|cycleLength|cohortSize/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18123,7 +18128,7 @@ registerToolHandler('run_probabilistic_sensitivity', async (input: Record<string
   try {
     const { runProbabilisticSensitivity } = await import('../heor/psa.js');
     const result = runProbabilisticSensitivity(input as any);
-    return JSON.stringify({ status: 'computed', engine: 'seeded-monte-carlo', result, instruction: 'Report the ICER, probabilityDominant, and CEAC verbatim. Results are reproducible for the given seed.' });
+    return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'seeded-monte-carlo', result, instruction: 'Report the ICER, probabilityDominant, and CEAC verbatim. Results are reproducible for the given seed.' }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/finite|non-negative|willingnessToPay|requires/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18136,7 +18141,7 @@ registerToolHandler('run_cdisc_pipeline', async (input: Record<string, unknown>)
     if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
     const { runCdiscPipeline } = await import('../cdisc/pipeline.js');
     const result = runCdiscPipeline(input.spec as any);
-    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Lead with readiness.submissionReady and error count; list errors before warnings. Structural subset, not the full validator of record.' });
+    return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction: 'Lead with readiness.submissionReady and error count; list errors before warnings. Structural subset, not the full validator of record.' }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18203,12 +18208,12 @@ registerToolHandler('assess_analytical_method_validation', async (input: Record<
   try {
     const { assessMethodValidation } = await import('../analytical/method-validation.js');
     const result = assessMethodValidation(input as any);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
       instruction: 'Report the linearity/precision/accuracy numbers and pass/fail verbatim. No lack-of-fit p-value is computed (out of scope).',
-    });
+    }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|at least|requires|LOW\/MID\/HIGH|r2Min|finite/i.test(m)) {
@@ -18711,7 +18716,7 @@ registerToolHandler('model_budget_impact', async (input: Record<string, unknown>
   try {
     const { computeBudgetImpact } = await import('../heor/heor-models.js');
     const result = computeBudgetImpact(input as any);
-    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the per-year and total budget impact and PMPM verbatim. Costs are in the caller-supplied currency unit.' });
+    return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the per-year and total budget impact and PMPM verbatim. Costs are in the caller-supplied currency unit.' }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18723,7 +18728,7 @@ registerToolHandler('model_cost_effectiveness', async (input: Record<string, unk
   try {
     const { computeCostEffectiveness } = await import('../heor/heor-models.js');
     const result = computeCostEffectiveness(input as any);
-    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the ICER, dominance, and (if given) net monetary benefit verbatim. A null ICER means effects are equal.' });
+    return JSON.stringify(statedInputEnvelope({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the ICER, dominance, and (if given) net monetary benefit verbatim. A null ICER means effects are equal.' }));
   } catch (err: any) {
     const m = err?.message || 'unknown error';
     if (/must be|finite|non-?negative/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
@@ -18913,7 +18918,7 @@ registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, un
   try {
     const { reconcileMinedFigures } = await import('../reconciliation/mined-figure-reconciler.js');
     const result = reconcileMinedFigures((input.documents as any) ?? []);
-    return JSON.stringify({
+    return JSON.stringify(statedInputEnvelope({
       status: 'computed',
       engine: 'deterministic',
       result,
@@ -18927,7 +18932,7 @@ registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, un
           : result.conflictCount > 0
             ? 'Surface each conflict with its quantity, the distinct values and the documents that report each, so the user can resolve the source of truth. Do not guess which value is correct; where a consensus value is given, say it is the most-reported value, not the correct one.'
             : `No cross-document conflict was found among the ${result.quantitiesCompared} quantity/quantities actually compared across two places. Name them, and do not imply anything about figures stated in only one document.`,
-    });
+    }));
   } catch (err: any) {
     const message = err?.message || 'unknown error';
     if (/must be|must have|each document/.test(message)) {
@@ -18938,7 +18943,7 @@ registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, un
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Guidance Ingestion — live FDA/ICH guidance fetching + freshness checks.
+// Curated guidance registries and freshness checks (no live FDA index).
 // See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -18951,7 +18956,7 @@ registerToolHandler('fetch_fda_guidance_list', async (input: Record<string, unkn
       status: input.status as 'final' | 'draft' | 'withdrawn' | undefined,
       limit: input.limit as number | undefined,
     });
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('fetch_ich_guideline_updates', async (input: Record<string, unknown>) =>
@@ -18961,7 +18966,7 @@ registerToolHandler('fetch_ich_guideline_updates', async (input: Record<string, 
       category: input.category as 'Q' | 'S' | 'E' | 'M' | undefined,
       since: input.since as string | undefined,
     });
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('check_guidance_freshness', async (input: Record<string, unknown>) =>
@@ -18973,7 +18978,7 @@ registerToolHandler('check_guidance_freshness', async (input: Record<string, unk
     return checkGuidanceFreshness({
       citedGuidances: input.citedGuidances as Array<{ title: string; citedDate?: string; jurisdiction?: string }>,
     });
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 // ── SPL generation & PSUR/DSUR safety-report structure ──────────────────────
@@ -18996,14 +19001,14 @@ registerToolHandler('generate_psur_structure', async (input: Record<string, unkn
   runStatsTool('generate_psur_structure', async () => {
     const { generatePsurStructure } = await import('../safety-reports/psur-dsur-service.js');
     return generatePsurStructure(input as any);
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('generate_dsur_structure', async (input: Record<string, unknown>) =>
   runStatsTool('generate_dsur_structure', async () => {
     const { generateDsurStructure } = await import('../safety-reports/psur-dsur-service.js');
     return generateDsurStructure(input as any);
-  })
+  }, 'deterministic', { statedInputs: false })
 );
 
 // ── CDISC conformance service (server/services/cdisc/cdisc-conformance-service) — deterministic. ──
@@ -19571,7 +19576,7 @@ registerToolHandler('assess_plr_structure', async (input: Record<string, unknown
   runStatsTool('assess_plr_structure', async () => {
     const { assessPLRStructure } = await import('../labeling/labeling-intelligence-knowledge.js');
     return assessPLRStructure(input as any);
-  }, 'deterministic')
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('assess_boxed_warning', async (input: Record<string, unknown>) =>
@@ -19592,14 +19597,14 @@ registerToolHandler('assess_pregnancy_lactation_labeling', async (input: Record<
   runStatsTool('assess_pregnancy_lactation_labeling', async () => {
     const { assessPregnancyLactationLabeling } = await import('../labeling/labeling-intelligence-knowledge.js');
     return assessPregnancyLactationLabeling(input as any);
-  }, 'deterministic')
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('structure_smpc', async (input: Record<string, unknown>) =>
   runStatsTool('structure_smpc', async () => {
     const { structureSmPC } = await import('../labeling/labeling-intelligence-knowledge.js');
     return structureSmPC(input as any);
-  }, 'deterministic')
+  }, 'deterministic', { statedInputs: false })
 );
 
 registerToolHandler('assess_otc_labeling', async (input: Record<string, unknown>) =>

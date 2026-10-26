@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > nested S4 dose cautions are idempotent 2ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > preserves numerical precision, seeded method and opaque provenance references 3ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > keeps an explicit list-only scope when adding the worksheet basis 1ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'parameter refusal' 0ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'data refusal' 0ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'engine fault' 0ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'fault alongside a computed status' 0ms
+ ✓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'ok:false refusal alongside an assesse…' 0ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  16:40:58
+   Duration  316ms (transform 73ms, setup 74ms, import 17ms, tests 11ms, environment 0ms)
