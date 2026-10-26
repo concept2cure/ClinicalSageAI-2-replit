@@ -20,10 +20,11 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network. ' +
+  'Deterministic stated-input worksheet for the project’s clinical and CMC workflows; no source records are read. ' +
+  'Unanswered booleans stay not_stated and dependent conclusions stay not_assessed or null. ' +
+  'Reference profiles do not establish product evidence, eligibility or accepted endpoints. Ask for missing facts. ' +
   'Report the returned numbers and regulatory citations verbatim. Do NOT recompute, ' +
-  'round differently, or substitute your own regulatory interpretation — a fabricated ' +
-  'or misattributed regulatory citation in a generic drug submission is a critical defect.';
+  'round differently, or substitute your own regulatory interpretation. Disclose any defaultsApplied as engine planning assumptions.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. design_vaccine_cmc
@@ -63,29 +64,28 @@ export const DESIGN_VACCINE_CMC: AnaTool = {
       },
       multivalent: {
         type: 'boolean',
-        description: 'Whether the product contains multiple valences/serotypes (default inferred false).',
+        description: 'Stated multivalent status. Omitted/null remains not_stated; no monovalent product is assumed.',
       },
       numberOfValences: {
         type: 'number',
-        description: 'Number of valences/serotypes if multivalent (default 2 when multivalent is true).',
+        description: 'Stated positive integer valence count. No count is invented when multivalent is true; a count above 1 contradicts multivalent:false.',
       },
       adjuvanted: {
         type: 'boolean',
         description:
-          'Whether the product is adjuvanted. If omitted, defaults to true for protein subunit, ' +
-          'inactivated, and VLP platforms and false otherwise.',
+          'Stated added-adjuvant status. Omitted/null remains not_stated regardless of platform; no self-adjuvancy is inferred.',
       },
       adjuvantName: {
         type: 'string',
         description:
           'Specific adjuvant if known (e.g. "aluminium hydroxide", "AS01", "MF59", "CpG 1018"). ' +
-          'If omitted, a platform-typical adjuvant is suggested.',
+          'If omitted, the actual adjuvant name stays unknown; platform examples remain references. A name contradicts adjuvanted:false.',
       },
       lyophilized: {
         type: 'boolean',
         description:
           'Whether the drug product is lyophilized (affects residual-moisture control and in-use ' +
-          'stability). If omitted, inferred from the platform cold-chain profile.',
+          'stability). If omitted, presentation-dependent controls remain unassessed; cold-chain references do not fill the fact.',
       },
       framework: {
         type: 'string',
@@ -104,15 +104,10 @@ export const DESIGN_VACCINE_CMC: AnaTool = {
 export const ASSESS_CORRELATE_OF_PROTECTION: AnaTool = {
   name: 'assess_correlate_of_protection',
   description:
-    'Classify and assess a proposed immune correlate of protection (CoP). Returns the CoP type ' +
-    'using the Plotkin & Gilbert (2012) nomenclature — mechanistic vs non-mechanistic, absolute ' +
-    'vs relative — matches the pathogen against known correlates (influenza HAI 1:40, hepatitis B ' +
-    'anti-HBs 10 mIU/mL, measles/meningococcal/diphtheria/tetanus/rabies neutralizing thresholds, ' +
-    'pneumococcal IgG/OPA), assesses threshold and surrogate-endpoint usability against the ' +
-    'Prentice/Qin (2007) framework, lists bridging applications (lot consistency, comparability, ' +
-    'population extrapolation, strain change), and flags validation gaps. Use when the user asks ' +
-    'whether an immune marker can serve as a correlate/surrogate endpoint, what threshold applies, ' +
-    'or whether immunobridging or accelerated approval is supportable. ' + DETERMINISTIC_NOTE,
+    'Classify the stated mechanism/protection flags for an immune correlate and show separate known-correlate references. ' +
+    'Missing flags leave classification unassessed; reference entries do not supply the actual marker, threshold or efficacy linkage. ' +
+    'Returns the stated marker/threshold, Prentice validation requirements and conditional bridging-use guidance. ' +
+    'Surrogate validation, product eligibility and agency acceptance are not determined. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -126,7 +121,7 @@ export const ASSESS_CORRELATE_OF_PROTECTION: AnaTool = {
         type: 'string',
         description:
           'Proposed immune marker (e.g. "HAI titer", "neutralizing antibody", "SBA", "OPA", "anti-HBs"). ' +
-          'If omitted, a known marker for the pathogen is used when available.',
+          'If omitted, the actual marker remains unknown; a pathogen reference does not supply it.',
       },
       proposedThreshold: {
         type: 'string',
@@ -136,8 +131,7 @@ export const ASSESS_CORRELATE_OF_PROTECTION: AnaTool = {
         type: 'boolean',
         description:
           'Whether the marker is the causal protective effector (mechanistic). Combined with ' +
-          'markerDirectlyProtective to classify the CoP. If both are omitted, the known-correlate ' +
-          'registry classification is used.',
+          'markerDirectlyProtective to classify the stated CoP. If either flag is omitted, classification stays not_assessed.',
       },
       markerDirectlyProtective: {
         type: 'boolean',
@@ -149,12 +143,12 @@ export const ASSESS_CORRELATE_OF_PROTECTION: AnaTool = {
         type: 'boolean',
         description:
           'Whether an efficacy dataset links the marker to clinical protection (supports Prentice ' +
-          'criteria). If omitted, inferred true when a known correlate matches the pathogen.',
+          'criteria). If omitted, stays not_stated; a known-correlate match is reference information, not product efficacy evidence.',
       },
       intendedUse: {
         type: 'string',
         enum: ['accelerated_approval', 'immunobridging', 'lot_release', 'strain_change'],
-        description: 'Intended regulatory use of the correlate (default "immunobridging").',
+        description: 'Stated intended use; if omitted, no intended-use assessment is selected. Returned guidance is conditional reference information.',
       },
       framework: {
         type: 'string',
@@ -179,7 +173,7 @@ export const DESIGN_VACCINE_CLINICAL_PROGRAM: AnaTool = {
     'point estimate >= 50% with the CI lower bound > 30%), per-phase objectives and sample sizes, ' +
     'immunogenicity endpoint definitions (seroconversion, seroresponse, seroprotection, GMT/GMC, ' +
     'GMR), the safety database size and follow-up duration, the >=3 consecutive-lot consistency ' +
-    'requirement, and accelerated-approval eligibility (21 CFR 601 Subpart E). Use when the user ' +
+    'reference expectation, and unassessed accelerated-approval eligibility with conditional guidance. Use when the user ' +
     'needs to plan a vaccine clinical program, define immunogenicity endpoints, decide between an ' +
     'efficacy trial and immunobridging, or size the safety database. ' + DETERMINISTIC_NOTE,
   input_schema: {
@@ -198,12 +192,12 @@ export const DESIGN_VACCINE_CLINICAL_PROGRAM: AnaTool = {
       hasEstablishedCorrelate: {
         type: 'boolean',
         description:
-          'Whether a validated immune correlate of protection exists (enables immunobridging). Default false.',
+          'Stated validated-correlate availability. Omitted/null remains not_stated; it cannot select a pathway or endpoint.',
       },
       efficacyFeasible: {
         type: 'boolean',
         description:
-          'Whether a field-efficacy trial is feasible (adequate disease incidence, ethics, logistics). Default true.',
+          'Stated field-efficacy feasibility (incidence, ethics, logistics). Omitted/null remains not_stated. Explicit false must not select an efficacy Phase 3.',
       },
       targetPopulation: {
         type: 'string',
@@ -219,8 +213,7 @@ export const DESIGN_VACCINE_CLINICAL_PROGRAM: AnaTool = {
         type: 'string',
         enum: ['routine', 'serious', 'pandemic'],
         description:
-          'Seriousness of the target disease (default "serious"). "pandemic" scales the safety ' +
-          'database and Phase 3 size upward.',
+          'Stated disease seriousness. If omitted, seriousness-dependent safety sizing remains unassessed. Reference ranges do not establish a project sample size.',
       },
       framework: {
         type: 'string',
@@ -254,7 +247,7 @@ export const ASSESS_LOT_CONSISTENCY: AnaTool = {
       numberOfLots: {
         type: 'number',
         description:
-          'Number of consecutive manufacturing lots to compare (default 3; clamped to 2-5). ' +
+          'Planned number of consecutive lots (integer 2–5; illustrative default 3, disclosed in defaultsApplied). Invalid values are refused. ' +
           'The conventional pre-licensure expectation is >= 3.',
       },
       immunogenicityMarker: {
@@ -278,11 +271,11 @@ export const ASSESS_LOT_CONSISTENCY: AnaTool = {
       },
       equivalenceMarginUpper: {
         type: 'number',
-        description: 'Upper equivalence margin on the GMT ratio (default 2.0). Symmetric to the lower bound in log space.',
+        description: 'Upper ratio margin above 1 (illustrative default 2). This approximation supports reciprocal log-symmetric bounds only; lower must equal 1 / upper.',
       },
       targetPower: {
         type: 'number',
-        description: 'Target power per pairwise comparison, 0-1 (default 0.90; clamped 0.5-0.99).',
+        description: 'Target planning power per comparison (supported 0.5–0.99; illustrative default 0.90). Invalid values are refused, not clamped.',
       },
       framework: {
         type: 'string',
@@ -322,20 +315,19 @@ export const ASSESS_VACCINE_PLATFORM: AnaTool = {
       priorLicensedProductOnPlatform: {
         type: 'boolean',
         description:
-          'Whether a product on this platform is already licensed (anchors referenceable safety/CMC knowledge). Default false.',
+          'Stated prior licensing status; omitted/null stays not_stated. The existence and reuse of accessible supporting evidence still need assessment.',
       },
       sameBackboneDifferentAntigen: {
         type: 'boolean',
         description:
           'Whether this product uses the same platform backbone with a new antigen/transgene/sequence ' +
-          '(supports an abbreviated antigen-specific nonclinical package). Default false.',
+          '(may support evidence-based reuse). Omitted/null stays not_stated and cannot select a full or abbreviated product package.',
       },
       intendedPopulation: {
         type: 'string',
         enum: ['general', 'immunocompromised', 'pregnant', 'pediatric', 'elderly'],
         description:
-          'Intended population (default "general"). Drives replicating-platform safety cautions for ' +
-          'immunocompromised/pregnant populations.',
+          'Stated intended population. If omitted, suitability remains unassessed. Viral-vector replication properties are not determined by this broad platform category.',
       },
       framework: {
         type: 'string',
@@ -376,17 +368,17 @@ export const PLAN_VACCINE_SPECIAL_POPULATIONS: AnaTool = {
         description:
           'Vaccine technology platform (mrna, viral_vector, protein_subunit, live_attenuated, ' +
           'inactivated, conjugate, vlp, dna; free text accepted). Drives replicating-platform cautions. ' +
-          'Defaults to protein_subunit if omitted.',
+          'If omitted, platform-specific safety/dosing remains unassessed; no protein-subunit platform is assumed.',
       },
       adultDataAvailable: {
         type: 'boolean',
         description:
-          'Whether adult/adolescent immunogenicity data exist to bridge from (relevant to pediatric strategy). Default false.',
+          'Stated adult/adolescent source-data availability. Omitted/null stays not_stated; pediatric bridging requires actual adequate source evidence.',
       },
       hasCorrelate: {
         type: 'boolean',
         description:
-          'Whether a validated correlate of protection exists (enables immunobridging across populations). Default false.',
+          'Stated validated-correlate availability. Omitted/null stays not_stated; no population bridge or correlate-based endpoint is selected from an unanswered flag.',
       },
       diseaseSeriousness: {
         type: 'string',

@@ -1,0 +1,7 @@
+Node 22.23.4; vitest run server/services/ana/__tests__/vaccine-unstated-inputs.test.ts --reporter=verbose
+Filter: supplemental; after initial corrections and before supplementary fixes.
+
+Test Files  1 failed (1)
+Tests  7 failed | 6 passed | 66 skipped (79)
+Start at  18:31:54
+Duration  8.87s (transform 6.09s, setup 80ms, import 8.51s, tests 34ms, environment 0ms)

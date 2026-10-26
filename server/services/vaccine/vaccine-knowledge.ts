@@ -3,8 +3,8 @@
  * ============================================================================
  *
  * Pure, closed-form, reproducible TypeScript. NO LLM, NO network, NO database,
- * NO imports from other services. Every function returns the same output for the
- * same input. All thresholds, margins, and recommendations are grounded in
+ * Shared deterministic input and statistics helpers are reused. Every function
+ * returns the same output for the same input. Reference thresholds and conventions come from
  * published regulatory guidance and the peer-reviewed correlates-of-protection
  * literature, with citations attached to every material output.
  *
@@ -44,6 +44,28 @@
  */
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
+
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+import { normalQuantile } from '../stats/normal';
+
+type BooleanState = boolean | 'not_stated';
+
+/** Validate optional text through the same refusal boundary as required inputs. */
+function validateTextInputs(params: object, fields: readonly string[]): void {
+  const values = params as Record<string, unknown>;
+  for (const field of fields) {
+    const value = values[field];
+    if (value == null) continue;
+    refuseUnlessStated('vaccine worksheet', [{ field, value,
+      ok: typeof value === 'string' && value.trim().length > 0, expected: 'non-empty text' }], 'assessed');
+  }
+}
+
+function referenceNotes(framework: unknown): AdvisoryNote[] {
+  return framework == null ? [{ severity: 'info', message:
+    'No framework was stated; FDA citations are the engine reference default, not a recorded project jurisdiction.' }] : [];
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 0. Shared types
@@ -91,58 +113,30 @@ export interface EngineMeta {
   notes: AdvisoryNote[];
 }
 
-// Helper: clamp a number to a range (deterministic).
-function clamp(value: number, lo: number, hi: number): number {
-  if (value < lo) return lo;
-  if (value > hi) return hi;
-  return value;
-}
-
-// Helper: round to N decimals deterministically.
-function roundTo(value: number, decimals: number): number {
-  const f = Math.pow(10, decimals);
-  return Math.round(value * f) / f;
-}
-
 // Helper: normalize a free-text platform string to a VaccinePlatform.
 function normalizePlatform(raw: string): VaccinePlatform {
-  const s = raw.toLowerCase().replace(/[^a-z]/g, '');
-  if (s.includes('mrna') || s.includes('messengerrna') || s.includes('sarna') || s.includes('selfamplifying')) {
-    return 'mrna';
-  }
-  if (s.includes('vector') || s.includes('adeno') || s.includes('ad26') || s.includes('ad5') || s.includes('chad') || s.includes('vsv') || s.includes('mva')) {
-    return 'viral_vector';
-  }
-  if (s.includes('conjugate') || s.includes('glycoconjugate') || s.includes('polysaccharideprotein')) {
-    return 'conjugate';
-  }
-  if (s.includes('vlp') || s.includes('viruslikeparticle')) {
-    return 'vlp';
-  }
-  if (s.includes('subunit') || s.includes('protein') || s.includes('recombinant') || s.includes('peptide')) {
-    return 'protein_subunit';
-  }
-  if (s.includes('liveattenuated') || s.includes('attenuated') || s.includes('live')) {
-    return 'live_attenuated';
-  }
-  if (s.includes('inactivated') || s.includes('killed') || s.includes('wholevirion') || s.includes('split')) {
-    return 'inactivated';
-  }
-  if (s.includes('dna') || s.includes('plasmid')) {
-    return 'dna';
-  }
-  // Default to protein subunit as the most generic, best-characterized case.
-  return 'protein_subunit';
+  refuseUnlessStated('vaccine worksheet', [{ field: 'platform', value: raw,
+    ok: typeof raw === 'string' && raw.trim().length > 0, expected: 'a recognized vaccine platform' }], 'assessed');
+  const value = raw.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const aliases: Array<[RegExp, VaccinePlatform]> = [
+    [/\b(mrna|messenger rna|messengerrna|sarna|self amplifying|selfamplifying)\b/, 'mrna'],
+    [/\b(viral vector|adenovirus|adenoviral|ad26|ad5|chad(?:ox[0-9]+)?|r?vsv|mva)\b/, 'viral_vector'],
+    [/\b(conjugate|glycoconjugate|polysaccharide protein|polysaccharideprotein)\b/, 'conjugate'],
+    [/\b(vlp|virus like particle|viruslikeparticle)\b/, 'vlp'],
+    [/\b(subunit|protein|peptide)\b/, 'protein_subunit'],
+    [/\b(live attenuated|liveattenuated|attenuated|live)\b/, 'live_attenuated'],
+    [/\b(inactivated|killed|whole virion|wholevirion|split)\b/, 'inactivated'],
+    [/\b(dna|plasmid)\b/, 'dna'],
+  ];
+  const match = aliases.find(([pattern]) => pattern.test(value));
+  if (match) return match[1];
+  throw new ComputationRefusal('invalid_input', 'platform is not recognized; state mrna, viral_vector, protein_subunit, live_attenuated, inactivated, conjugate, vlp or dna.', 'platform');
 }
 
 // Helper: normalize framework.
 function normalizeFramework(raw: string | undefined): RegFramework {
-  if (!raw) return 'fda';
-  const s = raw.toLowerCase();
-  if (s.startsWith('em')) return 'ema';
-  if (s.startsWith('wh')) return 'who';
-  if (s.startsWith('ic')) return 'ich';
-  return 'fda';
+  return statedOneOf('framework', typeof raw === 'string' ? raw.trim().toLowerCase() : raw,
+    ['fda', 'ema', 'who', 'ich'] as const) ?? 'fda';
 }
 
 // Helper: human label for a platform.
@@ -640,13 +634,16 @@ export interface StabilityPlan {
 }
 
 export interface DesignVaccineCMCResult extends EngineMeta {
+  inputStates: Record<string, BooleanState>;
+  valences: number | null;
+  platformReference: PlatformProfile & { basis: 'reference_only' };
   platform: VaccinePlatform;
   platformLabel: string;
   drugSubstance: string;
-  drugProduct: string;
+  drugProduct: string | null;
   adjuvantStrategy: {
-    adjuvanted: boolean;
-    recommendedAdjuvant: string;
+    adjuvanted: boolean | null;
+    recommendedAdjuvant: string | null;
     constituentMaterialControls: string;
   };
   cmcModules: CmcModule[];
@@ -668,19 +665,27 @@ export function designVaccineCMC(params: DesignVaccineCMCParams): DesignVaccineC
   const platform = normalizePlatform(params.platform);
   const framework = normalizeFramework(params.framework);
   const profile = getPlatformProfile(platform);
-  const notes: AdvisoryNote[] = [];
+  const notes = referenceNotes(params.framework);
+  validateTextInputs(params, ['antigenName', 'indication', 'adjuvantName']);
+  const inputStates = booleanInputStates(params, ['multivalent', 'adjuvanted', 'lyophilized']);
+  const count = statedNumber('numberOfValences', params.numberOfValences,
+    value => Number.isSafeInteger(value) && value >= 1, 'a positive integer');
+  if (count !== undefined && ((inputStates.multivalent === false && count !== 1)
+      || (inputStates.multivalent === true && count < 2))) {
+    throw new ComputationRefusal('invalid_input', 'numberOfValences contradicts the stated multivalent flag.', 'numberOfValences');
+  }
 
-  const valences = params.multivalent
-    ? Math.max(2, params.numberOfValences ?? 2)
-    : 1;
+  const valences = count ?? (inputStates.multivalent === false ? 1 : null);
 
   // Adjuvant strategy.
-  const adjuvanted =
-    params.adjuvanted ??
-    (platform === 'protein_subunit' || platform === 'inactivated' || platform === 'vlp');
+  const adjuvanted = inputStates.adjuvanted === 'not_stated' ? null : inputStates.adjuvanted;
+  if (adjuvanted === false && params.adjuvantName != null) throw new ComputationRefusal('invalid_input',
+    'adjuvantName contradicts the stated absence of an added adjuvant.', 'adjuvantName');
+  const lyophilized = inputStates.lyophilized;
   const recommendedAdjuvant = adjuvanted
-    ? params.adjuvantName ?? profile.typicalAdjuvant
-    : 'None (self-adjuvanting / not required for this platform)';
+    ? params.adjuvantName ?? null : null;
+  const drugProduct = [inputStates.multivalent, inputStates.adjuvanted, lyophilized].includes('not_stated') || valences === null
+    ? null : `${platformLabel(platform)} presentation (stated): ${valences} valence(s), ${adjuvanted ? 'adjuvanted' : 'without added adjuvant'}, ${lyophilized ? 'lyophilized' : 'liquid'}.`;
   if (adjuvanted) {
     notes.push({
       severity: 'recommendation',
@@ -706,14 +711,14 @@ export function designVaccineCMC(params: DesignVaccineCMCParams): DesignVaccineC
     {
       module: '3.2.P Drug Product',
       expectations: [
-        `Define the drug product: ${profile.drugProduct}`,
-        valences > 1
+        drugProduct === null ? 'Product presentation not assessed: state valence, adjuvant and lyophilization facts.' : `Define the drug product from the stated presentation: ${drugProduct}`,
+        valences === null ? 'Valence count was not stated; assess valence-specific controls when the formulation is defined.' : valences > 1
           ? `Multivalent product (${valences} valences): control each valence's identity, content, and potency and the consistency of the blend.`
           : 'Monovalent product: control identity, content, and potency of the single antigen.',
-        adjuvanted
-          ? `Adjuvant (${recommendedAdjuvant}): control content, adsorption/association, and stability of the antigen-adjuvant complex (21 CFR 610.15).`
-          : 'No added adjuvant: confirm absence and justify self-adjuvanting mechanism where relevant.',
-        params.lyophilized ?? profile.coldChain.includes('lyophil')
+        adjuvanted === null ? 'Adjuvant status was not stated; assess constituent-material controls when it is known.' : adjuvanted
+          ? `Added adjuvant (${recommendedAdjuvant ?? 'name not stated'}): control content, adsorption/association and stability (21 CFR 610.15).`
+          : 'No added adjuvant was stated; confirm the product’s actual immune-stimulation evidence separately.',
+        lyophilized === 'not_stated' ? 'Presentation was not stated; liquid or lyophilized controls remain to be assessed.' : lyophilized
           ? 'Lyophilized presentation: control residual moisture (21 CFR 610.13), reconstitution time, and in-use stability.'
           : 'Liquid presentation: control container-closure integrity and freeze sensitivity.',
       ],
@@ -757,12 +762,12 @@ export function designVaccineCMC(params: DesignVaccineCMCParams): DesignVaccineC
     designConditions: [
       'Real-time/real-condition at the intended storage temperature (primary basis for shelf life).',
       'Accelerated and, where informative, stress conditions to characterize degradation pathways.',
-      params.lyophilized ?? profile.coldChain.includes('lyophil')
+      lyophilized === 'not_stated' ? 'Presentation was not stated; assess presentation-specific in-use and transport conditions when known.' : lyophilized
         ? 'In-use / post-reconstitution stability for lyophilized presentations.'
         : 'Freeze-thaw and in-use stability for liquid presentations.',
       'Photostability and transport/excursion (e.g. shipping) studies as applicable.',
     ],
-    storageRecommendation: profile.coldChain,
+    storageRecommendation: `Platform reference only; product storage is not established here: ${profile.coldChain}`,
     shelfLifeApproach:
       'Assign shelf life from real-time data using stability-indicating potency; do not extrapolate beyond supported data without ICH Q5C-consistent justification.',
     ichReference: 'ICH Q5C',
@@ -803,10 +808,13 @@ export function designVaccineCMC(params: DesignVaccineCMCParams): DesignVaccineC
     engine: 'designVaccineCMC',
     deterministic: true,
     framework,
+    inputStates,
+    valences,
+    platformReference: { ...profile, basis: 'reference_only' },
     platform,
     platformLabel: platformLabel(platform),
-    drugSubstance: profile.drugSubstance,
-    drugProduct: profile.drugProduct,
+    drugSubstance: `Platform reference definition: ${profile.drugSubstance}`,
+    drugProduct,
     adjuvantStrategy: {
       adjuvanted,
       recommendedAdjuvant,
@@ -946,7 +954,7 @@ function classifyCoP(
   return 'nonmechanistic_relative';
 }
 
-function copTypeLabel(t: CoPType): string {
+function copTypeLabel(t: CoPType | 'not_assessed'): string {
   switch (t) {
     case 'mechanistic_absolute':
       return 'Mechanistic CoP, absolute (the marker is causally protective and a defined threshold predicts protection).';
@@ -958,22 +966,25 @@ function copTypeLabel(t: CoPType): string {
       return 'Non-mechanistic CoP, relative (the marker correlates with protection on a continuum but is not the effector).';
     case 'no_established_correlate':
       return 'No established correlate of protection — efficacy must be demonstrated clinically.';
+    case 'not_assessed':
+      return 'Not assessed: both classification facts must be stated.';
     default:
       return 'Unclassified.';
   }
 }
 
 export interface AssessCorrelateOfProtectionResult extends EngineMeta {
+  inputStates: Record<string, BooleanState>;
   pathogen: string;
-  immuneMarker: string;
-  matchedKnownCorrelate: KnownCorrelate | null;
-  copType: CoPType;
+  immuneMarker: string | null;
+  matchedKnownCorrelate: (KnownCorrelate & { basis: 'reference_only' }) | null;
+  copType: CoPType | 'not_assessed';
   copTypeExplanation: string;
-  thresholdAssessment: string;
+  thresholdAssessment: string | null;
   surrogateEndpointUsability: string;
   prenticeCriteria: string[];
   bridgingApplications: string[];
-  intendedUseAssessment: string;
+  intendedUseAssessment: string | null;
   validationGaps: string[];
 }
 
@@ -986,142 +997,54 @@ export function assessCorrelateOfProtection(
   params: AssessCorrelateOfProtectionParams,
 ): AssessCorrelateOfProtectionResult {
   const framework = normalizeFramework(params.framework);
-  const notes: AdvisoryNote[] = [];
-  const pathogen = (params.pathogen ?? 'unspecified').trim();
-  const pathogenKey = pathogen.toLowerCase();
-
-  const matched =
-    KNOWN_CORRELATES.find((c: KnownCorrelate) => pathogenKey.includes(c.pathogen)) ?? null;
-
-  const immuneMarker =
-    params.immuneMarker ?? matched?.marker ?? 'Unspecified immune marker';
-
-  // Determine CoP type.
-  let copType: CoPType;
-  if (
-    params.protectionMechanismKnown === undefined &&
-    params.markerDirectlyProtective === undefined &&
-    matched
-  ) {
-    copType = matched.type;
-  } else if (
-    params.protectionMechanismKnown === undefined &&
-    params.markerDirectlyProtective === undefined &&
-    !matched
-  ) {
-    copType = 'no_established_correlate';
-  } else {
-    copType = classifyCoP(
-      params.protectionMechanismKnown ?? false,
-      params.markerDirectlyProtective ?? false,
-    );
-  }
-
-  const proposedThreshold =
-    params.proposedThreshold ?? matched?.threshold ?? 'No threshold proposed';
-
-  // Prentice criteria for surrogate validation (Qin et al. 2007 / Prentice 1989).
-  const prenticeCriteria = [
-    'Prentice 1: the marker is correlated with clinical outcome.',
-    'Prentice 2: the vaccine affects the marker.',
-    'Prentice 3: the vaccine affects the clinical outcome.',
-    'Prentice 4 (full surrogacy): the marker fully captures (mediates) the vaccine effect on outcome.',
-  ];
-
-  // Surrogate endpoint usability.
-  let surrogateEndpointUsability: string;
-  const hasLink = params.hasEfficacyDataLinkingMarker ?? Boolean(matched);
-  if ((copType as CoPType) === 'no_established_correlate') {
-    surrogateEndpointUsability =
-      'Not usable as a surrogate endpoint — no validated correlate exists. A clinical efficacy endpoint is required.';
-    notes.push({
-      severity: 'caution',
-      message:
-        'Without a validated correlate, immunogenicity may support dose-finding but cannot substitute for an efficacy endpoint at licensure.',
-    });
-  } else if (hasLink && (copType === 'mechanistic_absolute' || copType === 'nonmechanistic_absolute')) {
-    surrogateEndpointUsability =
-      'Potentially usable as a surrogate/co-primary endpoint where a threshold is defined and linked to efficacy; strongest case under accelerated approval (21 CFR 601 Subpart E) with a confirmatory study.';
-  } else {
-    surrogateEndpointUsability =
-      'Usable for relative/bridging inference (continuous titer-protection relationship) but a single pass/fail threshold is not fully validated; use as supportive evidence with efficacy or robust immunobridging.';
-  }
-
-  // Bridging applications.
-  const bridgingApplications = [
-    'Lot-to-lot consistency (immunogenicity readout against a defined marker).',
-    'Manufacturing-change comparability (immunobridging under ICH Q5E).',
-    'Age/population extrapolation (immunobridge efficacy from a studied to an unstudied population).',
-    'Strain change (e.g. influenza) where the assay and threshold are established.',
-  ];
-
-  // Intended use assessment.
-  const intendedUse = params.intendedUse ?? 'immunobridging';
-  let intendedUseAssessment: string;
-  switch (intendedUse) {
-    case 'accelerated_approval':
-      intendedUseAssessment =
-        'Accelerated approval on an immune-marker surrogate is acceptable when the marker is reasonably likely to predict clinical benefit; a confirmatory effectiveness study is required post-approval (21 CFR 601 Subpart E).';
-      break;
-    case 'immunobridging':
-      intendedUseAssessment =
-        'Immunobridging requires a pre-specified non-inferiority/equivalence margin on the marker (e.g. GMT ratio and seroresponse difference) between the bridged and reference groups.';
-      break;
-    case 'lot_release':
-      intendedUseAssessment =
-        'For lot release, the marker supports potency/consistency rather than a clinical protection claim; align with 21 CFR 610.10 and lot-release guidance.';
-      break;
-    case 'strain_change':
-      intendedUseAssessment =
-        'For strain change, an established assay/threshold (e.g. influenza HAI) permits immunogenicity-only updates without new efficacy trials.';
-      break;
-    default:
-      intendedUseAssessment = 'General supportive use of the correlate.';
-  }
-
-  // Validation gaps.
-  const validationGaps: string[] = [];
-  if (!hasLink) {
-    validationGaps.push('No efficacy dataset linking the marker to clinical protection (Prentice 1/3/4 unmet).');
-  }
-  if ((proposedThreshold || '').toLowerCase().includes('no threshold') || (proposedThreshold || '').toLowerCase().includes('no universally')) {
-    validationGaps.push('No defined/validated protective threshold for a pass-fail decision.');
-  }
-  if (copType === 'nonmechanistic_relative' || copType === 'nonmechanistic_absolute') {
-    validationGaps.push('Non-mechanistic marker — risks residual confounding; assay standardization and a reference serum are essential.');
-  }
-  if (validationGaps.length === 0) {
-    validationGaps.push('No major gaps identified for the stated use; confirm assay validation and reference-standard traceability.');
-  }
-
-  notes.push({
-    severity: 'info',
-    message:
-      'Distinguish absolute correlates (a defined titer predicts protection in an individual) from relative/population correlates (protection rises with titer without a clean cutoff) per Plotkin & Gilbert (2012).',
-  });
-
+  const notes = referenceNotes(params.framework);
+  validateTextInputs(params, ['pathogen', 'immuneMarker', 'proposedThreshold']);
+  const inputStates = booleanInputStates(params, ['protectionMechanismKnown', 'markerDirectlyProtective', 'hasEfficacyDataLinkingMarker']);
+  const pathogen = params.pathogen ?? 'unspecified';
+  const matched = KNOWN_CORRELATES.find(c => pathogen.toLowerCase().includes(c.pathogen)) ?? null;
+  const immuneMarker = params.immuneMarker ?? null;
+  const proposedThreshold = params.proposedThreshold ?? null;
+  const mechanism = inputStates.protectionMechanismKnown;
+  const protective = inputStates.markerDirectlyProtective;
+  const copType = mechanism === 'not_stated' || protective === 'not_stated'
+    ? 'not_assessed' : classifyCoP(mechanism, protective);
+  const hasLink = inputStates.hasEfficacyDataLinkingMarker;
+  const surrogateEndpointUsability = hasLink === false
+    ? 'Not supported by the stated absence of an efficacy-data link; bridging or surrogate use cannot be endorsed here.'
+    : 'Not assessed: stated classification/linkage flags and a reference entry do not establish assay validation, the Prentice criteria or agency acceptance of a surrogate.';
+  const intendedUse = statedOneOf('intendedUse', params.intendedUse,
+    ['accelerated_approval', 'immunobridging', 'lot_release', 'strain_change'] as const);
+  const useReferences = {
+    accelerated_approval: 'Reference only: accelerated approval requires a surrogate reasonably likely to predict clinical benefit and confirmatory evidence. Eligibility is not assessed here.',
+    immunobridging: 'Reference only: immunobridging needs justified margins, an accepted marker and assay, and adequate source/comparator evidence; feasibility is not determined here.',
+    lot_release: 'Reference only: a lot-release marker supports potency/consistency rather than a clinical protection claim; align with 21 CFR 610.10.',
+    strain_change: 'Reference only: strain-change approaches depend on accepted assays, thresholds and authority-specific requirements; no waiver of efficacy studies is determined here.',
+  };
+  const validationGaps = ['Assay validation, source evidence, the Prentice criteria and intended-use acceptance are not assessed by this worksheet.'];
+  if (hasLink === 'not_stated') validationGaps.push('hasEfficacyDataLinkingMarker was not stated; its presence or absence cannot be assumed.');
+  if (hasLink === false) validationGaps.push('An efficacy-data link was explicitly ruled out in the stated inputs.');
+  if (proposedThreshold === null) validationGaps.push('proposedThreshold was not stated; no actual threshold is assessed.');
+  if (copType === 'not_assessed') validationGaps.push('State protectionMechanismKnown and markerDirectlyProtective to classify the stated marker.');
+  notes.push({ severity: 'info', message: 'Known correlates are reference profiles only; they do not supply product marker, threshold, classification or efficacy-link facts.' });
   return {
-    engine: 'assessCorrelateOfProtection',
-    deterministic: true,
-    framework,
-    pathogen,
-    immuneMarker,
-    matchedKnownCorrelate: matched,
-    copType,
-    copTypeExplanation: copTypeLabel(copType),
-    thresholdAssessment: `Proposed/known threshold: ${proposedThreshold}.`,
+    engine: 'assessCorrelateOfProtection', deterministic: true, framework, inputStates,
+    pathogen, immuneMarker, matchedKnownCorrelate: matched ? { ...matched, basis: 'reference_only' } : null,
+    copType, copTypeExplanation: copTypeLabel(copType),
+    thresholdAssessment: proposedThreshold === null ? null : `Stated proposed threshold: ${proposedThreshold}. Validation is not assessed.`,
     surrogateEndpointUsability,
-    prenticeCriteria,
-    bridgingApplications,
-    intendedUseAssessment,
-    validationGaps,
-    citations: cite(
-      'plotkin2010',
-      'plotkin_gilbert2012',
-      'qin2007',
-      intendedUse === 'accelerated_approval' ? 'fda_acceladult' : 'ema_clinical',
-      framework === 'who' ? 'who_trs924' : 'fda_flu2007',
-    ),
+    prenticeCriteria: [
+      'Prentice 1: the marker is correlated with clinical outcome.',
+      'Prentice 2: the vaccine affects the marker.',
+      'Prentice 3: the vaccine affects the clinical outcome.',
+      'Prentice 4: the marker fully captures the vaccine effect on outcome.',
+    ],
+    bridgingApplications: [
+      'Reference application: lot-to-lot consistency.', 'Reference application: manufacturing-change comparability.',
+      'Reference application: age/population extrapolation.', 'Reference application: strain change with an accepted assay/threshold.',
+    ],
+    intendedUseAssessment: intendedUse === undefined ? null : useReferences[intendedUse], validationGaps,
+    citations: cite('plotkin2010', 'plotkin_gilbert2012', 'qin2007',
+      intendedUse === 'accelerated_approval' ? 'fda_acceladult' : 'ema_clinical', framework === 'who' ? 'who_trs924' : 'fda_flu2007'),
     notes,
   };
 }
@@ -1142,6 +1065,7 @@ export interface DesignVaccineClinicalProgramParams {
 }
 
 export interface ClinicalPhasePlan {
+  basis: 'reference_only';
   phase: string;
   objectives: string[];
   typicalSampleSize: string;
@@ -1154,16 +1078,19 @@ export interface ImmunogenicityEndpointSet {
 }
 
 export interface DesignVaccineClinicalProgramResult extends EngineMeta {
+  inputStates: Record<string, BooleanState>;
+  pathwayAssessment: 'assessed' | 'not_assessed';
   platform: VaccinePlatform;
   pathogen: string;
   efficacyVsImmunobridging: string;
   efficacySuccessCriterion: string;
   phases: ClinicalPhasePlan[];
   immunogenicityEndpoints: ImmunogenicityEndpointSet;
-  safetyDatabaseExpectation: string;
+  safetyDatabaseExpectation: string | null;
   safetyFollowUpDuration: string;
   lotConsistencyExpectation: string;
-  acceleratedApprovalEligibility: string;
+  acceleratedApprovalEligibility: null;
+  acceleratedApprovalReference: string;
 }
 
 /**
@@ -1177,22 +1104,33 @@ export function designVaccineClinicalProgram(
 ): DesignVaccineClinicalProgramResult {
   const platform = normalizePlatform(params.platform);
   const framework = normalizeFramework(params.framework);
-  const notes: AdvisoryNote[] = [];
+  const notes = referenceNotes(params.framework);
+  validateTextInputs(params, ['pathogen']);
+  const inputStates = booleanInputStates(params, ['hasEstablishedCorrelate', 'efficacyFeasible', 'noveltyIsHigh']);
+  statedOneOf('targetPopulation', params.targetPopulation, ['adults', 'pediatric', 'elderly', 'maternal', 'all_ages']);
   const pathogen = (params.pathogen ?? 'unspecified').trim();
-  const seriousness = params.diseaseSeriousness ?? 'serious';
+  const seriousness = statedOneOf('diseaseSeriousness', params.diseaseSeriousness, ['routine', 'serious', 'pandemic']);
 
-  const hasCorrelate = params.hasEstablishedCorrelate ?? false;
-  const efficacyFeasible = params.efficacyFeasible ?? true;
+  const hasCorrelate = inputStates.hasEstablishedCorrelate;
+  const efficacyFeasible = inputStates.efficacyFeasible;
+  const pathwayAssessment = [hasCorrelate, efficacyFeasible].includes('not_stated') ? 'not_assessed' : 'assessed';
+  const bridgingSelected = pathwayAssessment === 'assessed' && hasCorrelate === true && efficacyFeasible === false;
+  const phase3Unresolved = pathwayAssessment === 'not_assessed' || (hasCorrelate === false && efficacyFeasible === false);
+  const phase3NextStep = pathwayAssessment === 'not_assessed'
+    ? 'State the pathway prerequisites before selecting a Phase 3 objective.'
+    : 'The stated facts do not select a supported routine Phase 3 pathway; assess alternative evidence and agency requirements before choosing an endpoint.';
 
   // Efficacy vs immunobridging decision.
   let efficacyVsImmunobridging: string;
-  if (hasCorrelate && !efficacyFeasible) {
+  if (pathwayAssessment === 'not_assessed') {
+    efficacyVsImmunobridging = 'Not assessed: state hasEstablishedCorrelate and efficacyFeasible before selecting a pathway or Phase 3 endpoint.';
+  } else if (bridgingSelected) {
     efficacyVsImmunobridging =
-      'Immunobridging pathway: an established correlate exists and a field-efficacy trial is impractical — license on immunogenicity non-inferiority/superiority against a validated marker, with confirmatory effectiveness as available.';
-  } else if (hasCorrelate && efficacyFeasible) {
+      'Reference immunobridging pathway: a correlate and infeasible field-efficacy trial were stated. Consider marker-based bridging only if the actual assay, source/target evidence and agency expectations support it; licensing is not determined here.';
+  } else if (hasCorrelate === true && efficacyFeasible === true) {
     efficacyVsImmunobridging =
       'Either pathway viable: a correlate exists but efficacy is feasible — a confirmatory efficacy trial is the most robust basis; immunobridging is acceptable for line extensions and population bridges.';
-  } else if (!hasCorrelate && efficacyFeasible) {
+  } else if (hasCorrelate === false && efficacyFeasible === true) {
     efficacyVsImmunobridging =
       'Clinical efficacy required: no validated correlate exists, so a Phase 3 efficacy endpoint (laboratory-confirmed disease) is needed for licensure.';
   } else {
@@ -1212,6 +1150,7 @@ export function designVaccineClinicalProgram(
   // Phased plan.
   const phases: ClinicalPhasePlan[] = [
     {
+      basis: 'reference_only',
       phase: 'Phase 1 (first-in-human / safety & dose-ranging)',
       objectives: [
         'Initial safety and reactogenicity.',
@@ -1222,6 +1161,7 @@ export function designVaccineClinicalProgram(
       endpoints: ['Solicited/unsolicited adverse events', 'Immunogenicity (GMT, seroconversion) by dose'],
     },
     {
+      basis: 'reference_only',
       phase: 'Phase 2 (dose confirmation / expanded safety)',
       objectives: [
         'Confirm dose, schedule, and formulation (including adjuvant).',
@@ -1232,12 +1172,13 @@ export function designVaccineClinicalProgram(
       endpoints: ['Immunogenicity (GMT, GMR, seroresponse/seroconversion rates)', 'Safety/reactogenicity'],
     },
     {
+      basis: 'reference_only',
       phase:
-        hasCorrelate && !efficacyFeasible
+        phase3Unresolved ? 'Phase 3 (evidentiary pathway not assessed)' : bridgingSelected
           ? 'Phase 3 (immunobridging / consistency / large safety)'
           : 'Phase 3 (efficacy / large safety)',
       objectives:
-        hasCorrelate && !efficacyFeasible
+        phase3Unresolved ? [phase3NextStep, 'Plan lot consistency and safety evidence.'] : bridgingSelected
           ? [
               'Demonstrate immunogenicity meeting the pre-specified marker criterion.',
               'Demonstrate manufacturing lot-to-lot consistency.',
@@ -1249,11 +1190,11 @@ export function designVaccineClinicalProgram(
               'Accrue the pre-specified safety database.',
             ],
       typicalSampleSize:
-        seriousness === 'pandemic'
+        seriousness === undefined ? 'Not assessed: diseaseSeriousness was not stated.' : seriousness === 'pandemic'
           ? 'Tens of thousands for a pre-licensure efficacy/safety database'
           : 'Thousands to tens of thousands depending on endpoint',
       endpoints:
-        hasCorrelate && !efficacyFeasible
+        phase3Unresolved ? ['Pathway-specific endpoint not assessed', 'Lot consistency (reference)', 'Safety (reference)'] : bridgingSelected
           ? ['Immunogenicity non-inferiority/superiority', 'Lot consistency', 'Safety']
           : ['Vaccine efficacy (attack-rate reduction)', 'Lot consistency', 'Safety'],
     },
@@ -1277,8 +1218,10 @@ export function designVaccineClinicalProgram(
   };
 
   // Safety database expectation (ICH E1 / vaccine convention).
-  let safetyDatabaseExpectation: string;
-  if (seriousness === 'pandemic') {
+  let safetyDatabaseExpectation: string | null;
+  if (seriousness === undefined) {
+    safetyDatabaseExpectation = null;
+  } else if (seriousness === 'pandemic') {
     safetyDatabaseExpectation =
       'Large pre-licensure safety database (commonly tens of thousands) to characterize uncommon events; consult FDA COVID-19 guidance expectations (e.g. a median follow-up benchmark for serious/medically attended events).';
   } else {
@@ -1292,17 +1235,11 @@ export function designVaccineClinicalProgram(
   const lotConsistencyExpectation =
     'Demonstrate consistency of ≥3 consecutive manufacturing lots by an equivalence design on the immunogenicity readout (and key potency attributes) — a standard pre-licensure requirement (WHO TRS 924; EMA clinical-evaluation guideline).';
 
-  // Accelerated approval eligibility.
-  let acceleratedApprovalEligibility: string;
-  if (seriousness !== 'routine' && hasCorrelate) {
-    acceleratedApprovalEligibility =
-      'Eligible: serious indication with a surrogate reasonably likely to predict benefit supports accelerated approval (21 CFR 601 Subpart E) with a confirmatory study commitment.';
-  } else {
-    acceleratedApprovalEligibility =
-      'Accelerated approval less applicable: either the indication is routine or no qualifying surrogate exists; plan for traditional approval on a clinical endpoint.';
-  }
+  const acceleratedApprovalReference = 'Reference only: accelerated approval depends on applicable legal criteria, an acceptable surrogate reasonably likely to predict benefit and confirmatory commitments. These inputs do not determine product eligibility.';
 
-  if (params.noveltyIsHigh) {
+  if (inputStates.noveltyIsHigh === 'not_stated') {
+    notes.push({ severity: 'caution', message: 'noveltyIsHigh was not stated; novelty-specific safety follow-up is not assessed.' });
+  } else if (inputStates.noveltyIsHigh === true) {
     notes.push({
       severity: 'recommendation',
       message:
@@ -1314,6 +1251,8 @@ export function designVaccineClinicalProgram(
     engine: 'designVaccineClinicalProgram',
     deterministic: true,
     framework,
+    inputStates,
+    pathwayAssessment,
     platform,
     pathogen,
     efficacyVsImmunobridging,
@@ -1323,7 +1262,8 @@ export function designVaccineClinicalProgram(
     safetyDatabaseExpectation,
     safetyFollowUpDuration,
     lotConsistencyExpectation,
-    acceleratedApprovalEligibility,
+    acceleratedApprovalEligibility: null,
+    acceleratedApprovalReference,
     citations: cite(
       'fda_covid2020',
       'fda_flu2007',
@@ -1351,6 +1291,7 @@ export interface AssessLotConsistencyParams {
 }
 
 export interface LotConsistencyResult extends EngineMeta {
+  defaultsApplied: string[];
   numberOfLots: number;
   design: string;
   equivalenceMarginGMTRatio: { lower: number; upper: number };
@@ -1372,17 +1313,24 @@ export function assessLotConsistency(
   params: AssessLotConsistencyParams,
 ): LotConsistencyResult {
   const framework = normalizeFramework(params.framework);
-  const notes: AdvisoryNote[] = [];
+  const notes = referenceNotes(params.framework);
+  validateTextInputs(params, ['immunogenicityMarker']);
+  statedNumber('expectedGMT', params.expectedGMT, value => value > 0, 'a finite positive number');
+  const defaultsApplied = ['numberOfLots', 'assumedSdLog', 'equivalenceMarginLower', 'equivalenceMarginUpper', 'targetPower']
+    .filter(field => params[field as keyof AssessLotConsistencyParams] == null);
 
-  const numberOfLots = clamp(Math.round(params.numberOfLots ?? 3), 2, 5);
+  const numberOfLots = statedNumber('numberOfLots', params.numberOfLots,
+    value => Number.isInteger(value) && value >= 2 && value <= 5, 'an integer from 2 to 5') ?? 3;
 
   // Conventional equivalence margin on the GMT ratio: 0.5 to 2.0 (i.e. two-fold).
-  const lower = params.equivalenceMarginLower ?? 0.5;
-  const upper = params.equivalenceMarginUpper ?? 2.0;
+  const lower = statedNumber('equivalenceMarginLower', params.equivalenceMarginLower, value => value > 0 && value < 1, 'a finite ratio between 0 and 1') ?? 0.5;
+  const upper = statedNumber('equivalenceMarginUpper', params.equivalenceMarginUpper, value => value > 1, 'a finite ratio above 1') ?? 2;
+  if (Math.abs(lower * upper - 1) > 1e-8) throw new ComputationRefusal('invalid_input',
+    'This planning approximation supports reciprocal log-symmetric margins only; equivalenceMarginLower must equal 1 / equivalenceMarginUpper.', 'equivalenceMarginLower');
 
-  const power = clamp(params.targetPower ?? 0.9, 0.5, 0.99);
+  const power = statedNumber('targetPower', params.targetPower, value => value >= 0.5 && value <= 0.99, 'a finite power from 0.5 to 0.99') ?? 0.9;
   // SD of log-transformed titers (natural log). 0.7–0.75 is a common assumption.
-  const sdLog = params.assumedSdLog ?? 0.75;
+  const sdLog = statedNumber('assumedSdLog', params.assumedSdLog, value => value > 0, 'a finite positive number') ?? 0.75;
 
   // Pairwise equivalence comparisons among lots.
   const pairwiseComparisons: string[] = [];
@@ -1395,13 +1343,15 @@ export function assessLotConsistency(
   // Closed-form per-group sample size for a TOST equivalence on log-GMT,
   // assuming true ratio = 1 (worst case at margin midpoint in log space).
   // n per group ≈ 2 * sdLog^2 * (z_{1-alpha} + z_{1-beta/2})^2 / (ln(upper))^2
-  const zAlpha = 1.6449; // one-sided alpha = 0.05
-  const zBetaHalf = inverseNormal(1 - (1 - power) / 2);
+  const zAlpha = normalQuantile(0.95); // one-sided alpha = 0.05
+  const zBetaHalf = normalQuantile(1 - (1 - power) / 2);
   const delta = Math.log(upper); // log of the upper margin (symmetric in log space)
   const perGroupRaw =
     (2 * sdLog * sdLog * Math.pow(zAlpha + zBetaHalf, 2)) / (delta * delta);
   const perGroup = Math.ceil(perGroupRaw);
   const totalSampleSize = perGroup * numberOfLots;
+  if (!Number.isSafeInteger(totalSampleSize) || totalSampleSize <= 0) throw new ComputationRefusal('invalid_input',
+    'The planning estimate is outside the supported finite integer range; review SD, margins and power.', 'assumedSdLog');
 
   if (numberOfLots < 3) {
     notes.push({
@@ -1421,9 +1371,10 @@ export function assessLotConsistency(
     engine: 'assessLotConsistency',
     deterministic: true,
     framework,
+    defaultsApplied,
     numberOfLots,
     design: `Randomized, parallel-group equivalence study of ${numberOfLots} consecutive manufacturing lots, immunogenicity measured after the same schedule, analyzed by pairwise TOST on the GMT ratio.`,
-    equivalenceMarginGMTRatio: { lower: roundTo(lower, 3), upper: roundTo(upper, 3) },
+    equivalenceMarginGMTRatio: { lower, upper },
     pairwiseComparisons,
     perGroupSampleSizeEstimate: perGroup,
     totalSampleSizeEstimate: totalSampleSize,
@@ -1436,8 +1387,8 @@ export function assessLotConsistency(
       'Conclude lot consistency if, for every pairwise comparison, the two-sided CI for the GMT ratio lies entirely within the pre-specified equivalence margin.',
     assumptions: [
       `Assumed within-group SD of log-titers (natural log): ${sdLog}.`,
-      `Target power: ${roundTo(power, 2)} per pairwise comparison.`,
-      `One-sided alpha 0.05 per TOST bound; GMT-ratio margin ${roundTo(lower, 2)}–${roundTo(upper, 2)} (two-fold).`,
+      `Target power: ${power} per pairwise comparison.`,
+      `One-sided alpha 0.05 per TOST bound; GMT-ratio margin ${lower}–${upper}.`,
       'Assumes true GMT ratio = 1 (lots truly identical); non-unity ratios increase required n.',
       'Sample-size estimate is a planning approximation; confirm with the final statistical analysis plan.',
     ],
@@ -1449,36 +1400,6 @@ export function assessLotConsistency(
     ),
     notes,
   };
-}
-
-// Helper: rational approximation of the inverse standard normal CDF
-// (Acklam / Beasley-Springer-style), deterministic.
-function inverseNormal(p: number): number {
-  if (p <= 0) return -Infinity;
-  if (p >= 1) return Infinity;
-  // Coefficients.
-  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.38357751867269e2, -3.066479806614716e1, 2.506628277459239];
-  const b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
-  const c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
-  const d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
-  const plow = 0.02425;
-  const phigh = 1 - plow;
-  let q: number;
-  let r: number;
-  if (p < plow) {
-    q = Math.sqrt(-2 * Math.log(p));
-    return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
-  }
-  if (p > phigh) {
-    q = Math.sqrt(-2 * Math.log(1 - p));
-    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
-      ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
-  }
-  q = p - 0.5;
-  r = q * q;
-  return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
-    (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1494,16 +1415,18 @@ export interface AssessVaccinePlatformParams {
 }
 
 export interface AssessVaccinePlatformResult extends EngineMeta {
+  inputStates: Record<string, BooleanState>;
+  platformReference: PlatformProfile & { basis: 'reference_only' };
   platform: VaccinePlatform;
   platformLabel: string;
   developmentImplications: string[];
-  priorKnowledgeStrength: 'high' | 'moderate' | 'emerging';
+  priorKnowledgeStrength: 'high' | 'moderate' | 'emerging' | 'not_assessed';
   priorKnowledgeLeverage: string[];
-  platformMasterFileEligible: boolean;
+  platformMasterFileEligible: boolean | null;
   platformMasterFileGuidance: string;
-  nonclinicalLeverage: string;
-  cmcLeverage: string;
-  populationSuitability: string;
+  nonclinicalLeverage: string | null;
+  cmcLeverage: string | null;
+  populationSuitability: string | null;
   keyPlatformRisks: string[];
 }
 
@@ -1518,31 +1441,33 @@ export function assessVaccinePlatform(
   const platform = normalizePlatform(params.platform);
   const framework = normalizeFramework(params.framework);
   const profile = getPlatformProfile(platform);
-  const notes: AdvisoryNote[] = [];
+  const notes = referenceNotes(params.framework);
+  const inputStates = booleanInputStates(params, ['priorLicensedProductOnPlatform', 'sameBackboneDifferentAntigen']);
 
-  const priorProduct = params.priorLicensedProductOnPlatform ?? false;
-  const sameBackbone = params.sameBackboneDifferentAntigen ?? false;
+  const priorProduct = inputStates.priorLicensedProductOnPlatform;
+  const sameBackbone = inputStates.sameBackboneDifferentAntigen;
 
   // Prior-knowledge leverage.
   const priorKnowledgeLeverage: string[] = [];
-  if (priorProduct) {
-    priorKnowledgeLeverage.push('A licensed product on this platform anchors the safety database and CMC characterization that can be referenced.');
+  if (priorProduct === true) {
+    priorKnowledgeLeverage.push('A prior licensed product was stated; assess whether its accessible safety/CMC evidence can be referenced for this product.');
   }
-  if (sameBackbone) {
-    priorKnowledgeLeverage.push('Same backbone with a new antigen/transgene/sequence — leverage platform process, analytical methods, and (largely) the nonclinical toxicology package; focus new work on the antigen-specific attributes.');
-  }
-  if (profile.platformMasterFileEligible) {
-    priorKnowledgeLeverage.push('Platform process and analytics can be captured in a Vaccine/Platform Master File and referenced across products.');
+  if (sameBackbone === true) {
+    priorKnowledgeLeverage.push('Same backbone was stated; consider process/method leverage only after the actual platform and product evidence supports it.');
   }
   if (priorKnowledgeLeverage.length === 0) {
-    priorKnowledgeLeverage.push('No prior-product leverage assumed — treat as a de-novo development with the full nonclinical and CMC package.');
+    priorKnowledgeLeverage.push([priorProduct, sameBackbone].includes('not_stated')
+      ? 'Prior-product/backbone evidence was not fully stated; leverage is not assessed.'
+      : 'Both encoded reuse bases were explicitly ruled out; other possible source evidence is not assessed.');
   }
 
   // Population suitability.
-  const population = params.intendedPopulation ?? 'general';
-  let populationSuitability: string;
-  const replicating = platform === 'live_attenuated' || platform === 'viral_vector';
-  if ((population === 'immunocompromised' || population === 'pregnant') && platform === 'live_attenuated') {
+  const population = statedOneOf('intendedPopulation', params.intendedPopulation, ['general', 'immunocompromised', 'pregnant', 'pediatric', 'elderly']);
+  let populationSuitability: string | null;
+  const replicating = platform === 'live_attenuated';
+  if (population === undefined) {
+    populationSuitability = null;
+  } else if ((population === 'immunocompromised' || population === 'pregnant') && platform === 'live_attenuated') {
     populationSuitability =
       'Caution: live-attenuated products are generally contraindicated in immunocompromised and pregnant populations due to replication/reversion risk — prefer a non-replicating platform.';
     notes.push({
@@ -1553,6 +1478,8 @@ export function assessVaccinePlatform(
   } else if (population === 'immunocompromised' && platform === 'viral_vector') {
     populationSuitability =
       'Caution: replication-competent vectors are problematic in immunocompromised hosts; replication-deficient vectors may be acceptable with justification.';
+  } else if (platform === 'viral_vector') {
+    populationSuitability = 'Reference only: viral vectors may be replication competent or deficient; establish the actual vector properties before assessing population suitability.';
   } else if (!replicating) {
     populationSuitability =
       'Non-replicating platform — generally suitable across special populations subject to standard benefit-risk and population-specific data.';
@@ -1561,9 +1488,7 @@ export function assessVaccinePlatform(
       'Replicating platform — confirm shedding/transmissibility and reversion controls before broadening to vulnerable populations.';
   }
 
-  const platformMasterFileGuidance = profile.platformMasterFileEligible
-    ? 'Eligible for a Vaccine/Platform Master File: register the sequence-independent process, analytical methods, and platform safety knowledge once and cross-reference it in each product application to compress timelines.'
-    : 'Not well suited to a platform master file: this platform is largely product-specific (seed lots, attenuation, inactivation), so most CMC and nonclinical work is generated per product.';
+  const platformMasterFileGuidance = 'Platform reference potential is not product eligibility. Confirm the legal route, actual shared process, accessible supporting evidence and agency expectations before proposing master-file reuse.';
 
   notes.push({
     severity: 'info',
@@ -1575,19 +1500,19 @@ export function assessVaccinePlatform(
     engine: 'assessVaccinePlatform',
     deterministic: true,
     framework,
+    inputStates,
+    platformReference: { ...profile, basis: 'reference_only' },
     platform,
     platformLabel: platformLabel(platform),
     developmentImplications: profile.developmentImplications,
-    priorKnowledgeStrength: profile.priorKnowledgeStrength,
+    priorKnowledgeStrength: 'not_assessed',
     priorKnowledgeLeverage,
-    platformMasterFileEligible: profile.platformMasterFileEligible,
+    platformMasterFileEligible: null,
     platformMasterFileGuidance,
-    nonclinicalLeverage: sameBackbone
-      ? 'Same-backbone leverage: a reduced antigen-specific nonclinical package (immunogenicity + targeted toxicology) is often acceptable where platform toxicology is established (WHO TRS 927).'
-      : 'Full nonclinical package (immunogenicity, repeat-dose toxicology, biodistribution/shedding for vectors, DART where applicable) per WHO TRS 927.',
-    cmcLeverage: profile.platformMasterFileEligible
-      ? 'CMC leverage: sequence/antigen-independent process and analytical methods transfer across products; re-verify product-specific identity, content, and potency.'
-      : 'CMC leverage limited: product-specific seed/inactivation/attenuation controls dominate and must be generated per product.',
+    nonclinicalLeverage: sameBackbone === 'not_stated' ? null : sameBackbone
+      ? 'Conditional reference: assess whether established platform toxicology can support antigen-specific bridging; no reduced package is approved here.'
+      : 'No same-backbone reuse was stated; assess the actual product-specific nonclinical package and any other source evidence.',
+    cmcLeverage: sameBackbone === 'not_stated' ? null : 'Reference: verify actual process/method comparability and product-specific identity, content and potency before reusing CMC evidence.',
     populationSuitability,
     keyPlatformRisks: profile.keyCmcRisks,
     citations: cite(
@@ -1617,23 +1542,25 @@ export interface PopulationStrategy {
   population: string;
   strategy: string[];
   dosing: string;
-  endpoint: string;
+  endpoint: string | null;
   safetyConsiderations: string[];
   cautions: string[];
 }
 
 export interface PlanVaccineSpecialPopulationsResult extends EngineMeta {
+  inputStates: Record<string, BooleanState>;
+  platform: VaccinePlatform | 'not_stated';
   requested: string;
   strategies: PopulationStrategy[];
   ageDeEscalationApproach: string;
   maternalImmunizationApproach: string;
-  bridgingApproach: string;
+  bridgingApproach: string | null;
 }
 
 function pediatricStrategy(
-  platform: VaccinePlatform,
-  adultData: boolean,
-  hasCorrelate: boolean,
+  platform: VaccinePlatform | undefined,
+  adultData: BooleanState,
+  hasCorrelate: BooleanState,
 ): PopulationStrategy {
   const cautions: string[] = [];
   if (platform === 'live_attenuated') {
@@ -1643,15 +1570,17 @@ function pediatricStrategy(
     population: 'Pediatric',
     strategy: [
       'Age de-escalation: study older children/adolescents first, then step down to younger ages and infants as safety accrues (PREA / 21 CFR 601.27).',
-      adultData
-        ? 'Immunobridge from adult/adolescent immunogenicity where a correlate or robust marker exists.'
+      adultData === 'not_stated' ? 'adultDataAvailable was not stated; the pediatric source-data strategy is not assessed.' : adultData
+        ? hasCorrelate === true ? 'Conditional reference: assess immunobridging from actual adult/adolescent evidence against the stated correlate.'
+          : 'Adult data were stated as available; population bridging remains to be assessed against an acceptable marker and source evidence.'
         : 'Generate de-novo pediatric immunogenicity (and efficacy where no correlate exists).',
       'Co-administration and EPI-schedule compatibility studies for infant vaccines.',
     ],
     dosing:
       'Dose may differ from adults; justify the pediatric dose by immunogenicity/reactogenicity dose-ranging rather than assuming the adult dose.',
-    endpoint: hasCorrelate
-      ? 'Immunogenicity non-inferiority against the established correlate/benchmark.'
+    endpoint: hasCorrelate === 'not_stated' ? null : hasCorrelate
+      ? adultData === true ? 'Reference endpoint: immunogenicity non-inferiority against an established correlate/benchmark with adequate source evidence.'
+        : 'Reference marker endpoint; population bridging is not assessed without source evidence.'
       : 'Immunogenicity, supported by efficacy where a correlate is unavailable.',
     safetyConsiderations: [
       'Age-appropriate reactogenicity (fever assessment, febrile seizure monitoring in young children).',
@@ -1662,13 +1591,12 @@ function pediatricStrategy(
 }
 
 function pregnancyStrategy(
-  platform: VaccinePlatform,
-  hasCorrelate: boolean,
+  platform: VaccinePlatform | undefined,
+  hasCorrelate: BooleanState,
 ): PopulationStrategy {
   const cautions: string[] = [];
-  if (platform === 'live_attenuated' || platform === 'viral_vector') {
-    cautions.push('Live/replicating platforms are generally avoided in pregnancy — prefer non-replicating products for maternal immunization.');
-  }
+  if (platform === 'live_attenuated') cautions.push('Live-attenuated products are generally avoided in pregnancy; assess product-specific maternal safety and platform choice.');
+  if (platform === 'viral_vector') cautions.push('Viral-vector replication status was not stated; establish actual replication properties before assessing maternal platform safety.');
   return {
     population: 'Pregnancy / maternal immunization',
     strategy: [
@@ -1676,8 +1604,8 @@ function pregnancyStrategy(
       'Goal of maternal immunization is transplacental transfer of antibody to protect the young infant (e.g. RSV, Tdap, influenza precedents).',
       'Pre-specify gestational-age window for vaccination to optimize transfer and infant protection.',
     ],
-    dosing: 'Typically the adult dose; timing in pregnancy is the key design variable.',
-    endpoint: hasCorrelate
+    dosing: 'Dose not assessed: justify the maternal dose from product-specific evidence; adult-equivalent dosing is not inferred.',
+    endpoint: hasCorrelate === 'not_stated' ? null : hasCorrelate
       ? 'Maternal and cord/infant antibody (transfer ratio) against the correlate, ± infant clinical endpoint.'
       : 'Infant clinical disease endpoint where no correlate exists, with maternal/infant immunogenicity.',
     safetyConsiderations: [
@@ -1688,7 +1616,7 @@ function pregnancyStrategy(
   };
 }
 
-function elderlyStrategy(platform: VaccinePlatform): PopulationStrategy {
+function elderlyStrategy(platform: VaccinePlatform | undefined): PopulationStrategy {
   return {
     population: 'Elderly (immunosenescence)',
     strategy: [
@@ -1696,7 +1624,7 @@ function elderlyStrategy(platform: VaccinePlatform): PopulationStrategy {
       'Evaluate the formulation specifically in older adults rather than extrapolating from younger adults.',
     ],
     dosing:
-      platform === 'protein_subunit' || platform === 'inactivated'
+      platform === undefined ? 'Platform-specific dose strategy is not assessed until the platform and product evidence are stated.' : platform === 'protein_subunit' || platform === 'inactivated'
         ? 'Consider an adjuvanted or higher-antigen-dose formulation to overcome reduced responsiveness.'
         : 'Confirm the dose drives adequate immunogenicity in older adults; a higher dose may be warranted.',
     endpoint: 'Immunogenicity in the elderly stratum, with efficacy where the burden/feasibility supports it.',
@@ -1708,7 +1636,7 @@ function elderlyStrategy(platform: VaccinePlatform): PopulationStrategy {
   };
 }
 
-function immunocompromisedStrategy(platform: VaccinePlatform): PopulationStrategy {
+function immunocompromisedStrategy(platform: VaccinePlatform | undefined): PopulationStrategy {
   const cautions: string[] = [];
   if (platform === 'live_attenuated') {
     cautions.push('Live-attenuated products are generally contraindicated in significant immunocompromise.');
@@ -1741,13 +1669,19 @@ export function planVaccineSpecialPopulations(
   params: PlanVaccineSpecialPopulationsParams,
 ): PlanVaccineSpecialPopulationsResult {
   const framework = normalizeFramework(params.framework);
-  const platform = params.platform ? normalizePlatform(params.platform) : 'protein_subunit';
-  const adultData = params.adultDataAvailable ?? false;
-  const hasCorrelate = params.hasCorrelate ?? false;
-  const notes: AdvisoryNote[] = [];
+  const platform = params.platform == null ? undefined : normalizePlatform(params.platform);
+  const inputStates = booleanInputStates(params, ['adultDataAvailable', 'hasCorrelate']);
+  const adultData = inputStates.adultDataAvailable;
+  const hasCorrelate = inputStates.hasCorrelate;
+  statedOneOf('diseaseSeriousness', params.diseaseSeriousness, ['routine', 'serious', 'pandemic']);
+  const population = statedOneOf('population', params.population, ['pediatric', 'pregnancy', 'elderly', 'immunocompromised', 'all']);
+  refuseUnlessStated('planVaccineSpecialPopulations', [{ field: 'population', value: params.population,
+    ok: population !== undefined, expected: 'pediatric, pregnancy, elderly, immunocompromised or all' }], 'planned');
+  const notes = referenceNotes(params.framework);
+  if (platform === undefined) notes.push({ severity: 'caution', message: 'platform was not stated; platform-specific dosing, contraindications and population safety are not assessed.' });
 
   const wanted: PopulationStrategy[] = [];
-  const want = params.population;
+  const want = population!;
   if (want === 'pediatric' || want === 'all') wanted.push(pediatricStrategy(platform, adultData, hasCorrelate));
   if (want === 'pregnancy' || want === 'all') wanted.push(pregnancyStrategy(platform, hasCorrelate));
   if (want === 'elderly' || want === 'all') wanted.push(elderlyStrategy(platform));
@@ -1772,14 +1706,16 @@ export function planVaccineSpecialPopulations(
     engine: 'planVaccineSpecialPopulations',
     deterministic: true,
     framework,
+    inputStates,
+    platform: platform ?? 'not_stated',
     requested: want,
     strategies: wanted,
     ageDeEscalationApproach:
       'Age de-escalation: begin in the oldest pediatric stratum (or adolescents/adults), then step down to progressively younger ages and finally infants only after the prior stratum’s safety and immunogenicity support it (PREA / 21 CFR 601.27).',
     maternalImmunizationApproach:
       'Maternal immunization: complete DART first, vaccinate in a pre-specified gestational window with a non-replicating product, and measure transplacental antibody transfer (cord/infant titers) plus infant clinical protection.',
-    bridgingApproach: hasCorrelate
-      ? 'With an established correlate, bridge across populations by immunogenicity non-inferiority against the marker.'
+    bridgingApproach: hasCorrelate === 'not_stated' || (hasCorrelate === true && ['pediatric', 'all'].includes(want) && adultData !== true) ? null : hasCorrelate
+      ? 'Conditional reference: assess marker-based population bridging only with adequate source/comparator evidence, an accepted assay and justified margins.'
       : 'Without a correlate, special populations generally need their own immunogenicity and, where feasible, clinical/efficacy data.',
     citations: cite(
       'fda_peds',
