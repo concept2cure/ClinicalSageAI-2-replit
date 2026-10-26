@@ -3407,7 +3407,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     });
     const { region, referenceBlock } = await savedSectionDraftTemplate(pool, {
       tenantId, documentId: section.doc_id, programId: section.client_program_id,
-      sectionId, code: section.code,
+      sectionId: String(sectionId), code: section.code,
     }, section, req.body.region);
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')

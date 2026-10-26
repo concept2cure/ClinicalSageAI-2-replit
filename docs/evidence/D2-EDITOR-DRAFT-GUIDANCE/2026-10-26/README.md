@@ -26,7 +26,7 @@ Searches covered direct draft/template guidance/reference/source/section context
 
 ## Qualification and publication
 
-Meaningful RED must exercise the existing actual HTTP draft route before production changes. Pure new-helper preparation without an existing export is not RED. Cover recorded-over-current guidance, section-over-parent identity, renamed headings, Japan/Canada/EU, conflicting region, manual/preparation limits, malformed or foreign receipt, legacy absence, full-context byte bound and unchanged sources/inputs/content. Verify actual recorded prompt and candidate digest. Preserve fixture/setup/calibration epochs honestly. Run scoped lint with no warning/metric growth, appropriate existing source/accept/model/current-access regressions, UI/size gates and build. Full compiler runs sequentially through normal push hooks (baseline0), never beside tests/build/gates. Normal source publication and final documentation follow-up include exact Git input and artifact verification. Human cases remain Not run.
+Meaningful RED must exercise the existing actual HTTP draft route before production changes. Pure new-helper preparation without an existing export is not RED. Cover recorded-over-current guidance, section-over-parent identity, renamed headings, Japan/Canada/EU, conflicting region, manual/preparation limits, malformed or foreign receipt, legacy absence, full-context byte bound and unchanged sources/inputs/content. Verify actual recorded prompt and candidate digest. Preserve fixture/setup/calibration epochs honestly. Run scoped lint with no warning/metric growth, appropriate existing source/accept/model/current-access regressions, UI/size gates and build. Full compiler runs sequentially through normal push hooks (baseline 0), never beside tests/build/gates. Normal source publication and final documentation follow-up include exact Git input and artifact verification. Human cases remain Not run.
 
 ## Results
 
@@ -46,3 +46,24 @@ Scoped production lint has no errors and the same 22 existing router warnings; n
 ## Canonical integration
 
 Four incoming commits through `ddbdfb938` complete independent onboarding/discovery handoff safety and verification. No declared draft-guidance input overlaps. Root retains them through a normal merge and qualifies the final combined source, build and existing editor/UI/size gates. No UI, navigation, entitlement or deployment is changed by this increment.
+
+
+## Final combined qualification
+
+After normal merge, **221 distinct tests across 14 suites pass** (`integration-post-merge.json`), with zero drift across the 54 declared source/config/test/migration inputs. This includes the new 33 actual-route cases and 24 adapter cases; repeated worker runs are not added again. Existing source retrieval, selected-source manifests, immutable generation/accept records, saved-review validation, provider refusals, structured source mapping and editor review/assembly flows remain covered.
+
+All seven existing editor/UI/size gates pass, with no baseline or style-rule changes (`gates-post-merge.json`). Final scoped lint has zero errors and the same 22 pre-existing router warnings; all new/changed fixtures, the adapter and canonical reference owner have zero warnings. The router's counted lines decrease 5301→5294, and its draft callback complexity decreases 66→62. No new UI, CSS, engine, endpoint, model, dependency, schema, entitlement or dispatch behavior was introduced.
+
+The actual HTTP checks keep guidance out of project evidence/candidate sources, verify the exact prompt persisted in the immutable turn record and candidate digest, and refuse region/eligibility/reference failures before selected-source/model/turn/candidate/content writes. Reference identity is not scientific support or evidence that a live model used it.
+
+All 130 human checklist cases remain **Not run**, including new 125–130. No native PostgreSQL concurrency/RLS, live model/provider, agency submission or deployment qualification is claimed. Full editor-action parity remains in progress; section-over-parent chat prefetch is a separate authenticated-context completion, while this increment completes the shared direct section-draft request used by standalone and assembly preparation.
+
+
+The full client/server build passes (`build-post-merge.json`, 19.049s), with no declared input drift. Pre-publication read-only verification matches all 54 actual Git input blobs and the source ancestry at `a1946af7ee85e16fce30f88b787250ab5e567f62` (source commit `62d1b6f5119c89923d0bb2c38b577ee07e0e063d`). Normal direct publication runs every hook, including full TypeScript baseline 0. Its actual outcome is retained after completion.
+
+
+## Normal compiler refusal and scalar parameter correction
+
+The first normal source push was stopped before publication by one TypeScript error: Express declares route parameters as string|string[], while the new adapter accepts string. The exact failed receipt/raw output is retained under `publication-attempt1/`. The existing actual route value is normalized with `String(sectionId)`, matching the turn/candidate identity handling already in use. No compiler baseline was changed. The affected 57 HTTP/adapter cases pass with this final expression (`type-fix-tests.json`), no drift. The combined run/build and normal push checks are repeated after synchronization.
+
+A fresh fetch also found the current dossier-details/AnA handoff and unstated-vaccine-fact corrections through `5e7e36ca1`. Their runtime files do not overlap the draft-guidance edits. The current handoff/map was read; it keeps the same core project workflow and editor ownership. Root retains all incoming history with a normal merge.

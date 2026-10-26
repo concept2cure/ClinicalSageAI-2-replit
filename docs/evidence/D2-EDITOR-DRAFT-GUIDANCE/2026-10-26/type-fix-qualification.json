@@ -1,0 +1,9 @@
+{
+  "compiler": "first normal push stopped with1 TS2322, no publication",
+  "fix": "String(sectionId) for existing Express scalar-or-array parameter type; actual route UUID unchanged",
+  "changedInputs": [
+    "server/routes/authoring.router.ts"
+  ],
+  "baseline": "unchanged0",
+  "checks": "Affected HTTP+unit, build and normal full push compiler repeated"
+}

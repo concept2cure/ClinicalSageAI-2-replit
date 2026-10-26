@@ -1,0 +1,12 @@
+{
+  "head": "a1946af7ee85e16fce30f88b787250ab5e567f62",
+  "original50InputsUnchanged": true,
+  "incomingRuntimeInputs": [
+    "client/src/concept2cure/v2/surfaces/DiscoveryQuestions.tsx",
+    "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+    "client/src/concept2cure/v2/surfaces/OnboardingSecurity.tsx",
+    "client/src/concept2cure/v2/useOnboardingDiscovery.ts"
+  ],
+  "inputCount": 54,
+  "normalMerge": true
+}
