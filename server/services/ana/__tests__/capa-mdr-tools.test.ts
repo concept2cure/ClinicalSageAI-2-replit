@@ -49,7 +49,12 @@ describe('CAPA_MDR_TOOLS contract', () => {
 
   it('only assess_mdr_reportability is context-free; the DB tools require a programId', () => {
     const byName = new Map(CAPA_MDR_TOOLS.map(t => [t.name, t]));
-    expect(byName.get('assess_mdr_reportability')!.input_schema.required).toEqual(['patientHarm']);
+    // The harm and every event fact the triage turns on: none is assumed false.
+    expect(byName.get('assess_mdr_reportability')!.input_schema.required).toEqual([
+      'patientHarm', 'isMalfunction', 'eventLocationCountry', 'anticipatesCorrection', 'trendThresholdCrossed',
+    ]);
+    expect(byName.get('assess_mdr_reportability')!.description).toMatch(/never assume false/);
+    expect(byName.get('assess_mdr_reportability')!.description.length).toBeLessThanOrEqual(1024);
     for (const n of ['triage_capa_mdr_queue', 'read_vigilance_timeline']) {
       expect(byName.get(n)!.input_schema.required).toContain('programId');
     }
@@ -57,24 +62,29 @@ describe('CAPA_MDR_TOOLS contract', () => {
 });
 
 describe('assess_mdr_reportability (live deterministic triage)', () => {
+  // Every event fact is stated: an omitted one is asked for, never read as false
+  // (capa-mdr/__tests__/mdr-reportability-unstated-facts-are-unknown.test.ts).
+  const STATED = { isMalfunction: false, eventLocationCountry: 'US', anticipatesCorrection: false, trendThresholdCrossed: false };
+
   it('a death is FDA MDR reportable', async () => {
-    const out = await run('assess_mdr_reportability', { patientHarm: 'death' });
+    const out = await run('assess_mdr_reportability', { patientHarm: 'death', ...STATED });
     expect(out.status).toBe('computed');
     expect(out.result.fdaReportable).toBe(true);
   });
 
   it('a plain malfunction with recurrence potential is FDA reportable', async () => {
-    const out = await run('assess_mdr_reportability', { patientHarm: 'malfunction', isMalfunction: true });
+    const out = await run('assess_mdr_reportability', { patientHarm: 'malfunction', ...STATED, isMalfunction: true });
     expect(out.status).toBe('computed');
     expect(out.result.fdaReportable).toBe(true);
   });
 
   it('a non-serious event is computed as not FDA reportable', async () => {
-    // patientHarm is schema-required; when the engine sees a non-serious harm it
-    // computes a non-reportable result rather than throwing.
-    const out = await run('assess_mdr_reportability', { patientHarm: 'none' });
+    // patientHarm and the event facts are stated; for a non-serious harm the
+    // engine computes a non-reportable result rather than throwing.
+    const out = await run('assess_mdr_reportability', { patientHarm: 'none', ...STATED });
     expect(out.status).toBe('computed');
     expect(out.result.fdaReportable).toBe(false);
+    expect(out.result.determinationComplete).toBe(true);
   });
 
   it.each([[{}], [{ patientHarm: 'unknown' }]])(

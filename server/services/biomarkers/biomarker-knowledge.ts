@@ -6,7 +6,9 @@
  * classification, qualification, companion-diagnostic (CDx) co-development,
  * analytical and clinical validation, and trial enrichment strategy.
  *
- * NO LLM. NO network. NO database. NO imports from other services.
+ * NO LLM. NO network. NO database. One import from another service: the 2x2
+ * engine (stats/clinical-performance), equally pure, so clinical validation
+ * computes its metrics there instead of keeping a second copy.
  * Identical input always yields identical output.
  *
  * ── Authoritative sources grounding the rules below ─────────────────────────
@@ -47,6 +49,7 @@
  */
 
 import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+import { computeDiagnosticAccuracy, type Interval } from '../stats/clinical-performance.js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SHARED TYPES
@@ -711,6 +714,10 @@ function categoryDescriptor(category: BiomarkerCategory): CategoryDescriptor {
 function round(value: number, decimals: number): number {
   const factor = Math.pow(10, decimals);
   return Math.round(value * factor) / factor;
+}
+
+function roundInterval(ci: Interval): Interval {
+  return { lower: round(ci.lower, 4), upper: round(ci.upper, 4) };
 }
 
 function clamp(value: number, lo: number, hi: number): number {
@@ -1698,12 +1705,19 @@ export interface ClinicalValidationParams {
 export interface ClinicalValidationResult {
   biomarkerName: string;
   clinicalSensitivity: number;
+  /** Exact (Clopper–Pearson) 95% interval on clinical sensitivity. */
+  clinicalSensitivityCi: Interval;
   clinicalSpecificity: number;
-  ppvApparent: number;
-  npvApparent: number;
+  /** Exact (Clopper–Pearson) 95% interval on clinical specificity. */
+  clinicalSpecificityCi: Interval;
+  /** Null when no subject tested positive: PPV is undefined there, not 0. */
+  ppvApparent: number | null;
+  /** Null when no subject tested negative. */
+  npvApparent: number | null;
   apparentPrevalence: number;
-  ppvAtIntendedPrevalence?: number;
-  npvAtIntendedPrevalence?: number;
+  /** Null when Bayes is undefined at the supplied prevalence (zero denominator). */
+  ppvAtIntendedPrevalence?: number | null;
+  npvAtIntendedPrevalence?: number | null;
   intendedUsePrevalence?: number;
   validityEstablished: boolean;
   utilityDistinctionNote: string;
@@ -1717,46 +1731,39 @@ export interface ClinicalValidationResult {
  * PPV/NPV (apparent and re-projected to the intended-use prevalence by Bayes),
  * cutoff-determination integrity, and the validity-vs-utility distinction.
  *
- * Deterministic — all metrics are closed-form from the 2x2 table.
+ * Deterministic — the 2x2 metrics, their exact (Clopper–Pearson) intervals and
+ * the Bayes re-projection come from computeDiagnosticAccuracy, the one 2x2
+ * engine. It throws on an empty table, a table with no diseased or no
+ * non-diseased subjects, a negative or fractional count, or a prevalence
+ * outside [0, 1], so none of them becomes a 0% metric or a verdict here. The
+ * AnA handler relays the "required" / "must be" refusals as needs_parameters;
+ * an all-zero table ("Confusion matrix is empty.") comes back as an error.
  */
 export function assessBiomarkerClinicalValidation(
   params: ClinicalValidationParams,
 ): ClinicalValidationResult {
-  const tp = Math.max(0, params.truePositives);
-  const fn = Math.max(0, params.falseNegatives);
-  const tn = Math.max(0, params.trueNegatives);
-  const fp = Math.max(0, params.falsePositives);
-
-  const diseased = tp + fn;
-  const nonDiseased = tn + fp;
-  const total = diseased + nonDiseased;
-
-  const sensitivity = diseased > 0 ? tp / diseased : 0;
-  const specificity = nonDiseased > 0 ? tn / nonDiseased : 0;
-
-  const testPositive = tp + fp;
-  const testNegative = tn + fn;
-  const ppvApparent = testPositive > 0 ? tp / testPositive : 0;
-  const npvApparent = testNegative > 0 ? tn / testNegative : 0;
-  const apparentPrevalence = total > 0 ? diseased / total : 0;
+  // A null prevalence is not stated, not 0: PPV/NPV stay at the table's own prevalence.
+  const prev = params.intendedUsePrevalence ?? undefined;
+  const accuracy = computeDiagnosticAccuracy(
+    {
+      tp: params.truePositives,
+      fp: params.falsePositives,
+      fn: params.falseNegatives,
+      tn: params.trueNegatives,
+    },
+    { prevalence: prev },
+  );
+  const sensitivity = accuracy.sensitivity;
+  const specificity = accuracy.specificity;
+  const apparentPrevalence = (params.truePositives + params.falseNegatives) / accuracy.n;
 
   const findings: Finding[] = [];
 
-  // Re-project PPV/NPV to intended-use prevalence via Bayes.
-  let ppvAtPrev: number | undefined;
-  let npvAtPrev: number | undefined;
-  let usedPrevalence: number | undefined;
-  if (params.intendedUsePrevalence !== undefined) {
-    const prev = clamp(params.intendedUsePrevalence, 0, 1);
-    usedPrevalence = prev;
-    const sens = sensitivity;
-    const spec = specificity;
-    const ppvDenom = sens * prev + (1 - spec) * (1 - prev);
-    const npvDenom = spec * (1 - prev) + (1 - sens) * prev;
-    ppvAtPrev = ppvDenom > 0 ? (sens * prev) / ppvDenom : 0;
-    npvAtPrev = npvDenom > 0 ? (spec * (1 - prev)) / npvDenom : 0;
-
-    if (prev <= 0.01 && ppvAtPrev < 0.5) {
+  // PPV/NPV re-projected to the intended-use prevalence (Bayes), when one is supplied.
+  const ppvAtPrev = prev !== undefined ? accuracy.ppvAdjusted : undefined;
+  const npvAtPrev = prev !== undefined ? accuracy.npvAdjusted : undefined;
+  if (prev !== undefined) {
+    if (prev <= 0.01 && ppvAtPrev != null && ppvAtPrev < 0.5) {
       findings.push({
         severity: 'caution',
         message:
@@ -1810,23 +1817,19 @@ export function assessBiomarkerClinicalValidation(
         'a valid test can still lack utility if no action changes outcomes.',
     });
   }
-  if (total === 0) {
-    findings.push({
-      severity: 'critical',
-      message: 'Empty 2x2 table — no subjects supplied. Metrics are undefined and reported as zero.',
-    });
-  }
 
   return {
     biomarkerName: params.biomarkerName,
     clinicalSensitivity: round(sensitivity, 4),
+    clinicalSensitivityCi: roundInterval(accuracy.sensitivityCi),
     clinicalSpecificity: round(specificity, 4),
-    ppvApparent: round(ppvApparent, 4),
-    npvApparent: round(npvApparent, 4),
+    clinicalSpecificityCi: roundInterval(accuracy.specificityCi),
+    ppvApparent: accuracy.ppvSample === null ? null : round(accuracy.ppvSample, 4),
+    npvApparent: accuracy.npvSample === null ? null : round(accuracy.npvSample, 4),
     apparentPrevalence: round(apparentPrevalence, 4),
-    ppvAtIntendedPrevalence: ppvAtPrev !== undefined ? round(ppvAtPrev, 4) : undefined,
-    npvAtIntendedPrevalence: npvAtPrev !== undefined ? round(npvAtPrev, 4) : undefined,
-    intendedUsePrevalence: usedPrevalence,
+    ppvAtIntendedPrevalence: ppvAtPrev == null ? ppvAtPrev : round(ppvAtPrev, 4),
+    npvAtIntendedPrevalence: npvAtPrev == null ? npvAtPrev : round(npvAtPrev, 4),
+    intendedUsePrevalence: prev,
     validityEstablished,
     utilityDistinctionNote:
       'Clinical validity = the biomarker accurately identifies the clinical condition/response it claims. ' +

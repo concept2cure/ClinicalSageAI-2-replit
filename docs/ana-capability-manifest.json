@@ -14066,7 +14066,7 @@
           "name": "netBalanceEstimate",
           "type": "number",
           "required": false,
-          "description": "Net benefit-risk margin from the balance assessment (e.g., from assess_benefit_risk_balance). A smaller absolute margin makes the conclusion more sensitive/fragile."
+          "description": "Net benefit-risk margin from the balance assessment (e.g., from assess_benefit_risk_balance). A smaller absolute margin makes the conclusion more sensitive/fragile. Without it, robustness is not assessed; no margin is assumed."
         },
         {
           "name": "sources",
@@ -14905,13 +14905,13 @@
           "name": "networkConnected",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Default true."
+          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unle"
         },
         {
           "name": "includesSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Default true."
+          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unless networkConnected is f"
         },
         {
           "name": "submissionUnder524B",
@@ -14923,31 +14923,31 @@
           "name": "threatModelProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap."
+          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not sta"
         },
         {
           "name": "sbomProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is"
         },
         {
           "name": "securityRiskManagementProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap."
+          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as pro"
         },
         {
           "name": "vulnerabilityHandlingProcess",
           "type": "boolean",
           "required": false,
-          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is reported as not stat"
         },
         {
           "name": "postMarketUpdatePlan",
           "type": "boolean",
           "required": false,
-          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to flag a (critical when 524B applies) gap."
+          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Set false to flag a (critical when 524B applies) gap. Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as provi"
         },
         {
           "name": "handlesSensitiveData",
@@ -15838,7 +15838,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.",
+      "description": "Assess whether a device adverse event is reportable — the deterministic MDR/vigilance triage. Given the patient harm and event facts, returns whether it is FDA MDR reportable (21 CFR 803) and/or EU MDR vigilance reportable (Art 87), whether a 21 CFR 806 correction/removal notice applies, the suggested jurisdiction, FDA report type, and EU severity/clock, with a rationale. All four event facts are required; an omitted one returns needs_parameters naming it: ask the user, never assume false. A country nobody knows is stated as \"unknown\": then determinationComplete is false, what it decides is null and missingFacts names it; say that part is not determined, never that it is not reportable. DETERMINISTIC — report the classification verbatim; it does not decide FOR the manufacturer, it computes the regulatory trigger.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15853,26 +15853,26 @@
         {
           "name": "isMalfunction",
           "type": "boolean",
-          "required": false,
-          "description": "Was this a device malfunction (that could recur and cause harm)?"
+          "required": true,
+          "description": "Was this a device malfunction (that could recur and cause harm)? Required: ask the user; never assume false."
         },
         {
           "name": "eventLocationCountry",
           "type": "string",
-          "required": false,
-          "description": "ISO country code where the event occurred (drives EU applicability)."
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 code of the country where the event occurred (drives EU applicability), or \"unknown\". Required."
         },
         {
           "name": "anticipatesCorrection",
           "type": "boolean",
-          "required": false,
-          "description": "Does the manufacturer anticipate a correction/removal (806)?"
+          "required": true,
+          "description": "Does the manufacturer anticipate a correction/removal (806)? Required: ask the user; never assume false."
         },
         {
           "name": "trendThresholdCrossed",
           "type": "boolean",
-          "required": false,
-          "description": "Has a trend reporting threshold been crossed?"
+          "required": true,
+          "description": "Has a trend reporting threshold been crossed? Required: ask the user; never assume false."
         },
         {
           "name": "eventNarrative",
@@ -15882,7 +15882,11 @@
         }
       ],
       "requiredInputs": [
-        "patientHarm"
+        "patientHarm",
+        "isMalfunction",
+        "eventLocationCountry",
+        "anticipatesCorrection",
+        "trendThresholdCrossed"
       ],
       "derived": true
     },
@@ -19914,7 +19918,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling.",
+      "description": "Log a device complaint into the post-market system. Creates the governed complaint record (with a preliminary reportability classification stamped automatically) and records the vigilance-timeline event. Use when the user wants to intake a complaint. Confirm the source, channel, and event narrative with the user before calling. The event facts isMalfunction, anticipatesCorrection, trendThresholdCrossed and eventLocationCountry are required too: ask the user, never assume false; a country nobody knows is \"unknown\".",
       "scope": "global",
       "governed": true,
       "renderer": "document-canvas",
@@ -19965,26 +19969,26 @@
         {
           "name": "isMalfunction",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Was this a device malfunction (that could recur and cause harm)? Required: ask the user."
         },
         {
           "name": "anticipatesCorrection",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Is a correction/removal (806) anticipated? Required: ask the user."
         },
         {
           "name": "trendThresholdCrossed",
           "type": "boolean",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "Has a trend reporting threshold been crossed? Required: ask the user."
         },
         {
           "name": "eventLocationCountry",
           "type": "string",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 code of the country of the event, or \"unknown\". Required."
         },
         {
           "name": "deviceModel",
@@ -20012,7 +20016,11 @@
         "receivedAt",
         "eventNarrative",
         "patientHarm",
-        "severityAssessment"
+        "severityAssessment",
+        "isMalfunction",
+        "anticipatesCorrection",
+        "trendThresholdCrossed",
+        "eventLocationCountry"
       ],
       "derived": true
     },
@@ -28527,7 +28535,7 @@
           "name": "verdict",
           "type": "string",
           "required": false,
-          "description": "The benefit-risk verdict to communicate (default \"favourable_with_conditions\")."
+          "description": "The benefit-risk conclusion to communicate. It is the sponsor's: pass only the conclusion the user has stated; do not choose or infer one. Without it the tool returns needs_parameters."
         },
         {
           "name": "keyBenefitMessages",

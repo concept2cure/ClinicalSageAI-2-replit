@@ -48,7 +48,7 @@ import type {
   VigilanceEventKind,
 } from '../../../shared/schema/capa-mdr';
 
-import { classify, type TriageInput } from './triageEngine';
+import { classify, unstatedTriageFacts, TRIAGE_FACT_VALUES, type TriageFact, type TriageInput } from './triageEngine';
 import { computeReportDue, daysToDue } from './clockCalculator';
 import {
   assertCapaTransition,
@@ -81,10 +81,12 @@ export class NotFoundError extends Error {
  *
  * Patient harm drives the preliminary MDR reportability classification, so it
  * cannot be assumed. Both fields used to default ('none', 'minor'), and a
- * complaint nobody had assessed was classified "no MDR".
+ * complaint nobody had assessed was classified "no MDR". The event facts the
+ * classification also turns on (TRIAGE_FACTS) defaulted to false, and the
+ * country to outside the EU, until 2026-10-26; they are required too.
  */
 export class ComplaintAssessmentRequired extends Error {
-  constructor(readonly field: 'patientHarm' | 'severityAssessment', allowed: readonly string[]) {
+  constructor(readonly field: 'patientHarm' | 'severityAssessment' | TriageFact, allowed: readonly string[]) {
     super(`${field} is required at intake and must be one of: ${allowed.join(', ')}`);
     this.name = 'ComplaintAssessmentRequired';
   }
@@ -281,14 +283,16 @@ export interface CreateComplaintInput {
   deviceSerial?: string | null;
   deviceModel?: string | null;
   eventDate?: Date | null;
-  eventLocationCountry?: string | null;
+  /** Required: an ISO 3166-1 alpha-2 code, or 'unknown'. */
+  eventLocationCountry: string;
   eventNarrative: string;
   /** Required: the intake classification is computed from it. */
   patientHarm: HarmLevel;
   severityAssessment: SeverityLevel;
-  isMalfunction?: boolean;
-  anticipatesCorrection?: boolean;
-  trendThresholdCrossed?: boolean;
+  /** Required, as the country is: the classification turns on them, so none is assumed false. */
+  isMalfunction: boolean;
+  anticipatesCorrection: boolean;
+  trendThresholdCrossed: boolean;
   createdBy?: string | null;
 }
 
@@ -300,6 +304,8 @@ function requireComplaintAssessments(input: CreateComplaintInput): void {
   if (!(SEVERITY_LEVELS as readonly string[]).includes(input.severityAssessment)) {
     throw new ComplaintAssessmentRequired('severityAssessment', SEVERITY_LEVELS);
   }
+  const [unstated] = unstatedTriageFacts(input);
+  if (unstated) throw new ComplaintAssessmentRequired(unstated, TRIAGE_FACT_VALUES[unstated]);
 }
 
 async function createComplaintTx(
@@ -310,10 +316,10 @@ async function createComplaintTx(
 
   const triageInput: TriageInput = {
     patientHarm: input.patientHarm,
-    isMalfunction: input.isMalfunction ?? false,
-    eventLocationCountry: input.eventLocationCountry ?? null,
-    anticipatesCorrection: input.anticipatesCorrection ?? false,
-    trendThresholdCrossed: input.trendThresholdCrossed ?? false,
+    isMalfunction: input.isMalfunction,
+    eventLocationCountry: input.eventLocationCountry,
+    anticipatesCorrection: input.anticipatesCorrection,
+    trendThresholdCrossed: input.trendThresholdCrossed,
     eventNarrative: input.eventNarrative,
   };
   const classification = classify(triageInput);

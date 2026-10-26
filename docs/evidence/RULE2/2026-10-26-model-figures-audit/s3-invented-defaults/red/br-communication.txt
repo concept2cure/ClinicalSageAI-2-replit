@@ -1,0 +1,18 @@
+# Rule 2 S3 red, item br-communication: its new test on trunk 3e06155de, before the item's edits.
+
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses an unstated verdict rather than planning a favourable one 14ms
+   → expected undefined to match object { name: 'ComputationRefusal', …(2) }
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses a verdict outside the vocabulary rather than carrying it through 3ms
+   → expected undefined to match object { name: 'ComputationRefusal', …(2) }
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > names absent key messages as not stated instead of inventing a benefit and a risk profile 3ms
+   → expected 'In metastatic NSCLC, DrugX provides t…' not to match /demonstrated benefit/i
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > treats a blank message as not stated, not as the word "benefit" 2ms
+   → expected 'In metastatic NSCLC, DrugX provides b…' to match /provides \[key benefit messages not s…/
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > still plans from a stated verdict and stated messages, unchanged 2ms
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > returns needs_parameters naming verdict, with no plan and no core message 8ms
+   → expected 'computed' to be 'needs_parameters' // Object.is equality
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > still computes once the verdict is stated 1ms
+ × server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > its verdict property names no default and tells the model not to choose one 1ms
+   → expected 'The benefit-risk verdict to communica…' not to match /default/i
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)

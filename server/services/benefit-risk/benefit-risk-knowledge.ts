@@ -4,8 +4,11 @@
  *
  * A pure, closed-form, fully reproducible reasoning engine for structured
  * benefit-risk (B-R) assessment of medicinal products. NO LLM. NO network.
- * NO database. NO imports from other services. Every output is a deterministic
- * function of the inputs and the citation-backed knowledge tables defined here.
+ * NO database. The one import from another service is refuseUnlessStated,
+ * which throws ComputationRefusal when an input that decides the output is not
+ * stated, so that AnA relays it as needs_parameters. Every output is a
+ * deterministic function of the inputs and the citation-backed knowledge tables
+ * defined here.
  *
  * The engine encodes the structured B-R methodologies that regulators expect a
  * sponsor to apply and document in a marketing application (Module 2.5.6 of the
@@ -52,6 +55,8 @@
  *
  * @module server/services/benefit-risk/benefit-risk-knowledge
  */
+
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
 
 /* ════════════════════════════════════════════════════════════════════════════
  * SECTION 0 — Shared vocabulary, citation registry, and helper primitives
@@ -1582,7 +1587,8 @@ export interface ResolvedUncertaintySource {
   readonly label: string;
   readonly description: string;
   readonly affects: 'benefit' | 'risk' | 'both';
-  readonly level: UncertaintyLevel;
+  /** 'not_stated' when the source gave no level: none is assumed. */
+  readonly level: UncertaintyLevel | 'not_stated';
   readonly impactOnBalance: string;
   readonly mitigationToReduce: string;
 }
@@ -1591,8 +1597,10 @@ export interface BRUncertaintyResult {
   readonly productName: string;
   readonly indication: string;
   readonly sources: ResolvedUncertaintySource[];
-  readonly overallUncertainty: UncertaintyLevel;
-  readonly robustnessOfConclusion: 'robust' | 'sensitive' | 'fragile';
+  /** 'not_assessed' with no source stated, or a source with no level and none stated 'high'. */
+  readonly overallUncertainty: UncertaintyLevel | 'not_assessed';
+  /** 'not_assessed' without a stated net margin, a stated source, or the levels a verdict needs. */
+  readonly robustnessOfConclusion: 'robust' | 'sensitive' | 'fragile' | 'not_assessed';
   readonly whatWouldChangeTheConclusion: string[];
   readonly recommendedSensitivityAnalyses: string[];
   readonly residualUncertaintyForLabel: string[];
@@ -1684,7 +1692,7 @@ function uncertaintyMitigation(type: UncertaintySourceType): string {
 
 function uncertaintyImpactProse(
   affects: 'benefit' | 'risk' | 'both',
-  level: UncertaintyLevel,
+  level: UncertaintyLevel | 'not_stated',
 ): string {
   const side =
     affects === 'benefit'
@@ -1692,6 +1700,9 @@ function uncertaintyImpactProse(
       : affects === 'risk'
         ? 'reduces confidence in the characterized risk (harms may be under- or over-stated)'
         : 'reduces confidence in both benefit and risk estimates';
+  if (level === 'not_stated') {
+    return `This ${side}; its level was not stated, so its impact on the balance is not graded.`;
+  }
   const strength =
     level === 'high'
       ? 'materially — potentially decisive for a narrowly balanced conclusion'
@@ -1716,13 +1727,20 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
   const sources: ResolvedUncertaintySource[] = [];
   let highCount = 0;
   let moderateCount = 0;
+  let notStatedCount = 0;
   let worst: UncertaintyLevel = 'low';
   for (const s of sourcesIn) {
-    const level = s.level ?? 'moderate';
+    // An omitted (or unrecognised) level is not stated, never 'moderate'.
+    const level: UncertaintyLevel | 'not_stated' =
+      s.level === 'low' || s.level === 'moderate' || s.level === 'high' ? s.level : 'not_stated';
     const affects = s.affects ?? 'both';
-    if ((level as UncertaintyLevel) === 'high') highCount += 1;
-    if ((level as UncertaintyLevel) === 'moderate') moderateCount += 1;
-    worst = worseUncertainty(worst, level);
+    if (level === 'high') highCount += 1;
+    if (level === 'moderate') moderateCount += 1;
+    if (level === 'not_stated') {
+      notStatedCount += 1;
+    } else {
+      worst = worseUncertainty(worst, level);
+    }
     sources.push({
       type: s.type,
       label: uncertaintySourceLabel(s.type),
@@ -1734,13 +1752,30 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
     });
   }
 
-  const overallUncertainty: UncertaintyLevel = sourcesIn.length === 0 ? 'moderate' : worst;
+  // No source, or an unstated level with no stated 'high', leaves the grade
+  // unassessed: a stated 'high' is the top of the scale whatever the rest are.
+  const overallUncertainty: UncertaintyLevel | 'not_assessed' =
+    sourcesIn.length === 0 || (notStatedCount > 0 && highCount === 0) ? 'not_assessed' : worst;
 
   // Robustness: combine number/severity of uncertainties with the net margin.
-  const margin = params.netBalanceEstimate !== undefined ? Math.abs(params.netBalanceEstimate) : 0.15;
-  let robustness: 'robust' | 'sensitive' | 'fragile';
-  if (highCount >= 2 || (highCount >= 1 && margin < 0.1)) {
+  // Neither a margin nor a source is assumed: without both it is not assessed.
+  // An unstated level can only add to the counts, so it leaves standing a
+  // 'fragile' that the stated levels reach, and nothing else.
+  const margin =
+    typeof params.netBalanceEstimate === 'number' && Number.isFinite(params.netBalanceEstimate)
+      ? Math.abs(params.netBalanceEstimate)
+      : null;
+  const notAssessedBecause: string[] = [];
+  if (margin === null) notAssessedBecause.push('no net benefit-risk margin was stated');
+  if (sourcesIn.length === 0) notAssessedBecause.push('no uncertainty source was stated');
+  if (notStatedCount > 0) notAssessedBecause.push(`the level of ${notStatedCount} source(s) was not stated`);
+  let robustness: 'robust' | 'sensitive' | 'fragile' | 'not_assessed';
+  if (margin === null || sourcesIn.length === 0) {
+    robustness = 'not_assessed';
+  } else if (highCount >= 2 || (highCount >= 1 && margin < 0.1)) {
     robustness = 'fragile';
+  } else if (notStatedCount > 0) {
+    robustness = 'not_assessed';
   } else if (highCount >= 1 || moderateCount >= 2 || margin < 0.18) {
     robustness = 'sensitive';
   } else {
@@ -1777,10 +1812,15 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
         'short-term trial balance.',
     );
   }
-  if (whatWouldChangeTheConclusion.length === 0) {
+  // Nothing above came from a stated source, so nothing was assessed: that is
+  // not evidence that the conclusion is insensitive.
+  const changeAssessed = whatWouldChangeTheConclusion.length > 0;
+  if (!changeAssessed) {
     whatWouldChangeTheConclusion.push(
-      'No specific decision-flipping uncertainty was identified from the supplied sources; the conclusion appears ' +
-        'insensitive to the stated uncertainties.',
+      sources.length === 0
+        ? 'No uncertainty source was stated, so what would change the conclusion was not assessed.'
+        : 'No stated source names a recognised side of the balance (benefit, risk or both), so what would change ' +
+          'the conclusion was not assessed.',
     );
   }
 
@@ -1806,27 +1846,45 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
   // Residual uncertainty for the label / RMP.
   const residualUncertaintyForLabel: string[] = [];
   for (const s of sources) {
-    if ((s.level as UncertaintyLevel) === 'high') {
+    if (s.level === 'high') {
       residualUncertaintyForLabel.push(
         `${s.label}: carry as "missing information" in the risk management plan and reflect in labeling/PASS.`,
+      );
+    } else if (s.level === 'not_stated') {
+      residualUncertaintyForLabel.push(
+        `${s.label}: its level was not stated, so whether it is carried as missing information was not assessed.`,
       );
     }
   }
   if (residualUncertaintyForLabel.length === 0) {
-    residualUncertaintyForLabel.push('No high-grade residual uncertainty requires explicit labeling beyond routine pharmacovigilance.');
+    residualUncertaintyForLabel.push(
+      sources.length === 0
+        ? 'No uncertainty source was stated, so the residual uncertainty for the label was not assessed.'
+        : 'No high-grade residual uncertainty requires explicit labeling beyond routine pharmacovigilance.',
+    );
   }
 
+  const notStatedPhrase = notStatedCount > 0 ? `, ${notStatedCount} with no stated level` : '';
   const narrative =
     `Uncertainty assessment for ${productName} in ${indication}: ${sources.length} source(s) considered ` +
-    `(${highCount} high, ${moderateCount} moderate). Overall uncertainty is graded ${overallUncertainty}; ` +
-    `the conclusion is judged ${robustness} given a net margin of approximately ${round(margin, 3)}. ` +
-    `The principal way the conclusion could change: ${whatWouldChangeTheConclusion[0]}`;
+    `(${highCount} high, ${moderateCount} moderate${notStatedPhrase}). ` +
+    (overallUncertainty === 'not_assessed'
+      ? 'Overall uncertainty is not graded; '
+      : `Overall uncertainty is graded ${overallUncertainty}; `) +
+    (robustness === 'not_assessed' || margin === null
+      ? `the robustness of the conclusion is not assessed, because ${notAssessedBecause.join(' and ')}. `
+      : `the conclusion is judged ${robustness} given a net margin of approximately ${round(margin, 3)}. `) +
+    (changeAssessed
+      ? `The principal way the conclusion could change: ${whatWouldChangeTheConclusion[0]}`
+      : whatWouldChangeTheConclusion[0]);
 
   const methodNotes: string[] = [
     'Uncertainty sources follow the PROTECT/EMA taxonomy and the FDA framework\'s requirement to make ' +
       'uncertainties explicit alongside the evidence in every framework row.',
     'Robustness combines the count/severity of uncertainties with the net benefit-risk margin: a small margin ' +
       'plus high uncertainty yields a fragile conclusion.',
+    'No net margin or uncertainty level is assumed: an omitted one is reported as not stated, and the overall ' +
+      'grade, robustness and labeling conclusion it would decide are reported as not assessed.',
     'Outputs are deterministic; "what would change the conclusion" is generated from the affected side and type ' +
       'of each declared uncertainty, not from any stochastic simulation.',
   ];
@@ -1860,11 +1918,15 @@ export type BRAudience =
   | 'payer'
   | 'regulator_internal';
 
+/** The benefit-risk conclusions a communication plan can carry. */
+const BR_VERDICTS: readonly BRVerdict[] = ['favourable', 'favourable_with_conditions', 'indeterminate', 'unfavourable'];
+
 export interface PlanBRCommunicationParams {
   readonly productName: string;
   readonly indication: string;
+  /** The sponsor's benefit-risk conclusion. Refused when absent, never defaulted. */
   readonly verdict?: BRVerdict;
-  /** The key benefit and risk messages to frame. */
+  /** The key benefit and risk messages to frame; an absent one is named as not stated. */
   readonly keyBenefitMessages?: readonly string[];
   readonly keyRiskMessages?: readonly string[];
   /** Audiences to plan communication for; defaults to the standard set. */
@@ -1900,6 +1962,8 @@ export interface BRCommunicationResult {
   readonly visualSummary: VisualSummaryRecommendation[];
   readonly coreBenefitRiskMessage: string;
   readonly consistencyRequirement: string;
+  /** Inputs the core message names as not stated: keyBenefitMessages, keyRiskMessages. */
+  readonly notStated: string[];
   readonly citations: Citation[];
   readonly methodNotes: string[];
 }
@@ -2056,13 +2120,25 @@ function audienceCautions(a: BRAudience): string[] {
  * single consistent core benefit-risk message across all artifacts.
  */
 export function planBRCommunication(params: PlanBRCommunicationParams): BRCommunicationResult {
+  // 2026-10-26 (Rule 2 S3): an unstated verdict was planned as favourable_with_conditions, and absent key
+  // messages became "the demonstrated benefit in the indicated population" and "manageable, characterized
+  // risks". The conclusion is the sponsor's, so an unstated one is refused; absent messages are named as
+  // not stated.
+  refuseUnlessStated('planBRCommunication', [{
+    field: 'verdict',
+    value: params.verdict,
+    ok: typeof params.verdict === 'string' && BR_VERDICTS.includes(params.verdict),
+    expected: `the benefit-risk conclusion is the sponsor's: one of ${BR_VERDICTS.join(', ')}`,
+  }], 'planned');
   const productName = norm(params.productName, 'the product');
   const indication = norm(params.indication, 'the indication');
-  const verdict: BRVerdict = params.verdict ?? 'favourable_with_conditions';
+  const verdict = params.verdict as BRVerdict;
   const patientData = params.patientExperienceDataAvailable === true;
   const includeVisual = params.includeVisualSummary !== false;
-  const benefitMessages = params.keyBenefitMessages ?? [];
-  const riskMessages = params.keyRiskMessages ?? [];
+  const stated = (messages: readonly string[] | undefined): string[] =>
+    (messages ?? []).map((m: string) => norm(m, '')).filter((m: string) => m.length > 0);
+  const benefitMessages = stated(params.keyBenefitMessages);
+  const riskMessages = stated(params.keyRiskMessages);
 
   const audiences: BRAudience[] =
     params.audiences && params.audiences.length > 0
@@ -2135,12 +2211,16 @@ export function planBRCommunication(params: PlanBRCommunicationParams): BRCommun
   })();
   const benefitClause =
     benefitMessages.length > 0
-      ? `provides ${benefitMessages.map((m: string) => norm(m, 'benefit')).join('; ')}`
-      : 'provides the demonstrated benefit in the indicated population';
+      ? `provides ${benefitMessages.join('; ')}`
+      : 'provides [key benefit messages not stated]';
   const riskClause =
     riskMessages.length > 0
-      ? `with the principal risks being ${riskMessages.map((m: string) => norm(m, 'risk')).join('; ')}`
-      : 'with manageable, characterized risks';
+      ? `with the principal risks being ${riskMessages.join('; ')}`
+      : 'with the principal risks being [key risk messages not stated]';
+  const notStated: string[] = [
+    ...(benefitMessages.length > 0 ? [] : ['keyBenefitMessages']),
+    ...(riskMessages.length > 0 ? [] : ['keyRiskMessages']),
+  ];
   const coreBenefitRiskMessage =
     `In ${indication}, ${productName} ${benefitClause}, ${riskClause}; the overall benefit-risk balance is ` +
     `${verdictWord}. All audience-specific materials must restate this same core balance without ` +
@@ -2168,6 +2248,7 @@ export function planBRCommunication(params: PlanBRCommunicationParams): BRCommun
     visualSummary,
     coreBenefitRiskMessage,
     consistencyRequirement,
+    notStated,
     citations: citeAll(['FDA_BR_FRAMEWORK_2023', 'FDA_PFDD', 'EMA_EFFECTS_TABLE', 'IMI_PROTECT_BRAT', 'CIOMS_VI']),
     methodNotes,
   };
