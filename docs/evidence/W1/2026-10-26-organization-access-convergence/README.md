@@ -29,3 +29,7 @@ Complete the existing switchOrganization helper with Account's stronger ceremony
 - Browser qualification initially used an ambiguous locator for multiple valid stale-session alerts; choosing the first matching alert corrected the harness without a product change.
 
 `final-regressions.txt` combines the final AuthService/token, native editor, Account/reporting, company-session and backend invitation suites: all 265 checks across 24 suites pass. `final-build.txt` passes all production targets. `typecheck.txt` records the full-program zero-error check. Normal publication gates remain required. Previous hosted CI/staging remain queued. No backend authority/schema, dependency, surface or navigation destination changes. The Account rotation implementation is carried into the canonical helper rather than maintained alongside it; both UI homes preserve their existing outcomes.
+
+## Shared-branch integration
+
+The first normal push passed every gate with zero type errors (`initial-prepush.txt`) but lost a shared-ref race. Merged upstream `c7f320403` filing-workflow completion into `1b885eb14` without conflicts or changes to these organization/authentication owners. On the combined source, `merged-regressions.txt` records all 299 tests in 28 suites passing; `merged-build.txt` passes all production targets; refreshed browser artifacts repeat all sixteen flows. No gate or baseline was bypassed.

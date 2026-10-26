@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 772ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 139ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 124ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 99ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 258ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 370ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 413ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 335ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 346ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 368ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 334ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 315ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 302ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 263ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > complete discovery review > previews therapeutic, experience and security answers and returns to their existing question steps 312ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 186ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 25ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 19ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write 148ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it 117ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account 87ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 89ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 77ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > blocks duplicate writes and drops a reply after the settings close 67ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual task_update producer preference from its labelled mounted control 316ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual schedule_milestone_slip producer preference from its labelled mounted control 130ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 91ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 92ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 18ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 10ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > separates requested SSO from verified second-factor status and routes to existing setup 227ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > does not report enrolled when authentication was not verified 34ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > opens the canonical account panel and rereads security after closing 101ms
+ ✓ client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx > security onboarding guidance > mounts the runtime-backed session policy only for an organization administrator 42ms
+
+ Test Files  4 passed (4)
+      Tests  34 passed (34)
+   Start at  23:31:17
+   Duration  10.85s (transform 766ms, setup 354ms, import 1.31s, tests 6.64s, environment 1.88s)
