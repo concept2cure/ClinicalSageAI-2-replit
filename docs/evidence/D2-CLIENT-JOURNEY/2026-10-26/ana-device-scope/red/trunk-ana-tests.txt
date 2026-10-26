@@ -1,0 +1,14 @@
+The AnA launch-scope tests at 62a46933f, before this change: the four the filing-types session reported, plus command-rbac's hidden-command example (same cause).
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role
+AssertionError: q_sub.create: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog
+AssertionError: device-510k: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest
+AssertionError: write_kit_section: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too
+AssertionError: write_kit_section: expected true to be false // Object.is equality
+ FAIL  server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me prepare an EU clinical trial application
+AssertionError: expected [ 'list_platform_commands', …(49) ] to include 'get_document_template'
+ Test Files  3 failed (3)
+      Tests  5 failed | 81 passed (86)
