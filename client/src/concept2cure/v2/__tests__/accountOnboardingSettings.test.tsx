@@ -78,7 +78,7 @@ describe('self-service onboarding in Account', () => {
     expect(await screen.findByText(/Invitation accepted for Inviting sponsor/)).toBeTruthy();
     expect(await screen.findByText('No pending invitations.')).toBeTruthy();
     expect(await screen.findByRole('option', { name: 'Inviting sponsor' })).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/accept', undefined);
+    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/accept', undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
     expect(mocks.user?.organizationId).toBe('1');
     expect(screen.getByText(/Your current session stays in its existing organisation/)).toBeTruthy();
   });
@@ -120,7 +120,7 @@ describe('self-service invitation recovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Decline invitation to Inviting sponsor' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm decline' }));
     expect(await screen.findByText(/Invitation declined for Inviting sponsor/)).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/decline', undefined);
+    expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/decline', undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('shows quota or authorization refusals without claiming the invitation was accepted', async () => {
@@ -204,7 +204,7 @@ describe('reporting role in Account', () => {
     fireEvent.change(field, { target: { value: 'qa' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save reporting role' }));
     expect(await screen.findByText('Reporting role saved. Your access role is unchanged.')).toBeTruthy();
-    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: 'qa' });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: 'qa' }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('can clear the reporting role without changing the membership role', async () => {
@@ -214,7 +214,7 @@ describe('reporting role in Account', () => {
     fireEvent.change(field, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save reporting role' }));
     await screen.findByText('Reporting role saved. Your access role is unchanged.');
-    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: null });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', PERSONA, { persona: null }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 
   it('does not offer persona controls if membership is refused or the server vocabulary is unknown', async () => {

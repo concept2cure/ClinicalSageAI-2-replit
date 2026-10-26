@@ -1,0 +1,225 @@
+{
+  "basis": "Actual AccountPanel and AccountOnboardingSettings, API transport, reporting cache, capturedActorHeaders and canonical CSS; synthetic auth-service adapter and API replies, synthetic JWTs. No hosted authenticated journey tested.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "body": {
+            "persona": "qa"
+          },
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "body": null,
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "staleActorRefused": true,
+      "lateSaveWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-selfservice-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "body": {
+            "persona": "qa"
+          },
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "body": null,
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "staleActorRefused": true,
+      "lateSaveWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-selfservice-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "body": {
+            "persona": "qa"
+          },
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "body": null,
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "staleActorRefused": true,
+      "lateSaveWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-selfservice-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "body": {
+            "persona": "qa"
+          },
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/tenant-users/invitations/52/accept",
+          "body": null,
+          "actorHeadersMatched": true
+        }
+      ],
+      "storageKeys": [
+        "trialsage_access_token"
+      ],
+      "staleActorRefused": true,
+      "lateSaveWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-selfservice-390-dark.png"
+    }
+  ]
+}

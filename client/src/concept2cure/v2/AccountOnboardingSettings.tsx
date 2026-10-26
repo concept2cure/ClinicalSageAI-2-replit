@@ -7,7 +7,7 @@
 import React from 'react';
 import { apiRequest, extractApiError, queryClient, redactInternals } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
-import { getAuthToken } from '@/utils/authToken';
+import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { type ReportPersona } from '@shared/constants/domain/report-personas';
 import { ASSIGNABLE_ORG_ROLES } from '@shared/constants/org-roles';
 import { EmptyState, ErrorState } from './dataConnect';
@@ -25,12 +25,29 @@ const SESSION_CHANGED = 'Your session has changed. Close Account and open it aga
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const positiveId = (v: unknown): boolean => (typeof v === 'number' || typeof v === 'string') && /^\d+$/.test(String(v)) && Number.isSafeInteger(Number(v)) && Number(v) > 0;
 
-/** The canonical API client supplies bearer credentials and redacts refusals. No dev-user fallback. */
-async function request(method: Method, path: string, body?: unknown): Promise<unknown> {
-  if (!getAuthToken()) throw new Error(SESSION_CHANGED);
+interface RequestOwner { headers: Record<string, string>; current: () => boolean }
+/** Capture each request's actor; a later sign-in cannot inherit its reply. */
+function useAccountOwner(userId: string, organizationId: string) {
+  const mounted = React.useRef(false);
+  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const capture = React.useCallback((): RequestOwner => {
+    const headers = capturedActorHeaders({ userId: Number(userId), organizationId: Number(organizationId) });
+    return { headers, current: () => mounted.current && headers.Authorization === `Bearer ${getAuthToken()}` };
+  }, [userId, organizationId]);
+  return { capture, mounted };
+}
+function requireOwner(owner: RequestOwner) {
+  if (!owner.current()) throw new Error(SESSION_CHANGED);
+}
+
+/** Keep the canonical API transport and redaction, with captured credentials. */
+async function request(owner: RequestOwner, method: Method, path: string, body?: unknown): Promise<unknown> {
   try {
-    const response = await apiRequest(method, path, body);
+    requireOwner(owner);
+    const response = await apiRequest(method, path, body, owner.headers);
+    requireOwner(owner);
     const result: unknown = await response.json();
+    requireOwner(owner);
     if (!response.ok || (isObject(result) && result.success === false)) {
       throw new Error(extractApiError(result, response.status).message);
     }
@@ -41,7 +58,7 @@ async function request(method: Method, path: string, body?: unknown): Promise<un
 }
 
 /** Ignore late reads after this account closes or a newer retry completes. */
-function useRead<T>(path: string, guard: (v: unknown) => v is T) {
+function useRead<T>(path: string, guard: (v: unknown) => v is T, capture: () => RequestOwner) {
   const [read, setRead] = React.useState<Read<T>>({ state: 'loading' });
   const version = React.useRef(0);
   const mounted = React.useRef(true);
@@ -49,19 +66,21 @@ function useRead<T>(path: string, guard: (v: unknown) => v is T) {
     const current = ++version.current;
     setRead({ state: 'loading' });
     try {
-      const value = await request('GET', path);
+      const owner = capture();
+      const value = await request(owner, 'GET', path);
+      requireOwner(owner);
       if (!guard(value)) throw new Error('The server did not return the requested settings. Try again.');
       if (mounted.current && current === version.current) setRead({ state: 'ready', data: value });
-      return true;
+      return mounted.current && current === version.current;
     } catch (error) {
       if (mounted.current && current === version.current) setRead({ state: 'error', error: (error as Error).message });
       return false;
     }
-  }, [path, guard]);
+  }, [path, guard, capture]);
   React.useEffect(() => {
     mounted.current = true;
     void load();
-    return () => { mounted.current = false; };
+    return () => { mounted.current = false; version.current += 1; };
   }, [load]);
   return { read, load, setRead };
 }
@@ -103,9 +122,10 @@ function invitationResponseNote(invitation: Invitation, action: 'accept' | 'decl
   return `Invitation ${action === 'accept' ? 'accepted' : 'declined'}${name ? ` for ${name}` : ''}.${preservedRole} Your current workspace remains active.`;
 }
 
-function InvitationsSection({ userId, onMembershipChange }: { userId: string; onMembershipChange: () => void }) {
+function InvitationsSection({ userId, organizationId, onMembershipChange }: { userId: string; organizationId: string; onMembershipChange: () => void }) {
   const heading = React.useId();
-  const { read, load } = useRead(INBOX, isInvitationList);
+  const { capture, mounted } = useAccountOwner(userId, organizationId);
+  const { read, load } = useRead(INBOX, isInvitationList, capture);
   const [confirm, setConfirm] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState<number | null>(null);
   const lock = React.useRef(false);
@@ -118,7 +138,9 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
     setError(null);
     setNote(null);
     try {
-      const result = await request('POST', `/api/tenant-users/invitations/${invitation.id}/${action}`);
+      const owner = capture();
+      const result = await request(owner, 'POST', `/api/tenant-users/invitations/${invitation.id}/${action}`);
+      requireOwner(owner);
       if (!isObject(result) || result.success !== true) {
         throw new Error('The server did not confirm the invitation response. Reload invitations before trying again.');
       }
@@ -131,10 +153,10 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
       if (action === 'accept') onMembershipChange();
       await load();
     } catch (failure) {
-      setError((failure as Error).message);
+      if (mounted.current) setError((failure as Error).message);
     } finally {
       lock.current = false;
-      setBusy(null);
+      if (mounted.current) setBusy(null);
     }
   };
   return (
@@ -187,7 +209,8 @@ const PERSONA_LABELS: Record<ReportPersona, string> = {
 
 function ReportingRoleSection({ userId, organizationId }: { userId: string; organizationId: string }) {
   const id = React.useId();
-  const { read, load, setRead } = useRead(PERSONA, isPersonaRead);
+  const { capture, mounted } = useAccountOwner(userId, organizationId);
+  const { read, load, setRead } = useRead(PERSONA, isPersonaRead, capture);
   const [persona, setPersona] = React.useState<ReportPersona | ''>('');
   const [busy, setBusy] = React.useState(false);
   const lock = React.useRef(false);
@@ -201,7 +224,9 @@ function ReportingRoleSection({ userId, organizationId }: { userId: string; orga
     setError(null);
     setNote(null);
     try {
-      const result = await request('PUT', PERSONA, { persona: persona || null });
+      const owner = capture();
+      const result = await request(owner, 'PUT', PERSONA, { persona: persona || null });
+      requireOwner(owner);
       if (!isObject(result) || result.success !== true || result.persona !== (persona || null) || result.role !== read.data.role) {
         throw new Error('The server did not confirm the reporting role. Reload this setting before trying again.');
       }
@@ -210,10 +235,10 @@ function ReportingRoleSection({ userId, organizationId }: { userId: string; orga
       queryClient.setQueryData(reportPersonaKey(userId, organizationId), confirmed);
       setNote('Reporting role saved. Your access role is unchanged.');
     } catch (failure) {
-      setError((failure as Error).message);
+      if (mounted.current) setError((failure as Error).message);
     } finally {
       lock.current = false;
-      setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   };
   return (
@@ -250,7 +275,7 @@ export function AccountOnboardingSettings({ userId, organizationId, onClose }: {
   }
   return (
     <React.Fragment key={`${userId}:${organizationId}`}>
-      <InvitationsSection userId={userId} onMembershipChange={() => setMembershipVersion(value => value + 1)} />
+      <InvitationsSection userId={userId} organizationId={organizationId} onMembershipChange={() => setMembershipVersion(value => value + 1)} />
       <div className="acct-sep" />
       <OrganizationSwitcher userId={userId} organizationId={organizationId} revision={membershipVersion} onClose={onClose} />
       <div className="acct-sep" />
