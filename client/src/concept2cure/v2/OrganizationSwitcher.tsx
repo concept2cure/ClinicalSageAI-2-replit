@@ -2,13 +2,14 @@
 import React from 'react';
 import { apiRequest, extractApiError, queryClient, redactInternals } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
-import { getAuthToken } from '@/utils/authToken';
+import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { hasUnsavedSessionWork, reserveSessionChange } from '@/lib/sessionChangeGuard';
-import { ErrorState, useLiveData, type DataState } from './dataConnect';
+import { ErrorState, liveGetOrNull, type DataState } from './dataConnect';
 
 const LIST = '/api/organizations?membershipOnly=true';
 const SELECT = '/api/auth/enterprise/select-organization';
 const DESTINATION = '/concept2cure/projects';
+const SESSION_CHANGED = 'Your session has changed. Reload this page before continuing.';
 interface Organization { id: string; name: string | null }
 interface Organizations { success: true; organizations: Organization[] }
 function isOrganizations(v: unknown): v is Organizations {
@@ -28,12 +29,18 @@ function sessionMatches(userId: string, organizationId: string): boolean {
   const caller = authService.getUser();
   return !!getAuthToken() && String(caller?.id) === userId && String(caller?.organizationId) === organizationId;
 }
+function sourceHeaders(userId: string, organizationId: string): Record<string, string> | null {
+  try {
+    if (!sessionMatches(userId, organizationId)) return null;
+    return capturedActorHeaders({ userId: Number(userId), organizationId: Number(organizationId) });
+  } catch { return null; }
+}
 const unchangedSession = (token: string | null, userId: string, organizationId: string) =>
   getAuthToken() === token && sessionMatches(userId, organizationId);
 const replacementBearer = (current: string | null, original: string | null, successor: string | null) =>
   Boolean(current && current !== original && current !== successor);
-async function selectSession(organizationId: string): Promise<string> {
-  const response = await apiRequest('POST', SELECT, { organizationId });
+async function selectSession(organizationId: string, headers: Record<string, string>): Promise<string> {
+  const response = await apiRequest('POST', SELECT, { organizationId }, headers);
   const answer = await response.json() as { success?: boolean; token?: unknown; organization?: { id?: unknown } };
   if (!response.ok || answer?.success !== true) {
     throw new SwitchRefusal(extractApiError(answer, response.status).message, expiredOrUnknown(response.status));
@@ -44,6 +51,32 @@ async function selectSession(organizationId: string): Promise<string> {
     throw new SwitchRefusal('The new organisation session could not be confirmed. Sign in again before continuing.', true);
   }
   return answer.token;
+}
+
+/** Membership choices belong to the account/workspace that requested them. */
+function useMemberships(userId: string, organizationId: string, revision: number, attempt: number): DataState<Organizations> {
+  const scope = `${userId}:${organizationId}`;
+  const [read, setRead] = React.useState<DataState<Organizations> & { scope: string }>({ scope, data: null, loading: true, empty: false });
+  React.useEffect(() => {
+    let retired = false;
+    setRead({ scope, data: null, loading: true, empty: false });
+    const load = async () => {
+      try {
+        const headers = sourceHeaders(userId, organizationId);
+        if (!headers) throw new Error(SESSION_CHANGED);
+        const reply = await liveGetOrNull<Organizations>(LIST, isOrganizations, headers);
+        if (retired) return;
+        if (headers.Authorization !== `Bearer ${getAuthToken()}` || !sessionMatches(userId, organizationId)) throw new Error(SESSION_CHANGED);
+        if (reply.error || !reply.data || reply.meta?.pendingStore === true) throw new Error(reply.error || 'Your organization memberships could not be read.');
+        setRead({ scope, data: reply.data, loading: false, empty: reply.data.organizations.length === 0 });
+      } catch (failure) {
+        if (!retired) setRead({ scope, data: null, loading: false, empty: false, error: redactInternals(failure instanceof Error ? failure.message : null, 'Your organization memberships could not be read.') });
+      }
+    };
+    void load();
+    return () => { retired = true; };
+  }, [scope, userId, organizationId, revision, attempt]);
+  return read.scope === scope ? read : { data: null, loading: true, empty: false };
 }
 function switchFailure(failure: unknown, rotated: boolean): SwitchRefusal {
   if (failure instanceof SwitchRefusal) return failure;
@@ -100,7 +133,7 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
 }) {
   const id = React.useId();
   const [attempt, setAttempt] = React.useState(0);
-  const read = useLiveData<Organizations>(LIST, [revision, attempt], isOrganizations);
+  const read = useMemberships(userId, organizationId, revision, attempt);
   const [selected, setSelected] = React.useState(organizationId);
   const [confirming, setConfirming] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -116,7 +149,8 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
   };
   const change = async () => {
     if (lock.current || !chosen || selected === organizationId) return;
-    if (!sessionMatches(userId, organizationId)) {
+    const headers = sourceHeaders(userId, organizationId);
+    if (!headers) {
       setError('Your session has changed. Reload this page before continuing.');
       return;
     }
@@ -130,10 +164,10 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
     setError(null);
     let rotated = false;
     let keepHeld = false;
-    const originalToken = getAuthToken();
+    const originalToken = headers.Authorization.slice('Bearer '.length);
     let successorToken: string | null = null;
     try {
-      const token = await selectSession(selected);
+      const token = await selectSession(selected, headers);
       // The route spends the previous access token before it answers success.
       rotated = true;
       successorToken = token;

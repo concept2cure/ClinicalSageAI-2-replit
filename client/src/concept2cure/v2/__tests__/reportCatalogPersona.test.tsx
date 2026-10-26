@@ -64,7 +64,7 @@ describe('saved reporting role personalises the existing report catalog', () => 
     expect(screen.getByText('Quality report')).toBeTruthy();
     expect(screen.getByText('Shared report')).toBeTruthy();
     expect(screen.queryByText('Regulatory report')).toBeNull();
-    expect(mocks.request).toHaveBeenCalledWith('GET', PATH);
+    expect(mocks.request).toHaveBeenCalledWith('GET', PATH, undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
     for (const button of screen.getAllByRole('button', { name: 'Run' })) expect(button).toHaveProperty('disabled', true);
   });
 

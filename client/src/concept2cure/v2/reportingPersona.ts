@@ -3,7 +3,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, extractApiError, queryClient } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
-import { getAuthToken } from '@/utils/authToken';
+import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { isReportPersona, type ReportPersona } from '@shared/constants/domain/report-personas';
 
 export const REPORT_PERSONA_PATH = '/api/users/me/persona';
@@ -23,6 +23,13 @@ const sessionIdentity = () => {
   const user = authService.getUser();
   return { userId: user ? String(user.id) : '', organizationId: user ? String(user.organizationId) : '' };
 };
+function personaOwnerMatches(identity: ReturnType<typeof sessionIdentity>): boolean {
+  try {
+    capturedActorHeaders({ userId: Number(identity.userId), organizationId: Number(identity.organizationId) });
+    const now = sessionIdentity();
+    return now.userId === identity.userId && now.organizationId === identity.organizationId;
+  } catch { return false; }
+}
 
 /** Reads on catalog entrance. Account's successful PUT updates this same scoped query cache. */
 export function useCurrentReportPersona() {
@@ -40,15 +47,28 @@ export function useCurrentReportPersona() {
     enabled,
     staleTime: 0,
     retry: false,
-    queryFn: async () => {
-      const response = await apiRequest('GET', REPORT_PERSONA_PATH);
+    queryFn: async ({ signal }) => {
+      const headers = capturedActorHeaders({ userId: Number(identity.userId), organizationId: Number(identity.organizationId) });
+      const requireOwner = () => {
+        const now = sessionIdentity();
+        if (signal.aborted || headers.Authorization !== `Bearer ${getAuthToken()}` ||
+            now.userId !== identity.userId || now.organizationId !== identity.organizationId) {
+          throw new Error('Your session has changed. Reload your reporting role before continuing.');
+        }
+      };
+      requireOwner();
+      const response = await apiRequest('GET', REPORT_PERSONA_PATH, undefined, headers);
+      requireOwner();
       const body: unknown = await response.json();
+      requireOwner();
       if (!response.ok) throw new Error(extractApiError(body, response.status).message);
       if (!isPersonaRead(body)) throw new Error('Your reporting role could not be read.');
       return body;
     },
   }, queryClient);
-  return { ...read, enabled, identityKey: `${identity.userId}:${identity.organizationId}` };
+  const ownerCurrent = personaOwnerMatches(identity);
+  return { ...read, data: ownerCurrent ? read.data : undefined, isSuccess: ownerCurrent && read.isSuccess,
+    ownerCurrent, enabled, identityKey: `${identity.userId}:${identity.organizationId}` };
 }
 
 /** Saved role is a default; an explicit choice, including All, stays in control. */
@@ -63,10 +83,11 @@ export function useCatalogReportingRole(personas: string[]) {
   }, [profile.identityKey]);
   const saved = profile.data?.persona;
   React.useEffect(() => {
+    if (!profile.ownerCurrent) { explicit.current = false; setPersona(''); return; }
     if (explicit.current || !profile.enabled) return;
     if (profile.isSuccess) setPersona(saved && vocabulary.split('|').includes(saved) ? saved : '');
     else if (profile.isError) setPersona('');
-  }, [profile.enabled, profile.isSuccess, profile.isError, saved, vocabulary, profile.identityKey]);
+  }, [profile.ownerCurrent, profile.enabled, profile.isSuccess, profile.isError, saved, vocabulary, profile.identityKey]);
   const choose = (value: string) => { explicit.current = true; setPersona(value); };
   return { persona, choose, profile };
 }
