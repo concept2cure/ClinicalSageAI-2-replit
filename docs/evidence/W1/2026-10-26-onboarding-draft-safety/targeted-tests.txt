@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > onboarding reaches canonical project creation > opens the canonical project wizard after activation without creating a project 581ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 116ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 101ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 99ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 213ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 273ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 321ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 248ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 276ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > preserves an invited signer role and records pending consent without claiming membership 312ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows a created account whose activation failed as needing attention 356ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > does not count an unconfirmed accepted-status response as a recorded invitation 264ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > saves changed discovery before opening existing organization setup 425ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > discovery setup handoffs > keeps the wizard and changed answers when the handoff save is refused 438ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > loads a saved draft and preserves revision without browser persistence 72ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > saves a partial draft with a revision and audit reason, then advances revision 58ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > refuses completion locally for incomplete answers 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > cleans comma-input blanks before saving and requires an actual therapeutic area 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > rejects an incomplete server confirmation and retains unsaved answers for retry 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > requires reload after a concurrent edit and prevents blind overwrite 107ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > retains answers after network refusal and permits retry 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > disables writes for a viewer while exposing saved discovery 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > treats malformed reads as errors rather than as an empty editable draft 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > org-wide discovery persistence > drops late read results across tenant changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > holds browser exit and workspace switching only while answers are unsaved 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > retains dirty answers and the exit guard when reloading saved answers fails 158ms
+ ✓ client/src/concept2cure/v2/__tests__/useOnboardingDiscovery.test.tsx > discovery draft safety > refuses same-turn edits and reloads until the pending write reports 56ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  18:43:27
+   Duration  6.77s (transform 531ms, setup 196ms, import 698ms, tests 4.92s, environment 748ms)

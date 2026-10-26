@@ -23,6 +23,39 @@ type Discovery = ReturnType<typeof useOnboardingDiscovery>;
 type Field = keyof OnboardingDiscoveryAnswers;
 type Option = { value: string; label: string };
 
+function reviewAnswer(answers: OnboardingDiscoveryAnswers, field: Field) {
+  const value = answers[field];
+  const values = Array.isArray(value) ? value : [value];
+  const options: readonly Option[] = Object.prototype.hasOwnProperty.call(DISCOVERY_OPTIONS, field)
+    ? DISCOVERY_OPTIONS[field as keyof typeof DISCOVERY_OPTIONS] : [];
+  return values.filter(entry => entry.trim()).map(entry => options.find(option => option.value === entry)?.label ?? entry).join(', ') || 'Not answered';
+}
+
+/** Review the recorded answers using the same fields and vocabulary as the questionnaire. */
+export function DiscoveryAnswersReview({ answers, onEdit, disabled = false }: {
+  answers: OnboardingDiscoveryAnswers;
+  onEdit: (step: number) => void;
+  disabled?: boolean;
+}) {
+  const sections: Array<{ title: string; fields: Field[]; step: number }> = [
+    { title: 'Company and working context', fields: DISCOVERY_CONTEXT_FIELDS, step: 1 },
+    { title: 'Project and desired outcome', fields: DISCOVERY_PROJECT_FIELDS, step: 2 },
+    { title: 'Security requirements', fields: ['securityNeeds'], step: 7 },
+  ];
+  return <div className="ob-discovery-summary">
+    <div className="pj-seclbl">Review your discovery answers</div>
+    <p className="scaf-note">These are your stated needs. Review them before activation; selecting a security requirement does not configure that control.</p>
+    {sections.map(section => <details key={section.step}>
+      <summary className="pj-seclbl">{section.title}</summary>
+      {section.fields.map(field => <div className="ob-rev-row" key={field}>
+        <span className="k">{DISCOVERY_FIELD_LABELS[field]}</span>
+        <span className="v">{reviewAnswer(answers, field)}</span>
+      </div>)}
+      <button type="button" className="sp-ask" disabled={disabled} onClick={() => onEdit(section.step)}>Review {section.title.toLowerCase()}</button>
+    </details>)}
+  </div>;
+}
+
 /** Uses the existing wizard fields, cards and token palette. Answers are client context, not regulatory findings. */
 function discoveryFields(d: Discovery) {
   const required = requiredDiscoveryFields(d.answers);
