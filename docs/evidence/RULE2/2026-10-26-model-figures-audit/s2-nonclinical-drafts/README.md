@@ -133,3 +133,44 @@ It states no study, dose, NOAEL or finding.
 - ESLint ratchet: no file changed its warning count.
 - `ci:unreferenced-modules`: 74 (baseline 74).
 - `manifest:ana`: regenerated (`docs/ana-capability-manifest.json`). It also picks up two earlier description edits (`get_document_template`, `draft_clinical_overview_m2_5`) that had not been regenerated. The two nonclinical tools now read `scope: project`, and `governed: false`, which is right for read-class tools that write nothing.
+
+## The adversarial review (2026-10-26), and the fixes
+
+Three independent read-only lenses reviewed `43f0e72b1`: refactor equivalence, Rule 2 and honest state, and consumers.
+A separate verifier then tried to refute each finding. Two findings were confirmed; both describe the same defect.
+
+**Confirmed: an absence claimed without a read.** The outline answer's `next_step` always said "No nonclinical study is
+recorded against this project". It said so when no project was open, and when the named project could not be resolved
+(`CSR_PROJECT_NOT_FOUND`, `CSR_PROGRAM_NOT_ANCHORED`). That reports an unavailable read as an empty one, against the
+design's rule that unavailable is not empty and CLAUDE.md's "an error is never rendered as an empty result". The
+`load_nonclinical_program` text and the skill also said the drafts "read the open project's recorded studies", which
+nothing does until R-1 is decided.
+
+**Fixed:**
+- `next_step` depends on the status. `needs_data` says the platform does not yet record nonclinical studies against a
+  project. Any other status says no project was read and points to `nonclinical_data`, which now carries the scope
+  error's `code`.
+- With no project open or named, the message no longer says that opening one lets 2.4/2.6 be composed. That is true of
+  2.5/2.7, not of 2.4/2.6 yet.
+- The `load_nonclinical_program` definition and instruction, and skill step 1, say the drafts take no studies and return
+  the outline until studies are recorded.
+- `get_nonclinical_template` (its definition and instruction) no longer tells the model to prefer the draft tools
+  "which fill the content from data". For 2.4/2.6 they no longer do.
+- Optional, taken: the cross-project refusal again says "so its … are not read here", as it did before the move.
+
+**Refuted:**
+- Three findings: the cross-project wording as a behaviour change, the template text as a defect, and the "Drafted …"
+  step label.
+- The step label is shared by every Module 2 draft tool that answers with an outline (2.5 has it since 3b Slice 1). Each
+  draft tool's register entry carries the verb `draft`, and tool-trace reads an answer as a refusal only on
+  `error`, `refused` or `ok: false`. Whether an outline answer should read "Drafted" is a cross-tool presentation
+  question, filed for the founder rather than changed here.
+
+**Proof:**
+- `red/review-before.txt`: the two new cases per tool fail on `de12d309c`, 4 of 4.
+- `green/review-after.txt`: 12 of 12 pass.
+- The neighbourhood is green: 13 files, 638 tests. It covers this file, `nonclinical-clinpharm-tools`,
+  `module2-csr-inputs.pglite`, the skills suites, the three tool-selection suites,
+  `inspection-readiness-and-nonclinical-load-say-what-was-assessed` and `csr-template-tool`.
+- typecheck 0, ESLint ratchet unchanged, `manifest:ana` regenerated.
+

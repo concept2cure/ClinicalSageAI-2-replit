@@ -5589,7 +5589,7 @@ registerToolHandler('get_nonclinical_template', async (input: Record<string, unk
       sectionCode: tmpl.sectionCode,
       title: tmpl.title,
       content: tmpl.content,
-      instruction: 'Fill the [PLACEHOLDER] tokens. If the program has ingested studies, prefer the draft_* composer tools, which fill content from data.',
+      instruction: 'Fill the [PLACEHOLDER] tokens from the cited study reports, and state a section with no data as such. The Module 2.4 and 2.6 draft tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Fetching nonclinical template failed: ${err?.message || 'unknown error'}` });
@@ -5650,7 +5650,7 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
       presentStudies: loaded.presentStudies,
       speciesNoaels: loaded.speciesNoaels,
       instruction:
-        'Pass presentStudies into assess_nonclinical_program and speciesNoaels into compute_fih_dose. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they read the open project\'s recorded studies themselves. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+        'Pass presentStudies into assess_nonclinical_program and speciesNoaels into compute_fih_dose. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
     // 2026-10-22: a program outside the organization read as a failed load.

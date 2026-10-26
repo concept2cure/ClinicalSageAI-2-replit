@@ -54,3 +54,4 @@ Recommendation: approve (a)–(d). Decide (e) after the check.
 | 19 (FD-8) | Schedule the EctdCoauthor store migration (`coauthor_documents` → `authoring_documents`)? | After launch. |
 | 20 (FD-10) | Should `assemble_ectd_module_from_artifacts` read `authoring_documents`? | Yes. |
 | 21 (FD-12) | What reads `ctdOnboardingDocuments` once nothing writes it? | Migrate those readers to the Vault, then retire the store. |
+| 22 (S2 review) | When a Module 2 draft tool answers with the outline because there are no records (2.4 and 2.6 always, for now; 2.5 and 2.7 with no completed CSR), should AnA's step trace still read "Drafted the Module 2.x …"? | No. Read it as "Outlined …" with the reason, as one presentation rule for every draft tool. It is a cross-tool change to the step presentation, so the UI session should own it. |

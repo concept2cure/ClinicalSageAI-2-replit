@@ -117,7 +117,7 @@ export async function resolveRecordSourceProject(
         ignoredSuppliedFigures,
         message:
           `Module ${subject.module} is composed from the open project's own ${subject.source}. Project ${named} is not the open project, ` +
-          "so they are not read here: a project's Module 2 is written from its own records.",
+          `so its ${subject.source} are not read here: a project's Module 2 is written from its own records.`,
       };
     }
     return { ok: true, organizationId, projectId: scope.projectId, ...(actorUserId ? { actorUserId } : {}) };

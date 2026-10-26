@@ -597,7 +597,7 @@ export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
 export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
   name: 'load_nonclinical_program',
   description:
-    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they read the open project's recorded studies themselves. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. Call this FIRST when the user references a program/IND by id and wants the gap analysis run or the FIH dose computed from the program's real data, then pass the returned arrays into the relevant tool. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
   input_schema: {
     type: 'object',
     properties: {
@@ -610,7 +610,7 @@ export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
 export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
   name: 'get_nonclinical_template',
   description:
-    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. When the program already has ingested studies, prefer the draft_* composer tools, which fill the content from data.",
+    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
   input_schema: {
     type: 'object',
     properties: {

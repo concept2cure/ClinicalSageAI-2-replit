@@ -53,6 +53,25 @@ describe.each([
     expect(out.nonclinical_data?.status).toBe('needs_data');
     expect(numbers(out.structure.sections)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
   });
+
+  // S2 review (2026-10-26): the outline's next step said "No nonclinical study is
+  // recorded against this project" when no project had been read at all, and
+  // after a scope error. Unavailable is not empty.
+  it('with no project open and nothing supplied, gives the outline without claiming what a project holds', async () => {
+    const out = await run(tool, {}, { organizationId: 3, userId: 5 });
+    expect(out.nonclinical_data?.status).toBe('needs_project');
+    expect(numbers(out.structure.sections)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
+    expect(JSON.stringify(out)).not.toMatch(/recorded against this project/);
+    expect(out.nonclinical_data.message).not.toMatch(/draft again/);
+  });
+
+  it('when the named project cannot be resolved, says so with its code and claims no absence', async () => {
+    const { resolveCsrScope, CsrScopeError } = await import('../../csr/project-scope.js');
+    vi.mocked(resolveCsrScope).mockRejectedValueOnce(new CsrScopeError('CSR_PROJECT_NOT_FOUND', 404, 'The project could not be resolved.'));
+    const out = await run(tool, { project_id: 99999 }, { organizationId: 3, userId: 5 });
+    expect(out.nonclinical_data).toMatchObject({ status: 'needs_project', code: 'CSR_PROJECT_NOT_FOUND' });
+    expect(JSON.stringify(out)).not.toMatch(/recorded against this project/);
+  });
 });
 
 describe('the tool definitions ask for no figures', () => {

@@ -30,6 +30,16 @@ export async function loadModule2NonclinicalInputs(
 ): Promise<RecordSourceRefusal> {
   const ignoredSuppliedFigures = suppliedAny(input, MODEL_SUPPLIED_NONCLINICAL_KEYS);
   const project = await resolveRecordSourceProject(input, ctx, { module, source: 'recorded nonclinical studies' }, ignoredSuppliedFigures);
+  if (!project.ok && project.status === 'needs_project' && !project.code) {
+    // The shared message says opening the project lets the module be composed,
+    // which is true of 2.5/2.7 and not yet of 2.4/2.6 (S2 review, 2026-10-26).
+    return {
+      ...project,
+      message:
+        'No project is open or named, so no project was read. This platform does not yet record nonclinical studies against a project, ' +
+        `so Module ${module} cannot be composed from records. Studies, NOAELs and findings given in the conversation are not used.`,
+    };
+  }
   if (!project.ok) return project;
   return {
     ok: false,
@@ -40,6 +50,22 @@ export async function loadModule2NonclinicalInputs(
       `This platform does not yet record nonclinical studies against a project, so Module ${module} cannot be composed from records. ` +
       'Studies, NOAELs and findings given in the conversation are not used.',
   };
+}
+
+/**
+ * What the outline answer says to do next. Only a resolved project supports a
+ * statement about what is recorded against it; no project, or one that could
+ * not be resolved, supports none (unavailable is not empty).
+ */
+function nextStep(module: '2.4' | '2.6', status: RecordSourceRefusal['status']): string {
+  const why =
+    status === 'needs_data'
+      ? 'This platform does not yet record nonclinical studies against a project'
+      : 'No project was read for this request (nonclinical_data says why)';
+  return (
+    `${why}, so Module ${module} is not composed and no study, dose, NOAEL or finding is stated. ` +
+    'Use this outline to draft each section in the governed authoring flow from the versioned study reports the author cites; state a section with no data as such rather than filling it.'
+  );
 }
 
 /**
@@ -54,10 +80,13 @@ export async function draftNonclinicalFromRecords(input: Record<string, unknown>
     const title = module === '2.4' ? 'Nonclinical Overview (Module 2.4)' : 'Nonclinical Written and Tabulated Summaries (Module 2.6)';
     return JSON.stringify({
       structure: { title, ich_reference: 'ICH M4S(R2)', ...(await nonclinicalOutline(module)) },
-      nonclinical_data: { status: sourced.status, message: sourced.message, ...(sourced.projectId ? { projectId: sourced.projectId } : {}) },
-      next_step:
-        `No nonclinical study is recorded against this project, so Module ${module} is not composed and no study, dose, NOAEL or finding is stated. ` +
-        'Use this outline to draft each section in the governed authoring flow from the versioned study reports the author cites; state a section with no data as such rather than filling it.',
+      nonclinical_data: {
+        status: sourced.status,
+        message: sourced.message,
+        ...(sourced.code ? { code: sourced.code } : {}),
+        ...(sourced.projectId ? { projectId: sourced.projectId } : {}),
+      },
+      next_step: nextStep(module, sourced.status),
     });
   } catch (err) {
     return JSON.stringify({ error: `Module ${module} drafting failed: ${err instanceof Error ? err.message : 'unknown error'}` });
