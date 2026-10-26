@@ -1,0 +1,7 @@
+S01 red: npm run ci:unkeyed-request-tables on dfd5b408e (exit 1)
+🚫 Stale baseline entries — these tables are no longer unkeyed-and-read:
+      ectd.module_structure
+
+  A baseline that overstates the debt hides the next real entry.
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+

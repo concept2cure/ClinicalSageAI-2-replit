@@ -379,3 +379,22 @@ defect it names. All pass after.
   without these changes.
 - typecheck: 0 errors.
 - ESLint ratchet `--since origin/concept2cure-v2`: no file changed its warning count.
+
+## C5/C6 — the duplicates inventory, executed slice by slice
+
+**The inventory.** Workflow `wf_0f8a9a31-23c`: six read-only sweep lenses (content, names, routes, client, AnA, dead code
+with history), 194 candidate files, seven area verifiers that re-derived each candidate's reachability and P-47 parity,
+and a planner that ordered 60 slices (`S01`–`S60`), five founder-decision slices (`GF-1`–`GF-6`) and twelve handoffs to
+the client-journey session (`H1`–`H12`). The plan is filed beside this README as `inventory-plan.md`. Each slice below
+is one commit; its red file is `sNN-red.txt`.
+
+### S01 — `ci:unkeyed-request-tables`: the stale `ectd.module_structure` entry
+
+**Cause:** D1 (`3c394edb3`) deleted `server/api/ectd/routes.ts`, the last server reader of `ectd.module_structure`
+(`git grep module_structure -- server` returns nothing). The gate fails on a stale baseline entry, and it runs in CI
+(`ci.yml`), not in the pre-push hook, so D1 pushed green and left this red.
+
+**Change:** the entry is removed from `scripts/ci/unkeyed-request-tables-baseline.json` and `total` goes from 90 to 89.
+The tables stay (Rule 1).
+
+**Red first:** `s01-red.txt` (exit 1, "Stale baseline entries … ectd.module_structure"). After: exit 0, 89 baselined.
