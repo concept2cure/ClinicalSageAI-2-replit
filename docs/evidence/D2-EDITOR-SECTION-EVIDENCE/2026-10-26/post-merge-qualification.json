@@ -1,0 +1,31 @@
+{
+  "head": "0e4cf47b68f561e4fe61021368969e542920530a",
+  "sourceCommit": "4fbcec89be256c9d62062fe69904d5a545e3e14d",
+  "mergedOrigin": "49211250d7dc4d8e5c1ce84ca98b2cadc3deb0ae",
+  "originalQualifiedInputs": 72,
+  "allOriginalGitBlobsMatch": true,
+  "additionalIncomingProductionFiles": [
+    "client/src/concept2cure/mdx/data/programs.ts",
+    "client/src/concept2cure/mdx/data/workbench.ts",
+    "client/src/concept2cure/mdx/hooks/useMdxPrograms.ts",
+    "client/src/concept2cure/mdx/hooks/useWorkbench.ts",
+    "client/src/concept2cure/mdx/surfaces/Overview.tsx",
+    "client/src/concept2cure/mdx/workbench/Workbench.tsx",
+    "client/src/concept2cure/v2/dossierReadiness.ts",
+    "client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx",
+    "client/src/concept2cure/v2/surfaces/Projects.tsx",
+    "server/routes/c2c/projects.ts",
+    "server/services/ana/coaProTools.ts",
+    "server/services/ana/skills/library/clinical.ts",
+    "server/services/c2c/project-portfolio.ts",
+    "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+    "server/services/mdx-health.service.ts",
+    "server/services/regulatory-programs.service.ts",
+    "shared/constants/domain/product-types.ts",
+    "shared/constants/mdx.ts",
+    "shared/navigation/surface-actions.ts"
+  ],
+  "finalDeclaredInputs": 92,
+  "reasonForRepeat": "Incoming project/device readiness/shared constants and assessment code can alter imported runtime paths; repeat all11suites plus build/gates before normal compiler/push."
+}

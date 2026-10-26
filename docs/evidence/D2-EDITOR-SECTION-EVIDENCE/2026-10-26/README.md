@@ -5,7 +5,7 @@
 | Canonical query/assembly completion | Root | Implemented; meaningful HTTP RED retained |
 | Real HTTP/PGlite source windows | next_authoring_usecase | 74/74 passed; strict lint passed |
 | Pure query/selector controls | ana_drafting_usecase | 18/18 passed; strict lint passed |
-| Git, global checks and human handoff | Root | Claimed |
+| Git, global checks and human handoff | Root | Code published; normal gates passed; 118 human cases Not run |
 
 Contract: docs/design/EDITOR_SECTION_EVIDENCE_2026-10-26.md.
 
@@ -40,7 +40,7 @@ An exact-section build now gives the existing deterministic window selector that
 
 - **74 passed** in the actual authenticated assembly HTTP/PGlite suite (`http/settled-green.json`), including nine added cases and 65 existing cases. Data Room and Vault each cover title-only and guidance-only later passages; normalized codes and a renamed saved heading preserve the exact working row. Preview writes nothing, commit/audit persist the same manifest and expected-manifest reads replay the exact source slice. Whole-document/no-match opening controls and pre-source structural refusal are covered.
 - **18 passed** in the new pure query suite (`tests/GREEN-result.json`), including raw Japanese guidance, the inherited term cap, title priority, generic/other-section exclusion, no-match/stop-only/short-source behavior, exact whole-document strings and invalid template identities. Its prepared snapshot is explicitly Not run, not fake missing-export RED.
-- **173 passed / nine different suites** in root integration (`integration.json`): existing English/Japanese selector behavior, universal assembly/filling scope/template guidance, selected-source generation/acceptance rollback and the existing editor/source/review flows. Together these are **265 distinct tests across 11 suites**, without adding historical reruns.
+- **173 passed / nine different suites** in root integration (`integration.json`): existing English/Japanese selector behavior, universal assembly/filing scope/template guidance, selected-source generation/acceptance rollback and the existing editor/source/review flows. Together these are **265 distinct tests across 11 suites**, without adding historical reruns.
 - Both production files and every touched fixture pass strict ESLint with zero errors/warnings. The production build and seven existing editor/UI/size gates pass with no source drift. No dependency, baseline or size-ceiling increase occurred.
 - `pre-merge-qualified-inputs.json` records the union of 72 declared final root/pure/HTTP inputs before incoming integration. This is bounded qualification, not exhaustive dependency closure. Final merged inputs/results/publication are recorded below and in their own receipts.
 
@@ -53,3 +53,15 @@ The original route RED has seven failures/two passing controls. Root retained a 
 After the production fix, the adjacent-passage fixture produced seven passes/two failures only because its assertion excluded nearby matching generic text; both selected excerpts already contained the exact scientific marker. The existing selector legitimately prefers a window containing more distinct terms. That epoch remains classified as an overconstrained fixture. A neutral gap larger than the excerpt budget makes the final guidance-only case unambiguous without changing assertions or scoring. Subsequent full 74-case GREEN and strict lint are retained separately.
 
 Strict fixture lint then found the existing main suite at 501 counted lines. The worker shared the existing typed registered-case fixture object between filing and source cases, removing duplicate wiring and keeping one authenticated app/database host. No assertions, suppressions or limits were removed. The final `settled` suite and strict fixture lint both pass on the final source hashes. Independent review found no blocking issue in the shared row validator, query scope, pre-plan ordering, canonical final fingerprint, source authority or lock/writer paths.
+
+## Merged qualification and accepted publication
+
+Normal source commit **4fbcec89be256c9d62062fe69904d5a545e3e14d** was merged with the incoming canonical project/device-readiness and clinical-outcome-assessment work, producing **0e4cf47b68f561e4fe61021368969e542920530a**. The 72 original qualified input blobs remained unchanged. Root expanded the declared freeze to include 20 incoming production files, for **92 final declared inputs**, and repeated the complete integration on that merged tree.
+
+- `integration-post-merge.json`: **265 passed / 11 suites**, zero declared source drift. This is the definitive combined run; earlier worker/root counts describe the same disjoint suites and are not added again.
+- `gates-post-merge.json`: all seven existing editor/UI/size gates passed.
+- `build-post-merge.json`: production build passed.
+- `publication-code.json` / `publication-code.log.gz`: successful normal direct push; every pre-push gate passed, including full TypeScript **zero errors against baseline zero** and no pushed-file ESLint warning growth. No baseline, dependency, branch, PR, worktree, force, bypass or deployment was introduced.
+- `accepted-code-verification.json`: a fresh authenticated fetch observed the accepted canonical revision above, local/remote 0 ahead and 0 behind, all 92 declared Git blobs matching and source-commit ancestry confirmed.
+
+These are local Codespaces automated results. PGlite does not qualify native PostgreSQL concurrency/RLS, and a synthetic-model draft test does not qualify a real AnA provider or scientific/regulatory completeness. The final documentation follow-up publishes the remaining receipts and complete artifact manifest. After acceptance, the read-only command `verify-publication.py --revision origin/concept2cure-v2 --require-artifacts` verifies actual accepted Git source/config/test blobs, every artifact against Git and the filesystem, tracked packet coverage and source ancestry. Its final console result avoids recursively writing another receipt/commit.
