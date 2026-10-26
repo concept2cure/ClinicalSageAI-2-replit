@@ -62,7 +62,7 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
         text (weekly review 2026-10-19, DS-F1). */}
     <div className="pde-actions pde-picker">
       <label>Protocol scope <select aria-label="Protocol scope" value={scope} onChange={(event) => setScope(event.target.value)}>
-        {programId && <option value={programId}>Open program: {programName || programId}</option>}
+        {programId && <option value={programId}>Open project: {programName || programId}</option>}
         <option value="unfiled">Unfiled protocols</option><option value="all">All organization protocols</option>
       </select></label>
       {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => selection.select(event.target.value)}>
@@ -72,10 +72,10 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
       </select></label>}
       <PG.Btn icon="plus" variant="primary" onClick={() => setStarting(true)} disabled={!programId}>Start a protocol</PG.Btn>
       {programId && selection.doc && !selection.doc.programId && !['finalized', 'superseded'].includes(selection.doc.status) &&
-        <PG.Btn icon="folder" variant="outline" onClick={() => setFiling(true)}>File protocol in open program</PG.Btn>}
+        <PG.Btn icon="folder" variant="outline" onClick={() => setFiling(true)}>File protocol in open project</PG.Btn>}
     </div>
-    {!programId && <p>Open a program to create a protocol. Existing protocols remain available for review.</p>}
-    {selection.doc && !selection.doc.programId && <p>This protocol is unfiled. It has no recorded program association.</p>}
+    {!programId && <p>Open a project to create a protocol. Existing protocols remain available for review.</p>}
+    {selection.doc && !selection.doc.programId && <p>This protocol is unfiled. It has no recorded project association.</p>}
     {error && <div className="pde-refusal" role="alert">{error}</div>}
     <SelectionDialogs starting={starting} filing={filing} selection={selection} programId={programId} programName={programName}
       onCreated={onCreated} closeStart={() => setStarting(false)} closeFile={() => setFiling(false)}

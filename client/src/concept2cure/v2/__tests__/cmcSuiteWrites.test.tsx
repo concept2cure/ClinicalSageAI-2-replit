@@ -497,7 +497,7 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
     wire();
     render(<CmModule3Build ask={() => {}} />);
-    expect(await screen.findByText('Open a program to build its Module 3')).toBeTruthy();
+    expect(await screen.findByText('Open a project to build its Module 3')).toBeTruthy();
     // Nothing is fetched without a project — a per-project board must not be
     // requested org-wide.
     expect(calls().filter((c) => String(c[1]).includes('module3-os'))).toHaveLength(0);

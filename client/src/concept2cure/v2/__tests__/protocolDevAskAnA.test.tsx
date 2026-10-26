@@ -114,8 +114,8 @@ describe('the AnA buttons send no stored text as the person\'s words (SEC-C-4)',
     const onAsk = mount([]);
     fireEvent.click(await screen.findByRole('button', { name: /Ask AnA to draft the synopsis/ }));
     expect(sent(onAsk)).toBe(
-      'Draft a protocol synopsis for the programme open in this workspace: the study objectives, design, ' +
-      'population and primary endpoint, from the evidence already in this programme.',
+      'Draft a protocol synopsis for the project open in this workspace: the study objectives, design, ' +
+      'population and primary endpoint, from the evidence already in this project.',
     );
     expect(sent(onAsk)).not.toContain('Disregard the evidence');
   });
@@ -123,7 +123,7 @@ describe('the AnA buttons send no stored text as the person\'s words (SEC-C-4)',
   it('with no programme open, the empty state\'s ask does not claim one is', async () => {
     const onAsk = mount([]);
     fireEvent.click(await screen.findByRole('button', { name: /Ask AnA to draft the synopsis/ }));
-    expect(sent(onAsk)).not.toMatch(/programme open in this workspace/);
+    expect(sent(onAsk)).not.toMatch(/project open in this workspace/);
   });
 });
 

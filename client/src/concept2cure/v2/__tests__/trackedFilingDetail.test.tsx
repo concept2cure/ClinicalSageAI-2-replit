@@ -78,8 +78,8 @@ describe('Tracked filing detail', () => {
     expect(screen.getByText('legacy_status_unmapped')).toBeTruthy();
     expect(screen.getByText('No filed artifact document recorded')).toBeTruthy();
     expect(screen.getByText('No filed artifact hash recorded')).toBeTruthy();
-    expect(screen.getByText('No programme binding recorded')).toBeTruthy();
-    expect(screen.getByText('No project binding recorded')).toBeTruthy();
+    expect(screen.getByText('No project recorded')).toBeTruthy();
+    expect(screen.getByText('No tracking record bound')).toBeTruthy();
     expect(screen.getByText('No notes recorded')).toBeTruthy();
     expect(screen.queryByText(/Decision due 2026/)).toBeNull();
   });

@@ -341,7 +341,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               <EmptyState
                 icon={I.clipboardList}
                 title="No RBM studies yet"
-                hint="No study in this organization has a risk-based monitoring assessment yet. Once an RBM assessment exists for a program it appears here with its live risk, KRIs, QTLs and monitoring plan — nothing is simulated."
+                hint="No study in this organization has a risk-based monitoring assessment yet. Once an RBM assessment exists for a study it appears here with its live risk, KRIs, QTLs and monitoring plan — nothing is simulated."
               />
             </div>
           ) : board.error ? (

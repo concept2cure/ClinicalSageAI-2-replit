@@ -29,7 +29,7 @@ export async function assessmentRequest(method: 'GET' | 'POST', path: string, in
 
 export function requireSavedIdentity(row: Record<string, unknown> | null | undefined, programId: string): string {
   if (!row || typeof row.id !== 'string' || !UUID.test(row.id) || row.program_id !== programId) {
-    throw new Error('The server did not confirm a saved record for this program. Refresh saved records before another attempt.');
+    throw new Error('The server did not confirm a saved record for this project. Refresh saved records before another attempt.');
   }
   return row.id;
 }

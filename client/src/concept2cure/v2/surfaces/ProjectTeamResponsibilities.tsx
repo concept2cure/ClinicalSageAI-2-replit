@@ -4,7 +4,7 @@ import { EmptyState, ErrorState, isPendingStore, useLiveData, type DataState } f
 
 const RESPONSIBILITY_LABEL = { project_lead: 'Project lead', project_owner: 'Project owner' };
 const SOURCE_LABEL = {
-  program_lead: 'Program lead', project_owner: 'Project owner', project_creator: 'Project creator',
+  program_lead: 'Project lead', project_owner: 'Project owner', project_creator: 'Project creator',
   project_member: 'Project sharing membership', recorded_name: 'Recorded name',
 };
 const SHARING_LABEL = { owner: 'Owner', edit: 'Edit', use: 'Use' };

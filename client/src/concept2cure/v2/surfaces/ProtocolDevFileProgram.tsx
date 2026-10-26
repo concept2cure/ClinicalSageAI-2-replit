@@ -9,8 +9,8 @@ interface FileProtocolProps {
 
 async function confirmProgram(documentId: number, programId: string, reason: string) {
   const result = await apiCall('POST', `/api/protocol-development/documents/${documentId}/program`, { programId, reason });
-  if (!result.ok) throw new Error(apiErrorText(result, 'Could not file this protocol in the open program.'));
-  if (result.body?.programId !== programId) throw new Error('The server did not confirm the program association. Refresh this protocol before retrying.');
+  if (!result.ok) throw new Error(apiErrorText(result, 'Could not file this protocol in the open project.'));
+  if (result.body?.programId !== programId) throw new Error('The server did not confirm the project association. Refresh this protocol before retrying.');
 }
 
 export function FileProtocolProgramDrawer({ documentId, programId, programName, onCancel, onDone }: FileProtocolProps) {
@@ -26,8 +26,8 @@ export function FileProtocolProgramDrawer({ documentId, programId, programName, 
     catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { running.current = false; setBusy(false); }
   };
-  return <C2CForm config={{ title: 'File protocol in open program', eyebrow: 'Protocol · program association', governed: true,
-    sub: `${programName || programId} — explicitly records this unfiled protocol’s program. An existing program association cannot be moved.`,
+  return <C2CForm config={{ title: 'File protocol in open project', eyebrow: 'Protocol · project association', governed: true,
+    sub: `${programName || programId} — explicitly records this unfiled protocol’s project. An existing project association cannot be moved.`,
     notice: error || undefined, busy: busy ? 'Filing the protocol…' : undefined, submitLabel: 'File protocol',
     fields: [{ key: 'reason', label: 'Reason for change (governed)', type: 'textarea', required: true }] }}
     onCancel={onCancel} onSubmit={submit} />;

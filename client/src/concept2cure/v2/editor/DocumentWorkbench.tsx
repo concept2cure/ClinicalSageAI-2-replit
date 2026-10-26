@@ -2384,7 +2384,7 @@ export function DocumentWorkbench({
     }
     if (target.programId && target.programId !== projectIdForOutline) {
       targetAttemptedRef.current = true;
-      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different program'}. Open that program and retry.`);
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${target.programTitle ?? 'a different project'}. Open that project and retry.`);
       return true;
     }
     return false;
@@ -2485,7 +2485,7 @@ export function DocumentWorkbench({
     const wanted = describeEditorTarget(t);
     if (t.programId && t.programId !== projectIdForOutline) {
       setTargetNotice(
-        `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
+        `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different project'}, ` +
           'which is not the project this editor is scoped to. Open that project and retry. ' +
           'Showing the editor’s default view instead.'
       );
@@ -4234,7 +4234,7 @@ export function DocumentWorkbench({
         {filing.reason === 'no-governed-document' && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
-            Projects created before scaffolding — and program types with no rule pack — fall here.
+            Projects created before scaffolding — and project types with no rule pack — fall here.
           </div>
         )}
 
@@ -4727,7 +4727,7 @@ export function DocumentWorkbench({
                   dirty
                     ? 'Save the open section first — the vault files the saved document.'
                     : !programId
-                      ? 'This document is not filed under a program; the vault is program-scoped.'
+                      ? 'This document is not filed under a project; the vault is project-scoped.'
                       : 'Export this document and file the file into the project vault, with its SHA-256 recorded.'
                 }
                 data-testid="file-to-vault-open"

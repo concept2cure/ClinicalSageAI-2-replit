@@ -1135,7 +1135,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const anaContext = useMemo(
     () => ({
       summary: ident == null
-        ? 'eCTD compile, with no program open — nothing can be assembled until one is.'
+        ? 'eCTD compile, with no project open — nothing can be assembled until one is.'
         : `eCTD compile for ${region} (${submissionType}). Readiness is ${statusState}` +
           (status ? `: ${statusReadinessWords(status)}` : '') +
           (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.',
@@ -1277,7 +1277,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       // returns early and statusState never leaves 'idle', so holding here
       // would wait out the 20 s TTL instead of answering.
       if (ident == null) {
-        return { ok: false, reason: 'No program is open, so there is no compilation to set a region for — open a program first.' };
+        return { ok: false, reason: 'No project is open, so there is no compilation to set a region for — open a project first.' };
       }
       const blocked = busyRefusal();
       if (blocked) return blocked;
@@ -1320,7 +1320,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         return { ok: false, reason: `Submission type must be one of: ${SUB_TYPES.join(', ')} (got "${params.submissionType}").` };
       }
       if (ident == null) {
-        return { ok: false, reason: 'No program is open, so this screen shows only its empty state and there is no Submission menu — open a program first.' };
+        return { ok: false, reason: 'No project is open, so this screen shows only its empty state and there is no Submission menu — open a project first.' };
       }
       const blocked = busyRefusal();
       if (blocked) return blocked;
@@ -1349,8 +1349,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         return {
           ok: false,
           reason:
-            'No program is open, so this screen shows only its empty state and the orchestrator panel is not rendered — a run ' +
-            'loaded now would be invisible. Open a program first.',
+            'No project is open, so this screen shows only its empty state and the orchestrator panel is not rendered — a run ' +
+            'loaded now would be invisible. Open a project first.',
         };
       }
       if (orchState === 'loading') {
@@ -1389,8 +1389,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       <div className="cm-body" style={{ padding: 24 }}>
         <EmptyState
           icon={I.layers}
-          title="Open a program to compile its eCTD"
-          hint="eCTD assembly runs against a program’s authored sections. Open a program, then compile and export its submission here."
+          title="Open a project to compile its eCTD"
+          hint="eCTD assembly runs against a project’s authored sections. Open a project, then compile and export its submission here."
         />
       </div>
     );
@@ -1612,7 +1612,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
         <div className="pj-card-b" style={{ paddingTop: 0 }}>
           {orchState === 'idle' ? (
             <EmptyState icon={I.workflow} title="No orchestrator run loaded"
-              hint="Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
+              hint="Build a run from this project’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
           ) : orchState === 'loading' ? (
             <EmptyState icon={I.zap} title="Loading run…" busy />
           ) : orchState === 'error' ? (

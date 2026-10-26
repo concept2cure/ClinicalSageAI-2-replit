@@ -406,7 +406,7 @@ describe('8. who may run reports is the server’s statement', () => {
 /* ── 9. Insights: a failed overview is a failure ───────────────────────── */
 
 describe('9. Insights renders a 503 overview as an error', () => {
-  it('shows the error state, not "No program readiness yet", and keeps the reports reachable', async () => {
+  it('shows the error state, not "No project readiness yet", and keeps the reports reachable', async () => {
     apiRequest.mockImplementation(async () => {
       throw new ApiRequestError('The portfolio could not be read.', 503, {
         success: false, error: { code: 'PORTFOLIO_UNAVAILABLE', message: 'The portfolio could not be read.' },
@@ -415,7 +415,7 @@ describe('9. Insights renders a 503 overview as an error', () => {
     const onNav = vi.fn();
     render(<InsightsCanvas onNav={onNav} segment="pharma" surface={{ id: 'insights', label: 'Reporting & analytics' } as never} />);
     expect((await screen.findByRole('alert')).textContent).toMatch(/Couldn't load the reporting canvas/);
-    expect(screen.queryByText('No program readiness yet')).toBeNull();
+    expect(screen.queryByText('No project readiness yet')).toBeNull();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Audit & compliance reports' }));
     });

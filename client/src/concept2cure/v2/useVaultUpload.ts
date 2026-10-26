@@ -332,7 +332,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
       if (!programId) {
         setNote({
           tone: 'error',
-          text: 'Open a program first — every vault document is filed against one.',
+          text: 'Open a project first — every vault document is filed against one.',
         });
         return empty;
       }

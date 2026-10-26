@@ -110,7 +110,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
         `Investigator's Brochure (ICH E6(R3) Appendix A): ${rows.length} section(s), ` +
         `${required.length} required — ${readyRequired} rendered, so required-section completeness is ` +
         `${completeness}%. ${openCount} section(s) are not yet rendered.` +
-        (empty ? ' No program is provisioned, so this is the deterministic ICH skeleton with every data-bearing section marked missing.' : ''),
+        (empty ? ' No project is provisioned, so this is the deterministic ICH skeleton with every data-bearing section marked missing.' : ''),
       facts: {
         totalSections: rows.length,
         requiredSections: required.length,
@@ -134,7 +134,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <PageHead
-        eyebrow="Program · IND authoring"
+        eyebrow="Project · IND authoring"
         title="Investigator's Brochure"
         sub="ICH E6(R3) Appendix A section structure with per-section readiness."
         actions={

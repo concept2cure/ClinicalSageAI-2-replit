@@ -221,7 +221,7 @@ function HistoryControls({ scopeLabel, scopeAvailable, currentScope, onScope, so
   const scopeId = React.useId();
   const sortId = React.useId();
   return <div className="rl-filters">
-    {scopeAvailable && <div className="rl-filter"><label className="gov-label" htmlFor={scopeId}>Reporting scope</label><select id={scopeId} className="rl-input" value={currentScope ? 'current' : 'all'} onChange={e => onScope(e.target.value === 'current')}><option value="all">All accessible reports</option><option value="current">{scopeLabel || 'Selected program'}</option></select></div>}
+    {scopeAvailable && <div className="rl-filter"><label className="gov-label" htmlFor={scopeId}>Reporting scope</label><select id={scopeId} className="rl-input" value={currentScope ? 'current' : 'all'} onChange={e => onScope(e.target.value === 'current')}><option value="all">All accessible reports</option><option value="current">{scopeLabel || 'Selected project'}</option></select></div>}
     <div className="rl-filter"><label className="gov-label" htmlFor={sortId}>Order by</label><select id={sortId} className="rl-input" value={sortBy} onChange={e => onSort(e.target.value as HistorySort)}><option value="createdAt">Newest first</option><option value="completedAt">Most recently computed</option><option value="confidence">Highest measured confidence</option><option value="reportType">Report type</option><option value="status">Status</option></select></div>
     <button type="button" className="btn ghost" onClick={onRefresh}>Refresh</button>
   </div>;

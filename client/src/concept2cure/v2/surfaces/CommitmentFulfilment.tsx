@@ -146,7 +146,7 @@ function SequenceChoice({
   let body: React.ReactNode;
   if (options.loading) body = <p className="de-desc" role="status">Reading the submissions this commitment can name…</p>;
   else if (options.error || !d) body = <p className="de-desc" role="alert">The submissions could not be read. None are offered rather than an incomplete list.</p>;
-  else if (!d.projectLinked) body = <p className="de-desc">This project is not linked to a program, so no sequence or Vault document of it can be named.</p>;
+  else if (!d.projectLinked) body = <p className="de-desc">This project has no linked regulatory record yet, so no sequence or Vault document of it can be named.</p>;
   else if (d.sequences.length === 0) {
     body = (
       <p className="de-desc">
@@ -199,7 +199,7 @@ function vaultScopeOf(door: 'org' | 'project', options: { loading: boolean; data
 const VAULT_SCOPE_WORDS: Record<Exclude<VaultScope['kind'], 'ready'>, string> = {
   waiting: "Reading which Vault this project's documents are in…",
   unavailable: "This project's Vault could not be identified, so no document can be named. Close this and open it again to retry.",
-  unlinked: 'This project is not linked to a program, so no Vault document of it can be named.',
+  unlinked: 'This project has no linked regulatory record yet, so no Vault document of it can be named.',
 };
 
 /** The Vault version named, or the picker to name one. Focus follows the choice: to Remove once chosen, back to the search once removed. */

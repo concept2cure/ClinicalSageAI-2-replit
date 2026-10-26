@@ -142,7 +142,7 @@ export function EctdFiledState({ identPath, seqQuery, isScopeCurrent }: { identP
   else if (state === 'error' || !view) {
     body = <EmptyState tone="error" icon={I.alertTriangle} title="What is on file didn’t respond." hint="It is not shown as empty until it loads." retry={load} />;
   } else if (view.submissionId == null) {
-    body = <EmptyState icon={I.fileText} title="No submission yet" hint="This program has no submission, so nothing is on file at the agency." />;
+    body = <EmptyState icon={I.fileText} title="No submission yet" hint="This project has no submission, so nothing is on file at the agency." />;
   }
   return (
     <div className="pj-card" data-testid="ectd-filed-state">

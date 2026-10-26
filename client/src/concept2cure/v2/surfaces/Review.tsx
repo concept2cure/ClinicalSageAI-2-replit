@@ -140,9 +140,9 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
           data-on={onlyProgram || undefined}
           style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
           onClick={() => onOnlyProgram(!onlyProgram)}
-          title={onlyProgram ? 'Showing this program only' : 'Show this program only'}
+          title={onlyProgram ? 'Showing this project only' : 'Show this project only'}
         >
-          {I.gitBranch} {onlyProgram ? 'Only ' : 'All programs · '}{program.title}
+          {I.gitBranch} {onlyProgram ? 'Only ' : 'All projects · '}{program.title}
         </button>
       )}
     </div>

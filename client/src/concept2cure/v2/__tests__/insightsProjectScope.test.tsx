@@ -65,7 +65,7 @@ describe('Insights — reports run over the lead project', () => {
     await renderCanvas('academic');
     fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
-    expect(screen.getByText(/Runs over program or account, not a single project\./)).toBeTruthy();
+    expect(screen.getByText(/Runs over project group or account, not a single project\./)).toBeTruthy();
     const runnable = [...document.querySelectorAll('button.ro-pack-card')].map((b) => b.textContent ?? '');
     expect(runnable.some((t) => /scorecard/i.test(t))).toBe(false);
     expect(runnable.length).toBeGreaterThan(0);

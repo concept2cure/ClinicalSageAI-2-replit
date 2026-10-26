@@ -49,7 +49,7 @@ async function open(note = vi.fn()) {
 }
 function editFacts() {
   fireEvent.change(screen.getByLabelText('Agency application number'), { target: { value: '000512' } });
-  fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: 'Record confirmed applicant facts' } });
+  fireEvent.change(screen.getByLabelText('Reason for project facts change'), { target: { value: 'Record confirmed applicant facts' } });
 }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => { resolve = r; }); return { promise, resolve }; }
 beforeEach(() => {
@@ -63,25 +63,25 @@ describe('recorded applicant facts in the existing forms panel', () => {
   it('requires a reason and binds the explicit sponsor with the exact program revision', async () => {
     const note = await open();
     fireEvent.change(screen.getByLabelText('Agency application number'), { target: { value: '000512' } });
-    expect((screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Save to project' }) as HTMLButtonElement).disabled).toBe(true);
     await screen.findByRole('option', { name: /Recorded test sponsor/ });
     fireEvent.change(screen.getByLabelText('Applicant sponsor record'), { target: { value: SID } });
-    fireEvent.change(screen.getByLabelText('Reason for program facts change'), { target: { value: 'Record confirmed applicant facts' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    fireEvent.change(screen.getByLabelText('Reason for project facts change'), { target: { value: 'Record confirmed applicant facts' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await waitFor(() => expect(api.request).toHaveBeenCalledWith('PUT', '/api/ind-forms/program-facts', {
       projectIdent: ID, expectedFactsVersion: VERSION, reason: 'Record confirmed applicant facts', applicationNumber: '000512', applicantSponsorId: SID, sponsorAddress: null, indType: null,
     }));
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/Program facts saved/)));
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/Project facts saved/)));
   });
 
   it.each([204, 200])('an HTTP %s answer without a matching receipt holds further saves', async status => {
     const base = api.request.getMockImplementation()!;
     api.request.mockImplementation((method, path, body) => method === 'PUT' ? Promise.resolve(response(status === 204 ? null : { programId: OTHER }, status)) : base(method, path, body));
-    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await screen.findByText(/could not confirm whether the program facts were saved/i);
-    expect((screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/Program facts saved/));
-    expect(screen.getByRole('button', { name: 'Reload recorded program facts' })).toBeTruthy();
+    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
+    await screen.findByText(/could not confirm whether the project facts were saved/i);
+    expect((screen.getByRole('button', { name: 'Save to project' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/Project facts saved/));
+    expect(screen.getByRole('button', { name: 'Reload recorded project facts' })).toBeTruthy();
   });
 
   it('says when a confirmed program save has no retrievable audit entry', async () => {
@@ -91,7 +91,7 @@ describe('recorded applicant facts in the existing forms panel', () => {
       if (method === 'PUT') return response({ ...(await res.json()), auditTrail: { persisted: true, chained: false } });
       return res;
     });
-    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await screen.findByText(/audit entry is not confirmed in retrievable history/i);
   });
 
@@ -119,7 +119,7 @@ describe('recorded applicant facts in the existing forms panel', () => {
     fireEvent.change(within(editor).getByLabelText('Authorized representative title'), { target: { value: 'Authorized officer' } });
     fireEvent.change(within(editor).getByLabelText('Reason for sponsor record change'), { target: { value: 'Record verified sponsor identity' } });
     fireEvent.click(within(editor).getByRole('button', { name: 'Save sponsor record' }));
-    await screen.findByText(/Sponsor record saved.*not bound to this program/i);
+    await screen.findByText(/Sponsor record saved.*not bound to this project/i);
     expect(api.request).toHaveBeenCalledWith('POST', '/api/ind-master-data/sponsors', expect.objectContaining({ signatoryName: 'Recorded test representative', signatoryTitle: 'Authorized officer' }));
     expect(api.request.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(0);
     expect((screen.getByLabelText('Applicant sponsor record') as HTMLSelectElement).value).toBe('');
@@ -132,7 +132,7 @@ describe('recorded applicant facts in the existing forms panel', () => {
     await open(); await screen.findByRole('option', { name: /Recorded test sponsor/ });
     fireEvent.change(screen.getByLabelText('Applicant sponsor record'), { target: { value: SID } });
     fireEvent.click(screen.getByRole('button', { name: 'Edit selected sponsor' }));
-    expect(screen.getByText(/Every program bound to this sponsor uses changes/i)).toBeTruthy();
+    expect(screen.getByText(/Every project bound to this sponsor uses changes/i)).toBeTruthy();
     const editor = screen.getByRole('group', { name: 'Sponsor registry record' });
     fireEvent.change(within(editor).getByLabelText('Regulatory contact name'), { target: { value: 'Changed test contact' } });
     fireEvent.change(within(editor).getByLabelText('Authorized representative name'), { target: { value: 'Updated test representative' } });
@@ -147,7 +147,7 @@ describe('recorded applicant facts in the existing forms panel', () => {
     const pending = deferred<Response>();
     const base = api.request.getMockImplementation()!;
     api.request.mockImplementation((method, path, body) => method === 'PUT' ? pending.promise : base(method, path, body));
-    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await waitFor(() => expect(api.request.mock.calls.some(c => c[0] === 'PUT')).toBe(true));
     act(() => { publishShellProject({ id: OTHER }); publishShellProject({ id: ID }); });
     await act(async () => { pending.resolve(response({ ...program, applicationNumber: '000512', factsVersion: NEXT, programId: ID, auditTrail: AUDIT })); });
@@ -184,18 +184,18 @@ describe('recorded applicant read ownership and reconciliation', () => {
       await screen.findByRole('option', { name: /Recorded test sponsor/ });
       fireEvent.change(screen.getByLabelText('Applicant sponsor record'), { target: { value: SID } });
     }
-    fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await screen.findByText(/could not confirm whether the program facts were saved/i);
-    expect((screen.getByRole('button', { name: 'Save to program' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
+    await screen.findByText(/could not confirm whether the project facts were saved/i);
+    expect((screen.getByRole('button', { name: 'Save to project' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('requires explicit successful read reconciliation after a lost program write answer', async () => {
     const base = api.request.getMockImplementation()!;
     api.request.mockImplementation((method, path, body) => method === 'PUT' ? Promise.reject(new Error('lost answer')) : base(method, path, body));
-    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await screen.findByText(/could not confirm whether the program facts were saved/i);
-    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded program facts' }));
-    await screen.findByText(/Recorded program facts reloaded/i);
+    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
+    await screen.findByText(/could not confirm whether the project facts were saved/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded project facts' }));
+    await screen.findByText(/Recorded project facts reloaded/i);
     expect((screen.getByLabelText('Agency application number') as HTMLInputElement).value).toBe('');
     expect(api.request.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(1);
   });
@@ -235,7 +235,7 @@ describe('recorded applicant read ownership and reconciliation', () => {
     const pending = deferred<Response>();
     const base = api.request.getMockImplementation()!;
     api.request.mockImplementation((method, path, body) => method === 'PUT' ? pending.promise : base(method, path, body));
-    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    const note = await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await waitFor(() => expect(api.request.mock.calls.some(c => c[0] === 'PUT')).toBe(true));
     act(() => { api.revision += 1; api.listeners.forEach(listener => listener()); });
     await act(async () => { pending.resolve(response({ ...program, applicationNumber: '000512', factsVersion: NEXT, programId: ID, auditTrail: AUDIT })); });
@@ -249,8 +249,8 @@ describe('recorded applicant read ownership and reconciliation', () => {
     await open();
     fireEvent.click(screen.getByRole('button', { name: /Build & check/ }));
     await screen.findByText('required fields present');
-    editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await screen.findByText('Program facts saved.');
+    editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
+    await screen.findByText('Project facts saved.');
     expect(screen.queryByText('required fields present')).toBeNull();
     expect(screen.getByText('Not checked yet')).toBeTruthy();
   });
@@ -263,8 +263,8 @@ describe('applicant editor interaction lifecycle', () => {
     const note = vi.fn();
     render(<React.StrictMode><IndFormsPanel note={note} /></React.StrictMode>);
     await screen.findByLabelText('Agency application number');
-    editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
-    await waitFor(() => expect(note).toHaveBeenCalledWith('Program facts saved to the program record.'));
+    editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
+    await waitFor(() => expect(note).toHaveBeenCalledWith('Project facts saved to the project record.'));
     expect(api.request.mock.calls.filter(c => c[0] === 'PUT')).toHaveLength(1);
   });
   it('preserves spaces while a person types a multiword sponsor address', async () => {
@@ -280,12 +280,12 @@ describe('field checks follow recorded input ownership', () => {
     const write = deferred<Response>(); const build = deferred<Response>();
     const base = api.request.getMockImplementation()!;
     api.request.mockImplementation((method, path, body) => method === 'PUT' ? write.promise : method === 'POST' && path.endsWith('/build') ? build.promise : base(method, path, body));
-    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to program' }));
+    await open(); editFacts(); fireEvent.click(screen.getByRole('button', { name: 'Save to project' }));
     await waitFor(() => expect(api.request.mock.calls.some(c => c[0] === 'PUT')).toBe(true));
     fireEvent.click(screen.getByRole('button', { name: /Build & check/ }));
     await waitFor(() => expect(api.request.mock.calls.some(c => c[0] === 'POST' && String(c[1]).endsWith('/build'))).toBe(true));
     await act(async () => write.resolve(response({ ...program, applicationNumber: '000512', factsVersion: NEXT, programId: ID, auditTrail: AUDIT })));
-    await screen.findByText('Program facts saved.');
+    await screen.findByText('Project facts saved.');
     await act(async () => build.resolve(response({ formId: 'FDA_1571', fields: {}, missingRequired: [] })));
     expect(screen.queryByText('required fields present')).toBeNull();
   });
@@ -295,8 +295,8 @@ describe('field checks follow recorded input ownership', () => {
     await open(); fireEvent.click(screen.getByRole('button', { name: /Build & check/ }));
     await screen.findByText('required fields present');
     program = { ...program, factsVersion: NEXT, applicationNumber: '000512' };
-    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded program facts' }));
-    await screen.findByText(/Recorded program facts reloaded/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded project facts' }));
+    await screen.findByText(/Recorded project facts reloaded/i);
     expect(screen.queryByText('required fields present')).toBeNull();
   });
   it('clears an old check when the per-form serial number changes', async () => {
@@ -346,8 +346,8 @@ describe('all recorded sponsor and investigator inputs reach field checks', () =
     await open(); fireEvent.click(screen.getByRole('button', { name: /Build & check/ }));
     await screen.findByText('required fields present');
     program = { ...program, boundSponsor: { ...SPONSOR, revision: NEXT, contactName: 'A newly recorded contact' } };
-    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded program facts' }));
-    await screen.findByText(/Recorded program facts reloaded/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Reload recorded project facts' }));
+    await screen.findByText(/Recorded project facts reloaded/i);
     expect(screen.queryByText('required fields present')).toBeNull();
   });
   it('shows missing fields from the second investigator instead of calling a 1572 array clean', async () => {

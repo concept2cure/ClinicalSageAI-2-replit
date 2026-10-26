@@ -107,20 +107,20 @@ async function openBoard(isTruncated: boolean, programCount: number) {
 describe('the portfolio board and the server’s rollup cap', () => {
   it('describes the accessible subset rather than every program in the organization', async () => {
     await openBoard(false, 3);
-    expect(screen.getByTestId('rc-find-result').textContent).toMatch(/3 programs you can access/);
-    expect(document.querySelector('.ro-dash')?.textContent).toMatch(/This board covers programs you can access/);
+    expect(screen.getByTestId('rc-find-result').textContent).toMatch(/3 projects you can access/);
+    expect(document.querySelector('.ro-dash')?.textContent).toMatch(/This board covers projects you can access/);
   });
   it('a complete rollup says nothing about a cap, and counts plainly', async () => {
     await openBoard(false, 3);
     expect(screen.queryByTestId('ro-port-truncated')).toBeNull();
-    expect(document.querySelector('.ro-rep-meta')?.textContent ?? '').toMatch(/3 programs/);
+    expect(document.querySelector('.ro-rep-meta')?.textContent ?? '').toMatch(/3 projects/);
     expect(document.querySelector('.ro-rep-meta')?.textContent ?? '').not.toMatch(/first/);
   });
 
   it('a capped rollup says the board is not the whole portfolio', async () => {
     await openBoard(true, 3);
     const note = await screen.findByTestId('ro-port-truncated');
-    expect(note.textContent ?? '').toMatch(/more programs than this board shows/);
+    expect(note.textContent ?? '').toMatch(/more projects than this board shows/);
     // And it says what the average does NOT cover, since that is the figure
     // an executive reads as the organisation's position.
     expect(note.textContent ?? '').toMatch(/not over your whole returned portfolio/);
@@ -129,7 +129,7 @@ describe('the portfolio board and the server’s rollup cap', () => {
   it('a capped rollup counts as "first N", never as the organisation’s total', async () => {
     await openBoard(true, 3);
     const meta = document.querySelector('.ro-rep-meta')?.textContent ?? '';
-    expect(meta).toMatch(/first 3 programs/);
+    expect(meta).toMatch(/first 3 projects/);
   });
 
   /* NOT "the highest-ranked": fetchOrgPrograms selects the cap with no ORDER BY,

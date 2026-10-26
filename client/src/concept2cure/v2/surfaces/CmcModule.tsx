@@ -214,7 +214,7 @@ const CMC_NAV: CmcNavItem[] = [
   { id: 'change', label: 'Change control', icon: 'gitBranch' },
   { id: 'quality', label: 'Quality by design', icon: 'sigma' },
   { id: 'build', label: 'Module 3 build', icon: 'layers' },
-  { id: 'pathway', label: 'Program records', icon: 'scroll' },
+  { id: 'pathway', label: 'Project records', icon: 'scroll' },
 ];
 
 const CMC_SUGGEST: Record<string, string[]> = {
@@ -627,7 +627,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     if (!sign) return;
     const target = sign;
     if (!ctxProjectId) {
-      fireToast('Open a program first — section approval is recorded per project.', 'error');
+      fireToast('Open a project first — section approval is recorded per project.', 'error');
       return;
     }
     try {
@@ -741,11 +741,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
             : fig.state === 'unreadable'
-              ? <>This program's agency questions could not be read, so the number overdue is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              ? <>This project's agency questions could not be read, so the number overdue is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : fig.state === 'ready' && fig.questionsOverdue
-              ? <>On this program, <b>{fig.questionsOverdue} Module 3 {fig.questionsOverdue === 1 ? 'question is' : 'questions are'} overdue</b> on {fig.lettersOverdue} {fig.lettersOverdue === 1 ? 'letter' : 'letters'}{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. They are answered and approved on the letter, in Communication. {fig.lettersWithoutQuestionsOverdue ? <>{fig.lettersWithoutQuestionsOverdue} more Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue with no question to answer recorded. </> : null}{nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              ? <>On this project, <b>{fig.questionsOverdue} Module 3 {fig.questionsOverdue === 1 ? 'question is' : 'questions are'} overdue</b> on {fig.lettersOverdue} {fig.lettersOverdue === 1 ? 'letter' : 'letters'}{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. They are answered and approved on the letter, in Communication. {fig.lettersWithoutQuestionsOverdue ? <>{fig.lettersWithoutQuestionsOverdue} more Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue with no question to answer recorded. </> : null}{nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : fig.state === 'ready' && fig.lettersWithoutQuestionsOverdue
-              ? <>On this program, <b>{fig.lettersWithoutQuestionsOverdue} Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue</b> with no question to answer recorded on {fig.lettersWithoutQuestionsOverdue === 1 ? 'it' : 'them'}. Record {fig.lettersWithoutQuestionsOverdue === 1 ? 'its' : 'their'} questions on the letter, or mark it as needing no response, in Communication. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}.</> : null}</>
+              ? <>On this project, <b>{fig.lettersWithoutQuestionsOverdue} Module 3 {fig.lettersWithoutQuestionsOverdue === 1 ? 'letter is' : 'letters are'} overdue</b> with no question to answer recorded on {fig.lettersWithoutQuestionsOverdue === 1 ? 'it' : 'them'}. Record {fig.lettersWithoutQuestionsOverdue === 1 ? 'its' : 'their'} questions on the letter, or mark it as needing no response, in Communication. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
                 : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
@@ -798,16 +798,16 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               count is a button; what it did not count is said with it. */}
           <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 320px)' }}>
             <Kpi
-              l="Module 3 questions overdue on this program"
+              l="Module 3 questions overdue on this project"
               v={irUnknown ? '—' : irOverdue}
               /* Green only for an all-clear: a zero over a partial figure, an
                  unread earlier file, or a Module 3 letter overdue with nothing
                  recorded is a plain figure, not a reassurance. */
               tone={irUnknown ? undefined : irOverdue ? 'err' : questionsComplete && !m3Overdue ? 'ok' : undefined}
               s={fig.state === 'no-program'
-                ? 'counted per program; open one'
+                ? 'counted per project; open one'
                 : fig.state === 'loading'
-                  ? "reading the program's letters"
+                  ? "reading the project's letters"
                   : fig.state === 'unreadable'
                     ? 'count not established, the agency questions could not be read'
                     : [
@@ -866,7 +866,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                 </div>
               ) : liveSections === null ? (
                 <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
+                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per project, with each section's approval state." action={openProgramAction(nav)} />
                 </div>
               ) : secs.length === 0 ? (
                 <div style={{ padding: 12 }}>
@@ -1104,7 +1104,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   // confirmed. approval_status is never sent here — approval is governed-only.
   const save = async (v: Record<string, string>) => {
     if ((!edit || edit === 'new') && !projectId) {
-      fireToast('Open a program first — specifications are recorded per project.', 'error');
+      fireToast('Open a project first — specifications are recorded per project.', 'error');
       return;
     }
     try {
@@ -1163,7 +1163,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   return (
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
-        actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
+        actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a project to record specifications' : ''}>{I.plus} New specification</button>} />
       <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5']} noun="these specifications" nav={nav} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
@@ -1172,7 +1172,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
               {!projectId ? (
-                <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." />
+                <EmptyState icon={I.clipboardList} title="Open a project to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a project, then create or review its specifications here." />
               ) : live.loading ? (
                 <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
@@ -1661,8 +1661,8 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
           <span className="s">
             {rows.length} studies — ICH Q1A(R2) · organization-wide register
             {projectId
-              ? ' — new results are linked to the open program'
-              : ' — open a program to link new results to its Module 3'}
+              ? ' — new results are linked to the open project'
+              : ' — open a project to link new results to its Module 3'}
           </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
@@ -2060,7 +2060,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   // add — REAL, awaited create against the governed batch file; adopts the
   // SERVER's row (real db id + persisted values). Nothing is added on failure.
   const add = async (v: Record<string, string>) => {
-    if (!projectId) { fireToast('Open a program first — batch records are logged per project.', 'error'); return; }
+    if (!projectId) { fireToast('Open a project first — batch records are logged per project.', 'error'); return; }
     try {
       const res = await apiRequest('POST', '/api/cmc/batch-records', batchCreateBody(v, projectId));
       const json = await res.json().catch(() => null);
@@ -2102,7 +2102,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   return (
     <div className="cm-body">
       <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition" ask={ask} suggest={CMC_SUGGEST.batch}
-        actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a program to log batch records' : ''}>{I.plus} Log batch</button>} />
+        actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a project to log batch records' : ''}>{I.plus} Log batch</button>} />
       <div className="cm-kpis">
         <Kpi l="Batches" v={rows.length} />
         <Kpi l="Pending release" v={pending} tone={pending ? 'warn' : 'ok'} />
@@ -2115,7 +2115,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
               {!projectId ? (
-                <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." />
+                <EmptyState icon={I.grid} title="Open a project to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a project, then log or release its batches here." />
               ) : live.loading ? (
                 <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
@@ -2141,7 +2141,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
       {/* Batch records are the process as run; process validation is the
           evidence that the process is capable of running that way. */}
       <CmProcessValidation />
-      {form && <C2CForm config={{ eyebrow: 'Batch — new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
+      {form && <C2CForm config={{ eyebrow: 'Batch — new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this project', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
         { key: 'stage', label: 'Stage', type: 'select', options: ['Drug substance', 'Drug product'], required: true, half: true },
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
@@ -2316,7 +2316,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
 
   return (
     <div className="cm-body">
-      <CmHead title="Program records" meta="Agency questions on Module 3, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
+      <CmHead title="Project records" meta="Agency questions on Module 3, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
       <CmcModule3QuestionIndex nav={nav} />
       <CmcEarlierQuestionFile nav={nav} />
       {!projectId ? (
@@ -2324,10 +2324,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           <div className="pj-card-b">
             <EmptyState
               icon={I.scroll}
-              title="Open a program to see its records"
+              title="Open a project to see its records"
               hint="The Module 3 audit chain and the contradiction history are recorded per project."
               action={openProgramAction(nav)}
-              regulation="Serves the per-program audit history (21 CFR Part 11 §11.10(e))"
+              regulation="Serves the per-project audit history (21 CFR Part 11 §11.10(e))"
             />
           </div>
         </div>

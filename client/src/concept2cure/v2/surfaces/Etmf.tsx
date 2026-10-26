@@ -349,8 +349,8 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     const programId = String(readShellProject()?.id ?? '').trim();
     if (!programId) {
       fireToast(
-        'Not filed — no program is open, and a vault document must belong to one. ' +
-          'Open the program from Projects, then file ' + tmfArtifactName(code) + ' again.',
+        'Not filed — no project is open, and a vault document must belong to one. ' +
+          'Open the project from Projects, then file ' + tmfArtifactName(code) + ' again.',
         'error',
       );
       return;

@@ -151,7 +151,7 @@ function PackageRunMessages({ programId, readState, runs, error, notice, inputGa
   programId: string | null; readState: 'loading' | 'ready' | 'error'; runs: SavedRun[]; error: string | null;
   notice: string | null; inputGaps: string[]; blocked: boolean; onRetry: () => void;
 }) { return <>
-    {!programId && <p>Open a program with its canonical UUID to start or discover package runs.</p>}
+    {!programId && <p>Open a project with its canonical UUID to start or discover package runs.</p>}
     {readState === 'error' && <p role="alert">Couldn’t load saved package runs. Use Load run below or <button disabled={blocked} onClick={onRetry}>Retry saved runs</button>.</p>}
     {readState === 'ready' && programId && runs.length === 0 && <p>No saved package runs</p>}
     {error && <p role="alert">{error}</p>}

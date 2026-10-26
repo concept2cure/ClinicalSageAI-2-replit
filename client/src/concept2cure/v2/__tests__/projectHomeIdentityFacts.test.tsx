@@ -71,7 +71,7 @@ describe('project home shows the program identity from the database', () => {
   it('renders sponsor, product, indication and the IND number from GET /api/c2c/projects/:id', async () => {
     mockProgram(program());
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('Sponsor')).toBeTruthy();
     expect(facts.getByText('Concept2Cure Therapeutics')).toBeTruthy();
     expect(facts.getByText('Product')).toBeTruthy();
@@ -85,7 +85,7 @@ describe('project home shows the program identity from the database', () => {
   it('takes product from the row, not from the navigation handoff', async () => {
     mockProgram(program());
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('Vorelinib')).toBeTruthy();
     expect(facts.queryByText('HANDOFF-PRODUCT')).toBeNull();
   });
@@ -93,7 +93,7 @@ describe('project home shows the program identity from the database', () => {
   it('labels the number by program type', async () => {
     mockProgram(program({ program_type: 'NDA', application_number: '215000' }));
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('NDA number')).toBeTruthy();
     expect(facts.queryByText('IND number')).toBeNull();
   });
@@ -101,7 +101,7 @@ describe('project home shows the program identity from the database', () => {
   it('says "not assigned" when the agency has not numbered the program — never a placeholder', async () => {
     mockProgram(program({ application_number: null }));
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getByText('IND number')).toBeTruthy();
     expect(facts.getByText('not assigned')).toBeTruthy();
     expect(facts.queryByText(/^\d{6}$/)).toBeNull();
@@ -110,7 +110,7 @@ describe('project home shows the program identity from the database', () => {
   it('says "not recorded" for sponsor, product or indication the row lacks', async () => {
     mockProgram(program({ sponsor_name: null, indication: null }));
     render(<ProjectHome {...props()} />);
-    const facts = within(await screen.findByRole('region', { name: /program identity/i }));
+    const facts = within(await screen.findByRole('region', { name: /project identity/i }));
     expect(facts.getAllByText('not recorded')).toHaveLength(2);
     expect(facts.getByText('Vorelinib')).toBeTruthy();
   });

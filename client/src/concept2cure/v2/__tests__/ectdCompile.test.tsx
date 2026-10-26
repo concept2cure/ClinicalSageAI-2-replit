@@ -74,7 +74,7 @@ describe('EctdCompile — real eCTD assembly', () => {
 
   it('shows an honest empty state when no program is open (no fixture)', () => {
     render(<EctdCompile {...props()} />);
-    expect(screen.getByText(/Open a program to compile its eCTD/)).toBeTruthy();
+    expect(screen.getByText(/Open a project to compile its eCTD/)).toBeTruthy();
     // No compile/status calls fire without a project.
     expect(apiRequest).not.toHaveBeenCalled();
   });

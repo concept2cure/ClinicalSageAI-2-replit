@@ -105,7 +105,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
     if (!projectId) {
       return {
         summary:
-          'The dossier map is scoped to one program and no project is open, so there is no module map on ' +
+          'The dossier map is scoped to one project and no project is open, so there is no module map on ' +
           'screen — this is not an empty dossier.',
         availableActions: ['Open a project first; its CTD / eCTD module map then appears here'],
       };
@@ -117,21 +117,21 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
       return {
         summary:
           'The dossier map could not be read, so this screen is showing no module completeness because of ' +
-          'a failure, not because the program has none.',
+          'a failure, not because the project has none.',
         availableActions: ['Retry the dossier-map read'],
       };
     }
     if (unanchored) {
       return {
         summary:
-          `Dossier map for program ${projectId}: this program has no CTD section-tracking store (no PM-spine ` +
+          `Dossier map for project ${projectId}: this project has no CTD section-tracking store (no PM-spine ` +
           'project anchor), so there is no module map to show — this is not the same as its sections being unauthored.',
         facts: { projectId, anchored: false, modules: [] },
       };
     }
     if (empty) {
       return {
-        summary: `Dossier map for project ${projectId}: the program tracks no CTD sections yet, so the module map is empty.`,
+        summary: `Dossier map for project ${projectId}: the project tracks no CTD sections yet, so the module map is empty.`,
         facts: { projectId, modules: [] },
       };
     }
@@ -181,7 +181,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.fileText}
           title="Open a project to see its dossier map"
-          hint="The dossier map is scoped to a single program's CTD / eCTD filing. Open a project first — its per-module (M1–M5) completeness and readiness overlay appears here, for that project only."
+          hint="The dossier map is scoped to a single project's CTD / eCTD filing. Open a project first — its per-module (M1–M5) completeness and readiness overlay appears here, for that project only."
         />
       ) : loading ? (
         <div role="status" className="scaf-note" style={{ marginTop: 18 }}>Loading the dossier map…</div>
@@ -195,8 +195,8 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
       ) : unanchored ? (
         <EmptyState
           icon={I.fileText}
-          title="This program has no CTD section-tracking store yet"
-          hint="Section tracking is keyed by a PM-spine project, and this program was created without one (its organisation has no client workspace to anchor it to). No module completeness can be shown until the anchor exists — nothing here is a statement about the program's sections."
+          title="This project has no CTD section-tracking store yet"
+          hint="Section tracking is keyed by a PM-spine record, and this project was created without one (its organisation has no client workspace to anchor it to). No module completeness can be shown until the anchor exists — nothing here is a statement about the project's sections."
         />
       ) : empty ? (
         <EmptyState

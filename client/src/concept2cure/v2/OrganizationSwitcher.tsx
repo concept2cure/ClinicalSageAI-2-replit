@@ -170,7 +170,7 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
   return (
     <section aria-labelledby={`${id}-heading`}>
       <h3 className="de-h-eye" id={`${id}-heading`}>Switch organisation</h3>
-      <p className="de-desc">Open an organisation where you have membership. Save your work before switching; your current program and conversation close.</p>
+      <p className="de-desc">Open an organisation where you have membership. Save your work before switching; your current project and conversation close.</p>
       {error && <ErrorState variant="inline" title="The organisation switch was not completed." message={error} />}
       {requiresSignIn ? <div className="de-field"><button type="button" className="de-btn ghost" onClick={() => navigate('/concept2cure/login')}>Sign in again</button></div> :
         <OrganizationReadBody read={read} retry={() => setAttempt(value => value + 1)} organizationId={organizationId} selected={selected} chosen={chosen}

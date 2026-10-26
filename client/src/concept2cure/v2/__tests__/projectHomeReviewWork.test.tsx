@@ -114,7 +114,7 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
     route(() => ok(work([item()])));
     stashNavParamsForTarget('project-home', { workId: 'review:another-program' });
     render(<ProjectHome {...props()} />);
-    expect(await screen.findByText(/requested task is not available in this program/)).toBeTruthy();
+    expect(await screen.findByText(/requested task is not available in this project/)).toBeTruthy();
     expect(document.querySelector('[data-work-target]')).toBeNull();
   });
 
@@ -146,7 +146,7 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
     render(<ProjectHome {...props()} />);
     openReviewStage();
 
-    expect(await screen.findByText(/No tasks or approvals on this program/)).toBeTruthy();
+    expect(await screen.findByText(/No tasks or approvals on this project/)).toBeTruthy();
   });
 
   it('a program with no project record says so, not "no tasks" and not an error', async () => {
@@ -154,8 +154,8 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
     render(<ProjectHome {...props()} />);
     openReviewStage();
 
-    expect(await screen.findByText(/This program has no task record/)).toBeTruthy();
-    expect(screen.queryByText(/No tasks or approvals on this program/)).toBeNull();
+    expect(await screen.findByText(/This project has no tracking record/)).toBeTruthy();
+    expect(screen.queryByText(/No tasks or approvals on this project/)).toBeNull();
     expect(screen.queryByText(/Couldn't load/)).toBeNull();
   });
 
@@ -164,7 +164,7 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
     render(<ProjectHome {...props()} />);
     openReviewStage();
 
-    expect(await screen.findByText(/Couldn't load this program's tasks/)).toBeTruthy();
-    expect(screen.queryByText(/No tasks or approvals on this program/)).toBeNull();
+    expect(await screen.findByText(/Couldn't load this project's tasks/)).toBeTruthy();
+    expect(screen.queryByText(/No tasks or approvals on this project/)).toBeNull();
   });
 });

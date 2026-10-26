@@ -274,7 +274,7 @@ export const SEGMENTS = [
       'biostatistics',
       'safety-narrative',
     ],
-    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
+    ana: 'Small-molecule and biologic projects, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
   },
   {
     id: 'cro',
@@ -296,7 +296,7 @@ export const SEGMENTS = [
       'submission-center',
       'insights',
     ],
-    ana: 'Multi-sponsor programs, tenant-isolated by organization.',
+    ana: 'Multi-sponsor projects, tenant-isolated by organization.',
   },
   {
     id: 'health',
@@ -711,7 +711,7 @@ export const SEGMENT_MODULES = {
      accidental ordering swap (labeling-pi moved from position 10 to 7);
      deleting the duplicate removes the divergence as a side effect. */
   biopharma: [
-    { label: 'Program journey', items: ['program-journey'] },
+    { label: 'Project journey', items: ['program-journey'] },
     {
       label: 'Author & assemble',
       items: [
@@ -895,7 +895,7 @@ export const SEGMENT_CONTEXT = {
     label: 'Biotech & Pharma',
     tagline: 'IND · NDA · BLA · MAA · Lifecycle',
     pathways: ['IND', 'NDA', '505(b)(2)', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
-    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
+    ana: 'Small-molecule and biologic projects, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
   },
   diagnostics: {
     label: 'Diagnostics',
@@ -1046,7 +1046,7 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'global-ri': ['Compute NCE exclusivity for FDA', 'Classify an IVD for EU MDR', 'Build a cross-market strategy brief'],
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
-  projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
+  projects: ['Which projects are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
   'crl-library': [

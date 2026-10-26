@@ -112,8 +112,8 @@ function SourceCell({ source, onOpen, canOpen, crossProgram }: { source: Deliver
       <span className="rd-chip tone-idle">{LIFECYCLE[source.evidence.lifecycle]}</span>
     </div>
     {source.editor && <button type="button" className="sc-trans-b sc-mt" disabled={!canOpen || crossProgram} onClick={() => onOpen(source)}
-      title={crossProgram ? 'Open the recorded source program before opening its saved document.' : undefined}>Open saved document</button>}
-    {source.editor && crossProgram && <div className="scaf-note">Open the recorded source program before opening its saved document.</div>}
+      title={crossProgram ? 'Open the recorded source project before opening its saved document.' : undefined}>Open saved document</button>}
+    {source.editor && crossProgram && <div className="scaf-note">Open the recorded source project before opening its saved document.</div>}
   </div>;
 }
 function CoverageTable({ data, onOpen, canOpen, openProgramId }: { data: PathwayManifestResponse; onOpen: (source: DeliverableSourceRef) => void; canOpen: boolean; openProgramId: string | null }) {
@@ -128,11 +128,11 @@ function CoverageTable({ data, onOpen, canOpen, openProgramId }: { data: Pathway
 }
 function CoverageResult({ data, props, onOpen }: { data: PathwayManifestResponse; props: Props; onOpen: (source: DeliverableSourceRef) => void }) {
   const available = useSurfaceAvailable();
-  const programLabel = [data.scope.programCode, data.scope.programTitle].filter(Boolean).join(' · ') || 'Recorded program';
+  const programLabel = [data.scope.programCode, data.scope.programTitle].filter(Boolean).join(' · ') || 'Recorded project';
   return <>
-    <div className="scaf-note sc-mb">{data.framework} · {data.scope.inputOrigin === 'recorded' ? 'Recorded framework' : 'Explicit compatible framework'} · {redactInternals(programLabel, 'Recorded program')} · sequence {props.seq.sequenceNumber}.
+    <div className="scaf-note sc-mb">{data.framework} · {data.scope.inputOrigin === 'recorded' ? 'Recorded framework' : 'Explicit compatible framework'} · {redactInternals(programLabel, 'Recorded project')} · sequence {props.seq.sequenceNumber}.
       {data.scope.memberStates.length > 0 && ` Member states: ${data.scope.memberStates.join(', ')}.`}
-      <div className="sp-q-s sc-mono">Program {data.scope.programId} · submission {data.scope.submissionId} · sequence record {data.scope.sequenceId}</div>
+      <div className="sp-q-s sc-mono">Project {data.scope.programId} · submission {data.scope.submissionId} · sequence record {data.scope.sequenceId}</div>
     </div>
     <div className="sc-chiprow sc-mb"><span className="rd-chip tone-idle">{data.totals.sections} sections</span><span className="rd-chip tone-idle">{data.totals.requiredPresent} required present</span><span className="rd-chip tone-warn">{data.totals.requiredMissing} required missing</span><span className="rd-chip tone-warn">{data.totals.undetermined} undetermined</span></div>
     {data.sourceIssues.map(issue => <div key={`${issue.leafId}:${issue.code}`} className="sc-verdict tone-warn">Leaf {issue.leafId} · {redactInternals(issue.message, 'This retained source could not be verified.')}</div>)}
@@ -147,7 +147,7 @@ function UnavailableCoverage({ reason, onValidation }: { reason: string; onValid
   return <div className="scaf-note">{reason}<div className="cm-pushbar sc-mt"><button type="button" className="sc-trans-b" onClick={onValidation}>Open Validation</button></div></div>;
 }
 function CoverageBody({ props, pathway, read, onOpen, onRetry, statesValid }: { props: Props; pathway: Pathway | null; read: ReturnType<typeof useSubmissionScopedRead<PathwayManifestResponse>>; onOpen: (source: DeliverableSourceRef) => void; onRetry: () => void; statesValid: boolean }) {
-  if (!props.sub.programId) return <UnavailableCoverage reason="This submission has no recorded program for a coverage evaluation." onValidation={props.onValidation} />;
+  if (!props.sub.programId) return <UnavailableCoverage reason="This submission has no recorded project for a coverage evaluation." onValidation={props.onValidation} />;
   if (!props.session.organizationId) return <div className="scaf-note">Sign in to evaluate this sequence's retained deliverables.</div>;
   if (!pathway) return <div className="scaf-note">Select a compatible framework to evaluate retained deliverables. No framework has been inferred.</div>;
   if (!statesValid) return <div className="sc-verdict tone-warn" role="status">Use supported two-letter EU member-state codes for this CTIS evaluation.</div>;

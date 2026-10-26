@@ -832,22 +832,22 @@ function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null;
     <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
         <h2>{title}</h2>
-        <span className="sec-sub">tasks, review threads and approvals on this program</span>
+        <span className="sec-sub">tasks, review threads and approvals on this project</span>
       </div>
       {!ident ? null : isUnanchored(state) ? (
         <EmptyState
           icon={I.checkCircle}
-          title="This program has no task record"
-          hint="Tasks, review threads and approvals are kept on the program's project record, and this program has none, so there is nothing to list for it here."
+          title="This project has no tracking record"
+          hint="Tasks, review threads and approvals are kept on the project's tracking record, and this project has none, so there is nothing to list for it here."
         />
       ) : (
         <Anchored
           state={state}
-          loadingText="Loading this program's tasks and approvals…"
-          errorTitle="Couldn't load this program's tasks and approvals"
+          loadingText="Loading this project's tasks and approvals…"
+          errorTitle="Couldn't load this project's tasks and approvals"
           errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
-          emptyTitle="No tasks or approvals on this program"
-          emptyHint="Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here."
+          emptyTitle="No tasks or approvals on this project"
+          emptyHint="Tasks, review threads, approval blockers and agency correspondence recorded on this project appear here."
           isEmpty={(d) => (d.items ?? []).length === 0}
           render={(d) => {
             const items = d.items ?? [];
@@ -1562,7 +1562,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       return {
         summary:
           'Project home has no project selected, so none of the panels on screen are populated. This is a ' +
-          'missing selection, not an empty programme.',
+          'missing selection, not an empty project.',
         availableActions: ['Open a project from All projects to load its governed workspace'],
       };
     }
@@ -1570,7 +1570,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       return {
         summary:
           'This project record could not be read, so the workspace below is empty because of a failure, ' +
-          'not because the programme has nothing in it.',
+          'not because the project has nothing in it.',
         facts: { projectId: pid, stage },
         availableActions: ['Return to All projects and try again'],
       };
@@ -1638,7 +1638,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
         activityUnavailable: activityState.error ? 'the activity read failed' : null,
       },
       availableActions: [
-        'Move through the programme lifecycle stages',
+        'Move through the project lifecycle stages',
         'Open one of this project’s documents in the editor',
         regionalApplication ? 'Open this project’s documents in the Vault surface' : 'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
@@ -1713,7 +1713,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
           {prog && (
-            <section className="pj-facts" aria-label="Program identity">
+            <section className="pj-facts" aria-label="Project identity">
               <dl className="pj-fact"><dt>Sponsor</dt><dd>{sponsorName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
@@ -1867,7 +1867,7 @@ function MissingRequestedWork({ targetId, state }: {
       {targetId && !state.loading && !state.error && state.data &&
         !(state.data.items ?? []).some((w) => w.id === targetId) && (
           <div role="alert" className="sp-tone-warn">{state.data.summary?.partial
-            ? 'The program work record is incomplete because a store could not be read. The requested task could not be located; retry the read.'
-            : "The requested task is not available in this program's work record. No other task was opened in its place."}</div>
+            ? 'The project work record is incomplete because a store could not be read. The requested task could not be located; retry the read.'
+            : "The requested task is not available in this project's work record. No other task was opened in its place."}</div>
         )}
   </>; }

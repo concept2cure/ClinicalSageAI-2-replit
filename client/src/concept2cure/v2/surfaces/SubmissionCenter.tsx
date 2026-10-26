@@ -553,9 +553,9 @@ export function SubmissionCenter({
      2026-10-08, j1). A program not on the page read is not named, and only a
      recorded null is stated as "no program". */
   const programOf = (s: SubRow): string | null => {
-    if (s.programId === null) return 'No program recorded';
+    if (s.programId === null) return 'No project recorded';
     const p = s.programId ? programmes.rows.find((r) => r.id === s.programId) : undefined;
-    return p?.code ? `Program ${p.code}` : null;
+    return p?.code ? `Project ${p.code}` : null;
   };
 
   /* ── Which of the three things an empty `list` means ────────────────────────
@@ -744,7 +744,7 @@ export function SubmissionCenter({
       ? openProgramme(openProgramId, openRow, shell)
       : programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
     if (!programme) {
-      setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
+      setNotice({ tone: 'err', text: 'Pick the project this submission belongs to.' });
       return;
     }
     setCreating(true);
@@ -1481,7 +1481,7 @@ export function SubmissionCenter({
               disabled={creating || (!openProgramId && programmes.rows.length === 0)}
               title={
                 !openProgramId && programmes.rows.length === 0
-                  ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
+                  ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
                   : undefined
               }
             >
@@ -1520,7 +1520,7 @@ export function SubmissionCenter({
               <table className="ub-inv">
                 <thead>
                   <tr>
-                    <th>Program</th>
+                    <th>Project</th>
                     <th>Region</th>
                     <th>Type</th>
                     <th>Client</th>
@@ -1604,7 +1604,7 @@ export function SubmissionCenter({
                 <thead>
                   <tr>
                     <th>Filing</th>
-                    <th>Program</th>
+                    <th>Filing type</th>
                     <th>Status</th>
                     <th>FDA tracking</th>
                     <th>Review clock</th>

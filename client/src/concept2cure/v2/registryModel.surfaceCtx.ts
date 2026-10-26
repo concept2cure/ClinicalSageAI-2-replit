@@ -28,13 +28,13 @@ export const ANA_SURFACE_CTX = {
     ],
   },
   'program-journey': {
-    here: 'the whole program journey — every stage from concept to submission',
-    focus: 'Program lifecycle · all 9 stages',
+    here: 'the whole project journey — every stage from concept to submission',
+    focus: 'Project lifecycle · all 9 stages',
     actions: [
       {
         label: 'Where are we blocked?',
         icon: 'alertTriangle',
-        prompt: 'Across the whole program journey, what is blocking submission and what is the fastest path to clear each blocker?',
+        prompt: 'Across the whole project journey, what is blocking submission and what is the fastest path to clear each blocker?',
       },
       {
         label: 'Readiness by stage',
@@ -44,7 +44,7 @@ export const ANA_SURFACE_CTX = {
       {
         label: 'Pre-empt agency questions',
         icon: 'sparkles',
-        prompt: 'List the predicted HAQs across the program and pre-draft a response to each.',
+        prompt: 'List the predicted HAQs across the project and pre-draft a response to each.',
       },
     ],
     suggestions: [
@@ -237,7 +237,7 @@ export const ANA_SURFACE_CTX = {
     suggestions: [
       'What is gating Module 3?',
       'Pull the 24-month stability trend',
-      'What is blocking the final export gate on this program?',
+      'What is blocking the final export gate on this project?',
       'Compile Module 3 and tell me which sections are still blocked',
       'Explain each open contradiction and what would resolve it',
       'What shelf life do my stability data actually support, and what limits it?',

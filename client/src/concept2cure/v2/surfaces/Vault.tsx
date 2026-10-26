@@ -539,7 +539,7 @@ function UploadsLane({
       <div className="vd-dr-head">
         <span className="vd-dr-title">{I.folder} Uploaded files</span>
         <span className="vd-dr-meta">
-          {total} uploaded file{total === 1 ? '' : 's'} in this programme
+          {total} uploaded file{total === 1 ? '' : 's'} in this project
           {win?.truncated ? ` · ${win.shown} in this window` : ''}
         </span>
         <button className="vd-dr-toggle" onClick={() => onOpen(cabinet.id, null)}>
@@ -548,7 +548,7 @@ function UploadsLane({
       </div>
       {rows.length === 0 && (
         <div className="vd-dr-empty">
-          No files uploaded to this programme yet. A file uploaded here, or filed through the
+          No files uploaded to this project yet. A file uploaded here, or filed through the
           API, is listed here and in the filing cabinet.
         </div>
       )}
@@ -712,7 +712,7 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
 
 /** The Vault shows one program's documents; with none open there is no vault
  *  to operate, and "no documents" or "no such folder" would misstate why. */
-const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
+const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
 /** Keep the recorded refusal with the action rather than only in a hover hint. */
 function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (source: VaultDoc) => void }) {
@@ -1476,7 +1476,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 title={
                   projectId
                     ? 'Choose files to file into this project’s Vault'
-                    : 'Open a project first — a Vault document is filed against a program.'
+                    : 'Open a project first — a Vault document is filed against a project.'
                 }
                 data-testid="vault-upload-button"
               >
@@ -1576,7 +1576,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
           Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
           recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
-          this programme. Search to reach the rest.
+          this project. Search to reach the rest.
         </div>
       ) : null}
 

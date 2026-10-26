@@ -52,12 +52,12 @@ describe('Projects — summary over a successful empty read', () => {
   it('states no mean readiness over zero programs', async () => {
     apiRequest.mockImplementation(async () => ok({ data: [] }));
     render(<Projects {...props()} />);
-    expect(await screen.findByText('No programs yet')).toBeTruthy();
+    expect(await screen.findByText('No projects yet')).toBeTruthy();
 
     expect(figure(/average readiness/i), 'a mean over no programmes rendered as a figure').toBe('—');
     expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%/);
     // The counts over an empty set are real zeros and stay so.
-    expect(figure(/active programs/i)).toBe('0');
+    expect(figure(/active projects/i)).toBe('0');
     // No "Blocked" figure at all since 2026-10-08: nothing writes a blocked
     // status or computes a blocker, so it could only state an unchecked 0
     // (projectsHonestCounts.test.tsx).

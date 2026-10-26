@@ -91,8 +91,8 @@ export function useProgramSummary(programId: string | null): ProgramSummary | nu
 export function programLineFor(program: ProgramSummary | null, state: ProgramSummaryState): string | null {
   const line = programHeadline(program);
   if (line) return line;
-  if (state === 'loading') return 'Reading the program…';
-  if (state === 'error') return 'Program details could not be read';
+  if (state === 'loading') return 'Reading the project…';
+  if (state === 'error') return 'Project details could not be read';
   return null;
 }
 

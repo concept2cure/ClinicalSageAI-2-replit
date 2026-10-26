@@ -131,7 +131,7 @@ export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
     if (seg !== 'diagnostics') {
       return {
         summary:
-          `The IVDR technical-file completeness board applies to In-Vitro Diagnostic programs only, and the ` +
+          `The IVDR technical-file completeness board applies to In-Vitro Diagnostic projects only, and the ` +
           `active segment is "${seg}" — so no completeness data is on screen. This is a segment mismatch, ` +
           'not an empty technical file.',
         availableActions: ['Switch to the Diagnostics / IVD segment to see this board'],
@@ -150,7 +150,7 @@ export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
     }
     return {
       summary:
-        `IVDR technical file for ${data.program || 'this IVD program'} (${data.spine}): ` +
+        `IVDR technical file for ${data.program || 'this IVD project'} (${data.spine}): ` +
         `${overall}% complete over ${families.length} IVDR requirement(s) — ${doneFamilies.length} evidenced, ` +
         `${inflightFamilies.length} in progress, ${missingFamilies.length} not started, ${flags.length} flagged. ${blocker}`,
       facts: {
@@ -182,7 +182,7 @@ export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
         <div className="ivd-lead">
           <div className="ivd-lead-ic">{I.alertTriangle}</div>
           <div>
-            <p className="ivd-lead-h">The IVD completeness view applies to In-Vitro Diagnostic programs.</p>
+            <p className="ivd-lead-h">The IVD completeness view applies to In-Vitro Diagnostic projects.</p>
             <p className="ivd-lead-b">Switch to the Diagnostics / IVD segment to see the IVDR requirements (GSPR Annex I, Performance Evaluation Report, analytical + clinical performance, PMPF/PMS).</p>
           </div>
         </div>
@@ -196,7 +196,7 @@ export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
         <div className="ivd-eyebrow">
           <span className="ivd-kicker">IVDR technical file — performance evaluation</span>
         </div>
-        <h1 className="ivd-title">{data?.program || 'IVD program'}</h1>
+        <h1 className="ivd-title">{data?.program || 'IVD project'}</h1>
         <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} — technical-file completeness</div>
       </div>
 

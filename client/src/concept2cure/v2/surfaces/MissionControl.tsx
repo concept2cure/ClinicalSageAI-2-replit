@@ -306,15 +306,15 @@ export function MissionControl(_props: SurfaceViewProps) {
   useSurfaceActionHandlers('mission-control', {
     'mission-control.select-program': (params) => {
       const raw = String(params.program ?? '').trim();
-      if (!raw) return { ok: false, reason: 'Name a program by its name or code.' };
+      if (!raw) return { ok: false, reason: 'Name a project by its name or code.' };
       if (programs.state === 'loading' || programs.state === 'idle') {
-        return { ok: false, reason: 'The program list is still loading.', retry: true };
+        return { ok: false, reason: 'The project list is still loading.', retry: true };
       }
       if (programs.state === 'error') {
-        return { ok: false, reason: 'The program list did not load, so there are no programs to select from.' };
+        return { ok: false, reason: 'The project list did not load, so there are no projects to select from.' };
       }
       const list = programs.data ?? [];
-      if (list.length === 0) return { ok: false, reason: 'No programs are recorded in this organization yet.' };
+      if (list.length === 0) return { ok: false, reason: 'No projects are recorded in this organization yet.' };
       const needle = raw.toLowerCase();
       // Exact code, then exact name, then an unambiguous partial name.
       const byCode = list.filter((p) => (p.code ?? '').toLowerCase() === needle);
@@ -322,8 +322,8 @@ export function MissionControl(_props: SurfaceViewProps) {
       const hits = byCode.length ? byCode
         : byName.length ? byName
         : list.filter((p) => p.name.toLowerCase().includes(needle));
-      if (hits.length === 0) return { ok: false, reason: `No program named "${raw}" in this organization.` };
-      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} programs — name one exactly.` };
+      if (hits.length === 0) return { ok: false, reason: `No project named "${raw}" in this organization.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} projects — name one exactly.` };
       const p = hits[0];
       if (selectedId === p.id) return { ok: true, detail: `Already on ${p.name}` };
       setSelectedId(p.id);
@@ -335,7 +335,7 @@ export function MissionControl(_props: SurfaceViewProps) {
   }, [programs.state]);
 
   const createProgram = useCallback(async () => {
-    if (!draft.name.trim()) { fireToast('Enter a program name.', 'error'); return; }
+    if (!draft.name.trim()) { fireToast('Enter a project name.', 'error'); return; }
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${BASE}/programs`, {
@@ -355,19 +355,19 @@ export function MissionControl(_props: SurfaceViewProps) {
       const parsed = (await res.json().catch(() => null)) as any;
       if (!res.ok) {
         fireToast(
-          res.status === 401 ? 'Sign in to your tenant to create a program.'
+          res.status === 401 ? 'Sign in to your tenant to create a project.'
           // `parsed.error` was toasted verbatim, so a coded refusal reached the
           // user as its token. serverMessage returns only a real sentence, and
           // null when there is none — which is when this surface's own copy is
           // the better answer.
-          : serverMessage(parsed) ?? `Could not create the program (HTTP ${res.status}).`,
+          : serverMessage(parsed) ?? `Could not create the project (HTTP ${res.status}).`,
           'error',
         );
         return;
       }
       setCreating(false);
       setDraft(EMPTY_DRAFT);
-      fireToast('Program created.');
+      fireToast('Project created.');
       await loadPrograms();
       if (parsed?.data?.id) setSelectedId(parsed.data.id);
     } catch (e) {
@@ -377,7 +377,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       // nothing — an error rendered as no result. Only an ApiRequestError's
       // message is safe to show; a native fetch rejection keeps the copy below.
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      fireToast(known && (e as Error).message ? (e as Error).message : 'Could not create the program.', 'error');
+      fireToast(known && (e as Error).message ? (e as Error).message : 'Could not create the project.', 'error');
     } finally { setBusy(false); }
   }, [draft, fireToast, loadPrograms]);
 
@@ -409,24 +409,24 @@ export function MissionControl(_props: SurfaceViewProps) {
       // list must never read as a genuinely empty org. programCount:0 is only
       // published once the list is actually 'ready'.
       if (programs.state === 'loading' || programs.state === 'idle') {
-        return { summary: 'Mission Control — the program list is still loading; nothing to report yet.' };
+        return { summary: 'Mission Control — the project list is still loading; nothing to report yet.' };
       }
       if (programs.state === 'error') {
         return {
           summary:
-            'Mission Control — the program list could not be loaded, so no programs are shown because of a ' +
+            'Mission Control — the project list could not be loaded, so no projects are shown because of a ' +
             'failure, not because there are none.',
-          availableActions: ['Retry the program list read'],
+          availableActions: ['Retry the project list read'],
         };
       }
       return {
-        summary: 'Mission Control with no program selected.',
+        summary: 'Mission Control with no project selected.',
         facts: { programCount: asArray(programs.data).length },
-        availableActions: ['Create a program', 'Open a program'],
+        availableActions: ['Create a project', 'Open a project'],
       };
     }
     return {
-      summary: `Mission Control, program "${selected.name}".`,
+      summary: `Mission Control, project "${selected.name}".`,
       facts: {
         programId: selected.id,
         programName: selected.name,
@@ -449,10 +449,10 @@ export function MissionControl(_props: SurfaceViewProps) {
         staleDependencyCount: stale.state === 'ready' ? asArray(stale.data).length : null,
       },
       availableActions: [
-        'Create a program',
-        'Switch to another program',
+        'Create a project',
+        'Switch to another project',
         'Explain a readiness dimension',
-        'Explain what is blocking this program',
+        'Explain what is blocking this project',
       ],
     };
   }, [selected, selectedModality, programs.state, programs.data, readiness.state, readiness.data, readinessRows, artifacts.state, artifacts.data, risks.state, risks.data, stale.state, stale.data]);
@@ -464,10 +464,10 @@ export function MissionControl(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Mission control</span>
-          <span className="s">Programs, readiness and what is blocking them</span>
+          <span className="s">Projects, readiness and what is blocking them</span>
         </div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300, #6b6963)', lineHeight: 1.5 }}>
-          Readiness is computed by the server from the program’s artifacts, evidence, reviews,
+          Readiness is computed by the server from the project’s artifacts, evidence, reviews,
           risks and dependencies. Nothing on this page is recalculated in the browser — the
           score you see is the score the engine will defend.
         </div>
@@ -476,19 +476,19 @@ export function MissionControl(_props: SurfaceViewProps) {
       {/* ── Programs ── */}
       <div className="pj-card">
         <div className="pj-card-h">
-          <span className="t">Programs</span>
+          <span className="t">Projects</span>
           <span className="s">{asArray(programs.data).length} in this organization</span>
         </div>
         <div className="pj-card-b">
           {programs.state === 'loading' ? (
-            <EmptyState icon={I.clock} title="Loading programs…" />
+            <EmptyState icon={I.clock} title="Loading projects…" />
           ) : programs.state === 'error' ? (
-            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load programs" hint={programs.error} />
+            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load projects" hint={programs.error} />
           ) : !Array.isArray(programs.data) || programs.data.length === 0 ? (
             <EmptyState
               icon={I.rocket}
-              title="No programs yet"
-              hint="A program is the unit Mission Control tracks: its artifacts, evidence, reviews, risks and submission destinations all hang off it."
+              title="No projects yet"
+              hint="A project is the unit Mission Control tracks: its artifacts, evidence, reviews, risks and submission destinations all hang off it."
             />
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
@@ -508,7 +508,7 @@ export function MissionControl(_props: SurfaceViewProps) {
 
           {creating ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 8, alignItems: 'end' }}>
-              <label style={{ fontSize: 12 }}>Program name
+              <label style={{ fontSize: 12 }}>Project name
                 <input className="c2c-input" style={{ height: 30 }} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="e.g. C2C-101 first-in-human" />
               </label>
               <label style={{ fontSize: 12 }}>Track
@@ -585,7 +585,7 @@ export function MissionControl(_props: SurfaceViewProps) {
               </div>
             </div>
           ) : (
-            <button className="btn" style={{ height: 30 }} onClick={() => setCreating(true)}>{I.plus} New program</button>
+            <button className="btn" style={{ height: 30 }} onClick={() => setCreating(true)}>{I.plus} New project</button>
           )}
         </div>
       </div>
@@ -666,7 +666,7 @@ export function MissionControl(_props: SurfaceViewProps) {
                 // of them means the program is in trouble.
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint={readiness.error} />
               ) : readinessRows.length === 0 ? (
-                <EmptyState icon={I.activity} title="No readiness signal yet" hint="Readiness is measured from the program’s artifacts, evidence, reviews and dependencies. Add any of them and its figures appear." />
+                <EmptyState icon={I.activity} title="No readiness signal yet" hint="Readiness is measured from the project’s artifacts, evidence, reviews and dependencies. Add any of them and its figures appear." />
               ) : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: '12px 20px' }}>
@@ -711,7 +711,7 @@ export function MissionControl(_props: SurfaceViewProps) {
           </div>
 
           {/* ── The records behind the score ── */}
-          <Section title="Artifacts" hint={`${asArray(artifacts.data).length}`} load={artifacts} empty="No artifacts on this program yet">
+          <Section title="Artifacts" hint={`${asArray(artifacts.data).length}`} load={artifacts} empty="No artifacts on this project yet">
             {() => <table className="reg-tbl">
               <thead><tr><th scope="col">Title</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Destination</th></tr></thead>
               <tbody>

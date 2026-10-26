@@ -194,6 +194,6 @@ describe('Vault — a document filed through the API is on the page', () => {
     render(<Vault {...props()} />);
 
     const lane = await screen.findByTestId('vault-uploads-lane');
-    expect(lane.textContent).toMatch(/No files uploaded to this programme yet/i);
+    expect(lane.textContent).toMatch(/No files uploaded to this project yet/i);
   });
 });

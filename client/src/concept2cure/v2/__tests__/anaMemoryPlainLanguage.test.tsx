@@ -97,7 +97,7 @@ describe('AnA memory — no table names on screen', () => {
     expect(document.body.textContent).not.toContain('ana_relational_profiles');
     expect(document.body.textContent).not.toMatch(SNAKE_IDENTIFIER);
     // It still says what will appear here.
-    expect(document.body.textContent).toMatch(/durable facts about your programs/i);
+    expect(document.body.textContent).toMatch(/durable facts about your projects/i);
   });
 
   it('the populated sections are headed in words, not table names', async () => {

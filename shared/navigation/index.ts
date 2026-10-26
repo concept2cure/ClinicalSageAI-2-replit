@@ -235,7 +235,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
   { id: 'labeling-pi', label: 'Prescribing information', description: 'The USPI / EU SmPC / SPL labeling workspace.', scope: 'global', group: 'module' },
   { id: 'precedent-intelligence', label: 'Precedent intelligence', description: 'The precedent search board — clearances, cycles, and risk analysis (runs only when a person searches).', scope: 'global', group: 'module' },
-  { id: 'program-journey', label: 'Program journey', description: 'The end-to-end program arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
+  { id: 'program-journey', label: 'Project journey', description: 'The end-to-end project arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },

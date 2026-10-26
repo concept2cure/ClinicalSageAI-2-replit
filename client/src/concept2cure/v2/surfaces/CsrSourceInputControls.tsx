@@ -156,7 +156,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
   if (!programId) return null;
   return <section aria-label="Clinical source tables">
     <strong>Clinical source tables</strong>
-    <p>Choose a supporting JSON document from this program’s Vault. Preview its tables, then explicitly include an approved source in the next package run.</p>
+    <p>Choose a supporting JSON document from this project’s Vault. Preview its tables, then explicitly include an approved source in the next package run.</p>
     <p>Review clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.</p>
     <p>These tables are saved with the run for review. They are not automatically placed into an eCTD package.</p>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -180,7 +180,7 @@ function ClinicalSourcePicker({ activeSources, blocked, documentId, choose, choi
     {!activeSources && <p role="status">Loading clinical source documents…</p>}
     {activeSources?.error && <p role="alert">{activeSources.error}</p>}
     {activeSources && !activeSources.error && <>
-      {activeSources.sources.length === 0 ? <p>No supporting JSON sources are listed for this program.</p> : <label>Clinical source document <select aria-label="Clinical source document" disabled={blocked} value={documentId} onChange={event => choose(event.target.value)}>
+      {activeSources.sources.length === 0 ? <p>No supporting JSON sources are listed for this project.</p> : <label>Clinical source document <select aria-label="Clinical source document" disabled={blocked} value={documentId} onChange={event => choose(event.target.value)}>
         <option value="">Choose a source</option>
         {activeSources.sources.map(source => <option key={source.documentId} value={source.documentId}>{source.documentTitle} · v{source.version} · {source.approved ? 'approved' : 'not approved'}</option>)}
       </select></label>}

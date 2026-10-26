@@ -117,7 +117,7 @@ function SponsorEditor({ editing, isCurrent, onRecorded, onClose, onBusy, onHold
         return;
       }
       onRecorded(row);
-      setMessage(`Sponsor record saved${editing ? '.' : ' — it is not bound to this program. Select it and save the program facts to bind it.'}${auditSentence(row.auditTrail, 'sponsor record')}`);
+      setMessage(`Sponsor record saved${editing ? '.' : ' — it is not bound to this project. Select it and save the project facts to bind it.'}${auditSentence(row.auditTrail, 'sponsor record')}`);
       setReason('');
       // Keep this receipt visible; another write requires an explicit editor open.
       setUnconfirmed(true);
@@ -125,7 +125,7 @@ function SponsorEditor({ editing, isCurrent, onRecorded, onClose, onBusy, onHold
   };
   return <fieldset aria-label="Sponsor registry record" style={{ border: '1px solid var(--border)', padding: 12, margin: '10px 0' }}>
     <legend>{editing ? 'Edit sponsor record' : 'Record a sponsor'}</legend>
-    {editing && <p style={{ fontSize: 12 }}>Every program bound to this sponsor uses changes to this shared record. Saving this record does not change which sponsor this program selects.</p>}
+    {editing && <p style={{ fontSize: 12 }}>Every project bound to this sponsor uses changes to this shared record. Saving this record does not change which sponsor this project selects.</p>}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 8 }}>
       {sponsorFields.map(field => <label key={field.key} style={{ fontSize: 12 }}>{field.label}<input className="c2c-input" type={field.type ?? 'text'} value={values[field.key] ?? ''} maxLength={field.max} disabled={busy || unconfirmed || locked} onChange={event => setValues(old => ({ ...old, [field.key]: event.target.value }))} /></label>)}
     </div>
@@ -211,14 +211,14 @@ function useApplicantIdentity({ program, projectIdent, isCurrent, onReload, onRe
       if (!matchesProgramReceipt(result.data, program, expected)) {
         const unknown = uncertainAnswer(result);
         setUnconfirmed(unknown);
-        setMessage(unknown ? 'We could not confirm whether the program facts were saved. Reload recorded program facts before making another change.' : result.error ?? 'The program facts change was refused.');
+        setMessage(unknown ? 'We could not confirm whether the project facts were saved. Reload recorded project facts before making another change.' : result.error ?? 'The project facts change was refused.');
         return;
       }
       const row = result.data;
       onRecorded({ ...program, ...row, id: program.id });
-      const warning = auditSentence(row.auditTrail, 'program facts');
-      setMessage(`Program facts saved.${warning}`); setReason('');
-      if (warning) note(`Program facts saved.${warning}`, 'error'); else note('Program facts saved to the program record.');
+      const warning = auditSentence(row.auditTrail, 'project facts');
+      setMessage(`Project facts saved.${warning}`); setReason('');
+      if (warning) note(`Project facts saved.${warning}`, 'error'); else note('Project facts saved to the project record.');
     } finally { if (current()) { pending.current = false; setBusy(false); } }
   };
   const reload = async () => {
@@ -227,8 +227,8 @@ function useApplicantIdentity({ program, projectIdent, isCurrent, onReload, onRe
     try {
       const next = await onReload();
       if (!current()) return;
-      if (!next || next.id !== program.id || !versioned(next.factsVersion)) { setMessage('The recorded program facts could not be verified. Reload before making another change.'); return; }
-      setFields(recordedFields(next)); setReason(''); setUnconfirmed(false); setMessage('Recorded program facts reloaded. Review them before saving another change.');
+      if (!next || next.id !== program.id || !versioned(next.factsVersion)) { setMessage('The recorded project facts could not be verified. Reload before making another change.'); return; }
+      setFields(recordedFields(next)); setReason(''); setUnconfirmed(false); setMessage('Recorded project facts reloaded. Review them before saving another change.');
     } finally { if (current()) setBusy(false); }
   };
   const openEditor = (row: IndSponsorRecord | null) => setEditor({ row, serial: ++readGeneration.current });
@@ -253,7 +253,7 @@ function ProgramFactFields({ model, indTypes }: { model: IdentityModel; indTypes
 }
 function RecordedSponsor({ program }: { program: IndProgramFacts }) {
   const row = program.boundSponsor;
-  if (!row) return program.applicantSponsorId ? <p role="status">The bound sponsor record could not be verified. Reload recorded program facts before saving.</p> : null;
+  if (!row) return program.applicantSponsorId ? <p role="status">The bound sponsor record could not be verified. Reload recorded project facts before saving.</p> : null;
   return <p style={{ fontSize: 12 }}>Recorded sponsor: {row.name}. DUNS: {row.duns ?? 'not recorded'}. Regulatory contact: {row.contactName ?? 'not recorded'} · {row.contactPhone ?? 'telephone not recorded'} · {row.contactEmail ?? 'email not recorded'}. Authorized representative: {row.signatoryName ?? 'name not recorded'} · {row.signatoryTitle ?? 'title not recorded'}.</p>;
 }
 function IdentityStatus({ model, program }: { model: IdentityModel; program: IndProgramFacts }) {
@@ -261,8 +261,8 @@ function IdentityStatus({ model, program }: { model: IdentityModel; program: Ind
     {model.registryState === 'loading' && <p role="status">Reading sponsor records…</p>}
     {model.registryState === 'error' && <p role="status">Sponsor records could not be read. Reload sponsor records before selecting or editing a sponsor.</p>}
     {model.registryState === 'ready' && model.sponsors.length === 0 && <p>No sponsor records have been recorded.</p>}
-    {model.dirty && <p role="status" style={{ fontSize: 12 }}>Not saved. Forms and packages continue to read the recorded program facts until you save.</p>}
-    {!versioned(program.factsVersion) && <p role="status">The program revision was not reported. Reload recorded program facts before saving.</p>}
+    {model.dirty && <p role="status" style={{ fontSize: 12 }}>Not saved. Forms and packages continue to read the recorded project facts until you save.</p>}
+    {!versioned(program.factsVersion) && <p role="status">The project revision was not reported. Reload recorded project facts before saving.</p>}
     {model.registryHold && <p role="status">The sponsor change could not be confirmed. Reload sponsor records and review them before making another change.</p>}
     {model.message && <p role="status" style={{ fontSize: 12 }}>{model.message}</p>}
   </>;
@@ -272,8 +272,8 @@ function IdentityActions({ model, program, panelBusy }: { model: IdentityModel; 
   const readingBlocked = [model.busy, panelBusy, model.registryBusy].some(Boolean);
   const registryBlocked = model.blocked || model.registryState !== 'ready';
   return <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-    <button className="nda-open" disabled={!canSave} onClick={() => void model.save()}>{model.busy ? 'Saving…' : 'Save to program'}</button>
-    <button className="nda-open" disabled={readingBlocked} onClick={() => void model.reload()}>Reload recorded program facts</button>
+    <button className="nda-open" disabled={!canSave} onClick={() => void model.save()}>{model.busy ? 'Saving…' : 'Save to project'}</button>
+    <button className="nda-open" disabled={readingBlocked} onClick={() => void model.reload()}>Reload recorded project facts</button>
     <button className="nda-open" disabled={registryBlocked} onClick={() => model.openEditor(null)}>Record a sponsor</button>
     <button className="nda-open" disabled={registryBlocked || !model.selected} onClick={() => model.selected && model.openEditor(model.selected)}>Edit selected sponsor</button>
     <button className="nda-open" disabled={readingBlocked} onClick={() => void model.loadSponsors()}>Reload sponsor records</button>
@@ -284,11 +284,11 @@ export function IndApplicantIdentity(props: IdentityProps) {
   const { program } = props;
   return <section aria-label="Recorded applicant identity" style={{ border: '1px solid var(--border)', padding: 12, marginBottom: 12 }}>
     <h4 style={{ margin: '0 0 8px' }}>Recorded applicant identity</h4>
-    <p style={{ fontSize: 12 }}>The program selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.</p>
+    <p style={{ fontSize: 12 }}>The project selects an existing sponsor record. Forms and sequence packaging read that recorded selection; edits below apply only after saving.</p>
     <ProgramFactFields model={model} indTypes={props.indTypes} />
-    <p style={{ fontSize: 12, color: 'var(--text-400)' }}>For FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a program fact.</p>
+    <p style={{ fontSize: 12, color: 'var(--text-400)' }}>For FDA, record the six-digit number assigned by the agency. Leave it blank until assigned. The sponsor address remains a project fact.</p>
     <RecordedSponsor program={program} />
-    <Reason label="Reason for program facts change" value={model.reason} onChange={model.setReason} disabled={model.blocked} />
+    <Reason label="Reason for project facts change" value={model.reason} onChange={model.setReason} disabled={model.blocked} />
     <IdentityStatus model={model} program={program} />
     <IdentityActions model={model} program={program} panelBusy={props.busy} />
     {model.editor && <SponsorEditor key={`${model.editor.row?.id ?? 'create'}:${model.editor.serial}`} editing={model.editor.row} isCurrent={model.current}
