@@ -133,3 +133,15 @@ The removed name had no stylesheet rule or consumer, so rendered styling and
 behavior are unchanged. `accepted/source-sha256.json` identifies the tested
 pre-cleanup snapshot; final publication hashes and the repeated picker/CSS
 checks identify this narrow follow-up. No gate or baseline was bypassed.
+
+## Publication receipt
+
+Implementation `b9975a91` and the narrow CSS follow-up
+`37706f19bf63e5ab1dd3a5ef482c3502207ef6d0` were pushed to
+`origin/concept2cure-v2` at 23:29 UTC on 2026-10-26 through the normal hooks.
+Every pre-push gate passed, including zero-error TypeScript and a net reduction
+of four ESLint warnings. `accepted/publication-push.log.gz` records that push;
+`accepted/publication-source-sha256.json` records the final source. The earlier
+CSS rejection and its 27/27 picker recheck are retained alongside it. No hook,
+warning baseline or approval check was bypassed. This is source publication,
+not a production deployment or a signed formal validation result.
