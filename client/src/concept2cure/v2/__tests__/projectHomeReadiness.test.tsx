@@ -91,6 +91,16 @@ afterEach(() => {
 });
 
 describe('project home — Dossier readiness', () => {
+  it('offers the existing choose-or-create door when no project is selected', async () => {
+    delete (window as any).C2C_PROJECT;
+    mockProgram(program());
+    const p = props();
+    render(<ProjectHome {...p} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose or create a project' }));
+    expect(p.onNav).toHaveBeenCalledWith('projects');
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('/dossier'))).toBe(false);
+  });
+
   it('draws the dossier read’s figure, and ignores a stale progress_percent and the detail row', async () => {
     // A server that predates the fix would still send progress_percent: 0.
     mockProgram(program({ readiness: 10, progress_percent: 0 }), dossier(measured(62, 50)));

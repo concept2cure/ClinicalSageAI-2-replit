@@ -94,7 +94,10 @@ const SCAN_ROOT = 'client/src/concept2cure';
  * wired and this number was not raised with it. Both are failures — see (3) in
  * the header. Raise it in the same commit that wires the surface.
  */
-const ID_BASELINE = 116; // 116: conversation-thread, grounded since 2026-10-01 through the DocumentWorkbench it embeds (cf4aa7800, 4c8b5534d)
+// 2026-10-26 A2.7: dossier and dossier-map are aliases to project-home, whose
+// ProjectDossier now publishes all three reads. Their two retired IDs are no
+// longer routable publishers (projectDossierParity/projectDestinationShell).
+const ID_BASELINE = 114;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

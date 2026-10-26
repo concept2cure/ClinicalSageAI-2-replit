@@ -156,7 +156,7 @@ describe('the scope list itself', () => {
     ['regulatory-workspace', 'authoring', 'a fixed paragraph where the editor should be'],
     ['template-library', 'authoring', 'a saved template formats no document'],
     ['ectd-coauthor', 'submission-center', 'a second editor whose checks report a fixed failure'],
-    ['dossier-map', 'submission-center', 'reads a store no program writes: always empty'],
+    ['dossier-map', 'projects', 'retired screen: its tracked records are reached in project Author'],
     ['ectd-publishing', 'submission-center', 'a reference page that publishes nothing'],
     ['qmp', 'qms', 'a plan cannot be given its gates, and nothing reads them'],
   ])('%s is out of the %s app — %s', (surface, app) => {

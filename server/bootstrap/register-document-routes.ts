@@ -240,7 +240,7 @@ export async function registerDocumentRoutes({
     // custom_smart_blocks, device_data_center_files, predicate_devices,
     // smart_block_usage — 500 on every call) or returned fabricated regulatory
     // content with a 200. Section status/owner/deadline live in project_sections
-    // (/api/project-sections, read by /api/dossier-map → DossierMap.tsx);
+    // (/api/project-sections, read by the canonical project dossier on Author);
     // section evidence links in evidence_links (/api/evidence/links). Do not
     // rebuild either store in parallel.
     // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every

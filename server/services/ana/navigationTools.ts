@@ -41,7 +41,7 @@ export const NAVIGATE_TO: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      target: { type: 'string', description: 'Target screen id from list_app_screens, e.g. "cmc", "dossier-map", "intelligence".' },
+      target: { type: 'string', description: 'Target screen id from list_app_screens, e.g. "cmc", "project-home", "intelligence".' },
       params: {
         type: 'object',
         description: 'Optional params for the target (e.g. { "intelligenceTab": "clinical" }, { "sectionCode": "3.2.P.8" }).',

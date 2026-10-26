@@ -217,8 +217,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('dispatch-readiness', 'standard'),
   ('doc-journey', 'standard'),
   ('document-authoring', 'standard'),
-  ('dossier', 'standard'),
-  ('dossier-map', 'standard'),
   ('ectd-coauthor', 'standard'),
   ('ectd-compile', 'standard'),
   ('ectd-publishing', 'standard'),   -- added 2026-09-22; see the amendment note at the top
@@ -351,3 +349,9 @@ UPDATE available_modules m
  WHERE p.module_id = m.module_id;
 
 COMMIT;
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.7 (CLAUDE.md Rule 1).
+-- The dossier and dossier-map read functions now live in ProjectDossier on
+-- project Author. 20260810 no longer upserts their standalone identities.
+-- Remove these two packaging references too: a fresh database need not have
+-- their retired rows, and the unknown-module guard below must keep working.
+-- Existing retired rows, subscriptions and unrelated module tiers are preserved.

@@ -1,0 +1,24 @@
+{
+  "head": "df1a3cc250a90e3cd69bde4e27af32d50579c665",
+  "source": "git show HEAD:<path>, bundled via esbuild onLoad only for the three listed registry/inventory sources",
+  "sources": [
+    {
+      "path": "shared/constants/ui-surface-registry.ts",
+      "gitBlob": "0a9b062f76e446e7906978b74f9ad986820ef557"
+    },
+    {
+      "path": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "gitBlob": "767664547fb395255f89f6050cccaa420dda01e7"
+    },
+    {
+      "path": "shared/constants/deferred-capability-inventory.ts",
+      "gitBlob": "c6e1442ae31d4eeb4f021c7ce078887ca778d4e2"
+    },
+    {
+      "path": "server/middleware/__tests__/launch-scope-api-gate.test.ts",
+      "gitBlob": "6323ee9855c1eccc542827fd8051b72e71557df1"
+    }
+  ],
+  "registrySnapshotSha256": "56fba6717f4f5481c1a8d24b6c35c9e0afa66d52326050fc1d6be9c66799a6c2",
+  "baselineResult": "Original HEAD middleware suite, with UI_SURFACES overridden to the HEAD snapshot: exact same five MDX failures, 37 passed. No production policy change."
+}

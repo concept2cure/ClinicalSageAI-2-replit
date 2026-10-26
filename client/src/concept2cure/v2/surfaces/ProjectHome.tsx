@@ -32,6 +32,7 @@ import { isUsInd, useProgramMarkets } from './programSequence';
 import { StageBand, StageTracker } from './ProjectStages';
 import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
+import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
@@ -1788,6 +1789,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           icon={I.folder}
           title="No project selected"
           hint="Open a project from All projects to load its governed workspace — documents, module completion, team and activity."
+          action={openProgramAction(onNav)}
         />
       ) : progState.error ? (
         <EmptyState

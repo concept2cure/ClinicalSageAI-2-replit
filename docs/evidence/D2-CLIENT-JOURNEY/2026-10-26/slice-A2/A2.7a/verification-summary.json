@@ -1,0 +1,53 @@
+{
+  "base": "df1a3cc250a90e3cd69bde4e27af32d50579c665",
+  "regression": {
+    "passed": 124,
+    "files": 14
+  },
+  "browser": {
+    "passed": 1,
+    "database": "PostgreSQL 16 + pgvector",
+    "runtimeRole": "app_service",
+    "rls": true,
+    "developmentAuth": true,
+    "widths": [
+      1440,
+      390
+    ]
+  },
+  "build": "client, server, audit verifier passed",
+  "independentReview": "passed",
+  "legacyScreensAndTrackingSource": "retained",
+  "typecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "commit": "4d0296a0",
+    "mergedTreeCheck": "required before publication"
+  },
+  "prepush": "all gates passed before remote advancement rejected publication",
+  "mergedRemote": "4334c3fc",
+  "mergedRegression": {
+    "passed": 94,
+    "files": 10,
+    "runs": [
+      {
+        "passed": 69,
+        "files": 8
+      },
+      {
+        "passed": 25,
+        "files": 2
+      }
+    ]
+  },
+  "secondMergedRemote": "65214946",
+  "csrMergedRegression": {
+    "passed": 185,
+    "files": 13
+  },
+  "scimMergedTypecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "prepush": "all gates passed; remote ref advanced"
+  }
+}

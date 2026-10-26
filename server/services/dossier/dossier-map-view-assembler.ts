@@ -1,5 +1,5 @@
 /**
- * Assemble the v2 DossierMap surface's render contract from the REAL CTD
+ * Assemble the project Author step's retained tracking detail from the REAL CTD
  * section-tracking store — project_sections — NOT the seed-only c2c_dossier_map
  * blob.
  *
@@ -21,8 +21,8 @@
  *     project returns nothing (the projects table has no deleted_at column; archive IS
  *     the soft delete — server/routes/concept2cure.ts DELETE handler).
  *
- * The surface renders one row per CTD module (M1–M5) shaped { m, label, pct, tone,
- * sections } (client/src/concept2cure/v2/surfaces/DossierMap.tsx). So this assembler
+ * The former DossierMap view's one row per CTD module (M1–M5), shaped { m, label,
+ * pct, tone, sections }, is carried by ProjectDossier's supporting detail. This assembler
  * rolls the one project's real per-section tracking state up to the module grain, deduped
  * by section_code (keeping the most-advanced status if a code is tracked more than once
  * within the project — the same "most advanced wins" rule the IND/NDA assemblers use):
@@ -40,8 +40,10 @@
  * we're tracking". A project with no CTD project sections (or an archived/other-org
  * project id) returns [] and the surface renders its own honest empty state.
  */
-import { pool } from '../../db';
 import { compareSectionCode } from '../../../shared/regulatory/section-code';
+
+interface Queryable { query(text: string, params?: unknown[]): Promise<{ rows: any[] }> }
+export interface DossierTrackedModule { m: string; label: string; pct: number; tone: string; sections: string[] }
 
 /** Canonical CTD module titles (M1–M5). Fixed structure, not per-org data — the honest
  *  blueprint enrichment. The surface prints the "M{m}" prefix itself, so these carry no
@@ -107,20 +109,32 @@ interface Section { code: string; status: string; title: string }
  * is archived, or does not belong to the org — the surface renders its honest empty state.
  */
 export async function assembleProjectDossierMap(
+  db: Queryable,
   orgId: number,
   projectId: number,
-): Promise<Record<string, unknown>[]> {
+  admitted?: { programId: string; clientWorkspaceId: number | null },
+): Promise<DossierTrackedModule[]> {
   // One bulk, project-scoped query: every tracked section for THIS project (double-scoped
   // to the caller's org), excluding a soft-deleted (archived) project.
-  const { rows } = await pool.query(
-    `SELECT ps.section_code, ps.module, ps.title, ps.status
+  const query = admitted
+    ? `SELECT ps.section_code, ps.module, ps.title, ps.status
        FROM project_sections ps
        JOIN projects p ON p.id = ps.project_id
       WHERE ps.organization_id = $1
         AND p.organization_id = $1
         AND ps.project_id = $2
-        AND p.status IS DISTINCT FROM 'archived'`,
-    [orgId, projectId],
+        AND p.status IS DISTINCT FROM 'archived' AND p.status IS DISTINCT FROM 'deleted'
+        AND p.regulatory_program_id=$3 AND p.client_workspace_id IS NOT DISTINCT FROM $4`
+    : `SELECT ps.section_code, ps.module, ps.title, ps.status
+       FROM project_sections ps
+       JOIN projects p ON p.id = ps.project_id
+      WHERE ps.organization_id = $1
+        AND p.organization_id = $1
+        AND ps.project_id = $2
+        AND p.status IS DISTINCT FROM 'archived' AND p.status IS DISTINCT FROM 'deleted'`;
+  const { rows } = await db.query(
+    query,
+    admitted ? [orgId, projectId, admitted.programId, admitted.clientWorkspaceId] : [orgId, projectId],
   );
   const sections = rows as Array<{ section_code: string; module: string; title: string; status: string }>;
   if (sections.length === 0) return [];

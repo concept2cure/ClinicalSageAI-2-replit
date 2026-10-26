@@ -30,11 +30,11 @@ export function TaskAssignmentControls(props: TaskAssignmentControlsProps) {
 function AssignmentEntry(props: TaskAssignmentControlsProps & { scope: TaskAssignmentScope }) {
   const [mode, setMode] = useState<Mode | null>(null);
   if (mode) return <WorkspaceAssignment {...props} initialMode={mode} onCancel={() => { setMode(null); props.onBlockedChange?.(false); }} />;
-  const open = (next: Mode) => { if (!props.disabled && props.isCurrent()) { props.onBlockedChange?.(true); setMode(next); } };
+  const openAssignment = (next: Mode) => { if (!props.disabled && props.isCurrent()) { props.onBlockedChange?.(true); setMode(next); } };
   return <div className="tb-detail-sec">
     <div className="tb-assignment-actions">
-      <button type="button" className="btn ghost" disabled={props.disabled} onClick={() => open('manual')}>Change assignee</button>
-      <button type="button" className="btn ghost" disabled={props.disabled} onClick={() => open('automatic')}>Auto-assign task</button>
+      <button type="button" className="btn ghost" disabled={props.disabled} onClick={() => openAssignment('manual')}>Change assignee</button>
+      <button type="button" className="btn ghost" disabled={props.disabled} onClick={() => openAssignment('automatic')}>Auto-assign task</button>
     </div><p className="tb-detail-note">{NOTE}</p>
   </div>;
 }
