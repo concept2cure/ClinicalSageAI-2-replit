@@ -407,7 +407,7 @@ describe('Projects — the program the server found', () => {
         <AnaActionChip
           onNav={vi.fn()}
           action={{
-            label: 'Open a program',
+            label: 'Open a project',
             actionType: 'surface_action',
             actionId: 'projects.open-program',
             surfaceId: 'projects',
@@ -421,7 +421,7 @@ describe('Projects — the program the server found', () => {
     await screen.findAllByText(/BX-204/);
 
     act(() => {
-      screen.getByRole('button', { name: /Open a program/ }).click();
+      screen.getByRole('button', { name: /Open a project/ }).click();
     });
     expect((window as any).C2C_PROJECT?.id).toBe('p-legacy-7');
     expect(onNav).toHaveBeenCalledWith('project-home');

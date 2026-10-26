@@ -48,13 +48,13 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
         for (;;) {
           const res = await apiRequest('GET', `/api/c2c/projects?limit=200&offset=${offset}`);
           const body = await res.json().catch(() => null) as { data?: Program[]; meta?: { hasMore?: boolean; pendingStore?: boolean } } | null;
-          if (!res.ok) throw new Error(serverMessage(body) ?? 'Programs could not be read. Try again.');
+          if (!res.ok) throw new Error(serverMessage(body) ?? 'Projects could not be read. Try again.');
           if (!body || !Array.isArray(body.data) || body.meta?.pendingStore || body.data.some(p => typeof p?.id !== 'string' || typeof p.title !== 'string')) {
-            throw new Error('Programs could not be read. Try again.');
+            throw new Error('Projects could not be read. Try again.');
           }
           choices.push(...body.data);
           if (!body.meta?.hasMore) break;
-          if (!body.data.length) throw new Error('Programs could not be read. Try again.');
+          if (!body.data.length) throw new Error('Projects could not be read. Try again.');
           offset += body.data.length;
           if (cancelled) return;
         }
@@ -63,7 +63,7 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
           setProgramId(current => choices.some(p => p.id === current) ? current : '');
         }
       } catch (err) {
-        if (!cancelled) setProgramError(redactInternals(err instanceof Error ? err.message : '', 'Programs could not be read. Try again.'));
+        if (!cancelled) setProgramError(redactInternals(err instanceof Error ? err.message : '', 'Projects could not be read. Try again.'));
       } finally { if (!cancelled) setLoading(false); }
     })();
     return () => { cancelled = true; };
@@ -82,16 +82,16 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
     } finally { setBusy(false); }
   };
   return <DialogPanel title={revision ? 'Start authored revision' : document ? 'Set up editing copy' : 'New controlled document'} busy={busy} onClose={onClose}>
-    <p>{revision ? 'Choose a project and template for the next revision. The earlier registry record is retained; no authored content is claimed for it.' : document ? 'Choose the program for this draft’s editing copy. The existing register entry is retained.' :
-      'Choose a program for the editing copy, then write and save its sections before sending it for review.'}</p>
+    <p>{revision ? 'Choose a project and template for the next revision. The earlier registry record is retained; no authored content is claimed for it.' : document ? 'Choose the project for this draft’s editing copy. The existing register entry is retained.' :
+      'Choose a project for the editing copy, then write and save its sections before sending it for review.'}</p>
     {template && <p>Template: {template.label}</p>}
     <form onSubmit={event => void submit(event)}>
-      <label>Program<select value={programId} onChange={event => setProgramId(event.target.value)} disabled={loading || busy || !!programError} required>
-        <option value="">{loading ? 'Loading programs…' : 'Choose a program'}</option>
+      <label>Project<select value={programId} onChange={event => setProgramId(event.target.value)} disabled={loading || busy || !!programError} required>
+        <option value="">{loading ? 'Loading projects…' : 'Choose a project'}</option>
         {programs.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code} — ` : ''}{p.title}</option>)}
       </select></label>
       {programError && <div role="alert">{programError} <button type="button" className="qms-btn ghost" onClick={() => setRetry(n => n + 1)}>Try again</button></div>}
-      {!loading && !programError && programs.length === 0 && <p>No programs are available. Create a program in Projects to begin.
+      {!loading && !programError && programs.length === 0 && <p>No projects are available. Create a project in Projects to begin.
         {onNavigate && <button type="button" className="qms-btn ghost" onClick={() => { onClose(); onNavigate('projects'); }}>Open Projects</button>}</p>}
       <label>Title<input value={title} onChange={event => setTitle(event.target.value)} maxLength={300} required readOnly={!!document} disabled={busy} /></label>
       {!template && <label>Template<select value={templateKey} disabled={busy} onChange={event => {

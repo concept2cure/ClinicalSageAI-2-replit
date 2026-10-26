@@ -38,7 +38,7 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<typeof NOTIFICATION_CATEGORIES
   enrollment_milestone: 'Enrollment milestones', admin: 'Administration', system: 'System notices',
   task_assigned: 'Task assignments', task_blocked: 'Blocked tasks', task_completed: 'Task completions',
   task_update: 'Task updates and reminders', collaboration: 'Collaboration messages and lock changes',
-  schedule_goal_reset: 'Program goal resets', schedule_milestone_slip: 'Slipped milestones',
+  schedule_goal_reset: 'Project goal resets', schedule_milestone_slip: 'Slipped milestones',
   schedule_milestone_at_risk: 'Milestones at risk', proactive_digest: 'AnA proactive digests',
   ana_turn: 'AnA turns that went on after the page closed',
 };

@@ -173,7 +173,7 @@ export const SLASH_COMMAND_SUMMARIES: Readonly<Record<SlashCommandName, string>>
   position: 'Competitive position',
   landscape: 'Competitive landscape',
   compete: 'Competitive strategy',
-  align: 'Alignment across the program',
+  align: 'Alignment across the project',
   ich: 'ICH guideline context',
   guideline: 'Guideline context',
   guidelines: 'Guideline context',

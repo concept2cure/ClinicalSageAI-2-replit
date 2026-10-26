@@ -1,0 +1,21 @@
+The three test files this sweep edited, run against the source at 77278f941 (the old wording).
+tests 42  failed 9  passed 33
+
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench creates a controlled document with a real program and reason, then opens its editing copy 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench passes the selected library template to the create route 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench sends the periodic review date chosen at create, which review-due reads 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench binds an unbound legacy draft explicitly before opening its new editing copy 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx :: QMS controls reach the canonical authoring workbench keeps a refused create visible and shows the server reason without claiming success 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx :: SOP register — governed actions reach their routes creates a controlled document through POST /documents, then opens it 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx :: Change control — governed actions reach their routes creates a gallery document with the selected program and reason, then opens its bound editing copy 
+      Error: Unable to find a label with the text of: Project
+   client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx :: Vault — AnA operates the real surface registers on mount, and vault.search drives the SAME search state the surface renders 
+      TestingLibraryElementError: Unable to find an element with the text: stability-summary-24m. This could be because the text is broken up by multiple elements. In this case, you can provide a function f

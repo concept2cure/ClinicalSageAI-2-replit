@@ -56,7 +56,7 @@ afterEach(cleanup);
 
 async function completeForm(button: string, title?: string) {
   const dialog = screen.getByRole('dialog');
-  await waitFor(() => expect((within(dialog).getByLabelText('Program') as HTMLSelectElement).value).toBe(PROGRAM));
+  await waitFor(() => expect((within(dialog).getByLabelText('Project') as HTMLSelectElement).value).toBe(PROGRAM));
   if (title) fireEvent.change(within(dialog).getByLabelText('Title'), { target: { value: title } });
   fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'Establish controlled procedure for the program.' } });
   fireEvent.click(within(dialog).getByRole('button', { name: button }));
