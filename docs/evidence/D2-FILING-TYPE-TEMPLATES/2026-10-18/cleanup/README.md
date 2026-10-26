@@ -454,3 +454,18 @@ file arguments, and its `--controls` run fails on an unrelated control (reported
 - authorities → `market-submission-specs.ts`.
 
 **Gates:** `fda-module1-numbering` and `registryCoverage`, 207 pass; `check-image-runtime-assets`, exit 0.
+
+### S04 — delete the laptop-only CTD seed scripts
+
+**Deleted:** `scripts/seed-ectd-templates.js`, `scripts/create-complete-ectd-templates.cjs`,
+`scripts/add-ind-templates.js`, `scripts/populate-ectd-modules.js`.
+
+**Proof of no caller:** `s04-red.txt`. No npm script, workflow, hook, `.replit` or Makefile names them. The only mention
+is a header comment in `scripts/seed-mdx-templates.mjs`, now reworded. Under Rule 1, reference data reaches a deployed
+database only through a migration; these never did.
+
+**P-47 parity:**
+- CTD outlines → `builtin-authoring-templates.ts` (`builtin-authoring-templates.test.ts`).
+- The module tree → the record.
+- `ectd_templates` stays live for tenant rows (S59).
+- Not carried over: their Module 1 contradicts FDA's ("1.0 Cover Letter", "1.2 Introductory Statement").
