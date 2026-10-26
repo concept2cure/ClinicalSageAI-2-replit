@@ -33,7 +33,7 @@ export interface UnmappedTrackedSection {
 
 export type DossierSectionTracking =
   | { basis: 'section_tracking'; state: 'measured' | 'no_sections'; modules: TrackingModule[]; unmapped: UnmappedTrackedSection[] }
-  | { basis: 'section_tracking'; state: 'unavailable' | 'unanchored'; reason: string; modules: null; unmapped: null };
+  | { basis: 'section_tracking'; state: 'unavailable' | 'unanchored'; reason: string; code?: 'STORE_UNAVAILABLE' | 'READ_FAILED'; modules: null; unmapped: null };
 
 /** Existing map reference labels, relocated for one server/client interpretation. */
 const MODULE_LABEL = new Map([

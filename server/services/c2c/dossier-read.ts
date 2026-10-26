@@ -49,6 +49,11 @@ import { readDocumentOutline } from './document-outline.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
+import { readDossierArtifactReadiness } from './dossier-artifact-read';
+import type { ArtifactReadiness } from '../../../shared/types/dossier-artifact-readiness';
+import { readProjectSectionTracking } from '../dossier/dossier-map-view-assembler';
+import type { DossierSectionTracking } from '../../../shared/types/dossier-section-tracking';
+import { ProgramReadAccessError, requireCurrentProgramAccess, type CurrentProgramAccess } from './current-program-access';
 
 interface Queryable { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> }
 
@@ -96,6 +101,29 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
+  artifactReadiness?: ArtifactReadiness;
+  supportingReadiness?: DossierSupportingReadiness;
+}
+
+export interface DossierSupportingReadiness {
+  sectionTracking: DossierSectionTracking;
+}
+
+async function requireSupportingScopeCurrent(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<void> {
+  const current = await requireCurrentProgramAccess(db, { organizationId, userId: access.actor.userId, programId: access.programId });
+  if (current.programId !== access.programId || current.projectId !== access.projectId || current.clientWorkspaceId !== access.clientWorkspaceId ||
+      current.actor.userId !== access.actor.userId || current.actor.role !== access.actor.role) {
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_CHANGED', 'Current project access changed during the read. No project data was supplied.');
+  }
+}
+
+/** One read of each source, bound to and revalidated against the accepted mapping. */
+export async function readDossierSupporting(db: Queryable, organizationId: number, access: CurrentProgramAccess): Promise<DossierSupportingReadiness & { artifactReadiness: ArtifactReadiness }> {
+  await requireSupportingScopeCurrent(db, organizationId, access);
+  const artifactReadiness = await readDossierArtifactReadiness(db, organizationId, access.projectId, access);
+  const sectionTracking = await readProjectSectionTracking(db, organizationId, access.projectId, access);
+  await requireSupportingScopeCurrent(db, organizationId, access);
+  return { artifactReadiness, sectionTracking };
 }
 
 const UNPROVISIONED = new Set(['42P01', '42703']);

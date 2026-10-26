@@ -30,6 +30,7 @@ export type ArtifactReadiness =
       basis: 'governed_artifacts';
       state: 'unavailable' | 'unanchored';
       reason: string;
+      code?: 'STORE_UNAVAILABLE' | 'READ_FAILED';
       sections: null;
       summary: null;
     };

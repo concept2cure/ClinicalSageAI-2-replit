@@ -1583,3 +1583,27 @@ OQ-008 as a whole is unexecuted (§3 of the protocol). RA-001 is not amended: no
 make the other twenty-nine look assessed by omission. The matrix builder (`scripts/validation/build-traceability.mjs`)
 therefore still stops on the URS-CMC rows that have no RA-001 row, now thirty, as it did before this change; TM-001 is
 not regenerated here. This package claims nothing for URS-CMC-030 until OQ-008 executes.
+
+## D2 A2.7 change impact (2026-10-26)
+
+The standalone dossier/map reads are folded into project Author through the
+canonical UUID dossier endpoint. Governed document readiness, artifact section
+rollups (counts, weakest status and section dates) and project section tracking
+(module completeness and labels) remain separate. Exact accepted project, anchor
+and client scope is revalidated before returning. Legacy URLs reach Author or
+the project chooser; no stored project/section/artifact records are deleted.
+
+URS-SUBC-009 remains historical. Revised URS-SUBC-009a is qualified by the
+updated OQ-SUBC-10 in OQ-004 v0.7; that formal protocol has **not been executed**
+at this revision. Earlier OQ-SUBC-10 passes do not qualify the revised path.
+Focused red/green SQL, route and browser evidence lives in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/` and is supplemental,
+not a signed OQ execution. TM-001 was regenerated against the explicitly
+selected historical 2026-09-27 result set, retaining its 69 pass / 2 partial
+verdicts and marking all 45 requirements without an execution **uncovered**.
+
+Regeneration exposed 31 pre-existing missing assessment rows. RA-001 now
+transcribes their risks and activities from existing URS-004/OQ-004 and
+URS-007/OQ-008; credential dependencies and unexecuted status are preserved.
+No CMC launch/commercial boundary, signature, approval, dispatch gate or
+validation result is changed by this documentation reconciliation.

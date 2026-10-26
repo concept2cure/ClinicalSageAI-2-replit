@@ -36,7 +36,6 @@ import { createComplianceReportRoutes } from '../routes/audit-compliance-reports
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
 import evidenceAskRouter from '../routes/evidence-ask';
 import esignatureRouter from '../routes/esignature';
-import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
@@ -273,11 +272,6 @@ export function registerInlinePlatformFacadesRoutes({
   // verify-mfa, sign). The portal-v2 ElectronicSignature UI calls these.
   app.use('/api/esignature', esignatureRouter);
   console.log('✅ E-signature routes mounted (/api/esignature)');
-
-  // Dossier section readiness derived from live concept2cure_artifacts
-  // (Doc System Convergence Phase 5 — replaces hardcoded section status).
-  app.use('/api/dossier-readiness', dossierReadinessRouter);
-  console.log('✅ Dossier readiness routes mounted (/api/dossier-readiness)');
 
   // AnA 1.0 RI endpoint + compatibility facades.
   app.use(
@@ -975,16 +969,6 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Decision lineage route mounted (/api/decision-lineage)');
   } catch (error) {
     console.error('❌ Failed to mount Decision lineage route:', error);
-  }
-
-  // Dossier map — org-scoped CTD module-map completeness read by GET
-  // /api/dossier-map (own sub-prefix). Feeds the DossierMap surface.
-  try {
-    const dossierMapModule = await import('../routes/dossier-map.routes');
-    app.use('/api/dossier-map', authMiddleware, dossierMapModule.default);
-    console.info('✅ Dossier map route mounted (/api/dossier-map)');
-  } catch (error) {
-    console.error('❌ Failed to mount Dossier map route:', error);
   }
 
   // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,

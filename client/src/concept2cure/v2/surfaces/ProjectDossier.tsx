@@ -56,6 +56,10 @@ export interface DossierMarket {
   notHeld: Array<{ key: string; label: string }> | null;
 }
 
+export interface SupportingReadiness {
+  sectionTracking: DossierSectionTracking;
+}
+
 export interface DossierRead {
   projectId: string;
   measuredAt: string;
@@ -65,7 +69,7 @@ export interface DossierRead {
   /** Separate artifact lifecycle source; absent from older responses. */
   artifactReadiness?: ArtifactReadiness;
   /** Existing project_sections records, with their own tracking lifecycle. */
-  sectionTracking?: DossierSectionTracking;
+  supportingReadiness?: SupportingReadiness;
 }
 
 const isFigure = (v: unknown): v is DossierFigure => {
@@ -275,7 +279,7 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
       rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
       artifactReadiness: artifactReadinessOf(d.artifactReadiness),
-      sectionTracking: sectionTrackingOf(d.sectionTracking),
+      supportingReadiness: { sectionTracking: sectionTrackingOf(d.supportingReadiness?.sectionTracking) },
     },
     dossierUnavailable: null,
   };

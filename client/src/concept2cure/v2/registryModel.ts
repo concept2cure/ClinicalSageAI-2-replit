@@ -74,7 +74,6 @@ export const NAV_GROUP_OF: Record<string, string> = {
   insights: 'both',
   'market-access': 'both',
   'reg-change': 'both',
-  dossier: 'both',
   'ind-checklist': 'biopharma',
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
@@ -162,10 +161,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * `group` puts an entry under a heading; entries without one are the places.
  */
 export const RAIL_WORK_AREAS_LABEL = 'Work areas';
+/** The same validated screen-action request used by rail entries and aliases. */
+export interface SurfaceApplies { actionId: string; params: Record<string, string> }
 export const RAIL_CORE = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
-  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } },
+  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } satisfies SurfaceApplies },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
@@ -181,12 +182,10 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'ectd-coauthor',
   'csr-workflow',
   'filings-catalog',
-  'dossier-map',
   'nda-cockpit',
   'maa-cockpit',
   'ind-checklist',
   'template-library',
-  'dossier',
   'review-approve',
   'doc-journey',
   'change-assessment',
@@ -612,7 +611,6 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'submission-center': ['compile_dossier', 'route_document_to_module', 'export_document', 'save_document_version'],
   'submission-twin': ['run_validation', 'compile_dossier'],
   'decision-lineage': ['get_document', 'export_document', 'run_validation'],
-  dossier: ['compile_dossier', 'route_document_to_module', 'export_document'],
   vault: ['promote_artifact', 'attach_sources_to_document', 'export_document'],
   review: ['save_document_version', 'export_document', 'route_document_to_module'],
   'haq-manager': ['attach_sources_to_document', 'refine_with_validation', 'save_document_version'],
@@ -671,7 +669,7 @@ export const SEGMENT_MODULES = {
         'decision-lineage',
       ],
     },
-    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -704,7 +702,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -730,8 +728,7 @@ export const SEGMENT_MODULES = {
         'batch-draft',
         'inconsistency',
         'source-tracer',
-        'dossier',
-        'document-authoring',
+              'document-authoring',
         'cmc',
         'nonclinical',
         'csr-workflow',
@@ -756,7 +753,6 @@ export const SEGMENT_MODULES = {
         'submission-center',
         'communication-center',
         'pyramid',
-        'dossier-map',
         'pdev',
         'haq-manager',
       ],
@@ -817,7 +813,7 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Submit & file',
-      items: ['submission-center', 'ind-checklist', 'dossier-map', 'haq-manager'],
+      items: ['submission-center', 'ind-checklist', 'haq-manager'],
     },
     {
       label: 'Science & intelligence',
@@ -958,6 +954,9 @@ export const ESIGN_MEANINGS = [
  * entries (BUILD_STATE): task-board → tasks board view · device-submission →
  * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
+  // Former dossier screens now reach all three recorded reads on Author.
+  dossier: 'project-home',
+  'dossier-map': 'project-home',
   'task-board': 'tasks',
   /* Subscription & features keeps its id `apps`; the address a person sees
      and copies is /concept2cure/features (section 12 of
@@ -998,6 +997,12 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   intelligence: 'global-ri',
   authoring: 'document-authoring',
   safety: 'pv-cockpit',
+};
+
+/** Alias visits may ask the destination for an existing action as it opens. */
+export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
+  dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
+  'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
 };
 
 /** Home is the shell's landing, not a registry surface (V2App renders it for

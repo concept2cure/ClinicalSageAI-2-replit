@@ -11,8 +11,9 @@ import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const queryMock = vi.fn();
+const poolQuery = vi.hoisted(() => vi.fn());
 vi.mock('../../../db', () => ({
-  pool: { query: (...args: unknown[]) => queryMock(...args) },
+  pool: { query: (...args: unknown[]) => poolQuery(...args) },
 }));
 vi.mock('../../../services/c2c/current-program-access', async (original) => {
   const real = await original<typeof import('../../../services/c2c/current-program-access')>();
@@ -26,13 +27,13 @@ const P1 = '11111111-1111-4111-8111-111111111111';
 const OTHER = '33333333-3333-4333-8333-333333333333';
 const USER = 41;
 
-function app(orgId: number | null) {
+function app(orgId: number | null, withRequestDb = true) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     if (orgId != null) req.organizationId = orgId;
     req.userId = USER;
-    req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
+    if (withRequestDb) req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
   });
   a.use('/api/c2c/projects', router);
@@ -44,6 +45,7 @@ const isDossier = (sql: unknown) => /FROM c2c_documents d\s+JOIN c2c_document_se
 
 beforeEach(() => {
   queryMock.mockReset();
+  poolQuery.mockReset().mockRejectedValue(new Error('Unscoped pool must not be used'));
   clearSeats();
   seatMember(7, USER, 'member');
   seatProgram(7, P1);
@@ -73,6 +75,45 @@ describe('GET /api/c2c/projects/:id/dossier', () => {
     const [, params] = queryMock.mock.calls.find(([sql]) => isDossier(sql))!;
     expect(params).toEqual([[P1], 7]);
     expect(queryMock.mock.calls.filter(([sql]) => isDossier(sql))).toHaveLength(1);
+    expect(res.body.supportingReadiness).toEqual({
+      sectionTracking: { basis: 'section_tracking', state: 'no_sections', modules: [], unmapped: [] },
+    });
+    expect(poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('does not fall back to a pool when request database context is absent', async () => {
+    const res = await request(app(7, false)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(res.status).toBe(503);
+    expect(res.body.supportingReadiness).toBeUndefined();
+    expect(poolQuery).not.toHaveBeenCalled();
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps unavailable artifact and tracking branches explicit beside the governed figure', async () => {
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      if (sql.includes('FROM concept2cure_artifacts')) throw Object.assign(new Error('missing artifacts'), { code: '42P01' });
+      if (sql.includes('FROM project_sections')) throw Object.assign(new Error('secret failure'), { code: '08006' });
+      return { rows: [] };
+    });
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(res.status).toBe(200);
+    expect(res.body.home).toEqual({ state: 'no_sections', pct: null });
+    expect(res.body.artifactReadiness).toMatchObject({ basis: 'governed_artifacts', state: 'unavailable', code: 'STORE_UNAVAILABLE', sections: null, summary: null });
+    expect(res.body.supportingReadiness).toMatchObject({ sectionTracking: { state: 'unavailable', code: 'READ_FAILED' } });
+    expect(JSON.stringify(res.body)).not.toContain('secret failure');
+  });
+
+  it('refuses an exact accepted anchor/client mapping that changes before the result returns', async () => {
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isOwnership(sql)) return { rows: [{ id: P1 }] };
+      if (sql.includes('FROM project_sections')) seatProgram(7, P1, { projectId: 1, clientWorkspaceId: 99 });
+      return { rows: [] };
+    });
+    const res = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PROJECT_ACCESS_CHANGED');
+    expect(res.body.home).toBeUndefined();
   });
 
   it('a project the caller cannot read is 404 and no section is read', async () => {
@@ -142,7 +183,7 @@ describe('GET dossier artifact stages beside governed document readiness', () =>
     });
     const artifactCalls = queryMock.mock.calls.filter(([sql]) => /FROM concept2cure_artifacts/.test(String(sql)));
     expect(artifactCalls).toHaveLength(1);
-    expect(artifactCalls[0][1]).toEqual([41, 7]);
+    expect(artifactCalls[0][1]).toEqual([41, 7, P1, 9]);
   });
 
   it('does not reuse a sibling project anchor or disclose another tenant’s artifact stages', async () => {
@@ -156,7 +197,7 @@ describe('GET dossier artifact stages beside governed document readiness', () =>
       const res = await request(app(7)).get(`/api/c2c/projects/${id}/dossier`);
       expect(res.status).toBe(200);
       expect(res.body.artifactReadiness).toMatchObject({ state: 'no_artifacts', sections: [], summary: { totalSections: 0 } });
-      expect(queryMock.mock.calls.filter(([sql]) => /FROM concept2cure_artifacts/.test(String(sql))).at(-1)?.[1]).toEqual([expected, 7]);
+      expect(queryMock.mock.calls.filter(([sql]) => /FROM concept2cure_artifacts/.test(String(sql))).at(-1)?.[1]).toEqual([expected, 7, id, null]);
     }
     queryMock.mockClear();
     seatMember(8, USER, 'member');
@@ -165,7 +206,7 @@ describe('GET dossier artifact stages beside governed document readiness', () =>
     expect(queryMock.mock.calls.some(([sql]) => /FROM concept2cure_artifacts/.test(String(sql)))).toBe(false);
   });
 
-  it('reports an unprovisioned artifact store separately and throws real artifact read failures', async () => {
+  it('reports unprovisioned and failed artifact reads independently without inventing empty sections', async () => {
     queryMock.mockImplementation(async (sql: string) => {
       if (isOwnership(sql)) return { rows: [{ id: P1 }] };
       if (/FROM concept2cure_artifacts/.test(sql)) throw Object.assign(new Error('missing'), { code: '42P01' });
@@ -180,8 +221,8 @@ describe('GET dossier artifact stages beside governed document readiness', () =>
       return { rows: [] };
     });
     const failed = await request(app(7)).get(`/api/c2c/projects/${P1}/dossier`);
-    expect(failed.status).toBe(500);
-    expect(failed.body.artifactReadiness).toBeUndefined();
+    expect(failed.status).toBe(200);
+    expect(failed.body.artifactReadiness).toMatchObject({ state: 'unavailable', code: 'READ_FAILED', sections: null, summary: null });
   });
 
 });

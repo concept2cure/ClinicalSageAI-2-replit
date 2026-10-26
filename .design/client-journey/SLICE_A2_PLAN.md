@@ -13,13 +13,16 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.6 complete. A2.6 evidence is under
-`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.6/README.md`.
-Next is A2.7's step-aware aliases and coordinated fold. A2.7a artifact status
-and A2.7b separate tracking-record carryover are complete.
-Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`
-and the adjacent `A2.7b/README.md`.
-The inventory below describes discovery-time behavior.
+**Implementation status:** A2.1–A2.7 are implemented. Incoming A2.7's alias,
+parity and retirement qualification is in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7/README.md` and
+`A2_7_PARITY_RECONCILIATION.md`. Concurrent A2.7b adds stronger recorded-tracking
+identity/unknown/label/placement safeguards; its 163-test/native/build proof
+in the adjacent `A2.7b/README.md` qualifies that pre-merge snapshot. The combined tree passed 294 tests in 27 files, both native browser flows and
+the production client/server/audit-verifier build. Merged proof is under
+`slice-A2/A2.7b/merged/`; mandatory publication gates still apply.
+Next is A2.8 (MDX alias to filtered Projects). The inventory below describes
+discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 
@@ -584,17 +587,17 @@ reconciliation before A2.7 can remove a screen. No deletion is authorized by A2.
 
 ### A2.7 Complete `DEEP_LINK_ALIASES` with a step and the no-project rule, and fold `dossier` and `dossier-map` onto Author
 
-**Completed prerequisite (A2.7a):** carry the existing artifact section counts,
-per-state counts, weakest-artifact status and per-section artifact dates into
-Author through the admitted canonical dossier read. Reuse the artifact rollup
-behind `dossier-readiness.ts`, preserving its source separately from governed
-document-section figures. Unknown statuses remain unassessed; approved plus
-locked has approved as its weakest state. Evidence and the existing-owner
-inventory: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`.
-The old map's `project_sections` tracking records are a separate source, not
-artifact-derived completion. Preserve their functions before removing that map.
-No alias, screen/route/catalog deletion or validation-inventory retirement is
-authorized by completion of the artifact-only prerequisite.
+**Fold integrated 2026-10-26; combined regression, native and build checks pass.** The current reconciliation addendum takes precedence
+over discovery assumptions below. Author now preserves all three distinct
+bases: governed sections, artifact rollups/counts/section dates, and legacy
+`project_sections` module completion/labels. Exact accepted access is revalidated.
+The old screens and HTTP routes are folded; the existing tracking assembler is
+retained internally because it owns the surviving read. Alias stage actions and
+no-project destinations share the resolver, with native URL and return proof.
+Both the catalog writer and its packaging writer were amended in place: keeping
+obsolete packaging references would fail the fresh-database unknown-module guard.
+No stored data, subscription, signature or dispatch gate was removed. Validation
+docs distinguish historical results from revised URS-SUBC-009a (not formally executed).
 
 **Completed tracking carryover (A2.7b):** reach `project_sections` from Author and AnA
 through the existing map assembler and the canonical dossier's verified exact
@@ -604,7 +607,15 @@ isolation. Keep this source separate from governed document sections and
 artifact lifecycle status. Missing stores, unknown states and unclassifiable
 module data remain explicit. Existing-owner inventory and proof:
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7b/README.md`.
-This carryover does not itself retire a screen or authorize a catalogue change.
+The carryover alone did not retire a screen. The incoming A2.7 fold now supplies
+that coordinated retirement and its prior qualification. The integration keeps one typed
+`supportingReadiness.sectionTracking` source, preserving raw records, unknown
+observations, null dependent figures and unmapped rows, alongside one canonical
+`artifactReadiness`. Supporting-source failures remain explicit unavailable
+states with safe fixed reasons/codes; failed scope currentness refuses the whole
+response. Both pre-merge snapshots remain historical. The combined tree passed
+294 tests across 27 files, two native flows and the production build; proof is in
+`A2.7b/merged/`. Mandatory publication gates still apply. A2.8 is next.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.

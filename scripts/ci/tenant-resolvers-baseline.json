@@ -65,8 +65,6 @@
     "server/routes/design-controls.routes.ts",
     "server/routes/dmsp.ts",
     "server/routes/doc-journey.routes.ts",
-    "server/routes/dossier-map.routes.ts",
-    "server/routes/dossier-readiness.ts",
     "server/routes/ectd-compile.ts",
     "server/routes/ectd-documents.ts",
     "server/routes/ectd-export.ts",

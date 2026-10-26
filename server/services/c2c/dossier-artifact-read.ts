@@ -1,6 +1,6 @@
 /**
- * The existing dossier artifact rollup, shared by the numeric compatibility
- * route and the project's core dossier. These are recorded ARTIFACT stages,
+ * The existing dossier artifact rollup, carried by the project's core dossier.
+ * These are recorded ARTIFACT stages,
  * not c2c_document_sections readiness or a filing-completion percentage.
  * The caller supplies its already-admitted exact integer project anchor.
  */
@@ -50,9 +50,10 @@ export async function readDossierArtifactReadiness(
   db: Queryable,
   orgId: number,
   projectId: number | null,
+  admitted?: { programId: string; clientWorkspaceId: number | null },
 ): Promise<ArtifactReadiness> {
   if (!Number.isSafeInteger(orgId) || orgId <= 0) throw new Error('A verified organization is required for artifact status.');
-  if (projectId === null || !Number.isSafeInteger(projectId) || projectId <= 0) {
+  if (projectId === null || !Number.isSafeInteger(projectId) || projectId <= 0 || !admitted) {
     return { basis: 'governed_artifacts', state: 'unanchored', sections: null, summary: null,
       reason: 'This project has no verified tracking record, so its artifact status cannot be read.' };
   }
@@ -60,22 +61,29 @@ export async function readDossierArtifactReadiness(
   let rows: Array<Record<string, unknown>>;
   try {
     ({ rows } = await db.query(
-      `SELECT ctd_section, status, COUNT(*)::int AS count, MAX(updated_at) AS last_updated
-         FROM concept2cure_artifacts
-        WHERE project_id = $1 AND organization_id = $2
-          AND ctd_section IS NOT NULL AND ctd_section <> ''
-        GROUP BY ctd_section, status`,
-      [projectId, orgId],
+      `SELECT a.ctd_section, a.status, COUNT(*)::int AS count, MAX(a.updated_at) AS last_updated
+         FROM concept2cure_artifacts a JOIN projects p ON p.id=a.project_id
+        WHERE a.project_id=$1 AND a.organization_id=$2 AND p.organization_id=$2
+          AND p.regulatory_program_id=$3 AND p.client_workspace_id IS NOT DISTINCT FROM $4
+          AND p.status IS DISTINCT FROM 'archived' AND p.status IS DISTINCT FROM 'deleted'
+          AND a.ctd_section IS NOT NULL AND a.ctd_section <> ''
+        GROUP BY a.ctd_section,a.status`,
+      [projectId, orgId, admitted.programId, admitted.clientWorkspaceId],
     ));
   } catch (error) {
     if (['42P01', '42703'].includes(String((error as { code?: string })?.code))) {
-      return { basis: 'governed_artifacts', state: 'unavailable', reason: UNAVAILABLE_REASON, sections: null, summary: null };
+      return { basis: 'governed_artifacts', state: 'unavailable', code: 'STORE_UNAVAILABLE', reason: UNAVAILABLE_REASON, sections: null, summary: null };
     }
-    throw error;
+    return { basis: 'governed_artifacts', state: 'unavailable', code: 'READ_FAILED',
+      reason: 'Artifact status could not be read.', sections: null, summary: null };
   }
 
   const bySection = new Map<string, ArtifactSectionReadiness>();
-  for (const row of rows) addArtifactBucket(bySection, row);
+  try { for (const row of rows) addArtifactBucket(bySection, row); }
+  catch {
+    return { basis: 'governed_artifacts', state: 'unavailable', code: 'READ_FAILED',
+      reason: 'Artifact status could not be read.', sections: null, summary: null };
+  }
 
   const sections = [...bySection.values()].sort((a, b) => compareSectionCode(a.ctdSection, b.ctdSection));
   for (const section of sections) section.status = artifactSectionStateOf(section);

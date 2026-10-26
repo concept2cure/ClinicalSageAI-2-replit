@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-004 |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-004 (`tests/validation/oq/submission-center/run.mjs`) |
@@ -18,6 +18,7 @@
 | 0.2 | 2026-09-27 | W3 | URS-SUBC-004: the placed document must belong to the submission's own project. The product refuses another project's document since PF-11 (2026-09-26, `39dfd9b7`); OQ-SUBC-04 (OQ-004 v0.4) verifies it. |
 | 0.3 | 2026-10-15 | D2 | URS-SUBC-013 is new: the signed Shadow Review waiver (decision P-34, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Tested by OQ-004 OQ-SUBC-15 (v0.5). |
 | 0.4 | 2026-10-26 | D2 | URS-SUBC-014 is new: a submission run takes no clinical or nonclinical figures from the request (CLAUDE.md Rule 2; Rule 2 audit S1, `docs/evidence/RULE2/2026-10-26-model-figures-audit/`). Tested by OQ-004 OQ-SUBC-16 (v0.6). |
+| 0.5 | 2026-10-26 | D2 A2.7 | URS-SUBC-009 is historical; URS-SUBC-009a replaces the folded map's HTTP requirement with the canonical project dossier, preserving separate governed, artifact and tracking records. Existing OQ-SUBC-10 results do not qualify the revised path. |
 
 ## 1. Intended use
 
@@ -35,7 +36,8 @@ The Submission Center plans, assembles, validates and dispatches a regulatory su
 | URS-SUBC-006 | `frozen` and `dispatched` cannot be reached through the generic transition endpoint (`GOVERNED_REQUIRED`); the governed endpoints require a `signatureActionId`. | §11.10(e) §11.200 | high | `submission-service.ts:65, 340-345`, `server/routes/submissions.ts:1604-1642` |
 | URS-SUBC-007 | The governed `sign` action on a sequence is high-risk: it requires re-authentication (password, optionally TOTP), a reason of ≥ 8 characters and a target the organisation owns; without re-authentication it is refused and no action id, ledger pair or `electronic_signatures` row is created; with it, the signature and the chained ledger rows land in one transaction. | §11.50 §11.70 §11.200 | high | `server/routes/c2c/actions.ts:58-89, 240-251, 402-480, 543-547` |
 | URS-SUBC-008 | The capabilities endpoint reports each agency gateway (ESG, CESP, …) as configured only when credentials exist; nothing is claimed as configured on an installation without them. | none | medium | `server/routes/submissions.ts:236` |
-| URS-SUBC-009 | The dossier map answers per-module (M1–M5) completeness for the program open in the shell. | none | medium | `server/routes/dossier-map.routes.ts:39-63`, `client/src/concept2cure/v2/surfaces/DossierMap.tsx:64` |
+| URS-SUBC-009 | Historical: the dossier map answers per-module (M1–M5) completeness for the program open in the shell; superseded by URS-SUBC-009a in A2.7. | none | medium | Historical OQ-SUBC-10 results; retained for traceability. |
+| URS-SUBC-009a | The canonical project dossier answers for the exact accepted program/anchor/client relationship; governed readiness, artifact section counts/status/dates and tracked CTD module completion retain distinct bases and explicit failed/unavailable states. | 11.10(d) | high | `server/routes/c2c/projects.ts`, `server/services/c2c/dossier-read.ts`, `ProjectDossier.tsx`; OQ-SUBC-10 v0.7. |
 | URS-SUBC-010 | eCTD compile for a program answers with a spine/status or an explained refusal; it never answers 500. | none | medium | `server/routes/ectd-compile.ts:425, 984` |
 | URS-SUBC-011 | The Submission Center, eCTD Compile and Publishing surfaces render the organisation's submissions and the open program's sequence. | none | medium | `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx`, `EctdCompile.tsx`, `PublishingCenter.tsx` |
 | URS-SUBC-012 | Transmit requires a signature action id and a dispatched, gate-clear sequence; without a configured gateway it reports `transmitted:false` with the reason and never fabricates an acknowledgement. | §11.10(e) | high | `server/routes/submissions.ts:1644-1680` |

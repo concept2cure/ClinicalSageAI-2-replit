@@ -1,24 +1,79 @@
 {
-  "base": "7d193063",
-  "regression": {
-    "passed": 163,
-    "files": 14
+  "preMerge": {
+    "base": "7d193063",
+    "regression": {
+      "passed": 163,
+      "files": 14
+    },
+    "serverTargeted": {
+      "passed": 50,
+      "files": 4
+    },
+    "nativeBrowser": {
+      "passed": 1,
+      "runtimeRole": "app_service",
+      "rls": true,
+      "developmentAuth": true,
+      "widths": [
+        1440,
+        390
+      ]
+    },
+    "build": "client, server, audit verifier passed",
+    "independentReview": "passed",
+    "legacyScreensAndRoutes": "retained; explicit store/review states"
   },
-  "serverTargeted": {
-    "passed": 50,
-    "files": 4
-  },
-  "nativeBrowser": {
-    "passed": 1,
-    "runtimeRole": "app_service",
-    "rls": true,
-    "developmentAuth": true,
-    "widths": [
-      1440,
-      390
-    ]
-  },
-  "build": "client, server, audit verifier passed",
-  "independentReview": "passed",
-  "legacyScreensAndRoutes": "retained; explicit store/review states"
+  "merged": {
+    "parents": [
+      "1744fa0c8b37730e3685741c5f1a77ffcef3c373",
+      "2fd07ac807292c4221468067eaf6807146cfc3a0"
+    ],
+    "regression": {
+      "passed": 294,
+      "files": 27,
+      "durationSeconds": 71.95
+    },
+    "serverTargeted": {
+      "passed": 59,
+      "files": 5
+    },
+    "nativeBrowser": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 53.35,
+      "runtimeRole": "app_service",
+      "rls": true,
+      "developmentAuth": true,
+      "database": "explicit local concept_handoff",
+      "widths": [
+        1440,
+        390
+      ],
+      "otherOrganizationStatus": 404,
+      "criticalPathModelRequests": 0,
+      "criticalPathWrites": 0
+    },
+    "build": "client, server and audit verifier passed",
+    "scopedLint": {
+      "errors": 0,
+      "warnings": 4,
+      "note": "Existing router and browser-test size/complexity warnings; normal push ratchet still required."
+    },
+    "independentReview": "No material merge regression found in client, server or access boundaries.",
+    "legacyScreensAndRoutes": "retired; page aliases reach project Author or Projects without project context",
+    "trackingContract": "supportingReadiness.sectionTracking only; raw aliases and unknown observations preserved",
+    "artifactContract": "artifactReadiness only; not_assessed unknown state",
+    "qualificationLimits": [
+      "Local synthetic browser proof uses explicit development authentication and historical tracking fixture rows; it does not qualify production auth or formal OQ.",
+      "OQ-SUBC-10 revision v0.7 is not executed or signed by these supplemental checks.",
+      "Unrelated baseline MDX launch-gate expectations remain as recorded in adjacent A2.7 evidence."
+    ],
+    "typecheck": {
+      "passed": true,
+      "errors": 0,
+      "baseline": 0,
+      "wholeProgram": true
+    }
+  }
 }

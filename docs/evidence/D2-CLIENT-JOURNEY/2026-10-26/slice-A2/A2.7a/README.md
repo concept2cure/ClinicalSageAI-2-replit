@@ -118,3 +118,13 @@ increment. Full A2.7 alias/fold work follows verified function parity.
 The old map's separate tracking records still need a reachable, source-labelled
 core home. Only then complete the coordinated alias, registry, route, catalogue,
 capability and validation-package retirement. No removal is claimed here.
+
+## Follow-up: convergence into A2.7
+
+A concurrent A2.7 implementation completed the separate tracking-map carryover
+and routing/catalog fold. Its merge reuses this artifact reader, shared state
+helpers and semantic client validator as the single artifact owner, retaining
+stronger exact parent/client predicates and independent failures. No duplicate
+artifact table or aggregation is published. The remaining-work paragraph above
+is historical; current implementation status, combined proof and qualification
+limits are in [A2.7/README.md](../A2.7/README.md).

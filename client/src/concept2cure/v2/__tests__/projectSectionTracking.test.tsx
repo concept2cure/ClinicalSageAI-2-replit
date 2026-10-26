@@ -18,7 +18,7 @@ function read(sectionTracking: unknown = measured()): DossierState {
   return { retry: vi.fn(), state: { loading: false, empty: false, data: {
     projectId: 'project-a', measuredAt: '2026-10-26T20:00:00.000Z',
     home: { state: 'measured', pct: 67, complete: 2, counted: 3 }, markets: [], rows: [],
-    ...({ sectionTracking } as object),
+    ...({ supportingReadiness: { sectionTracking } } as object),
   } } };
 }
 function mount(r: DossierState) {
@@ -43,7 +43,7 @@ describe('recorded tracking sections reached through Author', () => {
 
   it('gives AnA the same labelled tracking source without replacing governed figures', () => {
     const facts = dossierFacts(read()) as any;
-    expect(facts.dossier.sectionTracking).toEqual(measured());
+    expect(facts.dossier.supportingReadiness.sectionTracking).toEqual(measured());
     expect(facts.dossier.home).toEqual({ state: 'measured', pct: 67, counted: 3, complete: 2 });
     expect(facts.dossier.artifactReadiness).toBeNull();
   });
@@ -66,7 +66,7 @@ describe('recorded tracking sections reached through Author', () => {
     expect(panel().textContent).toContain('Completion not assessed');
     expect(panel().textContent).toContain('future_state');
     expect(panel().textContent).not.toMatch(/\d+%/);
-    expect((dossierFacts(r) as any).dossier.sectionTracking).toEqual(p);
+    expect((dossierFacts(r) as any).dossier.supportingReadiness.sectionTracking).toEqual(p);
   });
 
   it('shows unmapped records instead of guessing a module or reporting an empty map', () => {
@@ -77,7 +77,7 @@ describe('recorded tracking sections reached through Author', () => {
     expect(panel().textContent).toContain('4.2.1 Tracked report');
     expect(panel().textContent).toContain('M3');
     expect(panel().textContent).not.toContain('No tracked sections yet');
-    expect((dossierFacts(r) as any).dossier.sectionTracking).toEqual(p);
+    expect((dossierFacts(r) as any).dossier.supportingReadiness.sectionTracking).toEqual(p);
   });
 
   it.each(['unavailable', 'unanchored'])('preserves %s with its source reason', state => {
@@ -86,7 +86,7 @@ describe('recorded tracking sections reached through Author', () => {
     mount(r);
     expect(panel().textContent).toContain(p.reason);
     expect(panel().textContent).not.toMatch(/0%|No tracked sections yet/);
-    expect((dossierFacts(r) as any).dossier.sectionTracking).toEqual(p);
+    expect((dossierFacts(r) as any).dossier.supportingReadiness.sectionTracking).toEqual(p);
   });
 
   it('shows an explicitly measured empty tracking store', () => {
@@ -100,11 +100,11 @@ describe('recorded tracking sections reached through Author', () => {
 describe('tracking response validation and unavailable states', () => {
   it.each([undefined, null, { ...measured(), modules: null }, { ...measured(), modules: [{ ...measured().modules[0], pct: 100 }] }, { ...measured(), modules: [{ ...measured().modules[0], complete: '1' }] }, { ...measured(), state: 'no_sections' }])('withholds missing, malformed or contradictory tracking facts', p => {
     const r = read(p);
-    if (p === undefined) delete (r.state.data as any).sectionTracking;
+    if (p === undefined) delete (r.state.data as any).supportingReadiness.sectionTracking;
     mount(r);
     expect(panel().textContent).toContain('Section tracking is unavailable.');
     expect(panel().textContent).not.toMatch(/\d+%/);
-    expect((dossierFacts(r) as any).dossier.sectionTracking).toBeNull();
+    expect((dossierFacts(r) as any).dossier.supportingReadiness.sectionTracking).toBeNull();
   });
 
   it('withholds a ready-looking module that contains an unknown observation', () => {
@@ -123,7 +123,7 @@ describe('tracking response validation and unavailable states', () => {
     const r = read(p);
     mount(r);
     expect(panel().textContent).toContain('Section tracking is unavailable.');
-    expect((dossierFacts(r) as any).dossier.sectionTracking).toBeNull();
+    expect((dossierFacts(r) as any).dossier.supportingReadiness.sectionTracking).toBeNull();
   });
 
   it('withholds a module-mismatch reason when the recorded code and module agree', () => {

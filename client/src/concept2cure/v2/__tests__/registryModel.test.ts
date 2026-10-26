@@ -13,6 +13,7 @@ import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import {
   ANA_MODES,
+  ALIAS_APPLIES,
   CLIENT_CATEGORIES,
   DEEP_LINK_ALIASES,
   ESIGN_MEANINGS,
@@ -101,6 +102,16 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('deep-link aliases point at registered surfaces', () => {
     for (const [alias, target] of Object.entries(DEEP_LINK_ALIASES)) {
       expect(getSurface(target), `alias ${alias} → ${target}`).toBeDefined();
+    }
+  });
+
+  it('alias actions resolve through the existing bus on their canonical destination', () => {
+    for (const [id, applies] of Object.entries(ALIAS_APPLIES)) {
+      const resolved = resolveSurfaceAction(applies.actionId, applies.params);
+      expect(resolved.ok, `${id}: ${applies.actionId}`).toBe(true);
+      if (!resolved.ok) continue;
+      expect(resolveSurfaceIdForTarget(resolved.directive.surfaceId)).toBe(DEEP_LINK_ALIASES[id]);
+      expect(getSurface(id), `${id} is an alias, not a retained screen`).toBeUndefined();
     }
   });
 

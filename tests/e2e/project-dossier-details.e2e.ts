@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { seedHistoricalTracking } from './dossierTrackingFixture';
 
 async function recordSyntheticArtifacts(page: Page, programId: string, stamp: string) {
   return page.evaluate(async ({ programId, stamp }) => {
@@ -25,46 +26,32 @@ async function recordSyntheticArtifacts(page: Page, programId: string, stamp: st
   }, { programId, stamp });
 }
 
-async function verifyRecordedTracking(page: Page, programId: string, home: unknown, testInfo: TestInfo) {
+async function verifyRecordedTracking(page: Page, programId: string, anchor: number, home: unknown, testInfo: TestInfo) {
+  await seedHistoricalTracking(anchor, programId, [
+    { code: 'm2.5', module: 'M2', title: 'Synthetic signed clinical overview', status: 'signed' },
+    { code: '2.5', module: 'M2', title: 'Synthetic separate raw-code record', status: 'drafting' },
+    { code: 'm3.2.S.1', module: 'M3', title: 'Synthetic control record', status: 'internal_review' },
+  ]);
   const recorded = await page.evaluate(async programId => {
-    const call = async (method: string, path: string, body?: unknown) => {
-      const token = localStorage.getItem('trialsage_access_token');
-      const response = await fetch(path, { method, credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: body === undefined ? undefined : JSON.stringify(body) });
-      return { status: response.status, body: await response.json() };
-    };
-    const legacy = await call('GET', `/api/dossier-map?projectId=${programId}`);
-    const projectId = legacy.body.meta?.projectId;
-    if (!Number.isSafeInteger(projectId)) return { legacy, initialized: null, transitions: [], final: null, legacyFinal: null };
-    const initialized = await call('POST', '/api/project-sections/initialize', { project_id: projectId });
-    const initial = await call('GET', `/api/c2c/projects/${programId}/dossier`);
-    const code = initial.body.sectionTracking?.modules?.[0]?.sections?.[0]?.code;
-    const transitions = [];
-    if (code) for (const new_status of ['drafting', 'internal_review']) transitions.push(await call('PATCH', `/api/project-sections/${encodeURIComponent(code)}/status`, {
-      project_id: projectId, new_status, reason: 'Synthetic tracking browser test.',
-    }));
-    const final = await call('GET', `/api/c2c/projects/${programId}/dossier`);
-    const legacyFinal = await call('GET', `/api/dossier-map?projectId=${programId}`);
-    return { legacy, initialized, transitions: transitions.map(t => t.status), code, final, legacyFinal };
+    const token = localStorage.getItem('trialsage_access_token');
+    const response = await fetch(`/api/c2c/projects/${programId}/dossier`, { credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    return { status: response.status, body: await response.json() };
   }, programId);
-  expect(recorded.legacy.status).toBe(200);
-  expect(recorded.initialized?.status, JSON.stringify(recorded.legacy.body)).toBe(200);
-  expect(recorded.transitions).toEqual([200, 200]);
-  expect(recorded.final?.status).toBe(200);
-  expect(recorded.final?.body.home).toEqual(home);
-  const tracking = recorded.final!.body.sectionTracking;
+  expect(recorded.status).toBe(200);
+  expect(recorded.body.home).toEqual(home);
+  const tracking = recorded.body.supportingReadiness.sectionTracking;
   expect(tracking).toMatchObject({ basis: 'section_tracking', state: 'measured', unmapped: [] });
-  expect(tracking.modules.length).toBeGreaterThan(0);
-  expect(tracking.modules[0].sections.find((s: { code: string }) => s.code === recorded.code)?.status).toBe('internal_review');
-  expect(recorded.legacyFinal?.status).toBe(200);
-  expect(recorded.legacyFinal?.body.data).toEqual(tracking.modules.map((m: any) => ({ m: m.m, label: m.label, pct: m.pct, tone: m.tone, sections: m.sections.map((s: any) => s.label) })));
-  await page.reload();
+  expect(tracking.modules[0]).toMatchObject({ m: '2', counted: 2, complete: 1, pct: 50 });
+  expect(tracking.modules[0].sections.map((s: { code: string }) => s.code).sort()).toEqual(['2.5', 'm2.5']);
+  await page.goto(`/concept2cure/dossier-map?program=${programId}`);
+  await expect(page).toHaveURL(new RegExp(`/project-home\\?program=${programId}$`));
+  await expect(page.locator('.pj-lc-stage[aria-current="step"]')).toHaveText('Author');
   const panel = page.getByRole('region', { name: 'Section tracking', exact: true });
   await expect(panel.getByRole('heading', { name: `Module ${tracking.modules[0].m} · ${tracking.modules[0].label}` })).toBeVisible();
   await panel.locator('summary').first().click();
   await expect(panel.getByRole('list').first().getByRole('listitem')).toHaveCount(tracking.modules[0].counted);
-  await expect(panel.getByText('Internal review', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Signed', { exact: true })).toBeVisible();
   for (const [index, section] of tracking.modules[0].sections.entries()) {
     const item = panel.getByRole('list').first().getByRole('listitem').nth(index);
     await expect(item).toContainText(section.label);
@@ -78,9 +65,10 @@ async function verifyRecordedTracking(page: Page, programId: string, home: unkno
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await testInfo.attach('author-section-tracking-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await testInfo.attach('section-tracking-result.json', { body: JSON.stringify({ coreStatus: recorded.final?.status, initializeStatus: recorded.initialized?.status,
-    transitions: recorded.transitions, moduleCount: tracking.modules.length, firstModule: tracking.modules[0], legacyMatches: true, homeUnchanged: true }, null, 2), contentType: 'application/json' });
-  return { moduleCount: tracking.modules.length, legacyMatches: true };
+  await testInfo.attach('section-tracking-result.json', { body: JSON.stringify({ coreStatus: recorded.status,
+    fixture: 'three synthetic historical rows in explicit local concept_handoff', moduleCount: tracking.modules.length,
+    firstModule: tracking.modules[0], legacyPageReachedAuthor: true, homeUnchanged: true }, null, 2), contentType: 'application/json' });
+  return { moduleCount: tracking.modules.length, rawAliasesPreserved: true };
 }
 
 /** Actual scaffold, governed sections and carried source facts, without provider calls. */
@@ -111,9 +99,13 @@ test('Author shows governed sections and artifact states, then hands the critica
   await page.getByLabel('Product type').selectOption('Drug');
   await page.getByLabel('Target submission date').fill('2027-03-31');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  const createdResponse = page.waitForResponse(r => new URL(r.url()).pathname === '/api/c2c/projects' && r.request().method() === 'POST');
   const dossierResponse = page.waitForResponse(r => /\/api\/c2c\/projects\/[^/]+\/dossier$/.test(new URL(r.url()).pathname));
   await page.getByRole('button', { name: /Create project/ }).click();
   await expect(page).toHaveURL(/project-home/, { timeout: 30_000 });
+  const receipt = await (await createdResponse).json();
+  const anchor = receipt.meta.projectAnchorId;
+  expect(Number.isSafeInteger(anchor)).toBe(true);
   const response = await dossierResponse;
   expect(response.status()).toBe(200);
   const dossier = await response.json();
@@ -162,7 +154,7 @@ test('Author shows governed sections and artifact states, then hands the critica
   await testInfo.attach('author-artifact-status-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
   await page.setViewportSize({ width: 1440, height: 1000 });
 
-  const tracking = await verifyRecordedTracking(page, dossier.projectId, dossier.home, testInfo);
+  const tracking = await verifyRecordedTracking(page, dossier.projectId, anchor, dossier.home, testInfo);
   const modelRequests: string[] = [];
   const writes: string[] = [];
   page.on('request', r => {

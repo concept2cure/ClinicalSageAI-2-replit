@@ -53,6 +53,7 @@ function hasMeasuredTracking(v: Record<string, unknown>): boolean {
 export function sectionTrackingOf(value: unknown): DossierSectionTracking | null {
   if (!object(value) || value.basis !== 'section_tracking') return null;
   if (value.state === 'unavailable' || value.state === 'unanchored') {
+    if (value.code !== undefined && value.code !== 'STORE_UNAVAILABLE' && value.code !== 'READ_FAILED') return null;
     return text(value.reason) && value.reason.trim() !== '' && value.modules === null && value.unmapped === null
       ? value as unknown as DossierSectionTracking : null;
   }
@@ -104,7 +105,7 @@ function TrackingRecords({ tracking }: { tracking: Extract<DossierSectionTrackin
 export function SectionTracking({ read }: { read: DossierState }) {
   const heading = React.useId();
   const { state, retry } = read;
-  const tracking = sectionTrackingOf(state.data?.sectionTracking);
+  const tracking = sectionTrackingOf(state.data?.supportingReadiness?.sectionTracking);
   let body: React.ReactNode;
   if (state.error) {
     body = <div role="alert"><p>Section tracking could not be read.</p><button type="button" className="btn ghost" onClick={retry}>Retry</button></div>;

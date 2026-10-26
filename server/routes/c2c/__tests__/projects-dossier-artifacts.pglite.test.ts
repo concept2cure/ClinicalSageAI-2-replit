@@ -16,7 +16,7 @@ async function query(sql: string, params?: unknown[]) {
   if (h.beforeReadRemap && h.anchorReads === 1 && /FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) {
     await h.pg.query('UPDATE projects SET id=99 WHERE id=41');
   }
-  if (/FROM concept2cure_artifacts\s+WHERE/.test(sql)) {
+  if (/FROM concept2cure_artifacts(?:\s+a)?\b/.test(sql)) {
     h.artifactReads++;
     if (h.remap) await h.pg.query('UPDATE projects SET id=99 WHERE id=41');
     if (h.clientChange) await h.pg.query('UPDATE projects SET client_workspace_id=66 WHERE id=41');
@@ -93,14 +93,14 @@ describe('tracked sections travel through the same admitted core dossier', () =>
     expect(res.status).toBe(200);
     expect(res.body.home.pct).toBe(100);
     expect(res.body.artifactReadiness.sections[0].status).toBe('draft');
-    expect(res.body.sectionTracking).toMatchObject({
+    expect(res.body.supportingReadiness?.sectionTracking).toMatchObject({
       basis: 'section_tracking', state: 'measured', unmapped: [],
       modules: [{ m: '2', counted: 2, complete: 1, unknownCount: 0, pct: 50, tone: 'warn', sections: [
         { code: 'm2.5', title: 'Tracked clinical overview', status: 'signed', label: '2.5 Tracked clinical overview', observedStatuses: ['signed'] },
         { code: 'm2.7', title: 'Tracked clinical summary', status: 'drafting', observedStatuses: ['drafting'] },
       ] }],
     });
-    expect(res.body.sectionTracking.modules).toHaveLength(1);
+    expect(res.body.supportingReadiness?.sectionTracking.modules).toHaveLength(1);
     expect(h.trackingReads).toBe(1);
     const foreign = await request(app(8)).get(`/api/c2c/projects/${PROGRAM}/dossier`);
     expect(foreign.status).toBe(404);
@@ -114,7 +114,7 @@ describe('tracked sections travel through the same admitted core dossier', () =>
     expect(res.body.error).toBe('PROJECT_ACCESS_CHANGED');
     expect(res.body.home).toBeUndefined();
     expect(res.body.artifactReadiness).toBeUndefined();
-    expect(res.body.sectionTracking).toBeUndefined();
+    expect(res.body.supportingReadiness?.sectionTracking).toBeUndefined();
     expect(h.trackingReads).toBe(1);
   });
 
@@ -123,15 +123,15 @@ describe('tracked sections travel through the same admitted core dossier', () =>
     const res = await request(app()).get(`/api/c2c/projects/${PROGRAM}/dossier`);
     expect(res.status).toBe(200);
     expect(res.body.home.pct).toBe(100);
-    expect(res.body.sectionTracking).toMatchObject({ basis: 'section_tracking', state: 'unavailable', modules: null, unmapped: null });
+    expect(res.body.supportingReadiness?.sectionTracking).toMatchObject({ basis: 'section_tracking', state: 'unavailable', modules: null, unmapped: null });
   });
 
-  it('refuses an unexpected tracking read failure instead of returning other sources as a successful combined read', async () => {
+  it('marks an unexpected tracking failure unavailable without inventing an empty tracking source', async () => {
     h.trackingError = '08006';
     const res = await request(app()).get(`/api/c2c/projects/${PROGRAM}/dossier`);
-    expect(res.status).toBe(500);
-    expect(res.body.home).toBeUndefined();
-    expect(res.body.sectionTracking).toBeUndefined();
+    expect(res.status).toBe(200);
+    expect(res.body.home.pct).toBe(100);
+    expect(res.body.supportingReadiness?.sectionTracking).toMatchObject({state:'unavailable',code:'READ_FAILED',modules:null,unmapped:null});
   });
 });
 

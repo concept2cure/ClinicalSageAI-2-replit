@@ -1,226 +1,142 @@
-/**
- * assembleProjectDossierMap — END-TO-END against in-process PGlite.
- *
- * Proves the GA read: real per-section CTD tracking rows (project_sections joined to
- * their parent projects) are rolled up into the DossierMap render contract — one row
- * per module {m,label,pct,tone,sections}, pct a genuine derived readiness (complete =
- * approved/signed/locked), archived projects excluded, strict org scope — with no blob
- * and nothing fabricated. Crucially it is PROJECT-scoped: readiness is computed from the
- * one requested project only and NEVER contaminated by sections of the org's other
- * projects.
- */
+/** The retained tracking owner, on actual SQL with a bound accepted parent mapping. */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { readProjectSectionTracking } from '../dossier-map-view-assembler';
 
-let pglite: PGlite;
-const pool = {
-  query: async (sql: string, params?: unknown[]) => {
-    const r = await pglite.query(sql, params as unknown[]);
-    return { rows: r.rows as Array<Record<string, unknown>>, rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
-  },
-};
-vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
-
-import { assembleProjectDossierMap, readProjectSectionTracking } from '../dossier-map-view-assembler';
-
+let pg: PGlite;
+const q = { query: async (sql: string, params?: unknown[]) => ({ rows: (await pg.query(sql, params)).rows as Array<Record<string, unknown>> }) };
 const ORG = 7;
-const OTHER = 9;
+const programFor = (id: number) => `00000000-0000-4000-8000-${String(id).padStart(12, '0')}`;
+const mapping = (id: number) => ({ programId: programFor(id), projectId: id, clientWorkspaceId: 100 });
+const tracked = (id: number, org = ORG) => readProjectSectionTracking(q, org, id, mapping(id));
 
-const DDL = `
-CREATE TABLE projects (id serial PRIMARY KEY, organization_id int, status text DEFAULT 'active');
-CREATE TABLE project_sections (id serial PRIMARY KEY, organization_id int, project_id int, section_code text, module text, title text, status text DEFAULT 'not_started');
-`;
-
-beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000);
-afterAll(async () => { await pglite.close(); });
-beforeEach(async () => { await pglite.exec(`DELETE FROM project_sections; DELETE FROM projects;`); });
-
-async function project(org: number, status = 'active'): Promise<number> {
-  const r = await pglite.query(`INSERT INTO projects (organization_id, status) VALUES ($1,$2) RETURNING id`, [org, status]);
-  return (r.rows[0] as { id: number }).id;
+beforeAll(async () => {
+  pg = new PGlite();
+  await pg.exec(`CREATE TABLE projects(id serial PRIMARY KEY,organization_id int,status text,regulatory_program_id uuid,client_workspace_id int);
+    CREATE TABLE project_sections(organization_id int,project_id int,section_code text,module text,title text,status text);`);
+}, 60_000);
+afterAll(async () => { await pg.close(); });
+beforeEach(async () => { await pg.exec('DELETE FROM project_sections; DELETE FROM projects;'); });
+async function project(org = ORG, status = 'active') {
+  const result = await pg.query<{ id: number }>('INSERT INTO projects(organization_id,status,client_workspace_id) VALUES($1,$2,100) RETURNING id', [org,status]);
+  const id = result.rows[0].id;
+  await pg.query('UPDATE projects SET regulatory_program_id=$2 WHERE id=$1', [id,programFor(id)]);
+  return id;
 }
-async function section(org: number, projectId: number, code: string, module: string, title: string, status: string): Promise<void> {
-  await pglite.query(
-    `INSERT INTO project_sections (organization_id, project_id, section_code, module, title, status) VALUES ($1,$2,$3,$4,$5,$6)`,
-    [org, projectId, code, module, title, status],
-  );
+async function section(id: number, code: string, status: string | null, module: string | null = 'M2', title = 'Recorded title', org = ORG) {
+  await pg.query('INSERT INTO project_sections VALUES($1,$2,$3,$4,$5,$6)', [org,id,code,module,title,status]);
 }
 
-describe('assembleProjectDossierMap', () => {
-  it('rolls real tracked sections up to the module grain with derived pct/tone', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'approved');
-    await section(ORG, p, 'm2.7', 'M2', 'Clinical Summary', 'drafting');
-    await section(ORG, p, 'm3.2.S.1', 'M3', 'General Information', 'not_started');
-
-    const rows = await assembleProjectDossierMap(ORG, p) as any[];
-    expect(rows.map((r) => r.m)).toEqual(['2', '3']);         // only tracked modules, ordered
-
-    const m2 = rows[0];
-    expect(m2.label).toBe('CTD summaries');
-    expect(m2.pct).toBe(50);                                   // 1 of 2 complete — derived
-    expect(m2.tone).toBe('warn');                              // partial
-    expect(m2.sections).toEqual(['2.5 Clinical Overview', '2.7 Clinical Summary']); // m-stripped, coded order
-
-    const m3 = rows[1];
-    expect(m3.pct).toBe(0);
-    expect(m3.tone).toBe('idle');
-  });
-
-  it('scopes strictly to the requested project — a sibling project never contaminates readiness', async () => {
-    // Same org, same section code (m2.5), two DIFFERENT projects at different maturity.
-    // The requested project's readiness must reflect ONLY its own status — the more-
-    // advanced sibling must not leak in via any org-wide roll-up.
-    const target = await project(ORG);
-    const sibling = await project(ORG);
-    await section(ORG, target, 'm2.5', 'M2', 'Clinical Overview', 'drafting');   // this project
-    await section(ORG, sibling, 'm2.5', 'M2', 'Clinical Overview', 'signed');    // other project
-    await section(ORG, sibling, 'm4.2.1', 'M4', 'Pharmacology', 'approved');     // other project only
-
-    const rows = await assembleProjectDossierMap(ORG, target) as any[];
-    expect(rows.map((r) => r.m)).toEqual(['2']);              // sibling's M4 never appears
-    expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);
-    expect(rows[0].pct).toBe(0);                              // drafting ≠ complete — NOT the sibling's 'signed'
-    expect(rows[0].tone).toBe('idle');                        // would be 'ok' if org-wide contaminated it
-
-    // And the sibling, read on its own id, is fully complete — proving the scope cuts both ways.
-    const sibRows = await assembleProjectDossierMap(ORG, sibling) as any[];
-    expect(sibRows.map((r) => r.m)).toEqual(['2', '4']);
-    expect(sibRows[0].pct).toBe(100);
-    expect(sibRows[0].tone).toBe('ok');
-  });
-
-  it('dedups a section tracked more than once within the SAME project, keeping the most-advanced status', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'drafting');
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'signed');   // more advanced wins
-
-    const rows = await assembleProjectDossierMap(ORG, p) as any[];
-    expect(rows).toHaveLength(1);
-    expect(rows[0].sections).toEqual(['2.5 Clinical Overview']);           // one chip, not two
-    expect(rows[0].pct).toBe(100);                                          // signed counts complete
-    expect(rows[0].tone).toBe('ok');
-  });
-
-  it('returns [] for an archived (soft-deleted) project even when it has tracked sections', async () => {
-    const archived = await project(ORG, 'archived');
-    await section(ORG, archived, 'm4.2.1', 'M4', 'Pharmacology', 'approved');
-
-    expect(await assembleProjectDossierMap(ORG, archived)).toEqual([]);   // archived → nothing
-  });
-
-  it('returns [] for a project with no tracked sections, and never crosses tenants', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical Overview', 'approved');
-    // Right project id but wrong org → nothing (double-scoped org + project).
-    expect(await assembleProjectDossierMap(OTHER, p)).toEqual([]);
-    // Empty project id space → nothing.
-    expect(await assembleProjectDossierMap(ORG, 999999)).toEqual([]);
-  });
-
-  it('withholds a module percentage for an unknown tracked state', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical overview', 'future_status');
-    const result = await assembleProjectDossierMap(ORG, p);
-    expect(result[0]).toMatchObject({ m: '2', pct: null, tone: null });
-  });
-
-  it('does not hide an unknown duplicate behind a complete tracked state', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Clinical overview', 'locked');
-    await section(ORG, p, 'm2.5', 'M2', 'Unclassified record', '__proto__');
-    const result = await assembleProjectDossierMap(ORG, p);
-    expect(result[0]).toMatchObject({ m: '2', pct: null, tone: null });
-  });
-
-  it('does not turn incidental digits in module and section text into a CTD module', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'arbitrary4-record', 'garbage4', 'Unmapped record', 'approved');
-    await expect(assembleProjectDossierMap(ORG, p)).rejects.toMatchObject({ code: 'SECTION_TRACKING_REVIEW_REQUIRED' });
-  });
-
-  it('preserves distinct recorded raw code aliases in the tracking denominator', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm3.2.s.1', 'M3', 'Substance', 'drafting');
-    await section(ORG, p, '3.2.S.1', '3', 'Substance approved', 'approved');
-    const result = await assembleProjectDossierMap(ORG, p);
-    expect(result[0]).toMatchObject({ m: '3', pct: 50, tone: 'warn', sections: ['3.2.S.1 Substance approved', '3.2.s.1 Substance'] });
-  });
-});
-
-describe('recorded tracking details carried to core', () => {
-  it('keeps unmapped rows visible without assigning an incidental or contradictory module', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'record4', 'garbage4', 'Invalid section', 'locked');
-    await section(ORG, p, 'm2.5', 'garbage2', 'Invalid module', 'approved');
-    await section(ORG, p, 'm3.2.S.1', 'M4', 'Contradictory module', 'signed');
-    const result = await readProjectSectionTracking(pool, ORG, p);
-    expect(result).toMatchObject({ basis: 'section_tracking', state: 'measured', modules: [], unmapped: [
-      { code: 'm2.5', title: 'Invalid module', module: 'garbage2', status: 'approved', reason: 'INVALID_MODULE' },
-      { code: 'm3.2.S.1', title: 'Contradictory module', module: 'M4', status: 'signed', reason: 'MODULE_MISMATCH' },
-      { code: 'record4', title: 'Invalid section', module: 'garbage4', status: 'locked', reason: 'INVALID_SECTION_CODE' },
-    ] });
-    await expect(assembleProjectDossierMap(ORG, p)).rejects.toMatchObject({ code: 'SECTION_TRACKING_REVIEW_REQUIRED' });
-  });
-
-  it('retains stored code/title/status and unknown duplicate observations while withholding the dependent figure', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Approved old title', 'locked');
-    await section(ORG, p, 'm2.5', 'M2', 'New unassessed title', 'future_status');
-    const result = await readProjectSectionTracking(pool, ORG, p);
-    expect(result).toMatchObject({ modules: [{
-      counted: 1, complete: 0, unknownCount: 1, pct: null, tone: null,
-      sections: [{ code: 'm2.5', title: 'New unassessed title', status: 'future_status',
-        label: '2.5 New unassessed title', observedStatuses: ['future_status', 'locked'] }],
+describe('recorded section tracking retains its own basis and exact parent', () => {
+  it('returns recorded names, labels, stages and server-derived counts/percentage', async () => {
+    const p = await project();
+    await section(p,'m2.5','signed','M2','Clinical overview');
+    await section(p,'m2.7','drafting','M2','Clinical summary');
+    expect(await tracked(p)).toEqual({ basis:'section_tracking',state:'measured',unmapped:[],modules:[{
+      m:'2',label:'CTD summaries',counted:2,complete:1,unknownCount:0,pct:50,tone:'warn',sections:[
+        {code:'m2.5',title:'Clinical overview',status:'signed',label:'2.5 Clinical overview',observedStatuses:['signed']},
+        {code:'m2.7',title:'Clinical summary',status:'drafting',label:'2.7 Clinical summary',observedStatuses:['drafting']},
+      ],
     }] });
   });
 
-  it('chooses equal-rank duplicate states and titles deterministically', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'Z title', 'revision');
-    await section(ORG, p, 'm2.5', 'M2', 'B title', 'internal_review');
-    await section(ORG, p, 'm2.5', 'M2', 'A title', 'internal_review');
-    const result = await readProjectSectionTracking(pool, ORG, p);
-    expect(result).toMatchObject({ modules: [{ sections: [{ title: 'A title', status: 'internal_review', observedStatuses: ['internal_review', 'revision'] }] }] });
+  it('does not mix sibling/foreign rows or a foreign parent into the figure', async () => {
+    const p = await project(); const sibling = await project(); const foreign = await project(9);
+    await section(p,'m2.5','drafting');
+    await section(sibling,'m2.5','signed');
+    await section(p,'m4.2.1','locked','M4','Foreign section',9);
+    await section(foreign,'m5.3','locked','M5','Foreign parent');
+    expect(await tracked(p)).toMatchObject({modules:[{m:'2',counted:1,complete:0,pct:0,tone:'idle'}]});
+    expect(await tracked(foreign)).toMatchObject({state:'no_sections',modules:[],unmapped:[]});
+    expect(await tracked(p,9)).toMatchObject({state:'no_sections',modules:[],unmapped:[]});
   });
 
-  it('uses valid section syntax only when the module is absent, keeping regulatory section order', async () => {
-    const p = await project(ORG);
-    for (const code of ['3.2.R', '3.2.A', '3.2.P', '3.2.S.10', '3.2.S.2']) {
-      await section(ORG, p, code, '', code, 'signed');
-    }
-    const result = await readProjectSectionTracking(pool, ORG, p);
-    expect(result).toMatchObject({ modules: [{ m: '3', counted: 5, complete: 5, pct: 100, tone: 'ok', sections: [
-      { code: '3.2.S.2' }, { code: '3.2.S.10' }, { code: '3.2.P' }, { code: '3.2.A' }, { code: '3.2.R' },
-    ] }] });
+  it.each(['archived','deleted'])('excludes a %s parent without manufacturing tracked rows', async status => {
+    const p = await project(ORG,status); await section(p,'m2.5','signed');
+    expect(await tracked(p)).toMatchObject({state:'no_sections',modules:[],unmapped:[]});
   });
 
-  it('keeps null statuses unknown and raw code aliases distinct', async () => {
-    const p = await project(ORG);
-    await section(ORG, p, 'm2.5', 'M2', 'First stored code', 'signed');
-    await pglite.query('INSERT INTO project_sections(organization_id,project_id,section_code,module,title,status) VALUES($1,$2,$3,$4,$5,NULL)', [ORG, p, '2.5', null, 'Second stored code']);
-    const result = await readProjectSectionTracking(pool, ORG, p);
-    expect(result).toMatchObject({ modules: [{ counted: 2, complete: 1, unknownCount: 1, pct: null, tone: null,
-      sections: [{ code: '2.5', status: null, observedStatuses: [null] }, { code: 'm2.5', status: 'signed' }] }] });
+  it('does not follow an accepted parent that changes its program or client mapping', async () => {
+    const p = await project(); await section(p,'m2.5','signed');
+    await pg.query('UPDATE projects SET regulatory_program_id=$2 WHERE id=$1',[p,programFor(999)]);
+    expect(await tracked(p)).toMatchObject({state:'no_sections',modules:[],unmapped:[]});
+    await pg.query('UPDATE projects SET regulatory_program_id=$2,client_workspace_id=101 WHERE id=$1',[p,programFor(p)]);
+    expect(await tracked(p)).toMatchObject({state:'no_sections',modules:[],unmapped:[]});
   });
 });
 
-describe('tracking source states', () => {
-  it('does not query when no exact tracking anchor is supplied', async () => {
+describe('tracking syntax, raw identity and duplicate observations', () => {
+  it('retains most-advanced known duplicates and deterministic equal-rank title selection', async () => {
+    const p = await project();
+    await section(p,'m2.5','drafting','M2','Early title');
+    await section(p,'m2.5','signed','M2','Z title');
+    await section(p,'m2.5','signed','M2','A title');
+    expect(await tracked(p)).toMatchObject({modules:[{counted:1,complete:1,pct:100,tone:'ok',sections:[
+      {code:'m2.5',title:'A title',status:'signed',observedStatuses:['drafting','signed']},
+    ]}]});
+  });
+
+  it.each(['future_status','__proto__',null])('withholds the dependent figure for unknown state %s', async status => {
+    const p = await project(); await section(p,'m2.5',status);
+    expect(await tracked(p)).toMatchObject({modules:[{counted:1,complete:0,unknownCount:1,pct:null,tone:null,sections:[{status,observedStatuses:[status]}]}]});
+  });
+
+  it('cannot hide an unknown duplicate behind a complete record', async () => {
+    const p = await project();
+    await section(p,'m2.5','locked','M2','Approved old title');
+    await section(p,'m2.5','future_status','M2','New unassessed title');
+    expect(await tracked(p)).toMatchObject({modules:[{counted:1,complete:0,unknownCount:1,pct:null,tone:null,sections:[
+      {title:'New unassessed title',status:'future_status',observedStatuses:['future_status','locked']},
+    ]}]});
+  });
+
+  it('does not collapse distinct recorded raw code aliases', async () => {
+    const p = await project();
+    await section(p,'m2.5','signed'); await section(p,'2.5','drafting');
+    expect(await tracked(p)).toMatchObject({modules:[{counted:2,complete:1,pct:50,sections:[{code:'2.5'},{code:'m2.5'}]}]});
+  });
+
+  it('preserves invalid and contradictory placement as unmapped records', async () => {
+    const p = await project();
+    await section(p,'record4','locked','garbage4','Invalid section');
+    await section(p,'m2.5','approved','garbage2','Invalid module');
+    await section(p,'m3.2.S.1','signed','M4','Contradictory module');
+    expect(await tracked(p)).toMatchObject({state:'measured',modules:[],unmapped:[
+      {code:'m2.5',title:'Invalid module',module:'garbage2',reason:'INVALID_MODULE'},
+      {code:'m3.2.S.1',title:'Contradictory module',module:'M4',reason:'MODULE_MISMATCH'},
+      {code:'record4',title:'Invalid section',module:'garbage4',reason:'INVALID_SECTION_CODE'},
+    ]});
+  });
+
+  it('uses valid code fallback only for absent modules and preserves regulatory order', async () => {
+    const p = await project();
+    for (const code of ['3.2.R','3.2.A','3.2.P','3.2.S.10','3.2.S.2']) await section(p,code,'signed',null);
+    expect(await tracked(p)).toMatchObject({modules:[{m:'3',counted:5,complete:5,pct:100,sections:[
+      {code:'3.2.S.2'},{code:'3.2.S.10'},{code:'3.2.P'},{code:'3.2.A'},{code:'3.2.R'},
+    ]}]});
+  });
+});
+
+describe('explicit tracking source states', () => {
+  it('does not query without an accepted mapping or a valid anchor', async () => {
     const query = vi.fn();
-    expect(await readProjectSectionTracking({ query }, ORG, null)).toMatchObject({ basis: 'section_tracking', state: 'unanchored', modules: null, unmapped: null });
+    expect(await readProjectSectionTracking({query},ORG,null)).toMatchObject({state:'unanchored',modules:null,unmapped:null});
+    expect(await readProjectSectionTracking({query},ORG,41)).toMatchObject({state:'unanchored',modules:null,unmapped:null});
+    expect(await readProjectSectionTracking({query},ORG,41,mapping(42))).toMatchObject({state:'unanchored',modules:null,unmapped:null});
     expect(query).not.toHaveBeenCalled();
   });
 
-  it.each(['42P01', '42703'])('keeps missing tracking schema %s distinct from an empty measured store', async code => {
-    const query = vi.fn().mockRejectedValue(Object.assign(new Error('schema missing'), { code }));
-    expect(await readProjectSectionTracking({ query }, ORG, 41)).toMatchObject({ basis: 'section_tracking', state: 'unavailable', modules: null, unmapped: null });
+  it.each(['42P01','42703'])('keeps missing schema %s distinct from a measured empty source', async code => {
+    const query = vi.fn().mockRejectedValue(Object.assign(new Error('schema missing'),{code}));
+    expect(await readProjectSectionTracking({query},ORG,41,mapping(41))).toMatchObject({state:'unavailable',code:'STORE_UNAVAILABLE',modules:null,unmapped:null});
   });
 
-  it('throws unexpected failures and malformed rows rather than returning an empty or guessed map', async () => {
-    const failure = new Error('read failed');
-    await expect(readProjectSectionTracking({ query: vi.fn().mockRejectedValue(failure) }, ORG, 41)).rejects.toBe(failure);
-    const query = vi.fn().mockResolvedValue({ rows: [{ section_code: 'm2.5', module: 'M2', title: 'Clinical', status: { malformed: true } }] });
-    await expect(readProjectSectionTracking({ query }, ORG, 41)).rejects.toThrow('could not be read');
+  it('keeps failed or malformed sources unavailable without exposing error details', async () => {
+    const failure = new Error('private connection detail');
+    const failed = await readProjectSectionTracking({query:vi.fn().mockRejectedValue(failure)},ORG,41,mapping(41));
+    expect(failed).toMatchObject({state:'unavailable',code:'READ_FAILED',modules:null,unmapped:null});
+    expect(JSON.stringify(failed)).not.toContain('private connection detail');
+    const query = vi.fn().mockResolvedValue({rows:[{section_code:'m2.5',module:'M2',title:'Clinical',status:{malformed:true}}]});
+    expect(await readProjectSectionTracking({query},ORG,41,mapping(41))).toMatchObject({state:'unavailable',code:'READ_FAILED',modules:null,unmapped:null});
   });
 });

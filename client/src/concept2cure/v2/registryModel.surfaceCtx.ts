@@ -530,30 +530,5 @@ export const ANA_SURFACE_CTX = {
       'Summarize open deviations and CAPA status',
     ],
   },
-  dossier: {
-    here: 'the eCTD dossier — folder tree, documents and data room',
-    focus: 'Dossier · eCTD tree',
-    actions: [
-      {
-        label: 'Map a document to a leaf',
-        icon: 'gitBranch',
-        prompt: 'Map the active document to its correct eCTD leaf and lifecycle operation.',
-      },
-      {
-        label: 'What is unmapped?',
-        icon: 'alertTriangle',
-        prompt: 'List every required eCTD leaf that has no document mapped yet.',
-      },
-      {
-        label: 'Compile the dossier',
-        icon: 'sparkles',
-        prompt: 'Compile the current dossier and report completeness and readiness.',
-      },
-    ],
-    suggestions: [
-      'Show completeness by CTD module',
-      'Which leaves are missing?',
-      'Open the data room source files',
-    ],
-  },
+
 };

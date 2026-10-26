@@ -1,9 +1,8 @@
 /**
  * The existing project_sections module map, reached by the core dossier and
- * the legacy compatibility screen. Its recorded tracking source is separate
+ * its retained Author detail. Its recorded tracking source is separate
  * from c2c document sections and artifact-stage rollups.
  */
-import { pool } from '../../db';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import {
   preferredTrackingStatusOf, trackingModuleStats, trackingModuleLabel, trackingSectionLabel,
@@ -71,9 +70,12 @@ function assembleTracking(rows: Array<Record<string, unknown>>): Extract<Dossier
 }
 
 /** One org/project scoped read; caller supplies the currently admitted exact anchor. */
-export async function readProjectSectionTracking(db: TrackingQueryable, orgId: number, projectId: number | null): Promise<DossierSectionTracking> {
+export async function readProjectSectionTracking(db: TrackingQueryable, orgId: number, projectId: number | null,
+  admitted?: { programId: string; projectId: number; clientWorkspaceId: number | null }): Promise<DossierSectionTracking> {
   if (!Number.isSafeInteger(orgId) || orgId <= 0) throw new Error('A verified organization is required for section tracking.');
-  if (projectId === null || !Number.isSafeInteger(projectId) || projectId <= 0) {
+  if (projectId === null || !Number.isSafeInteger(projectId) || projectId <= 0 ||
+      !admitted || !admitted.programId || admitted.projectId !== projectId ||
+      !(admitted.clientWorkspaceId === null || (Number.isSafeInteger(admitted.clientWorkspaceId) && admitted.clientWorkspaceId > 0))) {
     return { basis: 'section_tracking', state: 'unanchored', modules: null, unmapped: null,
       reason: 'This project has no verified tracking record, so its tracked sections cannot be read.' };
   }
@@ -82,26 +84,16 @@ export async function readProjectSectionTracking(db: TrackingQueryable, orgId: n
       'SELECT ps.section_code, ps.module, ps.title, ps.status ' +
       'FROM project_sections ps JOIN projects p ON p.id = ps.project_id ' +
       'WHERE ps.organization_id = $1 AND p.organization_id = $1 ' +
-      'AND ps.project_id = $2 AND p.status IS DISTINCT FROM \'archived\'',
-      [orgId, projectId],
+      'AND ps.project_id = $2 AND p.status IS DISTINCT FROM \'archived\' AND p.status IS DISTINCT FROM \'deleted\' ' +
+      'AND p.regulatory_program_id=$3 AND p.client_workspace_id IS NOT DISTINCT FROM $4',
+      [orgId, projectId, admitted.programId, admitted.clientWorkspaceId],
     );
     return assembleTracking(rows);
   } catch (error) {
     if (['42P01', '42703'].includes(String((error as { code?: string })?.code))) {
-      return { basis: 'section_tracking', state: 'unavailable', modules: null, unmapped: null, reason: UNAVAILABLE_REASON };
+      return { basis: 'section_tracking', state: 'unavailable', code: 'STORE_UNAVAILABLE', modules: null, unmapped: null, reason: UNAVAILABLE_REASON };
     }
-    throw error;
+    return { basis: 'section_tracking', state: 'unavailable', code: 'READ_FAILED', modules: null, unmapped: null,
+      reason: 'Recorded section tracking could not be read.' };
   }
-}
-
-/** Preserve the old flat card envelope through the same typed reader and rules. */
-export async function assembleProjectDossierMap(orgId: number, projectId: number, db: TrackingQueryable = pool): Promise<Record<string, unknown>[]> {
-  const tracking = await readProjectSectionTracking(db, orgId, projectId);
-  if (tracking.modules === null) {
-    throw Object.assign(new Error(tracking.reason), { code: 'SECTION_TRACKING_STORE_UNAVAILABLE' });
-  }
-  if (tracking.unmapped.length > 0) {
-    throw Object.assign(new Error('Recorded section placement needs review before a module map can be supplied.'), { code: 'SECTION_TRACKING_REVIEW_REQUIRED' });
-  }
-  return tracking.modules.map(({ m, label, pct, tone, sections }) => ({ m, label, pct, tone, sections: sections.map(section => section.label) }));
 }

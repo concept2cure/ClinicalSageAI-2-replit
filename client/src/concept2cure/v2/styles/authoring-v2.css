@@ -811,58 +811,7 @@
     font-size: 12.5px;
   }
 
-  /* ── Dossier map ── */
-  .dossier {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: 840px;
-  }
-  .dmod {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 15px 18px;
-    background: var(--bg-050);
-  }
-  .dmod-h {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .dmod-m {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent-200);
-    width: 34px;
-  }
-  .dmod-l {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .dmod-bar {
-    height: 5px;
-    border-radius: 3px;
-    background: var(--bg-200);
-    margin: 11px 0;
-    overflow: hidden;
-  }
-  .dmod-bar-f {
-    height: 100%;
-    border-radius: 3px;
-  }
-  .dmod-bar-f[data-tone='ok'] {
-    background: var(--success);
-  }
-  .dmod-bar-f[data-tone='warn'] {
-    background: var(--warning);
-  }
-  .dmod-sec {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+  /* Shared small tags: CroPortfolio and Orchestration still use these. */
   .dmod-chip {
     font-size: 11px;
     font-family: var(--font-mono);

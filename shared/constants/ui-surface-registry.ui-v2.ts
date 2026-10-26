@@ -280,22 +280,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     notes: 'Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced. Literature citations are checked against PubMed and CrossRef — an unconfirmed citation is flagged, never assumed. Still sample-backed, and labelled as such until it is wired to live data.',
     engineering: 'POST /sources/analyze (claimsFound); verification via /api/citations/verify (verified|not_found|unverifiable|error). Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts.',
   },
-  {
-    id: 'dossier',
-    label: 'Dossier',
-    navTier: 'project',
-    layoutMode: 'dossier',
-    group: 'workspace',
-    icon: 'folder',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/ectd', '/api/documents', '/api/corpus'],
-    anaToolFamilies: ['draft_section', 'get_document'],
-    sharedContract: '@shared/types/document-contract',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.',
-  },
+
   {
     id: 'conversation-thread',
     label: 'Conversation',
