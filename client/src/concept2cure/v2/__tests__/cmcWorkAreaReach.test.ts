@@ -14,7 +14,7 @@
  * At the same time three deterministic engines we had built were not on any
  * screen. Measured, not assumed: a reachability sweep over all 99 CMC server
  * routes against every file in `client/src` found exactly three with no caller
- * (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass6/):
+ * (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass7/):
  *
  *     POST /api/cmc/stability-studies/:id/trending      out-of-trend + drift
  *     GET  /api/cmc/projects/:id/process-capability      Pp/Ppk/Cp/Cpk

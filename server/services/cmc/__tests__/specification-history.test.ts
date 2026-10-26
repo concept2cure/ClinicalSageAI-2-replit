@@ -7,7 +7,7 @@
  * `GET /api/cmc/specifications/:id/history` is as old as the register and had
  * NO caller anywhere in `client/src` — measured by a reachability sweep over
  * all 99 CMC routes against every client source file
- * (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass6/). So the register an
+ * (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass7/). So the register an
  * inspector asks about first — the limits a batch is released against — was
  * the only one whose changes could not be read in the product, while the other
  * sixteen gained the §11.10(e) panel on 2026-10-18.

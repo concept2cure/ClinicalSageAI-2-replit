@@ -1,4 +1,4 @@
-# D2 — The CMC work area (pass 6)
+# D2 — The CMC work area (pass 7)
 
 Launch row D2. Design and the pass sequence: `docs/design/CLIENT_JOURNEY_2026-10-25.md`.
 Decision: P-47 in `docs/LAUNCH_DEFINITION_OF_DONE.md`. CMC / Module 3 is in the catalog
@@ -7,7 +7,7 @@ baseline `50c0280b`.
 
 ## Why this pass exists
 
-Passes 1–5 reorganised the way in — a short rail, a start-here Home, six project steps,
+Passes 1–6 reorganised the way in — a short rail, a start-here Home, six project steps,
 each step saying what to do on it. **No pass touched a work area.** Opened as a client,
 CMC / Module 3 was still what it had always been: nine nouns in a tab strip, and the
 founder said so — *"I was very dismayed to see the CMC UI and the lack of features we

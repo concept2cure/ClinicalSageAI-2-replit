@@ -247,7 +247,7 @@ The what-exists critic also found Home's setup checklist offered to administrato
 Not fixed here, seen on the way: the editor's draft request reads "Draft preparation Target Product Profile …" (the
 section's code is spliced into the sentence). Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/first-session/`.
 
-## Pass 6 — the CMC work area says what to do, and reaches what we built (done, same day)
+## Pass 7 — the CMC work area says what to do, and reaches what we built (done, 2026-10-26)
 
 Passes 1–5 reorganised the way IN and touched no work area. Opened as a client, CMC /
 Module 3 was still nine nouns in a tab strip: *"I was very dismayed to see the CMC UI and
@@ -286,4 +286,4 @@ answered 500 — the encoding now follows the column.
 Not done, and why: `POST /sections/:p/:k/refresh` stays without a client caller, recorded
 in the reachability test with the door that serves it (`/build-section/:p/:k`, which also
 bridges the compile to its governed artifact); converging the two is its own change.
-Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass6/`.
+Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass7/`.

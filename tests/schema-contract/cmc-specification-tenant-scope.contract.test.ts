@@ -243,7 +243,7 @@ describe('quality_specifications is scoped to the caller tenant, and only to it'
 
   /* ── Two expectations changed on 2026-10-25, and why ─────────────────────
      The history route was reached from the product for the first time
-     (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass6/) and now answers the
+     (docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass7/) and now answers the
      same envelope as GET /api/cmc/register-history/:register/:id, so one panel
      reads every register's history and no second one exists to drift. Two
      things this file asserted therefore moved:
