@@ -1,4 +1,4 @@
-# Slice A.1's failing affected test files (regression verifier, tree), run again in a git archive copy of 7d1f7f316: file passed failed
+# Slice A.1's failing affected test files (regression verifier, tree), run again in a git archive copy of 7d1f7f316: file passed failed. Every one fails there too.
 client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx 0 3
 client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx 13 2
 client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx 12 1
@@ -19,5 +19,6 @@ client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx 
 client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx 0 3
 client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx 1 8
 server/middleware/__tests__/launch-scope-api-gate.test.ts 37 5
-server/middleware/__tests__/launch-scope-api-gate.test.ts 37 5 (same 5 tests fail in the tree)
+server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts 0 5
+server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts 87 6
 # liveDriveDefaults: failed in the tree under load; re-run in the tree: 17 passed.
