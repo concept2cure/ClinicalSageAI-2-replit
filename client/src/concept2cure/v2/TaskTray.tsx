@@ -8,7 +8,7 @@ import { capturedActorHeaders } from '@/utils/authToken';
 import { surfaceLeaveRefusal } from './navParams';
 import { taskActorScope, taskTargetLocation, type TaskActorScope } from './taskTarget';
 import { NotificationOpenButton } from './NotificationOpenButton';
-import { NotificationPreferences } from './NotificationPreferences';
+import { NotificationPreferences, NOTIFICATION_PREFERENCES_CHANGED } from './NotificationPreferences';
 import { OpenWorkGroups, useOpenWorkReads, type MyQueue, type MyWork, type MyWorkItem, type PendingApproval } from './OpenWork';
 
 /* ================================================================
@@ -70,6 +70,20 @@ function useTaskTrayOwnership(scope: TaskActorScope | null, onNav: TaskTrayProps
   return { stillOwned, beforeNotificationOpen };
 }
 
+function useNotificationPreferenceRefresh(scope: TaskActorScope | null, stillOwned: () => boolean,
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>) {
+  useEffect(() => {
+    const refresh = (event: Event) => {
+      const changed = (event as CustomEvent<TaskActorScope>).detail;
+      if (changed?.userId === scope?.userId && changed?.organizationId === scope?.organizationId && stillOwned()) {
+        setRefreshKey(key => key + 1);
+      }
+    };
+    window.addEventListener(NOTIFICATION_PREFERENCES_CHANGED, refresh);
+    return () => window.removeEventListener(NOTIFICATION_PREFERENCES_CHANGED, refresh);
+  }, [scope?.userId, scope?.organizationId, stillOwned, setRefreshKey]);
+}
+
 export function TaskTray(props: TaskTrayProps) {
   const { user } = useAuth();
   const scope = taskActorScope(user);
@@ -82,6 +96,8 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [navigationError, setNavigationError] = useState('');
   const { stillOwned, beforeNotificationOpen } = useTaskTrayOwnership(scope, onNav);
+
+  useNotificationPreferenceRefresh(scope, stillOwned, setRefreshKey);
 
   // The badge needs a count while the tray is closed; the heavier sources load
   // when it opens. refreshKey re-pulls after a mutation (mark read).
@@ -180,7 +196,7 @@ function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskAct
           openPreferences={() => { if (!stillOwned()) { setNavigationError('Your signed-in account or organization changed. Reopen Your work.'); return; } setOpen(false); setPreferencesOpen(true); }}
         />
       )}
-      {preferencesOpen && <NotificationPreferences onClose={()=>setPreferencesOpen(false)} onSaved={()=>setRefreshKey(key=>key+1)}/>}
+      {preferencesOpen && scope && <NotificationPreferences scope={scope} onClose={()=>setPreferencesOpen(false)}/>}
     </>
   );
 }

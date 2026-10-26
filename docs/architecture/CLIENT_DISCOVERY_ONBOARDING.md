@@ -78,3 +78,14 @@ secret may no longer be recoverable. The console reloads the directory before
 a fresh action. Do not automatically retry an unconfirmed create or rotation.
 Deletion confirms its audit record through `X-Audit-Row-Persisted` and
 `X-Audit-Row-Chained`; other mutations return `auditTrail` with the record.
+
+Account setup also reaches the existing per-organization in-app notification
+choices. Its expandable section and the inbox dialog share
+`NotificationPreferenceSettings` and `/api/mdx/notification-subscriptions`.
+Requests use the canonical captured-actor bearer headers, strict category and
+boolean validation, and confirmation of the returned user, organization,
+category and value. Obsolete replies cannot acknowledge another account's
+save. Confirmed choices refresh the existing inbox badge, and readback retains
+keyboard focus. Defaults are shown only after a valid preferences read.
+Email, push, sound and digest settings from the separate legacy personal
+preferences store remain outside these working in-app controls.

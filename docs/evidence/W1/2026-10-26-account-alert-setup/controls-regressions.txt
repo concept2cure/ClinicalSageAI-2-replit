@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account 353ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 30ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent 64ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request 101ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 148ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen 96ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words 52ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it 143ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 34ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing does not need one, removal carries no such warning 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 216ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 107ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 77ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 63ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 63ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 73ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 57ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 30ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 44ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 43ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 46ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 41ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 41ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 5ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 5ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 232ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual task_update producer preference from its labelled mounted control 281ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual schedule_milestone_slip producer preference from its labelled mounted control 122ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 97ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 89ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 15ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 7ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 167ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 19ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 17ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write 130ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it 79ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account 82ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 89ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 77ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > blocks duplicate writes and drops a reply after the settings close 67ms
+
+ Test Files  4 passed (4)
+      Tests  55 passed (55)
+   Start at  21:11:59
+   Duration  8.67s (transform 1.16s, setup 345ms, import 1.86s, tests 4.20s, environment 1.75s)

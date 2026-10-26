@@ -12,10 +12,14 @@ vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()),
   apiRequest: mocks.request,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: mocks.user }) }));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: mocks.user }), authService: { getUser: () => mocks.user } }));
+vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token, capturedActorHeaders: (scope: { userId: number; organizationId: number }) => {
+  if (!mocks.token || scope.userId !== Number(mocks.user?.id) || scope.organizationId !== Number(mocks.user?.organizationId)) throw new Error('Session changed');
+  return { Authorization: `Bearer ${mocks.token}`, 'x-organization-id': String(scope.organizationId) };
+} }));
 
 import { AccountOnboardingSettings } from '../AccountOnboardingSettings';
+import { TaskTray } from '../TaskTray';
 import { REPORT_PERSONAS } from '@shared/constants/domain/report-personas';
 
 const INBOX = '/api/tenant-users/invitations/mine';
@@ -236,5 +240,27 @@ describe('self-service onboarding refuses unavailable sessions', () => {
     open();
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(mocks.request).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('Account reaches existing in-app alert setup', () => {
+  it('loads on request, saves the current recipient preference and refreshes the existing inbox badge', async () => {
+    let enabled = true;
+    const path = '/api/mdx/notification-subscriptions';
+    routes.set(`GET ${path}`, () => json(200, { data: [{ category: 'system', in_app_enabled: enabled }] }));
+    routes.set(`PUT ${path}/system`, () => { enabled = false; return json(200, { data: { organization_id: 1, user_id: 33, category: 'system', in_app_enabled: false } }); });
+    routes.set('GET /api/task-management/my-work', () => json(200, { data: { items: [], total: 0, overdue: 0, dueSoon: 0, blocked: 0, approvalsPending: 0 } }));
+    routes.set('GET /api/mdx/notifications/unread-count', () => json(200, { data: { unread: enabled ? 1 : 0 } }));
+    render(<><TaskTray onNav={vi.fn()} /><AccountOnboardingSettings userId="33" organizationId="1" /></>);
+    await screen.findByRole('button', { name: /Your work.*1 item waiting/ });
+    expect(mocks.request.mock.calls.some(([, url]) => url === path)).toBe(false);
+    fireEvent.click(within(section('In-app notifications')).getByRole('button', { name: 'Open notification choices' }));
+    const checkbox = await within(section('In-app notifications')).findByRole('checkbox', { name: 'System notices' });
+    fireEvent.click(checkbox);
+    await screen.findByText('Notification choice saved.');
+    await waitFor(() => expect((within(section('In-app notifications')).getByRole('checkbox', { name: 'System notices' }) as HTMLInputElement).checked).toBe(false));
+    await screen.findByRole('button', { name: 'Your work' });
+    expect(mocks.request).toHaveBeenCalledWith('PUT', `${path}/system`, { inAppEnabled: false }, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
   });
 });

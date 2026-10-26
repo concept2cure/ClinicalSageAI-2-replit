@@ -254,9 +254,10 @@ export const shapeMismatch = (path: string) => `unexpected response shape for ${
 export async function liveGetOrNull<T>(
   path: string,
   guard?: ShapeGuard<T>,
+  headers?: Record<string, string>,
 ): Promise<DataResult<T>> {
   try {
-    const res = await apiRequest('GET', path);
+    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
     if (!res.ok) {
       return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
     }

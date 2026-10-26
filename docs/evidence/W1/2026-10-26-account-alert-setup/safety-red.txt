@@ -1,0 +1,12 @@
+Original NotificationPreferences implementation at 4334c3fc0. Full unmodified stdout/stderr is retained in safety-red.txt.gz.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it
+ FAIL  client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Duration  26.45s (transform 181ms, setup 135ms, import 232ms, tests 25.50s, environment 460ms)
