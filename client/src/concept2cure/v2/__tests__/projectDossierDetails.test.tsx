@@ -15,7 +15,7 @@ function read(): DossierState {
   return {
     retry: vi.fn(),
     state: {
-      loading: false,
+      loading: false, empty: false,
       data: {
         projectId: 'project', measuredAt: updated,
         home: { state: 'measured', pct: 0, complete: 0, counted: 2 }, markets: [],

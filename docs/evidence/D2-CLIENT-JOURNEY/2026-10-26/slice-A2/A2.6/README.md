@@ -88,6 +88,8 @@ remain callable; this slice does not authorize their removal.
   dossier/readiness and onboarding suites pass: **47 tests in 4 suites**.
 - Required pre-push gates, including the zero-baseline TypeScript check, run
   during publication; no bypass is used.
+  The first typecheck caught a missing required `empty` flag in the new test
+  fixture. The fixture was corrected; production state handling was unchanged.
 
 Raw outputs are compressed beside this file. Screenshots and selected result
 JSON contain only synthetic test data; auth traces/tokens are not included.
