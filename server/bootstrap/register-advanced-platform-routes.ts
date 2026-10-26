@@ -240,7 +240,9 @@ export async function registerAdvancedPlatformRoutes({
     authenticateToken,
   );
 
-
+  // ── Workspace Projects (inline handlers — use pool directly) ──
+  // authenticateToken runs first to populate req.user; the handler's
+  // own org-context check then enforces tenant presence.
   app.get('/api/workspace/projects', authenticateToken, async (req: any, res: any) => {
     const rawOrgId =
       req.tenantContext?.organizationId ||

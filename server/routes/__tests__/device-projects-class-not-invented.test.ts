@@ -1,6 +1,6 @@
 /**
- * The retired POST cannot write a class. Existing updates retain the governed
- * class vocabularies and allow a mistaken classification to be withdrawn.
+ * The alternate POST /api/device-projects is retired in A2.9. The retained PUT
+ * still uses the governed declared-class vocabularies and supports withdrawal.
  *
  * ── What it did ─────────────────────────────────────────────────────────────
  * The handler destructured `deviceClass = 'II'`. A create that did not state a
@@ -62,6 +62,7 @@ vi.mock('../../services/audit/audit-write-outcome', () => ({
 import request from 'supertest';
 import express from 'express';
 import deviceProjectsRouter from '../device-projects';
+import { MDR_DECLARED_CLASSES } from '@shared/regulatory/device-class';
 
 const app = express();
 app.use(express.json());
@@ -81,17 +82,25 @@ beforeEach(() => {
   H.existing = undefined;
 });
 
-describe('the retired device project creator', () => {
-  it.each([{}, { deviceClass: 'III' }, { deviceClass: 'IV' }])('returns 404 without recording or changing a class: %j', async body => {
-    expect((await create(body)).status).toBe(404);
+describe('the retired alternate device creator', () => {
+  it.each([{}, { deviceClass: 'III' }, { deviceClass: 'IV' }])('cannot write with payload %j', async body => {
+    // Stated and unstated classes now enter through canonical project intake.
+    const res = await create(body);
+    expect(res.status).toBe(404);
     expect(H.inserted).toEqual([]);
     expect(H.updated).toEqual([]);
   });
 });
 
-describe('withdrawing a class that was stated in error', () => {
+describe('retained updates preserve the stated-class rules', () => {
   beforeEach(() => {
     H.existing = { id: 51, organizationId: 9, metadata: { deviceClass: 'II', manufacturer: 'Acme' } };
+  });
+
+  it.each([...new Set([...MDR_DECLARED_CLASSES, 'I', 'II', 'III'])])('accepts stated class %s on an existing record', async deviceClass => {
+    const res = await request(app).put('/api/device-projects/51').send({ deviceClass });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect((H.updated.at(-1)!.metadata as Record<string, unknown>).deviceClass).toBe(deviceClass);
   });
 
   it('is possible, by patching it to null', async () => {

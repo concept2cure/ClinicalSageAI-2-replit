@@ -1,7 +1,19 @@
 /**
- * Read existing org-scoped program journeys and their recorded stage overlays.
- * A2.9 retires the separate creation/stage-write routes; Projects owns project
- * creation through /api/c2c/projects. Existing journey rows remain readable.
+ * Program-journey spine — retained organization-bound legacy read.
+ *
+ * GET /api/program-journey → the org's program-journey instances (segment scoped:
+ * pharma BX-204 · NDA, biotech BX-301 · BLA), held in the REAL, org-scoped store
+ * `program_journeys` + `program_journey_stages` (program-journey-service.ts),
+ * each shaped to exactly the
+ * keys the v2 BiopharmaJourney surface renders ({ seg, code, name, app, modality,
+ * indication, pathway, sponsor, agency, readiness, current, target, overlay, modules,
+ * clock, haqs, contra, blockers }). The per-stage overlay is assembled from REAL
+ * per-stage rows.
+ *
+ *   GET  /api/program-journey                       → list (honest empty when none)
+ *
+ * Org scoped; 403 without org context; GET fails to an empty list on 42P01 so an
+ * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
 import { listProgramJourneys } from '../services/program-journey/program-journey-service';

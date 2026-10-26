@@ -24,8 +24,7 @@ the production client/server/audit-verifier build. Merged proof is under
 A2.8 resolves `mdx` to Projects with the existing MDX filter, through the same
 destination/action owner. Its red/green routing, native portfolio and scope
 regression proof is in `slice-A2/A2.8/README.md`. The device-workstream shell,
-target and catalogue remain for A2.10. A2.9 retires the duplicate HTTP creators with 427-test/native/database proof in
-`slice-A2/A2.9/`. Next is A2.10 (parity-gated folds).
+target and catalogue remain for A2.10. A2.9 retirement is complete; A2.10 per-function parity checks are next.
 The inventory below describes
 discovery-time behavior.
 
@@ -726,14 +725,16 @@ filter lifetime rather than introduce another persistence store or router.
 
 ### A2.9 Retire the uncalled creators, and fix the unchecked workspace write by deleting it
 
-**Implemented 2026-10-26:** twelve duplicate POSTs across eight files and their
-unreachable private creation helpers are retired. Active readers/updates, stored
-records, canonical intake and the two explicitly deferred internal rule/quota
-owners remain. The source contract requires twelve absent writes, seventeen
-retained registrations and four exact reasoned insert owners. Proof: 427
-combined tests, 20 native database audit checks, the core wizard/12-404 browser
-flow and production build in `slice-A2/A2.9/README.md`. Final accepted-tree
-TypeScript and publication gates remain required.
+Implemented 2026-10-26: 12 enumerated POSTs and three dead AnA controller methods
+retired; 50 retained HTTP registrations and 11 retained method bodies remain
+byte-identical. Canonical wizard/intake, data and the two explicitly deferred
+internal PM writers remain. The source guard runs in CI and normal pre-push,
+with red-first actual-source and planted-writer proofs. Qualification: 523
+tests in 33 suites, 24 native PostgreSQL audit/role checks, both real Create/refusal
+browser flows and production build. Existing-owner inventory and limits:
+`A2_9_PROJECT_CREATION_RETIREMENT.md`; evidence:
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`.
+Next: A2.10's per-function parity checks, without automatic shell removal.
 
 - **Delete these handlers, not their routers:**
   - `concept2cure.ts:1047-1135`, :1934-1990

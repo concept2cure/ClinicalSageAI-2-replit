@@ -24,7 +24,11 @@ async function checkRetiredCreators(page: Page) {
         body: JSON.stringify({ name: 'Retired synthetic creator probe', deviceName: 'Synthetic device',
           submissionType: 'IND', type: 'ind', clientId: 999999, clientWorkspaceId: 999999,
           action: { category: 'project', action: 'create', parameters: { name: 'Retired synthetic probe' } } }) });
-      results.push({ path, status: response.status });
+      // Under normal release enforcement some paths are refused before the
+      // router. Record only the bounded policy code, never a response body.
+      const refusal = response.status === 403 ? await response.json() : null;
+      results.push({ path, status: response.status,
+        ...(response.status === 403 ? { code: refusal?.error?.code ?? null } : {}) });
     }
     return { before, results, after: await read() };
   }, retired);
@@ -79,7 +83,11 @@ test('retired creators refuse writes while the Projects wizard creates the canon
   const probe = await checkRetiredCreators(page);
   expect(probe.before).toEqual({ status: 200, ids: [receipt.data.id] });
   expect(probe.after).toEqual(probe.before);
-  expect(probe.results).toEqual(retired.map(path => ({ path, status: 404 })));
+  expect(probe.results.map(result => result.path)).toEqual(retired);
+  for (const result of probe.results) {
+    if (result.status === 403) expect(result.code).toBe('LAUNCH_SCOPE');
+    else expect(result.status).toBe(404);
+  }
   await testInfo.attach('creator-retirement-result.json', { body: JSON.stringify({
     canonicalCreateStatus: response.status(), acceptedAnchor: true, createdProjectReached: true,
     scaffoldReadStatus: scaffoldResponse.status(), moduleRows: scaffold.rows.length,

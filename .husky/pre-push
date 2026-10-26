@@ -492,6 +492,16 @@ if ! npm run --silent ci:program-ownership-single-source:selftest 2>&1 || ! npm 
 fi
 echo "   ✅ One program-ownership check."
 
+# D2/A2.9: canonical intake owns creation, not merely the best-known UI door.
+# The self-test plants alternate SQL/ORM writers and checks bounded exceptions.
+echo "   Checking that project creation stays with its recorded owners..."
+if ! npm run --silent ci:project-creation-owners:selftest 2>&1 || ! npm run --silent ci:project-creation-owners 2>&1; then
+  echo "🚫 ERROR: An alternate project creator or an unbounded writer exception."
+  echo "   Use Projects -> POST /api/c2c/projects; keep deferred writers explicit."
+  exit 1
+fi
+echo "   ✅ Project creation stays with its recorded owners."
+
 # ── A Part 11 audit row written and its outcome discarded (unconditional) ──
 #
 # `auditService.logAction` does not reject when persistence fails. That is

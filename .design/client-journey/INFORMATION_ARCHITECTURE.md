@@ -1297,10 +1297,13 @@ Its red/green routing and native portfolio proof is in `slice-A2/A2.8/README.md`
 the reconciled concurrent changes pass 398 tests in 30 suites, both native flows
 and the production build (`slice-A2/A2.8/merged/`). Earlier source qualifications remain separate;
 the existing device-workstream shell, target and catalogue remain for A2.10.
-A2.9 retires twelve duplicate HTTP writes and their unreachable creation helpers while preserving core intake,
-stored readers/updates and the two deferred internal rule/quota owners. Its source-owner/retained-route contract,
-427-test regression, 20 real database audit checks, native wizard/12-404 flow and build are recorded in
-`slice-A2/A2.9/`. Next is **A2.10** (`SLICE_A2_PLAN.md`), each remaining fold gated by function parity.
+A2.9 retires 12 alternate creation POSTs and three dead controller methods while
+preserving canonical intake, all 50 retained HTTP registrations, data and the
+two explicitly deferred internal writers. A red-first bounded-writer/retired-route
+contract runs in CI and pre-push; 523 focused tests, 24 native PostgreSQL checks,
+both canonical Create/refusal browser flows and build pass (`slice-A2/A2.9/README.md`).
+Next is **A2.10** (`SLICE_A2_PLAN.md`), whose remaining folds keep their per-function
+parity and admission prerequisites; no shell is removed by this creator retirement.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

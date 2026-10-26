@@ -1,7 +1,7 @@
 /**
  * Concept2Cure Routes - Unit Tests
  *
- * Covers project creation, conversation creation, artifact creation,
+ * Covers retired alternate project creators, conversation creation, artifact creation,
  * and electronic signature creation paths.
  *
  * @module tests/routes/concept2cure.test
@@ -270,10 +270,6 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
-/* The blueprint's milestones reach the board through the one seeder, which
-   writes each with its task.create row in one transaction
-   (server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts).
-   Here: the route hands it the project, its creator and the blueprint. */
 // Import after mocks
 import concept2cureRouter from '../../server/routes/concept2cure';
 // The artifact domain moved to its own router (L53, slice 8).
@@ -296,10 +292,13 @@ describe('Concept2Cure API', () => {
     vi.clearAllMocks();
   });
 
-  it('keeps legacy project create and clone handlers retired', () => {
-    for (const path of ['/projects', '/projects/:id/duplicate']) {
-      expect(concept2cureRouter.stack.some((layer: any) => layer.route?.path === path && layer.route?.methods?.post)).toBe(false);
-    }
+  it.each(['/projects', '/projects/:id/duplicate'])('retires the alternate POST %s creator', path => {
+    // Creation belongs to Projects.tsx → POST /api/c2c/projects; its canonical
+    // anchor/quota/actor behavior is qualified by projects-create-anchor.pglite.
+    const registered = concept2cureRouter.stack.some((layer: any) =>
+      layer.route?.path === path && layer.route?.methods?.post,
+    );
+    expect(registered).toBe(false);
   });
 
   it('should create a conversation for a project', async () => {

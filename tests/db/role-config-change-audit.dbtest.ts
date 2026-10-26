@@ -15,7 +15,7 @@
  *
  * Fix round: the connector for Claude (P1-47, ADR-0014 §10) is its owner's
  * setting. An administrator naming `claudeConnector` on the controller's doors
- * (PATCH /settings, /ai-config) or on PATCH
+ * (PATCH /settings and /ai-config) or on PATCH
  * /api/organizations/:id/settings is refused, stores nothing and writes no row.
  *
  * Mounted as production mounts them: SCIM at /scim/v2 under the system scope
@@ -464,6 +464,14 @@ describe('the AnA platform controller writes settings through the tenant setting
 describe('the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10)', () => {
   const asAdmin = () => auth(accessToken(user.admin, ORG, 'admin'));
   const CONNECTOR = { claudeConnector: { enabled: true } };
+  const execute = (category: string, parameters: object) => ({
+    id: 'dbp149-connector',
+    category,
+    action: 'update',
+    description: 'dbp149 administrator attempt',
+    requiresConfirmation: false,
+    parameters,
+  });
   const auditCount = async () =>
     Number((await one('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id = $1', [ORG]))?.n);
 
@@ -500,14 +508,25 @@ describe('the connector for Claude is not a general setting on these doors (P1-4
     expect(await auditCount(), 'a row was written for a change that was not made').toBe(rowsBefore);
   });
 
+  it.each(['settings', 'ai_config'].flatMap(category => [false, true].map(requiresConfirmation => ({ category, requiresConfirmation }))))(
+    'the retired execute door cannot change $category settings or propose confirmation=$requiresConfirmation', async ({ category, requiresConfirmation }) => {
+    const before = await settingsOf();
+    const rowsBefore = await auditCount();
+    const res = await request(app).post('/api/ana/platform/execute').set(asAdmin()).send({ ...execute(category, CONNECTOR), requiresConfirmation });
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(res.body.result?.pendingAction).toBeUndefined();
+    expect(await settingsOf()).toEqual(before);
+    expect(await auditCount()).toBe(rowsBefore);
+  });
+
   it('control: the same administrator, on the same doors, still changes another setting', async () => {
     const viaController = await request(app).patch('/api/ana/platform/settings').set(asAdmin()).send({ defaultModel: 'dbp149-control' });
     expect(viaController.status, JSON.stringify(viaController.body)).toBe(200);
-    const viaDirectSettings = await request(app)
+    const viaSettings = await request(app)
       .patch('/api/ana/platform/settings')
       .set(asAdmin())
       .send({ weeklyDigestEnabled: true });
-    expect(viaDirectSettings.status, JSON.stringify(viaDirectSettings.body)).toBe(200);
+    expect(viaSettings.status, JSON.stringify(viaSettings.body)).toBe(200);
     const viaOrganizations = await request(app)
       .patch(`/api/organizations/${ORG}/settings`)
       .set(asAdmin())

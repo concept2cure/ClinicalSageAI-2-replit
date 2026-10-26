@@ -7,8 +7,9 @@
  *   1. READ & MODIFY organization settings (branding, preferences, defaults)
  *   2. MANAGE project configuration (templates, defaults, compliance frameworks)
  *   3. CONTROL feature access & module activation per organization
- *   4. MONITOR & OPTIMIZE usage patterns with proactive recommendations
- *   5. CONFIGURE client-specific AI behavior (system prompts, guardrails, models)
+ *   4. CONFIGURE existing projects and compliance defaults
+ *   5. MONITOR & OPTIMIZE usage patterns with proactive recommendations
+ *   6. CONFIGURE client-specific AI behavior (system prompts, guardrails, models)
  *
  * Security model:
  *   - All actions require an active paid subscription (paymentStatus === 'active')
@@ -50,8 +51,7 @@ export type AnaActionCategory =
   | 'feature'         // module/feature toggles
   | 'ai_config'       // AI model, prompt, guardrail config
   | 'compliance'      // regulatory framework management
-  | 'usage'           // usage analysis & optimization
-  | 'onboarding';
+  | 'usage';          // usage analysis & optimization
 
 export interface AnaActionResult {
   success: boolean;
@@ -356,6 +356,8 @@ class AnaPlatformController {
       };
     });
   }
+
+  // ── Project Management ──────────────────────────────────
 
   /**
    * Update project configuration.

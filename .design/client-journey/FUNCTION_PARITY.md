@@ -226,7 +226,7 @@ Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared
 - [ ] Open blockers with owner and due date. From `BiopharmaJourney.tsx:642-655`. Goes to: Submit's market blockers and ProjectWorkPanel. There is no source for RTF risk per module. Not real today.
 - [ ] AnA selects a stage or switches the segment. From `BiopharmaJourney.tsx:265-294`. Goes to: repoint the actions and the nav entry to project-home. Not real today.
 - [ ] AnA reads the program and its stages. From `BiopharmaJourney.tsx:303-351`. Goes to: Project home's AnA context. No further work is named. Not real today.
-- [ ] Record a journey and advance a stage (audited routes). From `program-journey.routes.ts:67,117`. Goes to: nothing to carry as a write. Whether to keep the routes is a founder decision. Not real today.
+- [x] Retire the uncalled journey-create/stage POSTs. The later `SLICE_A2_PLAN.md` A2.9 explicitly specifies their retirement; source/route red-green checks confirm no stale HTTP write. Journey GET, services and stored data remain. No canonical stage write or completed journey fold is claimed; the remaining A2.10 parity row stays open. Evidence: `slice-A2/A2.9/README.md`.
 
 #### From `dossier-map` (folded in A2.7)
 The incoming A2.7 fold retires the screen, HTTP route, standalone registry/navigation identities and old suggested capability; stored tracking records and subscriptions remain. Its prior native/retirement qualification is preserved. The merged tracking protections below passed 294 combined tests in 27 files, two native flows and the production build; proof is in `slice-A2/A2.7b/merged/`. Mandatory publication gates still apply.

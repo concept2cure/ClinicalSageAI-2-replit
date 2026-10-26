@@ -31,13 +31,12 @@ const log = createScopedLogger('projects-management');
 //   · the module entitlement gate mounted across every route family
 //     (/api/projects belongs to the `projects` and `project-home` modules —
 //     server/middleware/moduleEntitlementGate.ts).
-// Project quotas are enforced where the project is created
-// (atomicCreateProject reads the workspace and organization limits). One
+// Project creation and quotas belong to POST /api/c2c/projects (A2.9). One
 // decision per question; this router asks none of them twice.
 
 const router = Router();
 
-
+// Validation schemas
 const updateProjectSchema = z.object({
   name: z.string().min(3, 'Project name must be at least 3 characters').optional(),
   description: z.string().optional(),
@@ -129,7 +128,6 @@ router.get('/:projectId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch project' });
   }
 });
-
 
 /**
  * DELETE /api/projects/:projectId

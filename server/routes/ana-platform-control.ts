@@ -39,7 +39,7 @@ const SETTINGS_NOT_SAVED = 'The settings could not be saved.';
  * IAM-20 (security review 2026-10-01): every write below changes
  * organisation-wide configuration (settings, AI configuration, compliance
  * defaults and module toggles). Behind the session gate alone, any member
- * could do all of it. Writes need the owner or admin role,
+ * could change these settings. Writes need the owner or admin role,
  * as tenant-config's settings writes do; the role is the one requireRole reads
  * from the membership on every request. Reads are unchanged.
  */
@@ -164,6 +164,8 @@ router.post('/modules/toggle', async (req: Request, res: Response) => {
     notSaved(res, 'toggle_module', SETTINGS_NOT_SAVED, err);
   }
 });
+
+// ── Project Management ────────────────────────────────────
 
 /**
  * PATCH /api/ana/platform/projects/:projectId

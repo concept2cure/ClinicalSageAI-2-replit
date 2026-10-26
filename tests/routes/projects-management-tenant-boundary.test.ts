@@ -100,7 +100,7 @@ describe('projects-management tenant boundary', () => {
     );
   });
 
-  it('does not register the retired legacy project creator', async () => {
+  it('does not register the alternate creator for any payload organization', async () => {
     const router = (await import('../../server/routes/projects-management')).default;
     expect(router.stack.some((layer: any) => layer.route?.path === '/' && layer.route?.methods?.post)).toBe(false);
     expect(mockDb.insert).not.toHaveBeenCalled();

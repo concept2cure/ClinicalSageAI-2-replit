@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   createProject: vi.fn(), onboardOrganization: vi.fn(), executeAction: vi.fn(),
   createCTDProject: vi.fn(), listCTDProjects: vi.fn(),
   createJourney: vi.fn(), updateStage: vi.fn(), listJourneys: vi.fn(),
+  updateSettings: vi.fn(), toggleModule: vi.fn(), recordAudit: vi.fn(), logAction: vi.fn(),
 }));
 vi.mock('../../services/ana-platform-controller', () => ({ anaPlatformController: h }));
 vi.mock('../../services/ctd-ingestion-service.js', () => ({
@@ -18,7 +19,8 @@ vi.mock('../../services/program-journey/program-journey-service', () => ({
   ProgramJourneyValidationError: class extends Error {},
 }));
 vi.mock('../../auth.js', () => ({ authMiddleware: (_req: Request, _res: Response, next: NextFunction) => next() }));
-vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true })) }));
+vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: h.recordAudit }));
+vi.mock('../../services/auditService', () => ({ default: { logAction: h.logAction } }));
 
 import platform from '../ana-platform-control';
 import ctd from '../ctd-onboarding';
@@ -50,13 +52,15 @@ describe('retired secondary project creation entry points', () => {
     ['/api/ana/platform/projects', { name: 'Legacy project' }],
     ['/api/ana/platform/onboard', { therapeuticArea: 'oncology', primaryAgency: 'FDA', submissionType: 'NDA' }],
     ['/api/ana/platform/execute', { category: 'project', action: 'create', parameters: { name: 'Legacy project' }, requiresConfirmation: false }],
+    ['/api/ana/platform/execute', { category: 'project', action: 'create', parameters: { name: 'Legacy project' }, requiresConfirmation: true }],
     ['/api/ctd/projects', { name: 'Legacy CTD', regulatoryRegion: 'FDA', submissionType: 'NDA', productName: 'Synthetic product', productType: 'drug' }],
     ['/api/program-journey', { seg: 'pharma', code: 'Legacy program', currentStage: 'ind' }],
     ['/api/program-journey/legacy-journey/stages/ind', { status: 'done', pct: 100 }],
   ])('%s is absent even for an administrator and invokes no writer', async (path, body) => {
     const response = await request(app()).post(path).send(body);
     expect(response.status).toBe(404);
-    for (const writer of [h.createProject, h.onboardOrganization, h.executeAction, h.createCTDProject, h.createJourney, h.updateStage]) expect(writer).not.toHaveBeenCalled();
+    expect(response.body.result?.pendingAction).toBeUndefined();
+    for (const writer of [h.createProject, h.onboardOrganization, h.executeAction, h.createCTDProject, h.createJourney, h.updateStage, h.updateSettings, h.toggleModule, h.recordAudit, h.logAction]) expect(writer).not.toHaveBeenCalled();
   });
 
   it('still reads stored CTD rows through the retained route', async () => {

@@ -1,5 +1,5 @@
 /**
- * `/api/device-projects` — the three writes were org-scoped and nothing else.
+ * `/api/device-projects` — the original writes were org-scoped and nothing else.
  *
  * A device project is the spine an FDA submission is assembled against. Any
  * authenticated member of the organization — a read-only viewer included —
@@ -85,7 +85,6 @@ function runChain(path: string, method: 'get' | 'post' | 'put' | 'delete') {
 
 function makeReq(role: string, overrides: Record<string, unknown> = {}) {
   const req = createMockRequest({
-    // Existing device records retain their governed update/delete paths.
     body: { deviceName: 'BX-204 CGM', clientWorkspaceId: 4, ...(overrides.body as object) },
     ...overrides,
   }) as any;
@@ -108,10 +107,6 @@ describe('/api/device-projects — the writes are gated and audited', () => {
     vi.clearAllMocks();
     mockRows.mockReturnValue([{ id: 7, name: 'BX-204 CGM', metadata: {}, organizationId: 2 }]);
     mockReturning.mockResolvedValue([{ id: 7, name: 'BX-204 CGM' }]);
-  });
-
-  it('does not register the retired device project creator', () => {
-    expect((deviceProjectRoutes as any).stack.some((x: any) => x.route?.path === '/' && x.route?.methods?.post)).toBe(false);
   });
 
   it("delete /:id refuses a program's anchor row 409 — nothing is deleted or audited (PF-08)", async () => {

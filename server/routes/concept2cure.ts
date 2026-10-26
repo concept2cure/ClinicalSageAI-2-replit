@@ -85,9 +85,10 @@ import {
 } from '../services/project-sharing-access';
 import { installProjectSharingRoutes } from './c2c/project-sharing';
 
+// A2.9 (2026-10-26): creation and duplication use Projects.tsx intake and
+// POST /api/c2c/projects; this router keeps existing records and their safeguards.
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
-
 
 function sendProjectAdmissionError(res: Response, error: unknown) {
   const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(
@@ -155,7 +156,7 @@ import { resolveActorNames } from '../services/tenant/actor-names';
 import { legacyIbTemplate } from './concept2cure-ib-template.js';
 import { clientIpKey } from '../utils/client-ip';
 
-const createProjectSchema = z.object({
+const updateProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(200, 'Name too long'),
   submissionType: SubmissionTypeEnum,
   description: z.string().max(2000, 'Description too long').optional(),
@@ -180,9 +181,7 @@ const createProjectSchema = z.object({
   productClass: z.string().max(50).optional(),
   dossierStandard: z.string().max(20).optional(),
   lifecycleStage: z.string().max(30).optional(),
-});
-
-const updateProjectSchema = createProjectSchema.partial();
+}).partial();
 
 const ownershipPreferencesSchema = z
   .object({
@@ -1474,7 +1473,6 @@ router.post('/projects/:id/export', projectRecordAdmission(false), async (req: R
     return sendError(res, 500, 'Failed to export project');
   }
 });
-
 
 const transferProjectSchema = z.object({
   targetWorkspaceId: z.string().min(1).max(100).optional(),

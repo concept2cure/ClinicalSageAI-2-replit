@@ -4,12 +4,13 @@
  * Extracted from server/index.ts — Device-Project CRUD endpoints.
  * CERV2 module server-backed persistence.
  *
- * Routes:
+ * A2.9 (2026-10-26): create through Projects.tsx → POST /api/c2c/projects.
+ * Routes for existing records:
  *   GET    /api/device-projects      — list (org-scoped)
  *   PUT    /api/device-projects/:id  — update   (editor+, audited)
  *   DELETE /api/device-projects/:id  — delete   (editor+, audited)
  *
- * The three WRITES were org-scoped and nothing else: any authenticated member
+ * The original writes were org-scoped and nothing else: any authenticated member
  * of the organization, a read-only viewer included, could rename or DELETE any
  * medical-device project in it, and no row recorded who. A device project is
  * the spine an FDA submission is assembled against, and a delete is not
@@ -18,15 +19,14 @@
  * middleware/orgMembership) and each writes an audit row against the session's
  * actor. The read stays open.
  *
- * WO-16C #133. Each of those three audit writes was
+ * WO-16C #133. Each original audit write was
  * `await auditService.logAction({…})` at statement position, and the
  * `AuditWriteResult` it resolved was discarded. `logAction` does not reject when
  * a persistence attempt fails — an audit-trail outage must not break the action
  * it records — so throwing that value away left a recorded rename and an
  * unrecorded one, a recorded DELETE and an unrecorded one, answering
- * byte-identically. All three now go through `recordAuditRow` and the outcome
- * leaves the handler: the POST and the PUT answer with the `projects` row
- * itself, so theirs ride in response headers; the DELETE answers with a body
+ * byte-identically. Retained writes go through `recordAuditRow`; the PUT
+ * answers with the `projects` row and audit headers; DELETE answers with a body
  * this file builds, so its outcome is a field in that body. No status code
  * changes.
  */
@@ -118,7 +118,6 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to list device projects' });
   }
 });
-
 
 /**
  * The PUT's field rules, one per field, in the order the handler reports them.

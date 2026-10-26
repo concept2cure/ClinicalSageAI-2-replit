@@ -2,12 +2,12 @@
  * quota and accepted-anchor behavior is proved by c2c/projects create tests. */
 import { describe, expect, it, vi } from 'vitest';
 
-const atomicCreateProject = vi.hoisted(() => vi.fn());
+const { atomicCreateProject, insert } = vi.hoisted(() => ({ atomicCreateProject: vi.fn(), insert: vi.fn() }));
 
 vi.mock('../../db', () => ({
   db: {
     select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([{ id: 1 }]) })) })) })),
-    insert: vi.fn(), delete: vi.fn(), update: vi.fn(),
+    insert, delete: vi.fn(), update: vi.fn(),
   },
 }));
 vi.mock('@shared/schema', () => ({
@@ -26,9 +26,14 @@ describe('the retired legacy project creator', () => {
     const router = (await import('../projects-management')).default;
     const app = express();
     app.use(express.json());
+    app.use((req: any, _res, next) => {
+      req.tenantContext = { organizationId: 1, clientWorkspaceId: 1 };
+      req.user = { id: 7, organizationId: 1 }; next();
+    });
     app.use('/api/projects', router);
     const response = await request(app).post('/api/projects').send({ name: 'Retired creator', type: 'regulatory_submission', organizationId });
     expect(response.status).toBe(404);
     expect(atomicCreateProject).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
   });
 });

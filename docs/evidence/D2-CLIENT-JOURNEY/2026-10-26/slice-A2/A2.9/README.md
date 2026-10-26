@@ -1,175 +1,196 @@
-# A2.9 — converge project creation on the core workflow
+# A2.9: retire alternate project creators
 
-Launch row D2; branch `concept2cure-v2`; base `1f6a8bf7`.
+Launch row D2; branch `concept2cure-v2`; starting source `a54e56337`.
 
 ## What already exists
 
-Checked from `1f6a8bf7`, under launch row D2. This continues the accepted
-central-service direction; it does not add a project service or store.
+The searched owner inventory, exact paths and limits are in
+`.design/client-journey/A2_9_PROJECT_CREATION_RETIREMENT.md`. Projects' existing
+wizard and `POST /api/c2c/projects` already own creation and atomic accepted
+project/client anchoring. Alternate PM, device, workspace, CTD, AnA-controller
+and journey creation registrations remain; their separate read/update consumers
+and stored data must survive. `atomicQuotaService.js` and the rules-engine
+`create_child_project` writer are explicitly deferred by the accepted plan.
 
-- `client/src/concept2cure/v2/surfaces/Projects.tsx` owns the existing wizard and
-  `projects.new-project` action. `server/routes/c2c/projects.ts` is the only
-  shipped `regulatory_programs` insert and owns the canonical create, scaffold,
-  audit and accepted client/project-anchor flow. `program-project-anchor.ts`
-  owns the accompanying `projects` insert. A2.4/A2.8 native flows already reach
-  the wizard and recorded device/drug project workflows.
-- `concept2cure.ts` still has POST `/projects` and `/projects/:id/duplicate`,
-  each inserting only a legacy project. Its GET, update, sharing, artifact and
-  governed-work routes are live and retained. The old create schema also
-  shapes the retained update schema, so it must not be blindly removed.
-- `device-projects.ts` POST `/` inserts a legacy device project;
-  `projects-management.ts` POST `/` selects/creates a default client workspace
-  then calls `atomicQuotaService`; `project-hierarchy.ts` POST `/:id/children`
-  inserts a child project. Their read/update/delete routes have other callers
-  and remain. Existing route tests must replace old creation expectations
-  with retirement/no-write checks and preserve unrelated safeguards.
-- `register-advanced-platform-routes.ts` inline POST `/api/workspace/projects`
-  writes IND/510(k)/CER stores, accepts a body client id without membership
-  verification and invents default sponsor/phase. Its aggregate GET remains.
-- `ana-platform-control.ts` POST `/projects`, `/onboard`, `/execute` reach
-  `ana-platform-controller.ts.createProject`, directly or through onboarding/
-  dispatch. Only that private creation chain is retired; independent settings,
-  module/configuration, usage and controlled write safeguards remain.
-- `ctd-onboarding.ts` POST `/projects` calls `createCTDProject` in
-  `ctd-ingestion-service.ts`. `program-journey.routes.ts` POST `/` and
-  `/:id/stages/:stageId` write the separate journey stores. Their GET readers
-  and existing stored rows remain. Service writers must be traced for other
-  callers before removing them.
-- Global shipped-source SQL/ORM search found nine direct insert sites: one
-  canonical program insert; five legacy project inserts to retire; and the
-  canonical anchor plus `rules-engine/actions/index.ts` and
-  `atomicQuotaService.js`. The latter two are explicitly retained by A2.9's
-  pre-existing exception pending their own caller/functional trace. They need
-  narrow, reasoned ownership entries, not an unscoped exemption.
-- Existing proof includes `projects-create-anchor.pglite.test.ts`,
-  `projects-create.test.ts`, `projectCreationDoors.contract.test.ts`, canonical
-  client/scoped list tests, device/project-management governance tests,
-  `ana-platform-control.test.ts`, journey read/service tests and the native
-  creation/plan browser flows. No second creator is needed.
-- Deleted-history search over all eight route/registrar paths returned no
-  deletion commits. The earlier discovery additionally traces the last legacy
-  concept2cure create caller to deleted commit `2895218b8`; the canonical wizard
-  is its reachable replacement. All current callers will be checked again.
+Searches included SQL/ORM writer sites, routes/services, AnA methods, table
+names, current client callers and tests, plus deleted project/Program/controller/
+Concept2cure history. Prior consolidation commits include `8b192f1e7`,
+`0fc2fc294`, `ecb6d4ea9`, `2895218b8`. Existing canonical creation, intake,
+anchor, door and native wizard tests supply the reachable replacement proof;
+this slice adds no project service, store, route or grant.
 
-Retire only the listed uncalled HTTP write handlers and unreachable private
-creation helpers after caller review. Preserve readers/stores and separately
-retained rule/quota owners. Add a source contract that rejects unowned program/
-project insert sites, missing owner reasons or extra inserts at an allowed
-owner, with deliberately planted failures. Prove removed endpoints cannot write
-and prove canonical creation still yields the program, anchor, scaffold and
-audit with accepted scope. Route retirement does not confer support for legacy
-specialist stores on the canonical wizard or retire their existing records.
+## Pre-merge continuation verification
 
-## Qualification
+The following results qualify the continuation before reconciling concurrent
+A2.9 work through `a0d4ada6f`. Its independent qualification is preserved intact
+in `pre-merge-a0d4ada6f/`. The source hashes and counts in each snapshot belong
+to that snapshot. Final combined qualification is recorded separately below.
 
-Caller review found no production caller for the twelve retiring HTTP writes.
-The sole active client creator is `projectIntakeRequest.ts` from the existing
-Projects wizard. Unrelated project readers, sharing, updates, governed artifacts
-and existing stores remain. After discovery, the branch fast-forwarded from
-`1f6a8bf7` to `a54e5633`, preserving concurrent Account, editor-context and
-MDX integration work; none of the retired production paths differed.
+| Check | Result | Evidence |
+| --- | --- | --- |
+| PM retirement tests on unchanged handlers | 8 intended failures, 33 passes | `pm-red.log.gz` |
+| Auxiliary retirement tests on unchanged handlers | 10 intended failures, 23 passes | `aux-red.log.gz` |
+| Writer inventory against original production source | Five alternate PM inserts refused; two guard self-checks passed | `writer-red.log.gz` |
+| Adversarial cast/parenthesis cases before fixing the guard | New case fails, two contract checks pass | `writer-wrapped-red.log.gz` |
+| Final registration detector against original `a54e56337` source, read from Git | All 12 retired registrations reported as failures | `registration-baseline-red.log.gz` |
+| Final combined focused regression | **307 tests in 21 suites pass**, 38.03 seconds | `final-regression.log.gz`, `test-files.txt` |
+| Real PostgreSQL role/settings/audit checks | **20 pass**, 3.71 seconds; runtime non-superuser/NOBYPASSRLS, enforcement on | `native-settings-audit.log.gz` |
+| Native Chromium canonical action → wizard → Create | **1 pass**, 14.4 seconds | `browser.log.gz`, `review-before-create.png`, `create-action-result.json` |
+| Production client/server/audit-verifier build | Pass; frontend 21.65 seconds | `build.log.gz` |
 
-The ownership/registration contract failed in **13 intended cases**: one grouped
-assertion identified five unapproved project inserts, and twelve assertions
-identified the old POST registrations. Ten planted/negative scanner probes
-passed. The final contract passes **40 checks**, including seventeen required
-retained route registrations and exact nonzero counts/reasons for four insert
-owners. Planted raw SQL (quoted/public/case/multiline), ORM alias/member/bracket
-inserts and an extra insert inside an allowed owner are rejected. Comments and
-unrelated stores cannot create misleading results.
+The final focused selection includes the four structural contract cases, 94
+canonical creation/anchor/regional cases, the retained route/audit suites,
+and existing client creation-door/action checks. Smaller worker runs overlap
+this selection; their counts are not added to 307. The native DB lane uses
+`vitest.db.config.ts`, which rejects mocked PostgreSQL or a placeholder URL.
+It proves retained direct settings writes still commit with their audit record,
+and a failed audit still refuses the write; retired execute/onboard requests
+cannot use those former paths to change settings.
 
-Six actual-router retirement reds showed the secondary endpoints calling their
-private writers. The final route tests return 404 without calling those writers;
-retained CTD/journey GETs still return recorded data. Private controller creation/
-onboarding/dispatch, CTD creation and journey creation/stage-update helpers were
-removed only after their caller closure was established. Direct settings,
-configuration, module, usage and project-update handlers remain.
+The browser uses a fresh synthetic organization and the real app/runtime role.
+Opening intake and repeating the opener preserve typed input and produce zero
+project writes. Only the person's final Create sends one canonical request,
+returns 201 with the saved PM anchor, and changes the real portfolio from zero
+to one. The review screenshot was inspected. No model/provider call or auth
+token/trace archive is needed. This native flow proves the reachable canonical
+replacement; handler absence is separately qualified by the red/green route
+tests and structural registration contract.
 
-Combined regression passed **427/427 tests in 25 files** (60.48 seconds).
-Canonical PGlite and route tests retain program/accepted-anchor/scaffold/audit,
-rollback, client/workspace membership, role, stated device/class facts, scoped
-portfolio, current-access and wizard/action reachability proof. Existing legacy
-update/delete governance and device-class withdrawal tests remain. One bootstrap
-assertion still expected `/dossier`, retired by the unchanged A2.7 suggested-
-actions service; it now pins the current `/protocol` suggestion and the absence
-of that retired command. The initial 107-pass/one-stale-expectation log is kept.
+## What changed and what remains
 
-Real PostgreSQL audit checks passed **20/20** (2.94 seconds), asserting runtime
-`app_service`, `NOSUPERUSER`, `NOBYPASSRLS`, RLS enforcement, admin/connector
-refusals and same-transaction chained role/settings/AI/compliance records. Two
-new tests initially assumed an empty audit history; they now require exactly
-one added row, validate its chain and compare its transaction ID to the changed
-organisation. This preserves append-only history. Both red and corrected logs
-are retained; production behavior was unchanged by the test correction.
+Removed exactly 12 enumerated POST registrations: PM create/duplicate, device
+create, projects-management create, hierarchy child create, workspace create,
+CTD onboarding create, AnA platform create/onboard/execute, and both journey
+writes. Three dead creator-reaching controller methods are gone. No router,
+table, stored record, commercial grant, entitlement or canonical intake is removed.
 
-The native Chromium flow passed (21.7 seconds): a fresh synthetic sign-up used
-the real Projects wizard and canonical API (201), received an accepted integer
-anchor and reached ProjectHome. Authenticated POSTs to all twelve retired paths
-returned **404**, including the workspace endpoint carrying an unchecked client
-id. The canonical portfolio remained unchanged after those attempts. The local
-fixture used the normal provisioned schema and `app_service` with RLS on.
-Browser tokens stayed in page context; selected JSON/screenshots contain only
-synthetic records and runtime/auth logs are excluded.
+Static AST comparison against `a54e56337` confirms **all 50 retained HTTP
+registrations and all 11 retained controller method bodies are byte-identical**.
+The transfer schema and update-schema fields are unchanged. Details and source
+hashes are in `pm-retained-route-proof.json` and `aux-retained-route-proof.json`.
+This is source comparison, not a runtime proof by itself; retained guards also
+run in the focused SQL/route tests.
 
-Production client, server and audit-verifier build passed (Vite 24.52 seconds).
-Scoped ESLint has zero errors and existing warnings only; required no-growth
-checks and full TypeScript/publication gates run on the accepted tree as recorded below.
-Independent read-only AST review found exactly twelve route deletions across
-eight files, no route additions, and byte-identical retained handler/service
-method bodies and middleware. The hierarchy move still enforces MAX_DEPTH=3.
-Canonical creator/access/sharing/anchor and the two deferred internal writers
-are unchanged; no migration or stored table was removed.
+The old PM creator's uncalled best-effort blueprint/legacy-IND seeding and
+invented greeting are not copied into canonical intake. Their underlying
+bootstrap/milestone services and direct tests remain. Active clients already
+use current rule-pack scaffolding and the submission/PM spine, the IND/device
+Plan and assignment owners, and the actual project conversation composer/list.
+The design records this boundary instead of claiming identical background
+side effects.
 
-## Deliberate boundary and next work
+The new `scripts/ci/check-project-creation-owners.mjs` runs from both normal
+pre-push and CI. It permits one `regulatory_programs` insert only in canonical
+intake, one PM anchor insert in its owner, and the accepted plan's two explicitly
+deferred PM writers (`atomicQuotaService.js` and `create_child_project`). Each
+exception names its reason and is bounded to one site: a new site, a freed
+allowance or an unreasoned exception fails. The self-test rejects 19 planted
+SQL/ORM forms, plus three retired-registration forms and invalid allowances;
+comments/read-only and retained GET examples pass. Casts, aliases, namespace
+targets, static concatenation, SQL comments, uppercase/quoted tables, ONLY and
+known interpolated table references are covered. Separate registration scanning
+keeps the old workspace writer closed even though it wrote other stores.
+This structural contract supplements endpoint authorization rather than replacing it.
 
-`create_child_project` in the rule engine and `atomicQuotaService.js` remain
-explicitly allowed internal owners pending their separate functional/caller
-trace. This slice retires the duplicated HTTP write paths and does not claim
-all internal project creation has been consolidated. Their source-contract
-entries each allow exactly one site with a written reason, so another insert
-cannot hide in an allowed file.
+Scoped lint reports zero errors and existing warnings only. The full warning
+ratchet and zero-baseline TypeScript check remain mandatory publication gates;
+no baseline expansion or bypass is used. No schema/data retirement or formal
+OQ execution is claimed. A2.7's documented broader MDX policy mismatches/formal
+qualification limits are not reclassified by this slice.
 
-No specialist store or route family is deleted. Retained legacy records remain
-readable, and an existing record keeps its update/governance controls. This
-work does not claim that the canonical wizard writes CTD/journey/IND/510(k)/CER
-legacy stores. Its supported project/scaffold flow remains authoritative.
-Local development authentication/browser proof is not production authentication
-qualification or formal OQ execution/sign-off. A2.10 is next, with every remaining
-screen/catalogue fold gated by its per-function parity and recorded decisions.
+Next is A2.10, checking each remaining fold against its function-parity row.
+No remaining shell or catalogue identity is retired until its specific carryover
+and admission prerequisites are satisfied.
 
-## Accepted Account integration (base `98987035`, 2026-10-26)
+## Concurrent Account integration
 
-A further fast-forward preserved the independent Account invitation/reporting
-request change. It changed one Account component and its tests, with no overlap
-in the retired routes/services. The combined Account/intake/ownership selection
-passed **99 tests in seven files** (19.8 seconds). The production build passed
-again (Vite 21.25 seconds). The 427-test and real database results above retain
-their initial base attribution; no affected production handler changed between
-those qualifications and this accepted tree.
+Concurrent actor-owned Account invitation/reporting work through `5c24914f0`
+was merged as `e33b7fe3d`. It uses the existing recipient/reporting APIs and does
+not call a retired creator. The A2.9 qualified source/test/gate hashes remain
+unchanged. Seven targeted Account/creation-door/action/AnA-control/owner-contract
+suites pass **97 tests** (16.80 seconds); these overlap earlier proof and are not
+added to 307. The combined production client/server/audit-verifier build passes
+(frontend **20.68 seconds**). Results are `account-integration.log.gz` and
+`account-build.log.gz`. Normal publication gates, including full TypeScript and
+the no-new-warning check, still apply to the final combined tree.
 
-The stronger final native check passed in **9.5 seconds** after server readiness:
-real wizard create 201, accepted anchor, actual dossier scaffold read 200 with
-module rows, explicit navigation to Author and visible module completion, then
-all twelve retired writes 404 with the canonical portfolio unchanged. Current
-selected JSON/screenshots are at this directory's root; the earlier navigation-
-only snapshot is under `pre-account/`. A preliminary expanded check waited for
-Author content while the project had opened on Plan; the corrected test makes
-the person's Author navigation explicit.
+## Concurrent A2.9 reconciliation
 
-The whole repository TypeScript gate passed with **zero errors against the
-unchanged zero baseline** (`accepted-typecheck.log.gz`). Its first run caught a
-named import from an untyped JS module in a new retirement test; that test now
-uses a directly typed hoisted spy. Final scoped lint is clean. Source hashes
-identify the checked source; normal publication hooks still check the final
-committed tree without bypass or baseline expansion.
+The first normal push passed every gate, including full TypeScript with zero
+errors and a net reduction of 12 lint warnings, then met concurrent A2.9 work
+on the remote (`gates-ref-race.log.gz`). No forced push or bypass was used.
+Both versions retire the same 12 HTTP creators and retain the same canonical
+intake. Their useful assertions and source guards are reconciled onto one
+canonical checker, with independent pre-merge evidence preserved. The duplicate
+incoming detector is removed after carrying its assertions into the shared owner.
 
-The final integration also preserves Account publication receipt `5c24914f`.
-That commit changes only Account evidence prose/logs; all checked A2.9 source
-hashes remain identical. The implementation is `ce8cae23`; required publication
-hooks run on the merged source without changing a type/lint baseline.
+The incoming removal of now-uncalled CTD/journey creation helpers is retained:
+no production caller remains, readers/records/stores stay, and the existing SQL
+interpolation allowance is narrowed from two to one. This extends the dead-writer
+cleanup; it does not retire a table or the remaining journey shell. The earlier
+continuation's retained-service statements describe its pre-merge choice.
 
-The first publication attempt correctly stopped at the SQL ratchet: deleting
-the journey writer reduced that file's interpolation count from two to one.
-The allowance is narrowed to one in `sql-interpolation-baseline.json`; it is
-not expanded. The retained read's existing allowance remains unchanged.
-Normal hooks are rerun after this required reduction.
+## Final combined qualification
+
+The combined selection passes **523 tests in 33 suites**, partitioned without
+overlap by file: 161 server cases/16 files (`merged/server.log.gz`), 39 contract
+cases/one file (`merged/contract.log.gz`), and 323 canonical/client/service/Account
+cases/16 files (`merged/remaining.log.gz`). The exact union is
+`merged/test-files.txt`. No test count from an earlier snapshot is added again.
+
+The one checker/allowlist now covers **25 planted writer forms**, exact-one-site
+checks, all 12 retired POSTs and 17 retained-route checks. Bracketed ORM methods
+and targets were demonstrated red before correction
+(`merged/contract-red.log.gz`). CI and pre-push still invoke that same checker.
+The 50 retained HTTP bodies and retained CTD/journey service bodies are unchanged
+from the continuation source; `merged/retained-server-proof.json` records the
+static comparison. The earlier 11-method controller preservation proof remains.
+
+Native PostgreSQL passes **24 cases** on the same non-superuser/NOBYPASSRLS
+runtime role with enforcement on (`merged/native-db.log.gz`). It includes the
+stale execute confirmation/category matrix and direct AI/compliance settings
+writes with their actual same-transaction audit rows. The incoming delta-based
+audit assertion respects existing append-only history rather than requiring an
+empty historic audit log.
+
+Both Chromium flows pass together in **18.8 seconds**, with release and RLS
+enforcement on (`merged/browser.log.gz`). Canonical intake returns 201 and its
+accepted anchor, the real dossier read returns 200 with five governed module
+rows, and Author is reached. All 12 legacy requests refuse writes and the
+canonical portfolio remains unchanged after the probes. Seven return 404; the
+three AnA paths and two journey paths return **403 `LAUNCH_SCOPE`** before the
+router. The initial imported browser expectation of 404 for every path failed
+under normal enforcement (`merged/browser-policy-red.log.gz`); the corrected
+test accepts only router 404 or the explicit `LAUNCH_SCOPE` refusal. No release,
+auth, role or entitlement guard changed. Router/AST tests independently prove
+handler absence, so the policy refusal is not presented as that proof.
+
+Selected results/screenshots are in `merged/`; the canonical Author screenshot
+was inspected. No token or trace archive is included. The combined production
+client/server/audit-verifier build passes (frontend **23.05 seconds**,
+`merged/build.log.gz`). `merged/source-proof.json` pins the merge parents and
+qualified source/test/gate hashes. Mandatory final publication gates still apply.
+
+## Further CSR/CRF integration
+
+Concurrent CSR/CRF coverage work through `c89a78956` was merged as `621151183`.
+All 38 pinned A2.9/canonical source, test and gate hashes remain unchanged.
+Independent source review found no creator, access-scope or guard overlap: CSR
+output coverage and CRF safety preservation tighten existing document behavior.
+Five affected server suites plus the creator contract and current creation-door
+checks pass **141 tests in seven suites** (25.32 seconds); these overlap earlier
+proof and are not added to 523. The production client/server/audit-verifier
+build passes again (frontend **22.30 seconds**). `merged/editor-*.log.gz` records
+these results. Final normal publication gates run on this combined source.
+
+## Accepted publication
+
+The combined source was accepted on `concept2cure-v2` as `b07f35dd452d520d908fa44da65829bc0bf3c4bd`.
+Every normal publication gate passed, including full TypeScript (**zero errors,
+unchanged zero baseline**) and no added lint warnings. The source guard/self-test
+passed in the real pre-push chain; `merged/accepted-push.log.gz` records the
+accepted ref. All 38 pinned A2.9/canonical inputs still matched, and a fresh remote
+check matched the clean local branch. This evidence-only follow-up records that
+acceptance; no production source changes. The local test app/database are stopped.
+A2.10 is next, with each remaining fold still subject to its own parity/admission
+prerequisites; no formal OQ or whole-product launch-completion claim is made.

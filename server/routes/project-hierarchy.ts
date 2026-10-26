@@ -27,9 +27,12 @@ import { ProjectRollupService } from '../services/project-rollup-service';
 const router = Router();
 const pool = getPool();
 const rollupService = new ProjectRollupService(pool);
-const MAX_DEPTH = 3; // Existing hierarchy move depth limit.
 
+const MAX_DEPTH = 3; // 0-indexed: 0=Program, 1=Project, 2=Study, 3=Sub-project
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation for existing hierarchy records; new projects use canonical intake (A2.9).
+// ─────────────────────────────────────────────────────────────────────────────
 
 const moveSchema = z.object({
   newParentId: z.number().nullable(),
@@ -170,7 +173,6 @@ router.get('/:projectId/children', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch child projects' });
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/project-hierarchy/:projectId/move
