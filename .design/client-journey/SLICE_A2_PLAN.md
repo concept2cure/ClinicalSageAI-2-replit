@@ -13,9 +13,9 @@
 - A2.6's section data for AnA does not satisfy the visible section-readiness promise in `FUNCTION_PARITY.md`. Before A2.7 deletes a screen, prove those visible functions in ModuleCompletion or a tested reachable Vault destination and reconcile the parity document. Additive enrichment alone is not a deletion authorization.
 - Founder-dependent admissions and folds remain pending.
 
-**Implementation status:** A2.1–A2.4 complete. A2.4 evidence is under
-`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.4/README.md`.
-Next is A2.5; the inventory below describes discovery-time behavior.
+**Implementation status:** A2.1–A2.5 complete. A2.5 evidence is under
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.5/README.md`.
+Next is A2.6; the inventory below describes discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
 

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { hasKeys, liveGetOrNull } from '../dataConnect';
-import { marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
+import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
+import { filingAskPrompt } from '@shared/regulatory/filing-catalog';
 
 const SEG_ICONS: Record<string, string> = {
   pharma_biotech: 'beaker', medical_devices: 'stethoscope',
@@ -95,9 +96,32 @@ interface RegistryPickerProps {
      arrived in and could not follow them when they switched tabs — it went on
      naming a category they were no longer looking at. */
   onSegmentChange?: (segment: string) => void;
+  onAsk?: (text: string) => void;
 }
 
-export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange }: RegistryPickerProps) {
+function ChosenFilingNote({ entry, chosen, market, onAsk }: {
+  entry: RegistryEntry; chosen: RowOffer; market: MarketRow | undefined; onAsk?: (text: string) => void;
+}) {
+  const build = chosen.kind === 'offer' ? marketBuildText(market ?? {}) : null;
+  return <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
+    {chosen.kind === 'offer' ? <p><strong>{chosen.offer.label}.</strong> {chosen.offer.reason}</p> : <p>
+      <strong>No tier is stated for this filing.</strong>{' '}
+      {chosen.offer.label} is stated for the {chosen.agency} {chosen.type.toUpperCase()} application itself
+      ({chosen.names.join(', ')}). This filing is not one of them. Creating it opens
+      a project whose application type is {chosen.type.toUpperCase()}.
+    </p>}
+    {entry.description && <p><strong>Catalog reference.</strong> {entry.description}</p>}
+    <p data-testid="rpk-chosen-build"><strong>How you’ll build it.</strong>{' '}
+      {chosen.kind === 'unclaimed' ? 'No build details are stated for this filing; the support above concerns the application it creates.'
+        : build ?? 'Build details could not be read for this filing’s market.'}
+    </p>
+    {onAsk && <button type="button" className="btn ghost sm" onClick={() => onAsk(filingAskPrompt(entry.displayName))}>
+      {I.sparkles} Ask AnA
+    </button>}
+  </div>;
+}
+
+export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange, onAsk }: RegistryPickerProps) {
   const segs = ((window as any).REG_SEGMENTS || {}) as Record<string, { label: string; count: number }>;
   const cats = ((window as any).REG_CATEGORIES || {}) as Record<string, { label: string }>;
   const catalog = useMemo(() => ((window as any).GLOBAL_REGISTRY || []) as RegistryEntry[], []);
@@ -160,7 +184,8 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   const matches = (e: RegistryEntry) =>
     e.displayName.toLowerCase().includes(term) || e.agency.toLowerCase().includes(term) ||
     e.region.toLowerCase().includes(term) || (e.dossierStandard || '').toLowerCase().includes(term) ||
-    (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term);
+    (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term) ||
+    (e.description || '').toLowerCase().includes(term);
   const filtered = useMemo(() => {
     let pool = term ? registry : segEntries;
     if (term) pool = pool.filter(matches);
@@ -207,6 +232,8 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   );
   const notOfferedCount = notOfferedMatches.length;
   const chosen = value ? offerOf.get(value) : undefined;
+  const chosenEntry = catalog.find(entry => entry.id === value);
+  const chosenMarket = chosenEntry ? rowFor(offers.byType.get(typeOf.get(value) ?? ''), chosenEntry.agency) : undefined;
   const notOfferedInTab = notOffered.filter((n) => n.entry.segment === seg).length;
   /* After a Retry that succeeds, the alert (and its button) gives way to the
      list: focus goes to the search box rather than falling to the page. */
@@ -308,19 +335,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
       )}
       {/* What the platform offers for the chosen filing, as text: a tooltip
           never reaches a keyboard or touch user. */}
-      {chosen?.kind === 'offer' && (
-        <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
-          <strong>{chosen.offer.label}.</strong> {chosen.offer.reason}
-        </div>
-      )}
-      {chosen?.kind === 'unclaimed' && (
-        <div className="rpk-result-note" role="status" data-testid="rpk-chosen-offer">
-          <strong>No tier is stated for this filing.</strong>{' '}
-          {chosen.offer.label} is stated for the {chosen.agency} {chosen.type.toUpperCase()} application itself
-          ({chosen.names.join(', ')}). This filing is not one of them. Creating it opens
-          a project whose application type is {chosen.type.toUpperCase()}.
-        </div>
-      )}
+      {chosen && chosenEntry && <ChosenFilingNote entry={chosenEntry} chosen={chosen} market={chosenMarket} onAsk={onAsk} />}
       <div className="rpk-body">
         {!term && full.length > 0 && (
           <div className="rpk-tier-h" data-testid="rpk-full-heading">
