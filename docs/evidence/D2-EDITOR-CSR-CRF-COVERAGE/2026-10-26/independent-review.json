@@ -1,0 +1,11 @@
+{
+  "review": "Read-only assistant review of CSR worker and shared ethics fallback, plus root review of CRF projector/import fixtures",
+  "finding": "Legacy stale100 progress remained visible while resuming with zero nonblank current targets.",
+  "resolution": "Reproduced in csr/progress-red.json; initial progress now seeds zero before drafting, and regression observes draft-entry state. Reviewer reread confirms resolution.",
+  "remainingSubstantiveBlockers": [],
+  "boundaries": [
+    "Read-only code review; no human validation.",
+    "Worker unit fixtures use a Drizzle fake; separate current-private-project PGlite fixture supplies actual SQL persistence/resume proof.",
+    "Gateway drafting and submission continuation are scripted in tests; no provider/agency/concurrency claim."
+  ]
+}

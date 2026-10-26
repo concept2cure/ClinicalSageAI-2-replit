@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T22:17:11.645116+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts",
+    "server/services/__tests__/csr-builder-completeness.test.ts",
+    "server/services/__tests__/csr-builder-e3-brief.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.093,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ethics/green-source.json",
+  "sourcesBefore": {
+    "server/services/csr-builder.ts": "9c41f640cbf34dd06f47adedd14878868a13a2f4b3dc00e00bc97fad21cdb1b9",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "0cd1e749dfd38ed063e4090c1dc9b010b843343e34ad05c18ad2bd44e970580f"
+  },
+  "sourcesAfter": {
+    "server/services/csr-builder.ts": "9c41f640cbf34dd06f47adedd14878868a13a2f4b3dc00e00bc97fad21cdb1b9",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "0cd1e749dfd38ed063e4090c1dc9b010b843343e34ad05c18ad2bd44e970580f"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "5d92d0aae3d756bb23bce816c4093acad4a658b856a8b6f273eb34d04369c615",
+  "testSummary": [
+    "Test Files  3 passed (3)",
+    "Tests  31 passed (31)",
+    "Duration  3.63s (transform 1.13s, setup 91ms, import 3.00s, tests 86ms, environment 0ms)"
+  ]
+}

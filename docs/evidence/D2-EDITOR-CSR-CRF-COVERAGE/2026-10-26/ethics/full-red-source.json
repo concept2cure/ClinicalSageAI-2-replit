@@ -1,0 +1,6 @@
+{
+  "files": {
+    "server/services/csr-builder.ts": "86b10136867351de436eee4a7acadf3ef5b6c4b43d5c10f003d26bd13ef8483e",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "bc1a1eb7d3b9a8aec43e852bc4fe146e83568dce9781d9ddf06b81b013045172"
+  }
+}

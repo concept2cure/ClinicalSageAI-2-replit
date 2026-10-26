@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T22:16:08.798074+00:00",
+  "argv": [
+    "./node_modules/.bin/eslint",
+    "server/services/study-design/crf-shell.ts",
+    "server/services/study-design/__tests__/crf-shell.test.ts",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts",
+    "--max-warnings",
+    "0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.037,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "crf/green-corrected-source.json",
+  "sourcesBefore": {
+    "server/services/study-design/crf-shell.ts": "8d8004eddbbe6f623fec145665b308ec2a9841354ccdf8cbb570c4835e2370ea",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "1cf364b7ca38230b1b9c51d4493a279f9c103c753e88b7f6cd644ec6c1f2524e",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "3e09aae1e9acfb4703978642dc5761e311094cba9379ae819ee19ec32a8df645"
+  },
+  "sourcesAfter": {
+    "server/services/study-design/crf-shell.ts": "8d8004eddbbe6f623fec145665b308ec2a9841354ccdf8cbb570c4835e2370ea",
+    "server/services/study-design/__tests__/crf-shell.test.ts": "1cf364b7ca38230b1b9c51d4493a279f9c103c753e88b7f6cd644ec6c1f2524e",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "3e09aae1e9acfb4703978642dc5761e311094cba9379ae819ee19ec32a8df645"
+  },
+  "sourceDrift": [],
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "6c733ed08e54a7cf3370dc78ea55e839556433c42d605caade8cae326abc8c08",
+  "testSummary": []
+}

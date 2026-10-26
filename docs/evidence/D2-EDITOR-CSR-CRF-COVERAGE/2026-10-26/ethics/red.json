@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T22:15:24.302351+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 3.53,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ethics/prepatch-source.json",
+  "sourcesBefore": {
+    "server/services/csr-builder.ts": "86b10136867351de436eee4a7acadf3ef5b6c4b43d5c10f003d26bd13ef8483e",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "4fec435afd11ec76274651c00a96d190fa7578a3f294d18b88c259be1ad5ae10"
+  },
+  "sourcesAfter": {
+    "server/services/csr-builder.ts": "86b10136867351de436eee4a7acadf3ef5b6c4b43d5c10f003d26bd13ef8483e",
+    "server/routes/__tests__/csr-draft-source-honesty.test.ts": "4fec435afd11ec76274651c00a96d190fa7578a3f294d18b88c259be1ad5ae10"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "7e38d15b62e579bd5b637cb96fa1bbcec28ae45f104a483a36aeec3bef4e5162",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  2 failed | 4 passed (6)",
+    "Duration  3.00s (transform 1.64s, setup 90ms, import 2.56s, tests 61ms, environment 1ms)"
+  ]
+}

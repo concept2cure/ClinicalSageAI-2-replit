@@ -1,0 +1,26 @@
+7df89f4f7 chore: pin upstream tools and resolve verification gates
+27ecdb8d2 Delete three dead CSR/search paths the column guard found writing a legacy shape
+2a71a823c fix(cre): converge the evidence facade onto the cre_* spine; retire the duplicate lineage (#1150)
+796c9ac98 chore(cre): Phase 8 — delete the orphaned foresight subtree (13 files)
+1b5bf1677 Swarm audit wave 5: reclaim server/src dead tree, restore 31 skipped tests
+fdfb00d33 chore(cleanup): Tier 3A — remove dead client dirs (api, templates, data, i18n set); vite build green
+787b04089 fix(types): wave 9 — clear the schema-mismatch backlog → typecheck baseline 0
+7a144fd1e chore: delete all non-Claude-Design UI under client/src/
+d04381632 Strip ZenApp dangling imports + delete the legacy chains they fed
+bb243dfad chore(ui): delete every surface not built by Claude Design
+00d3f5116 chore: Wave 1 — delete 17 dead JS/JSX duplicate files (-1,414 lines)
+b79f020e1 refactor: surgical dead code purge — 670 files removed, build verified
+3508261cd refactor: Phase 2 final — delete remaining orphaned client components
+fc9a7943b refactor: Phase 2D — delete orphaned editors, pages, and route components
+3ea8cc863 refactor: Phase 2 — massive dead client component purge
+b6e991501 refactor: Phase 1 dead code purge — delete unused routes and orphaned services
+a0f4d73a9 refactor: remove dead scripts, configs, shared stubs, agents (~62,000 lines)
+30cc29cfd refactor: remove 80+ orphaned server files (~23,000 lines)
+83fa7f6cf refactor: remove 146 orphaned client files (~42,000 lines)
+36f997067 chore: delete 35 verified orphaned client components (-13,782 lines)
+5c1033735 chore: delete 3 orphaned components + remove stale jspdf type declarations
+87d13d7cd chore: BETA audit — remove mock data route + 127 dead Python files
+3decdf8b3 chore: remove _deprecated folder (13 dead component files)
+b49e7495f cleanup: delete 180 orphan/duplicate pages (84k+ lines of dead code)
+41c396989 A7-6 batch runner hardening (#84)
+4a87d39a4 WIP: reconcile codespace changes

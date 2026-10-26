@@ -36,8 +36,10 @@ vi.mock('../../csr-builder', async () => {
 
 // ── In-memory fake of the drizzle `db` the runner calls via requireDb() ──────
 type Capture = Record<string, unknown>;
-function makeFakeDb(job: Record<string, unknown>) {
+type SavedOutput = { sectionNumber: string; content: string };
+function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) {
   const inserted: Array<{ sectionNumber: string; content: string }> = [];
+  const persisted = retained.map(row => ({ ...row }));
   const jobUpdates: Capture[] = [];
 
   function selectBuilder(cols: Record<string, unknown> | undefined) {
@@ -51,11 +53,10 @@ function makeFakeDb(job: Record<string, unknown>) {
         if (table === csrBuildJobs) {
           rows = [job];
         } else if (table === csrSectionOutputs) {
-          // The gate read selects { sectionNumber, content }; the earlier
-          // already-persisted read selects only { sectionNumber }.
+          // Preserve the requested projection for retained-output reads.
           rows = cols && Object.prototype.hasOwnProperty.call(cols, 'content')
-            ? inserted.map(r => ({ sectionNumber: r.sectionNumber, content: r.content }))
-            : inserted.map(r => ({ sectionNumber: r.sectionNumber }));
+            ? persisted.map(r => ({ sectionNumber: r.sectionNumber, content: r.content }))
+            : persisted.map(r => ({ sectionNumber: r.sectionNumber }));
         }
         resolve(rows);
       },
@@ -70,7 +71,10 @@ function makeFakeDb(job: Record<string, unknown>) {
         set(vals: Capture) {
           return {
             where() {
-              if (table === csrBuildJobs) jobUpdates.push(vals);
+              if (table === csrBuildJobs) {
+                jobUpdates.push(vals);
+                Object.assign(job, vals);
+              }
               return Promise.resolve();
             },
           };
@@ -83,6 +87,9 @@ function makeFakeDb(job: Record<string, unknown>) {
           return {
             onConflictDoUpdate() {
               inserted.push({ sectionNumber: v.sectionNumber, content: v.content });
+              const existing = persisted.find(row => row.sectionNumber === v.sectionNumber);
+              if (existing) existing.content = v.content;
+              else persisted.push({ sectionNumber: v.sectionNumber, content: v.content });
               return Promise.resolve();
             },
           };
@@ -90,7 +97,7 @@ function makeFakeDb(job: Record<string, unknown>) {
       };
     },
   };
-  return { db, inserted, jobUpdates };
+  return { db, inserted, persisted, jobUpdates, job };
 }
 
 let fake: ReturnType<typeof makeFakeDb>;
@@ -119,6 +126,151 @@ function terminalStatus(jobUpdates: Capture[]): Capture | undefined {
 beforeEach(() => {
   draftMock.mockReset();
   continueMock.mockReset().mockResolvedValue([]);
+});
+
+const sectionDraft = (number: string, content: string) => ({ number, content, source: 'template', model: null, tokenCost: 0, lineage: null });
+const progressValues = () => fake.jobUpdates.filter(update => typeof update.progress === 'number').map(update => update.progress);
+
+describe('runCSRBuildJob — requested saved-output coverage', () => {
+  it.each(['', ' \n\t '])('refuses completion when the requested draft has no usable content (%j)', async content => {
+    fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['6'] });
+    draftMock.mockResolvedValue(sectionDraft('6', content));
+
+    await runCSRBuildJob(42);
+
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', progress: 0,
+      error: { reason: 'missing_section_outputs', sections: ['6'] } });
+    expect(fake.inserted).toEqual([]);
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('preserves valid partial outputs and counts only requested rows through an explicit resume', async () => {
+    const retained = [
+      { sectionNumber: '1', content: 'Original title page prepared by the investigator.' },
+      { sectionNumber: '4', content: 'An unrelated retained abbreviations section.' },
+      { sectionNumber: '7', content: 'An unrelated retained introduction.' },
+    ];
+    fake = makeFakeDb({ ...makeJob(), status: 'failed', sectionsToGenerate: ['1', '6', '13'] }, retained);
+    draftMock.mockImplementation(async (section: { number: string }) => sectionDraft(section.number,
+      section.number === '6' ? '' : 'Recorded discussion awaiting scientific review.'));
+
+    await runCSRBuildJob(42);
+
+    expect(draftMock.mock.calls.map(call => (call[0] as { number: string }).number)).toEqual(['6', '13']);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', progress: 66,
+      error: { reason: 'missing_section_outputs', sections: ['6'] } });
+    expect(progressValues()).toEqual([33, 66, 66]);
+    expect(fake.persisted).toEqual([...retained, { sectionNumber: '13', content: 'Recorded discussion awaiting scientific review.' }]);
+    expect(continueMock).not.toHaveBeenCalled();
+
+    fake.jobUpdates.length = 0;
+    draftMock.mockClear().mockImplementation(async (section: { number: string }) => sectionDraft(section.number,
+      'Recorded investigator and administrative source details.'));
+    await runCSRBuildJob(42);
+
+    expect(draftMock.mock.calls.map(call => (call[0] as { number: string }).number)).toEqual(['6']);
+    expect(progressValues()).toEqual([66, 100, 100]);
+    expect(fake.job).toMatchObject({ status: 'complete', progress: 100, error: null });
+    expect(fake.persisted.slice(0, retained.length)).toEqual(retained);
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+
+  it('repairs a retained blank row only on explicit resume while preserving valid saved text', async () => {
+    const title = { sectionNumber: '1', content: 'Original title page.' };
+    fake = makeFakeDb({ ...makeJob(), status: 'failed', sectionsToGenerate: ['1', '6'] },
+      [title, { sectionNumber: '6', content: '\n\t ' }]);
+    draftMock.mockResolvedValue(sectionDraft('6', ''));
+
+    await runCSRBuildJob(42);
+
+    expect(draftMock).toHaveBeenCalledOnce();
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', progress: 50,
+      error: { reason: 'missing_section_outputs', sections: ['6'] } });
+    expect(fake.persisted).toEqual([title, { sectionNumber: '6', content: '\n\t ' }]);
+    expect(continueMock).not.toHaveBeenCalled();
+
+    draftMock.mockClear().mockResolvedValue(sectionDraft('6', 'Source-prepared investigator and administration details.'));
+    await runCSRBuildJob(42);
+
+    expect(draftMock).toHaveBeenCalledOnce();
+    expect(fake.persisted).toEqual([title,
+      { sectionNumber: '6', content: 'Source-prepared investigator and administration details.' }]);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'complete', progress: 100 });
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+});
+
+describe('runCSRBuildJob — retained target selections and progress', () => {
+  it.each([['999'], ['13', '999']])('refuses unsupported retained selection %j without drafting or continuation', async (...sections: string[]) => {
+    fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: sections });
+    draftMock.mockImplementation(async (section: { number: string }) => sectionDraft(section.number, 'A saved discussion.'));
+
+    await runCSRBuildJob(42);
+
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', progress: 0,
+      error: { reason: 'invalid_section_selection' } });
+    expect(fake.inserted).toEqual([]);
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('retains the existing placeholder refusal for saved target text without redrafting it', async () => {
+    fake = makeFakeDb({ ...makeJob(), status: 'failed' }, [{ sectionNumber: '13', content: '[DATA TO BE INSERTED]' }]);
+    await runCSRBuildJob(42);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'failed', error: { reason: 'unresolved_placeholders', sections: ['13'] } });
+    expect(fake.persisted).toEqual([{ sectionNumber: '13', content: '[DATA TO BE INSERTED]' }]);
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('does not let unrelated retained placeholder rows block an otherwise covered explicit subset', async () => {
+    fake = makeFakeDb({ ...makeJob(), status: 'failed' }, [
+      { sectionNumber: '13', content: 'Source-prepared discussion awaiting review.' },
+      { sectionNumber: '14', content: '[DATA TO BE INSERTED]' },
+    ]);
+    await runCSRBuildJob(42);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({ status: 'complete', progress: 100 });
+    expect(progressValues()).toEqual([100, 100]);
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+
+  it('preserves the existing full-build meaning of an empty retained selection', async () => {
+    fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: [] });
+    draftMock.mockImplementation(async (section: { number: string }) => sectionDraft(section.number, 'Source-prepared working text.'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'complete', progress: 100, error: null });
+    expect(draftMock.mock.calls.map(call => (call[0] as { number: string }).number)).toEqual(expect.arrayContaining(['1', '6', '13', '16']));
+    expect(fake.persisted.length).toBeGreaterThan(16);
+    expect(progressValues().every(value => typeof value === 'number' && value >= 0 && value <= 100)).toBe(true);
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+
+  it('drafts a duplicate supported subset only once', async () => {
+    fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['13', '13'] });
+    draftMock.mockResolvedValue(sectionDraft('13', 'Source-prepared discussion.'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'complete', progress: 100 });
+    expect(draftMock).toHaveBeenCalledOnce();
+    expect(fake.inserted).toEqual([{ sectionNumber: '13', content: 'Source-prepared discussion.' }]);
+    expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
+  });
+
+  it('resets stale progress before retrying targets when retained rows are unrelated or blank', async () => {
+    fake = makeFakeDb({ ...makeJob(), status: 'failed', progress: 100, sectionsToGenerate: ['6'] }, [
+      { sectionNumber: '1', content: 'Unrelated retained title page.' },
+      { sectionNumber: '6', content: '\n\t ' },
+    ]);
+    const progressAtDraft: unknown[] = [];
+    draftMock.mockImplementation(async () => {
+      progressAtDraft.push(fake.job.progress);
+      return sectionDraft('6', '');
+    });
+    await runCSRBuildJob(42);
+    expect(progressAtDraft).toEqual([0]);
+    expect(fake.job).toMatchObject({ status: 'failed', progress: 0, error: { reason: 'missing_section_outputs', sections: ['6'] } });
+    expect(continueMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('runCSRBuildJob — placeholder gate', () => {

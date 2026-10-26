@@ -123,9 +123,9 @@ describe('projectCrfShell', () => {
     expect(hba1c.sourceEndpointNames).toEqual(['HbA1c change']);
   });
 
-  it('does not give safety, eligibility or administrative activities their own forms', () => {
+  it('retains a safety activity while eligibility and administrative activities keep their standard forms', () => {
     const shell = projectCrfShell(crfDesign());
-    expect(byActivity(shell.forms, 'a_ae')).toBeUndefined();
+    expect(byActivity(shell.forms, 'a_ae')).toMatchObject({ name: 'Adverse-event review', sourceActivityId: 'a_ae', origin: 'design' });
     expect(byActivity(shell.forms, 'a_elig')).toBeUndefined();
     expect(byActivity(shell.forms, 'a_consent')).toBeUndefined();
   });
@@ -147,10 +147,10 @@ describe('projectCrfShell', () => {
 
   it('counts forms and scores grounding completeness', () => {
     const shell = projectCrfShell(crfDesign());
-    expect(shell.counts.forms).toBe(6);
-    expect(shell.counts.designDerivedForms).toBe(4);
+    expect(shell.counts.forms).toBe(7);
+    expect(shell.counts.designDerivedForms).toBe(5);
     expect(shell.counts.standardScaffoldForms).toBe(2);
-    expect(shell.counts.visitScheduledForms).toBe(5);
+    expect(shell.counts.visitScheduledForms).toBe(6);
     expect(shell.completeness).toEqual({ satisfied: 5, total: 5, percent: 100 });
   });
 });
@@ -214,5 +214,62 @@ describe('honest gaps', () => {
     expect(shell.forms.find(f => f.name === 'Study treatment exposure')).toBeDefined();
     expect(shell.gaps.join(' ')).toMatch(/not visit-scheduled/);
     expect(shell.completeness.satisfied).toBe(4); // grounding loses the SoA point
+  });
+});
+
+describe('recorded safety assessment coverage', () => {
+  it('retains a safety activity with its actual endpoint-derived item and scheduled visits', () => {
+    const d = clone(crfDesign());
+    d.endpoints.push({ name: 'Recorded QTc change', role: 'safety', type: 'continuous',
+      definition: 'Change in corrected QT interval', measurementMethod: 'Recorded central ECG reading', timepoint: 'Week 12' });
+    d.scheduleOfActivities!.activities.push({ id: 'safety_ecg', name: 'Recorded 12-lead ECG', category: 'safety',
+      endpointNames: ['Recorded QTc change'], order: 5 });
+    d.scheduleOfActivities!.cells.push({ activityId: 'safety_ecg', visitId: 'V3', state: 'performed' },
+      { activityId: 'safety_ecg', visitId: 'V2', state: 'performed' });
+    const form = byActivity(projectCrfShell(d).forms, 'safety_ecg');
+    expect(form).toMatchObject({ name: 'Recorded 12-lead ECG', origin: 'design', sourceActivityId: 'safety_ecg',
+      visitIds: ['V2', 'V3'], sourceEndpointNames: ['Recorded QTc change'], items: [{
+        prompt: 'Recorded QTc change: value (Recorded central ECG reading)', type: 'number', derivedFrom: 'endpoint:Recorded QTc change',
+      }] });
+    expect(form!.cdashDomain).toBeUndefined();
+    expect(form!.items[0].cdashVar).toBeUndefined();
+  });
+
+  it('retains unlinked safety laboratory and vital-sign activities with explicit placeholder gaps', () => {
+    const d = clone(crfDesign());
+    d.scheduleOfActivities!.activities.push(
+      { id: 'safety_labs', name: 'Recorded safety laboratory panel', category: 'safety', order: 5 },
+      { id: 'safety_vitals', name: 'Recorded vital signs', category: 'safety', order: 6 });
+    d.scheduleOfActivities!.cells.push({ activityId: 'safety_labs', visitId: 'V1', state: 'performed' },
+      { activityId: 'safety_vitals', visitId: 'V4', state: 'conditional' });
+    const shell = projectCrfShell(d);
+    for (const [id, name, visitId] of [
+      ['safety_labs', 'Recorded safety laboratory panel', 'V1'], ['safety_vitals', 'Recorded vital signs', 'V4'],
+    ]) {
+      const form = byActivity(shell.forms, id);
+      expect(form).toMatchObject({ name, origin: 'design', sourceActivityId: id, visitIds: [visitId], items: [
+        { prompt: `${name}: performed`, type: 'boolean', derivedFrom: `activity:${id}` },
+        { prompt: `${name}: result`, type: 'text', derivedFrom: `activity:${id}`, placeholder: true },
+      ] });
+      expect(form!.note).toContain('placeholder');
+      expect(shell.gaps).toContain(`Activity "${name}" has no endpoint link, so its CRF items are a placeholder.`);
+      expect(form!.cdashDomain).toBeUndefined();
+      expect(form!.items.every(item => item.cdashVar === undefined && item.units === undefined)).toBe(true);
+    }
+  });
+
+  it('keeps the generic AE form distinct from a recorded same-name safety activity', () => {
+    const d = clone(crfDesign());
+    d.scheduleOfActivities!.activities.find(activity => activity.id === 'a_ae')!.name = 'Adverse events';
+    const shell = projectCrfShell(d);
+    const recorded = byActivity(shell.forms, 'a_ae');
+    const generic = byDomain(shell.forms, 'AE');
+    expect(recorded).toMatchObject({ name: 'Adverse events', origin: 'design', sourceActivityId: 'a_ae',
+      visitIds: ['V2', 'V3', 'V4', 'V5'] });
+    expect(recorded!.items).toContainEqual({ prompt: 'Adverse events: result', type: 'text', derivedFrom: 'activity:a_ae', placeholder: true });
+    expect(generic).toMatchObject({ name: 'Adverse events', cdashDomain: 'AE', origin: 'design' });
+    expect(generic!.items.some(item => item.cdashVar === 'AETERM')).toBe(true);
+    expect(generic!.sourceActivityId).toBeUndefined();
+    expect(recorded).not.toBe(generic);
   });
 });

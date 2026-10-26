@@ -1,0 +1,23 @@
+{
+  "kind": "Selection/setup correction, not a production/test failure",
+  "initialSetupFailure": "Two incoming test files were intentionally deleted with the retired duplicate creators; asserting their presence stopped preparation before any suite ran.",
+  "retiredTests": [
+    "server/routes/__tests__/projects-management-quota-not-recorded-is-403.test.ts",
+    "server/services/__tests__/ana-create-project-refuses-an-unrecorded-project-limit.test.ts"
+  ],
+  "qualifiedReplacementTests": [
+    "server/__tests__/routes/ana-platform-control.test.ts",
+    "server/routes/__tests__/device-projects-class-not-invented.test.ts",
+    "server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts",
+    "server/routes/__tests__/program-journey-read.test.ts",
+    "server/routes/__tests__/projects-management-create-retired.test.ts",
+    "server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts",
+    "server/services/program-journey/__tests__/program-journey-service.pglite.integration.test.ts",
+    "tests/ci/project-creation-ownership.contract.test.ts",
+    "tests/routes/concept2cure-project-bootstrap.test.ts",
+    "tests/routes/concept2cure.test.ts",
+    "tests/routes/device-projects-governed-writes.test.ts",
+    "tests/routes/projects-management-tenant-boundary.test.ts"
+  ],
+  "policy": "Qualify current owner/retirement contracts; do not restore deleted duplicate project creators."
+}
