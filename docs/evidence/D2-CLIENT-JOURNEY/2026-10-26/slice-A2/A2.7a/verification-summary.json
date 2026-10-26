@@ -39,5 +39,15 @@
         "files": 2
       }
     ]
+  },
+  "secondMergedRemote": "65214946",
+  "csrMergedRegression": {
+    "passed": 185,
+    "files": 13
+  },
+  "scimMergedTypecheck": {
+    "errors": 0,
+    "baseline": 0,
+    "prepush": "all gates passed; remote ref advanced"
   }
 }

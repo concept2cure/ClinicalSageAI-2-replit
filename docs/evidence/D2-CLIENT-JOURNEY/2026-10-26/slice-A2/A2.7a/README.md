@@ -105,6 +105,13 @@ increment. Full A2.7 alias/fold work follows verified function parity.
   suites pass **25 tests in 2 files**. These are overlapping integration
   selections, not an additional full-suite total. Publication uses the normal
   gates again on the merged tree.
+- The SCIM-combined tree also passed every pre-push gate with **0 TypeScript
+  errors**. A simultaneous CSR/CRF publication through `65214946` moved the
+  ref before upload completed. That authoring work merged without conflicts;
+  the dossier, project document/step handoff, protocol CRF, editor assembly,
+  source import and template suites pass together: **185 tests in 13 files**.
+  The build/browser artifacts above belong to the preceding artifact-workflow
+  snapshot; these integration selections cover the later authoring merge.
 
 ## Remaining A2.7 work
 
