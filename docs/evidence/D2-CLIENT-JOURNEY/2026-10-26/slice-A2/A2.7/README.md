@@ -170,5 +170,11 @@ No auth traces, token values or real customer data are included.
 
 ## Next
 
+Publication encountered overlapping upstream A2.7a work at `7d193063f` after
+all hooks had passed. Its shared artifact types/reader and stricter semantic
+client validation are being reused as the single artifact owner, with tracking
+and the route fold retained. The reconciliation contract is recorded in the
+design addendum; previous raw proofs remain historical until combined checks.
+
 A2.8: route the existing MDX alias to Projects using the existing device filter.
 The device-workstream screen remains until A2.10's separate parity work.

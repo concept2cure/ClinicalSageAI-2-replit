@@ -67,3 +67,24 @@ Project-required destinations with no selected project return Projects without
 an action. Nav and URL loads use the same resolver and validated action bus;
 canonical URL replacement preserves program query/hash and features' address.
 URL project hydration must finish before a no-project redirect can be decided.
+
+## Concurrent artifact carryover reconciliation
+
+Remote `7d193063f` added overlapping A2.7a work while the publication hooks ran.
+What already exists there: `services/c2c/dossier-artifact-read.ts` is the extracted
+rollup reader; `shared/types/dossier-artifact-readiness.ts` owns weakest-state and
+summary rules; `ProjectArtifactReadiness.tsx` validates semantic counts/dates and
+renders their artifact view. It uses measured/no_artifacts/not_assessed states
+and a top-level `artifactReadiness` response. Its tests add scope and malformed
+response checks. Reuse these stronger shared owners rather than publish two
+readers, formula implementations, wire bases or artifact tables.
+
+Merge contract: top-level `artifactReadiness` uses that shared type and component.
+`supportingReadiness.sectionTracking` keeps the existing tracking map. Read the
+artifact source once through the accepted request/anchor/client scope; retain
+pre/post currentness checks and independent failure states. Retire our overlapping
+`services/dossier/artifact-readiness.ts` extraction, move any stronger scope
+predicates into the canonical reader, and keep the old HTTP route retired.
+AnA facts contain one artifact source and one tracking source. Preserve all new
+upstream semantic-validation and access tests while updating superseded wire
+expectations. A2.7 remains complete only when the combined tree is verified.
