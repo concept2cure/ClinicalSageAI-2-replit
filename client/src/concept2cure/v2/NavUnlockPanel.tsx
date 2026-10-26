@@ -117,8 +117,13 @@ export function NavUnlockPanel({
 
   return (
     <div className="nav-unlock-bd" onClick={onClose}>
+      {/* data-lock-source names the verdict this panel explains, so a check
+          can tell "not in this release" from a plan the organisation lacks:
+          the launch walk (tests/e2e/launch-walk-no-lock.e2e.ts) fails on the
+          first and records the second. */}
       <div
         className="nav-unlock"
+        data-lock-source={verdict.source}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

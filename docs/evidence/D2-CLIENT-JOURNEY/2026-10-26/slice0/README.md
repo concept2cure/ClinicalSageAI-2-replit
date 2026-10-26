@@ -136,8 +136,101 @@ What the confirmed findings changed, beyond the table above:
 - **`useMdxPrograms.deriveStageIdx`** still invents a stage when none is recorded, for the 510(k) strip and Overview.
   It is a shared hook for those surfaces' rows.
 - **The Pre-Sub dossier jump** comes back when `MdxSurfaceHost` passes `onJumpToDossier`.
-- **A walk of a freshly provisioned organisation that reaches no lock** is the map's slice 0 evidence. It is still
-  owed.
+- **A walk of a freshly provisioned organisation that reaches no lock** is the map's slice 0 evidence. It is done:
+  see "The walk" below.
+
+## The walk: a fresh organisation reaches no "not in this release" lock
+
+`tests/e2e/launch-walk-no-lock.e2e.ts` is the map's slice 0 evidence.
+
+**What it ran against.**
+- A server with `LAUNCH_SCOPE_ENFORCE=on`, as in production, served from a clean copy of `7d1f7f316` with this
+  commit's `NavUnlockPanel` attribute applied.
+- It skips itself on a server where launch scope is off.
+- It asserts the navigation verdicts (`/api/module-subscriptions/navigation`, `resolved: true`) can be read before
+  and after. With no verdict nothing is shown locked (`navEntitlements.tsx`, rule 1), so a walk on a server that
+  cannot answer would see nothing and pass.
+
+**What it does.** For a biotech and a medtech organisation, each signed up fresh through `POST /api/auth/signup`
+(never the demo seed), it:
+- presses every rail entry;
+- opens ⌘K from the top bar and presses every "Jump to" row, then every result of 13 searches: vault, submission,
+  readiness, protocol, cmc, quality, report, task, audit, ind, device, label and communication;
+- creates a first project (an IND; a 510(k)) and presses every door on its six steps. A door is a button that names
+  the place it opens. It never presses one that changes a record;
+- presses the rail and "Jump to" again with the project open.
+
+**What it fails on, and what it records.**
+- It fails on any "not in this release" lock:
+  - the full-page gate (`[data-launch-scope-gate]`);
+  - the unlock panel when it explains a launch-scope verdict (`.nav-unlock[data-lock-source="launch-scope"]`).
+- It records licence locks, which are the organisation's plan, and attaches every place visited as
+  `walk-<mode>.json`.
+
+| Organisation | Places visited | "Not in this release" | Licence locks (distinct features) | Doors on the six steps |
+| --- | --- | --- | --- | --- |
+| biotech, IND project | 134 | 0 | 53 (25) | 12 |
+| medtech, 510(k) project | 134 | 0 | 53 (25) | 12 |
+
+Evidence: `walk/walk-biotech.json`, `walk/walk-medtech.json`, `walk/green-run.txt`.
+
+### Made to fail first (`walk/red/`)
+
+The walk's first green run proved nothing. In ⌘K, a locked row of either kind opens the same unlock panel, and the
+walk counted every panel as a licence lock. So "not in this release" could be on screen and the walk would pass.
+
+- **The panel now names its verdict.** `NavUnlockPanel` carries `data-lock-source={verdict.source}`, pinned by
+  `navUnlockLockSource.test.tsx`. Its red is `unlock-panel-names-no-verdict.txt`: both tests fail against HEAD.
+- **The walk, made to fail.** Slice 0's ⌘K filter (`if (isLaunchScopeLocked(verdictFor(s.id))) return false;`) was
+  deleted in the scratch copy. The biotech walk then failed with 74 "not in this release" locks, each named by the
+  search and result that reached it, for example `⌘K "submission" → Dossier map`. See
+  `walk-without-cmdk-launch-filter.txt` and `.json`.
+- That run predates the verdict-read assertion above. Its lock classification is the same code.
+
+### Harness notes
+
+These apply to the scratch copy only. Nothing here changes the product.
+- **Vite cache.** The copy uses its own Vite cache directory (`cacheDir`). Through the symlinked `node_modules` it
+  shared the main tree's dependency cache, and React loaded twice: a blank page.
+- **Allowed origins.** A server on a port other than 5000 needs `ALLOWED_ORIGINS=http://127.0.0.1:<port>`. Otherwise
+  the CSRF origin check refuses Vite's module requests from the browser.
+- **The sign-up limiter.** It allows five sign-ups an hour from one address, held in the server's memory. A run makes
+  two, so a third run in the hour needs a fresh server process. The walk does not relax it.
+
+### What the walk found that is not a slice 0 failure
+
+Each is recorded for its owner; none is a "not in this release" lock.
+
+1. **A device company starts as pharma.**
+   - The server: `POST /api/auth/signup` stores `industry_mode` but never `client_type`, so the column keeps its
+     default `'pharma'`. Every walk organisation reads `client_type = pharma`, the medtech one included.
+   - The shell: its lane is the browser-local `prefs.segment` (default `biopharma`), not the organisation's.
+   - What a device client sees: CMC / Module 3 on its rail, and a New project picker that says "Tailored for
+     biopharma" with the pharma filings first. The raw id is printed because `SEG_LABELS` has no `biopharma` entry.
+   - Next change in this lane.
+2. **A fresh organisation holds no device feature.**
+   - The 510(k) workbench, CER, device clinical studies, PMA, Labeling, Risk, UDI and the rest are licence-locked for
+     the medtech organisation as for the biotech one ("not included in your plan").
+   - That follows the founder's request of 2026-10-23: device features are on the client's project, keeping every
+     feature's existing commercial verdict, with no new organisation grant (`shared/constants/launch-scope.ts`).
+   - It is the map's decision 1 widened from Communication and CMC to the device lane. It is for the founder.
+3. **⌘K search offers what the account menu does not.** It lists every in-release registry surface that matches:
+   - Master licensing ("platform-owner administration") to a customer's administrator;
+   - Admin console to members.
+
+   The account menu offers them only on `platformAdmin` and `isOrgAdmin`. This is a slice 0-class gap: offered to
+   someone who cannot use it. Next change in this lane.
+4. **⌘K search lists 25 features this organisation's plan lacks**, each a licence lock, among them 20 device
+   features for a biotech organisation. Their placed names are slice A.1, and which an organisation holds is decision
+   1.
+5. **Quality's reads fail on this server with `REQUEST_DB_CONTEXT_REQUIRED`.** This was seen in the server log, not
+   as a lock:
+   - affected: `/api/mdx/qms/documents` and the change, review-due and training reads (`server/routes/mdx-qms.ts`),
+     and the project schedule's unified work (`server/routes/project-schedule-of-events.ts`);
+   - why: each reads through `requestPgClient(req)`, which refuses a request with no tenant-pinned connection;
+   - status: under investigation in this lane.
+6. **AnA answers 503 on this server**, because the AI gateway started with no provider. It fails closed, as intended
+   for a local server.
 
 ## Tests, each made to fail first (`red/`)
 

@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/walkhead
+
+xx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/navUnlockLockSource.test.tsx > NavUnlockPanel data-lock-source > marks a feature outside the release as launch-scope
+AssertionError: expected null to be 'launch-scope' // Object.is equality
+
+- Expected:
+"launch-scope"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/navUnlockLockSource.test.tsx:39:50
+     37|   it('marks a feature outside the release as launch-scope', () => {
+     38|     const el = panel({ id: 'pv-cockpit', label: 'PV cockpit', entitled…
+     39|     expect(el?.getAttribute('data-lock-source')).toBe('launch-scope');
+       |                                                  ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/navUnlockLockSource.test.tsx > NavUnlockPanel data-lock-source > marks a feature the plan lacks by its own verdict, not as launch-scope
+AssertionError: expected null to be 'tier' // Object.is equality
+
+- Expected:
+"tier"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/navUnlockLockSource.test.tsx:44:50
+     42|   it('marks a feature the plan lacks by its own verdict, not as launch…
+     43|     const el = panel({ id: 'communication-center', label: 'Communicati…
+     44|     expect(el?.getAttribute('data-lock-source')).toBe('tier');
+       |                                                  ^
+     45|   });
+     46| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  12:21:05
+   Duration  2.55s (transform 532ms, setup 288ms, import 637ms, tests 70ms, environment 705ms)
+
