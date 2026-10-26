@@ -13,7 +13,6 @@
  *   server/services/ind/ctd/authoring-guidance.ts    AnA section drafting prompts
  *   c2c_rule_packs ind:fda (migrations)              the editor's filing outline
  *   global-ri/regional-module1-requirements.ts       Module 1 readiness aid
- *   templates/ectd/fda_template.xml                  the reference backbone
  *
  * The eCTD packager places every Module 1 leaf under the FDA heading element
  * derived from its section code (server/services/ectd/controlled-vocab/
@@ -144,17 +143,6 @@ function flattenTemplateSections(sections: CTDSection[]): TreeNode[] {
   return sections.flatMap((s) => [{ code: s.number, title: s.title }, ...flattenTemplateSections(s.childSections ?? [])]);
 }
 
-/** Module 1 heading elements in the reference FDA backbone template. */
-function fdaTemplateModule1(): TreeNode[] {
-  const xml = fs.readFileSync(path.join(ROOT, 'templates/ectd/fda_template.xml'), 'utf8');
-  const nodes: TreeNode[] = [];
-  for (const m of xml.matchAll(/<m1(-[0-9]+)+\s+title="([^"]*)"/g)) {
-    const code = m[0].match(/<m(1(?:-[0-9]+)+)/)![1].replace(/-/g, '.');
-    nodes.push({ code, title: m[2] });
-  }
-  return nodes;
-}
-
 describe('FDA Module 1 numbering — one published heading list, every tree agrees', () => {
   it('the FDA context-of-use list carries the Module 1 headings this contract is derived from', () => {
     for (const c of ['1.1', '1.2', '1.3.3', '1.3.4', '1.4.1', '1.12.14', '1.13.15', '1.14.4.1', '1.20']) {
@@ -263,12 +251,6 @@ describe('FDA Module 1 numbering — one published heading list, every tree agre
 
   it('the global-RI FDA Module 1 requirements file where FDA does', () => {
     const nodes = REGIONAL_MODULE1_REQUIREMENTS.FDA.map((c) => ({ code: c.section, title: c.label }));
-    expect(violationsFor(nodes)).toEqual([]);
-  });
-
-  it('the reference FDA backbone template files Module 1 where FDA does', () => {
-    const nodes = fdaTemplateModule1();
-    expect(nodes.length).toBeGreaterThan(3);
     expect(violationsFor(nodes)).toEqual([]);
   });
 

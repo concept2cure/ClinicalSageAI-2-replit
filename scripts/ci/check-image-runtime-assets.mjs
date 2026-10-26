@@ -114,10 +114,9 @@ export const RUNTIME_PATHS = {
       'Shipped by COPY server.',
   },
   // server/data/{global-regulatory-authorities,ich-guidelines-comprehensive,
-  // regulatory-document-requirements-matrix}.json and the directory entry: no
-  // longer read at run time (2026-10-15). Their one reader, the public API's
-  // second pathway engine (regulatory-pathway-intelligence.ts), was removed;
-  // /api/v1/regulatory/pathways answers from global-ri/regulatory-pathway-advisor.ts.
+  // regulatory-document-requirements-matrix}.json: unread since 2026-10-15 (their
+  // one reader, regulatory-pathway-intelligence.ts, was removed; /api/v1/regulatory/
+  // pathways answers from global-ri/regulatory-pathway-advisor.ts), deleted 2026-10-26.
   'server/export/stylePacks': {
     kind: 'ship',
     reason: 'Print style packs for 510(k)/PMA/CER PDF renders (export/stylePacks/config.ts); shipped by COPY server.',

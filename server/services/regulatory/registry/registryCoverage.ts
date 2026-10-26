@@ -141,7 +141,13 @@ const DEDICATED_SECTION = new Set<string>([
 ]);
 const DEDICATED_TASK = new Set<string>(DEDICATED_TASK_BLUEPRINT_IDS);
 
-/** Regions with a regional eCTD backbone reference template in `templates/ectd`. */
+/**
+ * Regions whose regional eCTD backbone the packager builds
+ * (server/services/ectd/regional-backbone-readiness.ts `module1ShapeOf`). A
+ * literal set, because that layer's Region type is not this one's. (The
+ * reference templates under templates/ectd, which nothing read, were deleted
+ * 2026-10-26, D2 cleanup S03.)
+ */
 const REGIONS_WITH_ECTD_BACKBONE = new Set<Region>(['US', 'EU', 'CA', 'JP']);
 
 function normalizedFormNumber(value: string): string {

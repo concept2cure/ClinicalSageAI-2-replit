@@ -422,3 +422,35 @@ user). The `.tpl-*` CSS is the client-journey session's (H10).
 from the 2026-10-23 device integration and outside this lens; it is reported, not deleted here.
 
 **Gates:** the four affected client test files, 64 pass.
+
+### S03 — delete repo-root template, policy and data files nothing loads
+
+**Deleted (16 files):**
+- `templates/module2_summary.docx.j2` and `templates/forms/form{1571,1572,3674}.docx.j2`;
+- `templates/workflows/ind-workflow.yaml`;
+- `templates/ectd/{fda,ema,hc,pmda}_template.xml` and `templates/ectd/0000/index.xml`;
+- `policy/reg/{fda,ema,pmda}.json`;
+- `server/data/{regulatory-document-requirements-matrix,ich-guidelines-comprehensive,global-regulatory-authorities}.json`.
+
+`templates/forms/acroforms/` (the live FDA forms the form fill reads, copied by the Dockerfile) and
+`templates/authoring/` are kept.
+
+**Proof of no reader:** `s03-red.txt`. Full-path greps find no code reader. The only reader was a test case that read
+`fda_template.xml` itself. `Dockerfile.optimized:217` says "the rest of templates/ is not read by the server". The
+`server/data` JSON lost its reader on 2026-10-15 (`64da63f28`). `prove-module-unused.mjs` does not apply: it takes no
+file arguments, and its `--controls` run fails on an unrelated control (reported).
+
+**Changed:**
+- `fda-module1-numbering.test.ts`: the "reference FDA backbone template" case and its helper go. The packager's
+  Module 1 placement is proven by the same file's other cases.
+- Comments in `registryCoverage.ts`, `market-submission-specs.ts` and `check-image-runtime-assets.mjs` no longer name
+  the deleted files.
+
+**P-47 parity:** none of these files was loaded, so no function is lost:
+- Module 1 → `shared/regulatory/regional-module1.ts`;
+- Modules 2–5 → the record;
+- backbones → the eCTD compile;
+- forms → `ind-form-fill-service.ts`;
+- authorities → `market-submission-specs.ts`.
+
+**Gates:** `fda-module1-numbering` and `registryCoverage`, 207 pass; `check-image-runtime-assets`, exit 0.
