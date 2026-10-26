@@ -8,14 +8,19 @@
  *   - SLASH_COMMAND_SUMMARIES: the composer's `/` menu;
  *   - DISCOVERY_OPTIONS labels: onboarding's questions;
  *   - NOTIFICATION_CATEGORY_LABELS: notification preferences;
- *   - DEMO_SCRIPTS descriptions and `say` lines: what AnA narrates on a tour.
+ *   - DEMO_SCRIPTS descriptions and `say` lines: what AnA narrates on a tour;
+ *   - the plan-of-work catalogues' phase names (services/regulatory/pyramids): Plan's "{n}. {phase name}" and
+ *     AnA's get_document_section_requirements read the IND's, served by the server with no client copy.
  * No test pinned any of them, so the sweep that changed them (wording-sweep-2 evidence) would not
  * have been noticed coming back. Ids, keys and values are not scanned: `projects.open-program` and
  * `intelligenceTab` are identifiers, not copy.
  *
  * A target or action is scanned when the screen it opens is in the release, resolved the way the
  * shell resolves it (DEEP_LINK_ALIASES): the `@` menu offers only those, and AnA is told the others
- * are locked. A surface outside the release gets its words when its slice places it.
+ * are locked. A surface outside the release gets its words when its slice places it. The one exception is the
+ * phase names of every plan-of-work catalogue, not only the IND's: the NDA, BLA and PMA catalogues named the same
+ * phase 1 "Program Planning" as the IND, and Plan reads them once it projects them (section 11 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md), so one phase keeps one name now.
  *
  * A regulatory or industry name that contains the word stays (FDA's Q-Submission Program, an
  * expedited or pediatric programme, a stability programme, a qualification programme), and so does
@@ -31,6 +36,7 @@ import { DISCOVERY_OPTIONS } from '@shared/types/onboarding-discovery';
 import { NOTIFICATION_CATEGORY_LABELS } from '@shared/constants/notifications';
 import { LAUNCH_SHELL_SURFACES, LAUNCH_SURFACE_IDS } from '@shared/constants/launch-scope';
 import { locationForSurface, surfaceIdFromLocation } from '../routing';
+import { getAllSupportedTypes, getPyramidForProject } from '../../../../../services/regulatory/SubmissionPyramidEngine';
 
 /** Whether the screen a navigation id opens is one a client can reach in this release. */
 function reachable(targetId: string): boolean {
@@ -76,5 +82,11 @@ describe('shared copy a client reads says "project", not "program"', () => {
       [`${d.id}.description`, d.description] as [string, string],
       ...d.steps.map((s, i) => [`${d.id}[${i}].say`, s.say] as [string, string]),
     ]))).toEqual([]);
+  });
+
+  /* Slice A.1: phase 1 of the IND, NDA, BLA and PMA catalogues read "Program Planning" until 2026-10-26. */
+  it("the plan-of-work catalogues' phase names", () => {
+    expect(offending(getAllSupportedTypes().flatMap((type) => getPyramidForProject(type).phases.map((p) =>
+      [`${type}.${p.id}`, p.name] as [string, string])))).toEqual([]);
   });
 });

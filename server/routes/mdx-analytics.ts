@@ -293,8 +293,8 @@ router.get('/analytics', async (req: Request, res: Response) => {
       ? Math.round((draft.accepted / (draft.accepted + draft.pending)) * 100) : null;
 
     const kpis = [
-      { label: 'Programs', metric: String(prog.total), meta: `${prog.active} active` },
-      { label: 'Approved programs', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
+      { label: 'Projects', metric: String(prog.total), meta: `${prog.active} active` },
+      { label: 'Approved projects', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
       { label: 'AnA acceptance rate', metric: acceptRate == null ? '—' : String(acceptRate), unit: acceptRate == null ? '' : '%', meta: acceptRate == null ? 'No recorded AnA drafts' : `${draft.accepted} accepted · ${draft.pending} pending` },
     ];
 

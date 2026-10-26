@@ -23,6 +23,7 @@ import {
 } from '../fixtures/licensing';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { getSurfaceMeta } from '../registryModel';
 
 /* -- Inline helpers -- */
 
@@ -69,7 +70,7 @@ const billing: BillingApi = {
   },
 };
 
-/* ════ Licensing -- plans & billing surface ════ */
+/* ════ Compare subscriptions (id licensing) -- subscriptions & billing surface ════ */
 
 export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [model, setModel] = useState<'dtc' | 'b2b'>('dtc');
@@ -106,7 +107,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
          routed and no one was told. No sales contact is configured in this
          product, so the button says what it does — ask AnA — and no toast
          claims more (settings/integrity audit 2026-10-17, finding 3). */
-      onAsk && onAsk('Tell me about the Enterprise plan: what it includes and how an organisation arranges it.');
+      onAsk && onAsk('Tell me about the Enterprise subscription: what it includes and how an organisation arranges it.');
       return;
     }
     const body: Record<string, unknown> =
@@ -143,15 +144,15 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
   /* WHAT ANA SEES HERE. On a failed status read `curTier` silently falls back
      to 'free' and the free card wears the Current tag — the error branch
-     exists so that fallback is never reported as the organization's plan.
-     Payment status is the raw value, never dunning language; choosing a plan
+     exists so that fallback is never reported as the organization's subscription.
+     Payment status is the raw value, never dunning language; choosing a subscription
      and the seats input are checkout acts and are never offered. */
   const anaContext = useMemo(() => {
     const lockLead = unlock
       ? `The user arrived here from a lock on "${unlock.label}", which ${
           unlock.requiredTier
-            ? `needs the ${unlock.requiredTier} plan or above`
-            : 'has no plan remedy — changing plan may not resolve it on its own'
+            ? `needs the ${unlock.requiredTier} subscription or above`
+            : 'has no subscription remedy — changing subscription may not resolve it on its own'
         }. `
       : '';
     const view = `Viewing the ${model === 'dtc' ? 'self-service' : 'enterprise per-user'} catalog on the ${cycle} cycle.`;
@@ -162,13 +163,13 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       arrivedFromLock: unlock ? { label: unlock.label, requiredTier: unlock.requiredTier } : null,
     };
     if (statusState.loading) {
-      return { summary: lockLead + 'The current plan is still loading. ' + view, facts: shared };
+      return { summary: lockLead + 'The current subscription is still loading. ' + view, facts: shared };
     }
     if (statusState.error) {
       return {
         summary:
           lockLead +
-          'The subscription status could not be read, so no current plan is shown — any "Current" marker on the ' +
+          'The subscription status could not be read, so no current subscription is shown — any "Current" marker on the ' +
           'free card is the silent fallback of the failed read, NOT a finding that the organization is on the ' +
           'free tier. ' + view,
         facts: { ...shared, planUnavailable: true },
@@ -183,7 +184,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
     return {
       summary:
         lockLead +
-        `Plans & licensing: current plan "${status.tier}", payment status "${status.paymentStatus}", ` +
+        `Compare subscriptions: current subscription "${status.tier}", payment status "${status.paymentStatus}", ` +
         `${status.seats} seat(s), billed ${status.billingCycle}` +
         (status.currentPeriodEnd
           ? `, current period ends ${new Date(status.currentPeriodEnd).toLocaleDateString()}`
@@ -200,7 +201,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Switch between the self-service and enterprise catalogs and the monthly/annual cycle (view state only)',
-        'Choosing a plan opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
+        'Choosing a subscription opens Stripe checkout; changing or cancelling runs through the billing portal — human acts',
       ],
     };
   }, [unlock, model, cycle, arch, statusState.loading, statusState.error, status]);
@@ -230,7 +231,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Admin · billing</div>
-          <h1 className="sp-title">Plans &amp; licensing</h1>
+          <h1 className="sp-title">{getSurfaceMeta('licensing').label}</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
             organization archetype — with seat bundle discounts and annual
@@ -248,8 +249,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         /* Says the thing the customer came here to find out. Every value is the
            server's own verdict, carried across the navigation — the module's
            real name and the real minimum tier. When requiredTier is null the
-           lock has no plan remedy (an administrator disabled it, or it is
-           outside this workspace's industry mode) and this must NOT offer a plan
+           lock has no subscription remedy (an administrator disabled it, or it is
+           outside this workspace's industry mode) and this must NOT offer a subscription
            that would change nothing. */
         <div className="lic-unlock" role="note">
           <span className="lic-unlock-ic" aria-hidden="true">{I.lock}</span>
@@ -257,8 +258,8 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
             <div className="lic-unlock-t">{unlock.label}</div>
             <div className="lic-unlock-b">
               {unlock.requiredTier
-                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} plan upward. Your current plan does not include it.`
-                : 'Not included in your plan. Changing plan may not resolve this on its own — check with your administrator.'}
+                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} subscription upward. Your current subscription does not include it.`
+                : 'Not included in your subscription. Changing subscription may not resolve this on its own — check with your administrator.'}
             </div>
           </div>
         </div>
@@ -266,14 +267,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
       {statusState.loading ? (
         <div role="status" className="scaf-note" style={{ marginBottom: 16 }}>
-          Loading your current plan…
+          Loading your current subscription…
         </div>
       ) : statusState.error ? (
         <div style={{ marginBottom: 16 }}>
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
-            title="Couldn't load your current plan"
+            title="Couldn't load your current subscription"
             hint="Your subscription status didn't load. This reads your organization's billing record — sign in and retry, or check the billing service is reachable."
           />
         </div>
@@ -281,7 +282,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card" style={{ marginBottom: 16 }}>
           <div className="pj-card-b lic-status">
             <div>
-              <span className="l">Current plan</span>
+              <span className="l">Current subscription</span>
               <span className="v">{status.tier}</span>
             </div>
             <div>
@@ -434,7 +435,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                   }
                 >
                   {cur
-                    ? 'Current plan'
+                    ? 'Current subscription'
                     : t.tier === 'enterprise'
                       ? 'Ask AnA about Enterprise'
                       : t.tier === 'free'
@@ -510,7 +511,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                   onClick={() => checkout(t.tier)}
                 >
                   {cur
-                    ? 'Current plan'
+                    ? 'Current subscription'
                     : t.tier === 'enterprise'
                       ? 'Ask AnA about Enterprise'
                       : 'Choose ' + t.name}
@@ -525,7 +526,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="lic-usage-main">
           <b>Usage-based, capped, auditable</b>
           <span>
-            Every plan meters real usage — session and weekly windows,
+            Every subscription meters real usage — session and weekly windows,
             per-engine buckets, overage caps you set yourself, and credits with
             auto-reload. Changing a cap is a governed action: admin role,
             reason-for-change, audit entry.
@@ -545,7 +546,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         {I.shieldCheck} Prices, limits, credits and features are the product&rsquo;s fixed
         catalog, mirrored from the same config the backend charges against
         (services/billing.ts) — identical for every organization, not per-tenant data.
-        Your plan, seats and renewal above are read from your organization&rsquo;s billing
+        Your subscription, seats and renewal above are read from your organization&rsquo;s billing
         record. Checkout &amp; management run through Stripe.
       </div>
       <C2CToast msg={toast} />

@@ -1642,13 +1642,13 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
       if (anchored == null) {
         return res.status(409).json({
-          error: 'This program has no project record, so no report runs over it yet. Nothing was run.',
+          error: 'This project has no tracking record, so no report runs over it yet. Nothing was run.',
           code: 'PROGRAM_NOT_ANCHORED',
         });
       }
       if (parsed.data.scopeId != null && parsed.data.scopeId !== String(anchored)) {
         return res.status(400).json({
-          error: 'scopeId does not name the program’s project record.',
+          error: 'scopeId does not name the project’s tracking record.',
           code: 'SCOPE_PROGRAM_MISMATCH',
         });
       }

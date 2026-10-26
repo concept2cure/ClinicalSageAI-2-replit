@@ -116,7 +116,7 @@ async function readProjectMetadata(organizationId: number, projectId: number): P
     [projectId, organizationId],
   );
   if (rows.length === 0) {
-    throw new RegionalNotComputed('This program was not found in this organization, so no market readiness was assessed.');
+    throw new RegionalNotComputed('This project was not found in this organization, so no market readiness was assessed.');
   }
   return (rows[0] as { metadata: unknown }).metadata;
 }
@@ -267,12 +267,12 @@ const PARTIAL_DEPENDENCIES: Readonly<Record<string, string>> = Object.freeze({
 function oneProgramScope(scopeType: string, scopeId: string): number {
   if (scopeType !== 'project') {
     throw new RegionalNotComputed(
-      `A market's filing readiness is assessed for one program, not for a ${scopeType} scope, so it was not run here.`,
+      `A market's filing readiness is assessed for one project, not for a ${scopeType} scope, so it was not run here.`,
     );
   }
   const projectId = Number(scopeId);
   if (!Number.isFinite(projectId) || projectId <= 0) {
-    throw new RegionalNotComputed('This scope does not name a program, so no market readiness was assessed.');
+    throw new RegionalNotComputed('This scope does not name a project, so no market readiness was assessed.');
   }
   return projectId;
 }
@@ -329,7 +329,7 @@ function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observa
        reporting every required heading as missing would turn an unrecorded
        program into a damning gap list. */
     const blocker =
-      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code on current non-empty content, ' +
+      'Module 1 coverage was not assessed: no section or governed document of this project records a CTD section code on current non-empty content, ' +
       `so nothing could be matched against the ${a.required.length} ${ctx.jurisdiction} Module 1 heading(s) ` +
       `a ${ctx.kind.toUpperCase()} requires.`;
     providers.push({ provider: 'module1_content', observedAt: now(), status: 'missing', blocker });
@@ -359,7 +359,7 @@ function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observa
   for (const u of a.undetermined) {
     blockers.push(
       `${headingLine(ctx, a, u.code)}: required only if ${u.condition.replace(/_/g, ' ')} holds, ` +
-        'and that is not recorded for this program.',
+        'and that is not recorded for this project.',
     );
   }
   providers.push({
@@ -367,7 +367,7 @@ function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observa
     observedAt: now(),
     status: a.undetermined.length === 0 ? 'ready' : 'partial',
     ...(a.undetermined.length > 0
-      ? { blocker: `${a.undetermined.length} Module 1 heading(s) are conditional on a fact this program does not record.` }
+      ? { blocker: `${a.undetermined.length} Module 1 heading(s) are conditional on a fact this project does not record.` }
       : {}),
   });
   return { providers, blockers, criticalBlockers };

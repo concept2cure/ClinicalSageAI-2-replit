@@ -80,14 +80,14 @@ async function projectProgram(q:RequestSqlClient, actor:DigestActor, projectId:n
   const result=await q.query('SELECT regulatory_program_id::text AS program_id FROM projects WHERE id=$1 AND organization_id=$2',[projectId,actor.organizationId]);
   if (result.rows.length!==1) throw notFound();
   const programId=z.string().uuid().nullable().parse(result.rows[0].program_id);
-  if (!programId) throw new DigestAccessError(409,'DIGEST_PROJECT_UNANCHORED','This retained digest needs a verified program relationship before its contents can be supplied.');
+  if (!programId) throw new DigestAccessError(409,'DIGEST_PROJECT_UNANCHORED','This retained digest needs a verified project relationship before its contents can be supplied.');
   return programId;
 }
 
 async function admitProject(q:RequestSqlClient, actor:DigestActor, projectId:number, forShare=false):Promise<CurrentProgramAccess> {
   const programId=await projectProgram(q,actor,projectId);
   const access=await requireCurrentProgramAccess(q,{...actor,programId,forShare});
-  if (access.projectId!==projectId) throw new DigestAccessError(409,'DIGEST_PROJECT_UNRESOLVED','This retained digest has an unresolved program relationship.');
+  if (access.projectId!==projectId) throw new DigestAccessError(409,'DIGEST_PROJECT_UNRESOLVED','This retained digest has an unresolved project relationship.');
   return access;
 }
 

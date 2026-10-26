@@ -17,7 +17,9 @@
  *   - the open step says what to do now, and offers the next step;
  *   - a US drug IND offers CMC / Module 3 on Author and the IND forms on Submit,
  *     each opened on this project; other filings are not offered what does not
- *     serve them.
+ *     serve them. Since slice A.1 each door carries the name Plan gives the same
+ *     job ("Compose Module 3 in CMC / Module 3", "Prepare Forms 1571, 1572 and
+ *     3674 in IND forms"; section 9: one job, one name), matched exactly.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -167,10 +169,10 @@ describe('each step offers the tools that belong to it, on this project', () => 
     serve(US_DRUG_IND, [DOC]);
     const { onNav } = mount();
     await screen.findByTestId('pj-documents');
-    fireEvent.click(await screen.findByRole('button', { name: /CMC \/ Module 3/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Compose Module 3 in CMC / Module 3' }));
     expect(onNav).toHaveBeenCalledWith('cmc');
     fireEvent.click(tab('Submit'));
-    fireEvent.click(await screen.findByRole('button', { name: /IND forms/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Prepare Forms 1571, 1572 and 3674 in IND forms' }));
     expect(onNav).toHaveBeenCalledWith('ind-checklist');
   });
 
@@ -178,18 +180,18 @@ describe('each step offers the tools that belong to it, on this project', () => 
     serve({ ...US_DRUG_IND, product_type: 'biologic' }, [DOC]);
     mount();
     await screen.findByTestId('pj-documents');
-    expect(screen.queryByRole('button', { name: /CMC \/ Module 3/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Compose Module 3 in CMC / Module 3' })).toBeNull();
     fireEvent.click(tab('Submit'));
-    expect(await screen.findByRole('button', { name: /IND forms/ })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Prepare Forms 1571, 1572 and 3674 in IND forms' })).toBeTruthy();
   });
 
   it('an NDA is offered neither', async () => {
     serve({ ...US_DRUG_IND, program_type: 'NDA' }, [DOC]);
     mount();
     await screen.findByTestId('pj-documents');
-    expect(screen.queryByRole('button', { name: /CMC \/ Module 3/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Compose Module 3 in CMC / Module 3' })).toBeNull();
     fireEvent.click(tab('Submit'));
     await screen.findByTestId('pj-markets');
-    expect(screen.queryByRole('button', { name: /IND forms/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Prepare Forms 1571, 1572 and 3674 in IND forms' })).toBeNull();
   });
 });

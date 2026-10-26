@@ -165,7 +165,7 @@ describe('placeModule3IntoSubmission and the composition boundary', () => {
       assessProgramCompositionScope.mockResolvedValue({
         code: 'CMC_MODALITY_OUT_OF_SCOPE',
         modality: 'biologic',
-        message: "This program's drug substance is biologically derived — CHO cell culture.",
+        message: "This project's drug substance is biologically derived — CHO cell culture.",
       });
       const result = await place();
       expect(!result.placed && result.refusedBy).toBe('composition-scope');

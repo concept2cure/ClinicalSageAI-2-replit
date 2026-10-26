@@ -179,7 +179,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
   it('a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build', async () => {
     const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
     (window as any).C2C_PROJECT = { id: uuid };
-    const refusal = 'This program has no project record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the program its project record.';
+    const refusal = 'This project has no tracking record, so it has no dossier to save the form into. Nothing was saved. An administrator can give the project its tracking record.';
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'], program: { id: String(window.C2C_PROJECT?.id), code: 'TEST-IND', name: 'Recorded test program', programType: 'IND', sponsorName: 'Recorded test sponsor', productName: 'Test product', applicationNumber: null, indication: null, formMetadata: {} } }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {

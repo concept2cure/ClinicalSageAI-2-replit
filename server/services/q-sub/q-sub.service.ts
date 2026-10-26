@@ -417,7 +417,7 @@ export async function createQSubmission(
 ): Promise<CreatedQSubmission> {
   // Tenant gate: program must belong to caller's org.
     if (!(await programInOrganization(pool, input.programId, organizationId))) {
-    throw new TenantAccessError('Program does not belong to this organization');
+    throw new TenantAccessError('Project does not belong to this organization');
   }
 
   const [row] = await db

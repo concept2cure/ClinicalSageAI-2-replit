@@ -34,7 +34,7 @@ const ctx = { organizationId: ORG, activeProjectId: P } as never;
 const MAB = {
   code: 'CMC_MODALITY_OUT_OF_SCOPE',
   modality: 'biologic',
-  message: "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+  message: "This project's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
 };
 
 beforeEach(() => {

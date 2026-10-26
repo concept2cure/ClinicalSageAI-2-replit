@@ -2,6 +2,10 @@ import { apiRequest } from '@/lib/queryClient';
 import { isProgramId } from './draftToDocument';
 import type { AskOrigin } from './askAnaToDraft';
 import type { EditorBridge } from './DocumentWorkbench';
+import { getSurfaceMeta } from '../registryModel';
+
+/** The editor's name where a conversation says where a question came from: its registry label. */
+const EDITOR_LABEL = getSurfaceMeta('document-authoring').label;
 
 export interface VerifiedOriginDocument {
   docId: string;
@@ -14,14 +18,14 @@ export type OriginDocumentRead =
   | { state: 'ready'; document: VerifiedOriginDocument }
   | { state: 'error'; message: string };
 
-const UNVERIFIED = 'The saved document could not be verified in the open project. Try again, return to Authoring, or remove the source context to ask a different question.';
+const UNVERIFIED = 'The saved document could not be verified in the open project. Try again, return to the editor, or remove the source context to ask a different question.';
 
 /** A collapsed canvas names the actual section it read, before its bridge mounts. */
 export function originForSavedSection(document: { id: string; title: string }, section: {
   id: string; code: string; title: string; updated_at?: string | null;
 }, programId: string | null): AskOrigin {
   return {
-    surfaceId: 'document-authoring', label: 'Authoring',
+    surfaceId: 'document-authoring', label: EDITOR_LABEL,
     moduleContext: { documentId: document.id, documentTitle: document.title, sectionId: section.id, sectionCode: section.code, sectionTitle: section.title, sectionUpdatedAt: section.updated_at, savedRecordOnly: true },
     ...(programId ? {
       authoringDocument: { docId: document.id, programId, sectionId: section.id },
@@ -75,7 +79,7 @@ function originMatchesProject(origin: AskOrigin, projectId: string | number | nu
 function originForEditorBridge(bridge?: EditorBridge | null): AskOrigin {
   const context = bridge?.authoringContext;
   return {
-    surfaceId: 'document-authoring', label: 'Authoring',
+    surfaceId: 'document-authoring', label: EDITOR_LABEL,
     authoringContext: context, moduleContext: bridge?.moduleContext,
     ...(bridge && context?.projectId ? { authoringDocument: {
       docId: bridge.docId, programId: context.projectId,

@@ -92,7 +92,7 @@ async function load(q: RequestSqlClient, scope: CsrSourceScope, selection: CsrSo
     FROM vault.documents d WHERE d.id = $1 AND d.organization_id = $2 AND d.program_id = $3 AND d.deleted_at IS NULL
       AND ${vaultDataEligibleSql('d')} AND ${vaultBinaryAvailableSql('d')} FOR SHARE OF d`,
   [selection.documentId, scope.organizationId, scope.programId]);
-  if (rows.length !== 1) throw new CsrSourceInputError(404, 'CSR_SOURCE_NOT_FOUND', 'This source is not available in the selected program.');
+  if (rows.length !== 1) throw new CsrSourceInputError(404, 'CSR_SOURCE_NOT_FOUND', 'This source is not available in the selected project.');
   const row = rows[0] as SourceRow;
   if (!/^[a-f0-9]{64}$/.test(row.content_hash) || row.content_hash !== selection.expectedSha256) {
     throw new CsrSourceInputError(409, 'CSR_SOURCE_CHANGED', 'The selected source no longer matches its preview. Refresh and preview its current version.');

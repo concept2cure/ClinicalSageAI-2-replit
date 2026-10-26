@@ -25,15 +25,16 @@ describe('MDX starts inside the verified client project', () => {
     /* The workflow is the device project's Plan (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
     fireEvent.click(await screen.findByRole('button', { name: 'Plan' }));
     const workflow = await screen.findByTestId('pj-mdx-workflow');
-    expect(workflow.textContent).toContain('510(k) · Diagnostic project workflow');
+    /* Slice A.1: headed "510(k) · Diagnostic project workflow" until section 9 took "workflow" out of client copy. */
+    expect(workflow.querySelector('h2')?.textContent).toBe('What this 510(k) needs');
     const analytical = workflow.querySelector('[data-work-package="analytical-performance"]')! as HTMLElement;
-    fireEvent.click(within(analytical).getByRole('button', { name: 'Open project evidence' }));
+    fireEvent.click(within(analytical).getByRole('button', { name: 'Add this work’s sources on Evidence' }));
     expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent).toContain('Evidence');
     expect(p.onNav).not.toHaveBeenCalled();
     expect(window.C2C_PROJECT?.id).toBe(A);
     fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
     const writing = (await screen.findByTestId('pj-mdx-workflow')).querySelector('[data-work-package="medical-writing"]')! as HTMLElement;
-    fireEvent.click(within(writing).getByRole('button', { name: 'Open project documents' }));
+    fireEvent.click(within(writing).getByRole('button', { name: 'Write this work’s documents on Author' }));
     expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent).toContain('Author');
     expect(document.querySelector('.pj-stageband-blurb')?.textContent).not.toContain('eCTD');
   });

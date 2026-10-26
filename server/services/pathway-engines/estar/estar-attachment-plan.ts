@@ -539,7 +539,7 @@ export function createDeviceAttachmentResolver(
         return {
           ok: false,
           reason:
-            `Section "${source.sectionCode}" has no authored content in this program's governed ` +
+            `Section "${source.sectionCode}" has no authored content in this project's governed ` +
             'document, so there is nothing to file into the slot.',
         };
       }

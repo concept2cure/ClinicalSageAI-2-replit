@@ -148,13 +148,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) {
-    return clientError(res, 422, 'programId must be a UUID');
+    return clientError(res, 422, 'The project id must be a UUID.');
   }
 
   try {
     /* Verify tenancy before reading anything. A valid UUID from another
        org and a non-existent UUID both 404, so neither leaks. */
-    if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'Program');
+    if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'Project');
 
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the

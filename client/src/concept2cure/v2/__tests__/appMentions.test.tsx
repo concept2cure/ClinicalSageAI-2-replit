@@ -167,12 +167,16 @@ describe('the @ menu offers only what this viewer can open', () => {
   });
 
   it('a navigation id is checked as the surface it opens', () => {
-    // `tasking` opens the `tasks` surface; locking `tasks` hides @Tasking.
-    locked.add('tasks');
+    // `tasking` (labelled Tasks) opens the `tasks` surface; locking `tasks` hides it.
     render(<Host onSend={vi.fn()} />);
     const box = screen.getByLabelText('Message') as HTMLTextAreaElement;
     type(box, '@Tasking');
-    expect(screen.queryByRole('option', { name: /Tasking/ })).toBeNull();
+    expect(screen.getByRole('option', { name: '@Tasks' })).toBeTruthy();
+    cleanup();
+    locked.add('tasks');
+    render(<Host onSend={vi.fn()} />);
+    type(screen.getByLabelText('Message') as HTMLTextAreaElement, '@Tasking');
+    expect(screen.queryByRole('option', { name: '@Tasks' })).toBeNull();
   });
 
   it('a locked feature does not take one of the eight places from an available one', () => {

@@ -397,7 +397,7 @@ async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown)
     return { kind: 'refused', status: 400, code: 'PROJECT_REQUIRED', error: 'Open a project first: a document belongs to a project.' };
   }
   if (!UUID_RE.test(String(clientProgramId))) {
-    return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
+    return { kind: 'refused', status: 400, error: 'The project id must be a valid UUID.' };
   }
   if (!(await programInOrganization(ctx.pool, String(clientProgramId), ctx.tenantId))) {
     return { kind: 'refused', status: 404, error: 'Project not found' };

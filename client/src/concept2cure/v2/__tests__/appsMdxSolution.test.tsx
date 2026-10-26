@@ -11,7 +11,7 @@ vi.mock('@/lib/queryClient', async (original) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 import { useActiveSurfaceContext } from '../surfaceContext';
 
-const surface = { id: 'apps', label: 'Plan & features' } as UiSurface;
+const surface = { id: 'apps', label: 'Subscription & features' } as UiSurface;
 const license = {
   tier: 'professional', industryMode: 'medtech', enabledModules: [],
   usage: { projects: { currentCount: 1, maxAllowed: 10 }, users: { currentCount: 2, maxAllowed: 20 } },
@@ -66,7 +66,7 @@ describe('Apps catalog reaches MDX through Projects', () => {
     const onNav = mount();
     const solution = await screen.findByTestId('mdx-catalog-solution');
     expect(screen.getAllByTestId('mdx-catalog-solution')).toHaveLength(1);
-    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects');
     expect(solution.querySelectorAll('[data-feature-id]')).toHaveLength(3);
     expect(solution.querySelector('.launch-grid')).toBeNull();
     fireEvent.click(within(solution).getByRole('button', { name: 'Open projects' }));
@@ -89,7 +89,7 @@ describe('Apps catalog reaches MDX through Projects', () => {
     const search = screen.getByRole('searchbox', { name: 'Find a feature' });
     fireEvent.change(search, { target: { value: 'Clinical evaluation' } });
     const solution = screen.getByTestId('mdx-catalog-solution');
-    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(solution.closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects');
     expect(solution.querySelectorAll('[data-feature-id]')).toHaveLength(1);
     expect(solution.querySelector('details')?.open).toBe(true);
     expect(screen.queryByText('510(k) submission', { selector: '.launch-title' })).toBeNull();
@@ -110,7 +110,7 @@ describe('Apps catalog reaches MDX through Projects', () => {
     await screen.findByTestId('mdx-catalog-solution');
     const access = revealAccess();
     expect(access.getByText(/510\(k\) submission is turned off for this workspace/)).toBeTruthy();
-    expect(access.getByText(/Clinical evaluation is not included in your plan/)).toBeTruthy();
+    expect(access.getByText(/Clinical evaluation is not included in your subscription/)).toBeTruthy();
     expect(access.getByText(/Risk management is not offered for this workspace/)).toBeTruthy();
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     expect(access.getAllByRole('switch')).toHaveLength(1);

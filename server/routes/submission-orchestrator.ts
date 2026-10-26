@@ -228,7 +228,7 @@ router.get('/csr/readiness', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
   const parsed = z.string().uuid().safeParse(req.query.programId);
-  if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A program UUID is required.' });
+  if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A project UUID is required.' });
   const userId = orchestratorActorId(req);
   try {
     return res.json(await readProgramCsrSourceReadiness(pool, organizationId, parsed.data, userId));
@@ -276,7 +276,7 @@ async function sendStartedProgramRun(res: Response, input: {
       catch (err) { continuationError = err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError ? err.code : 'CONTINUATION_UNAVAILABLE'; }
     }
     return res.json({ ...currentRun, steps: currentRun.steps.map(redactStepOutputRef), m3Refusal, continuationError,
-      inputGaps: ['No nonclinical study corpus is linked to this canonical program.',
+      inputGaps: ['No nonclinical study corpus is linked to this project.',
         ...(clinicalSource ? ['Clinical tables use the selected supporting source. Clinical verification and CDISC/FDA qualification are not established; first-study AI narrative generation remains unavailable.']
           : ['No clinical supporting source was selected for this run. Only completed, accessible CSR summaries are included.'])],
     });
@@ -308,7 +308,7 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
     if (enableCSRNarrative === true) return res.status(409).json({ error: CSR_NARRATIVE_INPUTS_REQUIRED.code, message: CSR_NARRATIVE_INPUTS_REQUIRED.message });
     const anchor = recordedProgramAnchor(programId, program);
     const spine = sequenceId ? await resolveSequenceSpine(anchor, organizationId, sequenceId) : await resolveSubmissionSpine(anchor, organizationId);
-    if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected program needs a recorded submission and sequence before it can be orchestrated.' });
+    if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected project needs a recorded submission and sequence before it can be orchestrated.' });
     // The sequence's own market's number (P-44), as the run's identity reader judges it.
     const identity = await readSubmissionPackageIdentity(pool, organizationId, spine.submissionId, { region: spine.sequence.region });
     const identityRefusal = packageIdentityRefusal(identity, 'Nothing was built.');
@@ -533,7 +533,7 @@ function refusedInlineCmcSources(rawBody: any, res: Response, organizationId: nu
       'CMC data cannot be supplied in the request. Module 3 reaches a submission through the CMC module: ' +
       'compile the sections (POST /api/cmc/module3-os/compile/:projectId), approve each one, then place them ' +
       '(POST /api/cmc/module3-os/place-into-submission/:projectId). Send cmcProjectId instead and the run ' +
-      'reads that program\u2019s approved Module 3.',
+      'reads that project\u2019s approved Module 3.',
   });
   return true;
 }

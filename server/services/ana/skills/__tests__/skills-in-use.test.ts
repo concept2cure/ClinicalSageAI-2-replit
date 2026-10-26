@@ -210,8 +210,8 @@ describe('a turn in a project', () => {
     const device = await selectTurnSkills(client({ clientType: 'medtech' }), { organizationId: 4, message });
     const pharma = await selectTurnSkills(client({ clientType: 'pharma' }), { organizationId: 4, message });
     const reasonsOf = (sel: typeof device) => sel.selected.find(x => x.skill.key === drugPathways.key)?.reasons.join(' ') ?? '';
-    expect(reasonsOf(device)).toContain('the program is device');
-    expect(reasonsOf(pharma)).toContain('the program is pharma');
+    expect(reasonsOf(device)).toContain('the project is device');
+    expect(reasonsOf(pharma)).toContain('the project is pharma');
   });
 });
 

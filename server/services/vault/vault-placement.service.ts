@@ -159,7 +159,7 @@ function resolveTargetFolder(
       return {
         refusal: invalid(
           'INVALID_FOLDER',
-          `Folder '${target}' does not exist in this program's ${view} vault taxonomy.`,
+          `Folder '${target}' does not exist in this project's ${view} vault taxonomy.`,
         ),
       };
     }

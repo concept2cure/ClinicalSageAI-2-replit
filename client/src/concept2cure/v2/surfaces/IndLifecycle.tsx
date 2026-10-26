@@ -22,6 +22,7 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
 import { readShellProject } from '../shellProject';
+import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams } from '../navParams';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
@@ -559,15 +560,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     if (!checklist) {
       return {
         summary: sentSubmissionId
-          ? 'IND lifecycle: the submission this screen was opened from has no IND checklist. Do not use another submission for drafting or filing.'
+          ? 'IND forms: the submission this screen was opened from has no IND checklist. Do not use another submission for drafting or filing.'
           : shellProject
-          ? 'IND lifecycle: the open project has no matching IND checklist. Do not use another project\'s submission for drafting or filing.'
-          : 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
+          ? 'IND forms: the open project has no matching IND checklist. Do not use another project\'s submission for drafting or filing.'
+          : 'IND forms: this organisation has no IND checklist assembled yet, so there is no filing to work.',
       };
     }
     return {
       summary:
-        `IND lifecycle for ${checklist.code}` +
+        `IND forms for ${checklist.code}` +
         (checklist.drugName ? ` (${checklist.drugName})` : '') +
         `, "${tab === 'file' ? 'File the IND' : 'Lifecycle'}" tab. ` +
         (R.assessed
@@ -687,16 +688,16 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           outside reader the shape of the API — the information-disclosure class
           in the UAT report's BP-07, of which this was the last live instance.
           The regulation is the useful half; the route is documented above. */}
-      {I.rocket} IND Lifecycle — 21 CFR 312
+      {I.rocket} IND forms — 21 CFR 312
     </div>
   );
   if (loading) {
     return (
-      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+      <div className="page-inner indl" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND lifecycle</h1>
+            <h1>{getSurfaceMeta('ind-checklist').label}</h1>
           </div>
         </div>
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
@@ -707,11 +708,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (error) {
     return (
-      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+      <div className="page-inner indl" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND lifecycle</h1>
+            <h1>{getSurfaceMeta('ind-checklist').label}</h1>
           </div>
         </div>
         <EmptyState
@@ -725,11 +726,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (!checklist) {
     return (
-      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+      <div className="page-inner indl" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND lifecycle</h1>
+            <h1>{getSurfaceMeta('ind-checklist').label}</h1>
           </div>
         </div>
         <EmptyState
@@ -739,7 +740,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             ? 'The submission you opened this from has no IND checklist in this organization, so no forms or letters can be built for it here. Another IND is not shown in its place.'
             : shellProject
             ? (openProgramType && openProgramType !== 'IND'
-                ? `${programRecord.data?.name ?? shellProject.title ?? 'The open project'} is a ${openProgramType} project, and the IND lifecycle covers IND projects. `
+                ? `${programRecord.data?.name ?? shellProject.title ?? 'The open project'} is a ${openProgramType} project, and IND forms cover IND projects. `
                 : 'No IND checklist is linked to the open project. Set up or link its IND submission; another project\'s filing is not used here. ') +
               'An IND submission is shown for a project only when its record names that project — it is never matched to a project by name.'
             : 'No Investigational New Drug application is provisioned for this organization yet. Once an IND is set up, its Module 1 forms (1571 / 1572 / 3674), eCTD section state, and 30-day safe-to-proceed clock appear here.'}
@@ -1139,7 +1140,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner indl" data-screen-label="IND Lifecycle">
+    <div className="page-inner indl" data-screen-label="IND forms">
       <div className="surface-head">
         <div>
           {kicker}

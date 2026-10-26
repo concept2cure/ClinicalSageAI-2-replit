@@ -139,7 +139,7 @@ router.get('/udi/summary', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
   if (programId !== undefined && !UUID_RE.test(programId)) {
-    return clientError(res, 422, 'program_id must be a UUID');
+    return clientError(res, 422, 'The project id must be a UUID.');
   }
 
   /** Empty rather than fatal when an optional table is not migrated. */

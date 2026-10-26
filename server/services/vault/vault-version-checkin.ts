@@ -105,7 +105,7 @@ export async function planCheckIn(
     ok: false,
     status: 404,
     code: 'VERSION_HEAD_NOT_FOUND',
-    message: `The document to add a version to is not in this program. ${NOTHING}`,
+    message: `The document to add a version to is not in this project. ${NOTHING}`,
   };
   if (!UUID_RE.test(p.headId)) return notFound;
 

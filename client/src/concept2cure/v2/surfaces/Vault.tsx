@@ -55,6 +55,7 @@ import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
    Real, org-scoped read-model (server/routes/c2c/project-vault.ts, mounted at
@@ -457,7 +458,7 @@ function DataRoomLane({
       {block.sources.length === 0 && (
         <div className="vd-dr-empty">
           Nothing captured for this project yet. Files attached in AnA chat or dropped on
-          Project home pass through the data room; files uploaded on this page go straight to
+          the project’s Evidence step pass through the data room; files uploaded on this page go straight to
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
@@ -704,7 +705,7 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
   );
 }
 
-/* ── Vault (DMS) surface ──
+/* ── Vault surface ──
    Document management aligned to the real dossier structure. The folder tree IS
    the project's live eCTD / eSTAR / IVDR / TMF spine (segment- and
    build-type-aware), served by GET /api/c2c/project-vault/:id straight from the
@@ -1382,7 +1383,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       <div className="vd-top">
         <div>
           <div className="sp-eyebrow">Documents {I.dot} project vault</div>
-          <h1 className="vd-title">Vault (DMS)</h1>
+          <h1 className="vd-title">{getSurfaceMeta('vault').label}</h1>
           <div className="vd-sub">
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}

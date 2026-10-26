@@ -3940,7 +3940,7 @@
    "site": "biotech-program.ts register('get_biotech_program_status')",
    "present": {
     "verb": "look_up",
-    "object": "the biotech program status",
+    "object": "the project's development status",
     "source": "project"
    }
   },
@@ -4128,7 +4128,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('get_session_briefing')",
    "present": {
     "verb": "look_up",
-    "object": "where your program stands",
+    "object": "where your project stands",
     "source": "project"
    }
   },
@@ -4545,7 +4545,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('link_program_clinical_study')",
    "present": {
     "verb": "link",
-    "object": "the program to its clinical study",
+    "object": "the project to its clinical study",
     "source": "authoring"
    }
   },
@@ -6987,7 +6987,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('set_program_metadata')",
    "present": {
     "verb": "update",
-    "object": "the program's details",
+    "object": "the project's details",
     "source": "project"
    }
   },
@@ -7163,7 +7163,7 @@
    "site": "AnaToolExecutor.ts registerToolHandler('suggest_reports')",
    "present": {
     "verb": "look_up",
-    "object": "reports that fit your programs",
+    "object": "reports that fit your projects",
     "source": "reports"
    }
   },

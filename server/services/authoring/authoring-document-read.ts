@@ -22,7 +22,7 @@ export interface AuthoringDocumentReadIdentity extends AuthoringReadIdentity {do
 export interface AuthoringDocumentFilters {module?:string;product_code?:string;status?:string;conversationId?:string;source?:string}
 export class AuthoringReadInputError extends Error {
   readonly code='AUTHORING_READ_INPUT_INVALID';
-  constructor(){super('A valid single program or document UUID is required.');}
+  constructor(){super('A valid single project or document UUID is required.');}
 }
 function readInput<T extends AuthoringReadIdentity>(input:T) {
   return {...input,includeOrganizationDocuments:!input.programId};

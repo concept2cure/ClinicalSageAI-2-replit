@@ -402,7 +402,7 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
     source: 'package creator',
     numericId: true,
   },
-  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
+  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'project creator' },
   // Report finalize is signed (reporting review 2026-10-01). The run's content
   // is computed by the engines; the person who requested it is its author. A
   // run whose requester was removed has none, and is refused.
@@ -474,7 +474,7 @@ async function cmcModule3SectionAuthors(
   if (read.cited.length === 0) {
     result.incomplete =
       `§${sectionKey} cites no recorded source, so this approval cannot be shown to be independent of whoever ` +
-      'entered its data. Nothing was signed. Compile the section from the programme\u2019s records, then approve.';
+      'entered its data. Nothing was signed. Compile the section from the project\u2019s records, then approve.';
   } else if (read.unattributed.length > 0) {
     result.incomplete = unattributedRecordsRefusal(sectionKey, read.unattributed);
   }

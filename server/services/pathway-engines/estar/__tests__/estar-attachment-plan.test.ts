@@ -537,6 +537,6 @@ describe('createDeviceAttachmentResolver', () => {
     const out = await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
     expect(out.ok).toBe(false);
     if (out.ok) return;
-    expect(out.reason).toMatch(/no regulatory program/);
+    expect(out.reason).toMatch(/This export has no project, so no governed document or project Vault can be attached\./);
   });
 });

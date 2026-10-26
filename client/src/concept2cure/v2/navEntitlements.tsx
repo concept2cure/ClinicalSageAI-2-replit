@@ -23,13 +23,13 @@
  *      catalog, and deliberately `audit-trail` / `part11-console`, which under
  *      21 CFR §11.10(e) may not be something an org can be sold or an admin can
  *      switch off — are absent, and absent means unconditionally available.
- *      That is load-bearing in the other direction too: Plan & features and
+ *      That is load-bearing in the other direction too: Subscription & features and
  *      AnA carry no catalog row, so they can never lock — which is what keeps
  *      the step that RESOLVES a lock reachable from a locked rail.
  *   3. THE REASON IS THE REAL ONE. A locked destination says which of the four
  *      real reasons applies and offers the step that actually resolves it. An
  *      org told to upgrade when the true reason is their industry mode would
- *      buy a plan that changes nothing.
+ *      buy a subscription that changes nothing.
  */
 import React from 'react';
 import { useLiveData } from './dataConnect';
@@ -187,7 +187,7 @@ export interface LockNotice {
    * True when the step left for THIS viewer is to ask an administrator.
    *
    * Separate from `ctaLabel`, and it has to be. `ctaLabel` is the step the
-   * viewer can take THEMSELVES — open the plans page, open Plan & features —
+   * viewer can take THEMSELVES — Compare subscriptions, Subscription & features —
    * and for a member who cannot buy it is correctly null on two of the three
    * lock reasons. That honesty was also a dead end: the panel named the reason,
    * refused to offer a button that would be refused, and left the person who
@@ -305,7 +305,7 @@ export function lockShortReason(verdict: NavSurfaceEntitlement): string {
       return 'not offered for this workspace';
     case 'tier':
     default:
-      return 'not included in your plan';
+      return 'not included in your subscription';
   }
 }
 
@@ -320,9 +320,13 @@ const TIER_LABEL: Record<string, string> = {
  * Honest copy for a locked destination.
  *
  * Each branch names the reason the server actually returned and routes to the
- * place that resolves THAT reason — plans for a tier gap, Plan & features for
- * a module an admin switched off, workspace setup for an industry-mode
- * mismatch. Nothing here invents a price, a tier, or a renewal date.
+ * place that resolves THAT reason — Compare subscriptions for a tier gap,
+ * Subscription & features for a module an admin switched off, workspace setup
+ * for an industry-mode mismatch. Nothing here invents a price, a tier, or a
+ * renewal date. "Plan" is the project's first step, so the subscription is
+ * never called a plan here (section 9 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md), and a button names the
+ * job it does, not only where it goes.
  */
 export function lockNotice(
   verdict: NavSurfaceEntitlement,
@@ -331,10 +335,10 @@ export function lockNotice(
   switch (verdict.source) {
     case 'launch-scope':
       /* Nothing to buy, switch on or request: the app exists and is not in
-         this release. Saying so beats offering a plan that changes nothing. */
+         this release. Saying so beats offering a subscription that changes nothing. */
       return {
         status: 'Not in this release',
-        body: 'This feature is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.',
+        body: 'This feature is built but is not part of the current release. It is not a subscription or permission matter — no upgrade, setting or request enables it.',
         ctaLabel: null,
         ctaTarget: null,
         requestable: false,
@@ -343,16 +347,16 @@ export function lockNotice(
       return {
         status: 'Turned off for this workspace',
         body: opts.isOrgAdmin
-          ? 'An administrator disabled this feature for your organization. You can turn it back on in Plan & features.'
+          ? 'An administrator disabled this feature for your organization. You can turn it back on in Subscription & features.'
           : 'An administrator disabled this feature for your organization. Ask them to turn it back on.',
-        ctaLabel: opts.isOrgAdmin ? 'Open Plan & features' : null,
+        ctaLabel: opts.isOrgAdmin ? 'Turn it back on in Subscription & features' : null,
         ctaTarget: opts.isOrgAdmin ? 'apps' : null,
         requestable: !opts.isOrgAdmin,
       };
     case 'industry':
       return {
         status: 'Not offered for this workspace',
-        body: 'This feature is not part of the catalog for your workspace’s industry setting. Changing that setting is an administrator action, not a plan change.',
+        body: 'This feature is not part of the catalog for your workspace’s industry setting. Changing that setting is an administrator action, not a subscription change.',
         ctaLabel: opts.isOrgAdmin ? 'Open workspace setup' : null,
         ctaTarget: opts.isOrgAdmin ? 'setup' : null,
         requestable: !opts.isOrgAdmin,
@@ -361,13 +365,13 @@ export function lockNotice(
     default: {
       const tier = verdict.requiredTier ? TIER_LABEL[verdict.requiredTier] : null;
       return {
-        status: tier ? `Included from ${tier}` : 'Not included in your plan',
+        status: tier ? `Included from ${tier}` : 'Not included in your subscription',
         body: tier
-          ? `Your plan does not include this feature. It is included from the ${tier} plan upward.`
-          : 'Your plan does not include this feature.',
-        ctaLabel: 'View plans',
+          ? `Your subscription does not include this feature. It is included from the ${tier} subscription upward.`
+          : 'Your subscription does not include this feature.',
+        ctaLabel: 'Compare subscriptions',
         ctaTarget: 'licensing',
-        /* A member sees the plans page too — it is the honest explanation of
+        /* A member sees Compare subscriptions too — it is the honest explanation of
            what the tier includes — but buying is not theirs to do, so the step
            that IS theirs is offered alongside it. */
         requestable: !opts.isOrgAdmin,

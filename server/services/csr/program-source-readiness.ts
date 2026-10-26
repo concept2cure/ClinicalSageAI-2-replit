@@ -9,7 +9,7 @@ import { programInOrganization } from '../c2c/program-access.js';
  * clinical observations or full study metadata needed to draft a first CSR. */
 export const CSR_NARRATIVE_INPUTS_REQUIRED = {
   code: 'CSR_NARRATIVE_INPUTS_REQUIRED',
-  message: 'First-study CSR drafting is unavailable until verified study data and complete study information are linked to this program. Completed CSR summaries can be reused in a package; they do not supply those source inputs.',
+  message: 'First-study CSR drafting is unavailable until verified study data and complete study information are linked to this project. Completed CSR summaries can be reused in a package; they do not supply those source inputs.',
 } as const;
 
 export interface ProgramCsrSourceReadiness {
@@ -38,10 +38,10 @@ export async function readProgramCsrSourceReadiness(
   userId: number,
 ): Promise<ProgramCsrSourceReadiness> {
   if (!Number.isSafeInteger(organizationId) || organizationId <= 0 || !looksLikeProgramUuid(programId)) {
-    throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'A valid organization and program UUID are required.');
+    throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'A valid organization and project UUID are required.');
   }
   const actor = await readCsrProjectActor(database, organizationId, userId);
-  if (!await programInOrganization(database, programId, organizationId)) throw new CsrScopeError('CSR_PROGRAM_NOT_FOUND', 404, 'The selected program is not accessible.');
+  if (!await programInOrganization(database, programId, organizationId)) throw new CsrScopeError('CSR_PROGRAM_NOT_FOUND', 404, 'The selected project is not accessible.');
   // Adapt the generic SQL executor without asserting unknown rows are typed
   // anchors. The canonical reader still validates a positive integer id and
   // rejects missing or ambiguous anchors before any summary read.
@@ -90,8 +90,8 @@ export async function readProgramCsrSourceReadiness(
       },
     },
     recovery: [
-      { appId: 'vault', label: 'Review study source records', message: 'Retain study source files and their provenance in this program\'s Vault. Select, validate and approve an exact supporting-source JSON version for deterministic tables in a run. Uploading alone does not connect observations or enable first-study AI narrative generation.' },
-      { appId: 'authoring', label: 'Review or author the CSR', message: 'Use this program\'s Authoring workspace for a governed CSR document and source review. Authoring a document does not qualify a clinical-data adapter.' },
+      { appId: 'vault', label: 'Review study source records', message: 'Retain study source files and their provenance in this project\'s Vault. Select, validate and approve an exact supporting-source JSON version for deterministic tables in a run. Uploading alone does not connect observations or enable first-study AI narrative generation.' },
+      { appId: 'authoring', label: 'Review or author the CSR', message: 'Use this project\'s Authoring workspace for a governed CSR document and source review. Authoring a document does not qualify a clinical-data adapter.' },
     ],
   };
 }

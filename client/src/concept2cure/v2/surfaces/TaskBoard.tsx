@@ -21,6 +21,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { publishShellProject } from '../shellProject';
+import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams, NAV_PARAMS_EVENT, stashNavParamsForTarget } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { isTaskFilingHome, isTrackedFilingId, type TaskFilingHome } from '@shared/types/task-filing-home';
@@ -138,16 +139,19 @@ interface TaskItem {
   description?: string | null;
 }
 
-/** The screen that owns another store's work, as a person reads it. */
+/** The screen that owns another store's work, as a person reads it. A project's
+ *  page is named by its project (section 9 of
+ *  .design/client-journey/INFORMATION_ARCHITECTURE.md), so `project-home` has no
+ *  fixed label here: OtherStoreTaskDetail names the task's project (the title it
+ *  opens the project with), or says "its project" when the board cannot name it. */
 const HOME_LABEL: Record<string, string> = {
-  'project-home': 'Project home',
-  'submission-center': 'Submission Center',
+  'submission-center': getSurfaceMeta('submission-center').label,
 };
 
 /** A store the board could not read (meta.unreadSources), as a person reads it. */
 const STORE_LABEL: Record<string, string> = {
   unified_tasks: "the board's own tasks",
-  project_tasks: 'the schedule and Communication Center',
+  project_tasks: `the schedule and ${getSurfaceMeta('communication-center').label}`,
   c2c_project_work_items: 'agency correspondence',
   estar_submissions: 'tracked filings',
 };
@@ -867,7 +871,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     const sel0 = sel;
     return {
       summary:
-        `Task board for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
+        `Tasks for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
         `${stats.blocked} blocked, ${overdue.length} overdue, ${stats.appr} awaiting approval.` +
         (unreadStores.length
           ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
@@ -962,7 +966,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Project — collaboration</div>
-          <h1 className="ph-title">Task board</h1>
+          <h1 className="ph-title">{getSurfaceMeta('tasks').label}</h1>
           <div className="ph-sub">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
         </div>
         {canWrite ? (
@@ -1412,7 +1416,7 @@ const ARCHIVE_REASON_MAX = 1000;
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
   if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
-  const forProject = project ? ` for ${project}` : '';
+  const forProject = project && project !== home ? ` for ${project}` : '';
   return `This work lives in ${home}${forProject}. It is changed there; the board shows it and does not edit it.`;
 }
 
@@ -1426,8 +1430,10 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
 }) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
-  const home = t.home ? HOME_LABEL[t.home.surface] ?? t.home.surface : null;
   const project = t.project ? projLabel(t.project) : null;
+  const home = !t.home ? null
+    : t.home.surface === 'project-home' ? t.home.programTitle || project || 'its project'
+    : HOME_LABEL[t.home.surface] ?? getSurfaceMeta(t.home.surface).label;
   const dialogRef = useDialog(onClose);
   return (
     <div className="tb-detail-bd" onClick={onClose}>

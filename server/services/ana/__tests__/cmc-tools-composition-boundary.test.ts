@@ -50,7 +50,7 @@ const PROGRAM = '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e';
 const BIOLOGIC = {
   code: 'CMC_MODALITY_OUT_OF_SCOPE',
   modality: 'biologic',
-  message: "This program's drug substance is biologically derived — a monoclonal antibody — and Module 3 for a biologic is not composed here.",
+  message: "This project's drug substance is biologically derived — a monoclonal antibody — and Module 3 for a biologic is not composed here.",
 };
 
 const run = async (tool: string, input: Record<string, unknown>, ctx: Record<string, unknown> = { organizationId: ORG }) =>

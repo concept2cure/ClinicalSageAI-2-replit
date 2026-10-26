@@ -14,8 +14,10 @@
  *
  * Now:
  *   - the steps are exactly Plan, Evidence, Author, Review, Submit and Respond;
- *   - no step says "Not in this release"; what Lifecycle promised is one line
- *     of words on Submit, with no button;
+ *   - no step says "Not in this release"; what Submit will hold once it works
+ *     is one line of words, with no button, rewritten in slice A.1 to name
+ *     only what is not yet shown (it named IND annual-report tracking, which
+ *     IND forms files today, and regulatory intelligence and agency meetings);
  *   - AnA's `project-home.set-stage` opens Plan by name, and still accepts
  *     'lifecycle', which opens Submit (follow-up sequences);
  *   - the steps come first; the start box and the Conversations list sit in
@@ -109,15 +111,15 @@ describe('Project home — six steps follow the work', () => {
     }
   });
 
-  it('what Plan and Lifecycle promised is named on Submit as coming later, with no button', async () => {
+  it('what Submit will hold is named as coming later, in words, with no button', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tab('Submit')).toBeTruthy());
     fireEvent.click(tab('Submit')!);
     const line = await screen.findByTestId('pj-coming-later');
-    expect(line.textContent).toMatch(/^Coming later:/);
-    for (const promised of ['Registrations', 'market access', 'pharmacovigilance', 'regulatory intelligence', 'precedent', 'agency meetings']) {
-      expect(line.textContent, `Submit does not name "${promised}"`).toContain(promised);
-    }
+    expect(line.textContent).toBe(
+      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
+      'obligations tracked as they fall due; safety reports with their reporting clock.',
+    );
     expect(within(line).queryByRole('button'), 'a coming-later line offers nothing to click').toBeNull();
   });
 });

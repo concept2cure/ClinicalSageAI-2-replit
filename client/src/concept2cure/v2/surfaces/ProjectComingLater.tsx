@@ -4,12 +4,13 @@
 import React from 'react';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 
-/** What this stage does not do in this release: one line of words and no
- *  button (FILING_SPINE.md §2). It replaced a "Not in this release" panel that
- *  stood where a stage's tools would be. */
+/** What this stage will hold once it works: one line of words and no button
+ *  (FILING_SPINE.md §2; INFORMATION_ARCHITECTURE.md section 9, "Not yet
+ *  shown"). It replaced a "Not in this release" panel that stood where a
+ *  stage's tools would be. Every step has one since slice A.1. */
 export function ComingLater({ stage, device = false }: { stage: string; device?: boolean }) {
   const meta = PJ_LIFECYCLE.find((s) => s.id === stage);
-  /* A device project's line does not promise IND or variation tracking. */
+  /* A device project's line does not name an IND's documents or a drug's obligations. */
   const words = (device && meta?.laterDevice) || meta?.later;
   if (!words) return null;
   return (

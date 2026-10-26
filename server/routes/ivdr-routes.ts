@@ -402,7 +402,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const programId = parseProgramId(req);
-      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+      if (programId === INVALID) return res.status(422).json({ error: 'The project id must be a UUID.' });
 
       /* Validations reach a programme through their classification. The join
          stays LEFT so an unclassified validation is still visible in the
@@ -669,7 +669,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const orgId = getServerOrgId(req);
       const programId = parseProgramId(req);
-      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+      if (programId === INVALID) return res.status(422).json({ error: 'The project id must be a UUID.' });
 
       /* Same reachability as validations: clinical evidence belongs to a
          programme via its classification. Sensitivity and specificity are

@@ -116,19 +116,19 @@ export async function authorizeCapaProgram(programId: string): Promise<void> {
   } catch (error) {
     if (!(error instanceof AuthoringProgramAccessError)) throw error;
     const message = error.code === 'PROJECT_ANCHOR_UNRESOLVED'
-      ? 'A verified project relationship is required to access this programme’s governed records.'
-      : error.status === 503 ? 'Current programme access could not be verified. Nothing was changed.'
-      : error.status === 404 ? 'Programme not found.' : 'Your current access does not permit this programme operation.';
+      ? 'A verified tracking record is required to access this project’s governed records.'
+      : error.status === 503 ? 'Current project access could not be verified. Nothing was changed.'
+      : error.status === 404 ? 'Project not found.' : 'Your current access does not permit this project operation.';
     throw new AuthoringProgramAccessError(error.status, error.code, message);
   }
   active.role = admitted.role;
   if (active.write) {
     // Canonical authority is checked before acquiring the programme lock.
     // This serializes generated display codes and all local state changes.
-    if (!await programInOrganization(active.q, programId, active.organizationId, { forUpdate: true })) throw new AuthoringProgramAccessError(404, 'PROJECT_NOT_FOUND', 'Programme not found.');
+    if (!await programInOrganization(active.q, programId, active.organizationId, { forUpdate: true })) throw new AuthoringProgramAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
     const project = await active.q.query(`SELECT id FROM projects WHERE id=$1 AND organization_id=$2
       AND regulatory_program_id=$3 FOR UPDATE`, [admitted.projectId, active.organizationId, programId]);
-    if (project.rows.length !== 1) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'A verified project relationship is required for this programme.');
+    if (project.rows.length !== 1) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'A verified tracking record is required for this project.');
     // Existing ACL updates/deletes are held; the parent project lock also
     // serializes inserts of absent FK-backed visibility/membership rows.
     await active.q.query('SELECT id FROM project_visibility_settings WHERE project_id=$1 AND organization_id=$2 FOR SHARE', [admitted.projectId, active.organizationId]);

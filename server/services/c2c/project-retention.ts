@@ -111,8 +111,8 @@ export function projectDeletionRefusal(
         error: 'PROJECT_IS_PROGRAM_ANCHOR',
         message:
           scope === 'project'
-            ? 'This project is the record of a program in Projects; its documents are kept under it. Archive or delete the program from Projects instead. Nothing was deleted.'
-            : `This workspace holds the record of ${holds.anchoredPrograms.length} program(s) in Projects; their documents are kept under it. Delete those programs from Projects first, or archive the workspace instead. Nothing was deleted.`,
+            ? 'This is the tracking record of a project in Projects; its documents are kept under it. Archive or delete the project from Projects instead. Nothing was deleted.'
+            : `This workspace holds the tracking records of ${holds.anchoredPrograms.length} project(s) in Projects; their documents are kept under it. Delete those projects from Projects first, or archive the workspace instead. Nothing was deleted.`,
         programIds: holds.anchoredPrograms,
       },
     };

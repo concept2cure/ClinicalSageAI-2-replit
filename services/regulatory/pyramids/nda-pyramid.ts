@@ -4,7 +4,7 @@ import { buildPhase } from './types.js';
 export function buildNdaPyramid(): SubmissionPyramid {
   const phases: PyramidPhase[] = [];
 
-  const phase1 = buildPhase('phase1', 'Program Planning', 1, [
+  const phase1 = buildPhase('phase1', 'Planning', 1, [
     { id: 'reg_strategy', name: 'Define NDA regulatory strategy', estimatedHours: 8, role: 'ra_lead', critical: true },
     { id: 'gap_assessment', name: 'Conduct data gap assessment', estimatedHours: 10, role: 'medical_writer' },
     { id: 'timelines', name: 'Create submission timeline', estimatedHours: 6, role: 'project_manager' },

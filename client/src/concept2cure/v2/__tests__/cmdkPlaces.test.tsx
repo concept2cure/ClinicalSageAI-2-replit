@@ -118,12 +118,12 @@ describe('⌘K: places, the open project\'s steps, and features already shown', 
   it('a surface outside the release is not listed; a licence lock still is, with its reason', async () => {
     serve([
       RELEASE_LOCK('submission-twin', 'Submission twin'),
-      { id: 'submission-center', label: 'Submission center', entitled: false, source: 'tier', requiredTier: 'professional' },
+      { id: 'submission-center', label: 'Submission Center', entitled: false, source: 'tier', requiredTier: 'professional' },
     ]);
     await mount();
     search('submission');
     expect(screen.queryByRole('button', { name: /Submission twin/ })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Submission center — not included in your plan' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Submission Center — not included in your subscription' })).toBeTruthy();
   });
 
   it('with a project open, its steps are listed, and a step opens the project on it', async () => {

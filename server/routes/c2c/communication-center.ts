@@ -1025,7 +1025,7 @@ router.get('/projects/:projectId/company-legal-documents', async (req: Request, 
     const anchorSql = 'SELECT regulatory_program_id::text AS program_id FROM projects WHERE id=$1 AND organization_id=$2';
     const current = await q.query(anchorSql, [projectId, organizationId]);
     const programId = current.rows[0]?.program_id;
-    if (current.rows.length !== 1 || typeof programId !== 'string') throw new CompanyDocumentsError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This communication project needs a current program relationship before listing legal documents.');
+    if (current.rows.length !== 1 || typeof programId !== 'string') throw new CompanyDocumentsError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This tracking record is not linked to a current project, so its legal documents cannot be listed.');
     const inventory = await readCompanyLegalInventory(req, { ...input, includeArchived: input.includeArchived ? 'true' : 'false', programId });
     const after = await q.query(anchorSql, [projectId, organizationId]);
     if (after.rows.length !== 1 || after.rows[0].program_id !== programId) throw new CompanyDocumentsError(409, 'PROJECT_ANCHOR_CHANGED', 'The communication project changed during this read. Refresh before selecting legal documents.');

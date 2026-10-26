@@ -465,7 +465,7 @@ function regionalCatalogAdmission(type: CatalogDefinition, baseRunnable: boolean
 function catalogReason(regional: RegionalFilingApplicability | null, registryReason: string | null, runnable: boolean, projectRunnable: boolean, baseReason: string | null): string | null {
   if (regional && !regional.runnable) return regional.availabilityReason;
   if (registryReason) return registryReason;
-  return !runnable && projectRunnable ? 'Open a program to run this project report.' : baseReason;
+  return !runnable && projectRunnable ? 'Open a project to run this report.' : baseReason;
 }
 
 function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null; filing: RegionalFilingContext | null; tierResolved: boolean }): CanvasReportType[] {
@@ -538,7 +538,7 @@ async function readLeadFiling(req: Request, organizationId: number, programId: s
   const identity = { organizationId, userId: authedUserId(req) ?? undefined, programId };
   const scope = await getCurrentAccessibleProgramScope(q, identity);
   const anchor = await readProgramAnchorRow(q, { programId, orgId: organizationId, context: 'insights-canvas-filing', requireUnique: true, eligibility: 'non-deleted' });
-  if (!anchor || anchor.id !== lead.projectId) throw new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This program needs one verified project relationship before its reporting context can be supplied.');
+  if (!anchor || anchor.id !== lead.projectId) throw new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before its reporting context can be supplied.');
   let filing: RegionalFilingContext;
   try {
     const { rows } = await q.query('SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3', [lead.projectId, organizationId, programId]);
@@ -576,7 +576,7 @@ export default function createInsightsCanvasRoutes(): Router {
       const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
       const programId = openProgramParam(req.query.programId);
       if (programId === false) {
-        return res.status(400).json({ success: false, error: { code: 'INVALID_PROGRAM_ID', message: 'programId must be a program id.' } });
+        return res.status(400).json({ success: false, error: { code: 'INVALID_PROGRAM_ID', message: 'programId must be a project id.' } });
       }
       const actor = overviewActor(req);
       if (!actor) return res.status(401).json({ success: false, error: 'Sign in to read reporting records.' });
@@ -616,7 +616,7 @@ export default function createInsightsCanvasRoutes(): Router {
           success: false,
           error: {
             code: 'PORTFOLIO_UNAVAILABLE',
-            message: 'Program readiness could not be read just now. Try again in a moment.',
+            message: 'Project readiness could not be read just now. Try again in a moment.',
           },
         });
       }
@@ -657,7 +657,7 @@ export default function createInsightsCanvasRoutes(): Router {
     } catch (error) {
       if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
       if (error instanceof MissingRequestDbContextError) return res.status(error.statusCode).json({ success: false, error: { code: error.code, message: error.message } });
-      if (error instanceof OpenProgramUnavailableError) return res.status(404).json({ success: false, error: 'Program not found' });
+      if (error instanceof OpenProgramUnavailableError) return res.status(404).json({ success: false, error: 'Project not found' });
       if (error instanceof CatalogUnavailableError) {
         return res.status(503).json({ success: false, error: { code: 'REPORT_CATALOG_UNAVAILABLE', message: 'The report catalog could not be read. Try again in a moment.' } });
       }

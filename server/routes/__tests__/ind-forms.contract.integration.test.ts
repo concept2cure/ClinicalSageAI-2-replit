@@ -853,7 +853,7 @@ describe('Save to dossier for an open program', () => {
     const res = await request(app).post('/api/ind-forms/FDA_1571/artifact').send({ projectIdent: 'BX-905' });
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(res.body.error.code).toBe('PROGRAM_NOT_ANCHORED');
-    expect(res.body.error.message).toMatch(/no project record/);
+    expect(res.body.error.message).toMatch(/This project has no tracking record/);
     expect(res.body.error.message).toMatch(/Nothing was saved/);
     expect(res.body).not.toHaveProperty('governed');
     expect(res.body).not.toHaveProperty('audited');

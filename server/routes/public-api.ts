@@ -327,7 +327,7 @@ router.get('/docs', (_req: Request, res: Response) => {
         scope: 'documents:read',
         description: 'List vault document metadata for your organization. Metadata only — this endpoint never returns document bytes or extracted text, and never discloses storage addressing.',
         parameters: {
-          programId: { type: 'string', description: 'Filter to one regulatory program (UUID)' },
+          programId: { type: 'string', description: 'Filter to one project (UUID)' },
           documentType: { type: 'string', description: 'Filter by document type' },
           // From the schema enums, not a restated copy: a value documented here
           // that the column does not accept is a lie in the API's own manual.

@@ -360,7 +360,7 @@ async function admitVaultDocument(
   } else if (args.folderId) {
     if (!isFolderInView(vaultView, args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
-        message: `Folder '${args.folderId}' does not exist in this program's ${vaultView} vault taxonomy.` };
+        message: `Folder '${args.folderId}' does not exist in this project's ${vaultView} vault taxonomy.` };
     }
     placement = {
       folderId: args.folderId,
@@ -558,7 +558,7 @@ async function admitVaultDocument(
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
         message:
           `A different document is already recorded at code "${documentCode}" ` +
-          `version "${version}" for this program. Nothing was changed. ` +
+          `version "${version}" for this project. Nothing was changed. ` +
           'Add it as a new version of that document instead of replacing the recorded one.',
         ...(head ? { headDocumentId: head.id, headVersion: head.version } : {}),
       };
@@ -711,7 +711,7 @@ async function admitVaultDocument(
       return {
         ok: false, status: 409, code: 'DUPLICATE_CONTENT',
         message:
-          'These exact bytes are already recorded in this program under a different ' +
+          'These exact bytes are already recorded in this project under a different ' +
           'document code. Nothing was changed — file the existing document rather than ' +
           'admitting a second copy of it.',
       };

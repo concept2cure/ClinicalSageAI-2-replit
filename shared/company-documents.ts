@@ -113,7 +113,7 @@ export function companyLegalVersionTargetRefusal(records: CompanyLegalDocument[]
     const workflow = workflowRefusal(record);
     if (workflow) return workflow;
     if (!record.active) continue;
-    if (!context.programId) return 'The target program for this company legal document could not be verified.';
+    if (!context.programId) return 'The target project for this company legal document could not be verified.';
     const refusal = companyLegalDocumentRefusal({ ...record, transmitRefusal: null }, context);
     if (refusal) return refusal;
   }

@@ -265,7 +265,7 @@ function gapsSectionFor(
         {
           kind: 'summary',
           text:
-            'Gaps were not evaluated: no section or governed document of this program records a CTD section ' +
+            'Gaps were not evaluated: no section or governed document of this project records a CTD section ' +
             'code, so nothing could be matched against this market’s Module 1 headings.',
         },
       ],
@@ -402,7 +402,7 @@ function module1CoverageBlocks(module1: Record<string, unknown> | null): ReportB
       {
         kind: 'summary',
         text:
-          'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+          'Module 1 coverage was not assessed: no section or governed document of this project records a CTD section code, ' +
           `so nothing could be matched against the ${required ?? 0} heading(s) this filing requires.`,
       },
       { kind: 'metric', label: 'Required Module 1 headings covered', value: null, status: 'missing' },

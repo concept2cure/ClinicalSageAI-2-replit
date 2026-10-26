@@ -62,7 +62,8 @@ const CATALOG = {
   submissionType: 'IND',
   phases: [
     { id: 'phase3', name: 'Module 3 — Quality/CMC', order: 3 },
-    { id: 'phase1', name: 'Program Planning', order: 1 },
+    /* The catalogue's own phase 1 name (services/regulatory/pyramids/ind-pyramid.ts). Slice A.1: it read "Program Planning". */
+    { id: 'phase1', name: 'Planning', order: 1 },
     { id: 'phase7', name: 'Module 1 — Administrative', order: 7 },
     { id: 'phase8', name: 'QA Review & Submission', order: 8 },
   ],
@@ -140,7 +141,7 @@ describe('a US IND’s Plan is what the filing needs, by phase', () => {
     expect(screen.getByRole('heading', { name: 'What this IND needs' })).toBeTruthy();
     expect(screen.getByText(/Target submission Mar 1, 2027/)).toBeTruthy();
     const names = Array.from(document.querySelectorAll('.pj-plan-phase-t')).map((n) => n.textContent);
-    expect(names).toEqual(['1. Program Planning', '3. Module 3 — Quality/CMC', '7. Module 1 — Administrative', '8. QA Review & Submission']);
+    expect(names).toEqual(['1. Planning', '3. Module 3 — Quality/CMC', '7. Module 1 — Administrative', '8. QA Review & Submission']);
     expect(phase('phase1').open).toBe(true);
     expect(phase('phase1').querySelector('.pj-plan-phase-n')?.textContent).toBe('2 documents · 0 started');
   });
@@ -225,11 +226,11 @@ describe('a phase opens the feature that composes it, on this project', () => {
     const { onNav } = mount();
     await openPlan();
     await screen.findByTestId('ind-filing-plan');
-    fireEvent.click(within(phase('phase3')).getByRole('button', { name: /Compose Module 3 in CMC \/ Module 3/ }));
+    fireEvent.click(within(phase('phase3')).getByRole('button', { name: 'Compose Module 3 in CMC / Module 3' }));
     expect(onNav).toHaveBeenCalledWith('cmc');
-    fireEvent.click(within(phase('phase7')).getByRole('button', { name: /IND forms/ }));
+    fireEvent.click(within(phase('phase7')).getByRole('button', { name: 'Prepare Forms 1571, 1572 and 3674 in IND forms' }));
     expect(onNav).toHaveBeenCalledWith('ind-checklist');
-    fireEvent.click(within(phase('phase8')).getByRole('button', { name: /on Submit/ }));
+    fireEvent.click(within(phase('phase8')).getByRole('button', { name: 'Place approved documents in the sequence on Submit' }));
     expect(activeLabel()).toBe('Submit');
   });
 
@@ -239,7 +240,7 @@ describe('a phase opens the feature that composes it, on this project', () => {
     await openPlan();
     await screen.findByTestId('ind-filing-plan');
     expect(within(phase('phase3')).queryByRole('button', { name: /CMC/ })).toBeNull();
-    expect(within(phase('phase7')).getByRole('button', { name: /IND forms/ })).toBeTruthy();
+    expect(within(phase('phase7')).getByRole('button', { name: 'Prepare Forms 1571, 1572 and 3674 in IND forms' })).toBeTruthy();
   });
 });
 
@@ -259,7 +260,8 @@ describe('other filings', () => {
     await openPlan();
     expect(screen.getByTestId('pj-plan-none').textContent).toMatch(/available for US INDs and device filings/);
     expect(screen.queryByTestId('ind-filing-plan')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Open Author/ }));
+    /* Slice A.1: it read "Open Author", naming only where it went (section 9, Door names). */
+    fireEvent.click(screen.getByRole('button', { name: 'See this filing’s documents on Author' }));
     expect(activeLabel()).toBe('Author');
   });
 });

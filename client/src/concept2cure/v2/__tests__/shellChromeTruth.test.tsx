@@ -106,7 +106,7 @@ describe('breadcrumb client category (finding 128)', () => {
     render(<TopBar surface={surface('device-510k')} onPalette={() => {}} segment="medtech" onSegment={() => {}} />);
     const crumbs = document.querySelector('.crumbs')?.textContent ?? '';
     expect(crumbs).not.toMatch(/Biotech & Pharma/);
-    expect(crumbs).toMatch(/Concept2Cure\.RI\s*›\s*510\(k\) workbench/);
+    expect(crumbs).toMatch(/Concept2Cure\.RI\s*›\s*510\(k\) and eSTAR/);
   });
 });
 

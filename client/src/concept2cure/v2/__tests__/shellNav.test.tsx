@@ -20,7 +20,7 @@
  * 87 features presented as apps (docs/design/CLIENT_JOURNEY_2026-10-25.md).
  * Now the rail is the five places every client works in (Home, Projects, Tasks,
  * Communication, Vault), then the work areas under their own heading (CMC /
- * Module 3, Quality, Reporting & analytics). The catalog is "Plan & features"
+ * Module 3, Quality, Reporting & analytics). The catalog is "Subscription & features"
  * in the account menu, for organization administrators; Submission Center opens
  * from a project's Submit step; Tasking and My work are one entry; Home lists
  * the person's conversations. The client type is in the account menu, which the
@@ -49,7 +49,7 @@ vi.mock('@/contexts/TenantContext', () => ({
 
 import { NavEntitlementsProvider } from '../navEntitlements';
 import { CmdK, Rail, TopBar } from '../Shell';
-import { CLIENT_CATEGORIES, SEGMENTS } from '../registryModel';
+import { CLIENT_CATEGORIES, SEGMENTS, getSurfaceMeta } from '../registryModel';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import { __resetSurfaceActionBus } from '../surfaceActions';
 import { TaskBoard } from '../surfaces/TaskBoard';
@@ -140,7 +140,7 @@ describe('the rail lists the places, then the work areas', () => {
   it('the feature catalog, Submission Center, Conversation and a second task entry are not on the rail', async () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
-    for (const gone of ['Workflows', 'Plan & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
+    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
       expect(labels, gone).not.toContain(gone);
     }
   });
@@ -166,7 +166,7 @@ describe('the rail lists the places, then the work areas', () => {
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
     // The catalog is an administrator's licensing view, not a member's place.
-    expect(within(menu).queryByRole('menuitem', { name: /Plan & features/ })).toBeNull();
+    expect(within(menu).queryByRole('menuitem', { name: 'Subscription & features' })).toBeNull();
   });
 
   it('every entry opens a screen in this release', async () => {
@@ -309,7 +309,7 @@ describe('Artifacts center, no longer a rail entry, is reached from ⌘K', () =>
   });
 });
 
-describe('the account menu holds Plan & features and the client type', () => {
+describe('the account menu holds Subscription & features and the client type', () => {
   async function openMenu(segment = 'biopharma') {
     const m = await mountRail(segment);
     const button = screen.getByTitle('Ada Rowe');
@@ -317,11 +317,23 @@ describe('the account menu holds Plan & features and the client type', () => {
     return { ...m, button, menu: screen.getByRole('menu') };
   }
 
-  it('offers an organization administrator Plan & features, which opens the catalog', async () => {
+  it('offers an organization administrator Subscription & features, which opens the catalog', async () => {
     const { menu, onNav } = await openMenu();
     expect(within(menu).queryByRole('menuitem', { name: /Workflows/ })).toBeNull();
-    fireEvent.click(within(menu).getByRole('menuitem', { name: /Plan & features/ }));
+    // "Plan" is the project's first step; the subscription is never called a plan (section 9).
+    expect(within(menu).queryByRole('menuitem', { name: /Plan & features/ })).toBeNull();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Subscription & features' }));
     expect(onNav).toHaveBeenCalledWith('apps');
+  });
+
+  it('names each subscription entry by its surface\'s registry label, as the breadcrumb and ⌘K do', async () => {
+    // One screen, one name (section 9 of .design/client-journey/INFORMATION_ARCHITECTURE.md).
+    for (const id of ['apps', 'licensing']) {
+      const { menu, onNav } = await openMenu();
+      fireEvent.click(within(menu).getByRole('menuitem', { name: getSurfaceMeta(id).label }));
+      expect(onNav).toHaveBeenCalledWith(id);
+      cleanup();
+    }
   });
 
   it('offers every client type once, the current one checked, by more than colour', async () => {
@@ -430,7 +442,7 @@ describe('the collapsed rail does not clip its account menu', () => {
     await mountRail('biopharma', true);
     fireEvent.click(screen.getByTitle('Ada Rowe'));
     const menu = screen.getByRole('menu');
-    expect(within(menu).getByRole('menuitem', { name: /Plan & features/ })).toBeTruthy();
+    expect(within(menu).getByRole('menuitem', { name: 'Subscription & features' })).toBeTruthy();
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CLIENT_CATEGORIES.length);
   });
 });

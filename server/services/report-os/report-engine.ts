@@ -130,7 +130,7 @@ export function reportTypeNotApplicableMessage(
   allowed: readonly string[],
   segments: readonly string[],
 ): string {
-  return `The ${label} applies to ${allowed.join(' / ')} programs; this program is recorded as ${segments.join(' / ')}, so it is not run.`;
+  return `The ${label} applies to ${allowed.join(' / ')} projects; this project is recorded as ${segments.join(' / ')}, so it is not run.`;
 }
 
 /**

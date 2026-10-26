@@ -124,7 +124,7 @@ describe('it refuses rather than assess the wrong thing', () => {
     stub({ project: { metadata: { registryId: 'EU_MAA' } } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(RegionalNotComputed);
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(
-      /assesses a US filing. This program is recorded as/,
+      /assesses a US filing. This project is recorded as/,
     );
   });
 
@@ -138,7 +138,7 @@ describe('it refuses rather than assess the wrong thing', () => {
   it('refuses a program that records no filing, rather than picking one', async () => {
     stub({ project: { metadata: {} } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(
-      'Record the program’s filing type before running this market readiness assessment. No market readiness was assessed.',
+      'Record the project’s filing type before running this market readiness assessment. No market readiness was assessed.',
     );
   });
 
@@ -162,14 +162,14 @@ describe('it refuses rather than assess the wrong thing', () => {
     // its own branch: the market matches and the report still does not.
     stub({ project: { metadata: { registryId: 'US_ANDA' } } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(
-      /assesses a nda or bla filing. This program is recorded as/,
+      /assesses a nda or bla filing. This project is recorded as/,
     );
   });
 
   it('refuses a scope that is not one program', async () => {
     stub({ project: { metadata: { registryId: 'US_NDA' } } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'program', '4')).rejects.toThrow(
-      /assessed for one program, not for a program scope/,
+      /assessed for one project, not for a program scope/,
     );
   });
 
@@ -194,7 +194,7 @@ describe('it reports what it measured, and says when it measured nothing', () =>
     expect(m1.coveredHeadings).toBeNull();
     expect(run.providers.find((p) => p.provider === 'module1_content')?.status).toBe('missing');
     expect(run.providers.find((p) => p.provider === 'module1_content')?.blocker).toMatch(
-      /no section or governed document of this program records a CTD section code/i,
+      /no section or governed document of this project records a CTD section code/i,
     );
     // And it is not a critical filing blocker: nothing was found to be absent.
     expect(run.criticalBlockers).toEqual([]);

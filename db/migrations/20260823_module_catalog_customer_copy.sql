@@ -17,6 +17,19 @@
 --   - Descriptions only; no module, entitlement or price changes.
 --   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
 -- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-26 (CLAUDE.md Rule 1) ══════════════════════════
+-- WHAT CHANGED: three descriptions open with the name section 9 of
+-- .design/client-journey/INFORMATION_ARCHITECTURE.md gives the feature, not a
+-- word section 9 keeps out of client copy or a folded feature's name:
+--   device-510k         "510(k) submission workbench — ..." -> "510(k) and eSTAR — ..."
+--   device-diagnostics  "IVD and diagnostics workbench — ..." -> "IVD and diagnostics evidence — ..."
+--   ind-checklist       "IND lifecycle — ..." -> "IND forms — ..."
+-- WHY: slice A.1 ("Names a client reads") renamed these features in the
+-- surface registry and in 20260810's upsert; each card in Subscription &
+-- features shows this description under its name. Descriptions only.
+-- CHANGED BY: slice A.1, the labels cluster (docs/evidence/D2-CLIENT-JOURNEY/
+-- 2026-10-26/slice1/).
+-- ═════════════════════════════════════════════════════════════════════════════
 -- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1), decision P-32 ══════════
 -- WHAT CHANGED: one row added, ind-checklist (34 descriptions, not 33), and
 -- the haq-manager row reworded.
@@ -99,9 +112,9 @@ CREATE TEMP TABLE module_copy (module_id TEXT PRIMARY KEY, description TEXT NOT 
 INSERT INTO module_copy (module_id, description) VALUES
   ('crl-library', 'Searchable library of FDA complete-response findings, drawn from the same regulatory evidence graph that CSR authoring, study design and AnA read.'),
   ('decision-lineage', 'The immutable, hash-chained record behind every governed artifact: who decided what, when, on what evidence, and signed how. Verifiable and exportable.'),
-  ('device-510k', '510(k) submission workbench — eSTAR section tree, content editor, and predicate and substantial-equivalence analysis in one place.'),
+  ('device-510k', '510(k) and eSTAR — the eSTAR section tree, content editor, and predicate and substantial-equivalence analysis in one place.'),
   ('device-cer', 'Clinical Evaluation Reports for EU MDR — Annex XIV structure, literature and vigilance evidence, GSPR checklist, and export.'),
-  ('device-diagnostics', 'IVD and diagnostics workbench — classification, analytical and clinical performance, risk analysis, and IVDR, CLIA, CDx and LDT pathways.'),
+  ('device-diagnostics', 'IVD and diagnostics evidence — classification, analytical and clinical performance, risk analysis, and IVDR, CLIA, CDx and LDT pathways.'),
   ('device-pma', 'PMA submissions for Class III devices — module status, clinical trial metrics, and pathway progress across the program.'),
   ('device-presub', 'Pre-submission and Q-Sub management — meeting requests, briefing packages, agency feedback, and the commitments that follow.'),
   ('dispatch-readiness', 'The final gate before transmit — structural validation, unacknowledged critical findings, and validator results, in one decision.'),
@@ -112,7 +125,7 @@ INSERT INTO module_copy (module_id, description) VALUES
   ('haq-manager', 'Health-authority questions — agency information requests, Day-120 lists of questions and complete response letters, logged by round, routed to review and approval, and assembled into a response package from the approved answers.'),
   ('inconsistency', 'Change a governed value once and propagate it to every document that cites it. Draft sections update in place; approved sections are flagged for re-approval with a task and an audit entry.'),
   ('insights', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.'),
-  ('ind-checklist', 'IND lifecycle — the IND checklist and Module 1 forms (1571, 1572, 3674); the cover letter, briefing book, Letter of Authorization and Statement of Right of Reference; and annual reports and amendments placed into the IND''s eCTD sequence. IND safety reports are not part of this release.'),
+  ('ind-checklist', 'IND forms — the IND checklist and Module 1 forms (1571, 1572, 3674); the cover letter, briefing book, Letter of Authorization and Statement of Right of Reference; and annual reports and amendments placed into the IND''s eCTD sequence. IND safety reports are not part of this release.'),
   ('intelligence-catalog', 'Reference catalog of the deterministic tools available across regulatory domains, with the trust level of each.'),
   ('ivd-completeness', 'IVDR technical-file completeness — GSPR Annex I, the Performance Evaluation Report under Annex XIII, analytical and clinical performance, scientific validity, and PMPF and PMS planning.'),
   ('labeling', 'Device labeling and instructions for use — authoring, the symbols register, and translation workflow.'),

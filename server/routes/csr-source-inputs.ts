@@ -17,7 +17,7 @@ function scope(req: Request, res: Response, tenant: RequireTenant, programId: un
   const organizationId = tenant(req, res);
   if (organizationId === null) return null;
   const parsed = Program.safeParse(programId);
-  if (!parsed.success) { res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'Select a canonical program UUID.' }); return null; }
+  if (!parsed.success) { res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'Select a project: a valid project id is required.' }); return null; }
   const user = (req as Request & { user?: { id?: unknown; userId?: unknown } }).user;
   const userId = Number(user?.id ?? user?.userId);
   if (!Number.isSafeInteger(userId) || userId <= 0) { res.status(403).json({ error: 'CSR_ACTOR_REQUIRED' }); return null; }

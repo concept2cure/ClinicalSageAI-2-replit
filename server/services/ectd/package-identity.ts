@@ -212,7 +212,7 @@ function applicationNumberGap(identity: LegacyReadableIdentity): string {
       "(record the number its agency assigned on the submission; the project's number is its home market's, P-44)";
   }
   return identity.programId
-    ? 'its project records no agency application number (record the number the agency assigned on the project; the program code is not one)'
+    ? 'its project records no agency application number (record the number the agency assigned on the project; the project code is not one)'
     : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)';
 }
 

@@ -205,7 +205,7 @@ describe('explicit selected program tenancy precedes its anchor', () => {
     h.anchor.mockResolvedValue(null);
     const result = await overview(`?programId=${programId}&organizationId=99`);
     expect(result.status).toBe(404);
-    expect(result.body).toEqual({ success: false, error: 'Program not found' });
+    expect(result.body).toEqual({ success: false, error: 'Project not found' });
     expect(h.anchor).not.toHaveBeenCalled(); expect(h.metadata).not.toHaveBeenCalled();
     expect(h.programLookup).toHaveBeenCalledWith([programId, 7]);
   });

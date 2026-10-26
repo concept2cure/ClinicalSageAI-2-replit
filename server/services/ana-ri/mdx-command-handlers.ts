@@ -177,7 +177,7 @@ export async function qSubCreate(
         agentAuditTrail,
       },
       message:
-        `Created ${qSubType} Q-Sub "${title}" under program ${programId}. ` +
+        `Created ${qSubType} Q-Sub "${title}" under project ${programId}. ` +
         `It is in stage 'plan' until you file the package.` +
         `${auditNote(agentAuditTrail)}${row.auditTrail ? auditNote(row.auditTrail) : ''}`,
     };

@@ -285,12 +285,12 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
 }): Promise<EvidenceSource[]> {
   const target = opts.programId ? await requireCurrentProgramAccess(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId}) : null;
   if (opts.workspaceId!=null && target && opts.workspaceId!==target.clientWorkspaceId) {
-    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_SCOPE_MISMATCH','The selected program and workspace do not agree.');
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_SCOPE_MISMATCH','The selected project and workspace do not agree.');
   }
   if (opts.workspaceId!=null && !target) {
     // A numeric coincidence is not workspace admission. A future caller must
     // supply an authoritative parent before a workspace-only read can proceed.
-    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded program before reading this workspace source scope.');
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded project before reading this workspace source scope.');
   }
   const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
   const args: unknown[] = [orgId,readable.sourceIds];

@@ -41,7 +41,7 @@ const PROGRAM = {
    `recordedLevels.length === 0` branch). `basis` carries the FDA citation; the
    panel does not read it. */
 const EMPTY_PROJECT_REASON =
-  'No software lifecycle items are recorded for this program, so the FDA Documentation Level (Basic or Enhanced) has not been determined and no completeness is computed.';
+  'No software lifecycle items are recorded for this project, so the FDA Documentation Level (Basic or Enhanced) has not been determined and no completeness is computed.';
 const EMPTY_PROJECT_SUMMARY = {
   docLevel: 'undetermined',
   recordedLevels: [],
@@ -104,7 +104,7 @@ const ALL_TRACKED_APPROVED_SUMMARY = {
 /* A level is recorded but cyber-device status is not: the route returns real
    counts over the matrix it tracks, a reason, and completion null. */
 const CYBER_UNRECORDED_REASON =
-  'Whether the device is a cyber device (FD&C Act §524B) is not recorded on the program, so the cybersecurity documentation is not known to be required or not, and no completeness is computed.';
+  'Whether the device is a cyber device (FD&C Act §524B) is not recorded on the project, so the cybersecurity documentation is not known to be required or not, and no completeness is computed.';
 const CYBER_UNRECORDED_SUMMARY = {
   ...ALL_TRACKED_APPROVED_SUMMARY,
   reason: CYBER_UNRECORDED_REASON,

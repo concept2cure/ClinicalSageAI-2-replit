@@ -24,7 +24,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 // The rail reads the signed-in user for its account footer and for the
 // org-admin branch of the unlock panel's copy. A plain member: the tier branch
-// under test offers "View plans" to every role, so this keeps the test honest
+// under test offers "Compare subscriptions" to every role, so this keeps the test honest
 // about which branch it is exercising.
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
@@ -153,7 +153,7 @@ describe('Rail licence gating', () => {
     const { onNav } = await mountRail();
 
     const btn = await screen.findByRole('button', {
-      name: /Reporting & analytics — not included in your plan$/,
+      name: /Reporting & analytics — not included in your subscription$/,
     });
     expect(btn.getAttribute('data-locked')).toBe('true');
     // Exactly one destination is locked — the verdict is not smeared onto siblings.
@@ -168,9 +168,9 @@ describe('Rail licence gating', () => {
     expect(within(dialog).getByText('Reporting & analytics')).toBeTruthy();
     // The minimum tier is named, and it is the tier the SERVER returned.
     expect(within(dialog).getByText('Included from Professional')).toBeTruthy();
-    expect(dialog.textContent).toMatch(/Professional plan/);
+    expect(dialog.textContent).toMatch(/Professional subscription/);
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'View plans' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Compare subscriptions' }));
     expect(onNav).toHaveBeenCalledWith('licensing');
   });
 
@@ -220,7 +220,7 @@ describe('Rail licence gating', () => {
     const { onNav } = await mountRail();
 
     expect(lockedButtons()).toHaveLength(0);
-    expect(document.body.textContent).not.toMatch(/not included in your plan/);
+    expect(document.body.textContent).not.toMatch(/not included in your subscription/);
     /* Quality, not risk-based monitoring: the rail lists only the places of
        this release (shellNav.test.tsx), and RBM is not one. */
     fireEvent.click(screen.getByRole('button', { name: 'Quality' }));
@@ -259,7 +259,7 @@ describe('Rail licence gating', () => {
      different, and wrong, reason from the one the panel gives them on
      activation. Each source must reach the accessible name as itself. */
   it.each([
-    ['tier' as const, 'not included in your plan'],
+    ['tier' as const, 'not included in your subscription'],
     ['disabled' as const, 'turned off for this workspace'],
     ['industry' as const, 'not offered for this workspace'],
   ])('states the real reason for a %s lock in the accessible name', async (source, reason) => {

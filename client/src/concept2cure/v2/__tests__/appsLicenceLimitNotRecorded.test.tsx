@@ -25,7 +25,7 @@ import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext'
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Plan & features', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Subscription & features', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -79,7 +79,7 @@ describe('Apps — licence band with an unrecorded limit', () => {
     );
     await screen.findByText('CMC Wizard');
 
-    // The band rendered: the plan is on screen, not the "unavailable" note.
+    // The band rendered: the subscription is on screen, not the "unavailable" note.
     expect(await screen.findByTestId('admin-manage-plan')).toBeTruthy();
     expect(screen.queryByText(/License & entitlement details are unavailable/)).toBeNull();
 

@@ -115,7 +115,7 @@ function whoseRoutes(
       region: null,
       note:
         `AnA holds no routes to market for ${agencyFor(named)} — its filings are in the registry, but what taking one ` +
-        'commits a programme to is not written, and she will not offer another regulator’s routes in their place. ' +
+        'commits a project to is not written, and she will not offer another regulator’s routes in their place. ' +
         'Describe the route you are taking and she will record it in your words.',
     };
   }
@@ -192,7 +192,7 @@ function nothingToOffer(input: GovernedOptionInput): string {
     );
   }
   return (
-    'AnA holds no route to market for this programme — describe the route you are taking and she will record it ' +
+    'AnA holds no route to market for this project — describe the route you are taking and she will record it ' +
     'in your words.'
   );
 }

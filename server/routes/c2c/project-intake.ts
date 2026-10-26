@@ -243,7 +243,7 @@ function nonRegionalProductTypeForIntake(
     return {
       refusal:
         `State whether the product is a drug or a biologic: ${filingTypeInSentence(programType).replace(/^A/, 'a')} filing ` +
-        'covers both, and the class is recorded on the program.',
+        'covers both, and the class is recorded on the project.',
     };
   }
   if (!VALID_PRODUCT_TYPES.has(productType)) {

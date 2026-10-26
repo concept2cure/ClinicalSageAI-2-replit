@@ -1831,7 +1831,7 @@ async function applyGovernedSequenceTransition(
         );
         if (!parent || locked.rows[0]?.submission_id !== seq.submissionId ||
           parent.programId !== verdict.recordedPackageIdentity?.identity.programId) {
-          throw new SubmissionError('INVALID_STATE', 'The sequence parent or recorded program anchor changed while this release was being checked. Nothing was recorded; refresh and sign the current content.');
+          throw new SubmissionError('INVALID_STATE', 'The sequence parent or the project’s tracking record changed while this release was being checked. Nothing was recorded; refresh and sign the current content.');
         }
         if (reauthorizing) {
           assertDispatchRenewalStillEligible(locked.rows[0], seq.dispatchStatus);
@@ -2404,7 +2404,7 @@ async function claimTransmitSlot(
     const parent = await lockSubmissionPackageIdentity(q, organizationId, expected.submissionId);
     const locked = await client.query(`SELECT id, submission_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [sequenceId, organizationId]);
     if (!parent || locked.rows[0]?.submission_id !== expected.submissionId || parent.programId !== expected.programId) {
-      throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence parent or recorded program anchor changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
+      throw new SubmissionError('GOVERNED_REQUIRED', 'The sequence parent or the project’s tracking record changed while the transmit claim was being taken. Nothing was assembled or sent; sign the current content again.');
     }
     // A receipt may settle while this request waits for the sequence lock.
     // Read the canonical ledger in a fresh statement after acquiring it.
@@ -2505,7 +2505,7 @@ export function transmitApplicationNumberRefusal(typed: string, recorded: string
     return new SubmissionError(
       'APPLICATION_NUMBER_MISMATCH',
       `Application number "${usable}" does not match the program's recorded application number "${recorded}". ` +
-        'The record is authoritative: transmit under the recorded number, or correct the program record first. Nothing was sent.',
+        'The record is authoritative: transmit under the recorded number, or correct the project record first. Nothing was sent.',
     );
   }
   return null;

@@ -26,34 +26,38 @@ import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { IndFilingPlan } from '../editor/IndDocumentLibrary';
 import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from './ProjectMdxWorkflow';
 import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
+import { ComingLater } from './ProjectComingLater';
+import { STEP_DOORS } from '../projectDoors';
 
-/** The features a US IND phase is composed in, when they serve this project. Each opens on the open project. */
+/** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
+ *  is named as the same job is named wherever its door appears (projectDoors.ts). */
 function IndPhaseDoor({ phaseId, usInd, cmcComposes, available, onNav, onStage }: {
   phaseId: string; usInd: boolean; cmcComposes: boolean;
   available: (id: string) => boolean; onNav: (id: string) => void; onStage: (id: string) => void;
 }) {
   const door = phaseId === 'phase3' && cmcComposes && available('cmc')
-    ? { label: 'Compose Module 3 in CMC / Module 3', act: () => onNav('cmc') }
+    ? { label: STEP_DOORS.cmc, act: () => onNav('cmc') }
     : phaseId === 'phase7' && usInd && available('ind-checklist')
-      ? { label: 'Prepare Forms 1571, 1572 and 3674 in IND forms', act: () => onNav('ind-checklist') }
+      ? { label: STEP_DOORS.indForms, act: () => onNav('ind-checklist') }
       : phaseId === 'phase8'
-        ? { label: 'Place approved documents in the sequence on Submit', act: () => onStage('submit') }
+        ? { label: STEP_DOORS.placeInSequence, act: () => onStage('submit') }
         : null;
   if (!door) return null;
   return <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={door.act}>{door.label} {I.right}</button></div>;
 }
 
-/* ════ My work on this project ═════════════════════════════════════════════
+/* ════ Your tasks on this project ══════════════════════════════════════════
    ONE_ANA_ONE_CANVAS.md slice 24; on Plan since pass 3 (moved from Project
    home). The program's tasks and approvals are listed just above it (ProjectWorkPanel, read by the program UUID through
-   the server's anchor). My work, the signed-in person's own queue, is not
-   filtered to this project yet; this says so in one line and links to it.
+   the server's anchor). The signed-in person's own tasks are not filtered to
+   this project yet (slice 5); this says so in one line and links to them.
    This section said "Tasks & submission readiness aren't wired"; the dispatch
-   readiness is on the Submit stage now.
+   readiness is on the Submit stage now. It was named "My work" until slice A.1
+   (section 9: Tasks is the place, "Your tasks" the section).
 
-   "Open My work" opens what the nav's My work opens: the task board on the
-   signed-in person's own tasks, asked of the board through the same validated
-   action bus (tasking.filter, mine), not the board on everyone's. */
+   Its door opens Tasks on the signed-in person's own tasks, asked of the board
+   through the same validated action bus (tasking.filter, mine), not the board
+   on everyone's. */
 function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; available: (id: string) => boolean }) {
   const openMyWork = () => {
     const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
@@ -63,14 +67,14 @@ function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; availab
   return (
     <section className="pj-sec" aria-labelledby="pj-mywork-h">
       <div className="pj-sec-h">
-        <h2 id="pj-mywork-h">My work</h2>
+        <h2 id="pj-mywork-h">{STEP_DOORS.yourTasksHeading}</h2>
         {available('tasks') && (
           <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openMyWork}>
-            Open My work {I.right}
+            {STEP_DOORS.yourTasks} {I.right}
           </button>
         )}
       </div>
-      <p className="pj-desc">Your work is not filtered to this project yet. My work lists it for every project.</p>
+      <p className="pj-desc">Your tasks are not filtered to this project yet. Tasks lists them for every project.</p>
     </section>
   );
 }
@@ -153,13 +157,14 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
           <p className="pj-desc" data-testid="pj-plan-none">
             A list of what the filing needs is available for US INDs and device filings in this release. This filing’s documents are on Author.
           </p>
-          <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>Open Author {I.right}</button></div>
+          <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>{STEP_DOORS.filingDocuments} {I.right}</button></div>
         </section>
       )}
       {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>
       <MyWorkLine onNav={onNav} available={available} />
+      <ComingLater stage="plan" device={deviceFiling} />
     </div>
   );
 }

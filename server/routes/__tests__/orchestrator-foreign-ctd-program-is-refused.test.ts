@@ -120,7 +120,7 @@ describe('a CTD program outside the organization', () => {
 
     expect(res.status, `a foreign ctdProgramId answered ${res.status}: ${JSON.stringify(res.body)}`).toBe(422);
     expect(res.body.code).toBe('CTD_PROGRAM_NOT_FOUND');
-    expect(res.body.error).toMatch(/CTD program 77 is not on record/);
+    expect(res.body.error).toMatch(/CTD dossier 77 is not on record/);
     expect(h.runOrchestrator).not.toHaveBeenCalled();
   });
 

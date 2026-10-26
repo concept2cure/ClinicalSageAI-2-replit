@@ -5,7 +5,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
-import { surfaceIdFromLocation } from '../routing';
+import { DEEP_LINK_ALIASES } from '../registryModel';
+import { locationForSurface, surfaceIdFromLocation, SURFACE_ADDRESSES } from '../routing';
 
 describe('surfaceIdFromLocation', () => {
   it('maps the bare base path to home', () => {
@@ -32,6 +33,13 @@ describe('surfaceIdFromLocation', () => {
     }
   });
 
+  it('/concept2cure/features is Subscription & features (section 12: no id with "app" in the address bar)', () => {
+    expect(surfaceIdFromLocation('/concept2cure/features')).toBe('apps');
+    expect(surfaceIdFromLocation('/concept2cure/features?program=7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d')).toBe('apps');
+    // A link written before the address changed still arrives.
+    expect(surfaceIdFromLocation('/concept2cure/apps')).toBe('apps');
+  });
+
   it('ignores trailing segments and query strings', () => {
     expect(surfaceIdFromLocation('/concept2cure/vault/some/deep/path')).toBe('vault');
     expect(surfaceIdFromLocation('/concept2cure/vault?ui-v2=1')).toBe('vault');
@@ -39,6 +47,26 @@ describe('surfaceIdFromLocation', () => {
 
   it('treats non-base locations as home', () => {
     expect(surfaceIdFromLocation('/somewhere-else')).toBe('home');
+  });
+});
+
+describe('locationForSurface (the path the shell writes)', () => {
+  it('writes /concept2cure/features for apps, and the id itself for every other surface', () => {
+    expect(locationForSurface('apps')).toBe('/concept2cure/features');
+    expect(locationForSurface('home')).toBe('/concept2cure');
+    for (const s of UI_SURFACES.filter((x) => x.id !== 'apps')) {
+      expect(locationForSurface(s.id), s.id).toBe(`/concept2cure/${s.id}`);
+    }
+  });
+
+  it('every address it writes reads back to the same surface', () => {
+    for (const [id, address] of Object.entries(SURFACE_ADDRESSES)) {
+      expect(DEEP_LINK_ALIASES[address], address).toBe(id);
+      expect(getSurface(address), `${address} is an address, not a registry id`).toBeUndefined();
+    }
+    for (const s of UI_SURFACES) {
+      expect(surfaceIdFromLocation(locationForSurface(s.id)), s.id).toBe(s.id);
+    }
   });
 });
 

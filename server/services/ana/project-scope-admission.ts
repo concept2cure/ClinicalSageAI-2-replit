@@ -52,7 +52,7 @@ async function uniqueAnchor(q: RequestSqlClient, organizationId: number, program
       }) };
     },
   }, { orgId: organizationId, programId, context: 'ana-project-scope', requireUnique: true });
-  if (!anchor) throw new AnaProjectScopeError(409, 'ANA_PROJECT_ANCHOR_UNRESOLVED', 'This program needs one verified project relationship before AnA can read its sources.');
+  if (!anchor) throw new AnaProjectScopeError(409, 'ANA_PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before AnA can read its sources.');
   return anchor.id;
 }
 

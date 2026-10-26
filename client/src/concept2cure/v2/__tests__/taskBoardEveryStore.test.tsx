@@ -107,10 +107,12 @@ describe("TaskBoard — every store's work", () => {
     mount();
     fireEvent.click(await card(SCHEDULE.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
-    expect(detail.textContent).toMatch(/Project home/);
+    // A project's page is named by its project (section 9), not "Project home".
+    expect(detail.textContent).toContain('This work lives in BX-1 programme. It is changed there');
+    expect(detail.textContent).not.toMatch(/Project home/);
     expect(within(detail).queryByRole('button', { name: /Archive/ })).toBeNull();
     expect(within(detail).queryByRole('button', { name: /Advance/ })).toBeNull();
-    fireEvent.click(within(detail).getByRole('button', { name: 'Open in Project home' }));
+    fireEvent.click(within(detail).getByRole('button', { name: 'Open in BX-1 programme' }));
     expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: SCHEDULE.home.programId, title: 'BX-1 programme' }));
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect(apiRequest.mock.calls.filter(([m]) => m !== 'GET')).toHaveLength(0);

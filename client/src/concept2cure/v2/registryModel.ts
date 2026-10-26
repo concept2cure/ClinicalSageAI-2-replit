@@ -111,7 +111,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
  *    scrap / later); the module catalog is in the account menu; Artifacts Center's
  *    list moves to the conversation's canvas (slice 25) and stays reachable
- *    meanwhile from ⌘K, Plan & features, and Live Drive, which opens it when
+ *    meanwhile from ⌘K, Subscription & features, and Live Drive, which opens it when
  *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
  *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
  *    opens the conversation in progress. "New conversation" opens Home, which
@@ -145,7 +145,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * client unable to tell where to start. The rail is now the five places every
  * client works in, then the durable work areas, under their own heading. Each
  * entry that left is still reached, from where its work happens:
- *  - Workflows (the module catalog) is "Plan & features" in the account menu,
+ *  - Workflows (the module catalog) is "Subscription & features" in the account menu,
  *    for organization administrators. Features open from inside a project.
  *  - Submission Center opens from a project's Submit step.
  *  - Tasking and My work are one entry, Tasks; the board's own "My tasks"
@@ -906,7 +906,7 @@ export const SEGMENT_CONTEXT = {
   cro: {
     label: 'CRO / Research',
     tagline: 'Multi-sponsor · protocol-led · org-isolated',
-    pathways: ['Protocol development', 'Cross-sponsor', 'IND', '510(k)'],
+    pathways: ['Protocols', 'Cross-sponsor', 'IND', '510(k)'],
     ana: 'Multi-sponsor portfolio. Protocol authoring + committee governance, org-isolated across sponsors.',
   },
   health: {
@@ -948,6 +948,11 @@ export const ESIGN_MEANINGS = [
  * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
   'task-board': 'tasks',
+  /* Subscription & features keeps its id `apps`; the address a person sees
+     and copies is /concept2cure/features (section 12 of
+     .design/client-journey/INFORMATION_ARCHITECTURE.md). routing.ts
+     SURFACE_ADDRESSES writes it; this reads it back. */
+  features: 'apps',
   // No `device-submission` alias. It pointed at `document-authoring` while
   // SURFACE_VIEWS routed the same id to the device kit — the registry and the
   // deep-link table disagreeing about what one id means. `device-submission` is

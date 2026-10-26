@@ -47,7 +47,7 @@ function readRecordedIdentity(meta: Record<string, unknown>): RecordedIdentity {
   if (registry.invalid || legacy.invalid) return invalidContext();
   if (!registry.value && !legacy.value) return {
     state: 'filing-context-required', reasonCode: 'REGIONAL_FILING_CONTEXT_REQUIRED',
-    availabilityReason: 'Record the program’s filing type before running this market readiness assessment. No market readiness was assessed.',
+    availabilityReason: 'Record the project’s filing type before running this market readiness assessment. No market readiness was assessed.',
   };
   const legacyId = legacy.value ? resolveToRegistryId(legacy.value) : null;
   if (legacy.value && !legacyId) return invalidContext();
@@ -97,9 +97,9 @@ export function regionalFilingApplicability(typeId: string, declared: { region?:
   const ctx = context.filing;
   if (!ctx.kind || !ctx.jurisdiction) {
     const modeled = MODELED_JURISDICTIONS.map(market => `${market} ${REGIONAL_MODULE1[market].kinds.join('/')}`).join(', ');
-    return refusal('not-applicable', 'REGIONAL_FILING_NOT_MODELED', `The Module 1 record models ${modeled}. This program is recorded as ${ctx.entryLabel}, which has no Module 1 record here, so its Module 1 content was not assessed.`);
+    return refusal('not-applicable', 'REGIONAL_FILING_NOT_MODELED', `The Module 1 record models ${modeled}. This project is recorded as ${ctx.entryLabel}, which has no Module 1 record here, so its Module 1 content was not assessed.`);
   }
-  if (ctx.jurisdiction !== binding.jurisdiction) return refusal('not-applicable', 'REGIONAL_REPORT_MARKET_MISMATCH', `${label} assesses a ${binding.jurisdiction} filing. This program is recorded as ${ctx.entryLabel}, so its readiness for that market was not assessed under this market’s name.`);
-  if (!binding.kinds.includes(ctx.kind)) return refusal('not-applicable', 'REGIONAL_REPORT_KIND_MISMATCH', `${label} assesses a ${binding.kinds.join(' or ')} filing. This program is recorded as ${ctx.entryLabel}, so it was not assessed under this report’s name.`);
+  if (ctx.jurisdiction !== binding.jurisdiction) return refusal('not-applicable', 'REGIONAL_REPORT_MARKET_MISMATCH', `${label} assesses a ${binding.jurisdiction} filing. This project is recorded as ${ctx.entryLabel}, so its readiness for that market was not assessed under this market’s name.`);
+  if (!binding.kinds.includes(ctx.kind)) return refusal('not-applicable', 'REGIONAL_REPORT_KIND_MISMATCH', `${label} assesses a ${binding.kinds.join(' or ')} filing. This project is recorded as ${ctx.entryLabel}, so it was not assessed under this report’s name.`);
   return { availabilityState: 'available', runnable: true, availabilityReason: null, reasonCode: null, filing: { ...ctx, kind: ctx.kind, jurisdiction: ctx.jurisdiction } };
 }

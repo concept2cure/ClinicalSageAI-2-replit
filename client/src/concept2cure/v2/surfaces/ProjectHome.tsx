@@ -31,6 +31,7 @@ import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/c
 import { isUsInd, useProgramMarkets } from './programSequence';
 import { StageBand, StageTracker } from './ProjectStages';
 import { ComingLater } from './ProjectComingLater';
+import { STEP_DOORS } from '../projectDoors';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
@@ -215,7 +216,7 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
         <h2 id="pj-evidence-h">Project files</h2>
         {available('vault') && (
           <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
-            Open in Vault {I.right}
+            {STEP_DOORS.vault} {I.right}
           </button>
         )}
       </div>
@@ -909,7 +910,7 @@ function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null;
           in this release. */}
       {available('tasks') && (
         <div style={{ marginTop: 8 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>Open task board {I.right}</button>
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
         </div>
       )}
     </section>
@@ -1057,7 +1058,7 @@ function ProjectReviews({ state, onRetry, onNav, available }: {
         {available('review') && (
           <span className="pj-sec-acts">
             <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('review')}>
-              Open the review board {I.right}
+              {STEP_DOORS.reviewBoard} {I.right}
             </button>
           </span>
         )}
@@ -1303,18 +1304,19 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
               and the workspace lists the open project's, so the door names the job. */}
           {available('protocol-dev') && (
             <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('protocol-dev')}>
-              Write the protocol in the protocol workspace {I.right}
+              {STEP_DOORS.protocol} {I.right}
             </button>
           )}
           {available('document-authoring') && (
             <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openAuthoring}>
-              Open in Authoring {I.right}
+              {STEP_DOORS.editor} {I.right}
             </button>
           )}
-          {/* CMC / Module 3 reads the open program; offered where it composes. */}
+          {/* CMC / Module 3 reads the open program; offered where it composes, with the name Plan's
+              phase 3 gives the same job (section 9: one job, one name). */}
           {cmcComposes && available('cmc') && (
             <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('cmc')}>
-              CMC / Module 3 {I.right}
+              {STEP_DOORS.cmc} {I.right}
             </button>
           )}
         </span>
@@ -1806,6 +1808,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             <div className="pj-stagebody">
               <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
+              <ComingLater stage="evidence" device={deviceFiling} />
             </div>
           )}
 
@@ -1825,6 +1828,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
               <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
+              <ComingLater stage="review" device={deviceFiling} />
             </div>
           )}
 
@@ -1833,18 +1837,22 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
 
           {/* Author — the project's documents, each opened by id, then module
-              completion, the person's work, records and the team. */}
+              completion, the person's work, records and the team; then what
+              this step will hold, in words (slice A.1). */}
           {stage === 'author' && (
-            <AuthorWorkspace
-              pid={pid}
-              dossier={dossier}
-              onNav={onNav}
-              activityState={activityState}
-              docs={docsRead}
-              onRetryDocs={reloadDocs}
-              onOpenDoc={openDocument}
-              cmcComposes={cmcComposes}
-            />
+            <>
+              <AuthorWorkspace
+                pid={pid}
+                dossier={dossier}
+                onNav={onNav}
+                activityState={activityState}
+                docs={docsRead}
+                onRetryDocs={reloadDocs}
+                onOpenDoc={openDocument}
+                cmcComposes={cmcComposes}
+              />
+              <ComingLater stage="author" device={deviceFiling} />
+            </>
           )}
           </div>
 

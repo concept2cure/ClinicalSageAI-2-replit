@@ -571,8 +571,8 @@ export function DocumentCanvas({
               fireToast={fireToast}
             />
           )}
-          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document on the Authoring surface" data-testid="dc-edit-in-authoring">
-            {I.penLine} Edit in Authoring
+          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document in the editor" data-testid="dc-edit-in-authoring">
+            {I.penLine} Edit in the editor
           </button>
         </div>
       </div>

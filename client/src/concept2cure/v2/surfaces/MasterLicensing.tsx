@@ -52,6 +52,7 @@ import EnterpriseRequestsPanel from './licensing/EnterpriseRequestsPanel';
 import LicensingHistoryPanel from './licensing/LicensingHistoryPanel';
 import { TrialsPanel } from './licensing/TrialsPanel';
 import '../styles/misc-surfaces-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── The server contract, as this surface reads it ─────────────────────────── */
 
@@ -621,19 +622,19 @@ export function MasterLicensing() {
       facts.categoryFilter = category;
       facts.searchTerm = search;
       if (lic.loading) {
-        summary = 'Licensing, Packaging tab — the module catalogue is still loading.';
+        summary = 'Platform licensing, Packaging tab — the module catalogue is still loading.';
       } else if (lic.error) {
         facts.licensingUnavailable = lic.error;
         summary =
-          'Licensing, Packaging tab — the licensing model could not be read. A failed read, not a platform that licenses nothing.';
+          'Platform licensing, Packaging tab — the licensing model could not be read. A failed read, not a platform that licenses nothing.';
       } else if (moduleRows.length === 0) {
         summary =
-          'Licensing, Packaging tab — no modules are registered, so there is nothing to package into tiers yet.';
+          'Platform licensing, Packaging tab — no modules are registered, so there is nothing to package into tiers yet.';
       } else {
         facts.moduleCount = moduleRows.length;
         facts.visibleModuleCount = visibleModules.length;
         summary =
-          `Licensing, Packaging tab — ${moduleRows.length} module(s) in the catalogue, ` +
+          `Platform licensing, Packaging tab — ${moduleRows.length} module(s) in the catalogue, ` +
           `${visibleModules.length} shown` +
           (category !== 'all' ? ` (category "${category}")` : '') +
           (search.trim() ? ` (search "${search.trim()}")` : '') + '.';
@@ -641,13 +642,13 @@ export function MasterLicensing() {
     } else if (tab === 'tenants') {
       facts.aWorkspaceIsSelected = selectedOrg !== '';
       if (lic.loading) {
-        summary = 'Licensing, Tenants tab — the workspace list is still loading.';
+        summary = 'Platform licensing, Tenants tab — the workspace list is still loading.';
       } else if (lic.error) {
         facts.licensingUnavailable = lic.error;
         summary =
-          'Licensing, Tenants tab — the workspace list could not be read. A failed read, not a platform with no workspaces.';
+          'Platform licensing, Tenants tab — the workspace list could not be read. A failed read, not a platform with no workspaces.';
       } else if (orgRows.length === 0) {
-        summary = 'Licensing, Tenants tab — no workspaces on this deployment yet.';
+        summary = 'Platform licensing, Tenants tab — no workspaces on this deployment yet.';
       } else {
         facts.workspaceCount = orgRows.length;
         // The tenant-detail read is its own read; its state is mirrored without
@@ -664,47 +665,47 @@ export function MasterLicensing() {
             detail = 'a workspace is selected and its module-by-module verdict is on screen';
           }
         }
-        summary = `Licensing, Tenants tab — ${orgRows.length} workspace(s) on this deployment; ${detail}.`;
+        summary = `Platform licensing, Tenants tab — ${orgRows.length} workspace(s) on this deployment; ${detail}.`;
       }
     } else if (tab === 'flags') {
       if (flagsState.loading) {
-        summary = 'Licensing, Feature flags tab — the flags are still loading.';
+        summary = 'Platform licensing, Feature flags tab — the flags are still loading.';
       } else if (flagsState.error) {
         facts.flagsUnavailable = flagsState.error;
         summary =
-          'Licensing, Feature flags tab — the flags could not be read. A failed read, not a deployment with no flags.';
+          'Platform licensing, Feature flags tab — the flags could not be read. A failed read, not a deployment with no flags.';
       } else if (flagRows.length === 0) {
-        summary = 'Licensing, Feature flags tab — no feature flags are registered on this deployment.';
+        summary = 'Platform licensing, Feature flags tab — no feature flags are registered on this deployment.';
       } else {
         const enabled = flagRows.filter((f) => f.enabled).length;
         facts.flagCount = flagRows.length;
         facts.flagsEnabled = enabled;
-        summary = `Licensing, Feature flags tab — ${flagRows.length} deployment-wide flag(s), ${enabled} enabled.`;
+        summary = `Platform licensing, Feature flags tab — ${flagRows.length} deployment-wide flag(s), ${enabled} enabled.`;
       }
     } else if (tab === 'enforcement') {
       if (enf.loading) {
-        summary = 'Licensing, Enforcement tab — the enforcement report is still loading.';
+        summary = 'Platform licensing, Enforcement tab — the enforcement report is still loading.';
       } else if (enf.error || !enf.data) {
         facts.enforcementUnavailable = enf.error ?? 'The platform returned no report for this server.';
         summary =
-          'Licensing, Enforcement tab — the enforcement report could not be read. A failed read, not a report of zero refusals.';
+          'Platform licensing, Enforcement tab — the enforcement report could not be read. A failed read, not a report of zero refusals.';
       } else {
         // Three states, never collapsed: off ≠ nothing recorded ≠ observed.
         facts.enforcementMode = enf.data.mode;
         facts.enforcementObserving = enf.data.observingSince !== null;
         if (enf.data.mode === 'off') {
           summary =
-            'Licensing, Enforcement tab — enforcement is off: route-level checks are not being applied and nothing is measured, so there is nothing to report.';
+            'Platform licensing, Enforcement tab — enforcement is off: route-level checks are not being applied and nothing is measured, so there is nothing to report.';
         } else if (enf.data.observingSince === null) {
           summary =
-            'Licensing, Enforcement tab — observation is on but this server has recorded nothing since restart. Absence of evidence, not evidence nothing would be refused.';
+            'Platform licensing, Enforcement tab — observation is on but this server has recorded nothing since restart. Absence of evidence, not evidence nothing would be refused.';
         } else {
           facts.observationCount = enf.data.observations.length;
           facts.organizationsAffected = enf.data.organizationsAffected;
           facts.modulesAffectedCount = enf.data.modulesAffected.length;
           facts.truncated = enf.data.truncated;
           summary =
-            `Licensing, Enforcement tab — mode "${enf.data.mode}"` +
+            `Platform licensing, Enforcement tab — mode "${enf.data.mode}"` +
             (enf.data.mode === 'enforce'
               ? ' (everything recorded was actually refused)'
               : ' (observing only — everything recorded was served)') +
@@ -718,7 +719,7 @@ export function MasterLicensing() {
       // Access requests / Trials / Decisions are self-contained panels with
       // their own reads; nothing of theirs is visible from here to report.
       const label = TABS.find((t) => t.id === tab)?.label ?? tab;
-      summary = `Licensing, ${label} tab — this panel owns its own read; its contents are not part of what this console publishes.`;
+      summary = `Platform licensing, ${label} tab — this panel owns its own read; its contents are not part of what this console publishes.`;
     }
     return {
       summary,
@@ -803,9 +804,9 @@ export function MasterLicensing() {
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Platform · master admin</div>
-          <h1 className="ph-title">Licensing</h1>
+          <h1 className="ph-title">{getSurfaceMeta('master-licensing').label}</h1>
           <div className="ph-sub">
-            What each plan tier includes, what each workspace is entitled to, and which feature
+            What each subscription tier includes, what each workspace is entitled to, and which feature
             flags this deployment runs. Every change here requires a reason and is written to the
             platform audit log.
           </div>

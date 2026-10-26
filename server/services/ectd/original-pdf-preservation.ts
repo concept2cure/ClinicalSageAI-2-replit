@@ -28,7 +28,7 @@ function referenceForVault(entry: unknown, vaultDocumentId: string, sourceSha256
     if (entry.vaultDocumentId.toLowerCase() !== vaultDocumentId.toLowerCase()) return null;
     const reference = immutableReference(entry as Record<string, unknown>, vaultDocumentId);
     if (reference.contentHash !== sourceSha256) refuse('The registered legal original no longer matches its source SHA-256.', vaultDocumentId);
-    if (reference.programId.toLowerCase() !== programId?.toLowerCase()) refuse('The registered legal original belongs to a different source program.', vaultDocumentId);
+    if (reference.programId.toLowerCase() !== programId?.toLowerCase()) refuse('The registered legal original belongs to a different source project.', vaultDocumentId);
     return reference;
 }
 

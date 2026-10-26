@@ -285,7 +285,7 @@ describe('what it refuses', () => {
         actorId: 7,
         patch: { status: 'approved' } as never,
       }),
-    ).rejects.toThrow(/Not a settable programme-profile column: status/);
+    ).rejects.toThrow(/Not a settable project-profile column: status/);
     expect(set).not.toHaveBeenCalled();
   });
 

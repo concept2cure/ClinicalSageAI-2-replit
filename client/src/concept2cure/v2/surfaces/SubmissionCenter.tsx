@@ -90,6 +90,7 @@ import { TrackedFilingDetail } from './TrackedFilingDetail';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
+import { getSurfaceMeta } from '../registryModel';
 import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
 import {
   SHADOW_DISPOSITION_MEANINGS,
@@ -1311,7 +1312,7 @@ export function SubmissionCenter({
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">Submission center</h1>
+          <h1 className="sp-title">{getSurfaceMeta('submission-center').label}</h1>
           <p className="sp-state">
             Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
           </p>
@@ -1597,7 +1598,7 @@ export function SubmissionCenter({
                 hint={available('device-510k')
                   ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
                   /* The surface it names is not in this release (F16: no dead ends). */
-                  : 'Device filings are tracked from the 510(k) workbench, which is not part of this release.'}
+                  : `Device filings are tracked from ${getSurfaceMeta('device-510k').label}, which is not part of this release.`}
               />
             ) : (
               <table className="ub-inv">

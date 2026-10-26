@@ -37,6 +37,7 @@ import { resolveFilingCatalogEntry, type RegionalDeviceApplicationClass } from '
 import type { ReviewItem } from '../fixtures/review-data';
 import type { BuilderSection } from './submissionNavTarget';
 import { MarketApplicationNumber } from './MarketApplicationNumber';
+import { STEP_DOORS } from '../projectDoors';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -278,10 +279,12 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
       {/* What the platform can carry for this market, in the server's words (F19). */}
       <div className="pj-file-m"><MarketSupportLine applicationType={s.applicationType} market={s.primaryRegion} /></div>
       {number?.(m)}
+      {/* Named for its job and its market, in words a person sees and hears alike (section 9; it read
+          "Open", with the market only in its accessible name). */}
       {onOpen && (
         <div className="pj-mkt-acts">
-          <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)} aria-label={`Open ${name} in the Submission Center`}>
-            Open {I.right}
+          <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)}>
+            {STEP_DOORS.marketSequence(name)} {I.right}
           </button>
         </div>
       )}
@@ -365,7 +368,7 @@ export function NotSequencedState({ documentClass, regionalApplication }: {
   return documentClass ? <EmptyState icon={I.rocket} title="No market: this project is authored, not sequenced" hint={classNotSequencedReason(documentClass)} /> : null;
 }
 
-/** The Submit tab's market list. "Open Submission Center" opens the open
+/** The Submit tab's market list. The header's Submission Center door opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
 /** The IND's forms (1571, cover letter, Letter of Authorization), a Submission
@@ -378,7 +381,7 @@ function IndFormsDoor({ usInd, onNav, available }: {
   if (!usInd || !available('ind-checklist')) return null;
   return (
     <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('ind-checklist')}>
-      IND forms {I.right}
+      {STEP_DOORS.indForms} {I.right}
     </button>
   );
 }
@@ -422,7 +425,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               door until F10 retargets it to Validation on the gated sequence. */}
           {available('dispatch-readiness') && (
             <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('dispatch-readiness')}>
-              Open readiness {I.right}
+              {STEP_DOORS.readiness} {I.right}
             </button>
           )}
           {/* eCTD compile, opened from the project, compiles the submission
@@ -454,7 +457,7 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
           {/* The Submission Center reads the open project, so it opens on this one. */}
           {center && (
             <button type="button" className="btn ghost pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio' })}>
-              Open Submission Center {I.right}
+              {STEP_DOORS.everySequence} {I.right}
             </button>
           )}
         </span>

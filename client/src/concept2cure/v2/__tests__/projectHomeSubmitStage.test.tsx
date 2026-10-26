@@ -10,7 +10,8 @@
  * It now shows, above the project's submissions:
  *   - the dispatch gate's verdict, from the same discovery and the same
  *     endpoint as the readiness screen (programSequence.ts), stated exactly as
- *     the server stated it, with "Open readiness" to the readiness screen;
+ *     the server stated it, with a door to the readiness screen ("Check what
+ *     stops sending" since slice A.1; it read "Open readiness");
  *   - the honest not-ready states in plain words;
  * and the project's submissions from GET /api/submissions?programId=<uuid>,
  * with loading, a failure with a retry, and an honest empty as three states.
@@ -163,7 +164,7 @@ describe('Project home — device pathway actions reflect the supported workflow
     const panel = await screen.findByTestId('pj-markets');
     await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
     expect(within(panel).queryByRole('button', { name: /Add a market|Compile and download/ })).toBeNull();
-    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'See every sequence in Submission Center' })).toBeTruthy();
   });
 
   it.each([['device', '510k'], ['device', 'pma'], ['ivd', '510k'], ['cdx', 'pma'], ['samd', '510k']])('does not offer an eCTD market for a %s %s project, while retaining its submissions', async (productType, programType) => {
@@ -172,8 +173,8 @@ describe('Project home — device pathway actions reflect the supported workflow
     const panel = await screen.findByTestId('pj-markets');
     await waitFor(() => expect(panel.textContent).toContain('file on their own pathways'));
     expect(within(panel).queryByRole('button', { name: /Add a market/ })).toBeNull();
-    expect(within(panel).getByRole('button', { name: /Open Submission Center/ })).toBeTruthy();
-    expect(within(panel).getByRole('button', { name: /Open readiness/ })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'See every sequence in Submission Center' })).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'Check what stops sending' })).toBeTruthy();
     expect(within(panel).queryByRole('button', { name: /Compile and download/ })).toBeNull();
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
@@ -222,10 +223,10 @@ describe('Project home — the Submit stage lists the project’s submissions', 
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
 
-  it('keeps "Open Submission Center", which opens on this project', async () => {
+  it('keeps the Submission Center door ("Open Submission Center" until slice A.1), which opens on this project', async () => {
     serve();
     await openSubmit();
-    fireEvent.click(await screen.findByRole('button', { name: /Open Submission Center/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'See every sequence in Submission Center' }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
   });
 });
@@ -246,7 +247,7 @@ describe('Project home — the Submit stage shows the server’s dispatch verdic
     expect(urls()).toContain('/api/submissions/sequences/905/dispatch-readiness');
     // On the submission's own row: the verdict and the list are one panel (F9).
     expect(verdict.textContent).toContain('ONC-221 IND');
-    fireEvent.click(screen.getByRole('button', { name: /Open readiness/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check what stops sending' }));
     expect(onNav).toHaveBeenCalledWith('dispatch-readiness');
   });
 

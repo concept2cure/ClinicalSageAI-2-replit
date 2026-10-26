@@ -153,7 +153,7 @@ describe('a vault leaf is finalized only when its version is approved, current, 
       const blockers = assembledTransmitBlockers({ skipped: [], unfinalized: mismatched.unfinalized, unfinalizedSections: mismatched.unfinalizedSections });
       expect(blockers.join(' ')).toContain('selected agency is outside');
       expect(await fs.readFile([...mismatched.byKey.values()][0].sourcePath)).toEqual(original);
-      expect((await run(uuid)).unfinalizedSections[0].status).toContain('target program');
+      expect((await run(uuid)).unfinalizedSections[0].status).toContain('The target project for this company legal document could not be verified.');
       const record = await harness.pglite.query('SELECT stage,content_hash FROM canonical_documents WHERE canonical_id=$1', [`cd-${uuid}`]);
       expect(record.rows[0]).toEqual({ stage: 'approved', content_hash: sha(original) });
     } finally { await harness.pglite.exec("TRUNCATE company_legal_registry"); }

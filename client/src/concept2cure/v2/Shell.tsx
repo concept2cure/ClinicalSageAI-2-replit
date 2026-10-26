@@ -22,7 +22,7 @@ import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { isOrgAdminRole } from './orgAdmin';
 import { TaskTray } from './TaskTray';
-import { useShellProject } from './shellProject';
+import { useShellProject, type ShellProject } from './shellProject';
 
 import {
   AI_ACTIONS,
@@ -118,7 +118,7 @@ export function Rail({
   /* Launch scope is a release boundary, not a licence: a greyed rail entry
      for an app nobody can enable is a dead affordance. Every place is in the
      launch scope today (shellNav.test.tsx); this keeps an entry out if a
-     deployment's verdicts say otherwise. Plan & features still lists the
+     deployment's verdicts say otherwise. Subscription & features still lists the
      feature with the reason. A feature flag that is off hides its entry as well: the
      one predicate every list of destinations reads (flagAllowsSurface, QA
      2026-10-08 j1), so the rail and Project home's grids never disagree. */
@@ -304,7 +304,14 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
  * The account menu: settings, the client type, help and sign-out
  * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The client type
  * moved here from the rail's list on 2026-10-08; the module catalog is here as
- * "Plan & features", for organization administrators, since 2026-10-25.
+ * "Subscription & features", for organization administrators, since 2026-10-25
+ * (named so on 2026-10-26: "Plan" is the project's first step, the
+ * subscription is "subscription", section 9 of
+ * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
+ * surface's registry label, as the breadcrumb and ⌘K do; they are written out
+ * because config/ui-surface-registry.json's audit (npm run audit:ui-authority)
+ * reads this menu's labels from this file, and shellNav.test.tsx and
+ * clientNamesSlice1.test.tsx hold them to the registry.
  *
  * It is a menu by the WAI-ARIA menu pattern, since the button says it opens
  * one: focus moves to the first item when it opens; ArrowUp and ArrowDown (and
@@ -350,24 +357,25 @@ function AccountMenu({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
-    /* What the organization's plan includes, and the switches for it. It was
-       "Workflows" (before that the Apps catalog), on the rail and in this menu
-       for everyone, and it read as dozens of separate applications: a client
-       testing the product could not tell what to use or when
-       (docs/design/CLIENT_JOURNEY_2026-10-25.md). Features open from inside a
-       project; this page is the administrator's licensing view of them. */
-    ...(isOrgAdmin ? [{ label: 'Plan & features', ic: 'grid', to: 'apps' }] : []),
-    // Licensing is the PLATFORM operator's console, not the customer's plan
-    // page (that is "View all plans" below). It is offered only when the server
+    /* What the organization's subscription includes, and the switches for it.
+       It was "Plan & features", and before that "Workflows" (and the Apps
+       catalog), on the rail and in this menu for everyone, and it read as
+       dozens of separate applications: a client testing the product could not
+       tell what to use or when (docs/design/CLIENT_JOURNEY_2026-10-25.md).
+       Features open from inside a project; this page is the administrator's
+       licensing view of them. */
+    ...(isOrgAdmin ? [{ label: 'Subscription & features', ic: 'grid', to: 'apps' }] : []),
+    // Platform licensing is the PLATFORM operator's console, not the customer's
+    // subscription page (that is "Compare subscriptions" below). It is offered only when the server
     // says its guard admits this viewer — `platformAdmin` is that guard's own
     // function (resolvePlatformAdmin). It used to be offered on `isOrgAdmin`, so
     // every customer org admin opened seven tabs that each refused them. The
     // guard still re-checks every read and write; this only decides the offer.
-    ...(platformAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    ...(platformAdmin ? [{ label: 'Platform licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
     /* An engineering view of the surface registry, not a customer capability,
        and outside the release. It was in every member's menu, where the launch
        scope turned it into a "not in this release" lock (slice 0 of
-       .design/client-journey/INFORMATION_ARCHITECTURE.md). Beside Licensing,
+       .design/client-journey/INFORMATION_ARCHITECTURE.md). Beside Platform licensing,
        for the platform's administrators, and only when it can be opened. */
     ...(platformAdmin && available('coverage') ? [{ label: 'Codebase coverage', ic: 'grid', to: 'coverage' }] : []),
     /* Where a member's request for a locked module lands. Without this entry the
@@ -381,7 +389,7 @@ function AccountMenu({
     { sep: true },
     { clientType: true },
     { sep: true },
-    { label: 'View all plans', ic: 'checkSquare', to: 'licensing' },
+    { label: 'Compare subscriptions', ic: 'checkSquare', to: 'licensing' },
     { label: 'Set up a workspace', ic: 'rocket', to: 'onboarding' },
     { label: 'Get help', ic: 'help', to: HELP_SURFACE },
     { sep: true },
@@ -482,6 +490,11 @@ function AccountMenu({
 
 /* ── Topbar ───────────────────────────────────────────────────────────── */
 
+/** The open project's name as the top bar reads it: its code, or its title when it has none. */
+function shellProjectName(project: ShellProject | null): string {
+  return String(project?.code ?? '').trim() || String(project?.title ?? '').trim();
+}
+
 /**
  * The open project, named (FILING_SPINE F8). No screen said which filing a
  * person was in, and the top bar's control here was "Switch client domain": a
@@ -506,7 +519,7 @@ function ProjectChip({ here, onNav }: { here: string; onNav?: (id: string) => vo
   }
   const code = String(openProject.code ?? '').trim();
   const title = String(openProject.title ?? '').trim();
-  const name = code || title;
+  const name = shellProjectName(openProject);
   return (
     <button
       type="button"
@@ -551,6 +564,13 @@ export function TopBar({
     .slice(0, 2)
     .toUpperCase();
   const tier = breadcrumbTierOf(surface);
+  /* The project's page is named by the project, not by "Project home" (section
+     9 of .design/client-journey/INFORMATION_ARCHITECTURE.md): a registry label
+     cannot hold a project's name, so the breadcrumb reads the shell's one
+     project channel, as the project chip beside it does. With no project open,
+     or one opened by id alone, it keeps the registry label. */
+  const openProject = useShellProject();
+  const here = (surface.id === 'project-home' && shellProjectName(openProject)) || surface.label;
   return (
     <header className="topbar">
       <div className="crumbs">
@@ -565,7 +585,7 @@ export function TopBar({
             <span className="sep" aria-hidden="true">›</span>
           </>
         )}
-        <span className="here">{surface.label}</span>
+        <span className="here">{here}</span>
       </div>
       <div className="tb-spacer" />
       <ProjectChip here={surface.id} onNav={onNav} />

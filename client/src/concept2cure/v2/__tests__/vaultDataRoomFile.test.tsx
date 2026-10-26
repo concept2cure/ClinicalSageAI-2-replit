@@ -127,7 +127,7 @@ describe('File into Vault from the data room (VR-11)', () => {
 });
 
 describe('a revised file refused as a conflict is offered as the next version (QA-2026-10-08)', () => {
-  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
+  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this project. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
 
   it('offers the recorded document, and files the source as its next version', async () => {
     let call = 0;

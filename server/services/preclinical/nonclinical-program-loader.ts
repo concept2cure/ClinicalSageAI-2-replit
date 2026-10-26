@@ -117,7 +117,7 @@ export type NonclinicalStudyRow = typeof ctdNonclinicalStudies.$inferSelect;
 export class CtdProgramNotFoundError extends Error {
   readonly code = 'CTD_PROGRAM_NOT_FOUND';
   constructor(ctdProgramId: number) {
-    super(`CTD program ${ctdProgramId} is not on record for this organization, so its nonclinical studies were not read.`);
+    super(`CTD dossier ${ctdProgramId} is not on record for this organization, so its nonclinical studies were not read.`);
     this.name = 'CtdProgramNotFoundError';
   }
 }

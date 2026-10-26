@@ -2355,7 +2355,7 @@ async function answeredUnknownProgram(res: express.Response, orgId: number, proj
   if (await projectBelongsToTenant({ organizationId: orgId, projectId })) return false;
   res.status(404).json({
     success: false,
-    error: 'No such program in this organization — nothing was assessed.',
+    error: 'No such project in this organization — nothing was assessed.',
   });
   return true;
 }

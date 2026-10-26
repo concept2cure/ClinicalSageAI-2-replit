@@ -49,7 +49,7 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
        (assertApiResponseOk); the build state answers 409 for a program outside
        the boundary (decision P-28). */
     const refusal =
-      'This program’s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.';
+      'This project’s drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.';
     apiRequest.mockImplementation(async (m: string, u: string) => {
       if (u.startsWith('/api/cmc/module3-os/build-state/')) throw Object.assign(new Error(refusal), { status: 409 });
       return res({ success: true, data: null });
@@ -62,7 +62,7 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
 
   it('titles a substance whose modality is not recorded yet as a record still to make, by the refusal’s code', async () => {
     const notYet =
-      'Whether this program’s drug substance is a small molecule is not established — no manufacturing route is recorded. Record the manufacturing route on the drug substance, then compile again.';
+      'Whether this project’s drug substance is a small molecule is not established — no manufacturing route is recorded. Record the manufacturing route on the drug substance, then compile again.';
     apiRequest.mockImplementation(async (m: string, u: string) => {
       if (u.startsWith('/api/cmc/module3-os/build-state/')) {
         throw Object.assign(new Error(notYet), { status: 409, code: 'CMC_MODALITY_NOT_ESTABLISHED' });
@@ -78,7 +78,7 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
   it('reports a read the boundary could not make (503) as a failure, with its retry, never as a verdict', async () => {
     apiRequest.mockImplementation(async (m: string, u: string) => {
       if (u.startsWith('/api/cmc/module3-os/build-state/')) {
-        throw Object.assign(new Error('This program’s submission could not be read … Try again.'), { status: 503, code: 'CMC_APPLICATION_NOT_READABLE' });
+        throw Object.assign(new Error('This project’s submission could not be read … Try again.'), { status: 503, code: 'CMC_APPLICATION_NOT_READABLE' });
       }
       return res({ success: true, data: null });
     });

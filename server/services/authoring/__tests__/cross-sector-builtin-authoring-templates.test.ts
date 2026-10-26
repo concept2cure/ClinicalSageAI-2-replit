@@ -30,9 +30,14 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // and no other: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/c1-builtin-snapshot-delta.txt.
     // And C2: the QOS, drug substance and drug product read the record — 6 changed (registry: and
     // component: for each), no other: cleanup/c2-builtin-snapshot-delta.txt.
+    // Re-recorded 2026-10-26 (slice A.1, names a client reads): the IND catalogue's phase 1 is "Planning",
+    // not "Program Planning", and each phase-1 preparation row's guidance names its phase, so 12 changed
+    // and no other: phase1.{product_profile,ind_strategy,pre_ind_plan,nonclinical_gap,clinical_outline,
+    // timeline}:deliverable:{0,1}. Was 705cbf73adf5025152e7d85343c9bee4267daeb6ed0b58bc06189a86c9193e74.
+    // docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice1/catalogue/builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('705cbf73adf5025152e7d85343c9bee4267daeb6ed0b58bc06189a86c9193e74');
+    )).digest('hex')).toBe('dcebcbec4173a7f89df51626cb22a7613c118bb4216543f9f8fb6b9965aacf3c');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {

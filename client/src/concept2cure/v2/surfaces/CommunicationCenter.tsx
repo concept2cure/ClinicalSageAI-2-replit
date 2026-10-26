@@ -52,6 +52,7 @@ import type { CompanyLegalCommunicationLink } from '@shared/company-corresponden
 import { ApiRequestError, apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { CommitmentFulfilDialog } from './CommitmentFulfilment';
 import { CommitmentRowView, isCommitmentsPayload, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -473,8 +474,8 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Submission · Communication Center</div>
-          <h1 className="sp-title">Communication center</h1>
+          <div className="sp-eyebrow">Submission · agency communications</div>
+          <h1 className="sp-title">{getSurfaceMeta('communication-center').label}</h1>
           <p className="sp-state">
             The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced
             to its filing and turned into governed action.
@@ -899,7 +900,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       {form && (
         <C2CForm
           config={{
-            eyebrow: 'Communication Center · agency communications',
+            eyebrow: 'Communication · agency communications',
             title: 'Log agency communication',
             /* This said saving was "not yet wired" and labelled the button
                "Add to view", while onSubmit already POSTed to the governed

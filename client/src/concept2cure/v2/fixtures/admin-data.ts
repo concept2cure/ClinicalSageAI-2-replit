@@ -139,10 +139,10 @@ export const AUDIT_KINDS: AuditKind[] = [
 /* ---- Apps catalog ---- */
 
 export const PLATFORM_SERVICES: PlatformService[] = [
-  { name: 'RIM -- Regulatory Intelligence Model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers the product\'s recommendations.' },
+  { name: 'Regulatory judgment model', icon: 'database', desc: 'The non-LLM judgment layer that accumulates regulatory precedent over time and powers the product\'s recommendations.' },
   { name: 'Evidence retrieval (RAG)', icon: 'search', desc: 'Grounds answers and drafts in the corpus and returns cited source chunks. Runs inside authoring, evidence and chat.' },
   { name: 'AnA gateway & model routing', icon: 'workflow', desc: 'Risk-tiered routing of every AI call to the right model, with human-review gates on high-impact actions.' },
-  { name: 'Precedent engine', icon: 'scale', desc: 'Deterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.' },
+  { name: 'Precedent search', icon: 'scale', desc: 'Deterministic search over past approvals and decisions; surfaced in Precedent, 510(k) SE and drafting.' },
   { name: 'Deterministic tool registry', icon: 'shieldCheck', desc: '142 pure-function regulatory tools (TTC, estimand, causality...) that AnA calls for submission-defensible output.' },
   { name: 'Deep-research orchestrator', icon: 'telescope', desc: 'Multi-connector fan-out and grounded synthesis that drives Deep research.' },
   { name: 'Template & rendering', icon: 'template', desc: 'Generates DOCX and PDF from governed templates -- produces the files in Artifacts Center and the editor.' },

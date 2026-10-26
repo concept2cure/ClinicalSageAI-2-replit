@@ -113,7 +113,7 @@ export const STORE_ABSENT =
   'migrations/20260814c_pmcf_enrollment_records.sql has not been applied';
 
 export const PROGRAM_NOT_IN_ORG =
-  'that programme is not visible to this organization, so PMCF activities cannot be read or ' +
+  'that project is not visible to this organization, so PMCF activities cannot be read or ' +
   'recorded against it';
 
 /** Rethrow a driver error as the refusal that names what is actually wrong. */

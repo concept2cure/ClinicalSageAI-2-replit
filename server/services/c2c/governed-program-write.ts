@@ -13,7 +13,7 @@ export class ProgramRecordWriteRefusal extends Error {
 export async function requireGovernedProgramWriteTx(client: ProgramClient, organizationId: number, userId: number, programId: string): Promise<void> {
   try {
     if (!await programInOrganization(client, programId, organizationId)) {
-      throw new ProgramRecordWriteRefusal('NOT_FOUND', 404, 'Program not found for this organization.');
+      throw new ProgramRecordWriteRefusal('NOT_FOUND', 404, 'Project not found for this organization.');
     }
     const actor = await readCsrProjectActor(client, organizationId, userId);
     // A lead assignment cannot preserve a write role revoked after request
@@ -23,16 +23,16 @@ export async function requireGovernedProgramWriteTx(client: ProgramClient, organ
       throw new ProgramRecordWriteRefusal('FORBIDDEN', 403, 'Current governed write permission is required. Nothing was written.');
     }
     const { rows } = await client.query('SELECT lead_user_id FROM regulatory_programs WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR SHARE', [programId, organizationId]);
-    if (rows.length !== 1) throw new ProgramRecordWriteRefusal('NOT_FOUND', 404, 'Program not found for this organization.');
+    if (rows.length !== 1) throw new ProgramRecordWriteRefusal('NOT_FOUND', 404, 'Project not found for this organization.');
     const leadUserId = rows[0].lead_user_id == null ? null : Number(rows[0].lead_user_id);
     if (!canMutateProgram({ actor: { userId: actor.userId, orgRole: actor.role }, program: { leadUserId } })) {
-      throw new ProgramRecordWriteRefusal('FORBIDDEN', 403, 'Only this program’s lead or an organization manager can write its governed records.');
+      throw new ProgramRecordWriteRefusal('FORBIDDEN', 403, 'Only this project’s lead or an organization manager can write its governed records.');
     }
   } catch (error) {
     if (error instanceof ProgramRecordWriteRefusal) throw error;
     if ((error as { status?: number }).status === 403) {
       throw new ProgramRecordWriteRefusal('FORBIDDEN', 403, 'Current active organization membership is required.');
     }
-    throw new ProgramRecordWriteRefusal('ACCESS_UNAVAILABLE', 503, 'Current program authority could not be verified. Nothing was written.');
+    throw new ProgramRecordWriteRefusal('ACCESS_UNAVAILABLE', 503, 'Current project authority could not be verified. Nothing was written.');
   }
 }

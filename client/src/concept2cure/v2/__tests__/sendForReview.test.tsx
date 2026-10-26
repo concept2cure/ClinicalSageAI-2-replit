@@ -246,7 +246,7 @@ describe('Send for review — the workbench records a review request the Review 
     expect(task).toMatchObject({ assigneeId: 42, sourceEntityType: 'authoring_document', sourceEntityId: DOC, taskType: 'review' });
     expect(String(task.description)).toContain('Check the efficacy claims against the SAP.');
     expect(String(task.description)).toContain(`Reason for the review request: ${REASON}`);
-    expect((await within(result).findByTestId('sfr-tasks')).textContent).toContain('Task TASK-1758-1 in OQ Signer’s My work');
+    expect((await within(result).findByTestId('sfr-tasks')).textContent).toContain('Task TASK-1758-1 in OQ Signer’s tasks');
 
     // Done closes the receipt; the document's Tasks rail lists the task.
     fireEvent.click(within(dlg).getByTestId('sfr-done'));

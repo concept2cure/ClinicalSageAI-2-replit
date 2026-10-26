@@ -5,6 +5,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
 import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Per-tier rate limits — canonical rate card, verbatim from the server's
    RATE_LIMITS grid (billing-dashboard.ts). This is reference config, NOT
@@ -32,7 +33,7 @@ const USAGE_RATE_LIMITS: Record<string, RateLimit> = {
    a "Buy more" button, an auto-reload switch and a per-category credit card —
    an unmetered number presented as metering. They are gone until something
    actually debits the ledger. Paying and invoices go through Stripe: the
-   portal is "Manage billing" on Plans & licensing (LicensingSurface), and the
+   portal is "Manage billing" on Compare subscriptions (LicensingSurface), and the
    invoice list stays below. ── */
 
 /* ── Live response shapes — aligned to the real /api/billing payloads.
@@ -327,7 +328,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
         'Switch between the usage and billing tabs',
         'Read plan usage limits, the session window and the weekly caps',
         'Open an invoice (hosted page or PDF) from the invoice list',
-        'View all plans on the licensing surface',
+        'Compare subscriptions on its own screen',
       ],
     };
   }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data]);
@@ -347,7 +348,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           </p>
         </div>
         <button className="sp-primary" onClick={() => nav('licensing')}>
-          {I.creditCard || I.arrowRight} View all plans
+          {I.creditCard || I.arrowRight} {getSurfaceMeta('licensing').label}
         </button>
       </div>
 

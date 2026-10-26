@@ -424,7 +424,7 @@ export const ANA_SURFACE_CTX = {
     ],
   },
   'ind-checklist': {
-    here: 'the IND lifecycle — application, amendments and reports',
+    here: 'IND forms — the application, amendments and reports',
     focus: 'IND · §312 lifecycle',
     actions: [
       {

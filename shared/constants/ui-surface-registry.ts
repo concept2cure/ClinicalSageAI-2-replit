@@ -176,7 +176,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'apps',
-    label: 'Plan & features',
+    label: 'Subscription & features',
     navTier: 'global',
     layoutMode: 'apps',
     icon: 'grid',
@@ -188,7 +188,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Module catalog + entitlement-gated launch. Locked modules show upgrade CTA, not a dead button.',
+    notes: 'What the organization’s subscription includes and why any feature is unavailable; administrators turn features on and off. A locked feature says why, and what opens it.',
   },
   {
     id: 'artifacts-center',
@@ -238,7 +238,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'document-authoring',
-    label: 'Document editor & authoring',
+    label: 'The editor',
     navTier: 'project',
     layoutMode: 'editor',
     icon: 'penLine',
@@ -292,7 +292,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'vault',
-    label: 'Vault (DMS)',
+    label: 'Vault',
     navTier: 'project',
     layoutMode: 'vault',
     icon: 'vault',
@@ -320,7 +320,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'review',
-    label: 'Review & approval',
+    label: 'The review board',
     navTier: 'project',
     layoutMode: 'review',
     icon: 'checkCircle',
@@ -338,7 +338,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-center',
-    label: 'Submission center',
+    label: 'Submission Center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'rocket',
@@ -486,7 +486,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'device-510k',
-    label: '510(k) workbench',
+    label: '510(k) and eSTAR',
     navTier: 'project',
     layoutMode: 'section-workspace',
     icon: 'fileCheck',
@@ -507,7 +507,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'device-cer',
-    label: 'CER generator (EU MDR)',
+    label: 'Clinical evaluation (CER)',
     navTier: 'project',
     layoutMode: 'section-workspace',
     icon: 'microscope',
@@ -606,7 +606,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ind-checklist',
-    label: 'IND lifecycle',
+    label: 'IND forms',
     navTier: 'project',
     layoutMode: 'ind-checklist',
     icon: 'clipboardList',
@@ -698,7 +698,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'tasks',
-    label: 'Tasks & collaboration',
+    label: 'Tasks',
     navTier: 'project',
     layoutMode: 'tasking',
     icon: 'checkSquare',
@@ -928,7 +928,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'device-diagnostics',
-    label: 'Device & diagnostics workbench',
+    label: 'IVDR evidence',
     navTier: 'specialist',
     layoutMode: 'device-diagnostics-workbench',
     icon: 'stethoscope',

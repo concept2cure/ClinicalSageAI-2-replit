@@ -52,7 +52,7 @@ describe('probeMdxHealth', () => {
     const report = await probeMdxHealth();
     expect(report.pathwayCoverage.length).toBeGreaterThan(0);
     for (const p of report.pathwayCoverage) expect(p).toMatchObject({ hasPrograms: null, programCount: null });
-    expect(report.warnings).toContain('Pathway coverage could not be read — the number of programs per pathway is not known.');
+    expect(report.warnings).toContain('Pathway coverage could not be read — the number of projects per pathway is not known.');
   });
 
   it('treats a pathway no program uses as a fact, and recommends no seed', async () => {

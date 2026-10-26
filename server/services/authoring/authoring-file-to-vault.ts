@@ -539,7 +539,7 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
   const programId = doc.client_program_id;
   if (!programId) {
     return refuse(409, 'DOCUMENT_HAS_NO_PROGRAM',
-      'This document is not scoped to a project, and a vault belongs to a project. Assign it to a program first; nothing was filed.');
+      'This document is not scoped to a project, and a vault belongs to a project. Assign it to a project first; nothing was filed.');
   }
   const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
   if (!sealed && doc.locked_at != null) {

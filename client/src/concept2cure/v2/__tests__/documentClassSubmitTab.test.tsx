@@ -48,7 +48,7 @@ describe('the Submit tab of a filing document class project', () => {
       documentClass={filingDocumentClassOf('pas')} />);
     expect(screen.queryByRole('button', { name: /Add a market/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Compile and download/ })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Open readiness/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
     expect(text()).toContain('No market: this project is authored, not sequenced');
     expect(text()).toContain('An FDA supplement is not built as a sequence yet, so this platform sends nothing for the Prior Approval Supplement.');
     expect(text()).not.toMatch(/Add a market to start one/);

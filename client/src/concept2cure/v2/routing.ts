@@ -16,9 +16,21 @@ export function surfaceIdFromLocation(location: string): string {
   return DEEP_LINK_ALIASES[seg] ?? seg;
 }
 
+/**
+ * The address a person sees for a surface whose id is not a word they read
+ * (section 12 of .design/client-journey/INFORMATION_ARCHITECTURE.md: no id with
+ * "app" in the address bar). The id stays the registry key everywhere else;
+ * only the path the shell writes changes. Each address is also a
+ * DEEP_LINK_ALIASES key that resolves back to its id, so a copied link opens
+ * the same surface, and the id's own path (`/concept2cure/apps`) still does.
+ */
+export const SURFACE_ADDRESSES: Readonly<Record<string, string>> = {
+  apps: 'features',
+};
+
 /** surface id → its canonical URL. */
 export function locationForSurface(id: string): string {
-  return id === 'home' ? UI_V2_BASE : `${UI_V2_BASE}/${id}`;
+  return id === 'home' ? UI_V2_BASE : `${UI_V2_BASE}/${SURFACE_ADDRESSES[id] ?? id}`;
 }
 
 /* ── The conversation on screen, in the URL ──────────────────────────────────

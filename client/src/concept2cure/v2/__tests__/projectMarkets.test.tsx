@@ -234,7 +234,9 @@ describe('Submit — opening the Submission Center, and the list’s own states'
     await openSubmit();
     const ind = await marketRow('ONC-221 IND');
     await waitFor(() => expect(ind.textContent).toContain('Dispatch blocked · 2 blockers'));
-    fireEvent.click(within(ind).getByRole('button', { name: /Open .* in the Submission Center/ }));
+    /* Slice A.1: the row's door read "Open", with the market only in its accessible name; it names the job
+       and the market in words a person sees and hears alike (section 9, Door names). */
+    fireEvent.click(within(ind).getByRole('button', { name: 'Build the IND · FDA (US) sequence in Submission Center' }));
     expect(onNav).toHaveBeenLastCalledWith('submission-center');
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({
       submissionId: '61', sequenceId: '905', ws: 'validation',
@@ -242,11 +244,11 @@ describe('Submit — opening the Submission Center, and the list’s own states'
 
     const maa = await marketRow('ONC-221 EU MAA');
     await waitFor(() => expect(maa.textContent).toContain('No sequence yet'));
-    fireEvent.click(within(maa).getByRole('button', { name: /Open .* in the Submission Center/ }));
+    fireEvent.click(within(maa).getByRole('button', { name: 'Build the MAA · EU (EMA) sequence in Submission Center' }));
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({ submissionId: '62', ws: 'sequences' });
   });
 
-  it('"Add a market" opens the Submission Center on New submission; "Open Submission Center" on the list', async () => {
+  it('"Add a market" opens the Submission Center on New submission; "See every sequence in Submission Center" on the list', async () => {
     serve();
     await openSubmit();
     const markets = await screen.findByTestId('pj-markets');
@@ -254,8 +256,8 @@ describe('Submit — opening the Submission Center, and the list’s own states'
     fireEvent.click(within(markets).getByRole('button', { name: /Add a market/ }));
     expect(onNav).toHaveBeenLastCalledWith('submission-center');
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({ ws: 'portfolio', newSubmission: '1' });
-    // "Open Submission Center" opens the project's submission list, and says no more than that.
-    fireEvent.click(within(markets).getByRole('button', { name: /Open Submission Center/ }));
+    // The header's Submission Center door ("Open Submission Center" until slice A.1) opens the project's submission list.
+    fireEvent.click(within(markets).getByRole('button', { name: 'See every sequence in Submission Center' }));
     expect(onNav).toHaveBeenLastCalledWith('submission-center');
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({ ws: 'portfolio' });
   });

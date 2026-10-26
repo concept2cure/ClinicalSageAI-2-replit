@@ -29,15 +29,15 @@ function releaseSealVerified(digest: string, organizationId: number, expectedDig
 }
 
 export async function requireOrchestratorProgramAccess(organizationId: number, programId: string, userId: number): Promise<Record<string, unknown>> {
-  if (!looksLikeProgramUuid(programId)) throw new OrchestratorContinuationRefusal('PROGRAM_SCOPE_REQUIRED', 409, 'A recorded program is required.');
+  if (!looksLikeProgramUuid(programId)) throw new OrchestratorContinuationRefusal('PROGRAM_SCOPE_REQUIRED', 409, 'A recorded project is required.');
   const actor = await readCsrProjectActor(pool, organizationId, userId);
   if (!GOVERNED_WRITE_ROLES.has(String(actor.role ?? '').toLowerCase())) throw new OrchestratorContinuationRefusal('PROGRAM_WRITE_ACCESS_DENIED', 403, 'Current governed write permission is required to build or continue this submission.');
   const { rows } = await pool.query(`SELECT id, name, code, program_type, lead_user_id, product_name FROM regulatory_programs
     WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [programId, organizationId]);
   const program = rows[0];
-  if (!program) throw new OrchestratorContinuationRefusal('PROGRAM_NOT_ACCESSIBLE', 404, 'The program is not accessible.');
+  if (!program) throw new OrchestratorContinuationRefusal('PROGRAM_NOT_ACCESSIBLE', 404, 'The project is not accessible.');
   if (!canMutateProgram({ actor: { userId: actor.userId, orgRole: actor.role }, program: { leadUserId: program.lead_user_id == null ? null : Number(program.lead_user_id) } })) {
-    throw new OrchestratorContinuationRefusal('PROGRAM_ACCESS_DENIED', 403, 'Current program management access is required to build or continue this submission.');
+    throw new OrchestratorContinuationRefusal('PROGRAM_ACCESS_DENIED', 403, 'Current project management access is required to build or continue this submission.');
   }
   return program;
 }
@@ -107,7 +107,7 @@ async function readLegacyReleaseInputs(run: OrchestratorRun, userId: number): Pr
   const { rows } = await pool.query(`SELECT program_id FROM submissions WHERE organization_id = $1 AND deleted_at IS NULL
     AND (($2::integer IS NOT NULL AND id = $2) OR ($2::integer IS NULL AND id::text = $3)) LIMIT 1`, [run.organizationId, run.submissionFk ?? null, run.submissionId]);
   const programId = rows[0]?.program_id;
-  if (typeof programId !== 'string') throw new OrchestratorContinuationRefusal('PROGRAM_SCOPE_REQUIRED', 409, 'The recorded submission has no program scope. Regenerate this package.');
+  if (typeof programId !== 'string') throw new OrchestratorContinuationRefusal('PROGRAM_SCOPE_REQUIRED', 409, 'The recorded submission has no project scope. Regenerate this package.');
   await requireOrchestratorProgramAccess(run.organizationId, programId, userId);
   const snapshot = JSON.parse(run.steps.find(s => s.key === 'package.sign')!.outputRef!).signedSnapshot as SignedPackageSnapshot;
   return { inputs: { organizationId: run.organizationId, programId, userId,
@@ -147,12 +147,12 @@ async function verifyPausedJobs(run: OrchestratorRun, inputs: OrchestratorInputs
   catch { throw new OrchestratorContinuationRefusal('RESUME_JOBS_INVALID', 409, 'The paused job receipt is unavailable.'); }
   const tuple = (jobs: Array<{ jobId: number; studyId: string; protocolNumber: string }>) => jobs.map(j => ({ jobId: j.jobId, studyId: j.studyId, protocolNumber: j.protocolNumber }));
   if (!inputs.projectId || !Array.isArray(expected) || !expected.length || !Array.isArray(recorded) || orchestratorInputDigest(tuple(expected)) !== orchestratorInputDigest(tuple(recorded))) {
-    throw new OrchestratorContinuationRefusal('RESUME_JOBS_INVALID', 409, 'The paused jobs no longer match the original program receipt.');
+    throw new OrchestratorContinuationRefusal('RESUME_JOBS_INVALID', 409, 'The paused jobs no longer match the original project receipt.');
   }
   const ids = [...new Set(expected.map(j => j.jobId))];
   const { rows } = await pool.query(`SELECT id, project_id, requested_by FROM csr_build_jobs WHERE organization_id = $1 AND id = ANY($2::integer[])`, [inputs.organizationId, ids]);
   if (rows.length !== ids.length || rows.some(j => Number(j.project_id) !== inputs.projectId || Number(j.requested_by) !== inputs.userId)) {
-    throw new OrchestratorContinuationRefusal('RESUME_JOBS_SCOPE_MISMATCH', 409, 'A paused CSR job is no longer bound to its original program and actor.');
+    throw new OrchestratorContinuationRefusal('RESUME_JOBS_SCOPE_MISMATCH', 409, 'A paused CSR job is no longer bound to its original project and actor.');
   }
 }
 

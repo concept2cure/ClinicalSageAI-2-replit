@@ -334,7 +334,7 @@ export async function getActivity(
     const action = (e.action ?? 'updated').toLowerCase();
     const verb: AuditVerb = ACTION_TO_VERB[action] ?? 'updated';
     const what = changedFields.length === 0
-      ? `${verb} program`
+      ? `${verb} project`
       : `${verb} ${changedFields.slice(0, 3).join(', ')}${changedFields.length > 3 ? ' …' : ''}`;
     return {
       id:        e.id,
@@ -387,8 +387,8 @@ export async function getMilestones(
      acknowledgement had arrived. Nothing a program holds records its eSTAR
      drafting or an internal QC, so those two say so; the filing and the
      acknowledgement come from its transmittals. */
-  milestones.push({ id: 'm-estar', label: 'eSTAR drafted', date: 'Not recorded for this program', state: 'not_recorded' });
-  milestones.push({ id: 'm-internal-qc', label: 'Internal QC', date: 'Not recorded for this program', state: 'not_recorded' });
+  milestones.push({ id: 'm-estar', label: 'eSTAR drafted', date: 'Not recorded for this project', state: 'not_recorded' });
+  milestones.push({ id: 'm-internal-qc', label: 'Internal QC', date: 'Not recorded for this project', state: 'not_recorded' });
 
   const [transmittal] = await db
     .select({
@@ -958,12 +958,12 @@ export async function getPortfolioInsights(orgId: number): Promise<PortfolioInsi
     const pct = Math.round((k510 / total) * 100);
     insights.push({
       kind: 'clearance-mix',
-      body: `Your portfolio: ${k510} of ${total} cleared programs went via 510(k) (${pct}%).`,
+      body: `Your portfolio: ${k510} of ${total} cleared projects went via 510(k) (${pct}%).`,
     });
   } else if (programs.length > 0) {
     insights.push({
       kind: 'clearance-mix',
-      body: `${programs.length} active program${programs.length === 1 ? '' : 's'} in flight — no clearances yet to compare.`,
+      body: `${programs.length} active project${programs.length === 1 ? '' : 's'} in flight — no clearances yet to compare.`,
     });
   }
 
@@ -1007,7 +1007,7 @@ export async function getPortfolioInsights(orgId: number): Promise<PortfolioInsi
         const lowFlag = avgPerProg < 250 ? ' — below the EU MDR Article 61 ≥250 threshold for sufficient clinical evidence' : '';
         insights.push({
           kind: 'literature-density',
-          body: `Literature corpus: ${total.toLocaleString()} entries across the portfolio (avg ${avgPerProg}/program)${lowFlag}.`,
+          body: `Literature corpus: ${total.toLocaleString()} entries across the portfolio (avg ${avgPerProg}/project)${lowFlag}.`,
         });
       }
     }
@@ -1018,7 +1018,7 @@ export async function getPortfolioInsights(orgId: number): Promise<PortfolioInsi
   if (insights.length === 0) {
     insights.push({
       kind: 'getting-started',
-      body: 'Insights appear here once your portfolio has cleared programs, predicate references, or literature entries.',
+      body: 'Insights appear here once your portfolio has cleared projects, predicate references, or literature entries.',
     });
   }
 

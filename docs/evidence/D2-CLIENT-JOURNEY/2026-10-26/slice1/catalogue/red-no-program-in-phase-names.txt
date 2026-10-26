@@ -1,0 +1,38 @@
+RED, before the rename: the plan-of-work catalogues' phase names (clientCopyNoProgram.test.ts, new case) find "Program Planning" as phase 1 of the IND, NDA, BLA and PMA catalogues. Run on HEAD 7d1f7f316 plus the uncommitted tree; no pyramid file changed yet.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+····x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > the plan-of-work catalogues' phase names
+AssertionError: expected [ Array(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "IND.phase1: Program Planning",
++   "NDA.phase1: Program Planning",
++   "BLA.phase1: Program Planning",
++   "PMA.phase1: Program Planning",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts:90:59
+     88|   it("the plan-of-work catalogues' phase names", () => {
+     89|     expect(offending(getAllSupportedTypes().flatMap((type) => getPyram…
+     90|       [`${type}.${p.id}`, p.name] as [string, string])))).toEqual([]);
+       |                                                           ^
+     91|   });
+     92| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  12:08:40
+   Duration  981ms (transform 526ms, setup 118ms, import 519ms, tests 24ms, environment 0ms)
+

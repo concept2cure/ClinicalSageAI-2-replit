@@ -51,6 +51,7 @@ import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { getSurfaceMeta } from '../registryModel';
 
 /* `window.TXW_ADMIN` used to be published from the Setup panel below and was
    read by nothing in the repository. Its successor, the Translation workspace
@@ -2385,11 +2386,11 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'subscription' && (
               <div>
                 <div className="scaf-note" style={{ marginBottom: 12 }}>
-                  Subscription status, seats, renewal and plan changes run through Stripe
-                  (/api/billing). Manage plans and seats in Plans &amp; licensing.
+                  Subscription status, seats, renewal and subscription changes run through
+                  Stripe. Choose a subscription and its seats in Compare subscriptions.
                 </div>
                 <button className="sp-primary" onClick={() => nav('licensing')}>
-                  {I.creditCard || I.arrowRight} Open Plans &amp; licensing
+                  {I.creditCard || I.arrowRight} {getSurfaceMeta('licensing').label}
                 </button>
               </div>
             )}
@@ -2509,7 +2510,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="scaf-note" style={{ marginBottom: 10 }}>
                   Modules auto-provision by tier (module_subscriptions --
                   provisionModulesForTier). This organization's live entitlement state is shown
-                  below; enable or disable modules in the Workflows.
+                  below; enable or disable features in Subscription &amp; features.
                 </div>
                 {modState.loading ? (
                   <div role="status" className="scaf-note" style={{ padding: '14px 10px' }}>Loading modules…</div>
@@ -2528,7 +2529,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   />
                 ) : (
                   <div className="ob-mods">
-                    {/* Open or not by the Workflows's own verdict: `isEnabled`
+                    {/* Open or not by Subscription & features' own verdict: `isEnabled`
                         read a module the plan includes, with no row written, as
                         locked (finding 44). */}
                     {liveModules.map((m) => {
@@ -2538,7 +2539,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                           key={m.moduleId}
                           className="ob-mod"
                           style={open ? undefined : { opacity: 0.55 }}
-                          title={open ? 'Open to this organization' : 'Not open to this organization — see the Workflows'}
+                          title={open ? 'Open to this organization' : 'Not open to this organization — see Subscription & features'}
                         >
                           {open ? I.check : I.lock} {m.name}
                         </span>

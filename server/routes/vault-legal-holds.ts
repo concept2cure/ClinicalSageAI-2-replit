@@ -56,7 +56,7 @@ const placeSchema = z
   })
   .refine(
     (b) => (b.scope === 'program' ? Boolean(b.programId) && !b.documentId : Boolean(b.documentId) && !b.programId),
-    { message: 'A program hold names programId and a document hold names documentId, and nothing else.' },
+    { message: 'A project hold names programId and a document hold names documentId, and nothing else.' },
   );
 
 const liftSchema = z.object({ liftReason: z.string().trim().min(3).max(2000) });
@@ -173,7 +173,7 @@ async function placeHold(req: Request, res: Response): Promise<void> {
   try {
     // A failed ownership read is a refused write, not an uncaught request.
     if (!(await targetOwned(client, auth.orgId, body))) {
-      res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
+      res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such project or document in this organisation.' });
       return;
     }
     await client.query('BEGIN');

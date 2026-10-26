@@ -108,7 +108,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'authoring' },
       },
       {
-        say: 'Protocol development is the second Authoring workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
+        say: 'The protocol workspace is Authoring’s second workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
         navigate: { target: 'protocol-dev' },
       },
       {

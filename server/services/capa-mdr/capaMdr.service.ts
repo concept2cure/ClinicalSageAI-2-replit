@@ -95,7 +95,7 @@ export class ComplaintAssessmentRequired extends Error {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assertProgramAccess(organizationId: number, programId: string): Promise<void> {
-  if (capaContext().organizationId !== organizationId) throw new TenantAccessError('Programme access denied.');
+  if (capaContext().organizationId !== organizationId) throw new TenantAccessError('Project access denied.');
   await authorizeCapaProgram(programId);
 }
 
@@ -498,9 +498,9 @@ async function createMdrEventTx(
   if (input.sourceComplaintId) {
     const [bound] = await capaContext().db.select({ id: complaints.id }).from(complaints)
       .where(and(eq(complaints.id, input.sourceComplaintId), eq(complaints.programId, input.programId))).limit(1);
-    if (!bound) throw new NotFoundError('Source complaint not found in this programme.');
+    if (!bound) throw new NotFoundError('Source complaint not found in this project.');
     const source = await getComplaintTx(organizationId, input.sourceComplaintId);
-    if (!source || source.programId !== input.programId) throw new NotFoundError('Source complaint not found in this programme.');
+    if (!source || source.programId !== input.programId) throw new NotFoundError('Source complaint not found in this project.');
   }
 
   const clock = computeReportDue({

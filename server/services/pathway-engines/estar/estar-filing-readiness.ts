@@ -164,7 +164,7 @@ function assessContent(
     }
     default: {
       const _exhaustive: never = programType;
-      throw new Error(`Unknown program type: ${String(_exhaustive)}`);
+      throw new Error(`Unknown filing type: ${String(_exhaustive)}`);
     }
   }
 }

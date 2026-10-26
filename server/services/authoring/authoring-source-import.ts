@@ -392,7 +392,7 @@ async function importWorkflow(ctx: CreateContext, principal: AuthoringPrincipal,
   if (input.previewOnly) return { ok: true, data: { preview: true, origin: materialized.origin, fingerprint: materialized.fingerprint,
     sections: materialized.sections.map(s => ({ code: s.code, title: s.title, contentSha256: createHash('sha256').update(s.content).digest('hex') })),
     gaps: materialized.gaps, warnings: materialized.warnings, target: { programId: input.programId, projectId: target.projectId }, association: materialized.association } };
-  if (materialized.association.required && !input.associationReason) return refused(400, 'ASSOCIATION_REASON_REQUIRED', 'State why this organization-scoped source belongs in the selected program.');
+  if (materialized.association.required && !input.associationReason) return refused(400, 'ASSOCIATION_REASON_REQUIRED', 'State why this organization-scoped source belongs in the selected project.');
   if (materialized.fingerprint !== input.expectedFingerprint) return refused(409, 'SOURCE_CHANGED', 'The workflow source changed. Preview it again. Nothing was imported.');
   if (!materialized.sections.length || materialized.sections.length > MAX_SECTIONS || materialized.sections.reduce((n, s) => n + s.content.length, 0) > MAX_CHARS) return refused(409, 'SOURCE_SIZE_REFUSED', 'The saved workflow output is empty or exceeds the editor limits.');
   for (let attempt = 0; attempt < 2; attempt++) {

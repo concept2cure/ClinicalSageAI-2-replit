@@ -861,7 +861,7 @@ describe('POST /api/510k/estar/official — retention of the delivered artifact'
     expect(res.status).toHaveBeenCalledWith(200);
     const payload = res.json.mock.calls[0][0];
     expect(payload.retention.retained).toBe(false);
-    expect(payload.retention.reason).toMatch(/no program vault/);
+    expect(payload.retention.reason).toMatch(/no project vault/);
     expect(payload.downloadable_output_ref.data.length).toBeGreaterThan(0);
     expect(mockIngest).not.toHaveBeenCalled();
   });

@@ -298,7 +298,7 @@ describe('getAnaContext says only what is true about where the person is', () =>
   it('the focus on an authoring surface does not change with the client type', () => {
     const bio = getAnaContext('protocol-dev', 'biopharma');
     const mdx = getAnaContext('protocol-dev', 'medtech');
-    expect(bio.focus).toBe('Protocol development');
+    expect(bio.focus).toBe('The protocol workspace');
     expect(mdx.focus).toBe(bio.focus);
   });
 

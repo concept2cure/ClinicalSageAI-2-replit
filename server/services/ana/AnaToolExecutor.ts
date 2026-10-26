@@ -8319,7 +8319,7 @@ registerToolHandler('create_q_sub', async (input, ctx) => {
       qNumber:   row.qNumber,
       stage:     row.stage,
       programId: row.programId,
-      message:   `Created ${row.qNumber} (${row.stage}) for program ${row.programId}.`,
+      message:   `Created ${row.qNumber} (${row.stage}) for project ${row.programId}.`,
     });
   } catch (err: unknown) {
     const TenantAccessErrorClass = (await import('../q-sub/q-sub.service.js')).TenantAccessError;
@@ -8431,7 +8431,7 @@ registerToolHandler('link_program_clinical_study', async (input, ctx) => {
       programId:       r.programId,
       clinicalStudyId: studyId,
       message:
-        `Bound program ${r.programId} to clinical_ops.studies ${studyId}. PMA trial-metrics will now resolve against this study.`,
+        `Bound project ${r.programId} to clinical study ${studyId}. PMA trial-metrics will now resolve against this study.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -8472,7 +8472,7 @@ registerToolHandler('set_program_metadata', async (input, ctx) => {
       ok:        true,
       programId: r.programId,
       metadata:  r.metadata,
-      message:   `Merged ${Object.keys(meta).length} key(s) into program metadata.`,
+      message:   `Merged ${Object.keys(meta).length} key(s) into the project's metadata.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -9101,7 +9101,7 @@ registerToolHandler('pair_companion_diagnostic', async (input, ctx) => {
     );
     return JSON.stringify({
       ok: true, ...rows[0],
-      message: `Paired ${drugName} with the device program.`,
+      message: `Paired ${drugName} with the device project.`,
     });
   } catch (err) {
     return JSON.stringify({

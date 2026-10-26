@@ -420,7 +420,7 @@ async function pinnedProjectRow(q: RequestSqlClient, projectId: number, org: num
 
 async function pinnedWorkspace(req: Request, q: RequestSqlClient, project: AdmittedProject, current: CurrentProgramAccess | null): Promise<void> {
   if (current && (current.projectId !== project.id || current.clientWorkspaceId !== project.clientWorkspaceId)) {
-    throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The project does not identify the selected program. Nothing was changed.');
+    throw new ProjectAdmissionRefusal(409, 'PROJECT_SCOPE_MISMATCH', 'The tracking record does not match the project you have open. Nothing was changed.');
   }
   const claimed = (req.tenantContext as Record<string, unknown> | undefined)?.clientWorkspaceId;
   const workspace = current ? current.clientWorkspaceId : await resolveClientWorkspaceId(req, q);

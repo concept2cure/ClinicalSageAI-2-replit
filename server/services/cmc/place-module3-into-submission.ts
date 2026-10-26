@@ -475,7 +475,7 @@ async function refusedTarget(
       refusedBy: 'wrong-submission-type',
       error:
         `Module 3 files on CTD headings, and this submission files on ${targetVocabulary} ` +
-        'sections. Nothing was written. Place Module 3 into the program’s US IND, the one application ' +
+        'sections. Nothing was written. Place Module 3 into the project’s US IND, the one application ' +
         'Module 3 is composed for here.',
       vocabulary: targetVocabulary,
     };

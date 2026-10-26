@@ -66,7 +66,7 @@ function pressEverything(segment: string) {
 describe('Home does not open the feature catalog', () => {
   it.each(SEGMENT_IDS)('%s: no control on Home leads to the catalog, and Home invents no project or conversation', async (segment) => {
     const { onNav, onAsk } = pressEverything(segment);
-    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features|Workflows/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features|Subscription & features|Workflows/ })).toBeNull();
     expect(onNav).not.toHaveBeenCalledWith('apps');
     expect(onAsk).not.toHaveBeenCalled();
     expect(window.C2C_PROJECT).toBeUndefined();
@@ -86,11 +86,11 @@ describe('Home does not open the feature catalog', () => {
     render(<Home segment="diagnostics" onNav={vi.fn()} onAsk={vi.fn()} />);
     expect(await screen.findByText(/Couldn.t load your projects/)).toBeTruthy();
     expect(screen.queryByTestId('home-first-project')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Explore workflows|Plan & features|Subscription & features/ })).toBeNull();
   });
 
-  it('the catalog is named Plan & features, at its unchanged routable id', () => {
-    expect(getSurfaceMeta('apps').label).toBe('Plan & features');
+  it('the catalog is named Subscription & features, at its unchanged routable id', () => {
+    expect(getSurfaceMeta('apps').label).toBe('Subscription & features');
     const views = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaceViews.ts'), 'utf8');
     expect(views).toMatch(/\bapps:\s*\{\s*component:\s*Apps\s*\}/);
   });

@@ -74,7 +74,7 @@ export async function readProgramStage(q: Queryable, orgId: number, projectId: s
     application,
     phase,
     basis:
-      `program type "${type}"; ` +
+      `filing type "${type}"; ` +
       (phase ? `clinical phase ${phase}, the highest of ${designs}` : `no clinical phase recorded in ${designs}`),
   };
 }

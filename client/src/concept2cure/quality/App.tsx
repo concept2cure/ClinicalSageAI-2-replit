@@ -1,5 +1,5 @@
 /**
- * QualityApp — Quality & Assurance domain shell.
+ * QualityApp — Quality domain shell.
  *
  * A tabbed shell (topbar + tab bar + scrollable page) over the quality
  * surfaces: the SOP register (controlled documents, periodic review, training)
@@ -227,7 +227,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      publishes itself as exactly that, never as an empty log. */
   const anaContext = React.useMemo(() => {
     if (editingDocument) return {
-      summary: 'The user is in the controlled-document workbench inside Quality & Assurance. The document workbench owns the open content and edit permissions; Quality tabs and register actions are held until the user returns.',
+      summary: 'The user is in the controlled-document workbench inside Quality. The document workbench owns the open content and edit permissions; Quality tabs and register actions are held until the user returns.',
       facts: { tab, editingDocument: true },
       availableActions: ['Read or edit the open document through its workbench permissions', 'Return to the Quality register using the workbench’s Back control'],
     };
@@ -240,7 +240,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
     if (stage !== 'all') state.push(`the change log is filtered to ${STATE_LABEL[stage]}`);
     if (openRow) state.push(`change ${openRow.changeNumber} is expanded`);
     const base =
-      `The user is on the ${HERE[tab]} tab of Quality & Assurance` +
+      `The user is on the ${HERE[tab]} tab of Quality` +
       (state.length ? ` — ${state.join('; ')}` : '') +
       '.';
     if (changeReg.loading) {
@@ -286,10 +286,10 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
   }, [changeReg.loading]);
 
   return (
-    <div className="qms-shell" data-screen-label="Quality & Assurance" data-editing={editingDocument || undefined}>
+    <div className="qms-shell" data-screen-label="Quality" data-editing={editingDocument || undefined}>
       {!editingDocument && <div className="qms-topbar">
         <div className="qms-crumbs">
-          <span>Quality &amp; Assurance</span>
+          <span>Quality</span>
           <span className="sep" aria-hidden="true">/</span>
           <span className="here">{HERE[tab]}</span>
         </div>

@@ -546,7 +546,7 @@ describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
   it('a submission whose record names no application number or applicant is refused 409 by name, and returns no zip', async () => {
     const { PackageIdentityMissingError } = await import('../../server/services/ectd/package-identity');
     const sentence =
-      'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing was built.';
+      'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the project code is not one). Nothing was built.';
     hoisted.assembleSubmissionEctd.mockRejectedValueOnce(new PackageIdentityMissingError(['applicationNumber'], sentence));
     const res = await request(makeApp()).post('/api/ectd/export/42').send({ ...REVIEWED });
     expect(res.status).toBe(409);

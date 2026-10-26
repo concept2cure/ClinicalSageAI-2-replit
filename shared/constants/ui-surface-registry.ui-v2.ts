@@ -148,7 +148,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'dispatch-readiness',
-    label: 'Dispatch readiness',
+    label: 'Readiness',
     navTier: 'project',
     layoutMode: 'dispatch-readiness',
     group: 'submission',
@@ -416,7 +416,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
      second rail is gone; these are how the shell reaches what it drew. */
   {
     id: 'device-pma',
-    label: 'PMA submissions',
+    label: 'PMA',
     navTier: 'project',
     layoutMode: 'section-workspace',
     group: 'device',
@@ -464,7 +464,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'device-engineering',
-    label: 'Device engineering',
+    label: 'Engineering evidence',
     navTier: 'project',
     layoutMode: 'section-workspace',
     group: 'device',
@@ -496,7 +496,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'device-postmarket',
-    label: 'Post-market vigilance',
+    label: 'Post-market surveillance and CAPA',
     navTier: 'specialist',
     layoutMode: 'section-workspace',
     group: 'device',
@@ -608,7 +608,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'protocol-dev',
-    label: 'Protocol development',
+    label: 'The protocol workspace',
     navTier: 'project',
     layoutMode: 'protocol-dev',
     group: 'authoring',
@@ -708,7 +708,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'quality',
-    label: 'Quality & Assurance',
+    label: 'Quality',
     navTier: 'project',
     layoutMode: 'quality',
     group: 'quality-cmc',
@@ -720,7 +720,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).',
+    notes: 'Quality: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).',
     engineering: 'Backed by /api/mdx/qms/*.',
   },
   {
@@ -789,7 +789,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   },
   {
     id: 'communication-center',
-    label: 'Communication Center',
+    label: 'Communication',
     navTier: 'project',
     layoutMode: 'communication-center',
     group: 'submission',
@@ -1284,7 +1284,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // ─── ui-v2 additions: admin ─────────────────────────────────────────────
   {
     id: 'licensing',
-    label: 'Plans & licensing',
+    label: 'Compare subscriptions',
     navTier: 'admin',
     layoutMode: 'setup',
     group: 'admin',
@@ -1303,12 +1303,12 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
        entry (Shell.tsx ACCT_ITEMS, org-admin gated) navigated here, and
        `getSurface('master-licensing')` returned undefined — so the platform
        licensing console rendered under a breadcrumb reading "Home" and had no
-       ⌘K row. Distinct from `licensing` (Plans & licensing), which is the
-       customer-facing plan/upgrade view; this is the platform-admin control
+       ⌘K row. Distinct from `licensing` (Compare subscriptions), which is the
+       customer-facing subscription view; this is the platform-admin control
        room that DEFINES the tiers. The surface re-checks platform-admin
        server-side on every read and write; registration only names it. */
     id: 'master-licensing',
-    label: 'Master licensing',
+    label: 'Platform licensing',
     navTier: 'admin',
     layoutMode: 'master-licensing',
     group: 'admin',

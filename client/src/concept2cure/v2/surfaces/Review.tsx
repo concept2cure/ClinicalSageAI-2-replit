@@ -52,10 +52,13 @@ import { ReviewThreadsPane } from './ReviewThreads';
 import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
 import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
+import { getSurfaceMeta } from '../registryModel';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
+/** The registry label, so the page and its breadcrumb are one name (section 9). */
+const REVIEW_TITLE = getSurfaceMeta('review').label;
+const REVIEW_SUB = 'Reviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -391,7 +394,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState title="Loading the review board…" icon={I.clock} />
       </div>
@@ -401,7 +404,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState
           tone="error"
@@ -421,20 +424,20 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     /* With Vault versions listed above, "nothing" would be untrue: the claim
        narrows to the Authoring queue. */
     const emptyTitle = vaultInReview > 0
-      ? 'No Authoring document is in this queue'
+      ? 'No document from the editor is in this queue'
       : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'
       : 'Nothing is in review';
     const emptyHint =
       scope === 'mine'
-        ? 'When a colleague requests your review on a document in Authoring, or a document reaches your sign-off step, it appears here.'
+        ? 'When a colleague requests your review on a document in the editor, or a document reaches your sign-off step, it appears here.'
         : scope === 'requested'
-          ? 'Reviews you request from the authoring workspace appear here with each reviewer’s verdict.'
-          : 'When a review is requested on a document in Authoring, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
+          ? 'Reviews you request from the editor appear here with each reviewer’s verdict.'
+          : 'When a review is requested on a document in the editor, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         {boardRead ? (
           <EmptyState title={emptyTitle} hint={emptyHint} icon={I.shieldCheck} />
@@ -571,7 +574,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
         {decisionDialog}
       <PageHead
         eyebrow="Project · review"
-        title="Review & approval"
+        title={REVIEW_TITLE}
         sub={REVIEW_SUB}
         actions={
           <button className="btn ghost" onClick={() => onAsk('Summarize open review comments')}>
@@ -584,7 +587,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
         tone={signState === 'assessed-with-findings' ? 'urgent' : 'calm'}
         eyebrow="What is waiting on your review right now"
         headline={signHeadline}
-        body={<>Each document carries the reviews requested in Authoring and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
+        body={<>Each document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.</>}
         reassure={
           hasAnswer(signState) && signState !== 'not-assessed'
             ? "I'll surface exactly which review you own and pre-read the document so your verdict is one informed click."

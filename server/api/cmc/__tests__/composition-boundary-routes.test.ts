@@ -72,7 +72,7 @@ app.use('/api/cmc', router);
 const MAB_REFUSAL = {
   code: 'CMC_MODALITY_OUT_OF_SCOPE',
   modality: 'biologic',
-  message: "This program's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
+  message: "This project's drug substance is biologically derived — CHO cell culture — and Module 3 for a biologic is not composed here.",
 };
 
 const study = (id: number, projectId: string | null) => ({
@@ -112,7 +112,7 @@ describe.each(programRoutes)('$name asks the composition boundary first', ({ cal
   it('answers a read the boundary could not make 503, so a screen offers the retry, and runs nothing', async () => {
     assessProgramCompositionScope.mockResolvedValue({
       code: 'CMC_APPLICATION_NOT_READABLE',
-      message: "This program's submission could not be read … Try again; if it persists, the failure is in the server log.",
+      message: "This project's submission could not be read … Try again; if it persists, the failure is in the server log.",
     });
     const res = await call();
     expect(res.status).toBe(503);

@@ -1,0 +1,909 @@
+RED: slice A.1 (names a client reads) evidence test client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx run against today's code (HEAD 7d1f7f316 plus the uncommitted working tree, no source file changed), 2026-10-26: 31 of 34 checks fail, each naming the client-visible label, door, Coming later line, catalogue phase, address or source literal that breaks section 9/12 of .design/client-journey/INFORMATION_ARCHITECTURE.md; the 3 that pass are the test's own self-checks (scope matches section 9, section 9 lists the doors, section 9's target names pass the guard). Command: npx vitest run --reporter=dot --maxWorkers=1 client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx (ANSI stripped).
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+·xxxxx··xxxxxxxxxxxxxxxxxxxxxxxxxx
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 31 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "device-510k: \"510(k) workbench\" (workbench)",
++   "device-diagnostics: \"Device & diagnostics workbench\" (workbench)",
++   "apps: \"Plan & features\" (plan (the subscription))",
++   "licensing: \"Plans & licensing\" (plan (the subscription))",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:336:96
+    334|
+    335|   it('no surface a client can reach is named with a word from "Not in …
+    336|     expect(offending(CLIENT_SURFACE_IDS.map((id) => [id, getSurfaceMet…
+       |                                                                                                ^
+    337|   });
+    338|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named after a folded feature (section 5.8)
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "device-cer: \"CER generator (EU MDR)\" names cer-generator (\"cer generator\")",
++   "ind-checklist: \"IND lifecycle\" names ind-lifecycle (\"ind lifecycle\")",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:341:130
+    339|   it('no surface a client can reach is named after a folded feature (s…
+    340|     expect(FOLDS.length, 'section 5.8 lists the folds').toBe(72);
+    341|     expect(namesFolded(CLIENT_SURFACE_IDS.filter((id) => !FOLDED.has(i…
+       |                                                                                                                                  ^
+    342|   });
+    343|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > each slice 1 row carries its section 9 name, exactly
+AssertionError: expected [ …(19) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "apps: \"Plan & features\" should be \"Subscription & features\"",
++   "licensing: \"Plans & licensing\" should be \"Compare subscriptions\"",
++   "master-licensing: \"Master licensing\" should be \"Platform licensing\"",
++   "tasks: \"Tasks & collaboration\" should be \"Tasks\"",
++   "communication-center: \"Communication Center\" should be \"Communication\"",
++   "vault: \"Vault (DMS)\" should be \"Vault\"",
++   "quality: \"Quality & Assurance\" should be \"Quality\"",
++   "document-authoring: \"Document editor & authoring\" should be \"The editor\"",
++   "review: \"Review & approval\" should be \"The review board\"",
++   "protocol-dev: \"Protocol development\" should be \"The protocol workspace\"",
++   "ind-checklist: \"IND lifecycle\" should be \"IND forms\"",
++   "dispatch-readiness: \"Dispatch readiness\" should be \"Readiness\"",
++   "submission-center: \"Submission center\" should be \"Submission Center\"",
++   "device-cer: \"CER generator (EU MDR)\" should be \"Clinical evaluation (CER)\"",
++   "device-510k: \"510(k) workbench\" should be \"510(k) and eSTAR\"",
++   "device-pma: \"PMA submissions\" should be \"PMA\"",
++   "device-diagnostics: \"Device & diagnostics workbench\" should be \"IVDR evidence\"",
++   "device-engineering: \"Device engineering\" should be \"Engineering evidence\"",
++   "device-postmarket: \"Post-market vigilance\" should be \"Post-market surveillance and CAPA\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:348:19
+    346|       .filter(([id, label]) => getSurfaceMeta(id).label !== label)
+    347|       .map(([id, label]) => `${id}: "${getSurfaceMeta(id).label}" shou…
+    348|     expect(wrong).toEqual([]);
+       |                   ^
+    349|   });
+    350|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "NAVIGATION_TARGETS apps: \"Plan & features\" (plan (the subscription))",
++   "NAVIGATION_TARGETS licensing: \"Plans & licensing\" (plan (the subscription))",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:352:135
+    350|
+    351|   it('the names AnA and the @ menu give a reachable screen (NAVIGATION…
+    352|     expect(offending(NAVIGATION_TARGETS.filter((t) => reachable(t.id))…
+       |                                                                                                                                       ^
+    353|   });
+    354|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, as the project chip does
+AssertionError: expected 'Project home' to be 'BX-301' // Object.is equality
+
+Expected: "BX-301"
+Received: "Project home"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:359:66
+    357|     render(<TopBar surface={getSurfaceMeta('project-home') as UiSurfac…
+    358|     await act(async () => { await new Promise((r) => setTimeout(r, 0))…
+    359|     expect(document.querySelector('.crumbs .here')?.textContent).toBe(…
+       |                                                                  ^
+    360|   });
+    361|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > the door names live in one module, one constant per job, each with its section 9 name
+AssertionError: client/src/concept2cure/v2/projectDoors.ts does not exist: it holds STEP_DOORS and DEVICE_DOORS: expected null not to be null
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:419:98
+    417|   it('the door names live in one module, one constant per job, each wi…
+    418|     const doors = await loadDoors();
+    419|     expect(doors, `${rel(DOORS_FILE)} does not exist: it holds STEP_DO…
+       |                                                                                                  ^
+    420|     if (!doors) return;
+    421|     expect(typeof doors.STEP_DOORS, 'STEP_DOORS').toBe('object');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > no step door still carries today's name (Project*.tsx)
+AssertionError: expected [ …(26) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:218: \"Open in Vault\"",
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:912: \"Open task board\"",
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1060: \"Open the review board\"",
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1311: \"Open in Authoring\"",
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1317: \"CMC / Module 3\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx:283: \"Open {} in the Submission Center\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx:381: \"IND forms\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx:425: \"Open readiness\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx:457: \"Open Submission Center\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:58: \"Open engineering evidence\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:59: \"Open project evidence\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:60: \"Open project documents\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:64: \"Open software evidence\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:66: \"Open agency responses\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:67: \"Open surveillance\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:72: \"Open pathway work\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:74: \"Open eSTAR assembly\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:74: \"Open filing documents\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:77: \"Open clinical evaluation\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:77: \"Open clinical studies\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:79: \"Open IVDR evidence\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx:119: \"Open project evidence\"",
++   "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx:66: \"My work\"",
++   "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx:69: \"Open My work\"",
++   "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx:156: \"Open Author\"",
++   "client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx:284: \"Open\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:440:18
+    438|       ...wholeLiterals(STEP_FILES.filter((file) => file.endsWith('Proj…
+    439|     ];
+    440|     expect(hits).toEqual([]);
+       |                  ^
+    441|   });
+    442|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > a job name is written once, in projectDoors.ts, and read from there by every door
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1306: \"Write the protocol in the protocol workspace\"",
++   "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx:36: \"Compose Module 3 in CMC / Module 3\"",
++   "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx:38: \"Prepare Forms 1571, 1572 and 3674 in IND forms\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:445:101
+    443|   it('a job name is written once, in projectDoors.ts, and read from th…
+    444|     const files = CLIENT_FILES.filter((file) => file !== DOORS_FILE);
+    445|     expect(wholeLiterals(files, DOOR_JOBS.map((job) => ({ name: job.na…
+       |                                                                                                     ^
+    446|   });
+    447|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway
+AssertionError: expected [ …(69) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "510(k): \"Open pathway work\" is not a job name",
++   "510(k): \"Open engineering evidence\" is not a job name",
++   "510(k): \"Open project evidence\" is not a job name",
++   "510(k): \"Open software evidence\" is not a job name",
++   "510(k): \"Open project documents\" is not a job name",
++   "510(k): \"Open eSTAR assembly\" is not a job name",
++   "510(k): \"Open agency responses\" is not a job name",
++   "510(k): \"Open surveillance\" is not a job name",
++   "510(k) heading: \"510(k) · Device project workflow\" (workflow)",
++   "510(k): \"Choose predicates and build the SE comparison\" is not drawn (drawn: Open pathway work | Open engineering evidence | Open engineering evidence | Open project evidence | Open software evidence | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open eSTAR assembly | Open agency responses | Open project documents | Open surveillance)",
++   "510(k) (feature not available): \"Open project evidence\" is not a job name",
++   "510(k) (feature not available): \"Open project documents\" is not a job name",
++   "510(k) (feature not available): \"Open agency responses\" is not a job name",
++   "510(k) (feature not available) heading: \"510(k) · Device project workflow\" (workflow)",
++   "PMA: \"Open pathway work\" is not a job name",
++   "PMA: \"Open engineering evidence\" is not a job name",
++   "PMA: \"Open project evidence\" is not a job name",
++   "PMA: \"Open clinical studies\" is not a job name",
++   "PMA: \"Open project documents\" is not a job name",
++   "PMA: \"Open filing documents\" is not a job name",
++   "PMA: \"Open agency responses\" is not a job name",
++   "PMA: \"Open surveillance\" is not a job name",
++   "PMA heading: \"PMA · Device project workflow\" (workflow)",
++   "PMA: \"See which PMA modules are written\" is not drawn (drawn: Open pathway work | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open project evidence | Open project evidence | Open clinical studies | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "PMA: \"Export the PMA package\" is not drawn (drawn: Open pathway work | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open project evidence | Open project evidence | Open clinical studies | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "PMA (feature not available): \"Open project evidence\" is not a job name",
++   "PMA (feature not available): \"Open project documents\" is not a job name",
++   "PMA (feature not available): \"Open agency responses\" is not a job name",
++   "PMA (feature not available) heading: \"PMA · Device project workflow\" (workflow)",
++   "MDR: \"Open pathway work\" is not a job name",
++   "MDR: \"Open clinical evaluation\" is not a job name",
++   "MDR: \"Open engineering evidence\" is not a job name",
++   "MDR: \"Open project evidence\" is not a job name",
++   "MDR: \"Open project documents\" is not a job name",
++   "MDR: \"Open filing documents\" is not a job name",
++   "MDR: \"Open agency responses\" is not a job name",
++   "MDR: \"Open surveillance\" is not a job name",
++   "MDR heading: \"EU MDR CER · Device project workflow\" (workflow)",
++   "MDR: \"Gather literature and map the GSPRs\" is not drawn (drawn: Open pathway work | Open clinical evaluation | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open project evidence | Open project evidence | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "MDR: \"Export the CER\" is not drawn (drawn: Open pathway work | Open clinical evaluation | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open project evidence | Open project evidence | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "MDR (feature not available): \"Open project evidence\" is not a job name",
++   "MDR (feature not available): \"Open project documents\" is not a job name",
++   "MDR (feature not available): \"Open agency responses\" is not a job name",
++   "MDR (feature not available) heading: \"EU MDR CER · Device project workflow\" (workflow)",
++   "IVDR: \"Open pathway work\" is not a job name",
++   "IVDR: \"Open engineering evidence\" is not a job name",
++   "IVDR: \"Open project evidence\" is not a job name",
++   "IVDR: \"Open IVDR evidence\" is not a job name",
++   "IVDR: \"Open project documents\" is not a job name",
++   "IVDR: \"Open filing documents\" is not a job name",
++   "IVDR: \"Open agency responses\" is not a job name",
++   "IVDR: \"Open surveillance\" is not a job name",
++   "IVDR heading: \"EU IVDR PER · Diagnostic project workflow\" (workflow)",
++   "IVDR: \"Record classification and performance evidence\" is not drawn (drawn: Open pathway work | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open IVDR evidence | Open project evidence | Open project evidence | Open IVDR evidence | Open IVDR evidence | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "IVDR: \"Assemble the technical documentation\" is not drawn (drawn: Open pathway work | Open engineering evidence | Open engineering evidence | Open project evidence | Open project evidence | Open IVDR evidence | Open project evidence | Open project evidence | Open IVDR evidence | Open IVDR evidence | Open project documents | Open project documents | Open project evidence | Open engineering evidence | Open filing documents | Open agency responses | Open project documents | Open surveillance)",
++   "IVDR (feature not available): \"Open project evidence\" is not a job name",
++   "IVDR (feature not available): \"Open project documents\" is not a job name",
++   "IVDR (feature not available): \"Open agency responses\" is not a job name",
++   "IVDR (feature not available) heading: \"EU IVDR PER · Diagnostic project workflow\" (workflow)",
++   "\"Build the risk file and design-control trace\" is drawn for no pathway",
++   "\"Add this work's sources on Evidence\" is drawn for no pathway",
++   "\"Write this work's documents on Author\" is drawn for no pathway",
++   "\"Check the software and cybersecurity documentation\" is drawn for no pathway",
++   "\"Answer the agency on Respond\" is drawn for no pathway",
++   "\"Run post-market surveillance and CAPA\" is drawn for no pathway",
++   "\"Assemble the eSTAR\" is drawn for no pathway",
++   "\"Write the clinical evaluation (CER)\" is drawn for no pathway",
++   "\"Record the clinical studies behind this filing\" is drawn for no pathway",
++   "\"Record analytical and clinical performance (IVDR)\" is drawn for no pathway",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:488:48
+    486|     }
+    487|     const neverDrawn = DEVICE_JOBS.filter((job) => !job.pathway && !se…
+    488|     expect([...new Set(wrong), ...neverDrawn]).toEqual([]);
+       |                                                ^
+    489|     expect([...seen].filter((door) => DEVICE_TODAY.includes(door))).to…
+    490|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Plan, Evidence, Author, Review, Submit and Respond each have one
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "plan has no Coming later line",
++   "evidence has no Coming later line",
++   "author has no Coming later line",
++   "review has no Coming later line",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:503:117
+    501|   it('Plan, Evidence, Author, Review, Submit and Respond each have one…
+    502|     expect(PJ_LIFECYCLE.map((step) => step.id)).toEqual(['plan', 'evid…
+    503|     expect(PJ_LIFECYCLE.filter((step) => !step.later?.trim()).map((ste…
+       |                                                                                                                     ^
+    504|   });
+    505|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line uses a word from "Not in client copy"
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "submit.later: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\" (intelligence)",
++   "submit.laterDevice: \"Registration lifecycle tracking and market access; regulatory intelligence, precedent and agency meetings.\" (intelligence)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:507:30
+    505|
+    506|   it('no line uses a word from "Not in client copy"', () => {
+    507|     expect(offending(lines)).toEqual([]);
+       |                              ^
+    508|   });
+    509|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > no line names a folded feature as a thing still to come
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "submit.later: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\" names agency-meetings (\"Agency meetings\"), pharmacovigilance (\"Pharmacovigilance\")",
++   "submit.laterDevice: \"Registration lifecycle tracking and market access; regulatory intelligence, precedent and agency meetings.\" names agency-meetings (\"Agency meetings\")",
++   "respond.later: \"Agency meetings and precedent responses.\" names agency-meetings (\"Agency meetings\")",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:511:32
+    509|
+    510|   it('no line names a folded feature as a thing still to come', () => {
+    511|     expect(namesFolded(lines)).toEqual([]);
+       |                                ^
+    512|   });
+    513|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Submit's lines name only Submit's rows not yet shown
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "submit.later names IND annual-report tracking: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.later names the variation classifier: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.later names precedent: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.later names market access: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.later names pharmacovigilance: \"Registrations, market access and pharmacovigilance; the variation classifier; IND annual-report tracking; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.laterDevice names precedent: \"Registration lifecycle tracking and market access; regulatory intelligence, precedent and agency meetings.\"",
++   "submit.laterDevice names market access: \"Registration lifecycle tracking and market access; regulatory intelligence, precedent and agency meetings.\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:530:19
+    528|     const wrong = [['later', submit?.later], ['laterDevice', submit?.l…
+    529|       NOT_SUBMIT.filter(([, re]) => re.test(text ?? '')).map(([what]) …
+    530|     expect(wrong).toEqual([]);
+       |                   ^
+    531|   });
+    532|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · each step's Coming later line (sections 3 and 5.4) > Respond's line names precedent responses and FDA's Pre-Sub feedback
+AssertionError: expected 'Agency meetings and precedent respons…' to match /Pre-Sub/i
+
+- Expected:
+/Pre-Sub/i
+
++ Received:
+"Agency meetings and precedent responses."
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:536:21
+    534|     const respond = PJ_LIFECYCLE.find((step) => step.id === 'respond')…
+    535|     expect(respond).toMatch(/precedent/i);
+    536|     expect(respond).toMatch(/Pre-Sub/i);
+       |                     ^
+    537|   });
+    538| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name
+AssertionError: expected '1. Program Planning' to be '1. Planning' // Object.is equality
+
+Expected: "1. Planning"
+Received: "1. Program Planning"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:546:49
+    544|     const catalog = buildIndDocumentCatalogSource();
+    545|     const phase1 = catalog.phases.find((p) => p.id === 'phase1');
+    546|     expect(`${phase1?.order}. ${phase1?.name}`).toBe('1. Planning');
+       |                                                 ^
+    547|     expect(buildIndPyramid().phases.find((p) => p.id === 'phase1')?.na…
+    548|     expect([...new Set(catalog.deliverables.filter((d) => d.phaseId ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy"
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "phase1: \"1. Program Planning\" (program)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:552:121
+    550|
+    551|   it('no phase name uses a word from "Not in client copy"', () => {
+    552|     expect(offending(buildIndDocumentCatalogSource().phases.map((p) =>…
+       |                                                                                                                         ^
+    553|   });
+    554| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > /concept2cure/features opens Subscription & features
+AssertionError: expected 'features' to be 'apps' // Object.is equality
+
+Expected: "apps"
+Received: "features"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:560:61
+    558| describe('A.1 · /concept2cure/features (section 12)', () => {
+    559|   it('/concept2cure/features opens Subscription & features', () => {
+    560|     expect(surfaceIdFromLocation(`${UI_V2_BASE}/features`)).toBe('apps…
+       |                                                             ^
+    561|     expect(surfaceIdFromLocation(`${UI_V2_BASE}/features?program=7a1b2…
+    562|     expect(getSurfaceMeta(surfaceIdFromLocation(`${UI_V2_BASE}/feature…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives
+AssertionError: expected '/concept2cure/apps' to be '/concept2cure/features' // Object.is equality
+
+Expected: "/concept2cure/features"
+Received: "/concept2cure/apps"
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:566:40
+    564|
+    565|   it('the shell writes /concept2cure/features for apps, and an old /co…
+    566|     expect(locationForSurface('apps')).toBe(`${UI_V2_BASE}/features`);
+       |                                        ^
+    567|     expect(surfaceIdFromLocation(locationForSurface('apps'))).toBe('ap…
+    568|     expect(surfaceIdFromLocation(`${UI_V2_BASE}/apps`)).toBe('apps');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > no address a client can reach has "app" in it
+AssertionError: expected [ '/concept2cure/apps' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/concept2cure/apps",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:574:125
+    572|
+    573|   it('no address a client can reach has "app" in it', () => {
+    574|     expect([...LAUNCH_SURFACE_IDS].map((id) => locationForSurface(id))…
+       |                                                                                                                             ^
+    575|   });
+    576| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the account menu: Subscription & features, Compare subscriptions, Platform licensing
+AssertionError: expected { words: [ …(2) ], …(2) } to deeply equal { words: [], missing: [], oldName: [] }
+
+- Expected
++ Received
+
+  {
+-   "missing": [],
+-   "oldName": [],
+-   "words": [],
++   "missing": [
++     "Subscription & features",
++     "Compare subscriptions",
++     "Platform licensing",
++   ],
++   "oldName": [
++     "Licensing",
++   ],
++   "words": [
++     "account menu: \"Plan & features\" (plan (the subscription))",
++     "account menu: \"View all plans\" (plan (the subscription))",
++   ],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:606:8
+    604|       missing: want.filter((name) => !items.includes(name)),
+    605|       oldName: items.filter((item) => item === 'Licensing'),
+    606|     }).toEqual({ words: [], missing: [], oldName: [] });
+       |        ^
+    607|     fireEvent.click(screen.getByRole('menuitem', { name: 'Subscription…
+    608|     expect(onNav).toHaveBeenCalledWith('apps');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > a member's menu offers Compare subscriptions
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "account menu (member): \"View all plans\" (plan (the subscription))",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:614:86
+    612|     auth.roles = ['user'];
+    613|     const { items } = await accountMenu(false);
+    614|     expect(offending(items.map((item) => ['account menu (member)', ite…
+       |                                                                                      ^
+    615|     expect(items).toContain('Compare subscriptions');
+    616|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the lock copy (rail, ⌘K, Subscription & features, unlock panel) names the subscription and the job
+AssertionError: expected { words: [ …(20) ], …(4) } to deeply equal { words: [], …(4) }
+
+- Expected
++ Received
+
+  {
+-   "disabledBodyNamesSubscriptionAndFeatures": true,
+-   "disabledButtonNamesOnlyWhereItGoes": false,
+-   "disabledButtonNamesSubscriptionAndFeatures": true,
+-   "tierButton": "Compare subscriptions",
+-   "words": [],
++   "disabledBodyNamesSubscriptionAndFeatures": false,
++   "disabledButtonNamesOnlyWhereItGoes": true,
++   "disabledButtonNamesSubscriptionAndFeatures": false,
++   "tierButton": "View plans",
++   "words": [
++     "launch-scope, member body: \"This feature is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.\" (plan (the subscription))",
++     "launch-scope, administrator body: \"This feature is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.\" (plan (the subscription))",
++     "disabled, administrator body: \"An administrator disabled this feature for your organization. You can turn it back on in Plan & features.\" (plan (the subscription))",
++     "disabled, administrator button: \"Open Plan & features\" (plan (the subscription))",
++     "industry, member body: \"This feature is not part of the catalog for your workspace's industry setting. Changing that setting is an administrator action, not a plan change.\" (plan (the subscription))",
++     "industry, administrator body: \"This feature is not part of the catalog for your workspace's industry setting. Changing that setting is an administrator action, not a plan change.\" (plan (the subscription))",
++     "tier (professional), member short reason: \"not included in your plan\" (plan (the subscription))",
++     "tier (professional), member body: \"Your plan does not include this feature. It is included from the Professional plan upward.\" (plan (the subscription))",
++     "tier (professional), member button: \"View plans\" (plan (the subscription))",
++     "tier (professional), administrator short reason: \"not included in your plan\" (plan (the subscription))",
++     "tier (professional), administrator body: \"Your plan does not include this feature. It is included from the Professional plan upward.\" (plan (the subscription))",
++     "tier (professional), administrator button: \"View plans\" (plan (the subscription))",
++     "tier, member short reason: \"not included in your plan\" (plan (the subscription))",
++     "tier, member status: \"Not included in your plan\" (plan (the subscription))",
++     "tier, member body: \"Your plan does not include this feature.\" (plan (the subscription))",
++     "tier, member button: \"View plans\" (plan (the subscription))",
++     "tier, administrator short reason: \"not included in your plan\" (plan (the subscription))",
++     "tier, administrator status: \"Not included in your plan\" (plan (the subscription))",
++     "tier, administrator body: \"Your plan does not include this feature.\" (plan (the subscription))",
++     "tier, administrator button: \"View plans\" (plan (the subscription))",
++   ],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:640:8
+    638|       // A door names its job, not only where it goes.
+    639|       disabledButtonNamesOnlyWhereItGoes: /^Open\b/.test(disabled.ctaL…
+    640|     }).toEqual({
+       |        ^
+    641|       words: [],
+    642|       tierButton: 'Compare subscriptions',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > every door to Compare subscriptions has that name (no "View all plans", "View plans", "See plans", "Manage plan")
+AssertionError: expected [ …(7) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "client/src/concept2cure/v2/Shell.tsx:384: \"View all plans\"",
++   "client/src/concept2cure/v2/navEntitlements.tsx:368: \"View plans\"",
++   "client/src/concept2cure/v2/surfaces/Insights.tsx:2151: \"See plans\"",
++   "client/src/concept2cure/v2/surfaces/UsageBilling.tsx:330: \"View all plans on the licensing surface\"",
++   "client/src/concept2cure/v2/surfaces/UsageBilling.tsx:350: \"View all plans\"",
++   "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx:717: \"Manage plan\"",
++   "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx:736: \"Manage plan\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:651:56
+    649|   it('every door to Compare subscriptions has that name (no "View all …
+    650|     const DOOR = /\b(?:View all plans|View plans|See plans|Manage plan…
+    651|     expect(literalsMatching(CLIENT_FILES, DOOR, DOOR)).toEqual([]);
+       |                                                        ^
+    652|   });
+    653|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > no heading or label outside the registry still carries a slice 1 row's old name
+AssertionError: expected { source: [ …(23) ], …(1) } to deeply equal { source: [], navigationTargets: [] }
+
+- Expected
++ Received
+
+  {
+-   "navigationTargets": [],
+-   "source": [],
++   "navigationTargets": [
++     "NAVIGATION_TARGETS apps: \"Plan & features\"",
++     "NAVIGATION_TARGETS protocol-dev: \"Protocol development\"",
++     "NAVIGATION_TARGETS communication-center: \"Communication Center\"",
++     "NAVIGATION_TARGETS device-engineering: \"Device engineering\"",
++     "NAVIGATION_TARGETS device-postmarket: \"Post-market vigilance\"",
++     "NAVIGATION_TARGETS dispatch-readiness: \"Dispatch readiness\"",
++     "NAVIGATION_TARGETS licensing: \"Plans & licensing\"",
++     "NAVIGATION_TARGETS master-licensing: \"Master licensing\"",
++   ],
++   "source": [
++     "client/src/concept2cure/v2/Shell.tsx:359: \"Plan & features\"",
++     "client/src/concept2cure/v2/Shell.tsx:366: \"Licensing\"",
++     "client/src/concept2cure/v2/registryModel.ts:909: \"Protocol development\"",
++     "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx:477: \"Communication center\"",
++     "client/src/concept2cure/v2/surfaces/FilingsCatalog.tsx:126: \"Communication Center\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:695: \"IND Lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:699: \"IND lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:710: \"IND Lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:714: \"IND lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:728: \"IND Lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:732: \"IND lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:1142: \"IND Lifecycle\"",
++     "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx:233: \"Plans & licensing\"",
++     "client/src/concept2cure/v2/surfaces/MasterLicensing.tsx:806: \"Licensing\"",
++     "client/src/concept2cure/v2/surfaces/Review.tsx:394: \"Review & approval\"",
++     "client/src/concept2cure/v2/surfaces/Review.tsx:404: \"Review & approval\"",
++     "client/src/concept2cure/v2/surfaces/Review.tsx:437: \"Review & approval\"",
++     "client/src/concept2cure/v2/surfaces/Review.tsx:574: \"Review & approval\"",
++     "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:1314: \"Submission center\"",
++     "client/src/concept2cure/v2/surfaces/Vault.tsx:1385: \"Vault (DMS)\"",
++     "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx:667: \"Plan & features\"",
++     "client/src/concept2cure/quality/App.tsx:289: \"Quality & Assurance\"",
++     "client/src/concept2cure/quality/App.tsx:292: \"Quality & Assurance\"",
++   ],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:659:8
+    657|         .map((o) => `NAVIGATION_TARGETS ${t.id}: "${t.label}"`));
+    658|     expect({ source: wholeLiterals(CLIENT_FILES, oldLabelMatcher), nav…
+    659|       .toEqual({ source: [], navigationTargets: [] });
+       |        ^
+    660|   });
+    661|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > Setup's module panel no longer sends anyone to the Workflows
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx:2510: \"Modules auto-provision by tier (module_subscriptions -- provisionModulesForTier). This organization's live entitlement state is shown below; enable or disable modules in the Workflows.\"",
++   "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx:2541: \"Not open to this organization — see the Workflows\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:664:77
+    662|   it("Setup's module panel no longer sends anyone to the Workflows", (…
+    663|     const admin = path.join(V2, 'surfaces', 'AdminSurfaces.tsx');
+    664|     expect(literalsMatching([admin], /\bthe Workflows\b/, /the Workflo…
+       |                                                                             ^
+    665|   });
+    666| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > its heading, licence band, cards and administrator controls
+AssertionError: expected { heading: 'Plan & features', …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "heading": "Subscription & features",
+-   "words": [],
++   "heading": "Plan & features",
++   "words": [
++     "text: \"Plan & features\" (plan (the subscription))",
++     "text: \"What your organization's plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.\" (plan (the subscription))",
++     "text: \"Current plan\" (plan (the subscription))",
++     "text: \"Manage plan\" (plan (the subscription))",
++     "text: \"Medical devices and diagnostics · project workflows\" (workflow)",
++     "text: \"Shared services supporting these workflows\" (workflow)",
++     "text: \"These services support drafting, evidence, reporting and signing within the workflows above.\" (workflow)",
++     "text: \"RIM -- Regulatory Intelligence Model\" (intelligence)",
++     "text: \"Precedent engine\" (engine)",
++     "aria-label: \"Projects workflow\" (workflow)",
++     "title: \"Disable module\" (module)",
++     "aria-label: \"Vault workflow\" (workflow)",
++     "aria-label: \"Authoring workflow\" (workflow)",
++     "aria-label: \"Submission Center workflow\" (workflow)",
++     "aria-label: \"QMS controlled documents workflow\" (workflow)",
++   ],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:721:8
+    719|       heading: screen.getByRole('heading', { level: 1 }).textContent,
+    720|       words: pageWords(container),
+    721|     }).toEqual({ heading: 'Subscription & features', words: [] });
+       |        ^
+    722|   });
+    723|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > while loading
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "text: \"Plan & features\" (plan (the subscription))",
++   "text: \"What your organization's plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.\" (plan (the subscription))",
++   "text: \"Loading workflows…\" (workflow)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:727:34
+    725|     serveCatalog(() => new Promise<Response>(() => {}), () => new Prom…
+    726|     const { container } = mountFeatures();
+    727|     expect(pageWords(container)).toEqual([]);
+       |                                  ^
+    728|   });
+    729|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > when the catalogue cannot be read, or the licence cannot
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "text: \"Plan & features\" (plan (the subscription))",
++   "text: \"What your organization's plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.\" (plan (the subscription))",
++   "text: \"Manage plan\" (plan (the subscription))",
++   "text: \"Couldn't load workflows\" (workflow)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:736:34
+    734|     await waitFor(() => expect(container.textContent).toMatch(/could n…
+    735|     await waitFor(() => expect(container.querySelector('[data-testid="…
+    736|     expect(pageWords(container)).toEqual([]);
+       |                                  ^
+    737|   });
+    738|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > when the catalogue is empty
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "text: \"Plan & features\" (plan (the subscription))",
++   "text: \"What your organization's plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.\" (plan (the subscription))",
++   "text: \"Current plan\" (plan (the subscription))",
++   "text: \"Manage plan\" (plan (the subscription))",
++   "text: \"No workflows available\" (workflow)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:743:34
+    741|     const { container } = mountFeatures();
+    742|     await waitFor(() => expect(container.textContent).toMatch(/No feat…
+    743|     expect(pageWords(container)).toEqual([]);
+       |                                  ^
+    744|   });
+    745|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > when nothing matches a search
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "text: \"Plan & features\" (plan (the subscription))",
++   "text: \"What your organization's plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.\" (plan (the subscription))",
++   "text: \"Current plan\" (plan (the subscription))",
++   "text: \"Manage plan\" (plan (the subscription))",
++   "text: \"No workflows match your search\" (workflow)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:752:34
+    750|     fireEvent.change(screen.getByRole('searchbox', { name: 'Find a fea…
+    751|     await waitFor(() => expect(container.textContent).toMatch(/clear t…
+    752|     expect(pageWords(container)).toEqual([]);
+       |                                  ^
+    753|   });
+    754|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/31]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · Subscription & features says "features" and "subscription" > each slice 1 feature's card carries its section 9 name, from the catalogue as deployed
+AssertionError: expected [ …(30) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "tasks: the card reads \"Tasks & collaboration\"",
++   "tasks: no card reads \"Tasks\"",
++   "communication-center: the card reads \"Communication Center\"",
++   "communication-center: no card reads \"Communication\"",
++   "vault: the card reads \"Vault (DMS)\"",
++   "vault: no card reads \"Vault\"",
++   "quality: the card reads \"Quality & Assurance\"",
++   "quality: no card reads \"Quality\"",
++   "document-authoring: the card reads \"Document editor & authoring\"",
++   "document-authoring: no card reads \"The editor\"",
++   "review: the card reads \"Review & approval\"",
++   "review: no card reads \"The review board\"",
++   "protocol-dev: the card reads \"Protocol development\"",
++   "protocol-dev: no card reads \"The protocol workspace\"",
++   "ind-checklist: the card reads \"IND lifecycle\"",
++   "ind-checklist: no card reads \"IND forms\"",
++   "dispatch-readiness: the card reads \"Dispatch readiness\"",
++   "dispatch-readiness: no card reads \"Readiness\" or \"Submission Readiness\"",
++   "device-cer: the card reads \"CER generator (EU MDR)\"",
++   "device-cer: no card reads \"Clinical evaluation (CER)\"",
++   "device-510k: the card reads \"510(k) workbench\"",
++   "device-510k: no card reads \"510(k) and eSTAR\"",
++   "device-pma: the card reads \"PMA submissions\"",
++   "device-pma: no card reads \"PMA\"",
++   "device-diagnostics: the card reads \"Device & diagnostics workbench\"",
++   "device-diagnostics: no card reads \"IVDR evidence\"",
++   "device-engineering: the card reads \"Device engineering\"",
++   "device-engineering: no card reads \"Engineering evidence\"",
++   "device-postmarket: the card reads \"Post-market vigilance\"",
++   "device-postmarket: no card reads \"Post-market surveillance and CAPA\"",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:778:19
+    776|       ];
+    777|     });
+    778|     expect(wrong).toEqual([]);
+       |                   ^
+    779|   });
+    780| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/31]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  31 failed | 3 passed (34)
+   Start at  10:11:22
+   Duration  5.72s (transform 1.47s, setup 157ms, import 2.16s, tests 2.60s, environment 631ms)
+

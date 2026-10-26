@@ -49,7 +49,7 @@ function sourceOrigin(code: string, sourceRowId: string, content: string, author
 }
 
 function validateInput(input: WorkflowMaterializationInput): void {
-  if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target program are required.');
+  if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target project are required.');
   const id = input.source.kind === 'csr' ? input.source.jobId : input.source.documentId;
   if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
     if (typeof id !== 'string' || !UUID.test(id)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved IVD record.');
@@ -68,7 +68,7 @@ async function protocolRecordedProgram(input: WorkflowMaterializationInput, q: Q
   const designs = await q.query('SELECT program_id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2', [studyId, input.organizationId]);
   if (designs.rows.length !== 1) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded study design is unavailable for this organization.');
   const designProgram = designs.rows[0].program_id;
-  if (stored != null && stored !== designProgram) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'The saved protocol and its bound design disagree about their program.');
+  if (stored != null && stored !== designProgram) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'The saved protocol and its bound design disagree about their project.');
   return stored ?? designProgram;
 }
 
@@ -76,11 +76,11 @@ async function protocolScope(input: WorkflowMaterializationInput, q: Queryable):
   const recorded = await protocolRecordedProgram(input, q);
   const actor = await readCsrProjectActor(q, input.organizationId, input.userId);
   if (recorded === null) return {level:'organization',programId:null,projectId:null};
-  if (typeof recorded !== 'string' || !UUID.test(recorded)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded program relationship is invalid.');
+  if (typeof recorded !== 'string' || !UUID.test(recorded)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol’s recorded project relationship is invalid.');
   const programId = recorded.toLowerCase();
   const anchor = await readProgramAnchorRow(q, {programId,orgId:input.organizationId,context:'protocol-workflow-import',requireUnique:true});
   if (!anchor || !await canAccessReportProject(input.organizationId, actor, anchor.id, q)) return fail(403, 'WORKFLOW_SOURCE_ACCESS_DENIED', 'The saved protocol project is not accessible to this actor.');
-  if (programId !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'This protocol belongs to another recorded program. Choose its recorded program.');
+  if (programId !== input.target.programId.toLowerCase() || anchor.id !== input.target.projectId) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'This protocol belongs to another recorded project. Choose its recorded project.');
   return {level:'program',programId,projectId:anchor.id};
 }
 
@@ -240,7 +240,7 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
   const warnings = ['This is an unbound working draft. Source completion, approval and signatures are not transferred.',
     'Original authorship and model qualification are not established by a workflow fingerprint.',
     'Verified generation document/hash/span support was not recorded by this materializer.'];
-  if (mode === 'explicit') warnings.push('The source has no recorded program association. Creation requires an explicit association reason.');
+  if (mode === 'explicit') warnings.push('The source has no recorded project association. Creation requires an explicit association reason.');
   return {origin,fingerprint,sections,gaps,warnings,association};
 }
 

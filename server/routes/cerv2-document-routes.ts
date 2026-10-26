@@ -115,9 +115,9 @@ async function requireScreeningScope(req: Parameters<typeof requireCurrentProjec
   if (!userId) throw new ProjectAdmissionRefusal(403, 'SCREENING_ACTOR_REQUIRED', 'An identified organization member is required.');
   await requireCurrentProjectActor(req, forWrite);
   if (!programId) return;
-  if (!await programVisibleInOrg(req, programId, organizationId)) throw new ProjectAdmissionRefusal(404, 'SCREENING_PROGRAM_NOT_FOUND', 'Program not found in your organization.');
+  if (!await programVisibleInOrg(req, programId, organizationId)) throw new ProjectAdmissionRefusal(404, 'SCREENING_PROGRAM_NOT_FOUND', 'Project not found in your organization.');
   const scope = await admitAnaProjectScope(client, { organizationId, userId, projectRef: programId });
-  if (scope.projectId === null) throw new ProjectAdmissionRefusal(409, 'SCREENING_PROJECT_UNRESOLVED', 'The program project relationship could not be verified.');
+  if (scope.projectId === null) throw new ProjectAdmissionRefusal(409, 'SCREENING_PROJECT_UNRESOLVED', "The project's tracking record could not be verified.");
   await requireProjectAdmission(req, String(scope.projectId), forWrite);
 }
 
@@ -262,7 +262,7 @@ router.post('/literature/record', authMiddleware, async (req, res) => {
   try {
     if (parsed.data.programId) {
       if (!(await programVisibleInOrg(req, parsed.data.programId, organizationId))) {
-        return res.status(404).json({ error: 'Program not found in your organization' });
+        return res.status(404).json({ error: 'Project not found in your organization' });
       }
     }
 

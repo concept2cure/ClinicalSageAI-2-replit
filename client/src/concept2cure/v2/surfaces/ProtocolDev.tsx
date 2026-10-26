@@ -78,7 +78,7 @@ function anaContextFor(
   }
   if (state.empty || !doc) {
     return {
-      summary: 'Protocol development: no protocol is available in the selected scope, so no document is open for authoring.',
+      summary: 'The protocol workspace: no protocol is available in the selected scope, so no document is open for authoring.',
       ...(program ? { facts: { programme: program } } : {}),
       availableActions: ['Start a clinical protocol', 'Draft a protocol synopsis for the open project'],
     };
@@ -100,7 +100,7 @@ function anaContextFor(
   return {
     documentType: protocolRegistryType(doc.kind),
     summary:
-      `Protocol development: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
+      `The protocol workspace: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
       `${doc.status}, ${doc.completeness}% complete — ${done} of ${secs.length} ` +
       `section(s) complete. ${len(doc.risks)} risk(s), ${len(doc.amendments)} amendment(s), ` +
       `${len(doc.deviations)} deviation(s), ${len(doc.completenessFindings)} completeness finding(s). ` +

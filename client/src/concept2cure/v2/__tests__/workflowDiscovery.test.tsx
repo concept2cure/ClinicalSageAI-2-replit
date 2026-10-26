@@ -18,7 +18,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE = {
-  id: 'apps', label: 'Plan & features', navTier: 'global', layoutMode: 'apps',
+  id: 'apps', label: 'Subscription & features', navTier: 'global', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -128,7 +128,7 @@ describe('workflow discovery extends the live catalog', () => {
     live();
     const { container } = mount();
     await screen.findByText('Document editor & authoring', { selector: '.launch-title' });
-    expect(screen.getByRole('heading', { name: 'Plan & features' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Subscription & features' })).toBeTruthy();
 
     const memberships = [
       ['projects', 'Projects', ['Projects']],
@@ -238,7 +238,7 @@ describe('workflow discovery extends the live catalog', () => {
     const { container, onNav } = mount();
     await screen.findByText('510(k) workbench', { selector: '.launch-title' });
     expect(workflow(container, 'cmc')).toBeTruthy();
-    expect(screen.getByTestId('mdx-catalog-solution').closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects workflow');
+    expect(screen.getByTestId('mdx-catalog-solution').closest('.workflow-area')?.getAttribute('aria-label')).toBe('Projects');
     expect(container.querySelector('[data-workflow="additional"]')).toBeNull();
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     for (const name of ['CMC / Module 3', '510(k) workbench']) {
@@ -246,7 +246,7 @@ describe('workflow discovery extends the live catalog', () => {
       expect(within(locked).getByText('Not in this release')).toBeTruthy();
       expect(within(locked).queryByRole('button', { name: 'Open' })).toBeNull();
       expect(within(locked).queryByRole('switch')).toBeNull();
-      expect(within(locked).queryByText('View plans')).toBeNull();
+      expect(within(locked).queryByText('Compare subscriptions')).toBeNull();
     }
     expect(onNav).not.toHaveBeenCalled();
     expect(apiRequest.mock.calls.filter(([method]) => method === 'PUT')).toHaveLength(0);
@@ -282,29 +282,29 @@ describe('workflow discovery distinguishes search, empty and failed reads', () =
     const { container } = mount();
     await screen.findByText('Vault', { selector: '.launch-title' });
     search('zz-no-such-client-workflow');
-    expect(screen.getByText('No workflows match your search')).toBeTruthy();
-    expect(screen.queryByText('No workflows available')).toBeNull();
-    expect(screen.queryByText("Couldn't load workflows")).toBeNull();
+    expect(screen.getByText('No features match your search')).toBeTruthy();
+    expect(screen.queryByText('No features available')).toBeNull();
+    expect(screen.queryByText("Couldn't load features")).toBeNull();
     expect(container.querySelectorAll('.launch-title')).toHaveLength(0);
     search('');
     expect(screen.getByText('Vault', { selector: '.launch-title' })).toBeTruthy();
-    expect(screen.queryByText('No workflows match your search')).toBeNull();
+    expect(screen.queryByText('No features match your search')).toBeNull();
   });
 
   it('reports a genuinely empty catalog without claiming a search or read failure', async () => {
     live([]);
     mount();
-    expect(await screen.findByText('No workflows available')).toBeTruthy();
-    expect(screen.queryByText('No workflows match your search')).toBeNull();
-    expect(screen.queryByText("Couldn't load workflows")).toBeNull();
+    expect(await screen.findByText('No features available')).toBeTruthy();
+    expect(screen.queryByText('No features match your search')).toBeNull();
+    expect(screen.queryByText("Couldn't load features")).toBeNull();
   });
 
   it.each(['network failure', 'malformed successful body'])('reports %s as a failed read, never an empty catalog', async (failure) => {
     if (failure === 'network failure') apiRequest.mockRejectedValue(new Error('network down'));
     else live([], { catalog: { data: [] } });
     mount();
-    expect(await screen.findByText("Couldn't load workflows")).toBeTruthy();
-    expect(screen.queryByText('No workflows available')).toBeNull();
-    expect(screen.queryByText('No workflows match your search')).toBeNull();
+    expect(await screen.findByText("Couldn't load features")).toBeTruthy();
+    expect(screen.queryByText('No features available')).toBeNull();
+    expect(screen.queryByText('No features match your search')).toBeNull();
   });
 });

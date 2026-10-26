@@ -110,7 +110,7 @@ describe('resolveRequiredSections — the seeded ind:fda pack decides what an IN
     const client = fakeClient([]);
     const set = await resolveRequiredSections(client, { programType: null, primaryAgency: null });
     expect(set.provenance.source).toBe('fallback');
-    expect(set.provenance.reason).toMatch(/program type is unknown/);
+    expect(set.provenance.reason).toMatch(/filing type is unknown/);
     expect(client.calls).toEqual([]);
     expect(set.modules).toEqual(FALLBACK_REQUIRED_MODULES);
   });

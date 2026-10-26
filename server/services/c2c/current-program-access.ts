@@ -108,7 +108,7 @@ export async function requireCurrentProgramAccess(q: ProgramAccessExecutor, inpu
     const actor = await readCurrentProgramActor(q,input);
     const anchor = await readProgramAnchorRow(q,{programId:input.programId,orgId:input.organizationId,
       context:'current-program-access',requireUnique:true,eligibility:input.includeDeleted?'all':'non-deleted'});
-    if (!anchor) throw new ProgramReadAccessError(409,'PROJECT_ANCHOR_UNRESOLVED','This program needs one verified project relationship before its records can be supplied.');
+    if (!anchor) throw new ProgramReadAccessError(409,'PROJECT_ANCHOR_UNRESOLVED','This project needs one verified tracking record before its records can be supplied.');
     if (!await canAccessReportProject(input.organizationId,actor,anchor.id,q)) {
       throw new ProgramReadAccessError(403,'PROJECT_PERMISSION_DENIED','Current project access does not permit this operation.');
     }

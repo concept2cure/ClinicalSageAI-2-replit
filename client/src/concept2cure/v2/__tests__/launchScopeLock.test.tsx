@@ -29,7 +29,7 @@ describe('launch-scope lock', () => {
     expect(lockShortReason(launchLocked)).toBe('not in this release');
   });
 
-  it('offers no plan, no toggle and no request — for admins and members alike', () => {
+  it('offers no subscription, no toggle and no request — for admins and members alike', () => {
     for (const isOrgAdmin of [true, false]) {
       const n = lockNotice(launchLocked, { isOrgAdmin });
       expect(n.status).toBe('Not in this release');
@@ -37,7 +37,7 @@ describe('launch-scope lock', () => {
       expect(n.ctaTarget).toBeNull();
       expect(n.requestable).toBe(false);
       expect(n.body).toMatch(/not part of the current release/);
-      expect(n.body).not.toMatch(/view plans|included from/i);
+      expect(n.body).not.toMatch(/compare subscriptions|included from/i);
     }
   });
 });

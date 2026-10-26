@@ -47,7 +47,7 @@ router.get('/work-packages', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const programId = typeof req.query.programId === 'string' ? req.query.programId : null;
   if (programId && !UUID_RE.test(programId)) {
-    return clientError(res, 422, 'programId must be a UUID');
+    return clientError(res, 422, 'The project id must be a UUID.');
   }
 
   try {

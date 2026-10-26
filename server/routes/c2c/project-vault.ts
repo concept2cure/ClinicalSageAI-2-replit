@@ -650,7 +650,7 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       children: otherView.map(u => ({
         ...uploadLeaf(view, u),
         num: '—',
-        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
+        flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this project's current view. Move it to a folder here, or check the project's product type.`,
       })),
     });
   }
@@ -1294,7 +1294,7 @@ export default function createProjectVaultRoutes(): Router {
         if (!isMissingStore(err)) throw err;
         unavailable.push({
           branch: 'Module 3 (CMC)',
-          reason: 'The governed artifact registry (or its program anchor) is not provisioned in this environment.',
+          reason: 'The governed artifact registry (or its link to this project) is not provisioned in this environment.',
         });
       }
 

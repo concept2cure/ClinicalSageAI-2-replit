@@ -72,6 +72,19 @@ const ALIASES: Readonly<Record<string, string>> = {
   'ectd': 'ectd-coauthor',
   'crl': 'crl-library',
   'module3': 'cmc',
+  /* The labels these apps carried before slice A.1 of
+     .design/client-journey/INFORMATION_ARCHITECTURE.md renamed them (section
+     9): a message written with the old name still names the same app. */
+  'communication center': 'communication-center',
+  'protocol development': 'protocol-dev',
+  'quality (sop / controlled docs)': 'quality',
+  '510(k) pathway': 'device-510k',
+  'pma pathway': 'device-pma',
+  'clinical evaluation report': 'device-cer',
+  'ivd pathway': 'device-diagnostics',
+  'device engineering': 'device-engineering',
+  'post-market vigilance': 'device-postmarket',
+  'dispatch readiness': 'dispatch-readiness',
 };
 
 function toApp(t: NavigationTarget): CallableApp {

@@ -953,13 +953,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Master licensing (platform owner) ──
+  // ── Platform licensing (platform owner; id master-licensing) ──
   {
     id: 'master-licensing.open-tab',
     surfaceId: 'master-licensing',
     label: 'Open a licensing tab',
     description:
-      'On master licensing, switch between the console tabs. Every change on this console — packaging, entitlements, flags, enforcement — stays a governed platform-owner act; workspace selection is not driven (it fires a cross-tenant read).',
+      'On Platform licensing, switch between the console tabs. Every change on this console — packaging, entitlements, flags, enforcement — stays a governed platform-owner act; workspace selection is not driven (it fires a cross-tenant read).',
     params: [
       {
         name: 'tab',
@@ -986,13 +986,13 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     params: [{ name: 'query', required: true, description: 'Text to search module names for.' }],
   },
 
-  // ── Plans & licensing ──
+  // ── Compare subscriptions (id licensing) ──
   {
     id: 'licensing.set-pricing-model',
     surfaceId: 'licensing',
     label: 'Switch the pricing catalog',
     description:
-      'Switch between the self-service and enterprise per-user catalogs — a view switch over public pricing config. Choosing a plan (Stripe checkout) and the seat count stay human acts.',
+      'Switch between the self-service and enterprise per-user catalogs — a view switch over public pricing config. Choosing a subscription (Stripe checkout) and the seat count stay human acts.',
     params: [
       { name: 'model', required: true, description: 'The catalog to show.', enum: ['dtc', 'b2b'] },
     ],
@@ -1348,7 +1348,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Protocol development ──
+  // ── The protocol workspace (id protocol-dev) ──
   {
     id: 'protocol-dev.open-section',
     surfaceId: 'protocol-dev',
@@ -1495,11 +1495,11 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'apps',
     label: 'Show or hide the admin controls',
     description:
-      'In Plan & features, show or hide the administrator controls — the per-module enable/disable ' +
+      'In Subscription & features, show or hide the administrator controls — the per-feature enable/disable ' +
       'switches on the feature cards. This only changes what is displayed: switching a module on or off ' +
       'for the organisation stays an administrator\'s own click on the switch this reveals (a ' +
       'persisted, admin-only write). Refuses honestly when the catalog has not loaded, failed, is ' +
-      'empty, or when no module on screen has a switch at all (plan or industry-mode locks have no ' +
+      'empty, or when no module on screen has a switch at all (subscription or industry-mode locks have no ' +
       'switch), naming the modules and the reason in that case.',
     params: [
       {

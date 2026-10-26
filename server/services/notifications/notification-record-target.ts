@@ -13,7 +13,7 @@ import { threadOwnerMatches } from '../chat-thread-helpers';
 export class NotificationTargetRefusal extends Error {
   constructor(readonly status: 404 | 422 | 503) {
     super(status === 404 ? 'The linked record is unavailable or you no longer have access.'
-      : status === 422 ? 'This notification does not name a record and program relationship this version can open.'
+      : status === 422 ? 'This notification does not name a record and project relationship this version can open.'
         : 'The linked record could not be checked. Try again.');
   }
 }
@@ -119,8 +119,8 @@ async function resolveRecord(ctx: TargetContext, ref: RecordReference): Promise<
     case 'authoring_document': return authoringTarget(ctx,ref);
     case 'submission': case 'ectd_sequence': return submissionTarget(ctx,ref);
     case 'report_run': return reportTarget(ctx,ref);
-    case 'regulatory_program': return {surface:'project-home',label:'Open program',params:{},programId:await ownedProgram(ctx,ref.id)};
-    case 'project': return {surface:'project-home',label:'Open program',params:{},programId:await projectProgram(ctx,ref.id)};
+    case 'regulatory_program': return {surface:'project-home',label:'Open project',params:{},programId:await ownedProgram(ctx,ref.id)};
+    case 'project': return {surface:'project-home',label:'Open project',params:{},programId:await projectProgram(ctx,ref.id)};
     case 'unified_task': {
       const task = await rowFor(ctx,'SELECT project_id FROM unified_tasks WHERE task_id=$1 AND organization_id=$2 AND deleted_at IS NULL',[ref.id,ctx.organizationId]);
       return {surface:'tasks',label:'Open task',params:{taskId:ref.id},programId:task.project_id == null ? null : await projectProgram(ctx,task.project_id)};

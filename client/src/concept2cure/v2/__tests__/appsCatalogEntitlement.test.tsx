@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Plan & features — entitlement honesty.
+ * Subscription & features — entitlement honesty.
  *
  * appsLive.test.tsx locks the WIRING (the surface reads the real endpoints and
  * renders no fixture). This file locks what the surface then SAYS, because the
@@ -42,7 +42,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
-  id: 'apps', label: 'Plan & features', navTier: 'workspace', layoutMode: 'apps',
+  id: 'apps', label: 'Subscription & features', navTier: 'workspace', layoutMode: 'apps',
   group: 'workspace', uiKit: null, apiPrefixes: [], anaToolFamilies: [],
   sharedContract: null, discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
 } as unknown as UiSurface;
@@ -125,7 +125,7 @@ afterEach(() => {
   apiRequest.mockReset();
 });
 
-describe('Plan & features — the five entitlement states are five different cards', () => {
+describe('Subscription & features — the five entitlement states are five different cards', () => {
   it('above the plan: names the plan that includes it and routes to plans, with no switch', async () => {
     mockCatalog([
       row({
@@ -140,16 +140,16 @@ describe('Plan & features — the five entitlement states are five different car
     // The real minimum tier, in the shell's own words — not 'Add-on', which
     // names no plan, and not the org's own tier.
     expect(screen.getByText(/Included from Enterprise/)).toBeTruthy();
-    expect(screen.getByText(/Insight Synthesis is not included in your plan\./)).toBeTruthy();
-    expect(screen.getByTestId('admin-upgrade-plan').textContent).toContain('View plans');
+    expect(screen.getByText(/Insight Synthesis is not included in your subscription\./)).toBeTruthy();
+    expect(screen.getByTestId('admin-upgrade-plan').textContent).toBe('Compare subscriptions');
 
     // The server refuses this write with 403 MODULE_NOT_AVAILABLE, so the
     // switch is not offered — not before admin controls are shown, and not
     // after. This is the assertion that fails if the gate ever goes back to
     // string-matching the chip.
-    expect(screen.queryByTitle('Enable module')).toBeNull();
+    expect(screen.queryByTitle('Enable this feature')).toBeNull();
     showAdminControls();
-    expect(screen.queryByTitle('Enable module')).toBeNull();
+    expect(screen.queryByTitle('Enable this feature')).toBeNull();
     expect(screen.queryByRole('switch')).toBeNull();
   });
 
@@ -170,7 +170,7 @@ describe('Plan & features — the five entitlement states are five different car
     expect(screen.getByText(/Device 510\(k\) is not offered for this workspace\./)).toBeTruthy();
     // The distinction that matters commercially: an org told to upgrade here
     // would buy a plan that unlocks nothing.
-    expect(screen.queryByText(/not included in your plan/)).toBeNull();
+    expect(screen.queryByText(/not included in your subscription/)).toBeNull();
     expect(screen.queryByTestId('admin-upgrade-plan')).toBeNull();
     showAdminControls();
     expect(screen.queryByRole('switch')).toBeNull();
@@ -190,11 +190,11 @@ describe('Plan & features — the five entitlement states are five different car
     expect(screen.getByText(/Turned off for this workspace/)).toBeTruthy();
     expect(screen.getByText(/Risk Register is turned off for this workspace\./)).toBeTruthy();
     // Nothing is being sold: the plan already includes it.
-    expect(screen.queryByText(/not included in your plan/)).toBeNull();
+    expect(screen.queryByText(/not included in your subscription/)).toBeNull();
     expect(screen.queryByTestId('admin-upgrade-plan')).toBeNull();
     // The remedy is the switch, and the server accepts this write.
     showAdminControls();
-    expect(screen.getByTitle('Enable module')).toBeTruthy();
+    expect(screen.getByTitle('Enable this feature')).toBeTruthy();
   });
 
   it('in the plan but never provisioned: it opens, like the rail says, and blames nobody', async () => {
@@ -219,15 +219,15 @@ describe('Plan & features — the five entitlement states are five different car
        it" — an administrator's decision invented for a module no administrator
        has ever touched. */
     expect(screen.queryByText(/turned off for this workspace/i)).toBeNull();
-    expect(screen.queryByText(/not included in your plan/)).toBeNull();
+    expect(screen.queryByText(/not included in your subscription/)).toBeNull();
     // In the plan → the chip states the packaging band, not a lock reason.
-    // Twice on screen: the licence band's "Current plan" and this module's chip.
+    // Twice on screen: the licence band's "Current subscription" and this module's chip.
     expect(screen.getAllByText('Professional')).toHaveLength(2);
     // The switch shows what the organization has: open. Turning it off writes
     // the 'disabled' row that locks it.
     screen.getByText(/Feature access/).closest('details')!.open = true;
     showAdminControls();
-    const sw = screen.getByTitle('Disable module');
+    const sw = screen.getByTitle('Disable this feature');
     expect(sw.getAttribute('aria-checked')).toBe('true');
   });
 
@@ -244,13 +244,13 @@ describe('Plan & features — the five entitlement states are five different car
 
     expect(screen.getByText('Cross-module IND assembly')).toBeTruthy();
     expect(screen.getByText('Open')).toBeTruthy();
-    expect(screen.queryByText(/not included in your plan/)).toBeNull();
+    expect(screen.queryByText(/not included in your subscription/)).toBeNull();
     expect(screen.queryByText(/turned off for this workspace/i)).toBeNull();
     expect(screen.queryByText(/Not switched on/)).toBeNull();
   });
 });
 
-describe('Plan & features — writes the UI offers are writes the server accepts', () => {
+describe('Subscription & features — writes the UI offers are writes the server accepts', () => {
   it('an out-of-plan module that is still RUNNING can be switched off (canAccessModule allows it)', async () => {
     /* The downgrade case: the org dropped to a lower tier, so isAvailable is
        false, but the subscription row is still enabled. canAccessModule returns
@@ -271,7 +271,7 @@ describe('Plan & features — writes the UI offers are writes the server accepts
     mount();
     await findFeature('Insight Synthesis');
     showAdminControls();
-    fireEvent.click(screen.getByTitle('Disable module'));
+    fireEvent.click(screen.getByTitle('Disable this feature'));
     // A governed change: the switch opens the reason-for-change dialog first.
     const dialog = screen.getByRole('dialog');
     fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Downgraded; module no longer in plan' } });
@@ -293,7 +293,7 @@ describe('Plan & features — writes the UI offers are writes the server accepts
   });
 });
 
-describe('Plan & features — no verdict is not a verdict', () => {
+describe('Subscription & features — no verdict is not a verdict', () => {
   it('a 200 that is not the catalog contract is an error, never "no apps"', async () => {
     /* The failure this pins: a proxy login page, an envelope change, `{data:[]}`
        — all arrive as HTTP 200. The surface used to map any of them to null and
@@ -309,15 +309,15 @@ describe('Plan & features — no verdict is not a verdict', () => {
       throw new Error(`unexpected ${method} ${url}`);
     });
     mount();
-    expect(await screen.findByText("Couldn't load workflows")).toBeTruthy();
-    expect(screen.queryByText('No workflows available')).toBeNull();
+    expect(await screen.findByText("Couldn't load features")).toBeTruthy();
+    expect(screen.queryByText('No features available')).toBeNull();
   });
 
   it('a genuinely empty catalog is still the honest empty state', async () => {
     mockCatalog([]);
     mount();
-    expect(await screen.findByText('No workflows available')).toBeTruthy();
-    expect(screen.queryByText("Couldn't load workflows")).toBeNull();
+    expect(await screen.findByText('No features available')).toBeTruthy();
+    expect(screen.queryByText("Couldn't load features")).toBeNull();
   });
 
   it('with the licence unreadable, an unavailable module is not blamed on the plan', async () => {
@@ -339,7 +339,7 @@ describe('Plan & features — no verdict is not a verdict', () => {
     mount();
     await findFeature('Insight Synthesis');
     expect(screen.getByText(/License & entitlement details are unavailable/)).toBeTruthy();
-    expect(screen.queryByText(/not included in your plan/)).toBeNull();
+    expect(screen.queryByText(/not included in your subscription/)).toBeNull();
     expect(screen.queryByTestId('admin-upgrade-plan')).toBeNull();
   });
 });

@@ -703,9 +703,9 @@ router.post('/', async (req: Request, res: Response) => {
     : [];
 
   if (!name) return send400(res, 'name is required');
-  if (!programType) return send400(res, 'programType is required');
+  if (!programType) return send400(res, 'A filing type is required.');
   if (!VALID_PROGRAM_TYPES.has(programType)) {
-    return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
+    return send400(res, `The filing type must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
   // A filing the product does not offer in this market is refused, with the
   // verdict's own reason (WORKFLOW_DECISION_2026-10-08 §4 Q2; FILING_SPINE F19,
@@ -756,9 +756,9 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      const pending = await pendingStore(e, 'the licensed-program quota check', req);
+      const pending = await pendingStore(e, 'the licensed-project quota check', req);
       if (pending) return res.status(503).json(pending);
-      return serverError(res, logger, 'the licensed-program quota check', e);
+      return serverError(res, logger, 'checking the licensed-project quota', e);
     }
     throw e;
   }
@@ -768,7 +768,7 @@ router.post('/', async (req: Request, res: Response) => {
         error: 'QUOTA_EXCEEDED',
         message:
           `This organization has ${quota.currentCount} of ${quota.maxAllowed} licensed ` +
-          'programs. Archive a program or raise the plan limit to create another.',
+          'projects. Archive a project or raise the plan limit to create another.',
       });
     }
     logger.warn(

@@ -15,7 +15,7 @@ beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PROGRAM, title: 'Governed program' };
   apiRequest.mockImplementation(async (_method, path) => {
     if (path.includes('?programId=')) return ok({ runs: [{ runId: run.runId, status: run.status, startedAt: run.startedAt }] });
-    if (path.endsWith('/for-program')) return ok({ ...run, inputGaps: ['No nonclinical study corpus is linked to this canonical program.'], m3Refusal: null });
+    if (path.endsWith('/for-program')) return ok({ ...run, inputGaps: ['No nonclinical study corpus is linked to this project.'], m3Refusal: null });
     if (path.endsWith('/sign-release')) return ok({ signatureId: 42, signedAt: '2026-10-14T01:00:00Z', continuation: 'retry-required' });
     if (path.endsWith('/resume')) return ok({ continuation: 'waiting', run });
     if (path.endsWith('/audit')) return ok({ events: [] });
@@ -41,7 +41,7 @@ it('starts from the selected program and exposes missing source inputs', async (
   mount();
   fireEvent.click(screen.getByRole('button', { name: 'Build package run' }));
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/submission-orchestrator/runs/for-program', { programId: PROGRAM }));
-  await screen.findByText('No nonclinical study corpus is linked to this canonical program.');
+  await screen.findByText('No nonclinical study corpus is linked to this project.');
 });
 it('forwards the real signature ceremony then offers continuation retry without a second signature', async () => {
   mount();

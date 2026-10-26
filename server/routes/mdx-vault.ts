@@ -309,11 +309,11 @@ router.get('/vault', async (req: Request, res: Response) => {
       return clientError(
         res,
         422,
-        'Program-scoped vault listing is unavailable',
+        'Project-scoped vault listing is unavailable',
         {
           program_id: [
-            'Artifacts cannot be filtered by regulatory program in this environment: ' +
-              'the project-to-program anchor column has not been applied to this database. ' +
+            'Artifacts cannot be filtered by project in this environment: ' +
+              'the column linking a project to its tracking record has not been applied to this database. ' +
               "Listing without program_id returns this organization's artifacts.",
           ],
         },

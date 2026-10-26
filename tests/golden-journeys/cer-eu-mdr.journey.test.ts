@@ -384,7 +384,7 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
       // The response states what it CANNOT represent rather than implying it did.
       expect(res.body.screeningState).toBeNull();
       expect(Array.isArray(res.body.notes)).toBe(true);
-      expect(res.body.notes.join(' ')).toMatch(/program/i);
+      expect(res.body.notes.join(' ')).toMatch(/project/i);
       return { created: res.body.created, notes: res.body.notes };
     });
     void recorded;

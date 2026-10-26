@@ -50,7 +50,7 @@ describe('canonical Vault placement and transmission applicability', () => {
   it.each([
     [{ agency: 'EMA' }, /agency/], [{ country: 'EU' }, /country/],
     [{ submissionType: 'NDA' }, /submission type/], [{ programId: 'another-program' }, /Copy/],
-    [{ programId: null }, /target program/], [{ agency: undefined }, /agency/],
+    [{ programId: null }, 'The target project for this company legal document could not be verified.'], [{ agency: undefined }, /agency/],
     [{ today: '2027-01-01' }, /expired/],
   ])('refuses the actual target outside an active legal version scope: %j', (patch, reason) => {
     expect(companyLegalVersionTargetRefusal([document], document.vaultDocumentId, { ...context, ...patch })).toMatch(reason);

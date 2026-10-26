@@ -1288,7 +1288,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       return res.status(500).json({
         error: 'ESTAR_NOT_RETAINED',
         message:
-          'The official eSTAR was produced but could not be retained in the program vault, ' +
+          'The official eSTAR was produced but could not be retained in the project’s Vault, ' +
           'so it was not delivered. The problem has been logged.',
       });
     }

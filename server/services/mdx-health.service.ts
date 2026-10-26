@@ -112,7 +112,7 @@ export function deriveMdxReleaseStatus(input: {
    When `required` is missing we report readiness=not_ready. */
 const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = [
   /* Beta-blocking. */
-  { name: 'public.regulatory_programs',           role: 'Programs list, every per-program endpoint',   required: true  },
+  { name: 'public.regulatory_programs',           role: 'Projects list, every per-project endpoint',   required: true  },
   { name: 'public.saved_precedent_queries',       role: 'PrecedentSurface saved queries panel',        required: true  },
   { name: 'public.audit_logs',                    role: 'ProjectHome activity feed + 21 CFR Part 11', required: true  },
   { name: 'public.q_submissions',                 role: 'PreSubManager list + KPIs',                   required: true  },
@@ -295,7 +295,7 @@ function tableWarnings(tables: TableHealth[], pathwayCoverage: PathwayCoverage[]
     warnings.push(`Table ${t.name} could not be probed — whether it is provisioned is not known. Affects: ${t.role}.`);
   }
   if (pathwayCoverage.some((p) => p.programCount === null)) {
-    warnings.push('Pathway coverage could not be read — the number of programs per pathway is not known.');
+    warnings.push('Pathway coverage could not be read — the number of projects per pathway is not known.');
   }
   return { warnings, missingRequired, requiredUnprobed: unprobed.some((t) => t.required) };
 }

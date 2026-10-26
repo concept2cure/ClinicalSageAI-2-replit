@@ -18,7 +18,8 @@
  *     target (docId and programId); a failed read is an error with a retry;
  *   - a module row opens the project's newest document in that module;
  *   - the grid is gone, and its two filing doors are on Submit: "Compile and
- *     download" (ectd-compile) and "Open readiness" (dispatch-readiness);
+ *     download" (ectd-compile) and "Check what stops sending" (dispatch-readiness;
+ *     "Open readiness" until slice A.1 named each door for its job);
  *   - the data room is on Evidence, and "Write from these sources" hands the
  *     readable sources to AnA, as "Draft with N pinned" does.
  */
@@ -182,7 +183,8 @@ describe('Author — the project\'s documents', () => {
     const p = props();
     (window as unknown as { C2C_EDITOR_TARGET?: unknown }).C2C_EDITOR_TARGET = { docId: 'stale', setAt: Date.now() };
     render(<ProjectHome {...p} />);
-    fireEvent.click(await screen.findByRole('button', { name: /Open in Authoring/ }));
+    /* Slice A.1: "Open in Authoring" named only where it went (section 9, Door names). */
+    fireEvent.click(await screen.findByRole('button', { name: 'Find or start a document in the editor' }));
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
     expect(target(), 'an older target does not ride along').toBeUndefined();
     /* Slice 0: the door said "Protocols (organisation-wide)". Protocols carry the project's key since
@@ -220,6 +222,16 @@ describe('Evidence — every way a source comes in', () => {
     expect(String(p.onAsk.mock.calls[0][0])).toMatch(/1 readable source/);
   });
 
+  it('the project files\' door names its job: "Add or find files in Vault" opens the Vault', async () => {
+    serve();
+    const p = props();
+    render(<ProjectHome {...p} />);
+    await open('Evidence');
+    /* Slice A.1: it read "Open in Vault", a door that named only where it went (section 9, Door names). */
+    fireEvent.click(await screen.findByRole('button', { name: 'Add or find files in Vault' }));
+    expect(p.onNav).toHaveBeenCalledWith('vault');
+  });
+
   it('the Evidence blurb says what the tab holds', async () => {
     serve();
     render(<ProjectHome {...props()} />);
@@ -229,14 +241,14 @@ describe('Evidence — every way a source comes in', () => {
 });
 
 describe('Submit — the grid\'s filing doors', () => {
-  it('"Compile and download" opens eCTD compile, and "Open readiness" opens the readiness screen', async () => {
+  it('"Compile and download" opens eCTD compile, and "Check what stops sending" opens the readiness screen', async () => {
     serve();
     const p = props();
     render(<ProjectHome {...p} />);
     await open('Submit');
     fireEvent.click(await screen.findByRole('button', { name: /Compile and download/ }));
     expect(p.onNav).toHaveBeenCalledWith('ectd-compile');
-    fireEvent.click(screen.getByRole('button', { name: /Open readiness/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check what stops sending' }));
     expect(p.onNav).toHaveBeenCalledWith('dispatch-readiness');
   });
 });
@@ -293,20 +305,27 @@ describe('Review findings — the row, the handoff and the filing type say what 
     serve({ program: { product_type: 'device', program_type: '510(k)', regulatory_path: '510k' } });
     render(<ProjectHome {...props()} />);
     await open('Submit');
-    await screen.findByRole('button', { name: /Open Submission Center/ });
+    await screen.findByRole('button', { name: 'See every sequence in Submission Center' });
     expect(screen.queryByRole('button', { name: /Compile and download/ }), 'an eCTD compile door on a 510(k)').toBeNull();
     const later = screen.getByTestId('pj-coming-later').textContent ?? '';
     expect(later).not.toMatch(/IND/);
     expect(later).not.toMatch(/variation classifier/);
     // The device line's wording (PJ_LIFECYCLE laterDevice), not the drug line's.
-    expect(later).toMatch(/Registration lifecycle tracking and market access/);
+    expect(later).toBe('Coming later: Each market’s registration status and renewal date; renewals and post-market obligations tracked as they fall due.');
   });
 
-  it('a drug project still names IND annual-report tracking as coming later', async () => {
+  it('a drug project names what Submit does not show yet, and nothing IND forms already does', async () => {
     serve();
     render(<ProjectHome {...props()} />);
     await open('Submit');
     await screen.findByRole('button', { name: /Compile and download/ });
-    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/IND annual-report tracking/);
+    const later = screen.getByTestId('pj-coming-later').textContent ?? '';
+    /* Slice A.1: it named "IND annual-report tracking", which IND forms assembles, downloads and files
+       into a sequence today, and AnA's variation classifier and regulatory intelligence. */
+    expect(later).toBe(
+      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
+      'obligations tracked as they fall due; safety reports with their reporting clock.',
+    );
+    expect(later).not.toMatch(/annual[- ]report|variation classifier|intelligence/i);
   });
 });

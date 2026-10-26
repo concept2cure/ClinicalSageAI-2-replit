@@ -137,6 +137,7 @@ import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
 import { AuthoredHtml } from './AuthoredHtml';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -903,7 +904,7 @@ export function filingCommitNote(filing: unknown): string {
   if (f.committed === true) return ' The text was committed to the filing.';
   if (f.committed === false) {
     const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
-    return ` The text is saved in Authoring but not in the filing: ${why}`;
+    return ` The text is saved in the editor but not in the filing: ${why}`;
   }
   return '';
 }
@@ -1677,7 +1678,7 @@ export function DocumentWorkbench({
     if (adopt) setAcceptedAssemblyIntent(intent); return true;
   }, [programId, programSwitchHeld]);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
-  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
+  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: getSurfaceMeta('document-authoring').label });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
   const applyStatusFilter = useCallback((value: string) => onStatusChange?.(value), [onStatusChange]);
@@ -2025,7 +2026,7 @@ export function DocumentWorkbench({
     availableActions: ['Review section', 'Review document', 'Reconcile project evidence', 'Prepare targeted fixes'],
   });
   oversightOriginRef.current = {
-    surfaceId: 'document-authoring', label: 'Authoring', moduleContext, authoringContext,
+    surfaceId: 'document-authoring', label: getSurfaceMeta('document-authoring').label, moduleContext, authoringContext,
     ...(activeDoc && programId ? { authoringDocument: {
       docId: activeDoc.id, programId, ...(activeSection ? { sectionId: activeSection.id } : {}),
     } } : {}),
@@ -5311,7 +5312,7 @@ export function DocumentWorkbench({
                     {/* 2026-09-28 (GE-P-2, coverage-gap sweep): this said "Create a new
                         version to make further changes" — a capability nothing provides.
                         The remedy that exists is a new document; this one stays the record. */}
-                    To make further changes, start a new document in Authoring; this one remains the record.
+                    To make further changes, start a new document in the editor; this one remains the record.
                   </div>
                 )}
                 {/* Above the canvas, at reading width: the accept decision is

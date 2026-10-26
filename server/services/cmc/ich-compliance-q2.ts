@@ -60,7 +60,7 @@ export function q2Expectation(stage: ProgramStage | null | undefined): Expectati
     return {
       level: 'validation',
       shortfall: 'fail',
-      why: 'The program records no application type, so the marketing-application standard is applied.',
+      why: 'The project records no application type, so the marketing-application standard is applied.',
       citation: cite('ich-q2-r2'),
     };
   }
@@ -97,9 +97,9 @@ export function q2Expectation(stage: ProgramStage | null | undefined): Expectati
     level: 'validation',
     shortfall: 'warning',
     why:
-      'The program records no clinical phase, so the phase-appropriate expectation cannot be applied: phase 1 ' +
+      'The project records no clinical phase, so the phase-appropriate expectation cannot be applied: phase 1 ' +
       'needs suitable procedures, phase 3 and the marketing application need Q2(R2) validation. Record the phase ' +
-      'in the program’s study design.',
+      'in the project’s study design.',
     citation: cite('fda-fih-ph1-cmc-small-molecule-2026', 'ema-qwp-545525-2017-rev2', 'ich-q2-r2'),
   };
 }

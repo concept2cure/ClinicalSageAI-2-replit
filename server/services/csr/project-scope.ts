@@ -62,11 +62,11 @@ async function resolveProgramScope(database: Pick<RequestDb, 'select'>, organiza
   let projectId = parseCsrScopeId(input.projectId, 'projectId');
   let programId: string | undefined;
   if (input.programId !== undefined) {
-    if (typeof input.programId !== 'string' || !looksLikeProgramUuid(input.programId)) throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'programId must be a program UUID.');
+    if (typeof input.programId !== 'string' || !looksLikeProgramUuid(input.programId)) throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'programId must be a project UUID.');
     programId = input.programId.trim().toLowerCase();
     const anchor = await readProgramAnchorRow(database as RequestDb, { programId, orgId: organizationId, context: 'csr-workflow', requireUnique: true });
-    if (!anchor) throw new CsrScopeError('CSR_PROGRAM_NOT_ANCHORED', 409, 'The program has no unique project record for this organization. Nothing was read or built under another program.');
-    if (projectId !== undefined && projectId !== anchor.id) throw new CsrScopeError('CSR_SCOPE_MISMATCH', 400, 'projectId does not identify the selected program.');
+    if (!anchor) throw new CsrScopeError('CSR_PROGRAM_NOT_ANCHORED', 409, 'The project has no unique tracking record for this organization. Nothing was read or built under another project.');
+    if (projectId !== undefined && projectId !== anchor.id) throw new CsrScopeError('CSR_SCOPE_MISMATCH', 400, 'projectId does not identify the selected project.');
     projectId = anchor.id;
   }
   return { projectId, programId };
@@ -76,7 +76,7 @@ async function verifyWorkspaceScope(database: Pick<RequestDb, 'select'>, organiz
   if (clientWorkspaceId !== undefined) {
     const [workspace] = await database.select({ id: clientWorkspaces.id }).from(clientWorkspaces).where(and(eq(clientWorkspaces.id, clientWorkspaceId), eq(clientWorkspaces.organizationId, organizationId))).limit(1);
     if (!workspace) throw new CsrScopeError('CSR_WORKSPACE_NOT_FOUND', 403, 'That client workspace is not in your organization.');
-    if (projectId === undefined) throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'A client workspace filter requires an explicit project or program.');
+    if (projectId === undefined) throw new CsrScopeError('CSR_SCOPE_INVALID', 400, 'A client workspace filter requires an explicit project or tracking record.');
   }
 }
 

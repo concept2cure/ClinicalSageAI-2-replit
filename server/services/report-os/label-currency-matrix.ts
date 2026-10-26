@@ -121,7 +121,7 @@ export function calculateLabelCurrencyMatrix(snapshot: LabelMatrixSnapshot): Lab
   return { schemaVersion: 1, observedAt, products: snapshot.products, registrations: snapshot.registrations, labels,
     obligations: snapshot.obligations.map(obligation => ({ ...obligation, productName: obligation.product_id == null ? null : products.get(obligation.product_id)!.product_name, urgency: obligationUrgency({ dueDate: obligation.due_date, terminal: terminal.has(obligation.status) }, today) })), gaps,
     limits: [LABEL_CURRENCY_LIMIT,
-      'The data covers the organization. A project or program is context, not a product or client-workspace filter.',
+      'The data covers the organization. A project is context, not a product or client-workspace filter.',
       'All stored versions and statuses are shown. Version strings are not ranked and approved status is not an effective-date assertion.',
       'J-Label is not supported by the canonical label-type schema. No CCDS or other label type is substituted for it or for an unknown market.',
       'Lifecycle obligations are independent product/region records; they are not linked to a specific label. Region is not mapped to country, and overdue dates do not establish labeling noncompliance.'],

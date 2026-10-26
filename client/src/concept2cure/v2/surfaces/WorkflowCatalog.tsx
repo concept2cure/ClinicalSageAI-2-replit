@@ -1,5 +1,6 @@
-// Existing live module catalog, reached as Plan & features (an administrator's view since
-// 2026-10-25; docs/design/CLIENT_JOURNEY_2026-10-25.md); ids and write contracts stay stable.
+// Existing live module catalog, reached as Subscription & features (an administrator's view since
+// 2026-10-25; docs/design/CLIENT_JOURNEY_2026-10-25.md; named so on 2026-10-26, section 9 of
+// .design/client-journey/INFORMATION_ARCHITECTURE.md); ids and write contracts stay stable.
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
@@ -477,12 +478,12 @@ export function Apps({ onNav }: SurfaceViewProps) {
      confidently-wrong answer this channel exists to prevent. */
   const anaContext = useMemo(() => {
     if (catState.loading || licState.loading) {
-      return { summary: 'Plan & features and licence details are still loading; nothing on screen is final yet.' };
+      return { summary: 'Subscription & features and licence details are still loading; nothing on screen is final yet.' };
     }
     if (catState.error) {
       return {
         summary:
-          'Plan & features could not be read, so this screen is showing no features because of a ' +
+          'Subscription & features could not be read, so this screen is showing no features because of a ' +
           'failure, not because none are entitled.',
         availableActions: ['Retry the catalog read'],
       };
@@ -490,12 +491,12 @@ export function Apps({ onNav }: SurfaceViewProps) {
     const all = groups.flatMap((g) => g.apps);
     return {
       summary:
-        'Plan & features lists what the organisation\'s plan includes. Each feature is used inside a project, ' +
+        'Subscription & features lists what the organisation\'s subscription includes. Each feature is used inside a project, ' +
         'along the project journey: Evidence → Author → Review → Submit → Respond' +
         (lic
-          ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
+          ? `. Subscription "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
             `${usagePhrase(pj, 'projects')} and ${usagePhrase(us, 'users')} used`
-          : '. The licence could not be read, so no plan or usage figures are on screen') +
+          : '. The licence could not be read, so no subscription or usage figures are on screen') +
         (admin ? '. Admin controls are switched on, so the enable/disable toggles are live.' : ''),
       facts: {
         adminControlsVisible: admin,
@@ -538,8 +539,8 @@ export function Apps({ onNav }: SurfaceViewProps) {
       availableActions: [
         'Find a feature and open an available feature',
         'Open Projects to work with MDX features inside a device or diagnostic project',
-        'Show the admin controls and enable or disable a module for this organisation (admin only; takes a reason for change and is written to the audit trail)',
-        'Read the plan tier and the project / user usage against their limits',
+        'Show the admin controls and enable or disable a feature for this organisation (admin only; takes a reason for change and is written to the audit trail)',
+        'Read the subscription tier and the project / user usage against their limits',
       ],
     };
   }, [catState.loading, catState.error, licState.loading, licState.error, groups, lic, pj, us, admin, query, catalogView]);
@@ -553,8 +554,8 @@ export function Apps({ onNav }: SurfaceViewProps) {
       if (want !== 'on' && want !== 'off') {
         return { ok: false, reason: `"${params.state}" is not a state for the admin controls — choose on or off.` };
       }
-      if (catState.loading) return { ok: false, reason: 'Plan & features is still loading.', retry: true };
-      if (catState.error) return { ok: false, reason: 'Plan & features could not be read, so the admin controls are not on screen.' };
+      if (catState.loading) return { ok: false, reason: 'Subscription & features is still loading.', retry: true };
+      if (catState.error) return { ok: false, reason: 'Subscription & features could not be read, so the admin controls are not on screen.' };
       const next = want === 'on';
       if (admin === next) return { ok: true, detail: `The admin controls are already ${want}` };
       setAdmin(next);
@@ -573,7 +574,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
           className="btn ghost"
           style={{ height: 26, marginLeft: 'auto' }}
           onClick={() => setAdmin(true)}
-          title="Turn on admin controls to enable this module"
+          title="Turn on admin controls to enable this feature"
         >
           Admin controls
         </button>
@@ -603,7 +604,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
           data-on={a.on || undefined}
           style={{ marginLeft: 'auto' }}
           onClick={() => toggle(groupIdx, a.id, !a.on)}
-          title={a.on ? 'Disable module' : 'Enable module'}
+          title={a.on ? 'Disable this feature' : 'Enable this feature'}
         >
           <span className="lic-toggle-k"></span>
         </button>
@@ -664,11 +665,12 @@ export function Apps({ onNav }: SurfaceViewProps) {
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Administration</div>
-          <h1 className="ph-title">Plan &amp; features</h1>
+          <h1 className="ph-title">{getSurfaceMeta('apps').label}</h1>
           {/* Not a place a client works from (docs/design/CLIENT_JOURNEY_2026-10-25.md):
               each feature is used inside a project, and this page says what the
-              plan includes and why a feature is unavailable. */}
-          <p className="ph-sub">What your organization’s plan includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.</p>
+              subscription includes and why a feature is unavailable. The heading
+              is the registry label, so it and the breadcrumb are one name. */}
+          <p className="ph-sub">What your organization’s subscription includes, and why any feature is unavailable. Your team uses these features inside a project, along its steps: Evidence → Author → Review → Submit → Respond. An administrator turns features on or off here.</p>
         </div>
         <button className="btn ghost" data-on={admin || undefined}
           onClick={() => setAdmin(v => !v)} title="Toggle admin controls">
@@ -690,7 +692,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
         <div className="lic-tier">
           <span className="lic-tier-dot" data-tier={tierLabel}></span>
           <div>
-            <div className="lic-tier-l">Current plan</div>
+            <div className="lic-tier-l">Current subscription</div>
             <div className="lic-tier-v">
               {String(tierLabel).charAt(0).toUpperCase() + String(tierLabel).slice(1)}
               {lic.industryMode ? (
@@ -714,7 +716,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
           onClick={() => open('licensing')}
           data-testid="admin-manage-plan"
         >
-          {I.creditCard || I.zap} Manage plan
+          {I.creditCard || I.zap} {getSurfaceMeta('licensing').label}
         </button>
       </div>
       ) : (
@@ -733,32 +735,32 @@ export function Apps({ onNav }: SurfaceViewProps) {
             onClick={() => open('licensing')}
             data-testid="admin-manage-plan-fallback"
           >
-            {I.creditCard || I.zap} Manage plan
+            {I.creditCard || I.zap} {getSurfaceMeta('licensing').label}
           </button>
         </div>
       )}
 
       {catState.loading ? (
         <div className="sec">
-          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading features…</div>
         </div>
       ) : catState.error ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
-          title="Couldn't load workflows"
+          title="Couldn't load features"
           hint="Your workspace features could not be loaded. Check your connection and try again."
         />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={I.grid}
-          title="No workflows available"
+          title="No features available"
           hint="No features are listed for this workspace. Ask your administrator to check the workspace setup."
         />
       ) : (
         <div className="workflow-guide">
           {catalogView.matchingFeatures === 0 ? (
-            <EmptyState icon={I.search} title="No workflows match your search"
+            <EmptyState icon={I.search} title="No features match your search"
               hint="Try a task, document type or feature name, or clear the search." />
           ) : null}
           <span className="sr-only" role="status">
@@ -768,7 +770,7 @@ export function Apps({ onNav }: SurfaceViewProps) {
             const mdxFeatures = area.features.filter(feature => isMdxProjectFeature(feature.row.id));
             const sharedFeatures = area.features.filter(feature => !isMdxProjectFeature(feature.row.id));
             return (
-              <section key={area.id} className="workflow-area" aria-label={`${area.label} workflow`}>
+              <section key={area.id} className="workflow-area" aria-label={area.label}>
                 <h2>{area.label}</h2>
                 <dl className="workflow-guidance">
                   <div><dt>When to use</dt><dd>{area.when}</dd></div>
@@ -818,11 +820,11 @@ export function Apps({ onNav }: SurfaceViewProps) {
       <div className="sec">
         <div className="sec-hdr">
           <div className="sec-title">Platform services</div>
-          <div className="sec-sub">Shared services supporting these workflows</div>
+          <div className="sec-sub">Shared services supporting these features</div>
         </div>
         <div className="svc-note">
           {I.info}
-          <span>These services support drafting, evidence, reporting and signing within the workflows above.</span>
+          <span>These services support drafting, evidence, reporting and signing within the features above.</span>
         </div>
         <div className="svc-grid">
           {PLATFORM_SERVICES.map((s, i) => (

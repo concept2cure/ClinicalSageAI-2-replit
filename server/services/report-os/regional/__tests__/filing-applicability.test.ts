@@ -18,7 +18,7 @@ describe('the same strict current filing validator feeds overview and engine', (
   }
   it.each([{}, null, undefined])('requires a recorded filing for absent metadata (%j)', metadata => {
     expect(regionalFilingApplicability('usa_fda.ind_safety_readiness', { region: 'USA_FDA' }, readRecordedRegionalFiling(metadata)))
-      .toMatchObject({ runnable: false, availabilityState: 'filing-context-required', reasonCode: 'REGIONAL_FILING_CONTEXT_REQUIRED', availabilityReason: 'Record the program’s filing type before running this market readiness assessment. No market readiness was assessed.' });
+      .toMatchObject({ runnable: false, availabilityState: 'filing-context-required', reasonCode: 'REGIONAL_FILING_CONTEXT_REQUIRED', availabilityReason: 'Record the project’s filing type before running this market readiness assessment. No market readiness was assessed.' });
   });
   it.each(['{broken', '[]', 4, [], { registryId: null }, { registryId: '' }, { registryId: 123 }, { submissionType: {} }, { registryId: 'UNKNOWN', submissionType: 'NDA' }, { registryId: 'EU_MAA', submissionType: 'NDA' }, { registryId: 'EU_MAA', applicationNumber: true }])('refuses malformed/conflicting context (%j)', metadata => {
     const context = readRecordedRegionalFiling(metadata);

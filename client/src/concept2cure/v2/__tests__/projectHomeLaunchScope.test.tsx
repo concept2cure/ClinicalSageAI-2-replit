@@ -13,6 +13,11 @@
  * FILING_SPINE.md F2 (2026-10-08) removed Plan and Lifecycle. What they and
  * Respond's locked tools promised is one coming-later line of words, with no
  * button; no stage says "Not in this release" (projectHomeStages.test.tsx).
+ *
+ * Slice A.1 (INFORMATION_ARCHITECTURE.md sections 3, 8 and 9) gave every step
+ * its line, Plan, Evidence, Author and Review as well as Submit and Respond,
+ * each naming what that step will hold once it works; a device project reads
+ * its own line where the step has one (PJ_LIFECYCLE laterDevice).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,14 +58,24 @@ vi.mock('../navEntitlements', async (importOriginal) => {
 });
 
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 
 const PID = '9a7f0b10-0000-4000-8000-0000000000cc';
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
 
+/* The project the detail read returns; a test may name the filing. */
+const PROJECT = { id: PID, name: 'BX-204', status: 'active' };
+let project: Record<string, unknown> = PROJECT;
+const FILINGS = {
+  'a drug IND': { program_type: 'IND', product_type: 'drug', primary_agency: 'FDA' },
+  'a device 510(k)': { program_type: '510K', product_type: 'device', regulatory_path: '510k', primary_agency: 'FDA' },
+} as const;
+
 beforeEach(() => {
+  project = PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-204', status: 'active' });
+    if (url === `/api/c2c/projects/${PID}`) return ok(project);
     if (url === `/api/c2c/projects/${PID}/dossier`)
       return ok({ projectId: PID, measuredAt: '2026-10-22T09:00:00.000Z', home: { state: 'measured', pct: 25, counted: 4, complete: 1 }, markets: [],
         rows: [{ group: 'module', module: '2', agency: null, label: 'Module 2 · Summaries', documentId: 'd', counted: 4, complete: 1, inReview: 0, drafted: 0, figure: { state: 'measured', pct: 25, counted: 4, complete: 1 }, lastUpdated: null }] });
@@ -81,8 +96,16 @@ const toolIds = (onNav: ReturnType<typeof vi.fn>) => {
   return onNav.mock.calls.map((c) => c[0] as string);
 };
 
+const STEPS = ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond'] as const;
+
 describe('Project home and the launch scope', () => {
-  it.each(['Respond', 'Submit'])('the %s stage offers no locked tool, and names what comes later in words', async (label) => {
+  it.each(STEPS.flatMap((label) => (Object.keys(FILINGS) as Array<keyof typeof FILINGS>).map((filing) => [label, filing] as const)))(
+    'the %s step of %s offers no locked tool, and names what comes later in one bare line of words', async (label, filing) => {
+    project = { ...PROJECT, ...FILINGS[filing] };
+    const device = filing === 'a device 510(k)';
+    const step = PJ_LIFECYCLE.find((s) => s.label === label)!;
+    const words = (device && step.laterDevice) || step.later;
+    expect(words, `${label} has a Coming later line`).toBeTruthy();
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
     await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(6));
@@ -92,10 +115,12 @@ describe('Project home and the launch scope', () => {
     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers tools that open "not in this release"`).toEqual([]);
     // What is not in this release is a line of words, never a panel or a button.
     expect(screen.queryByText('Not in this release')).toBeNull();
-    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/^Coming later:/);
-    // The same bare line on both stages: Respond's sat inside its tool card
+    // One line per step, read once the project's filing is known (a device reads its own line).
+    await waitFor(() => expect(screen.getByTestId('pj-coming-later').textContent).toBe(`Coming later: ${words}`));
+    // The same bare line on every step: Respond's sat inside its tool card
     // (filing-spine design review, open item 10, 2026-10-08).
     expect(screen.getByTestId('pj-coming-later').closest('.pj-sec')).toBeNull();
+    expect(screen.getByTestId('pj-coming-later').querySelector('button, a')).toBeNull();
     // The removed Plan stage pointed at meetings, eTMF and grants "above".
     expect(screen.queryByText('Meetings, eTMF and grants open in their own surfaces')).toBeNull();
   });

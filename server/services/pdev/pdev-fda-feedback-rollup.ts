@@ -301,7 +301,7 @@ export class PdevFdaFeedbackRollupService {
   async applyRollup(input: PdevFdaFeedbackApplyInput): Promise<PdevFdaFeedbackApplyResult> {
     // Tenant gate.
         if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
-      throw new Error('PDEV program not found in tenant');
+      throw new Error('PDEV project not found in tenant');
     }
 
     const applied: PdevFdaFeedbackApplyResult['applied'] = [];
@@ -339,7 +339,7 @@ export class PdevFdaFeedbackRollupService {
       if (ctx.programId !== input.programId) {
         skipped.push({
           commitmentId: mapping.commitmentId,
-          reason: 'Commitment belongs to a different program',
+          reason: 'Commitment belongs to a different project',
         });
         continue;
       }

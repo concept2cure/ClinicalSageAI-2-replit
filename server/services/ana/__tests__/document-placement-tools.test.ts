@@ -321,7 +321,7 @@ describe('the inputs it will not act on', () => {
       ok: false,
       status: 400,
       code: 'INVALID_FOLDER',
-      message: "Folder 'zone-5' does not exist in this program's pharma vault taxonomy.",
+      message: "Folder 'zone-5' does not exist in this project's pharma vault taxonomy.",
     });
     const out = await call({ document_id: VAULT_ID, folder_id: 'zone-5', rationale: 'r' });
     expect(out.ok).toBe(false);

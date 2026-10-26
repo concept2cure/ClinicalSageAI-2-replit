@@ -24,7 +24,7 @@ describe('a filing document class records the product class the filing fixes', (
     expect(productTypeFixedByFiling('us_nda_supp')).toBeNull();
     const asked = productTypeForIntake('pas', '', 'us_nda_supp') as { refusal: string };
     expect(asked.refusal).toBe(
-      'State whether the product is a drug or a biologic: a Prior Approval Supplement filing covers both, and the class is recorded on the program.',
+      'State whether the product is a drug or a biologic: a Prior Approval Supplement filing covers both, and the class is recorded on the project.',
     );
     expect(productTypeForIntake('pas', 'drug', 'us_nda_supp')).toEqual({ productType: 'drug' });
   });

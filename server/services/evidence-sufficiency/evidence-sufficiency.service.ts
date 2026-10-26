@@ -389,7 +389,7 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
           ? 'Claim health was not assessed: no claim-health result was supplied, so no claim ' +
             'was checked for contradicting or missing evidence.'
           : ch.assessed === false || ch.claimsRecorded === 0
-            ? 'Claim health was not assessed: no claims are recorded for this program, so the ' +
+            ? 'Claim health was not assessed: no claims are recorded for this project, so the ' +
               'orphan and contradiction counts are zero because nothing was examined — not because ' +
               'nothing was found.'
             : 'Claim health was not assessed: the result supplied does not say how many claims ' +

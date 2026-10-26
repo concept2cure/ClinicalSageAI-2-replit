@@ -39,6 +39,15 @@ describe('AnA reads the same complete IND catalogue as the existing editor', () 
     expect(pages.length).toBeGreaterThan(1);
   });
 
+  /* Slice A.1 (INFORMATION_ARCHITECTURE.md section 9): phase 1 read "Program Planning" until 2026-10-26. AnA's
+     first page and Plan's "{n}. {phase name}" read this one catalogue, so they read one name. */
+  it("names phase 1 as Plan does, from the same catalogue: 'Planning'", () => {
+    const catalog = buildIndDocumentCatalog();
+    const first = JSON.parse(documentSectionRequirements({ document: 'ind_pyramid' }));
+    expect(first.phases[0]).toEqual(catalog.phases[0]);
+    expect(catalog.phases[0]).toEqual({ id: 'phase1', name: 'Planning', order: 1 });
+  });
+
   it('preserves official-form and dataset authoring limits instead of declaring them narrative drafts', () => {
     const { entries } = walk();
     const forms = entries.filter(e => String(e.title).includes('1571') || String(e.title).includes('1572') || String(e.title).includes('3674'));

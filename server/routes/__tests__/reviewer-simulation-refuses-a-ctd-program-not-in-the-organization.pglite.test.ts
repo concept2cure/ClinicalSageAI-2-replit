@@ -132,6 +132,6 @@ describe('AnA reviewer_simulation.run', () => {
 
     expect(r.error, r.message).toBe('CTD_PROGRAM_NOT_FOUND');
     expect(r.success).toBe(false);
-    expect(r.message).toMatch(/CTD program 20 is not on record/);
+    expect(r.message).toMatch(/CTD dossier 20 is not on record/);
   });
 });

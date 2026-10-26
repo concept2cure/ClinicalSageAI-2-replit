@@ -306,7 +306,7 @@ router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
       return;
     }
     if (typeof programParam !== 'string' || !isUuid(programParam)) {
-      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a project UUID.' } });
     }
     const programId = programParam.toLowerCase();
     ok(res, await listSubmissionsForRequest(requestPgClient(req), ctx, programId));

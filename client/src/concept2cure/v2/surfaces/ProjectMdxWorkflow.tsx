@@ -1,6 +1,7 @@
 import React from 'react';
 import { isDeviceFamily, isIvdFamily, productTypeForFilingType } from '@shared/constants/domain/product-types';
 import { compileWorkPackages, type Specialization, type WorkPackage } from '@shared/regulatory/work-packages';
+import { DEVICE_DOORS } from '../projectDoors';
 import '../styles/mdx-project-workflow.css';
 
 /** The verified project read, not the shell handoff or an organization default. */
@@ -24,7 +25,14 @@ function filingToken(value: string | null | undefined): string | null {
 }
 
 const FILING_LABELS: Record<string, string> = { '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', mdr: 'EU MDR CER', ivdr: 'EU IVDR PER' };
-const PATHWAY_FEATURES: Record<string, string> = { '510k': 'device-510k', pma: 'device-pma', mdr: 'device-cer', ivdr: 'device-diagnostics' };
+/** Each primary pathway's own feature, and the names of its strategy and assembly doors (section 9: a device
+ *  door's name depends on the pathway the project files). A De Novo or an unrecorded route has none. */
+const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
+  '510k': { surface: 'device-510k', doors: DEVICE_DOORS.pathway['510k'] },
+  pma: { surface: 'device-pma', doors: DEVICE_DOORS.pathway.pma },
+  mdr: { surface: 'device-cer', doors: DEVICE_DOORS.pathway.mdr },
+  ivdr: { surface: 'device-diagnostics', doors: DEVICE_DOORS.pathway.ivdr },
+};
 const CLINICAL_SUMMARIES: Record<string, string> = {
   mdr: 'Clinical Affairs and a qualified evaluator lead the clinical evaluation. Literature specialists, clinicians, biostatistics and surveillance supply the evidence; Regulatory Affairs maps the conclusions to GSPR and the conformity route.',
   ivdr: 'Clinical Affairs coordinates the performance evaluation with assay development and laboratory medicine: scientific validity, analytical performance and clinical performance feed the PER and its PMPF updates.',
@@ -43,7 +51,8 @@ export function mdxProjectPlan(project: MdxWorkflowProject, otherFilings: string
   const clinicalSummary = CLINICAL_SUMMARIES[primary ?? ''];
   return {
     primary,
-    title: `${filingLabel ? `${filingLabel} · ` : ''}${diagnostic ? 'Diagnostic' : 'Device'} project workflow`,
+    /* Named as Plan names a US IND's list ("What this IND needs"), by the filing (section 9). */
+    title: `What this ${filingLabel ?? (diagnostic ? 'diagnostic filing' : 'device filing')} needs`,
     lead: clinicalSummary ? 'Clinical Affairs' : 'Regulatory Affairs',
     summary: clinicalSummary ?? 'Regulatory Affairs owns the filing. Engineering, Quality and Risk Management supply the technical evidence; Medical Writing authors the narrative and Regulatory Operations assembles the submission.',
     cadence: clinicalSummary
@@ -53,30 +62,31 @@ export function mdxProjectPlan(project: MdxWorkflowProject, otherFilings: string
   };
 }
 
-/** Destinations are existing features or the project's own evidence/document stages. */
+/** Destinations are existing features or the project's own evidence/document stages. Each door is named for its
+ *  job (projectDoors.ts, section 9's Door names), not for where it goes. */
 type WorkDestination = { surface?: string; stage?: string; label: string };
-const ENGINEERING_DESTINATION = { surface: 'device-engineering', label: 'Open engineering evidence' };
-const EVIDENCE_DESTINATION = { stage: 'evidence', label: 'Open project evidence' };
-const DOCUMENT_DESTINATION = { stage: 'author', label: 'Open project documents' };
+const ENGINEERING_DESTINATION = { surface: 'device-engineering', label: DEVICE_DOORS.engineering };
+const EVIDENCE_DESTINATION = { stage: 'evidence', label: DEVICE_DOORS.evidence };
+const DOCUMENT_DESTINATION = { stage: 'author', label: DEVICE_DOORS.documents };
 const WORK_DESTINATIONS: Record<string, WorkDestination> = {
   'design-controls': ENGINEERING_DESTINATION, 'risk-management': ENGINEERING_DESTINATION,
   'manufacturing-transfer': ENGINEERING_DESTINATION,
-  'software-cybersecurity': { surface: 'device-software', label: 'Open software evidence' },
+  'software-cybersecurity': { surface: 'device-software', label: DEVICE_DOORS.software },
   'medical-writing': DOCUMENT_DESTINATION, labeling: DOCUMENT_DESTINATION, 'registration-udi': DOCUMENT_DESTINATION,
-  'authority-review': { stage: 'respond', label: 'Open agency responses' },
-  postmarket: { surface: 'device-postmarket', label: 'Open surveillance' },
+  'authority-review': { stage: 'respond', label: DEVICE_DOORS.agencyResponses },
+  postmarket: { surface: 'device-postmarket', label: DEVICE_DOORS.surveillance },
 };
 function packageDestination(item: WorkPackage, primary: string | null): WorkDestination {
   const { id, filingSectionsSupported } = item;
   const pathway = PATHWAY_FEATURES[primary ?? ''];
-  if (id === 'regulatory-strategy' && pathway) return { surface: pathway, label: 'Open pathway work' };
+  if (id === 'regulatory-strategy' && pathway) return { surface: pathway.surface, label: pathway.doors.strategy };
   if (id === 'submission-assembly') return pathway
-    ? { surface: pathway, label: primary === '510k' ? 'Open eSTAR assembly' : 'Open filing documents' }
+    ? { surface: pathway.surface, label: pathway.doors.assembly }
     : DOCUMENT_DESTINATION;
   if (id === 'clinical-evidence') return filingSectionsSupported.some(section => section.startsWith('mdr:'))
-    ? { surface: 'device-cer', label: 'Open clinical evaluation' } : { surface: 'device-clinical-studies', label: 'Open clinical studies' };
+    ? { surface: 'device-cer', label: DEVICE_DOORS.clinicalEvaluation } : { surface: 'device-clinical-studies', label: DEVICE_DOORS.clinicalStudies };
   if (['analytical-performance', 'clinical-performance', 'performance-evaluation'].includes(id)) return filingSectionsSupported.some(section => section.startsWith('ivdr:'))
-    ? { surface: 'device-diagnostics', label: 'Open IVDR evidence' } : EVIDENCE_DESTINATION;
+    ? { surface: 'device-diagnostics', label: DEVICE_DOORS.ivdrEvidence } : EVIDENCE_DESTINATION;
   return WORK_DESTINATIONS[id] ?? EVIDENCE_DESTINATION;
 }
 
@@ -116,7 +126,7 @@ function Workstream({ item, plan, onNav, onStage, onAsk, available, projectName,
           <button type="button" className="btn ghost" onClick={() => {
             if (destination.surface && canOpen) onNav(destination.surface);
             else onStage(destination.stage ?? 'evidence');
-          }}>{canOpen ? destination.label : 'Open project evidence'}</button>
+          }}>{canOpen ? destination.label : EVIDENCE_DESTINATION.label}</button>
           {assignAction?.({ id: item.id, title: item.title, group: item.ownerDiscipline })}
           <button type="button" className="btn" onClick={() => onAsk(
             `For the open project ${projectName}, prepare the ${item.title.toLowerCase()} work with ${item.ownerDiscipline}. ` +

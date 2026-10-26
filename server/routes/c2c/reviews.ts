@@ -1751,7 +1751,7 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const onProject = await inboxProjectFilter(req.query.programId, organizationId);
-    if (onProject === false) return sendError(res, 400, 'programId must be a program id');
+    if (onProject === false) return sendError(res, 400, 'The project id is not valid.');
     // A program with no project record has no review threads or tasks to read.
     const unanchored = onProject === null;
 

@@ -13,8 +13,9 @@
  * what they need from the person (waiting on you, in review, changes
  * requested, declined, reviewers approved and awaiting sign-off, approved),
  * and each row opens THAT document in the editor
- * through the editor target. "Open the review board" opens the full Review
- * surface, and only when that surface is in this release.
+ * through the editor target. "Review documents on the review board" opens the
+ * full Review surface, and only when that surface is in this release ("Open
+ * the review board" until slice A.1 named each door for its job).
  *
  * Pinned here:
  *   - the read is by the program's UUID, scope all;
@@ -26,7 +27,8 @@
  *   - a failed read is an error with a retry and the read's own reason, never an empty list;
  *   - an empty board says so in words;
  *   - the tab never sends the person to `task-board` and never says "aren't wired";
- *   - "Open the review board" is offered only when the Review surface is available.
+ *   - "Review documents on the review board" is offered only when the Review surface is available;
+ *   - "See all tasks in Tasks" opens Tasks from the tab's tasks and approvals.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -248,13 +250,13 @@ describe('ProjectHome — the Review tab shows this filing’s reviews', () => {
     expect(p.onNav).not.toHaveBeenCalledWith('task-board');
   });
 
-  it('"Open the review board" opens the Review surface when it is available, and is not shown when it is not', async () => {
+  it('"Review documents on the review board" opens the Review surface when it is available, and is not shown when it is not', async () => {
     serve(() => ok(board(QUEUE)));
     const p = props();
     render(<ProjectHome {...p} />);
     openReviewStage();
 
-    fireEvent.click(await screen.findByRole('button', { name: /Open the review board/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Review documents on the review board' }));
     expect(p.onNav).toHaveBeenCalledWith('review');
 
     cleanup();
@@ -263,6 +265,17 @@ describe('ProjectHome — the Review tab shows this filing’s reviews', () => {
     render(<ProjectHome {...props()} />);
     openReviewStage();
     await screen.findByText('Cover letter');
-    expect(screen.queryByRole('button', { name: /Open the review board/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Review documents on the review board' })).toBeNull();
+  });
+
+  it('"See all tasks in Tasks" opens Tasks from the tab\'s tasks and approvals', async () => {
+    serve(() => ok(board(QUEUE)));
+    const p = props();
+    render(<ProjectHome {...p} />);
+    openReviewStage();
+    /* Slice A.1: it read "Open task board", naming only where it went (section 9, Door names). */
+    const panel = await screen.findByRole('region', { name: 'Tasks and approvals' });
+    fireEvent.click(within(panel).getByRole('button', { name: 'See all tasks in Tasks' }));
+    expect(p.onNav).toHaveBeenCalledWith('tasks');
   });
 });

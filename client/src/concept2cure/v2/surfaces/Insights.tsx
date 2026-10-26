@@ -25,6 +25,7 @@ import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+import { getSurfaceMeta } from '../registryModel';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -2148,7 +2149,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                 <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
                 <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} requires the stated plan and an implemented report engine at the requested scope. A plan does not supply a missing engine or qualify a prediction.</div>
                 <div className="rc-lock-acts">
-                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
+                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>{getSurfaceMeta('licensing').label} {I.right}</button>
                   <button className="rc-chip" onClick={() => setTierOverride(found.locked!.requiredTier)}>Preview on {tierLabel(found.locked.requiredTier)}</button>
                 </div>
               </div>

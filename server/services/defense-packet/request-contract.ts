@@ -19,17 +19,17 @@ function positiveId(value: unknown): number | null {
   return Number.isSafeInteger(number) && number > 0 ? number : null;
 }
 export async function assertShadowProgramAccess(req: Request, programId: unknown): Promise<void> {
-  if (typeof programId !== 'string' || !looksLikeProgramUuid(programId)) throw new ShadowContractRefusal(400, 'PROGRAM_ID_INVALID', 'A valid program UUID is required.');
+  if (typeof programId !== 'string' || !looksLikeProgramUuid(programId)) throw new ShadowContractRefusal(400, 'PROGRAM_ID_INVALID', 'A valid project UUID is required.');
   const organizationId = positiveId(req.user?.organizationId);
   const userId = positiveId(req.user?.id);
   if (!organizationId || !userId) throw new ShadowContractRefusal(403, 'PROGRAM_ACCESS_DENIED', 'Current organization identity is required.');
   const client = requestPgClient(req);
-  if (!await programInOrganization(client, programId, organizationId)) throw new ShadowContractRefusal(403, 'PROGRAM_ACCESS_DENIED', 'You do not have access to this program.');
+  if (!await programInOrganization(client, programId, organizationId)) throw new ShadowContractRefusal(403, 'PROGRAM_ACCESS_DENIED', 'You do not have access to this project.');
   // Despite its historical name, this is the canonical generic persisted user,
   // account-status and organization-membership read, not a CSR entitlement.
   const actor = await readCsrProjectActor(client, organizationId, userId);
   const anchor = await readProgramAnchorRow(requestDb(req), { programId, orgId: organizationId, context: 'defense-packet-access', requireUnique: true });
-  if (!anchor) throw new ShadowContractRefusal(409, 'PROGRAM_ANCHOR_UNAVAILABLE', 'This program has no unique project record. Its records could not be verified.');
+  if (!anchor) throw new ShadowContractRefusal(409, 'PROGRAM_ANCHOR_UNAVAILABLE', 'This project has no unique tracking record. Its records could not be verified.');
   if (!await canAccessReportProject(organizationId, actor, anchor.id, client)) throw new ShadowContractRefusal(403, 'PROGRAM_ACCESS_DENIED', 'Current project access is required.');
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     await client.query('BEGIN');
@@ -44,7 +44,7 @@ export async function requireShadowProgramAccess(req: Request, res: Response, ne
   } catch (error) {
     if (error instanceof ShadowContractRefusal) return sendShadowContractRefusal(res, error);
     if ((error as { status?: number }).status === 403) return res.status(403).json({ code: 'PROGRAM_ACCESS_DENIED', error: 'Current project and organization access is required.' });
-    return res.status(503).json({ code: 'PROGRAM_ACCESS_UNAVAILABLE', error: 'Current program access could not be verified.' });
+    return res.status(503).json({ code: 'PROGRAM_ACCESS_UNAVAILABLE', error: 'Current project access could not be verified.' });
   }
 }
 export function sendShadowContractRefusal(res: Response, error: unknown): boolean {
@@ -58,11 +58,11 @@ async function exactRow(req: Request, sql: string, key: unknown): Promise<BoundP
   if (typeof key !== 'string' || !key || key.length > 128) throw new ShadowContractRefusal(400, 'SHADOW_OBJECT_ID_INVALID', 'A valid record identifier is required.');
   try {
     const { rows } = await requestPgClient(req).query(sql, [req.params.programId, key]);
-    if (rows.length !== 1) throw new ShadowContractRefusal(404, 'SHADOW_OBJECT_NOT_FOUND', 'Record not found for this program.');
+    if (rows.length !== 1) throw new ShadowContractRefusal(404, 'SHADOW_OBJECT_NOT_FOUND', 'Record not found for this project.');
     return rows[0] as BoundPacket;
   } catch (error) {
     if (error instanceof ShadowContractRefusal) throw error;
-    throw new ShadowContractRefusal(503, 'SHADOW_BINDING_UNAVAILABLE', 'The stored record and its program binding could not be verified.');
+    throw new ShadowContractRefusal(503, 'SHADOW_BINDING_UNAVAILABLE', 'The stored record and its project binding could not be verified.');
   }
 }
 export function requireBoundPacket(req: Request, key: unknown): Promise<BoundPacket> {
@@ -85,7 +85,7 @@ export async function confirmShadowMutation<T>(req: Request, confirm: () => Prom
   try { return await confirm(); }
   catch {
     throw new ShadowContractRefusal(503, 'SHADOW_OPERATION_UNCONFIRMED',
-      'The external operation may have completed, but its stored program binding could not be confirmed. Review the existing records before retrying.',
+      'The external operation may have completed, but its stored project binding could not be confirmed. Review the existing records before retrying.',
       `/api/programs/${encodeURIComponent(String(req.params.programId))}/predicate-intel/${recoverySuffix}`);
   }
 }

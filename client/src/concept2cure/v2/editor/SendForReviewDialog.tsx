@@ -14,7 +14,7 @@
  * 2. Only once the server has confirmed the request: one review task per
  *    reviewer the request actually asked (their row came back pending),
  *    POST /api/tasks/tasks, through AssignReviewDialog's create and its
- *    confirmation, so the request also appears in each reviewer's My work.
+ *    confirmation, so the request also appears in each reviewer's tasks (Tasks).
  *    The reviewer's verdict on the Review board completes that task on the
  *    server, on the verdict's own transaction (POST /documents/:id/review,
  *    wave 2D), so the verdict and the task do not disagree.
@@ -293,7 +293,7 @@ export function tasksSentence(tasks: ReviewTaskOutcome[]): string | null {
   const made = tasks.filter(t => t.outcome.ok).length;
   const unknown = tasks.filter(t => !t.outcome.ok && t.outcome.unconfirmed).length;
   const refused = tasks.length - made - unknown;
-  if (made === tasks.length) return made === 1 ? 'Their review task is in My work.' : 'Each reviewer asked has a review task in My work.';
+  if (made === tasks.length) return made === 1 ? 'Their review task is in Tasks.' : 'Each reviewer asked has a review task in Tasks.';
   const groups = [
     made ? `${made} created` : null,
     refused ? `${refused} not created` : null,
@@ -359,7 +359,7 @@ function ReasonField({ value, onChange }: { value: string; onChange: (v: string)
   );
 }
 
-/** The task half of the form: what each reviewer's My work task carries. */
+/** The task half of the form: what each reviewer's task in Tasks carries. */
 function TaskFields({ instructions, onInstructions, due, onDue, priority, onPriority }: {
   instructions: string;
   onInstructions: (v: string) => void;
@@ -370,7 +370,7 @@ function TaskFields({ instructions, onInstructions, due, onDue, priority, onPrio
 }) {
   return (
     <fieldset className="de-field">
-      <legend className="de-label">In each reviewer’s My work</legend>
+      <legend className="de-label">In each reviewer’s tasks</legend>
       <div className="de-field">
         <label className="de-label" htmlFor="sfr-instructions">Instructions to the reviewers</label>
         <textarea
@@ -416,7 +416,7 @@ function taskFate(t: ReviewTaskOutcome): TaskFate {
 
 /** One task's line: its id, or why there is none, or that whether there is one is unknown. */
 export function taskLine(t: ReviewTaskOutcome): string {
-  if (t.outcome.ok) return `Task ${t.outcome.taskId} in ${t.outcome.assigneeName ?? t.reviewer}’s My work`;
+  if (t.outcome.ok) return `Task ${t.outcome.taskId} in ${t.outcome.assigneeName ?? t.reviewer}’s tasks`;
   if (t.outcome.unconfirmed) return `${t.reviewer}: ${t.outcome.message}`;
   return `${t.reviewer}: no task. ${t.outcome.message}`;
 }
@@ -635,7 +635,7 @@ function SendForReviewDialogForSource(props: SendForReviewDialogProps) {
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. When you own the document (or are an administrator), each reviewer is granted the Reviewer role on it, which lets them comment and sign the review. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
+                  One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. When you own the document (or are an administrator), each reviewer is granted the Reviewer role on it, which lets them comment and sign the review. Then each reviewer is given a review task in Tasks. Reviewers record their verdicts on the Review board, which completes their task; a binding §11.50 signature is applied on the document.
                 </span>
               </div>
             </>

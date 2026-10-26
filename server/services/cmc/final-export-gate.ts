@@ -369,7 +369,7 @@ export async function evaluateFinalExportGate(params: {
           `has since been superseded or withdrawn. Verify each record against the current version and move its evidence ` +
           `link (or correct the record and recompile) before final export: ${describeDrift(data.supersededEvidenceSections)}`
         : data.unrecordedCriticalFindings.length > 0
-        ? `${data.unrecordedCriticalFindings.length} critical contradiction(s) in the program's current records are not ` +
+        ? `${data.unrecordedCriticalFindings.length} critical contradiction(s) in the project's current records are not ` +
           `recorded: run the contradiction sweep, then resolve or correct them before final export ` +
           `(${data.unrecordedCriticalFindings.map((c) => c.contradictionType).join(', ')})`
         : data.sectionsWithoutProvenance > 0

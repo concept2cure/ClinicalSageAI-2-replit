@@ -192,7 +192,7 @@ export async function resolveRequiredSections(
 ): Promise<RequiredSectionSet> {
   const programType = input.programType ? String(input.programType).trim().toLowerCase() : '';
   if (!programType) {
-    return fallbackSet('The program type is unknown, so no rule pack applies; the ICH CTD marketing-application baseline is in force.');
+    return fallbackSet('The filing type is unknown, so no rule pack applies; the ICH CTD marketing-application baseline is in force.');
   }
   const regional = regionalDeviceApplicationClassOf(programType);
   if (regional) {
@@ -220,7 +220,7 @@ export async function resolveRequiredSections(
   // recorded); the doc type alone still reaches the harmonised ICH pack.
   const klass = resolveDocumentClass(programType, input.primaryAgency ?? 'ICH');
   if (!klass) {
-    return fallbackSet(`No governed document class is mapped for program type '${programType}'; the ICH CTD marketing-application baseline is in force.`);
+    return fallbackSet(`No governed document class is mapped for filing type '${programType}'; the ICH CTD marketing-application baseline is in force.`);
   }
   const candidates = [...new Set(documentAgencyCandidates(klass.docType, klass.agency))];
   try {
