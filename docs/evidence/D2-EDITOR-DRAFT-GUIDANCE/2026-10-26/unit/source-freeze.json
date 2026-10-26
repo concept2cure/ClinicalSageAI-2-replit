@@ -1,0 +1,8 @@
+{
+  "files": {
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "c01919d4c1649f6f6d27e612c2c4aed0cc39078a303d747b9608235db6bbf204",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/ana/project-scope-admission.ts": "3a4d6a9d9f9b7dea888b1e9aa8d3c59868a03e978feff685812987b8061581b3"
+  }
+}

@@ -148,6 +148,7 @@ import {
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import { savedSectionDraftTemplate, buildSectionDraftPrompt } from '../services/authoring/authoring-draft-template';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -3373,13 +3374,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
   let draftTurn: DraftTurn | null = null;
   try {
     const { sectionId } = req.params;
-    const { tone = 'professional', region = 'FDA', context, requirements } = req.body;
+    const { tone = 'professional', context, requirements } = req.body;
     const tenantId = getTenantId(req);
 
     // Get section details
     const sectionResult = await pool.query(
       `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
               s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
+              d.template_id::text, to_jsonb(d)->'provenance' AS provenance,
               to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
@@ -3403,6 +3405,10 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       userId: Number(getActorId(req)),
       projectRef: section.client_program_id,
     });
+    const { region, referenceBlock } = await savedSectionDraftTemplate(pool, {
+      tenantId, documentId: section.doc_id, programId: section.client_program_id,
+      sectionId, code: section.code,
+    }, section, req.body.region);
     const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
     const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
       ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
@@ -3513,21 +3519,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       });
     }
 
-    const prompt = `Generate professional ${region} regulatory content for:
-Module: ${section.module}
-Section: ${section.code} - ${section.title}
-Product: ${section.product_code || 'Medical Product'}
-Tone: ${tone}
-${context ? `Context: ${context}` : ''}
-${requirements ? `Requirements: ${requirements}` : ''}
-${evidenceBlock}
-
-Return ONLY a JSON object of this exact shape:
-{"content": "<the drafted section as clean prose>", "attributions": [{"quote": "<a sentence copied verbatim from content>", "src": <the SRC number>}]}
-- "content" is the full section a reviewer reads — do NOT put [SRC-n] markers in it.
-- Add one "attributions" entry for each sentence you DERIVED from a provided [SRC-n] source: "quote" copied EXACTLY from "content", "src" the integer n.
-- Omit sentences that are your own analysis or not based on a provided source. Never cite a src not shown above.
-Provide detailed, compliance-ready content following ${region} guidelines.`;
+    const prompt = buildSectionDraftPrompt({ section, tone, region, context, requirements, evidenceBlock, referenceBlock });
 
     draftTurn = openDraftTurn(pool, {
       orgId: tenantId,

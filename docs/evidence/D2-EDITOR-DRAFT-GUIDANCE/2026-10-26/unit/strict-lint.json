@@ -1,0 +1,30 @@
+{
+  "startedAt": "2026-10-26T19:13:47.057112+00:00",
+  "argv": [
+    "./node_modules/.bin/eslint",
+    "--max-warnings=0",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.208,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": null,
+  "sourceFreeze": "source-freeze.json",
+  "sourcesBefore": {
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "c01919d4c1649f6f6d27e612c2c4aed0cc39078a303d747b9608235db6bbf204",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/ana/project-scope-admission.ts": "3a4d6a9d9f9b7dea888b1e9aa8d3c59868a03e978feff685812987b8061581b3"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "c01919d4c1649f6f6d27e612c2c4aed0cc39078a303d747b9608235db6bbf204",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/ana/project-scope-admission.ts": "3a4d6a9d9f9b7dea888b1e9aa8d3c59868a03e978feff685812987b8061581b3"
+  },
+  "sourceDrift": [],
+  "rawOutput": "strict-lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "testSummary": []
+}

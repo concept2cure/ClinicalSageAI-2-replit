@@ -1,0 +1,40 @@
+{
+  "scope": "Pure adapter/prompt rendering with typed canonical savedTemplateReview result mocked",
+  "tests": "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+  "testCount": 24,
+  "sourcePins": {
+    "server/services/authoring/authoring-draft-template.ts": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "c01919d4c1649f6f6d27e612c2c4aed0cc39078a303d747b9608235db6bbf204",
+    "server/services/ana/saved-template-review.ts": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+    "server/services/ana/project-scope-admission.ts": "3a4d6a9d9f9b7dea888b1e9aa8d3c59868a03e978feff685812987b8061581b3"
+  },
+  "sourcePinsStillMatch": true,
+  "runs": [
+    {
+      "receipt": "green.json",
+      "exitCode": 0,
+      "testSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  24 passed (24)",
+        "Duration  1.68s (transform 702ms, setup 109ms, import 1.23s, tests 16ms, environment 0ms)"
+      ],
+      "sourceDrift": []
+    },
+    {
+      "receipt": "strict-lint.json",
+      "exitCode": 0,
+      "testSummary": [],
+      "sourceDrift": []
+    }
+  ],
+  "qualification": "Prepared before the new export existed; no absent-export test was run or called RED. Canonical validation/access/SQL/HTTP/provider/candidate persistence are not proven by this isolated mock. Root packet owns actual route RED, SQL/HTTP and broader gates.",
+  "receiptSha256": {
+    "README.md": "8c80ce223105f3d8110c8c3fc8d54eb4ec8407852dc078621f5af6b0e2b0df64",
+    "green.json": "eb4cd84eaca4e32e85d855c5b7a0392c0d5c804e363f4201dd2926db0e058d11",
+    "green.log.gz": "3610b40ec251d10f76a2cfefe9602a03369746b0c523acd54d06ba38b5046baf",
+    "run-check.py": "4eb8f0f313cc617a28564e16a463a60c01ecea8ca2c7abfd21679ead896efd9e",
+    "source-freeze.json": "94b135d0f26fa869d08661fe4d57a586c10ee75f77f640107f76885b764e32bf",
+    "strict-lint.json": "9138eabfe51d80291aaedd39a05bd1c6424b70126aeeb66f526f750d289b0e04",
+    "strict-lint.log.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "startedUtc": "2026-10-26T19:14:25.339211+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "elapsedSeconds": 1.171,
+  "sourceDrift": [],
+  "testSummary": [],
+  "rawOutput": "lint.log.gz",
+  "rawGzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+}

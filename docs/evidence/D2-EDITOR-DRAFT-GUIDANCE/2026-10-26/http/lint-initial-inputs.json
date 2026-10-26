@@ -1,0 +1,170 @@
+{
+  "capturedUtc": "2026-10-26T19:13:16.347613+00:00",
+  "inputs": [
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "157ae82d75faa213e4dadb6e20678297dbc2edb2d17e8e4eeea926dbd9a9eb3a",
+      "snapshot": "lint-initial-00-authoring.router.ts.gz"
+    },
+    {
+      "path": "server/services/ana/saved-template-review.ts",
+      "sha256": "ab7ad8856a2057805428c723380b4643b3cba18170a215121d99ae29d1ee0a4c",
+      "snapshot": "lint-initial-01-saved-template-review.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "sha256": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+      "snapshot": "lint-initial-02-authoring-template-guidance.ts.gz"
+    },
+    {
+      "path": "shared/authoring/recorded-template-source.ts",
+      "sha256": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+      "snapshot": "lint-initial-03-recorded-template-source.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+      "sha256": "94761f994e0e4c2b939c5184adc5cf5c66cdaa481ac1d2f0d13378b6620cedbf",
+      "snapshot": "lint-initial-04-authoringAssemblyDraftSafety.pglite.test.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-canvas-fixture.ts",
+      "sha256": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+      "snapshot": "lint-initial-05-_authoring-canvas-fixture.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-record-fixture.ts",
+      "sha256": "328fd5edc28a4f7d18baeeae35ca92efa333c03fb6680dde380abac91e038006",
+      "snapshot": "lint-initial-06-_authoring-record-fixture.ts.gz"
+    },
+    {
+      "path": "tests/golden-journeys/harness.ts",
+      "sha256": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+      "snapshot": "lint-initial-07-harness.ts.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "lint-initial-08-setup.ts.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "lint-initial-09-vitest.config.ts.gz"
+    },
+    {
+      "path": "eslint.config.js",
+      "sha256": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+      "snapshot": "lint-initial-10-eslint.config.js.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "lint-initial-11-package.json.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+      "snapshot": "lint-initial-12-package-lock.json.gz"
+    },
+    {
+      "path": "migrations/20260727_authoring_document_program_scope.sql",
+      "sha256": "274b1ddc42fdb2084406581160d62fc0c5e8e3f4d050801e9e6e4f4a4c17becf",
+      "snapshot": "lint-initial-13-20260727_authoring_document_program_scope.sql.gz"
+    },
+    {
+      "path": "migrations/20260921_authoring_document_provenance.sql",
+      "sha256": "616cb787b8f0f8b7393171c00ef69447d53556aab436e860f76180549f29be87",
+      "snapshot": "lint-initial-14-20260921_authoring_document_provenance.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "sha256": "319a15fbb81c0b60c7a603b13979a663bb60a39e506fb3c90a9178f34144f07a",
+      "snapshot": "lint-initial-15-20260725_authoring_document_loop_tables.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_audit_trail.sql",
+      "sha256": "6b5c98fe8c713b8a06e894b0b01721f9cacb05a384321cf5183dc72d802dba2c",
+      "snapshot": "lint-initial-16-20260725_authoring_audit_trail.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "sha256": "3685ae069374e11878694de04393d484b12b56e7e77f4afb140294e876ba9338",
+      "snapshot": "lint-initial-17-20260725_authoring_signatures_and_workflow.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "sha256": "c272ad7f9760e9d062254f57f53e6ced0bebe7f658ef878433d9ee23eefc0175",
+      "snapshot": "lint-initial-18-20260725_authoring_signature_freeze_binding.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260727_authoring_object_permissions.sql",
+      "sha256": "deaa6b1f55dcb25648fa4b7678355554928746073a58ac4fbb6c2598c8fb7c02",
+      "snapshot": "lint-initial-19-20260727_authoring_object_permissions.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "sha256": "cc7a7700d15f5270abdad8a7628d070676875aa14e9d71ef6769a79d3e2a5bf7",
+      "snapshot": "lint-initial-20-20260730_authoring_runtime_ddl.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2",
+      "snapshot": "lint-initial-21-20260730_authoring_comments_router_columns.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "sha256": "2b2eb3079dd172dd02bb8f5d770019c616af4cb40ef11e91a1250ef7932fc6eb",
+      "snapshot": "lint-initial-22-20260817_doc_revisions_immutable_ledger.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d",
+      "snapshot": "lint-initial-23-20260730_authoring_subsystem_schema.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260803_document_span_lineage.sql",
+      "sha256": "9e2b0686d8a08ca94e800ded14e6eb636954231d081d6a59533988eac2f9fada",
+      "snapshot": "lint-initial-24-20260803_document_span_lineage.sql.gz"
+    },
+    {
+      "path": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "sha256": "d659449dd1555b84917a45e84c134d51d9336b5b664a7abb3f4d2548a47f1b77",
+      "snapshot": "lint-initial-25-20260809_source_attribution_draft_candidates.sql.gz"
+    },
+    {
+      "path": "migrations/20260921_audit_logs_chain_seq.sql",
+      "sha256": "4f2838bcd6f9a8c52899c4b99f37ed41d151f7d02f63551eb0033736b22b4833",
+      "snapshot": "lint-initial-26-20260921_audit_logs_chain_seq.sql.gz"
+    },
+    {
+      "path": "migrations/20260926_ana_turn_records.sql",
+      "sha256": "90232afca18b8417c5c449de88349c37ca36bdcc58a434f5a78beac8f4e59ac3",
+      "snapshot": "lint-initial-27-20260926_ana_turn_records.sql.gz"
+    },
+    {
+      "path": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "sha256": "2b92f11b66edd420b77645a5df81238694b0985b8a98b936ef0725d6f1be2249",
+      "snapshot": "lint-initial-28-20260907_span_lineage_accepted_machine_draft.sql.gz"
+    },
+    {
+      "path": "migrations/20260908_span_lineage_machine_draft.sql",
+      "sha256": "eb7de6104615f743767d51ac05a1e30dc502ae6a4a1769672aeb482723157179",
+      "snapshot": "lint-initial-29-20260908_span_lineage_machine_draft.sql.gz"
+    },
+    {
+      "path": "migrations/20260814i_draft_candidate_generator.sql",
+      "sha256": "239242cf912120dafd8c9f4afcd826a89f472c15acae20dd5769816af57e45a3",
+      "snapshot": "lint-initial-30-20260814i_draft_candidate_generator.sql.gz"
+    },
+    {
+      "path": "migrations/20260906c_draft_candidate_assertions.sql",
+      "sha256": "03b2645f899886d4ab3d7648e7b86803a9b89185ac306be5c1c33cb1676caa88",
+      "snapshot": "lint-initial-31-20260906c_draft_candidate_assertions.sql.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "3a1289acbd60aae3058072b549b710dc409147fcf4229a9b537a0d28e51d534c",
+      "snapshot": "lint-initial-32-authoring-draft-template.ts.gz"
+    }
+  ]
+}
