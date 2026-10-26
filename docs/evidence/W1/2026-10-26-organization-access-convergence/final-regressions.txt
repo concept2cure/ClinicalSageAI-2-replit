@@ -1,0 +1,352 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 219ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 58ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 39ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 37ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 37ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 33ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > refuses dirty preflight without rotating, purging drafts or asking a second confirmation 249ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds editing while SELECT waits and restores it after a definite membership refusal 128ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > keeps the old editor held after assign returns until the current document unloads 121ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds the raw source textarea without rewriting the device recovery cache 63ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching waits for an existing editor write to settle > refuses preflight during a save even when typing returns the buffer to its old baseline 188ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after select, expires the spent bearer and preserves only the original account recovery cache 133ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after probe, expires the spent bearer and preserves only the original account recovery cache 176ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while select was pending 89ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while probe was pending 143ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > preserves a replacement sign-in for the same account and organization while SELECT waits 92ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt 26ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure 25ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending 24ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations 14ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name 12ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 185ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 106ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing member role instead of requiring the invitation’s suggested role 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing admin role instead of requiring the invitation’s suggested role 67ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > preserved membership role on invitation acceptance > confirms a preserved existing owner role instead of requiring the invitation’s suggested role 68ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > confirms a decline calmly and allows cancellation before the server mutation 79ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > shows quota or authorization refusals without claiming the invitation was accepted 59ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > keeps an inbox read error distinct from no pending invitations and retries it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > refuses malformed pending rows instead of offering a mutation against a guessed organization 30ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > does not accept an invitation until the inviting organization is identified by name 25ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service invitation recovery > retains a pending named invitation when the server does not confirm acceptance 59ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":null} without refreshing membership or announcing acceptance 44ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":""} without refreshing membership or announcing acceptance 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":"  "} without refreshing membership or announcing acceptance 50ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"role":["owner"]} without refreshing membership or announcing acceptance 58ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"invitationId":53} without refreshing membership or announcing acceptance 48ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"organizationId":72} without refreshing membership or announcing acceptance 46ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"userId":34} without refreshing membership or announcing acceptance 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > accepted invitation response proof > refuses malformed or mismatched confirmation {"status":"pending"} without refreshing membership or announcing acceptance 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > offers canonical reporting personas returned by the server and saves only the persona 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > can clear the reporting role without changing the membership role 34ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > reporting role in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 28ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 4ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > Account reaches existing in-app alert setup > loads on request, saves the current recipient preference and refreshes the existing inbox badge 213ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account 279ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 26ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays 69ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words 62ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent 59ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request 104ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 148ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen 84ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words 50ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL 39ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it 134ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing does not need one, removal carries no such warning 39ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 257ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 78ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 212ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 119ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 95ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 36ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 25ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > preserves an unsaved company name and reason across real ordinary bearer refresh 124ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > blocks the retained save before React can rerender a replaced account 175ms
+ ✓ client/src/concept2cure/v2/__tests__/companySettingsSessionContinuity.test.tsx > company settings retain their canonical account/session owner > rereads and remounts legal forms after a same-bearer account snapshot replacement 420ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > lets the recipient accept and decline persisted invitations without switching their session 344ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > lets the recipient decline without creating membership or switching 103ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > offers a confirmed switch to a returned membership, never the current one 92ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > refuses before token rotation if the native editor has unsaved work 76ms
+stderr | client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > will not open another tenant ceremony over an existing governed form
+An update to OrganizationAccess inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TaskTrayOwner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > preserves the consent confirmation when the server refuses acceptance 90ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx > membership consent and switching in the actual shell > will not open another tenant ceremony over an existing governed form 26ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins Account reads and mutations to the validated captured actor 206ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before persona while auth context still shows the old owner 54ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before accept while auth context still shows the old owner 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before decline while auth context still shows the old owner 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/tenant-users/invitations/mine 17ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/users/me/persona 13ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after session change 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after unmount 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not refresh memberships or acknowledge a late invitation acceptance for a replaced session 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > rechecks ownership after response-body decoding 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins invitation acceptance and refreshes only after a current-owner confirmation 27ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not acknowledge or reload after a late decline for a replaced bearer 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > keeps the mutation lock until the saved record is confirmed 29ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Accept decision after bearer replacement 223ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Decline decision after bearer replacement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > withholds a late invitation list after the bearer changes 34ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not accept an unnamed inviting organization 38ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > rejects duplicate pending invitation identities 34ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true} 49ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true,"data":{"invitationId":52,"organizationId":9,"userId":44,"role":"member","status":"accepted"}} 50ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > withholds a late consent acknowledgement after the owner changes 47ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a stale source before the shared helper rotates a session 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not adopt over or end an unrelated login while SELECT is pending 2ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > reserves the native editor before the shared helper spends a bearer 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > ends its own uncertain session after a network failure without navigating 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > clears the canonical in-memory bearer when AuthService ends a session 0ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentsAccount.test.tsx > delegated company-document entry in Account > opens the shared capability-controlled settings without an admin roster read 443ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins profile reads to the expected source organization 43ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins memberships reads to the expected source organization 131ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses profile preflight when bearer claims differ from the retained auth context 9ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses memberships preflight when bearer claims differ from the retained auth context 16ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late profile read after bearer replacement 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a late memberships read after bearer replacement 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > does not cache an unmounted persona request 4ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > withholds a cached persona immediately when current bearer claims belong to another account 6ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > rechecks persona ownership after JSON decoding 5ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > refuses a stale source bearer before spending a workspace session 62ms
+ ✓ client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx > pins workspace rotation to the source organization 39ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > rejects raw browser credential drift without treating it as canonical refresh 36ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > retires same-id account-object replacement even when the auth revision stays current 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company owner retirement before dispatch > cannot revive retained profile handlers after A to B to A or unmount 12ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > does not consume an old read body when the account changed before its response 6ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > rejects an old parsed read body after a new account receives its own saved profile 59ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > settles an already-sent save normally across ordinary bearer rotation 9ms
+stderr | client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > blocks old resource actions in the same frame as credential replacement
+An update to ResourceHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > preserves a pending Word proof across refresh, but drops it after replacement during blob read 65ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > delivers a pending Word proof once after an ordinary refresh 57ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > retains an imported draft and its warnings through a genuine refresh 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > does not consume a retired extraction response or overwrite the replacement draft 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company response and body ownership > keeps a new logo read busy when an older owner completes or fails 7ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > retains a pending current resource across ordinary refresh without another read 4ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > retires old calls and files on path/version changes, A to B to A and unmount 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companySessionBoundaries.test.tsx > company resource path/version leases > blocks old resource actions in the same frame as credential replacement 5ms
+stderr | server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list
+{
+  "timestamp": "2026-10-26T23:28:34.182Z",
+  "level": "error",
+  "message": "[tenant-users] Error retrieving pending invitations",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > uses the session caller despite body/query targets, then reads only their inviting organization in verified scope 183ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > an empty self-only list does not look up another person’s organization 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a missing organization name is null, never a fabricated name 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list 6ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > requires authentication before resolving invitations or names 3ms
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI/server/services/tenant/invitation-consent.ts:26:9)
+    at Module.atomicAcceptInvitation (/workspace/ClinicalSageAI/server/services/atomicQuotaService.js:478:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI/server/routes/tenant-users.ts:232:20
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim
+{
+  "timestamp": "2026-10-26T23:28:34.236Z",
+  "level": "error",
+  "message": "[tenant-users] Error declining invitation",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI/server/services/tenant/invitation-consent.ts:26:9)
+    at atomicAcceptInvitation (/workspace/ClinicalSageAI/server/services/atomicQuotaService.js:478:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:391:20
+    at file:///workspace/ClinicalSageAI/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept refuses another person’s invitation without disclosing or changing it 10ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses another person’s invitation without disclosing or changing it 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept commits membership, accepted status and one chained audit on the same client, with the authenticated actor 8ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim 11ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accepting an already accepted invitation is 409 without audit, role overwrite or membership insertion 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept preserves an existing lower membership role and records that no membership was created 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline commits its conditional update and one chained audit on the same client, before commit 5ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > a concurrent response makes the guarded decline 409 with no audit or success claim 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already accepted before any write 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already declined before any write 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > reports a committed chained audit and binds its actor to callerUserId even if optional context names somebody else 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > rejects a non-invitee even if called directly in the inviting organization 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > continues to enforce the existing member quota before writes or audit 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > checks the synchronous adoption disposition before storing or purging anything 16ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 0 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id -1 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 33::34 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 9007199254740992 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not let an old account read replace the adopted organization 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > refuses account and policy refreshes begun while adoption is awaiting verification 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after the browser session has ended 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after logout has completed 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not let a deferred idle refusal for the old account end the adopted session 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not replace the adopted policy with a deferred previous-session policy 52ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after a different account has signed in 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > keeps the newest of overlapping session adoption attempts 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 17ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 0ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives 53ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > still revokes the settled rotated pair when the original session remains current 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > revokes the rotated pair returned by a refresh that began before logout 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > does not finish an earlier pending adoption while logout awaits its server answer 52ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout clears its credential session after same-session account metadata changes > ends the same bearer after a newer role read replaces the user object while logout waits 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > retains the adopted account and its session clocks after the old successful probe returns 28ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 401 refusal without revoking or ending the adopted session 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 403 refusal without revoking or ending the adopted session 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 200 refusal without revoking or ending the adopted session 5ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > does not restore the predecessor after a late server failure 5ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > does not restore the predecessor after a late network failure 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores an expired probe after its provider has unmounted 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not install old user data whose JSON decoding finishes after adoption 56ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not expire a replacement login while an old refusal body is being decoded 56ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not overwrite a newer account/role read for the same bearer 5ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > revokes the current refused bearer and its stored refresh token 7ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > keeps the original account on a current server failure 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > keeps the original account on a current network failure 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 17ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old SESSION_IDLE answer 54ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old AUTH_002 answer 53ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > lost: actual apiRequest warns, still adopts and navigates, and the reloaded shell consumes once 50ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > tamper-only: actual apiRequest warns, still adopts and navigates, and the reloaded shell consumes once 12ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > a healthy switch navigates without a persisted or rendered warning 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > a refused switch does not adopt a token, navigate or save a completed-action notice 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > restricted notice storage never breaks the completed token handoff 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > stores only bounded allowed fields and rejects malformed or other-action notices without replay 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx > the current organization switch carries its actual audit warning through reload > does not carry an unverified destination session into a reload notice 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > pins a refreshed same-actor bearer without trusting the organization storage fallback 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":8,"organizationId":12} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":13} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":"7garbage","organizationId":12} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":"12garbage"} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":null,"organizationId":12} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses missing or unreadable bearer instead of falling back to persisted identity 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > reads the canonical trialsage_access_token key fresh on every call 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > prefers sessionStorage over localStorage (tier precedence) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > falls back to localStorage when sessionStorage has no token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > does NOT mutate storage on read (no lazy migration) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > returns null when no token is present anywhere 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D2 — remember-me (localStorage) token survives the first API call > reading the token never deletes the persisted localStorage copy 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D3 — a token refresh propagates > a refreshed trialsage_access_token is seen on the next read 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > clearAuthToken wipes the token from both tiers so getAuthToken returns null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > no leftover mirror in either tier can revive the bearer after logout 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken keeps the token in exactly one tier (session) and clears the other 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken clears legacy keys from both tiers 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > resolves a legacy "token" key but never migrates or deletes it 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > prefers the canonical key over a legacy key 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > keeps a tab-scoped bearer and its organization together despite another tab changing shared selection 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > uses a remembered bearer organization without moving its token into session storage 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > follows a replaced session on the next read and returns to legacy selection after logout 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: unreadable-token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: fixture.e30.fixture 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > retains the default when browser privacy settings refuse local-storage reads 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > reads currentOrganizationId as the primary org source 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to legacy currentOrganization 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to the persisted user payload organizationId 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > defaults to "1" when nothing is persisted 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders always carries x-organization-id, and the bearer when present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders still sends x-organization-id when no token is present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > a legacy bearer left in either tier cannot outlive clearAuthToken 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > the authService logout key list stays in sync with the legacy fallback 7ms
+ ✓ client/src/services/portal/__tests__/authService-sso-mfa.test.ts > SAML challenge adoption uses only the canonical factor verifier > stores only a tab-scoped challenge and remains anonymous when the server refuses the code 20ms
+ ✓ client/src/services/portal/__tests__/authService-sso-mfa.test.ts > SAML challenge adoption uses only the canonical factor verifier > authenticates only from a successful canonical verification response, then erases the challenge 2ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > probes the rotated token, preserves session storage choice, clears tenant selection and loads Projects 7ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > does not rotate or clear anything while the editor refuses unload 3ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > preserves the original tenant selection on a refused membership switch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/switchOrganization.test.ts > verified tenant-session handoff > ends the spent old session if the destination probe fails rather than retaining an old canvas under a new token 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 8ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 3ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 5ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > the client singleton addresses /api/v1/auth, where the auth router is mounted 1ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > reads every api call in the client (none is skipped for its shape) 1ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > each one is registered on server/routes/auth.ts 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 0ms
+
+ Test Files  24 passed (24)
+      Tests  265 passed (265)
+   Start at  23:28:15
+   Duration  26.73s (transform 1.87s, setup 1.40s, import 3.82s, tests 10.30s, environment 8.53s)
