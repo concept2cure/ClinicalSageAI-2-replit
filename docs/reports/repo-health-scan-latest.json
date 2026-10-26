@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-25T20:05:05.748Z",
+  "generatedAt": "2026-10-26T03:14:36.002Z",
   "git": {
-    "sha": "b648b01bf66a7488040100b32c4c71ed29e36e55",
+    "sha": "79d9913f103d6f2cf7343cf7d2fc0e880438c1f0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 252,
+    "duplicateBasenames": 251,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 56,
@@ -264,12 +264,11 @@
       },
       {
         "basename": "routes",
-        "count": 13,
+        "count": 12,
         "paths": [
           "server/api/ai/routes.ts",
           "server/api/cmc/routes.ts",
           "server/api/drafting/routes.ts",
-          "server/api/ectd/routes.ts",
           "server/api/enterprise/routes.js",
           "server/api/gcc/ectd/routes.js",
           "server/api/gcc/labeling/routes.js",
@@ -2242,14 +2241,6 @@
         ]
       },
       {
-        "basename": "templateregistry",
-        "count": 2,
-        "paths": [
-          "server/services/docx/templateRegistry.ts",
-          "server/utils/templateRegistry.js"
-        ]
-      },
-      {
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
@@ -2350,7 +2341,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1167955
+        "bytes": 1166405
       },
       {
         "file": "shared/schema.ts",
@@ -2576,7 +2567,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22249
+        "lines": 22210
       },
       {
         "file": "shared/schema.ts",
@@ -2975,10 +2966,6 @@
         "lines": 1690
       },
       {
-        "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1674
-      },
-      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1663
       },
@@ -2993,6 +2980,10 @@
       {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1639
+      },
+      {
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1623
       },
       {
         "file": "services/regulatory/globalPyramids.ts",
@@ -3036,7 +3027,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 467,
+      "duplicateGroups": 464,
       "largeByBytes": 41,
       "largeByLines": 88
     },

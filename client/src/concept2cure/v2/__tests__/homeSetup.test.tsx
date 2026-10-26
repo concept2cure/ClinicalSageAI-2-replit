@@ -4,7 +4,8 @@
  * team, your first project — for the administrators who can do them. Each step's state is read: the company
  * profile saved with an address (not the signup name), more than one membership, a project in the list Home
  * already reads. A failed read is "Could not be checked", never "To do" or "Done". With all three done the
- * checklist is gone. Each step opens the screen where it is done today.
+ * checklist is gone. Each step opens the screen where it is done today. It is offered only to someone the server
+ * lets take the steps: the company read's own canManage, not the client's wider administrator-role list.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -88,6 +89,19 @@ describe('Home: set up your organisation', () => {
     await screen.findByRole('heading', { name: 'Your projects' });
     expect(screen.queryByTestId('home-setup')).toBeNull();
     expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/organizations/4');
+  });
+
+  it('is not offered to an administrator role the server refuses the steps to', async () => {
+    // business_admin passes the client's admin check, but company details and
+    // invitations need the organisation role owner or admin; the company read
+    // says so itself (canManage).
+    auth.user = { id: 9, organizationId: '4', firstName: 'Bo', roles: ['business_admin'] };
+    serve({ company: ok({ data: { revision: 0, address: '' }, canManage: false }) });
+    mount();
+    await screen.findByRole('heading', { name: 'Your projects' });
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/client-branding/company-documents?includeLegal=false'));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.queryByTestId('home-setup')).toBeNull();
   });
 
   it('reads the profile from either response shape, and a saved address is what counts', () => {

@@ -20,15 +20,19 @@ export function ProjectSide({ pid, dossier, onAsk }: { pid: string | null; dossi
       {/* The skills AnA follows in this project: deployed here, off here,
           and written for it (ProjectSkills.tsx). */}
       {pid && <ProjectSkills projectRef={pid} onAsk={onAsk} />}
-      {/* Memory / instructions / intelligence — served only by the numeric
-          project-home read-model (project_intelligence_profiles), not reachable
-          from this UUID-scoped surface. Honest empty, never a fabricated body. */}
+      {/* Memory / instructions — served only by the numeric project-home
+          read-model (project_intelligence_profiles), which this
+          program-keyed page has no read for. They said "No project memory
+          yet" and "No custom instructions yet" on every project: a read that
+          does not exist, shown as a fact about the project. They say what is
+          true until the read exists (slice 0 of
+          .design/client-journey/INFORMATION_ARCHITECTURE.md). */}
       <section className="pj-card">
         <div className="pj-card-h"><h3>Memory</h3></div>
         <EmptyState
           icon={I.penLine}
-          title="No project memory yet"
-          hint="AnA's persisted regulatory-strategy memory, open blockers, and decisions-on-record for this project will appear here once enriched."
+          title="Not read on this page yet"
+          hint="AnA's regulatory-strategy memory for this project, its open blockers and decisions on record, are kept on the project's intelligence profile. This page does not read that profile yet, so it cannot say what is there."
         />
       </section>
 
@@ -36,8 +40,8 @@ export function ProjectSide({ pid, dossier, onAsk }: { pid: string | null; dossi
         <div className="pj-card-h"><h3>Instructions</h3></div>
         <EmptyState
           icon={I.penLine}
-          title="No custom instructions yet"
-          hint="Authoring instructions saved on this project's intelligence profile will appear here."
+          title="Not read on this page yet"
+          hint="Authoring instructions saved on the project's intelligence profile are not read by this page yet, so it cannot say whether there are any."
         />
       </section>
 

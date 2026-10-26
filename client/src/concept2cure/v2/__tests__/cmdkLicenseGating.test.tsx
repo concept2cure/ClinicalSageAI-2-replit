@@ -320,9 +320,11 @@ describe('⌘K licence gating', () => {
   /* CONTRACT 7 — THE DEFAULT LIST GATES TOO, AND AN UNKNOWN ID NEVER LOCKS.
      Two rules in one mount because they need the same payload. The empty-query
      "Jump to" list is a separate code path from a search hit and was equally
-     ungated. And Plan & features carries no catalog row on purpose — absent
-     from the payload must mean unconditionally available, which is what keeps
-     the surface that RESOLVES a lock reachable from a locked palette. */
+     ungated. And a destination with no catalog row (Home, which the shell
+     synthesises) must read as unconditionally available: absent from the
+     payload is never a lock. (Until 2026-10-26 this used Plan & features, then
+     in "Jump to"; "Jump to" lists the places now, and Plan & features is an
+     administrator's account-menu entry, slice 0 of the placement map.) */
   it('gates the default list without ever locking a surface the catalog has no row for', async () => {
     mockNav(async () =>
       ok(
@@ -343,11 +345,11 @@ describe('⌘K licence gating', () => {
     // An admin switched it off; the reason is that, not a plan gap.
     expect(locked.querySelector('.hint')?.textContent).toBe('turned off for this workspace');
 
-    const apps = screen.getByRole('button', { name: /^Plan & features/ });
-    expect(apps.getAttribute('data-locked')).toBeNull();
-    expect(apps.getAttribute('aria-label')).toBeNull();
-    fireEvent.click(apps);
-    expect(onNav).toHaveBeenCalledWith('apps');
+    const home = screen.getByRole('button', { name: /^Home/ });
+    expect(home.getAttribute('data-locked')).toBeNull();
+    expect(home.getAttribute('aria-label')).toBeNull();
+    fireEvent.click(home);
+    expect(onNav).toHaveBeenCalledWith('home');
   });
 
   /* CONTRACT 8 — THE REASON IN THE ACCESSIBLE NAME IS THE REAL ONE.

@@ -16,7 +16,8 @@
  *                     with "Your projects"). Done in the New project wizard.
  *
  * A read that fails is said ("Could not be checked"), never shown as to do or
- * done. When all three are done the checklist is gone.
+ * done. When all three are done the checklist is gone. It is not offered to a
+ * viewer the company read says cannot manage (its canManage).
  */
 import React from 'react';
 import { I } from '../icons';
@@ -27,7 +28,7 @@ import { applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
 type StepState = 'done' | 'todo' | 'unknown' | 'reading';
-interface CompanyProfileRead { data?: { revision?: unknown; address?: unknown }; revision?: unknown; address?: unknown }
+interface CompanyProfileRead { data?: { revision?: unknown; address?: unknown }; revision?: unknown; address?: unknown; canManage?: unknown }
 interface OrganizationRead { organization?: { activeUsers?: unknown } }
 
 /** Saved, with an address: the profile's own facts, from either response shape. */
@@ -66,6 +67,13 @@ export function HomeSetup({ onNav, onNewProject, projects }: {
   const company = useLiveData<CompanyProfileRead>(admin ? '/api/client-branding/company-documents?includeLegal=false' : null);
   const org = useLiveData<OrganizationRead>(admin && orgId ? `/api/organizations/${encodeURIComponent(orgId)}` : null);
   if (!admin) return null;
+  /* The role list above is the client's, and wider than the server's: it admits
+     business_admin and platform_admin, whom both writes refuse (company details
+     and invitations need the organisation role owner or admin). The company
+     read answers for the viewer (canManage), so someone it says cannot manage is
+     not offered steps the server would refuse (2026-10-25, the what-exists
+     critic of the client journey). */
+  if (company.data?.canManage === false) return null;
   const steps: Array<{ id: string; label: string; hint: string; state: StepState; act: () => void }> = [
     { id: 'company', label: 'Record your company details', hint: 'Name, address and contact, used on your documents and letters.',
       state: companyDetailsState(company), act: () => openAdminTab('settings', onNav) },

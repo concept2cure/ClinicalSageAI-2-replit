@@ -13,10 +13,29 @@
  * orchestrator is responsible for ensuring upstream is locked before invoking
  * these summaries (a 2.3 QOS built before M3 is locked is a 2.3 QOS that has
  * to be re-built).
+ *
+ * Every numbered heading is the one ICH M2–M5 record's (D2 cleanup C4b,
+ * 2026-10-26): `heading(code)` reads it, so a composer cannot carry a title of
+ * its own. They had: "2.3.P.1 Description and Composition", "2.4.1 Overview of
+ * Nonclinical Testing Strategy", "2.7.4.1 Exposure to the Investigational
+ * Drug", and SAE and death counts under a "2.7.4.3" that the record holds as
+ * Clinical Laboratory Evaluations; 2.4.6, 2.5.7 and 2.7.6 were missing.
  */
 
 import type { ComposedSection, GeneratedTable } from './module3Composer.js';
 import type { CSRSection } from './csr-builder.js';
+import { ichHeadingTitle } from './ind/ctd/ich-m4-headings.js';
+
+/**
+ * A heading line as the ICH M2–M5 record numbers and titles it. The first level
+ * below a module (2.4.1, 2.3.S) is in capitals, the composers' house style.
+ * Throws on a code the record does not hold: a composer cannot invent one.
+ */
+function heading(code: string): string {
+  const title = ichHeadingTitle(code);
+  if (title === null) throw new Error(`The ICH M2–M5 record holds no heading ${code}.`);
+  return `${code} ${code.split('.').length <= 3 ? title.toUpperCase() : title}`;
+}
 
 /**
  * Where a narrative would name the drug substance and none is recorded.
@@ -124,26 +143,30 @@ export interface CSRSummaryInput {
 
 /**
  * The Module 3 sections the QOS summarizes — ICH M4Q 2.3.S.1–S.7 and
- * 2.3.P.1–P.8 — with the heading, the excerpt length (null: printed in full, so
- * a stability qualification is never cut) and the text for a section not composed.
+ * 2.3.P.1–P.8 — with the excerpt length (null: printed in full, so a stability
+ * qualification is never cut) and the text for a section not composed. Each
+ * one's QOS heading is the record's 2.3 code for it (`qosHeading`).
  */
-const QOS_SECTIONS: ReadonlyArray<{ key: string; heading: string; chars: number | null; absent: string }> = [
-  { key: '3.2.S.1', heading: '2.3.S.1 General Information', chars: 400, absent: '[Section 3.2.S.1 not yet composed — drug substance general information missing]' },
-  { key: '3.2.S.2', heading: '2.3.S.2 Manufacture', chars: 600, absent: '[Section 3.2.S.2 not yet composed — manufacturing process information missing]' },
-  { key: '3.2.S.3', heading: '2.3.S.3 Characterisation', chars: 500, absent: '[Section 3.2.S.3 not yet composed — characterisation data missing]' },
-  { key: '3.2.S.4', heading: '2.3.S.4 Control of Drug Substance', chars: 500, absent: '[Section 3.2.S.4 not yet composed — specification missing]' },
-  { key: '3.2.S.5', heading: '2.3.S.5 Reference Standards or Materials', chars: 400, absent: '[Section 3.2.S.5 not yet composed]' },
-  { key: '3.2.S.6', heading: '2.3.S.6 Container Closure System', chars: 400, absent: '[Section 3.2.S.6 not yet composed]' },
-  { key: '3.2.S.7', heading: '2.3.S.7 Stability', chars: null, absent: '[Section 3.2.S.7 not yet composed — stability data missing]' },
-  { key: '3.2.P.1', heading: '2.3.P.1 Description and Composition', chars: 400, absent: '[Section 3.2.P.1 not yet composed]' },
-  { key: '3.2.P.2', heading: '2.3.P.2 Pharmaceutical Development', chars: 600, absent: '[Section 3.2.P.2 not yet composed]' },
-  { key: '3.2.P.3', heading: '2.3.P.3 Manufacture', chars: 500, absent: '[Section 3.2.P.3 not yet composed]' },
-  { key: '3.2.P.4', heading: '2.3.P.4 Control of Excipients', chars: 400, absent: '[Section 3.2.P.4 not yet composed]' },
-  { key: '3.2.P.5', heading: '2.3.P.5 Control of Drug Product', chars: 500, absent: '[Section 3.2.P.5 not yet composed]' },
-  { key: '3.2.P.6', heading: '2.3.P.6 Reference Standards or Materials', chars: 400, absent: '[Section 3.2.P.6 not yet composed]' },
-  { key: '3.2.P.7', heading: '2.3.P.7 Container Closure System', chars: 400, absent: '[Section 3.2.P.7 not yet composed]' },
-  { key: '3.2.P.8', heading: '2.3.P.8 Stability', chars: null, absent: '[Section 3.2.P.8 not yet composed]' },
+const QOS_SECTIONS: ReadonlyArray<{ key: string; chars: number | null; absent: string }> = [
+  { key: '3.2.S.1', chars: 400, absent: '[Section 3.2.S.1 not yet composed — drug substance general information missing]' },
+  { key: '3.2.S.2', chars: 600, absent: '[Section 3.2.S.2 not yet composed — manufacturing process information missing]' },
+  { key: '3.2.S.3', chars: 500, absent: '[Section 3.2.S.3 not yet composed — characterisation data missing]' },
+  { key: '3.2.S.4', chars: 500, absent: '[Section 3.2.S.4 not yet composed — specification missing]' },
+  { key: '3.2.S.5', chars: 400, absent: '[Section 3.2.S.5 not yet composed]' },
+  { key: '3.2.S.6', chars: 400, absent: '[Section 3.2.S.6 not yet composed]' },
+  { key: '3.2.S.7', chars: null, absent: '[Section 3.2.S.7 not yet composed — stability data missing]' },
+  { key: '3.2.P.1', chars: 400, absent: '[Section 3.2.P.1 not yet composed]' },
+  { key: '3.2.P.2', chars: 600, absent: '[Section 3.2.P.2 not yet composed]' },
+  { key: '3.2.P.3', chars: 500, absent: '[Section 3.2.P.3 not yet composed]' },
+  { key: '3.2.P.4', chars: 400, absent: '[Section 3.2.P.4 not yet composed]' },
+  { key: '3.2.P.5', chars: 500, absent: '[Section 3.2.P.5 not yet composed]' },
+  { key: '3.2.P.6', chars: 400, absent: '[Section 3.2.P.6 not yet composed]' },
+  { key: '3.2.P.7', chars: 400, absent: '[Section 3.2.P.7 not yet composed]' },
+  { key: '3.2.P.8', chars: null, absent: '[Section 3.2.P.8 not yet composed]' },
 ];
+
+/** The QOS heading for a Module 3 section: 3.2.S.4 is summarized under 2.3.S.4. */
+const qosHeading = (key: string) => heading(key.replace(/^3\.2\./, '2.3.'));
 
 /**
  * What keeps a Module 3 section from being a complete QOS input, in the
@@ -187,7 +210,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
   const completeness = Math.round((rows.filter(r => !r.open).length / rows.length) * 100);
 
   const summarize = (part: string): string[] => rows.filter(r => r.key.startsWith(`3.2.${part}.`)).flatMap(r => [
-    r.heading,
+    qosHeading(r.key),
     !r.section ? r.absent : r.chars === null ? r.section.narrativeDraft : excerpt(r.section.narrativeDraft, r.chars),
     ...(r.section && r.open ? [`[Open in Module 3: ${r.open}.]`] : []),
     ``,
@@ -263,7 +286,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     `INTRODUCTION`,
     `This Nonclinical Overview integrates the pharmacology, pharmacokinetic, and toxicology data for ${ds}${ctx.indication ? ` developed for ${ctx.indication}` : ''}. ${studies.length} nonclinical study/ies are summarized; full reports are provided in Module 4.`,
     ``,
-    `2.4.1 OVERVIEW OF NONCLINICAL TESTING STRATEGY`,
+    heading('2.4.1'),
     // 2026-10-15: this used to open "The nonclinical program was designed in
     // accordance with ICH M3(R2) and supports the proposed clinical use" — beside
     // its own gap list — and close "All ICH M3(R2) recommended studies have been
@@ -271,7 +294,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     // the program against M3(R2) for a clinical phase and duration.
     `${categoryGaps.length === 0 ? `Studies are recorded in each category this overview checks: ${checked.map(([label]) => label).join('; ')}.` : `Gaps in the program: ${categoryGaps.join('; ')}.`} Whether the program meets ICH M3(R2) for the proposed clinical phase and duration is not assessed in this overview.`,
     ``,
-    `2.4.2 PHARMACOLOGY`,
+    heading('2.4.2'),
     byType.pharmacology.length > 0
       ? `Primary pharmacology: ${byType.pharmacology.length} study/ies — ${recordedFindings(byType.pharmacology)}.`
       : `[No pharmacology studies provided — see gap list]`,
@@ -279,12 +302,12 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
       ? `Safety pharmacology (ICH S7A): ${byType.safetyPharm.length} study/ies — ${recordedFindings(byType.safetyPharm)}.`
       : ``,
     ``,
-    `2.4.3 PHARMACOKINETICS`,
+    heading('2.4.3'),
     byType.pk.length > 0
       ? `Pharmacokinetic and ADME characterization: ${byType.pk.length} study/ies. Species: ${[...new Set(byType.pk.map(s => s.species).filter(Boolean))].join(', ') || '[not specified]'}.`
       : `[PK / ADME data missing]`,
     ``,
-    `2.4.4 TOXICOLOGY`,
+    heading('2.4.4'),
     byType.tox.length > 0
       ? `Repeat-dose toxicology: ${byType.tox.length} study/ies in ${[...new Set(byType.tox.map(s => s.species).filter(Boolean))].join(', ') || '[species not specified]'}. NOAEL range: ${nooalSummary(byType.tox)}.`
       : `[Repeat-dose toxicology missing — required per ICH M3(R2)]`,
@@ -298,7 +321,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
       ? `Carcinogenicity per ICH S1: ${byType.carcino.length} study/ies.`
       : ``,
     ``,
-    `2.4.5 INTEGRATED OVERVIEW AND CONCLUSIONS`,
+    heading('2.4.5'),
     // The "supports the plan" sentence used to print whenever any nonclinical
     // study existed, immediately followed by the list of study categories that
     // did not — the assertion and the gap list contradicted each other in one
@@ -306,6 +329,9 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     categoryGaps.length > 0
       ? `The nonclinical assessment of ${ds} is incomplete; no conclusion on the proposed clinical investigational plan is drawn pending: ${categoryGaps.join('; ')}.`
       : `Studies are recorded in every category this overview checks. Whether the nonclinical safety profile of ${ds} supports the proposed clinical investigational plan — the findings and NOAELs above weighed against the proposed clinical dose and exposure — is the sponsor's toxicology judgment and is not drawn automatically.`,
+    ``,
+    heading('2.4.6'),
+    `[No literature is cited in this composed overview. List here any reference the author cites; copies are filed in Module 4.3.]`,
   ].filter(Boolean).join('\n');
 
   const tables: GeneratedTable[] = [];
@@ -605,24 +631,24 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
     ``,
     `This Clinical Overview provides a critical assessment of the clinical data for ${ctx.investigationalProduct} in ${ctx.indication}, per ICH M4E(R2). It is intended to be read alongside the Clinical Summary (Module 2.7) and the full study reports in Module 5.`,
     ``,
-    `2.5.1 PRODUCT DEVELOPMENT RATIONALE`,
+    heading('2.5.1'),
     ctx.developmentRationale ||
       `[Disease background, current therapeutic options, unmet medical need, and the scientific rationale for ${ctx.investigationalProduct} — to be provided.]`,
     ctx.nonclinicalConclusion ? `Nonclinical basis: ${ctx.nonclinicalConclusion}` : ``,
     ``,
-    `2.5.2 OVERVIEW OF BIOPHARMACEUTICS`,
+    heading('2.5.2'),
     // 2026-10-15: this said the data "support the proposed dosage form and raise
     // no issue affecting the benefit-risk assessment"; no biopharmaceutic input exists.
     `[No biopharmaceutic data (bioavailability, bioequivalence, dissolution) are recorded for this overview — 2.5.2 to be provided.]`,
     ``,
-    `2.5.3 OVERVIEW OF CLINICAL PHARMACOLOGY`,
+    heading('2.5.3'),
     // 2026-10-15: any Phase 1 CSR used to "characterize pharmacokinetics,
     // pharmacodynamics, and exposure-response, supporting the dose rationale".
     clinPharm.length > 0
       ? `Clinical pharmacology: ${clinPharm.length} Phase 1 study/ies recorded — ${clinPharm.map(studyRecordText).join('; ')}. The dose rationale is not concluded from these records.`
       : `[Clinical pharmacology characterization missing — required to justify the dose per ICH M4E.]`,
     ``,
-    `2.5.4 OVERVIEW OF EFFICACY`,
+    heading('2.5.4'),
     pivotal.length > 0
       ? efficacyHeadline(outcomes, pivotal.length)
       : `[No pivotal efficacy study available — efficacy is not yet established.]`,
@@ -630,17 +656,20 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${sampleSizeText(c)}): ${c.primaryEndpoint} — ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`,
     ),
     ``,
-    `2.5.5 OVERVIEW OF SAFETY`,
+    heading('2.5.5'),
     // 2026-10-15: this said "exposed to <product>" of ITT/enrolled counts summed over every arm, comparators included.
     csrs.length > 0
       ? `The safety database comprises ${totalSubjects} subjects enrolled across ${csrs.length} study/ies (ITT population where recorded, otherwise enrolled; all treatment arms). ${safety.statement} The detailed safety analysis is in Module 2.7.4.`
       : `[No safety database — clinical exposure data missing.]`,
     ``,
-    `2.5.6 BENEFITS AND RISKS CONCLUSIONS`,
+    heading('2.5.6'),
     benefitRisk,
     gaps.length > 0
       ? `Open items before a definitive benefit-risk conclusion: ${gaps.join('; ')}.`
       : `No open items preclude the benefit-risk conclusion.`,
+    ``,
+    heading('2.5.7'),
+    `[No literature is cited in this composed overview. List here any reference the author cites; copies are filed in Module 5.4.]`,
   ]
     .filter(Boolean)
     .join('\n');
@@ -706,12 +735,12 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
 /**
  * Build M2.7 Clinical Summary from CSR data.
  * Per ICH M4E, this is a 50–400 page integrated summary of efficacy and safety.
- * We compose the four core subsections:
- *   2.7.1 Summary of Biopharmaceutic Studies & Methods
- *   2.7.2 Summary of Clinical Pharmacology
- *   2.7.3 Summary of Clinical Efficacy
- *   2.7.4 Summary of Clinical Safety
+ * Every heading the record holds directly below 2.7 is written; 2.7.1–2.7.4 are
+ * composed from the CSR records, and of 2.7.4's subdivisions, those the records
+ * reach (exposure; common adverse events, deaths, other serious adverse events).
  */
+const NOT_AMONG_INPUTS = 'Their narratives and causality assessments are not among the recorded inputs to this summary.';
+
 export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   const csrs = ctx.csrs;
   const phaseCounts = csrs.reduce<Record<string, number>>((acc, c) => {
@@ -736,6 +765,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   if (outcomes.unrecorded > 0) gaps.push(`primary endpoint outcome not recorded for ${outcomes.unrecorded} of ${pivotal.length} pivotal study/ies`);
   if (safety.gap) gaps.push(safety.gap);
   gaps.push(...ae.gaps);
+  gaps.push('individual study synopses (2.7.6): not composed');
 
   const narrative = [
     `MODULE 2.7 — CLINICAL SUMMARY`,
@@ -743,12 +773,12 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
     `INTRODUCTION`,
     `This Clinical Summary integrates efficacy and safety data for ${ctx.investigationalProduct} in ${ctx.indication}. ${csrs.length} clinical study/ies enrolling ${totalSubjects} subjects are summarized. Full study reports are provided in Module 5.3.`,
     ``,
-    `2.7.1 SUMMARY OF BIOPHARMACEUTIC STUDIES AND ASSOCIATED ANALYTICAL METHODS`,
+    heading('2.7.1'),
     // 2026-10-15: this said "Key findings have been integrated into the proposed
     // dosage form rationale"; no biopharmaceutic input exists.
     `[No biopharmaceutic study data (bioavailability, bioequivalence, dissolution) are recorded for this summary — 2.7.1 to be provided from the Module 5.3.1 reports.]`,
     ``,
-    `2.7.2 SUMMARY OF CLINICAL PHARMACOLOGY STUDIES`,
+    heading('2.7.2'),
     // 2026-10-15: any Phase 1 CSR used to "address pharmacokinetics,
     // pharmacodynamics, and exposure-response relationships in healthy
     // volunteers and the target population". It now states what is recorded.
@@ -756,7 +786,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       ? `Clinical pharmacology: ${phase1.length} Phase 1 study/ies recorded — ${phase1.map(studyRecordText).join('; ')}.`
       : `[Phase 1 clinical pharmacology data missing — required for NDA/BLA per ICH M4E]`,
     ``,
-    `2.7.3 SUMMARY OF CLINICAL EFFICACY`,
+    heading('2.7.3'),
     controlledCount > 0
       ? `${controlledCount} Phase 2–3 study/ies are recorded. ${pivotal.length > 0 ? efficacyHeadline(outcomes, pivotal.length) : 'No pivotal (Phase 3) study is recorded.'}`
       : `[No controlled efficacy study available — efficacy has not been evaluated]`,
@@ -766,27 +796,41 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
     ``,
     `Phase distribution: ${Object.entries(phaseCounts).map(([p, n]) => `Phase ${p}: ${n}`).join(', ')}.`,
     ``,
-    `2.7.4 SUMMARY OF CLINICAL SAFETY`,
+    heading('2.7.4'),
     `Safety database: ${totalSubjects} subjects enrolled across ${csrs.length} study/ies (ITT population where recorded, otherwise enrolled; all treatment arms). ${safety.statement}`,
     ``,
-    `2.7.4.1 Exposure to the Investigational Drug`,
+    heading('2.7.4.1'),
     // 2026-10-15: this said every enrolled subject "received" the product (the
     // total counts comparator arms) and that an exposure-response analysis is
     // in Module 5.3.5, which no input records.
     `The number of subjects dosed with ${ctx.investigationalProduct} and the duration of exposure are not recorded for this summary; the enrolment total above counts every treatment arm.`,
     ``,
-    `2.7.4.2 Adverse Events`,
+    heading('2.7.4.2'),
+    heading('2.7.4.2.1'),
+    heading('2.7.4.2.1.1'),
     ae.statement,
     ``,
-    `2.7.4.3 Serious Adverse Events and Deaths`,
+    // 2026-10-26: the SAE and death counts sat under "2.7.4.3 Serious Adverse
+    // Events and Deaths"; the record's 2.7.4.3 is Clinical Laboratory
+    // Evaluations, and M4E puts deaths and other SAEs under 2.7.4.2.1.
     // 2026-10-15: narratives in Module 5.3.5 and a causality discussion in 2.5
     // used to be cited here; neither is among this summary's inputs, and 2.5 has none.
+    heading('2.7.4.2.1.2'),
     safety.gap
       ? safety.statement
-      : `${safety.totalSAEs} SAE(s) and ${safety.totalDeaths} death(s) reported.${safety.totalSAEs + safety.totalDeaths > 0 ? ' Their narratives and causality assessments are not among the recorded inputs to this summary.' : ''}`,
+      : `${safety.totalDeaths} death(s) reported.${safety.totalDeaths > 0 ? ` ${NOT_AMONG_INPUTS}` : ''}`,
     ``,
-    `2.7.5 LITERATURE REFERENCES`,
+    heading('2.7.4.2.1.3'),
+    safety.gap
+      ? safety.statement
+      // Whether a study's SAE count includes its fatal events is not recorded.
+      : `${safety.totalSAEs} serious adverse event(s) reported${safety.totalDeaths > 0 ? '; whether this count includes the deaths above is not recorded' : ''}.${safety.totalSAEs > 0 ? ` ${NOT_AMONG_INPUTS}` : ''}`,
+    ``,
+    heading('2.7.5'),
     `See Module 5.4 for the integrated reference list.`,
+    ``,
+    heading('2.7.6'),
+    `[The synopses of the ${csrs.length} study/ies in the Clinical Study Index are not composed here; include each report's synopsis, in the order of the Module 5 reports.]`,
     // The open items used to live only on the sibling `gaps` field, which a
     // consumer of the narrative alone (the authoring tool) never renders.
     ...(gaps.length > 0 ? [``, `Open items: ${gaps.join('; ')}.`] : []),

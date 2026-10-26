@@ -1,0 +1,19 @@
+C4b red, run on 93e989df3 (trunk composers unchanged) before the derivation
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.3: every heading line is the record’s code and title, in CTD order 9ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.4: every heading line is the record’s code and title, in CTD order 2ms
+ ✓ server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.5: every heading line is the record’s code and title, in CTD order 1ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.7: every heading line is the record’s code and title, in CTD order 1ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.4: every heading the record holds directly below the root is composed 4ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.5: every heading the record holds directly below the root is composed 2ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.7: every heading the record holds directly below the root is composed 2ms
+ ✓ server/services/__tests__/m2-composers-head-as-the-record.test.ts > each composer heads its sections as the record titles them > 2.3: every drug substance and drug product heading is composed 1ms
+ × server/services/__tests__/m2-composers-head-as-the-record.test.ts > the Clinical Summary states SAEs and deaths where the record puts them > deaths under 2.7.4.2.1.2 and other serious adverse events under 2.7.4.2.1.3, never under 2.7.4.3 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 2.3.P.1: expected 'description and composition' to be 'description and composition of the dr…' // Object.is equality
+AssertionError: 2.4.1: expected 'overview of nonclinical testing strat…' to be 'overview of the nonclinical testing s…' // Object.is equality
+AssertionError: 2.7.4.1: expected 'exposure to the investigational drug' to be 'exposure to the drug' // Object.is equality
+AssertionError: expected [ '2.4.1', '2.4.2', '2.4.3', …(2) ] to deeply equal [ '2.4.1', '2.4.2', '2.4.3', …(3) ]
+AssertionError: expected [ '2.5.1', '2.5.2', '2.5.3', …(3) ] to deeply equal [ '2.5.1', '2.5.2', '2.5.3', …(4) ]
+AssertionError: expected [ '2.7.1', '2.7.2', '2.7.3', …(2) ] to deeply equal [ '2.7.1', '2.7.2', '2.7.3', …(3) ]
+AssertionError: expected '' to match /\b1 death\(s\)/
+      Tests  7 failed | 2 passed (9)

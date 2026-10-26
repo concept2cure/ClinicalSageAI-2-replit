@@ -28,9 +28,11 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // Re-recorded again 2026-10-25 (D2 cleanup C1): the IND lane's Module 2/3 projector reads the one
     // record, so its 61 templates (section:m2.*/m3.*, module:M2/M3, phase3/phase6 deliverables) changed
     // and no other: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/c1-builtin-snapshot-delta.txt.
+    // And C2: the QOS, drug substance and drug product read the record — 6 changed (registry: and
+    // component: for each), no other: cleanup/c2-builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('76638e48cbef49344336fe7325489f0ff585dbf0ad9ed49e8f8e4784010cfa94');
+    )).digest('hex')).toBe('705cbf73adf5025152e7d85343c9bee4267daeb6ed0b58bc06189a86c9193e74');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {

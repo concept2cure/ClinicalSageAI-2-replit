@@ -1,0 +1,112 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.5: one section per heading the record holds directly below it, headed as the record titles it 16ms
+   → expected [ …(6) ] to deeply equal [ …(7) ]
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.7: one section per heading the record holds directly below it, headed as the record titles it 5ms
+   → expected [ …(4) ] to deeply equal [ …(6) ]
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > a fact lands by its CTD code, and still by the id it had before (the tool’s existing contract) 2ms
+   → expected '# IND Module 2.5 — X (Y)\n\n_Common T…' to match /## 2\.5\.4 Overview of Efficacy[\s\S]…/
+ × server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > draft_clinical_overview_m2_5 outlines the served Clinical Overview > every section is the record’s, 2.5.7 and the 2.5.6 subdivisions included, with its 2.7 cross-reference kept 3ms
+   → expected [ '2.5.1', '2.5.2', '2.5.3', …(3) ] to deeply equal [ '2.5.1', '2.5.2', '2.5.3', …(4) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.5: one section per heading the record holds directly below it, headed as the record titles it
+AssertionError: expected [ …(6) ] to deeply equal [ …(7) ]
+
+- Expected
++ Received
+
+@@ -3,7 +3,6 @@
+    "2.5.2 Overview of Biopharmaceutics",
+    "2.5.3 Overview of Clinical Pharmacology",
+    "2.5.4 Overview of Efficacy",
+    "2.5.5 Overview of Safety",
+    "2.5.6 Benefits and Risks Conclusions",
+-   "2.5.7 Literature References",
+  ]
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > 2.7: one section per heading the record holds directly below it, headed as the record titles it
+AssertionError: expected [ …(4) ] to deeply equal [ …(6) ]
+
+- Expected
++ Received
+
+  [
+-   "2.7.1 Summary of Biopharmaceutic Studies and Associated Analytical Methods",
++   "2.7.1 Summary of Biopharmaceutic Studies",
+    "2.7.2 Summary of Clinical Pharmacology Studies",
+    "2.7.3 Summary of Clinical Efficacy",
+    "2.7.4 Summary of Clinical Safety",
+-   "2.7.5 Literature References",
+-   "2.7.6 Synopses of Individual Studies",
+  ]
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > plan_ind_module_authoring plans the record’s sections > a fact lands by its CTD code, and still by the id it had before (the tool’s existing contract)
+AssertionError: expected '# IND Module 2.5 — X (Y)\n\n_Common T…' to match /## 2\.5\.4 Overview of Efficacy[\s\S]…/
+
+- Expected:
+/## 2\.5\.4 Overview of Efficacy[\s\S]*ORR: 42\.3%/
+
++ Received:
+"# IND Module 2.5 — X (Y)
+
+_Common Technical Document Module 2.5. AI-authored from structured source; every figure below is transcribed verbatim and verified against the source._
+
+## 2.5.1 Product Development Rationale
+_ICH M4E — CTD 2.5.1_
+
+[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. Provide structured source facts for \"2.5.1 Product Development Rationale\" before sealing.]
+
+## 2.5.2 Overview of Biopharmaceutics
+_ICH M4E — CTD 2.5.2_
+
+[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. Provide structured source facts for \"2.5.2 Overview of Biopharmaceutics\" before sealing.]
+
+## 2.5.3 Overview of Clinical Pharmacology
+_ICH M4E — CTD 2.5.3_
+
+[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. Provide structured source facts for \"2.5.3 Overview of Clinical Pharmacology\" before sealing.]
+
+## 2.5.4 Overview of Efficacy
+_ICH M4E — CTD 2.5.4_
+
+[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. Provide structured source facts for \"2.5.4 Overview of Efficacy\" before sealing.]
+
+## 2.5.5 Overview of Safety
+_ICH M4E — CTD 2.5.5_
+
+- SAEs: 7
+
+## 2.5.6 Benefits and Risks Conclusions
+_ICH M4E — CTD 2.5.6_
+
+[NO SOURCE FACT SUPPLIED — this section has no transcribed figure. Provide structured source facts for \"2.5.6 Benefits and Risks Conclusions\" before sealing.]"
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/ana-tools-read-the-ctd-record.test.ts > draft_clinical_overview_m2_5 outlines the served Clinical Overview > every section is the record’s, 2.5.7 and the 2.5.6 subdivisions included, with its 2.7 cross-reference kept
+AssertionError: expected [ '2.5.1', '2.5.2', '2.5.3', …(3) ] to deeply equal [ '2.5.1', '2.5.2', '2.5.3', …(4) ]
+
+- Expected
++ Received
+
+@@ -3,7 +3,6 @@
+    "2.5.2",
+    "2.5.3",
+    "2.5.4",
+    "2.5.5",
+    "2.5.6",
+-   "2.5.7",
+  ]
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯

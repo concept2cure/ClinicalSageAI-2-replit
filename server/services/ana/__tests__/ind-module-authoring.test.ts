@@ -1,5 +1,5 @@
 /**
- * Unit tests for the shared IND narrative-module authoring core (E11): the CTD
+ * Unit tests for the IND narrative-module authoring core (E11): the CTD
  * Module 2.5 / 2.7 templates, the required_strings derivation from structured
  * source facts/figures (which CATCHES a missing/mistyped figure), the
  * authored-plan/verification pass-fail, and the 21 CFR Part 11 honesty contract
@@ -29,7 +29,7 @@ describe('IND module templates', () => {
     expect(IND_MODULE_TEMPLATES['2.7'].length).toBeGreaterThan(0);
     // Section ids are unique within a module.
     for (const mod of listIndModules()) {
-      const ids = IND_MODULE_TEMPLATES[mod].map((s) => s.id);
+      const ids = IND_MODULE_TEMPLATES[mod].map((s) => s.code);
       expect(new Set(ids).size).toBe(ids.length);
     }
   });

@@ -1,7 +1,6 @@
 {
   "server/api/cmc/routes.ts": 7,
   "server/api/cmc/specificationRoutes.ts": 3,
-  "server/api/ectd/routes.ts": 3,
   "server/api/labeling/routes.ts": 8,
   "server/api/site-intel/routes.ts": 15,
   "server/db/drizzle-queryable.ts": 1,

@@ -82,6 +82,10 @@ const RECORD_PROOFS: Record<string, () => void> = {
   nonclinical_overview: () => expect(getDocumentTemplate('nonclinical_overview')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.4' }),
   clinical_overview: () => expect(getDocumentTemplate('clinical_overview')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.5' }),
   clinical_summary: () => expect(getDocumentTemplate('clinical_summary')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.7' }),
+  // And since 2026-10-25 (D2 cleanup C2), the QOS and Module 3's drug substance and drug product.
+  quality_overall_summary: () => expect(getDocumentTemplate('quality_overall_summary')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:2.3' }),
+  drug_substance: () => expect(getDocumentTemplate('drug_substance')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:3.2.S' }),
+  drug_product: () => expect(getDocumentTemplate('drug_product')!.outlineSource).toMatchObject({ kind: 'document-outline', record: 'CTD_AUTHORING_GUIDANCE+ICH_M4_HEADINGS:3.2.P' }),
   dsur: () => {
     expect(getDocumentTemplate('dsur')!.sections.map((s) => s.heading)).toEqual(ICH_E2F_DSUR_SECTIONS.map((s) => s.title));
     expect(getDocumentTemplate('dsur')!.outlineSource).toMatchObject({ kind: 'lifecycle-record', record: 'ICH_E2F_DSUR_SECTIONS' });
