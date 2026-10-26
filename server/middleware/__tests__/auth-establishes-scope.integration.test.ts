@@ -26,6 +26,7 @@
  */
 
 import type { NextFunction, Request, Response } from 'express';
+import { EventEmitter } from 'node:events';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // --- Mocks shared by both middlewares -----------------------------------------
@@ -46,7 +47,8 @@ vi.mock('../../utils/jwtVerify', () => ({
 //
 // They are told apart by the projection passed to `select()`, which is the only
 // thing distinguishing them here (the real drizzle tables are not mocked).
-// `getPool` backs the lazy request client, which never acquires here (no query).
+// `getPool` backs the lazy request client. The boundary composition cases also
+// query it, checking the connection's scope setup and response-end cleanup.
 let membershipRows: Array<Record<string, unknown>> = [{ role: 'editor', orgUuid: null }];
 let organizationRows: Array<Record<string, unknown>> = [
   { status: 'active', paymentStatus: 'active' },
@@ -69,6 +71,9 @@ let maxStorageGb: number | null = 5;
 // that is not 'active' before any scope opens. Modelled on its own for the same
 // reason as the two above; `Error` stands for a read that fails.
 let accountStatus: string | Error = 'active';
+const requestStatements: Array<{ text: string; params?: unknown[] }> = [];
+let requestConnections = 0;
+let requestReleases = 0;
 
 vi.mock('../../db', () => ({
   pool: {
@@ -85,7 +90,16 @@ vi.mock('../../db', () => ({
         : chain(() => membershipRows),
   },
   getPool: () => ({
-    connect: async () => ({ query: async () => ({ rows: [] }), release: () => undefined }),
+    connect: async () => {
+      requestConnections += 1;
+      return {
+        query: async (text: string, params?: unknown[]) => {
+          requestStatements.push({ text, params });
+          return { rows: text === 'SELECT 1 AS request_context_probe' ? [{ request_context_probe: 1 }] : [] };
+        },
+        release: () => { requestReleases += 1; },
+      };
+    },
     query: async () => ({ rows: [{ max_storage: maxStorageGb }] }),
   }),
 }));
@@ -103,6 +117,8 @@ vi.mock('../../services/tenant/tenant-storage', async importOriginal => {
 });
 
 import { getTenantScope } from '../../db/tenantStore';
+import { requestPgClient } from '../../db/requestDb';
+import { createAuthBoundary } from '../authBoundary';
 import { invalidateOrgMembershipCache } from '../orgMembership';
 import { invalidateTenantPosture } from '../../services/tenant/tenant-lifecycle';
 import { invalidateTenantStorage } from '../../services/tenant/tenant-storage';
@@ -148,9 +164,14 @@ function drive(
   // Defaults reproduce the original GET /probe with no body, so every test
   // written before the storage guard existed keeps driving exactly the same
   // request. Overriding these is how a content-bearing upload is simulated.
-  opts: { method?: string; headers?: Record<string, string>; path?: string } = {}
+  opts: {
+    method?: string;
+    headers?: Record<string, string>;
+    path?: string;
+    inspect?: (req: Request, res: Response) => Promise<void>;
+  } = {}
 ): Promise<DriveResult> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let status = 200;
     let settled = false;
     let reachedHandler = false;
@@ -166,15 +187,12 @@ function drive(
       resolve({ status, scoped, tenantId, orgUuid, ctxOrgUuid, reachedHandler, body });
     };
 
-    const res = {
+    const res = Object.assign(new EventEmitter(), {
       status(code: number) { status = code; return res; },
       json(payload?: unknown) { body = payload; settle(); return res; },
       send() { settle(); return res; },
-      // establishRequestTenantScope registers release on finish/close; never
-      // emitted here, and the lazy client never acquired, so it is a no-op.
-      on() { return res; },
       set() { return res; },
-    } as unknown as Response;
+    }) as unknown as Response;
 
     const headers: Record<string, string> = {
       ...(authorization ? { authorization } : {}),
@@ -199,7 +217,8 @@ function drive(
       tenantId = scope?.tenantId ?? null;
       orgUuid = scope?.orgUuid ?? null;
       ctxOrgUuid = (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null;
-      settle();
+      if (opts.inspect) void opts.inspect(req, res).then(settle, reject);
+      else settle();
     };
 
     mw(req, res, next);
@@ -207,6 +226,9 @@ function drive(
 }
 
 beforeEach(() => {
+  requestStatements.length = 0;
+  requestConnections = 0;
+  requestReleases = 0;
   accountStatus = 'active';
   membershipRows = [{ role: 'editor', orgUuid: null }];
   organizationRows = [{ status: 'active', paymentStatus: 'active' }];
@@ -267,6 +289,70 @@ describe('authenticateToken opens a tenant scope on the member path', () => {
     expect(r.reachedHandler).toBe(false);
     expect(r.scoped).toBe(false);
   });
+});
+
+/**
+ * The client-journey handoff reported REQUEST_DB_CONTEXT_REQUIRED on these
+ * request families. An active ALS scope alone cannot satisfy requestPgClient.
+ * Compose the real boundary and authenticator, then make a downstream read;
+ * this guards client installation, reuse and lifetime separately from scope.
+ * The SQL transport is a stub: this does not claim native PostgreSQL/RLS proof
+ * or exercise each family's route handler.
+ */
+describe('the auth boundary retains the request database client', () => {
+  const ORIGINAL_MODE = process.env.AUTH_BOUNDARY_MODE;
+  const ORIGINAL_RLS = process.env.RLS_ENFORCE;
+  const ORG_UUID = 'cec579dd-c9c5-44d7-b96f-be0cb408fd34';
+
+  afterEach(() => {
+    if (ORIGINAL_MODE === undefined) delete process.env.AUTH_BOUNDARY_MODE;
+    else process.env.AUTH_BOUNDARY_MODE = ORIGINAL_MODE;
+    if (ORIGINAL_RLS === undefined) delete process.env.RLS_ENFORCE;
+    else process.env.RLS_ENFORCE = ORIGINAL_RLS;
+  });
+
+  for (const mode of ['warn', 'enforce'] as const) {
+    it.each([
+      ['/api/mdx/qms/documents', false],
+      ['/api/mdx/notifications/unread-count', false],
+      ['/api/concept2cure/projects/12/unified-work', true],
+    ] as const)('%s permits a scoped read in ' + mode + ' mode', async (path, authenticateAtMount) => {
+      process.env.AUTH_BOUNDARY_MODE = mode;
+      process.env.RLS_ENFORCE = 'on';
+      membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+      const { authenticateToken } = await importRealMiddlewareAuth();
+      const boundary = createAuthBoundary();
+      let boundaryClient: unknown;
+      const chain: Middleware = (req, res, next) => boundary(req, res, () => {
+        boundaryClient = req.dbClient;
+        if (authenticateAtMount) authenticateToken(req, res, next);
+        else next();
+      });
+
+      const outcome = await drive(chain, 'Bearer x', {
+        path,
+        inspect: async (req, res) => {
+          const client = requestPgClient(req);
+          expect(client).toBe(boundaryClient);
+          expect(getTenantScope()).toMatchObject({ tenantId: '2', role: 'editor', orgUuid: ORG_UUID });
+          const result = await client.query('SELECT 1 AS request_context_probe');
+          expect(result.rows).toEqual([{ request_context_probe: 1 }]);
+          expect(requestConnections).toBe(1);
+          expect(requestStatements[0].text).toContain("set_config('app.current_tenant_id'");
+          expect(requestStatements[0].params).toEqual(['2', 'editor', ORG_UUID]);
+          expect(requestStatements[0].text).toContain("set_config('app.rls_enforce', 'on', false)");
+          expect(requestReleases).toBe(0);
+          res.emit('finish');
+          res.emit('close');
+          await vi.waitFor(() => expect(requestReleases).toBe(1));
+          expect(req.dbClient).toBeNull();
+        },
+      });
+
+      expect(outcome.status).toBe(200);
+      expect(outcome.reachedHandler).toBe(true);
+    });
+  }
 });
 
 // VSR-001 F-29. An account suspended by an administrator or deprovisioned by the

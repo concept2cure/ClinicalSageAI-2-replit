@@ -1,0 +1,1324 @@
+{
+  "visited": 138,
+  "launchLocks": [],
+  "licenceLocks": [
+    {
+      "from": "rail",
+      "via": "Communication",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "rail",
+      "via": "CMC / Module 3",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"vault\"",
+      "via": "Device artifact vault — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device artifact vaultIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/ectd-compile",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/ectd-compile",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Pre-submission (Q-Sub) — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Pre-submission (Q-Sub)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Submission blockers — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Submission blockersIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subs"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"protocol\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"cmc\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"quality\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Human factors (IEC 62366-1) — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Human factors (IEC 62366-1)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "510(k) and eSTAR — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "510(k) and eSTARIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Clinical evaluation (CER) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Clinical evaluation (CER)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompar"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "IVDR evidence — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "IVDR evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Labeling — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "LabelingIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Risk management — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Risk managementIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscrip"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Medical Device & IVD — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Medical Device & IVDIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare sub"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "PMA — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "PMAIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device clinical studies — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device clinical studiesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare "
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Software lifecycle — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Software lifecycleIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subsc"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Engineering evidence — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Engineering evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare sub"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "UDI & device identification — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "UDI & device identificationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Post-market surveillance and CAPA — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Post-market surveillance and CAPAIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription up"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Pre-submission (Q-Sub) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Pre-submission (Q-Sub)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device artifact vault — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device artifact vaultIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Submission blockers — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Submission blockersIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subs"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Design controls (DHF) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Design controls (DHF)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Human factors (IEC 62366-1) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Human factors (IEC 62366-1)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "IVDR evidence — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IVDR evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "Labeling — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "LabelingIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "UDI & device identification — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "UDI & device identificationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"communication\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    }
+  ],
+  "visits": [
+    {
+      "from": "rail",
+      "via": "Home",
+      "url": "/concept2cure",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Projects",
+      "url": "/concept2cure/projects",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Tasks",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Communication",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "rail",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "CMC / Module 3",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "rail",
+      "via": "Quality",
+      "url": "/concept2cure/quality",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Home",
+      "url": "/concept2cure",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Projects",
+      "url": "/concept2cure/projects",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Tasks",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Quality",
+      "url": "/concept2cure/quality",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Run validationAction",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Export documentAction · e-sign",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"vault\"",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"vault\"",
+      "via": "Device artifact vault — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device artifact vaultIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"vault\"",
+      "via": "Ask AnA: \"vault\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Projects",
+      "url": "/concept2cure/projects",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Submission Center",
+      "url": "/concept2cure/submission-center",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Gateway transmittals",
+      "url": "/concept2cure/gateway-transmittals",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Compile & export eCTDBiotech & Pharma",
+      "url": "/concept2cure/ectd-compile",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/ectd-compile",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/ectd-compile",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Readiness",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Pre-submission (Q-Sub) — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Pre-submission (Q-Sub)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Submission blockers — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Submission blockersIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subs"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"submission\"",
+      "via": "Ask AnA: \"submission\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Project home",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Readiness",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"readiness\"",
+      "via": "Ask AnA: \"readiness\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"protocol\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"protocol\"",
+      "via": "The protocol workspace",
+      "url": "/concept2cure/protocol-dev",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"protocol\"",
+      "via": "Ask AnA: \"protocol\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"cmc\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"cmc\"",
+      "via": "Quality",
+      "url": "/concept2cure/quality",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"cmc\"",
+      "via": "Ask AnA: \"cmc\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"quality\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"quality\"",
+      "via": "Quality",
+      "url": "/concept2cure/quality",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"quality\"",
+      "via": "Ask AnA: \"quality\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "Audit & compliance reports",
+      "url": "/concept2cure/compliance-reports",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"report\"",
+      "via": "Ask AnA: \"report\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Project home",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Tasks",
+      "url": "/concept2cure/tasks",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Conversation",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Human factors (IEC 62366-1) — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "Human factors (IEC 62366-1)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"task\"",
+      "via": "Ask AnA: \"task\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Audit trailAdmin",
+      "url": "/concept2cure/audit-trail",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "21 CFR Part 11 consoleAdmin",
+      "url": "/concept2cure/part11-console",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Audit & compliance reports",
+      "url": "/concept2cure/compliance-reports",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Admin consoleAdmin",
+      "url": "/concept2cure/admin-console",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Set up from a documentAdmin",
+      "url": "/concept2cure/onboarding-ingest",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"audit\"",
+      "via": "Ask AnA: \"audit\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "CMC / Module 3 — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CMC / Module 3Included from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "IND forms — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IND formsIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "Readiness",
+      "url": "/concept2cure/dispatch-readiness",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "Refine with findingsAction",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"ind\"",
+      "via": "Ask AnA: \"ind\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Vault",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "510(k) and eSTAR — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "510(k) and eSTARIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Clinical evaluation (CER) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Clinical evaluation (CER)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompar"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "IVDR evidence — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "IVDR evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Labeling — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "LabelingIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Risk management — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Risk managementIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscrip"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "IVD completeness — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "IVD completenessIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscri"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Medical Device & IVD — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Medical Device & IVDIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare sub"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "PMA — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "PMAIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device clinical studies — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device clinical studiesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare "
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Software lifecycle — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Software lifecycleIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subsc"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Engineering evidence — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Engineering evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare sub"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "UDI & device identification — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "UDI & device identificationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Post-market surveillance and CAPA — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Post-market surveillance and CAPAIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription up"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Pre-submission (Q-Sub) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Pre-submission (Q-Sub)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare s"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device artifact vault — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device artifact vaultIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device submission workload — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device submission workloadIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Submission blockers — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Submission blockersIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subs"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device submission packages — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device submission packagesIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompa"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Device pathway analytics — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Device pathway analyticsIncluded from ProfessionalYour subscription does not include this feature. It is included from the Professional subscription upward.Clos"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Design controls (DHF) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Design controls (DHF)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare su"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Human factors (IEC 62366-1) — not included in your subscription",
+      "url": "/concept2cure/vault",
+      "launchLock": false,
+      "licenceLock": "Human factors (IEC 62366-1)Included from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"device\"",
+      "via": "Ask AnA: \"device\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "IVDR evidence — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "IVDR evidenceIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "Labeling — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "LabelingIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscriptions"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "UDI & device identification — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "UDI & device identificationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseComp"
+    },
+    {
+      "from": "⌘K \"label\"",
+      "via": "Ask AnA: \"label\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K \"communication\"",
+      "via": "Communication — not included in your subscription",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": "CommunicationIncluded from StandardYour subscription does not include this feature. It is included from the Standard subscription upward.CloseCompare subscripti"
+    },
+    {
+      "from": "⌘K \"communication\"",
+      "via": "Ask AnA: \"communication\"Send to gateway",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Plan",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Plan",
+      "via": "See all tasks in Tasks",
+      "url": "/concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Plan",
+      "via": "See your tasks in Tasks",
+      "url": "/concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Evidence",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Evidence",
+      "via": "Add or find files in Vault",
+      "url": "/concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Author",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Author",
+      "via": "Write the protocol in the protocol workspace",
+      "url": "/concept2cure/protocol-dev?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Review",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Submit",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "project step Respond",
+      "via": "Open project WKDE",
+      "url": "/concept2cure/project-home",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Home",
+      "url": "/concept2cure?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Projects",
+      "url": "/concept2cure/projects?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Tasks",
+      "url": "/concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Communication",
+      "url": "/concept2cure/communication-center?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Vault",
+      "url": "/concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "CMC / Module 3",
+      "url": "/concept2cure/cmc?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Quality",
+      "url": "/concept2cure/quality?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "rail",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Home",
+      "url": "/concept2cure?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Projects",
+      "url": "/concept2cure/projects?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Tasks",
+      "url": "/concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Communication",
+      "url": "/concept2cure/communication-center?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Vault",
+      "url": "/concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "CMC / Module 3Biotech & Pharma",
+      "url": "/concept2cure/cmc?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Quality",
+      "url": "/concept2cure/quality?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Reporting & analytics",
+      "url": "/concept2cure/insights?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "PlanWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "EvidenceWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "AuthorWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "ReviewWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "SubmitWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "RespondWKDE",
+      "url": "/concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Run validationAction",
+      "url": "/concept2cure/conversation-thread?program=e9f5e603-da51-449c-b93a-e4b9703613f3",
+      "launchLock": false,
+      "licenceLock": null
+    },
+    {
+      "from": "⌘K Jump to",
+      "via": "Export documentAction · e-sign",
+      "url": "/concept2cure/conversation-thread",
+      "launchLock": false,
+      "licenceLock": null
+    }
+  ]
+}

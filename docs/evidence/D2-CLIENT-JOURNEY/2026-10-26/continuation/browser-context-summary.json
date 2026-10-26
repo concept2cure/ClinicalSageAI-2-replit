@@ -1,0 +1,312 @@
+{
+  "source_server_log": "/tmp/concept-server-final.log",
+  "source_network_archives": [
+    "test-results/e2e/launch-walk-no-lock.e2e.ts-e7faa-ail-\u2318K-or-a-project-s-doors-chromium/trace.zip!/0-trace.network",
+    "test-results/e2e/launch-walk-no-lock.e2e.ts-fe7bb-ail-\u2318K-or-a-project-s-doors-chromium/trace.zip!/0-trace.network"
+  ],
+  "deduplication_key": "frame + monotonic start + wall start + method + URL path; headers, cookies, query strings and bodies excluded",
+  "duplicate_records_removed": 0,
+  "unique_affected_request_count": 266,
+  "counts_by_family": {
+    "quality_qms": {
+      "total": 80,
+      "status_200": 32,
+      "status_429": 0,
+      "status_minus_1": 48,
+      "status_500": 0,
+      "other_statuses": {}
+    },
+    "notifications_unread_count": {
+      "total": 106,
+      "status_200": 82,
+      "status_429": 24,
+      "status_minus_1": 0,
+      "status_500": 0,
+      "other_statuses": {}
+    },
+    "project_schedule_and_unified_work": {
+      "total": 80,
+      "status_200": 76,
+      "status_429": 0,
+      "status_minus_1": 4,
+      "status_500": 0,
+      "other_statuses": {}
+    }
+  },
+  "selected_cancellation_correlations": [
+    {
+      "server_error": {
+        "time": "2026-10-26T15:17:32.641Z",
+        "message": "[mdx-qms] change-list failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.622Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/changes",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 19.0
+        },
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.625Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/changes",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 16.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:17:32.725Z",
+        "message": "[mdx-qms] doc-list failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.621Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/documents",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 104.0
+        },
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.622Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/documents",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 103.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:17:32.731Z",
+        "message": "[mdx-qms] training-compliance failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.621Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/training/compliance",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 110.0
+        },
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.624Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/training/compliance",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 107.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:17:32.734Z",
+        "message": "[mdx-qms] change-list failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.622Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/changes",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 112.0
+        },
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:32.625Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/changes",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 109.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:17:42.452Z",
+        "message": "[mdx-qms] change-list failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "quality_qms",
+          "started_at": "2026-10-26T15:17:42.443Z",
+          "method": "GET",
+          "path": "/api/mdx/qms/changes",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 9.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:19:01.891Z",
+        "message": "[project-schedule-of-events] loading unified work failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "project_schedule_and_unified_work",
+          "started_at": "2026-10-26T15:19:01.500Z",
+          "method": "GET",
+          "path": "/api/concept2cure/projects/d07a6265-1350-4879-9682-7e5b7dbd5524/unified-work",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 391.0
+        },
+        {
+          "family": "project_schedule_and_unified_work",
+          "started_at": "2026-10-26T15:19:01.503Z",
+          "method": "GET",
+          "path": "/api/concept2cure/projects/d07a6265-1350-4879-9682-7e5b7dbd5524/unified-work",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 388.0
+        }
+      ]
+    },
+    {
+      "server_error": {
+        "time": "2026-10-26T15:19:05.350Z",
+        "message": "[project-schedule-of-events] loading unified work failed",
+        "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+      },
+      "matching_aborted_requests": [
+        {
+          "family": "project_schedule_and_unified_work",
+          "started_at": "2026-10-26T15:19:04.976Z",
+          "method": "GET",
+          "path": "/api/concept2cure/projects/d07a6265-1350-4879-9682-7e5b7dbd5524/unified-work",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 374.0
+        },
+        {
+          "family": "project_schedule_and_unified_work",
+          "started_at": "2026-10-26T15:19:04.976Z",
+          "method": "GET",
+          "path": "/api/concept2cure/projects/d07a6265-1350-4879-9682-7e5b7dbd5524/unified-work",
+          "status": -1,
+          "failure_text": "net::ERR_ABORTED",
+          "duration_ms": -1,
+          "server_error_after_request_start_ms": 374.0
+        }
+      ]
+    }
+  ],
+  "sanitized_request_context_errors": [
+    {
+      "time": "2026-10-26T15:17:32.641Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:17:32.725Z",
+      "message": "[mdx-qms] doc-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:17:32.731Z",
+      "message": "[mdx-qms] training-compliance failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:17:32.734Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:17:42.452Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:01.891Z",
+      "message": "[project-schedule-of-events] loading unified work failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:05.350Z",
+      "message": "[project-schedule-of-events] loading unified work failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:22.264Z",
+      "message": "[mdx-qms] training-compliance failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:22.280Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:48.227Z",
+      "message": "[mdx-qms] doc-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:48.232Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:19:59.146Z",
+      "message": "[mdx-qms] doc-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:20:00.407Z",
+      "message": "[mdx-qms] change-list failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:21:41.978Z",
+      "message": "[mdx-qms] training-compliance failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    },
+    {
+      "time": "2026-10-26T15:21:41.984Z",
+      "message": "[mdx-qms] doc-review-due failed",
+      "error_code": "REQUEST_DB_CONTEXT_REQUIRED"
+    }
+  ],
+  "server_completed_target_http_errors": [],
+  "completed_target_500_records": [],
+  "interpretation": "Observed request-context log occurrences align with cancelled requests. No missing-mount cause is established. Server response-close events were not instrumented, so precise causal timing remains unproven. No production change or shared-pool fallback is warranted by this evidence.",
+  "limits": "Timestamp/path correlation does not instrument server response close; browser 200 statuses can correspond to server conditional 304 responses."
+}

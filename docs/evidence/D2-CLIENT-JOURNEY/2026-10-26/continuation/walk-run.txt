@@ -1,0 +1,289 @@
+
+Running 2 tests using 1 worker
+
+(node:6317) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:6317) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+walk: rail → Home /concept2cure
+walk: rail → Projects /concept2cure/projects
+walk: rail → Tasks /concept2cure/tasks
+walk: rail → Communication /concept2cure/tasks licence
+walk: rail → Vault /concept2cure/vault
+walk: rail → CMC / Module 3 /concept2cure/vault licence
+walk: rail → Quality /concept2cure/quality
+walk: rail → Reporting & analytics /concept2cure/insights
+walk: ⌘K Jump to → Home /concept2cure
+walk: ⌘K Jump to → Projects /concept2cure/projects
+walk: ⌘K Jump to → Tasks /concept2cure/tasks
+walk: ⌘K Jump to → Communication — not included in your subscription /concept2cure/tasks licence
+walk: ⌘K Jump to → Vault /concept2cure/vault
+walk: ⌘K Jump to → CMC / Module 3 — not included in your subscription /concept2cure/vault licence
+walk: ⌘K Jump to → Quality /concept2cure/quality
+walk: ⌘K Jump to → Reporting & analytics /concept2cure/insights
+walk: ⌘K Jump to → Run validationAction /concept2cure/conversation-thread
+walk: ⌘K Jump to → Export documentAction · e-sign /concept2cure/conversation-thread
+walk: ⌘K "vault" → Vault /concept2cure/vault
+walk: ⌘K "vault" → Device artifact vault — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "vault" → Ask AnA: "vault"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "submission" → Projects /concept2cure/projects
+walk: ⌘K "submission" → Vault /concept2cure/vault
+walk: ⌘K "submission" → Submission Center /concept2cure/submission-center
+walk: ⌘K "submission" → Gateway transmittals /concept2cure/gateway-transmittals
+walk: ⌘K "submission" → Compile & export eCTDBiotech & Pharma /concept2cure/ectd-compile
+walk: ⌘K "submission" → CMC / Module 3 — not included in your subscription /concept2cure/ectd-compile licence
+walk: ⌘K "submission" → IND forms — not included in your subscription /concept2cure/ectd-compile licence
+walk: ⌘K "submission" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "submission" → Pre-submission (Q-Sub) — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Device submission workload — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Submission blockers — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Device submission packages — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Communication — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Ask AnA: "submission"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "readiness" → Project home /concept2cure/project-home
+walk: ⌘K "readiness" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "readiness" → IVD completeness — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "readiness" → Device submission packages — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "readiness" → Reporting & analytics /concept2cure/insights
+walk: ⌘K "readiness" → Ask AnA: "readiness"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "protocol" → Device pathway analytics — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "protocol" → The protocol workspace /concept2cure/protocol-dev
+walk: ⌘K "protocol" → Ask AnA: "protocol"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "cmc" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "cmc" → Quality /concept2cure/quality
+walk: ⌘K "cmc" → Ask AnA: "cmc"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "quality" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "quality" → Quality /concept2cure/quality
+walk: ⌘K "quality" → Ask AnA: "quality"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "report" → IND forms — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → IVD completeness — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → Device pathway analytics — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → Reporting & analytics /concept2cure/insights
+walk: ⌘K "report" → Audit & compliance reports /concept2cure/compliance-reports
+walk: ⌘K "report" → Ask AnA: "report"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "task" → Project home /concept2cure/project-home
+walk: ⌘K "task" → Tasks /concept2cure/tasks
+walk: ⌘K "task" → Conversation /concept2cure/conversation-thread
+walk: ⌘K "task" → Device submission workload — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Communication — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Human factors (IEC 62366-1) — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Ask AnA: "task"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "audit" → Vault /concept2cure/vault
+walk: ⌘K "audit" → Audit trailAdmin /concept2cure/audit-trail
+walk: ⌘K "audit" → 21 CFR Part 11 consoleAdmin /concept2cure/part11-console
+walk: ⌘K "audit" → Audit & compliance reports /concept2cure/compliance-reports
+walk: ⌘K "audit" → Admin consoleAdmin /concept2cure/admin-console
+walk: ⌘K "audit" → Set up from a documentAdmin /concept2cure/onboarding-ingest
+walk: ⌘K "audit" → Ask AnA: "audit"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "ind" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "ind" → IND forms — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "ind" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "ind" → Refine with findingsAction /concept2cure/conversation-thread
+walk: ⌘K "ind" → Ask AnA: "ind"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "device" → Vault /concept2cure/vault
+walk: ⌘K "device" → 510(k) and eSTAR — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Clinical evaluation (CER) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → IVDR evidence — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Labeling — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Risk management — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → IVD completeness — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Medical Device & IVD — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → PMA — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device clinical studies — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Software lifecycle — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Engineering evidence — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → UDI & device identification — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Post-market surveillance and CAPA — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Pre-submission (Q-Sub) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device artifact vault — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device submission workload — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Submission blockers — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device submission packages — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device pathway analytics — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Design controls (DHF) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Human factors (IEC 62366-1) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Ask AnA: "device"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "label" → IVDR evidence — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → Labeling — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → UDI & device identification — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → Ask AnA: "label"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "communication" → Communication — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "communication" → Ask AnA: "communication"Send to gateway /concept2cure/conversation-thread
+walk: project step Plan → Open project WK-101 /concept2cure/project-home
+walk: project step Plan → See all tasks in Tasks /concept2cure/tasks?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Plan → See your tasks in Tasks /concept2cure/tasks?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Evidence → Open project WK-101 /concept2cure/project-home
+walk: project step Evidence → Add or find files in Vault /concept2cure/vault?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Author → Open project WK-101 /concept2cure/project-home
+walk: project step Author → Write the protocol in the protocol workspace /concept2cure/protocol-dev?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Author → Find or start a document in the editor /concept2cure/document-authoring?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Author → Compose Module 3 in CMC / Module 3 /concept2cure/cmc?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: project step Review → Open project WK-101 /concept2cure/project-home
+walk: project step Submit → Open project WK-101 /concept2cure/project-home
+walk: project step Respond → Open project WK-101 /concept2cure/project-home
+walk: rail → Home /concept2cure?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Projects /concept2cure/projects?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Tasks /concept2cure/tasks?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Communication /concept2cure/communication-center?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Vault /concept2cure/vault?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → CMC / Module 3 /concept2cure/cmc?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Quality /concept2cure/quality?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: rail → Reporting & analytics /concept2cure/insights?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Home /concept2cure?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Projects /concept2cure/projects?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Tasks /concept2cure/tasks?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Communication /concept2cure/communication-center?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Vault /concept2cure/vault?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → CMC / Module 3Biotech & Pharma /concept2cure/cmc?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Quality /concept2cure/quality?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Reporting & analytics /concept2cure/insights?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → PlanWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → EvidenceWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → AuthorWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → ReviewWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → SubmitWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → RespondWK-101 /concept2cure/project-home?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Run validationAction /concept2cure/conversation-thread?program=d07a6265-1350-4879-9682-7e5b7dbd5524
+walk: ⌘K Jump to → Export documentAction · e-sign /concept2cure/conversation-thread
+  ✓  1 [chromium] › tests/e2e/launch-walk-no-lock.e2e.ts:197:3 › a fresh biotech organisation reaches no "not in this release" lock from the rail, ⌘K or a project's doors (2.2m)
+walk: rail → Home /concept2cure
+walk: rail → Projects /concept2cure/projects
+walk: rail → Tasks /concept2cure/tasks
+walk: rail → Communication /concept2cure/tasks licence
+walk: rail → Vault /concept2cure/vault
+walk: rail → CMC / Module 3 /concept2cure/vault licence
+walk: rail → Quality /concept2cure/quality
+walk: rail → Reporting & analytics /concept2cure/insights
+walk: ⌘K Jump to → Home /concept2cure
+walk: ⌘K Jump to → Projects /concept2cure/projects
+walk: ⌘K Jump to → Tasks /concept2cure/tasks
+walk: ⌘K Jump to → Communication — not included in your subscription /concept2cure/tasks licence
+walk: ⌘K Jump to → Vault /concept2cure/vault
+walk: ⌘K Jump to → CMC / Module 3 — not included in your subscription /concept2cure/vault licence
+walk: ⌘K Jump to → Quality /concept2cure/quality
+walk: ⌘K Jump to → Reporting & analytics /concept2cure/insights
+walk: ⌘K Jump to → Run validationAction /concept2cure/conversation-thread
+walk: ⌘K Jump to → Export documentAction · e-sign /concept2cure/conversation-thread
+walk: ⌘K "vault" → Vault /concept2cure/vault
+walk: ⌘K "vault" → Device artifact vault — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "vault" → Ask AnA: "vault"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "submission" → Projects /concept2cure/projects
+walk: ⌘K "submission" → Vault /concept2cure/vault
+walk: ⌘K "submission" → Submission Center /concept2cure/submission-center
+walk: ⌘K "submission" → Gateway transmittals /concept2cure/gateway-transmittals
+walk: ⌘K "submission" → Compile & export eCTDBiotech & Pharma /concept2cure/ectd-compile
+walk: ⌘K "submission" → CMC / Module 3 — not included in your subscription /concept2cure/ectd-compile licence
+walk: ⌘K "submission" → IND forms — not included in your subscription /concept2cure/ectd-compile licence
+walk: ⌘K "submission" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "submission" → Pre-submission (Q-Sub) — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Device submission workload — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Submission blockers — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Device submission packages — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Communication — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "submission" → Ask AnA: "submission"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "readiness" → Project home /concept2cure/project-home
+walk: ⌘K "readiness" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "readiness" → IVD completeness — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "readiness" → Device submission packages — not included in your subscription /concept2cure/dispatch-readiness licence
+walk: ⌘K "readiness" → Reporting & analytics /concept2cure/insights
+walk: ⌘K "readiness" → Ask AnA: "readiness"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "protocol" → Device pathway analytics — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "protocol" → The protocol workspace /concept2cure/protocol-dev
+walk: ⌘K "protocol" → Ask AnA: "protocol"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "cmc" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "cmc" → Quality /concept2cure/quality
+walk: ⌘K "cmc" → Ask AnA: "cmc"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "quality" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "quality" → Quality /concept2cure/quality
+walk: ⌘K "quality" → Ask AnA: "quality"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "report" → IND forms — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → IVD completeness — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → Device pathway analytics — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "report" → Reporting & analytics /concept2cure/insights
+walk: ⌘K "report" → Audit & compliance reports /concept2cure/compliance-reports
+walk: ⌘K "report" → Ask AnA: "report"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "task" → Project home /concept2cure/project-home
+walk: ⌘K "task" → Tasks /concept2cure/tasks
+walk: ⌘K "task" → Conversation /concept2cure/conversation-thread
+walk: ⌘K "task" → Device submission workload — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Communication — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Human factors (IEC 62366-1) — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "task" → Ask AnA: "task"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "audit" → Vault /concept2cure/vault
+walk: ⌘K "audit" → Audit trailAdmin /concept2cure/audit-trail
+walk: ⌘K "audit" → 21 CFR Part 11 consoleAdmin /concept2cure/part11-console
+walk: ⌘K "audit" → Audit & compliance reports /concept2cure/compliance-reports
+walk: ⌘K "audit" → Admin consoleAdmin /concept2cure/admin-console
+walk: ⌘K "audit" → Set up from a documentAdmin /concept2cure/onboarding-ingest
+walk: ⌘K "audit" → Ask AnA: "audit"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "ind" → CMC / Module 3 — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "ind" → IND forms — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "ind" → Readiness /concept2cure/dispatch-readiness
+walk: ⌘K "ind" → Refine with findingsAction /concept2cure/conversation-thread
+walk: ⌘K "ind" → Ask AnA: "ind"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "device" → Vault /concept2cure/vault
+walk: ⌘K "device" → 510(k) and eSTAR — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Clinical evaluation (CER) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → IVDR evidence — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Labeling — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Risk management — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → IVD completeness — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Medical Device & IVD — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → PMA — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device clinical studies — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Software lifecycle — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Engineering evidence — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → UDI & device identification — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Post-market surveillance and CAPA — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Pre-submission (Q-Sub) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device artifact vault — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device submission workload — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Submission blockers — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device submission packages — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Device pathway analytics — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Design controls (DHF) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Human factors (IEC 62366-1) — not included in your subscription /concept2cure/vault licence
+walk: ⌘K "device" → Ask AnA: "device"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "label" → IVDR evidence — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → Labeling — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → UDI & device identification — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "label" → Ask AnA: "label"Send to gateway /concept2cure/conversation-thread
+walk: ⌘K "communication" → Communication — not included in your subscription /concept2cure/conversation-thread licence
+walk: ⌘K "communication" → Ask AnA: "communication"Send to gateway /concept2cure/conversation-thread
+walk: project step Plan → Open project WKDE /concept2cure/project-home
+walk: project step Plan → See all tasks in Tasks /concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: project step Plan → See your tasks in Tasks /concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: project step Evidence → Open project WKDE /concept2cure/project-home
+walk: project step Evidence → Add or find files in Vault /concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: project step Author → Open project WKDE /concept2cure/project-home
+walk: project step Author → Write the protocol in the protocol workspace /concept2cure/protocol-dev?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: project step Review → Open project WKDE /concept2cure/project-home
+walk: project step Submit → Open project WKDE /concept2cure/project-home
+walk: project step Respond → Open project WKDE /concept2cure/project-home
+walk: rail → Home /concept2cure?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Projects /concept2cure/projects?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Tasks /concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Communication /concept2cure/communication-center?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Vault /concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → CMC / Module 3 /concept2cure/cmc?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Quality /concept2cure/quality?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: rail → Reporting & analytics /concept2cure/insights?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Home /concept2cure?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Projects /concept2cure/projects?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Tasks /concept2cure/tasks?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Communication /concept2cure/communication-center?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Vault /concept2cure/vault?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → CMC / Module 3Biotech & Pharma /concept2cure/cmc?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Quality /concept2cure/quality?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Reporting & analytics /concept2cure/insights?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → PlanWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → EvidenceWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → AuthorWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → ReviewWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → SubmitWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → RespondWKDE /concept2cure/project-home?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Run validationAction /concept2cure/conversation-thread?program=e9f5e603-da51-449c-b93a-e4b9703613f3
+walk: ⌘K Jump to → Export documentAction · e-sign /concept2cure/conversation-thread
+  ✓  2 [chromium] › tests/e2e/launch-walk-no-lock.e2e.ts:197:3 › a fresh medtech organisation reaches no "not in this release" lock from the rail, ⌘K or a project's doors (2.2m)
+
+  2 passed (4.7m)
