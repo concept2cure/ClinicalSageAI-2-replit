@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.23 |
+| Version | 0.24 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -12,6 +12,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.24 | 2026-10-26 | D2 A2.10 | Assessed URS-PROJ-007a: medium, scripted. Mistaking reference clocks for deadlines or a reference listing for a server offer can misdirect filing work. Historical 007 results remain; revised formal execution owed. |
 | 0.23 | 2026-10-26 | D2 A2.7 | Added revised dossier URS-SUBC-009a assessment; retained historical 009. Transcribed 31 previously missing rows from the already recorded URS-004/OQ-004 and URS-007/OQ-008 risk/activity selections so TM-001 can regenerate without integrity gaps. No execution or CMC admission claimed. |
 | 0.1 | 2026-09-21 | W3a | One row per URS requirement; assurance chosen per CSA. |
 | 0.2 | 2026-09-23 | W3 | URS-PROJ-010 (the sign-in audit trail) assessed: high, scripted (VSR-001 §13, F-19). |
@@ -55,6 +56,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-PROJ-005 | Render Projects and Project Home | medium — a non-rendering surface stops work but corrupts nothing | unscripted | rendering check with screenshot; observed state recorded |
 | URS-PROJ-006 | Raise and list tasks, ledgered | medium — tasks drive but do not constitute the filing | scripted | create → board → surface |
 | URS-PROJ-007 | Honest empty/unavailable states for journey and catalog | low — informational | ad-hoc | render and record; no fixture data may appear |
+| URS-PROJ-007a | Canonical filing discovery, exact recorded identity and explicitly authored lifecycle reference | medium | scripted | Legacy route/action and no-write checks, server refusal/error tests, exact identity projection, reference preservation and Plan/browser regression evidence; revised formal OQ-PROJ-12 unexecuted. |
 | URS-PROJ-008 | Enforce the launch boundary | medium — an out-of-scope surface reachable in production would expose unvalidated functions | scripted | payload verdicts plus deep-link gate |
 | URS-PROJ-009 | Refuse foreign/unknown program ids | high — cross-tenant read | scripted | negative test; full RLS under D3 |
 | URS-PROJ-010 | Enter every sign-in attempt in the organisation's audit trail | high — without it an attack on an account, or a session opened on it, leaves no record an inspector can read (§11.10(e)); F-19 showed the trail empty under RLS while every other check passed | scripted | the attempts made by the step itself, read back on the ledger in order, hash-chained, with the server's chain verdict |

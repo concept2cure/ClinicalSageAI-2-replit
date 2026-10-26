@@ -129,9 +129,9 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- already caps it at 5 runs on free; gating it twice would turn the free tier
   -- into a wall of locks instead of a demonstration.
   --
-  -- authoring-engine, filings-catalog and intelligence-catalog are here for a
+  -- authoring-engine and intelligence-catalog are here for a
   -- different reason: they render NO organization data at all (verified -- no
-  -- fetch in AuthoringEngine.tsx, a static FILINGS_TAXONOMY, and a static tool
+  -- fetch in AuthoringEngine.tsx and a static tool
   -- registry). They are reference and wayfinding pages. Selling a static page
   -- is not something to do at any tier.
   ('artifacts-center', 'free'),
@@ -139,7 +139,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('crl-library', 'free'),
   ('deep-research', 'free'),
   ('evidence-search', 'free'),
-  ('filings-catalog', 'free'),
   ('intelligence-catalog', 'free'),
   ('precedent-intelligence', 'free'),
   ('projects', 'free'),
@@ -349,6 +348,12 @@ UPDATE available_modules m
  WHERE p.module_id = m.module_id;
 
 COMMIT;
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 (CLAUDE.md Rule 1).
+-- Filing discovery/reference now lives in the existing New project picker
+-- and ProjectPlan. Remove the retired filings-catalog packaging reference:
+-- fresh deployments have no such row, and existing rows keep their recorded
+-- metadata/subscriptions while 20260810 deprecates them on every replay.
+-- Evidence: slice-A2/A2.10/README.md, double-apply SQL checks.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.7 (CLAUDE.md Rule 1).
 -- The dossier and dossier-map read functions now live in ProjectDossier on
 -- project Author. 20260810 no longer upserts their standalone identities.

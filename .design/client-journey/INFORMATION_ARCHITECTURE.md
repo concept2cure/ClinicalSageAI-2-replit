@@ -836,7 +836,7 @@ row. A function not carried as it is goes on the founder's list (section 5.9).
 | `mission-control` | Projects | partial | no | `projects` | Portfolio list → Projects. Create a project → Projects' New project, on the canonical store (it would create one in a second store). "Choose or create a project" target → `OPEN_PROGRAM_SURFACE` = `projects` (slice 0). Readiness and blockers per project → the project's readiness card and the dispatch verdict; its nine-dimension readiness engine may later score the project if it reads `regulatory_programs`. | FOLD IN | To carry |
 | `device-workstream` | Projects, filtered by pathway | works | yes | `projects` | Device portfolio list → Projects. Pathway filter (510(k), PMA, CER) → a filter on Projects for device clients (Projects already has workstream tabs and device-family mapping). Portfolio health strip → a summary on Projects, unrecorded readiness reading "Not recorded", not 0%. The `mdx` alias now reaches `projects` with its MDX filter (A2.8); the separate device-workstream target remains until A2.10 parity. Its commands `evidence_sufficiency.assess` and `reviewer_simulation.run`, which run in production, keep their claim on the device project. | FOLD IN | To carry |
 | `cro-portfolio` | Projects, grouped by sponsor | partial | no | `projects` | Every sponsor served, with contract and SOW status → a sponsor filter on Projects (needs a sponsor key on projects and on `/api/c2c/projects`; today the sponsor name is the organisation's). Studies and submissions per sponsor → the filtered project list. Onboarding a sponsor (client workspace, SOW, contract dates) → Admin. | FOLD IN | To carry |
-| `filings-catalog` | New project's filing picker | partial | no | `projects` | Browse every filing type → `RegistryPicker` (has it, with search). What a filing is and how it is built → the picker's "how you'll build it" copy. Ask AnA when a filing is required, what it contains, what evidence it needs → the picker's prompt. Its lifecycle loop → the picker. Start → the wizard creates the project (this screen's Start opened a blank editor). | FOLD IN | To carry |
+| `filings-catalog` | New project’s filing picker | partial | no (retired identity) | `projects` | A2.10 confirms all ten parity functions in RegistryPicker/New project and recorded ProjectPlan: search/segments/categories, metadata, visible descriptions, server build facts, Ask AnA, authored lifecycle and distinct inspected-reference context. Lifecycle clocks are general reference, never project deadlines. Legacy links open the wizard once through the shared resolver. Old shell/registry/view/nav rows are removed; creating and packaging seeds amended in place, preserving subscriptions. Evidence: `slice-A2/A2.10/README.md`. | FOLD IN | Confirmed; folded A2.10 |
 
 #### Into the project (Plan, Author, Respond)
 
@@ -1302,8 +1302,17 @@ preserving canonical intake, all 50 retained HTTP registrations, data and the
 two explicitly deferred internal writers. A red-first bounded-writer/retired-route
 contract runs in CI and pre-push; 523 focused tests, 24 native PostgreSQL checks,
 both canonical Create/refusal browser flows and build pass (`slice-A2/A2.9/README.md`).
-Next is **A2.10** (`SLICE_A2_PLAN.md`), whose remaining folds keep their per-function
-parity and admission prerequisites; no shell is removed by this creator retirement.
+A2.10 now completes the filing-catalogue fold into canonical intake and recorded
+Plan, including labelled authored lifecycle reference and read-only unavailable
+filing inspection. Its former identity is an alias with the existing wizard
+action; catalogue replay retains subscriptions. The expanded review corrects CRO
+company-type labels and clarifies already independent project-command ownership.
+**Four folds remain open:** mission-control, device-workstream, cro-portfolio
+and program-journey retain shells/stores until the concrete per-function gaps in
+`A2_10_REMAINING_PARITY_REVIEW.md` and any required admission decisions are met.
+No empty synthetic database establishes absence of legacy tenant records.
+Continue A3’s existing AnA prompt-key convergence while those fold prerequisites
+are tracked; do not recreate or auto-retire their functions.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

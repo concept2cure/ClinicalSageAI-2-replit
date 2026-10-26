@@ -41,7 +41,7 @@ import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext
 // wizard's first step hung on "Loading registry…" and could never complete).
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
-import { RegistryPicker } from './AnaVerbs';
+import { RegistryPicker, type FilingBrowseState } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
@@ -189,7 +189,7 @@ function documentClassLabel(programType: string): string | null {
 const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
 
 type WizardScreenContext = Omit<SurfaceContext, 'surfaceId'>;
-function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false): WizardScreenContext {
+function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false, browser: { segment: string | null; searchTerm: string; inspectedReference?: FilingBrowseState['inspectedReference'] } = { segment: null, searchTerm: '', inspectedReference: null }): WizardScreenContext {
   if (unavailable) return {
     summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
     facts: { wizardState: 'unavailable', selectedFiling: null },
@@ -197,7 +197,7 @@ function wizardScreenContext(step: number, filing: SelTpl | null, applicationTyp
   return {
     summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
       (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
-    facts: { wizardState: 'open', wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+    facts: { wizardState: 'open', filingBrowser: { ...browser, inspectedReference: browser.inspectedReference ?? null }, wizardStep: { number: step + 1, label: STEP_LABELS[step] },
       selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null } : null },
     availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
   };
@@ -341,6 +341,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   /* The tab the user is LOOKING at, which is the lane they arrived in until
      they switch. The banner reads this, not the arrival lane. */
   const [tabSeg, setTabSeg] = useState<string | null>(null);
+  const [filingBrowser, setFilingBrowser] = useState<FilingBrowseState | null>(null);
   const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
   const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
@@ -349,7 +350,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
-  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired), [step, selTpl, programType, retired]);
+  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowser ?? { segment: regSeg ?? null, searchTerm: '', inspectedReference: null }), [step, selTpl, programType, retired, filingBrowser, regSeg]);
   useEffect(() => { onContext?.(screenContext); }, [onContext, screenContext]);
   useEffect(() => () => onContext?.(null), [onContext]);
   /* The filing fixes the family when known; the person states any unresolved class. */
@@ -591,6 +592,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
                 onAsk={onAsk}
+                onBrowseChange={setFilingBrowser}
               />
             </div>
           )}

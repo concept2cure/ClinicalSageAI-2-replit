@@ -481,7 +481,7 @@ function jsonColumn(v: unknown): unknown {
   try { return JSON.parse(v); } catch { return null; }
 }
 
-/** The detail read model: the stored row plus the device fields intake keeps in
+/** The detail read model: the stored row plus the filing identity/device fields intake keeps in
  *  `metadata`, lifted to first-class keys. Nothing is invented: a program
  *  without a device taxonomy answers null for each field, and `metadata` itself
  *  is not exposed (it holds internal provenance such as createdVia). */
@@ -495,6 +495,9 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
   return {
     ...rest,
+    // Reference placement uses the exact intake choice, never a guessed filing
+    // from program_type. Internal provenance stays inside metadata.
+    submission_type_id: str(meta.submissionTypeId),
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),

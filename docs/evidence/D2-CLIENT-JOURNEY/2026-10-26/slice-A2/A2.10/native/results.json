@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "test": "us_ind: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 15320
+    },
+    {
+      "test": "us_510k: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 10286
+    },
+    {
+      "test": "the New project action preserves intake and waits for the person to create",
+      "status": "passed",
+      "durationMs": 7311
+    }
+  ],
+  "passed": 3,
+  "runtime": "native PostgreSQL app_service with RLS/launch enforcement; no response mocks/provider"
+}

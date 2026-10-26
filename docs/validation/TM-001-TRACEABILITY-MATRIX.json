@@ -1,24 +1,24 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-26T20:09:56.392Z",
+  "generatedAt": "2026-10-26T23:23:53.883Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 116,
+    "requirements": 117,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 45
+    "uncovered": 46
   },
   "byApp": {
     "Projects": {
-      "requirements": 14,
+      "requirements": 15,
       "pass": 13,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 1
+      "uncovered": 2
     },
     "Vault": {
       "requirements": 21,
@@ -383,6 +383,22 @@
         "rationale": "render and record; no fixture data may appear"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-007a",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "Filing discovery lives in the New project wizard. Legacy catalogue links open that wizard without creating a project. Search and reference details retain the filing identity, segment, authority, format, CTD mapping, description and authored lifecycle; unavailable filings remain read-only and a failed offer read is an explicit failure. Reference clocks/stages are labelled as general reference, never the project's progress, deadline or an agency commitment. Project Plan uses only the recorded filing identity; missing or unknown identity does not infer a reference from the tenant or application type.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Canonical filing discovery, exact recorded identity and explicitly authored lifecycle reference",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "Legacy route/action and no-write checks, server refusal/error tests, exact identity projection, reference preservation and Plan/browser regression evidence; revised formal OQ-PROJ-12 unexecuted."
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-PROJ-008",

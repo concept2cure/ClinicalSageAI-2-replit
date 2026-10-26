@@ -283,18 +283,37 @@ Remove the id from LAUNCH_SHELL_SURFACES, the segment lists and the demo script.
 ### Into Projects (`projects`: Projects.tsx, the New project wizard and Project home)
 
 #### From `filings-catalog`
-Deprecate the catalogue row by amending its creating migration in place (Rule 1).
+**Confirmed 2026-10-26, A2.10 filing carryover.** All ten outcomes are now
+reached through existing RegistryPicker/New project and ProjectPlan owners.
+`registryPickerReference.test.tsx`, `projectPlanLifecycleReference.test.tsx`,
+`newProjectWizardContext.test.tsx`, `filingAskPrompt.test.tsx` and existing
+server-offer/creation tests pass (107 tests in 11 focused suites before shell
+retirement). Shared `FilingReference.tsx` projects the existing authored tables
+migrated verbatim to `shared/regulatory/filing-lifecycle-reference.ts`; clocks
+remain explicitly reference, never current status, deadlines or agency promises.
+Unavailable filings have read-only reference details and cannot be selected.
+Plan resolves only the exact recorded `submission_type_id`, not the tenant or
+program-type default. Current Plan/Tasks, Submit and Respond doors retain whole-
+loop navigation; the separate journey link added no catalogue function.
 
-- [ ] Search by description and workflow label, with the segment named on each result. From `FilingsCatalog.tsx:160-170,238-260`. Goes to: RegistryPicker's match rule in the New project wizard. Real today.
-- [ ] Category descriptions. From `FilingsCatalog.tsx:277-305`. Goes to: under each category heading in RegistryPicker. Real today.
-- [ ] List every filing type, including those not offered. From `FilingsCatalog.tsx:290-299`. Goes to: nothing to add, because showing an unoffered filing as startable would be wrong. Real today.
-- [ ] Filing description as visible text. From `FilingsCatalog.tsx:138-146`. Goes to: the card, or the chosen-filing note. Real today.
-- [ ] Filing detail: authority, format, CTD module. From `FilingsCatalog.tsx:59-64,86-95`. Goes to: a chosen-filing detail in wizard step 1 or 2. Real today.
-- [ ] Lifecycle loop: stages, review clock, return loop. From `filings-catalog-data.ts:118-168`. Goes to: the wizard's chosen-filing detail and the Plan step, labelled as authored reference. Real today.
-- [ ] "How you'll build it". From `FilingsCatalog.tsx:56-58`. Goes to: a filing-specific review-step note (`Projects.tsx:936-939`). Real today.
-- [ ] Ask AnA about a filing type. From `FilingsCatalog.tsx:119`. Goes to: an Ask AnA button on the chosen filing, with the filing published in the wizard's AnA context. Real today.
-- [ ] Links to run the whole loop. From `FilingsCatalog.tsx:122-130`. Goes to: already reached inside the project. The journey link is not needed. Real today.
-- [ ] AnA sees the segment, search and selection. From `FilingsCatalog.tsx:179-211`. Goes to: the wizard's state, published in the projects AnA context. Real today.
+The qualified shell may now fold to `projects` with `projects.new-project`
+through the existing alias resolver. Deprecate its catalogue identity by amending
+the creating migration in place; retain its row and subscriptions. Final combined qualification passes 378 tests in 33 suites, 16 native
+PostgreSQL checks, three native browser flows and the production build.
+The follow-up preserves distinct unavailable-reference inspection in AnA
+context without selection or writes. Proof and normal publication gates are
+recorded in `slice-A2/A2.10/README.md`; no signed OQ execution is claimed.
+
+- [x] Search by description and workflow label, with the segment named on each result. From `FilingsCatalog.tsx:160-170,238-260`. Goes to: RegistryPicker's match rule in the New project wizard. Real today.
+- [x] Category descriptions. From `FilingsCatalog.tsx:277-305`. Goes to: under each category heading in RegistryPicker. Real today.
+- [x] List every filing type, including those not offered. From `FilingsCatalog.tsx:290-299`. Goes to: nothing to add, because showing an unoffered filing as startable would be wrong. Real today.
+- [x] Filing description as visible text. From `FilingsCatalog.tsx:138-146`. Goes to: the card, or the chosen-filing note. Real today.
+- [x] Filing detail: authority, format, CTD module. From `FilingsCatalog.tsx:59-64,86-95`. Goes to: a chosen-filing detail in wizard step 1 or 2. Real today.
+- [x] Lifecycle loop: stages, review clock, return loop. From `filings-catalog-data.ts:118-168`. Goes to: the wizard's chosen-filing detail and the Plan step, labelled as authored reference. Real today.
+- [x] "How you'll build it". From `FilingsCatalog.tsx:56-58`. Goes to: a filing-specific review-step note (`Projects.tsx:936-939`). Real today.
+- [x] Ask AnA about a filing type. From `FilingsCatalog.tsx:119`. Goes to: an Ask AnA button on the chosen filing, with the filing published in the wizard's AnA context. Real today.
+- [x] Links to run the whole loop. From `FilingsCatalog.tsx:122-130`. Goes to: already reached inside the project. The journey link is not needed. Real today.
+- [x] AnA sees the segment, search and selection. From `FilingsCatalog.tsx:179-211`. Goes to: the wizard's state, published in the projects AnA context. Real today.
 
 #### From `device-workstream`
 

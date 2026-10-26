@@ -1,4 +1,10 @@
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 filing catalogue fold (Rule 1).
+-- RegistryPicker, FilingReference and ProjectPlan now carry every filing
+-- discovery/reference function. Remove filings-catalog from this keep-list
+-- and upsert so step 1 deprecates it on every deploy, preserving the existing
+-- row, metadata and all tenant subscriptions. No cascading DELETE.
+-- Evidence and replay proof: slice-A2/A2.10/README.md.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.7 dossier fold (CLAUDE.md Rule 1).
 -- Dossier artifact rollups and section tracking now live on project Author in
 -- ProjectDossier.tsx. Remove dossier/dossier-map from this writer's keep-list
@@ -263,7 +269,6 @@ UPDATE available_modules
    'ectd-publishing',   -- added 2026-09-22: a launch module; see the amendment note at the top
    'ectd-compile',
    'evidence-search',
-   'filings-catalog',
    'gateway-transmittals',
    'global-ri',
    'haq-manager',
@@ -390,7 +395,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('registrations', 'Registrations', 'Global registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy.', 'Lifecycle & access', '/concept2cure/registrations', 'globe', 690, '{"tiers": [], "industries": []}'::json),
   ('program-journey', 'Program journey', 'The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers.', 'Program journey', '/concept2cure/program-journey', 'workflow', 700, '{"tiers": [], "industries": []}'::json),
   ('communication-center', 'Communication', 'The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl. CRL/RTF/denial (rejected_or_remediation) → response → resubmit, HA interactions + PMR/PMC/REMS commitments, authority profiles.', 'Applications & filing', '/concept2cure/communication-center', 'mail', 710, '{"tiers": [], "industries": []}'::json),
-  ('filings-catalog', 'Filings catalog', 'Canonical taxonomy of 113 filing types across pharma/biotech, device, IVD, cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER).', 'Applications & filing', '/concept2cure/filings-catalog', 'clipboardList', 720, '{"tiers": [], "industries": []}'::json),
   ('ind-checklist', 'IND forms', 'IND checklist, forms (1571/1572/3674), autodraft, master data, amendments, annual reports, safety reports.', 'Applications & filing', '/concept2cure/ind-checklist', 'clipboardList', 730, '{"tiers": [], "industries": []}'::json),
   ('maa-cockpit', 'MAA / non-US Module 1', 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.', 'Applications & filing', '/concept2cure/maa-cockpit', 'globe', 740, '{"tiers": [], "industries": []}'::json),
   ('nda-cockpit', 'NDA / BLA filing', 'NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).', 'Applications & filing', '/concept2cure/nda-cockpit', 'beaker', 750, '{"tiers": [], "industries": []}'::json),

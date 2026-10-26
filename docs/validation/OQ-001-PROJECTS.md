@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-001 |
-| Version | 0.7 |
+| Version | 0.8 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-001 |
 | Runner (the executable protocol) | `tests/validation/oq/projects/run.mjs` — `npm run validation:oq -- projects` |
@@ -13,6 +13,7 @@
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 0.8 | 2026-10-26 | D2 A2.10 | OQ-PROJ-12 now verifies URS-PROJ-007a: legacy catalogue links reach canonical intake and labelled filing reference without a project write. Old step-12 results qualify only the earlier standalone screen. Revised formal step is unexecuted. |
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-22 | W3 | OQ-PROJ-06b checks what its expected result says: at least one entry carries record/previous hashes, and the server's chain verdict (`meta.chain`) is `ok = true`. v0.1 counted entries only, so an unchained entry or a broken chain passed. Shown on a deliberately tampered local chain: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed; v0.2 fails it (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.3 | 2026-09-23 | W3 | OQ-PROJ-02 signs in through the form with email, password and the authenticator code when the run is credentialed. The Demo Access path it had used exists only on a development server with ALLOW_DEV_AUTH=1, which production must refuse (IQ-10), so the step could not execute on staging. The harness authenticates every protocol the same way (tests/validation/lib/harness.mjs passwordLogin; VSR-001 §13). §1 now describes that session method; it named dev-login only, which OQ-002…006 inherit through "As OQ-001 §1". |
@@ -53,7 +54,7 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 | OQ-PROJ-09 | URS-PROJ-006 | scripted | `POST /api/tasks/tasks`; `GET /api/task-management/board` | 2xx; task on the board |
 | OQ-PROJ-10 | URS-PROJ-006 | unscripted (browser) | Open `/concept2cure/tasks` | Task title visible; screenshot |
 | OQ-PROJ-11 | URS-PROJ-007 | ad-hoc | `GET /api/program-journey` | 200 with `data[]` |
-| OQ-PROJ-12 | URS-PROJ-007 | ad-hoc (browser) | Open `/concept2cure/filings-catalog` | Renders; screenshot |
+| OQ-PROJ-12 | URS-PROJ-007a | scripted (browser) | Open `/concept2cure/filings-catalog`; select the IND filing in the existing wizard; inspect reference details | URL becomes Projects; New project is open; selected filing has metadata and explicitly authored reference; no canonical project POST occurs; screenshot. Formal execution owed at v0.8. |
 | OQ-PROJ-13 | URS-PROJ-008 | scripted | `GET /api/module-subscriptions/navigation` | `launchScope.enforced=true`; `rbm` locked by `launch-scope`; six launch surfaces entitled |
 | OQ-PROJ-14 | URS-PROJ-008 | scripted (browser) | Open `/concept2cure/rbm` | "Not in this release" gate; screenshot |
 | OQ-PROJ-15 | URS-PROJ-009 | scripted | `GET /api/c2c/projects/<random uuid>` | 404 |

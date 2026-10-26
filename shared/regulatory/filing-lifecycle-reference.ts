@@ -1,47 +1,9 @@
-/**
- * Regulatory Filing & Document Taxonomy -- the Filings catalog's view of the
- * ONE filing catalog (shared/regulatory/filing-catalog.ts).
- *
- * This file used to carry its own hand-written list of 113 filing types,
- * drifting from both the canonical registry and the wizard's mirror — three
- * different answers to "how many filing types do you support", and stale
- * regulatory metadata (an IB still in M5, an ANDA still scoped M1–M3) after
- * the canonical copies were corrected. BP-W1-2 retires the list:
- * FILINGS_TAXONOMY is DERIVED here, so both surfaces render the same entries,
- * the same metadata, and the same (computed) count.
- *
- * The workflow-code tables and lifecycle-loop archetypes below are the
- * catalog page's own domain content and remain authored here.
+/** Authored lifecycle reference migrated from the former filing catalogue.
+ * These descriptions and clocks are reference text, never a project verdict,
+ * current status, due date, agency commitment or platform support decision.
+ * No project progress is inferred from a filing's reference archetype.
  */
-import {
-  filingCatalogTree,
-  filingWfCode,
-} from '@shared/regulatory/filing-catalog';
-
-/* ---- Interfaces ---- */
-
-export interface FilingItem {
-  n: string;
-  a: string;
-  f: string;
-  c: string;
-  wf: string;
-  d: string;
-}
-
-export interface FilingCategory {
-  cat: string;
-  desc: string;
-  items: FilingItem[];
-}
-
-export interface FilingSegment {
-  seg: string;
-  label: string;
-  sub: string;
-  icon: string;
-  cats: FilingCategory[];
-}
+import { filingWfCode, resolveFilingCatalogEntry } from './filing-catalog';
 
 export interface FilingLoopReturn {
   label: string;
@@ -54,53 +16,6 @@ export interface FilingLoop {
   stages: string[];
   ret: FilingLoopReturn;
 }
-
-/* ---- Taxonomy -- derived, not authored ---- */
-
-/** Legacy short segment keys the catalog page uses as tab state. */
-const SEG_KEY: Record<string, { seg: string; icon: string }> = {
-  pharma_biotech: { seg: 'pharma', icon: 'beaker' },
-  medical_devices: { seg: 'device', icon: 'stethoscope' },
-  diagnostics_ivd: { seg: 'ivd', icon: 'microscope' },
-  cross_cutting: { seg: 'cross', icon: 'layers' },
-};
-
-export const FILINGS_TAXONOMY: FilingSegment[] = filingCatalogTree().map((seg) => ({
-  seg: SEG_KEY[seg.id]?.seg ?? seg.id,
-  label: seg.title,
-  sub: seg.subtitle,
-  icon: SEG_KEY[seg.id]?.icon ?? seg.iconHint,
-  cats: seg.categories.map((cat) => ({
-    cat: cat.title,
-    desc: cat.description,
-    items: cat.entries.map((e) => ({
-      n: e.displayName,
-      a: e.agency,
-      f: e.submissionFormat,
-      c: e.ctdModule,
-      wf: filingWfCode(e),
-      d: e.description,
-    })),
-  })),
-}));
-
-
-/* ---- Workflow surface mapping ---- */
-
-export const FILING_WF_SURFACE: Record<string, string> = {
-  IND: 'document-authoring', NDA: 'document-authoring', BLA: 'document-authoring', MAA: 'document-authoring',
-  CSR: 'document-authoring', '510k': 'document-authoring', PMA: 'document-authoring',
-  denovo: 'document-authoring', CER: 'document-authoring', ANDA: 'document-authoring',
-  '505b2': 'document-authoring', biosimilar: 'document-authoring', DMF: 'document-authoring',
-  IDE: 'document-authoring', HDE: 'document-authoring', IVDR: 'document-authoring',
-  MDR: 'document-authoring', STED: 'document-authoring',
-  designation: 'document-authoring', postmarket: 'document-authoring', presub: 'document-authoring',
-  samd: 'document-authoring', qms: 'document-authoring', pv: 'document-authoring',
-  clindoc: 'document-authoring', eua: 'document-authoring', cdx: 'document-authoring',
-  pmdevice: 'document-authoring', ivdpresub: 'document-authoring', ldt: 'document-authoring',
-  intldevice: 'document-authoring', advice: 'document-authoring', ivdpostmarket: 'document-authoring',
-};
-
 
 export const FILING_WF_LABEL: Record<string, string> = {
   IND: 'IND', NDA: 'NDA', BLA: 'BLA', MAA: 'MAA', CSR: 'CSR',
@@ -166,3 +81,15 @@ export const FILING_LOOP: Record<string, FilingLoop> = {
     stages: ['Draft to ICH template', 'Bind evidence', 'Internal review', 'Finalize', 'File into dossier'],
     ret: { label: 'Reviewer questions (in the parent application)', desc: 'Clinical documents are assessed inside the marketing application; questions arrive as part of the CRL / LoQ for the parent filing.' } },
 };
+
+/** Resolve only a recorded/chosen catalogue identity, including its established
+ * aliases. Unknown identities have no reference; application/tenant defaults
+ * are deliberately not accepted here. */
+export function filingLifecycleReference(filingId: string | null | undefined) {
+  const entry = resolveFilingCatalogEntry(filingId);
+  if (!entry || typeof entry.registryId !== 'string') return null;
+  const workflow = filingWfCode(entry);
+  const archetype = FILING_LOOP_ARCHETYPE[workflow];
+  return { entry, workflowLabel: FILING_WF_LABEL[workflow] ?? workflow,
+    loop: archetype ? FILING_LOOP[archetype] ?? null : null };
+}

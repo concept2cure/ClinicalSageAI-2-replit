@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { hasKeys, liveGetOrNull } from '../dataConnect';
 import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
-import { filingAskPrompt } from '@shared/regulatory/filing-catalog';
+import { filingAskPrompt, FILING_CATEGORY_METADATA } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReference } from '@shared/regulatory/filing-lifecycle-reference';
+import { FilingReferenceDetails } from '../FilingReference';
 
 const SEG_ICONS: Record<string, string> = {
   pharma_biotech: 'beaker', medical_devices: 'stethoscope',
@@ -85,6 +87,13 @@ function useFilingOffers(pairs: Pair[]) {
   return { ...state, retry: () => setBump((b) => b + 1) };
 }
 
+export interface FilingBrowseState {
+  segment: string;
+  searchTerm: string;
+  /** A read-only inspected reference is never the selected creation choice. */
+  inspectedReference: { id: string; name: string; agency: string; region: string; format: string; ctdModule: string; workflow: string; description: string } | null;
+}
+
 interface RegistryPickerProps {
   value: string; onChange: (id: string) => void;
   /** The application type a catalog filing creates (Projects.tsx programTypeFor):
@@ -97,6 +106,8 @@ interface RegistryPickerProps {
      naming a category they were no longer looking at. */
   onSegmentChange?: (segment: string) => void;
   onAsk?: (text: string) => void;
+  /** Catalog state only; no configuration fields or project records. */
+  onBrowseChange?: (state: FilingBrowseState) => void;
 }
 
 function ChosenFilingNote({ entry, chosen, market, onAsk }: {
@@ -111,6 +122,7 @@ function ChosenFilingNote({ entry, chosen, market, onAsk }: {
       a project whose application type is {chosen.type.toUpperCase()}.
     </p>}
     {entry.description && <p><strong>Catalog reference.</strong> {entry.description}</p>}
+    <FilingReferenceDetails filingId={entry.id} />
     <p data-testid="rpk-chosen-build"><strong>How you’ll build it.</strong>{' '}
       {chosen.kind === 'unclaimed' ? 'No build details are stated for this filing; the support above concerns the application it creates.'
         : build ?? 'Build details could not be read for this filing’s market.'}
@@ -121,7 +133,7 @@ function ChosenFilingNote({ entry, chosen, market, onAsk }: {
   </div>;
 }
 
-export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange, onAsk }: RegistryPickerProps) {
+export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegment, compact, onSegmentChange, onAsk, onBrowseChange }: RegistryPickerProps) {
   const segs = ((window as any).REG_SEGMENTS || {}) as Record<string, { label: string; count: number }>;
   const cats = ((window as any).REG_CATEGORIES || {}) as Record<string, { label: string }>;
   const catalog = useMemo(() => ((window as any).GLOBAL_REGISTRY || []) as RegistryEntry[], []);
@@ -168,7 +180,9 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   }, [catalog, typeOf, offers]);
   const segKeys = Object.keys(segs);
   const [seg, setSegState] = useState(initialSegment || segKeys[0] || 'pharma_biotech');
+  const [inspectedReferenceId, setInspectedReferenceId] = useState<string | null>(null);
   const setSeg = (next: string) => {
+    setInspectedReferenceId(null);
     setSegState(next);
     onSegmentChange?.(next);
   };
@@ -185,7 +199,8 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     e.displayName.toLowerCase().includes(term) || e.agency.toLowerCase().includes(term) ||
     e.region.toLowerCase().includes(term) || (e.dossierStandard || '').toLowerCase().includes(term) ||
     (e.ctdModule || '').toLowerCase().includes(term) || e.id.toLowerCase().includes(term) ||
-    (e.description || '').toLowerCase().includes(term);
+    (e.description || '').toLowerCase().includes(term) ||
+    (filingLifecycleReference(e.id)?.workflowLabel ?? '').toLowerCase().includes(term);
   const filtered = useMemo(() => {
     let pool = term ? registry : segEntries;
     if (term) pool = pool.filter(matches);
@@ -213,7 +228,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     const byCat: Record<string, RegistryEntry[]> = {};
     entries.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
     return Object.entries(byCat).map(([catId, list]) => ({
-      catId, label: cats[catId]?.label || catId, entries: list,
+      catId, label: cats[catId]?.label || catId, description: FILING_CATEGORY_METADATA.find(category => category.id === catId)?.description, entries: list,
     }));
   };
   const full = term ? filtered : filtered.filter(isFull);
@@ -223,13 +238,26 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
   const restOpen = showRest || full.length === 0 || rest.some((e) => e.id === value);
   const grouped = groupOf(full);
   const restGrouped = restOpen ? groupOf(rest) : [];
-  /* A search that matches filings the platform does not offer lists them, each
-     with the server's reason, rather than "no match". */
+  /* Browse every unavailable filing in the current segment, or search across
+     segments. Reference details never call onChange or create a project. */
   const notOfferedMatches = useMemo(
-    () => (term ? notOffered.filter(({ entry: e }) => matches(e)) : []),
+    () => notOffered.filter(({ entry: e }) => term ? matches(e) : e.segment === seg),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matches` reads only `term`
-    [term, notOffered],
+    [term, notOffered, seg],
   );
+  const inspected = inspectedReferenceId && !offers.loading && !offers.error && notOfferedMatches.some(({ entry }) => entry.id === inspectedReferenceId)
+    ? filingLifecycleReference(inspectedReferenceId) : null;
+  const inspectedEntry = inspected?.entry ?? null;
+  const inspectedWorkflow = inspected?.workflowLabel ?? '';
+  const inspectedReference = useMemo<FilingBrowseState['inspectedReference']>(() => inspectedEntry ? {
+    id: inspectedEntry.id, name: inspectedEntry.displayName, agency: inspectedEntry.agency, region: inspectedEntry.region,
+    format: inspectedEntry.submissionFormat, ctdModule: inspectedEntry.ctdModule,
+    workflow: inspectedWorkflow, description: inspectedEntry.description,
+  } : null, [inspectedEntry, inspectedWorkflow]);
+  React.useEffect(() => {
+    if (inspectedReferenceId && !inspectedReference) setInspectedReferenceId(null);
+    onBrowseChange?.({ segment: seg, searchTerm: q, inspectedReference });
+  }, [seg, q, inspectedReferenceId, inspectedReference, onBrowseChange]);
   const notOfferedCount = notOfferedMatches.length;
   const chosen = value ? offerOf.get(value) : undefined;
   const chosenEntry = catalog.find(entry => entry.id === value);
@@ -248,6 +276,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     <button key={e.id} className="rpk-type" data-on={value === e.id || undefined}
       onClick={() => onChange(e.id)} title={e.description || e.displayName}>
       <div className="rpk-type-n">{e.displayName}</div>
+      {term && <span className="rpk-chip">{segs[e.segment]?.label ?? e.segment}</span>}
       <div className="rpk-type-meta">
         {(() => {
           const o = offerOf.get(e.id);
@@ -285,9 +314,9 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     <div className={'rpk' + (compact ? ' rpk-compact' : '')}>
       <div className="rpk-search">
         <span className="ico rpk-search-ic">{I.search}</span>
-        <input ref={searchRef} aria-label="Search filing types" value={q} onChange={e => { setQ(e.target.value); if (e.target.value) clearFilters(); }}
+        <input ref={searchRef} aria-label="Search filing types" value={q} onChange={e => { setInspectedReferenceId(null); setQ(e.target.value); if (e.target.value) clearFilters(); }}
           placeholder={'Search ' + registry.length + ' filing types — name, agency, region…'} />
-        {q && <button className="tbtn rpk-search-x" aria-label="Clear search" onClick={() => setQ('')}>{I.close}</button>}
+        {q && <button className="tbtn rpk-search-x" aria-label="Clear search" onClick={() => { setInspectedReferenceId(null); setQ(''); }}>{I.close}</button>}
       </div>
       {!term && (
         <div className="rpk-tabs">
@@ -330,7 +359,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
       {!term && notOfferedInTab > 0 && (
         <div className="rpk-result-note">
           {notOfferedInTab} filing type{notOfferedInTab === 1 ? '' : 's'} in {segs[seg]?.label ?? 'this tab'}{' '}
-          {notOfferedInTab === 1 ? 'is' : 'are'} not offered. Search for one to see why.
+          {notOfferedInTab === 1 ? 'is' : 'are'} not offered. Their reference details and the server’s reasons appear below.
         </div>
       )}
       {/* What the platform offers for the chosen filing, as text: a tooltip
@@ -346,6 +375,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
         {grouped.map(g => (
           <div key={g.catId} className="rpk-cat">
             <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
+            {g.description && <p className="rpk-result-note">{g.description}</p>}
             <div className="rpk-cat-grid">{g.entries.map(card)}</div>
           </div>
         ))}
@@ -365,6 +395,7 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
             ) : restGrouped.map(g => (
               <div key={g.catId} className="rpk-cat">
                 <div className="rpk-cat-h">{g.label} <span className="rpk-cat-n">{g.entries.length}</span></div>
+                {g.description && <p className="rpk-result-note">{g.description}</p>}
                 <div className="rpk-cat-grid">{g.entries.map(card)}</div>
               </div>
             ))}
@@ -376,6 +407,15 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
             {notOfferedMatches.map(({ entry: e, reason }) => (
               <div key={e.id} className="rpk-result-note">
                 <strong>{e.displayName} · {e.agency}.</strong> {reason}
+                {term && <p>{segs[e.segment]?.label ?? e.segment}</p>}
+                <details open={inspectedReferenceId === e.id} onToggle={event => {
+                  const opened = event.currentTarget.open;
+                  setInspectedReferenceId(current => opened ? e.id : current === e.id ? null : current);
+                }}>
+                  <summary>Reference details for {e.displayName}</summary>
+                  {e.description && <p><strong>Catalog reference.</strong> {e.description}</p>}
+                  <FilingReferenceDetails filingId={e.id} onAsk={onAsk} />
+                </details>
               </div>
             ))}
           </div>

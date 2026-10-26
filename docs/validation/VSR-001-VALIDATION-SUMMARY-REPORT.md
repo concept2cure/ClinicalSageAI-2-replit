@@ -1607,3 +1607,31 @@ transcribes their risks and activities from existing URS-004/OQ-004 and
 URS-007/OQ-008; credential dependencies and unexecuted status are preserved.
 No CMC launch/commercial boundary, signature, approval, dispatch gate or
 validation result is changed by this documentation reconciliation.
+
+
+## D2 A2.10 filing discovery change impact (2026-10-26)
+
+Filing discovery and its existing authored lifecycle reference now live in the
+canonical New project picker and the recorded project's Plan. Legacy catalogue
+URLs reach the wizard through the shared resolver/action bus. Server filing
+offers, refusal/error states and canonical human-confirmed creation remain the
+existing owners. Plan uses only the stored filing identity exposed by the same
+scoped project detail serializer; it never infers reference from a tenant or
+program-type default. Internal metadata is not exposed. Catalogue replay keeps
+retired rows and subscriptions without recreating the former standalone entry.
+
+URS-PROJ-007 and earlier OQ-PROJ-12 results remain historical. New
+URS-PROJ-007a and OQ-PROJ-12 v0.8 require formal execution; no earlier standalone
+screen pass qualifies the revised requirement. Focused source, real SQL and
+native-server browser regression evidence is supplemental in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10/`.
+TM-001 is regenerated using the same explicitly selected 2026-09-27 historical
+execution set: 117 requirements, 69 pass, 2 partial, 46 uncovered. The new
+requirement is uncovered until its revised formal protocol is executed.
+
+The expanded review also corrects current CRO company-type labels and clarifies
+already in-scope project commands without changing their handlers, executable
+scope lists, access policy or audit transactions. Mission control, device
+portfolio, CRO portfolio and project journey retain their shells/stores pending
+the concrete parity gaps recorded in A2.10. No legacy tenant-data absence,
+external sponsor admission or completed launch qualification is inferred.

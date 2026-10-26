@@ -9,29 +9,33 @@ vi.mock('@shared/regulatory/filing-catalog', async original => ({
   filingAskPrompt: promptFactory,
 }));
 
-import { FilingsCatalog } from '../surfaces/FilingsCatalog';
+const request = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: request }));
+import { RegistryPicker } from '../surfaces/AnaVerbs';
+import '../surfaces/RegistryBridge';
 import { resolveFilingCatalogEntry } from '@shared/regulatory/filing-catalog';
 
-beforeEach(() => promptFactory.mockClear());
+beforeEach(() => {
+  promptFactory.mockClear();
+  request.mockImplementation(async (_method: string, raw: string) => {
+    const url = new URL(raw, 'http://test');
+    return { ok: true, status: 200, json: async () => ({ markets: [{ agency: url.searchParams.get('market') || 'FDA',
+      offer: { tier: 'author_only', label: 'Author documents for this market', reason: 'Server offer' } }] }) };
+  });
+});
 afterEach(cleanup);
 
-describe('the existing catalog Ask AnA control shares its filing question', () => {
-  it('uses the shared builder for the chosen real catalog filing and closes its detail', () => {
+describe('the canonical picker preserves the filing catalogue Ask AnA question', () => {
+  it('uses the shared builder for the chosen real catalog filing without changing selection', async () => {
     const onAsk = vi.fn();
-    const onNav = vi.fn();
+    const onChange = vi.fn();
     const filingName = resolveFilingCatalogEntry('us_ind')!.displayName;
-    render(<FilingsCatalog surface={{ id: 'filings-catalog', label: 'Filings' } as never}
-      onAsk={onAsk} onNav={onNav} segment="biopharma" />);
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search filings' }), {
-      target: { value: 'Investigational New Drug Application' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^Investigational New Drug Application/ }));
-    const detail = screen.getByRole('dialog', { name: filingName });
-    fireEvent.click(within(detail).getByRole('button', { name: 'Ask AnA' }));
+    render(<RegistryPicker value="us_ind" onChange={onChange} onAsk={onAsk} applicationTypeOf={() => 'ind'} />);
+    const note = await screen.findByTestId('rpk-chosen-offer');
+    fireEvent.click(within(note).getByRole('button', { name: 'Ask AnA' }));
     expect(promptFactory).toHaveBeenCalledExactlyOnceWith(filingName);
     expect(onAsk).toHaveBeenCalledExactlyOnceWith(`Shared filing question: ${filingName}`);
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(onNav).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('preserves the existing question wording and the catalog display name', async () => {

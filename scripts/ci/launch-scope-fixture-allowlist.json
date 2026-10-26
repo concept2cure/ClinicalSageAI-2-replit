@@ -1,5 +1,5 @@
 {
-  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition.",
+  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition. A2.10 (2026-10-26): removed all five filings-catalog-data exceptions after migrating its authored lifecycle reference/labels to shared/regulatory/filing-lifecycle-reference.ts and folding discovery into canonical intake; no fixture import remains.",
   "symbols": {
     "risk-data.RISK_ENUMS": "Risk strategy, status, control and source vocabulary only; no risk records. Reviewed for project-first MDX scope, 2026-10-23.",
     "risk-data.SEV_LABELS": "Severity category labels only, from Negligible to Catastrophic; no risk scores or project records. Reviewed 2026-10-23.",
@@ -19,11 +19,6 @@
     "conversation-thread-data.CT_LINKIC": "CT_LINKIC: link-target, icon and status label maps \u2014 reference configuration",
     "conversation-thread-data.CT_LINKMAP": "CT_LINKMAP: link-target, icon and status label maps \u2014 reference configuration",
     "conversation-thread-data.CT_STATUS_LABEL": "CT_STATUS_LABEL: link-target, icon and status label maps \u2014 reference configuration",
-    "filings-catalog-data.FILINGS_TAXONOMY": "FILINGS_TAXONOMY: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "filings-catalog-data.FILING_LOOP": "FILING_LOOP: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "filings-catalog-data.FILING_LOOP_ARCHETYPE": "FILING_LOOP_ARCHETYPE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "filings-catalog-data.FILING_WF_LABEL": "FILING_WF_LABEL: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "filings-catalog-data.FILING_WF_SURFACE": "FILING_WF_SURFACE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
     "governed-intelligence-data.GI_META": "GI_META: display labels and tones for the enums the contradiction engine records \u2014 reference configuration; the gate and every authority come from the board (the overlay/gate functions were removed 2026-10-15)",
     "ind-lifecycle-data.INDL_CLOCK_STATUS": "INDL_CLOCK_STATUS: label and tone for each 21 CFR 312.40/312.42 clock state \u2014 reference configuration; the screen shows it only over a recorded FDA receipt, never over a projection (decision P-32, 2026-10-15)",
     "ind-lifecycle-data.INDL_DELIVERABLES": "INDL_DELIVERABLES: the deliverable card definitions (title, eCTD placement, CFR reference, route, AnA request wording) \u2014 product configuration that names no programme (indLifecycleNoFixtures.test.ts); the safety-report entry is withheld by P-32",
@@ -53,7 +48,7 @@
     "submission.SC_TRANSITIONS": "SC_TRANSITIONS: application type, region, sequence status and transition maps mirroring shared/types/submission-constants \u2014 reference configuration, not sample data",
     "task-board-data.TB_COLS": "TB_COLS: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "task-board-data.TB_MOD": "TB_MOD: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
-    "task-board-data.MODULE_COLOR_UNKNOWN": "MODULE_COLOR_UNKNOWN: the colour token (var(--text-300)) of a module the TB_MOD map does not name — configuration beside TB_MOD, not sample data (design-system G2, 2026-09-28)",
+    "task-board-data.MODULE_COLOR_UNKNOWN": "MODULE_COLOR_UNKNOWN: the colour token (var(--text-300)) of a module the TB_MOD map does not name \u2014 configuration beside TB_MOD, not sample data (design-system G2, 2026-09-28)",
     "task-board-data.TB_SRC": "TB_SRC: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "task-board-data.TB_TYPE": "TB_TYPE: board column, module colour, task type and source label maps \u2014 configuration; the three invented programmes were removed, the board reads GET /api/projects",
     "vault-data.flattenDocs": "flattenDocs: pure helpers over VaultDoc trees (flatten, status, icon key, type guard) \u2014 functions, no documents",

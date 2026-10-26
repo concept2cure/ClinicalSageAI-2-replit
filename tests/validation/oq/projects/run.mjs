@@ -318,19 +318,32 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-12',
-    kind: 'ad-hoc',
-    urs: ['URS-PROJ-007'],
-    title: 'Filings catalog surface renders',
+    kind: 'scripted',
+    urs: ['URS-PROJ-007a'],
+    title: 'Legacy filing discovery reaches canonical intake and authored reference',
     action: 'Open /concept2cure/filings-catalog',
-    expected: 'Surface renders (screenshot) without a runtime page error',
+    expected: 'Projects URL, New project wizard, selected IND metadata and authored reference; no project creation',
   },
   async (ctx) => {
     await ctx.newPage({ id: state.programId, name: state.programName });
+    const writes = [];
+    const recordCreation = request => {
+      if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/c2c/projects') writes.push(request.url());
+    };
+    ctx.page.on('request', recordCreation);
     await ctx.goto('/concept2cure/filings-catalog');
+    await ctx.page.getByRole('heading', { name: 'New project', exact: true }).waitFor({ state: 'visible', timeout: 30_000 });
+    ctx.expect(new URL(ctx.page.url()).pathname === '/concept2cure/projects', 'legacy catalogue did not reach Projects');
+    await ctx.page.getByLabel('Search filing types').fill('Investigational New Drug Application');
+    await ctx.page.getByRole('button', { name: /^Investigational New Drug Application/ }).first().click();
+    const reference = ctx.page.getByTestId('filing-lifecycle-reference');
+    await reference.waitFor({ state: 'visible' });
+    ctx.expect((await reference.innerText()).includes('not this project’s status, deadline or agency commitment'), 'reference clock presented without its basis');
+    ctx.expect((await ctx.page.getByTestId('filing-reference-metadata').innerText()).includes('FDA'), 'selected filing metadata missing');
+    ctx.expect(writes.length === 0, 'reference discovery created a project');
+    ctx.page.off('request', recordCreation);
     await ctx.screenshot();
-    const errs = (await ctx.page.evaluate(() => document.body.innerText)).length;
-    ctx.expect(errs > 0, 'page body is empty');
-    return 'rendered';
+    return 'legacy catalogue reaches canonical intake and authored reference without a project write';
   },
 );
 

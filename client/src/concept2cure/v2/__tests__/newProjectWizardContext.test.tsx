@@ -7,11 +7,13 @@ const h = vi.hoisted(() => ({ actor: 12, org: 7, tenant: 7, request: vi.fn() }))
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: String(h.actor), organizationId: String(h.org) }) }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: h.tenant }, setCurrentClientWorkspace: vi.fn() }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: h.request }));
-vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ value, onChange, onAsk }: {
-  value: string; onChange: (id: string) => void; onAsk?: (question: string) => void;
+vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ value, onChange, onAsk, onBrowseChange }: {
+  value: string; onChange: (id: string) => void; onAsk?: (question: string) => void; onBrowseChange?: (state: { segment: string; searchTerm: string; inspectedReference?: { id: string; name: string; agency: string } | null }) => void;
 }) => <>
   <button onClick={() => onChange('us_ind')}>Pick IND</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'medical_devices', searchTerm: 'predicate evidence' })}>Search device references</button>
   <button onClick={() => onChange('us_nda')}>Pick NDA</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'pharma_biotech', searchTerm: '', inspectedReference: { id: 'eu_maa', name: 'Marketing Authorisation Application', agency: 'EMA' } })}>Inspect unavailable filing</button>
   {value && onAsk && <button onClick={() => onAsk(`Question about ${value}`)}>Ask about filing</button>}
 </> }));
 vi.mock('../surfaces/RegistryBridge', () => ({ getSubmissionTypeContext: (id: string) => ({ id,
@@ -59,6 +61,27 @@ describe('the actual wizard reports its public state through the Projects publis
     fireEvent.click(screen.getByRole('button', { name: 'Ask about filing' }));
     expect(onAsk).toHaveBeenCalledExactlyOnceWith('Question about us_ind');
     expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it('reports actual picker segment and search alongside the selected filing', async () => {
+    const { seen } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Search device references' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowser).toEqual({ segment: 'medical_devices', searchTerm: 'predicate evidence', inspectedReference: null }));
+    expect(facts(seen)?.selectedFiling).toBeNull();
+    expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it('keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor', async () => {
+    const { seen, view } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Inspect unavailable filing' }));
+    await waitFor(() => expect((facts(seen)?.filingBrowser as { inspectedReference?: unknown })?.inspectedReference).toMatchObject({ id: 'eu_maa', agency: 'EMA' }));
+    expect(facts(seen)?.selectedFiling).toBeNull();
+    expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+    h.tenant = 8;
+    view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
+    await waitFor(() => expect(facts(seen)?.wizardState).toBe('unavailable'));
+    expect(facts(seen)?.filingBrowser).toBeUndefined();
+    expect(facts(seen)?.selectedFiling).toBeNull();
   });
 
   it('tracks Configure, Review and Back while excluding entered/private fields', async () => {

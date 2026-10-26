@@ -88,6 +88,8 @@ interface ProgramRow {
   code: string | null;
   name: string | null;
   program_type: string | null;
+  /** Exact recorded catalogue choice; never inferred from application type. */
+  submission_type_id?: string | null;
   status: string | null;
   phase: string | null;
   priority: string | null;

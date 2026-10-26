@@ -1,0 +1,44 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CroPortfolio.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 6,
+      "rules": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:react-hooks/exhaustive-deps": 2,
+        "1:max-lines": 1
+      }
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 6,
+      "rules": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:react-hooks/exhaustive-deps": 2,
+        "1:max-lines": 1
+      }
+    }
+  },
+  {
+    "path": "server/services/ana-ri/mdx-command-handlers-phase2.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 3,
+      "rules": {
+        "1:complexity": 2,
+        "1:max-lines": 1
+      }
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 3,
+      "rules": {
+        "1:complexity": 2,
+        "1:max-lines": 1
+      }
+    }
+  }
+]
