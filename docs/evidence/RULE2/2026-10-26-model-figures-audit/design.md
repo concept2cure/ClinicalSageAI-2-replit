@@ -8,7 +8,8 @@
 > | S2 | done, with its review fixes | `s2-nonclinical-drafts/` |
 > | S3 | done, with review fixes | `s3-invented-defaults/review/` |
 > | S4 | independent safeguards implemented; R-2/F2 policy pending | `s4-nonclinical-engines/` |
-> | S5–S14 | queued | — |
+> | S5-0 | done; stated-input labels are independent of R-2 availability | `s5-0-stated-basis/` |
+> | S5a–S5d, S6–S14 | queued | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -466,6 +467,13 @@ Each item gets its own red in the same commit.
 ### S5. A stated basis everywhere a calculator runs (P-B per F2)
 
 **S5-0, one commit for the mechanism.**
+
+**Execution correction (2026-10-26):** the wrapper audit found 208 calls, including two RIM
+record readers and curated-reference/structure outputs. These 12 callers explicitly opt out;
+the remaining calculations default to the stated-input label. The shared S4 decorator is
+extended rather than duplicated. The instruction names reported engine defaults instead of
+claiming every input was stated. See `s5-0-stated-basis/README.md` and its audited callsite list.
+This mechanism applies under either F2 option; availability remains undecided.
 - `runStatsTool` (`:16576`), `ivdComputed` (`:6759`) and the inline calculator envelopes add, by default:
   - `basis: 'stated'`;
   - `appliesTo: 'the inputs stated in this conversation'`.
@@ -475,7 +483,7 @@ Each item gets its own red in the same commit.
   - `estimate_shelf_life`, `assess_analytical_method_validation`
   - `assess_mdr_reportability`, `characterize_pk`, `assess_concentration_qtc`, `assess_ddi_risk`
   - `select_exposure_response_dose`, `compute_sample_size`
-- Record-reading tools never pass through these wrappers. Pin this with a test that `compare_recorded_dissolution` and `estimate_recorded_shelf_life` carry no `basis: 'stated'`.
+- Record-reading/source/structure tools must not receive a stated-input claim. Existing RIM readers use the explicit opt-out; `compare_recorded_dissolution` and `estimate_recorded_shelf_life` keep their separate recorded envelopes. Successful output pins cover both paths.
 - Red: a table-driven test over a sample from each wrapper asserts `basis: 'stated'`; it is absent on trunk.
 
 **S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (the GCP engine already does this). Red: each family's "omitted means not stated" case.

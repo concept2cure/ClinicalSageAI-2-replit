@@ -1,0 +1,28 @@
+## Whole-program incremental TypeScript
+
+
+> concept2cure-riai@1.0.0 ci:typecheck:no-regression
+> node scripts/ci/typecheck-no-regression.mjs --incremental
+
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+
+## Changed-file ESLint warning ratchet
+
+
+> concept2cure-riai@1.0.0 ci:eslint-ratchet
+> node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate
+
+[ci:eslint-warning-ratchet] --since HEAD (133de1428) -- 5 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+
+
+## Validation traceability
+
+
+> concept2cure-riai@1.0.0 ci:validation-traceability
+> node scripts/ci/check-validation-traceability.mjs
+
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind

@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > nested S4 dose cautions are idempotent 7ms
+   → expected '{"status":"computed","engine":"determ…' to be '{"status":"computed","engine":"determ…' // Object.is equality
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > preserves numerical precision, seeded method and opaque provenance references
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > keeps an explicit list-only scope when adding the worksheet basis
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'parameter refusal'
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'data refusal'
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'engine fault'
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'fault alongside a computed status'
+ ↓ server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > does not relabel or reformat a 'ok:false refusal alongside an assesse…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/stated-input-result-contract.test.ts > stated-input result contract > nested S4 dose cautions are idempotent
+AssertionError: expected '{"status":"computed","engine":"determ…' to be '{"status":"computed","engine":"determ…' // Object.is equality
+
+Expected: "{"status":"computed","engine":"deterministic","result":{"mrsd":1.6216},"instruction":"Report the returned dose verbatim. This is a calculation from the NOAEL you stated; it was not read from the program's studies and is not the program's starting dose. Do not use it as governed content.","basis":"stated","appliesTo":"the inputs stated in this conversation"}"
+Received: "{"status":"computed","engine":"deterministic","result":{"mrsd":1.6216},"instruction":"Report the returned dose verbatim. This is a calculation from the NOAEL you stated; it was not read from the program's studies and is not the program's starting dose. Do not use it as governed content. This is a calculation from the NOAEL you stated; it was not read from the program's studies and is not the program's starting dose. Do not use it as governed content.","basis":"stated","appliesTo":"the inputs stated in this conversation"}"
+
+ ❯ server/services/ana/__tests__/stated-input-result-contract.test.ts:11:19
+      9|     const once = statedInputResult(raw, STATED_DOSE_NOTE);
+     10|     const twice = statedInputResult(once, STATED_DOSE_NOTE);
+     11|     expect(twice).toBe(once);
+       |                   ^
+     12|     const { STATED_BASIS } = await import('../stated-input-result');
+     13|     const out = JSON.parse(twice);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  16:40:58
+   Duration  356ms (transform 78ms, setup 78ms, import 20ms, tests 10ms, environment 0ms)
