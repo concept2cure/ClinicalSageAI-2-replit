@@ -532,3 +532,32 @@ deleted test. The unreferenced-modules baseline loses `validateZip.js` (75 → 7
 - `ci:unreferenced-modules`: 74, at baseline;
 - `service-registry-names-only-existing-modules` and the route-bundle tests pass;
 - typecheck: 0 errors.
+
+### S07 — delete dead exports inside live CTD files
+
+**Deleted:**
+- **`server/services/regional-ctd-templates.ts`:** `getAllRegionalTemplates`, `getModule1Sections`,
+  `getSupportedAgencies` and `getMultiAgencyCTDStructure` (a hand-typed Module 2 list). Also the default export that
+  re-exposed them; every importer of the file uses named imports.
+- **`server/services/templateService.ts`:** `initializeDefaultTemplates`.
+- **`services/regulatory/ind-ectd-sections.ts`:** `getAIDraftableSections`, `getSectionsForPyramidTask` and
+  `pyramidToECTDMap`. `buildINDPackageDefinition` and `INDPackageDefinition` lose `export`; they are used only inside
+  the file.
+- **`services/regulatory/pyramids/ind-pyramid.ts`:** `IB_BINDINGS` loses `export`.
+
+**Proof:** `s07-red.txt`. Each symbol's only references are its definition, a use inside its own file, or the unused
+default export.
+
+**Not deleted, correcting the plan:** `docx/templateRegistry.ts` `indTemplate` ('ind-fda').
+- It is registered in the map that the tool registry reads (`server/services/tools/index.ts`:
+  `documents.list_templates`, and `documents.generate_docx` with `templateId`).
+- That registry is loaded by `/api/cortex-unified` and the MCP server, so the template is reachable.
+- It is a heading copy ("Nonclinical Summaries", "2.7 … required: false"), so it moves to Tier C as a convergence onto
+  the record, not a deletion.
+
+**P-47 parity:** none of the deleted functions had a caller.
+- Module 1 → `regional-module1.ts`;
+- Modules 2–5 → the record;
+- IND sections → `getAllINDSections` and `getRequiredSections` (kept).
+
+**Gates:** typecheck: 0 errors. The 22 test files that name these modules: 383 pass.

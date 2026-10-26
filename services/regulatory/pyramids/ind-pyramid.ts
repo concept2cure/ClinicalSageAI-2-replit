@@ -23,7 +23,7 @@ function m1Binding(role: DocumentRole, rest: Omit<Binding, 'ctdSection' | 'secti
   return p ? [{ ...rest, ctdSection: p.code, sectionTitle: p.title }] : [];
 }
 
-export const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
+const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
   ectdLifecycleOp: 'new',
   artifactTypes: ['investigator_brochure'],
 });

@@ -1,0 +1,36 @@
+S07 proof of no caller, on 7855b5115: whole-word references to each symbol outside docs/ (git grep -nw):
+  getMultiAgencyCTDStructure:
+    server/services/regional-ctd-templates.ts:319:export function getMultiAgencyCTDStructure(agencies: string[]): {
+    server/services/regional-ctd-templates.ts:357:  getMultiAgencyCTDStructure,
+  getAllRegionalTemplates:
+    server/services/regional-ctd-templates.ts:296:export function getAllRegionalTemplates(): RegionalTemplate[] {
+    server/services/regional-ctd-templates.ts:354:  getAllRegionalTemplates,
+  getModule1Sections:
+    server/services/regional-ctd-templates.ts:303:export function getModule1Sections(agency: string): CTDSection[] {
+    server/services/regional-ctd-templates.ts:343:    const sections = getModule1Sections(agency);
+    server/services/regional-ctd-templates.ts:355:  getModule1Sections,
+  getSupportedAgencies:
+    server/services/regional-ctd-templates.ts:311:export function getSupportedAgencies(): string[] {
+    server/services/regional-ctd-templates.ts:356:  getSupportedAgencies,
+  initializeDefaultTemplates:
+    server/services/templateService.ts:423:  async initializeDefaultTemplates(organizationId: number) {
+  getAIDraftableSections:
+    services/regulatory/ind-ectd-sections.ts:2249:export function getAIDraftableSections(): INDSection[] {
+  getSectionsForPyramidTask:
+    services/regulatory/ind-ectd-sections.ts:2270:export function getSectionsForPyramidTask(taskId: string): INDSection[] {
+  pyramidToECTDMap:
+    services/regulatory/ind-ectd-sections.ts:2278:export function pyramidToECTDMap(): Map<string, INDSection[]> {
+  buildINDPackageDefinition:
+    services/regulatory/ind-ectd-sections.ts:2224:export function buildINDPackageDefinition(): INDPackageDefinition {
+    services/regulatory/ind-ectd-sections.ts:2242:  const pkg = buildINDPackageDefinition();
+    services/regulatory/ind-ectd-sections.ts:2302:  const pkg = buildINDPackageDefinition();
+  INDPackageDefinition:
+    services/regulatory/ind-ectd-sections.ts:137:export interface INDPackageDefinition {
+    services/regulatory/ind-ectd-sections.ts:2224:export function buildINDPackageDefinition(): INDPackageDefinition {
+  IB_BINDINGS:
+    services/regulatory/pyramids/ind-pyramid.ts:26:export const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
+    services/regulatory/pyramids/ind-pyramid.ts:413:      documentBindings: IB_BINDINGS,
+
+Each reference is the symbol's own definition, an internal use in the same file, or the default-export object that re-exposed it (imported by nothing: every importer of regional-ctd-templates uses named imports).
+
+NOT deleted, against the plan: docx/templateRegistry.ts indTemplate ('ind-fda'). It is registered in the template map that server/services/tools/index.ts reads (documents.list_templates; documents.generate_docx with templateId), loaded by /api/cortex-unified (server/routes/cortex-unified.ts:36) and the MCP server. It is reachable, so it is a heading copy to converge onto the record, not dead code.
