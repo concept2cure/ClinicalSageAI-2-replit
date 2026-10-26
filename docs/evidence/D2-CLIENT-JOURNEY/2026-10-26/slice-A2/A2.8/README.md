@@ -145,3 +145,19 @@ and AnA navigation. These overlap earlier selections and are not added to the
 398-test total. The production client/server/audit-verifier build passes again
 (frontend **23.91 seconds**). `merged/editor-*.log.gz` records these results.
 Normal publication gates run again on the final commit.
+
+## Concurrent Account integration
+
+A further normal push passed every gate with zero TypeScript errors, then met
+remote Account alert-setup work through `609206a35` (`merged/editor-gates-ref-race.log.gz`).
+That work was merged as `45dbd72b5`. Independent source review found no MDX
+filter or navigation overlap: optional captured-actor headers preserve existing
+API-call defaults, and notification save/refresh responses remain actor scoped.
+All eight qualified A2.8 source/test hashes remain unchanged.
+
+On this combined tree **131 tests in 11 suites** pass: Account preferences,
+actor safety, tray reads, shared API shape/error guards, notification navigation
+guards, Projects pathway/client filtering and the real MDX destination shell.
+These selections overlap earlier proof and are not added to its total. The
+production client/server/audit-verifier build passes (frontend **23.70 seconds**).
+Results are in `merged/account-*.log.gz`; final normal publication gates still apply.
