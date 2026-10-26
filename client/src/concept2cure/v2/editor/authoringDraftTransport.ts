@@ -17,8 +17,11 @@ export interface PendingAiDraft {
   check: AnswerCheckView | null; turnRecord?: AnaTurnRecordStatus;
 }
 export interface AcceptedAttribution { sourceSpans: number; authorSpans: number; distinctSources: number; coverage: number }
+export interface AiDraftGenerationInputs { tone: string; region: string; context: string; requirements: string }
 export interface AiDraftReviewState {
   draft: PendingAiDraft | null; body: string; changeReason: string; refusal: string | null;
+  /** Editable inputs for the next explicit draft; source authority stays on the session. */
+  generationInputs?: AiDraftGenerationInputs;
   /** A lost or malformed acceptance response may follow a committed save. */
   acceptUnknown?: boolean;
   /** A confirmed base conflict keeps the candidate for comparison only. */

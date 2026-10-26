@@ -1,0 +1,294 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates PMDA with its retained inputs and ignores conflicting optional metadata 104ms
+   → expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates EMA with its retained inputs and ignores conflicting optional metadata 24ms
+   → expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates Health Canada with its retained inputs and ignores conflicting optional metadata 33ms
+   → expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates FDA with its retained inputs and ignores conflicting optional metadata 40ms
+   → expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps standalone defaults compatible with initialRegion=undefined 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps standalone defaults compatible with initialRegion=Health Canada 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > keeps a legacy controlled candidate compatible with initialRegion rather than provider metadata 11ms
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > Discard exposes the retained inputs in the same existing four controls 14ms
+   → expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > keeps all four manual options through generation, Discard and a controlled Close/reopen 161ms
+   → expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > isolates manual options for each section across actual controlled remounts 60ms
+   → expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > merges synchronous edits to different fields without overwriting earlier values 40ms
+   → expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a transport regeneration refusal preserves the reviewed candidate, reason and options 19ms
+   → expected { tone: 'professional', region: 'FDA' } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a truncated regeneration refusal preserves the reviewed candidate, reason and options 9ms
+   → expected { tone: 'professional', region: 'FDA' } to deeply equal { tone: 'concise', …(3) }
+ × client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a provider regeneration refusal preserves the reviewed candidate, reason and options 10ms
+   → expected { tone: 'professional', region: 'FDA' } to deeply equal { tone: 'concise', …(3) }
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > unknown acceptance prevents another generation and preserves the retained inputs 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > a no-longer-current retained session cannot generate from its options 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed session change 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed project-round-trip change 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed section-switch change 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > retained inputs do not bypass acceptance or currentness holds > does not replace the prior candidate or cross retained section inputs after a delayed unmount change 12ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates PMDA with its retained inputs and ignores conflicting optional metadata
+AssertionError: expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "POST",
+    "/api/authoring/sections/44444444-4444-4444-8444-444444444444/ai/draft",
+    {
+-     "context": "Use the recorded diagnostic assay validation reference.",
+-     "region": "PMDA",
+-     "requirements": "State the limitations and distinguish missing evidence.",
+-     "tone": "concise",
++     "region": "MHRA",
++     "tone": "professional",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:112:29
+    110|
+    111|     expect(draftCalls()).toHaveLength(1);
+    112|     expect(draftCalls()[0]).toEqual(['POST', `/api/authoring/sections/…
+       |                             ^
+    113|     expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement…
+    114|     expect(acceptCalls()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates EMA with its retained inputs and ignores conflicting optional metadata
+AssertionError: expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "POST",
+    "/api/authoring/sections/44444444-4444-4444-8444-444444444444/ai/draft",
+    {
+-     "context": "Use the recorded diagnostic assay validation reference.",
+-     "region": "EMA",
+-     "requirements": "State the limitations and distinguish missing evidence.",
+-     "tone": "concise",
++     "region": "MHRA",
++     "tone": "professional",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:112:29
+    110|
+    111|     expect(draftCalls()).toHaveLength(1);
+    112|     expect(draftCalls()[0]).toEqual(['POST', `/api/authoring/sections/…
+       |                             ^
+    113|     expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement…
+    114|     expect(acceptCalls()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates Health Canada with its retained inputs and ignores conflicting optional metadata
+AssertionError: expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "POST",
+    "/api/authoring/sections/44444444-4444-4444-8444-444444444444/ai/draft",
+    {
+-     "context": "Use the recorded diagnostic assay validation reference.",
+-     "region": "Health Canada",
+-     "requirements": "State the limitations and distinguish missing evidence.",
+-     "tone": "concise",
++     "region": "MHRA",
++     "tone": "professional",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:112:29
+    110|
+    111|     expect(draftCalls()).toHaveLength(1);
+    112|     expect(draftCalls()[0]).toEqual(['POST', `/api/authoring/sections/…
+       |                             ^
+    113|     expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement…
+    114|     expect(acceptCalls()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > regenerates FDA with its retained inputs and ignores conflicting optional metadata
+AssertionError: expected [ 'POST', …(2) ] to deeply equal [ 'POST', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "POST",
+    "/api/authoring/sections/44444444-4444-4444-8444-444444444444/ai/draft",
+    {
+-     "context": "Use the recorded diagnostic assay validation reference.",
+-     "region": "FDA",
+-     "requirements": "State the limitations and distinguish missing evidence.",
+-     "tone": "concise",
++     "region": "MHRA",
++     "tone": "professional",
+    },
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:112:29
+    110|
+    111|     expect(draftCalls()).toHaveLength(1);
+    112|     expect(draftCalls()[0]).toEqual(['POST', `/api/authoring/sections/…
+       |                             ^
+    113|     expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement…
+    114|     expect(acceptCalls()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > existing retained review uses its explicit regional generation inputs > Discard exposes the retained inputs in the same existing four controls
+AssertionError: expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "context": "Use the recorded diagnostic assay validation reference.",
+-   "region": "PMDA",
+-   "requirements": "State the limitations and distinguish missing evidence.",
+-   "tone": "concise",
++   "context": "",
++   "region": "FDA",
++   "requirements": "",
++   "tone": "professional",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:140:23
+    138|     fireEvent.click(screen.getByTestId('ai-draft-discard'));
+    139|
+    140|     expect(options()).toEqual(input);
+       |                       ^
+    141|     expect(view.read()).toMatchObject({ draft: null, body: '', generat…
+    142|     expect(apiRequest).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > keeps all four manual options through generation, Discard and a controlled Close/reopen
+AssertionError: expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "context": "Use the recorded diagnostic assay validation reference.",
+-   "region": "Health Canada",
+-   "requirements": "State the limitations and distinguish missing evidence.",
+-   "tone": "concise",
++   "context": "",
++   "region": "FDA",
++   "requirements": "",
++   "tone": "professional",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:154:23
+    152|     closeAndReopen();
+    153|
+    154|     expect(options()).toEqual(input);
+       |                       ^
+    155|     expect(view.read().generationInputs).toEqual(input);
+    156|     await generate();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > isolates manual options for each section across actual controlled remounts
+AssertionError: expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "context": "Use the recorded diagnostic assay validation reference.",
+-   "region": "PMDA",
+-   "requirements": "State the limitations and distinguish missing evidence.",
+-   "tone": "concise",
++   "context": "",
++   "region": "FDA",
++   "requirements": "",
++   "tone": "professional",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:167:23
+    165|     fireEvent.click(screen.getByRole('button', { name: 'Switch section…
+    166|
+    167|     expect(options()).toEqual(first);
+       |                       ^
+    168|     expect(view.read(FIRST).generationInputs).toEqual(first);
+    169|     fireEvent.click(screen.getByRole('button', { name: 'Switch section…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > merges synchronous edits to different fields without overwriting earlier values
+AssertionError: expected { tone: 'professional', …(3) } to deeply equal { tone: 'concise', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "context": "Use the recorded diagnostic assay validation reference.",
+-   "region": "PMDA",
+-   "requirements": "State the limitations and distinguish missing evidence.",
+-   "tone": "concise",
++   "context": "",
++   "region": "FDA",
++   "requirements": "",
++   "tone": "professional",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:180:23
+    178|     closeAndReopen();
+    179|
+    180|     expect(options()).toEqual(input);
+       |                       ^
+    181|     expect(view.read().generationInputs).toEqual(input);
+    182|     await generate();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a transport regeneration refusal preserves the reviewed candidate, reason and options
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a truncated regeneration refusal preserves the reviewed candidate, reason and options
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx > explicit control edits remain in the existing retained review buffer > a provider regeneration refusal preserves the reviewed candidate, reason and options
+AssertionError: expected { tone: 'professional', region: 'FDA' } to deeply equal { tone: 'concise', …(3) }
+
+- Expected
++ Received
+
+  {
+-   "context": "Use the recorded diagnostic assay validation reference.",
+-   "region": "PMDA",
+-   "requirements": "State the limitations and distinguish missing evidence.",
+-   "tone": "concise",
++   "region": "FDA",
++   "tone": "professional",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftInputs.test.tsx:196:32
+    194|     await generate(true);
+    195|
+    196|     expect(draftCalls()[0][2]).toEqual(input);
+       |                                ^
+    197|     expect(view.read()).toMatchObject({ draft: original.draft, body: o…
+    198|     expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 9 passed (20)
+   Start at  17:09:22
+   Duration  2.09s (transform 531ms, setup 126ms, import 684ms, tests 660ms, environment 444ms)
+

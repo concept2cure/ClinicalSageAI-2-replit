@@ -1,0 +1,7 @@
+
+/workspace/ClinicalSageAI/client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx
+  161:28  warning  'structuredClone' is not defined  no-undef
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).

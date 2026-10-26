@@ -1,0 +1,32 @@
+# Retain regional drafting inputs in the existing editor
+
+W1 / D2, concept2cure-v2 only. Evidence: docs/evidence/D2-EDITOR-REGIONAL-REDRAFT/2026-10-26/.
+
+## What already exists
+
+- `client/src/concept2cure/v2/editor/assemblyDraftQueue.ts` generates each eligible saved section through the canonical draft transport with the verified plan region, bounded template-reference JSON and trimmed author requirements. It retains only draft/body/reason/refusal; these request inputs are lost at review.
+- `editor/authoringDraftTransport.ts` owns the existing AiDraftReviewState/AiDraftReviewSession contracts, exact scoped generation, selected-source manifest and reviewed acceptance. Extend that review buffer; do not introduce another session/store or infer inputs from optional provider metadata.
+- `editor/useAuthoringDraftReview.ts` owns the one panel's state, current request lane, failure preservation, unknown acceptance and exact saved-section recovery. It appends only session.sources to generation; it currently has no retained drafting-option buffer.
+- `surfaces/AuthoringAiDraft.tsx` has the existing Tone, Region, Context and Requirements controls and explicit Draft again/Discard/Accept actions. Four mount-local state fields start professional/FDA/empty/empty; the controls are hidden when a retained candidate exists, so regeneration silently uses those defaults. Reuse these exact controls and layout.
+- `editor/useAuthoringAssemblyBuild.ts` retains review sessions by exact section/source selection and supplies them to the sole `editor/DocumentWorkbench.tsx` panel. Workbench keys that panel by section and does not pass a region prop. The coordinator/session update and all ownership/acceptance guards remain canonical and unchanged.
+- Existing `v2/__tests__/authoringAiDraftAssembly.test.tsx` covers controlled buffer retention and refusal; `editor/__tests__/sourceFirstAssemblyFlow.test.tsx` already walks chooser → exact editor → build → manual regeneration, but checks only selected source manifests. Existing standalone authoringAiDraft and termination tests cover defaults and failed regeneration.
+- `server/routes/authoring.router.ts` accepts region/context/requirements as supplied; the existing section-generation service and lineage-backed accept path remain authoritative. No server/provider change is needed or proposed.
+- Existing authoringOversight prompts/actions and Workbench remedies already carry saved project/document/section/template identity. No oversight rewrite is needed.
+
+Root and two independent read-only audits searched current generation inputs, session/slot/review consumers, all panel callers, initial and retry request construction, server draft owners, shared contracts, template and source references, tests and deleted draft/assembly/AuthoringAiDraft history. No competing input-retention path was found. The same editor is extended. Root read design SKILL/HANDOFF/README/tokens and the managed runtime/network policy; no deployment or live provider/agency operation is planned.
+
+## Approved completion contract
+
+Add optional `generationInputs` to existing AiDraftReviewState, typed `AiDraftGenerationInputs` with tone, region, context and requirements strings. It is an editable buffer for the next draft, not a source manifest, approval, candidate provenance claim or receiving-market inference. Existing states without it remain compatible.
+
+The queue captures a copied input snapshot before awaiting generation, using professional tone, its verified draftRegion, the exact bounded referenceContext and trimmed current requirements; seed the successful retained review with that snapshot. Later changes to the assembly form must not reseed a completed candidate. Keep template context separate from author requirements and selected sources. Queue retries retain their existing explicit semantics.
+
+The existing panel derives its four existing controls from that review buffer, falling back to its existing professional / initialRegion-or-FDA / empty context / empty requirements defaults only when no retained inputs exist. Every explicit control edit updates the same review buffer. Use a latest-state merge in the existing review hook so synchronous edits to different fields cannot overwrite each other. Both standalone and controlled reviews use this one path. Retain options across Close/reopen, section switches and explicit Discard whenever the coordinator retains that review; no durable reload promise is introduced.
+
+The review hook snapshots the actually invoked inputs when an explicit generation begins. A failed or refused generation preserves the prior candidate/body/reason and the chosen options. Candidate/source/context guards, unknown-acceptance holds and no automatic acceptance remain intact. Sources come only from the existing owned reviewSession.sources; generation inputs must not carry or replace source/section/project authority. A context/owner change must still suppress late results. Manual overrides are explicit and are not continuously reset from mutable assembly fields or optional draft metadata.
+
+Root owns production authoringDraftTransport.ts, assemblyDraftQueue.ts, useAuthoringDraftReview.ts and AuthoringAiDraft.tsx; design, human checklist, integration/global gates and normal Git publication. ana_drafting_usecase owns a new focused v2/__tests__/authoringDraftInputs.test.tsx and packet tests/. next_authoring_usecase owns sourceFirstAssemblyFlow.test.tsx and packet workbench/. No concurrent production edits or worker Git/compiler/build/global checks.
+
+Retain meaningful existing-export UI/HTTP RED with source/test snapshots and raw exits before production edits. Then qualify focused and actual editor/source regressions, appropriate existing integration suites, strict zero-growth lint, production build, the seven existing editor/UI/size gates and the normal pre-push TypeScript baseline-zero check. No dependencies/baselines, editor/surface, control, layout/CSS, route, schema, provider or global store changes. Local/Codespaces, concept2cure-v2 only; normal direct commits/pushes, no PR/branch/worktree/force/bypass. Automated synthetic HTTP does not mark human or live-provider/agency acceptance passed.
+
+Selected-section source-window relevance is a valid separate follow-up: authoring-assembly.ts omits the selected title/guidance from its query to the existing deterministic selector. Do not widen this regional redraft completion into that server/manifest change. Exact-target retry-summary wording is also separate.

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FireToast } from '../toast';
 import { acceptAuthoringDraft, captureEditorDraftGuard, checkAuthoringDraftSection, createEmptyAiDraftReviewState,
-  generateAuthoringDraft, type AcceptedAttribution, type AiDraftReviewSession, type AiDraftReviewState } from './authoringDraftTransport';
+  generateAuthoringDraft, type AcceptedAttribution, type AiDraftGenerationInputs, type AiDraftReviewSession, type AiDraftReviewState } from './authoringDraftTransport';
 
 interface Options {
   sectionId: string; docId?: string; programId?: string | null; docSealed: boolean; editorDirty: boolean;
@@ -89,6 +89,9 @@ export function useAuthoringDraftReview(options: Options) {
     const session = latest.current.options.reviewSession;
     if (session) session.update(value); else setLocal(value);
   };
+  const setGenerationInputs = (next: Partial<AiDraftGenerationInputs>, defaults: AiDraftGenerationInputs) => {
+    patch({ generationInputs: { ...defaults, ...latest.current.state.generationInputs, ...next } });
+  };
   const begin = () => {
     const currentOptions = latest.current.options;
     if (attempt.current || currentOptions.reviewSession?.isCurrent() === false) return null;
@@ -105,10 +108,10 @@ export function useAuthoringDraftReview(options: Options) {
     attempt.current = null;
     setGenerating(false); setAccepting(false); setChecking(false);
   };
-  const generate = async (request: { tone: string; region: string; context: string; requirements: string }) => {
+  const generate = async (request: AiDraftGenerationInputs) => {
     if (latest.current.options.docSealed || latest.current.state.acceptUnknown) return;
     const run = begin(); if (!run) return;
-    setGenerating(true); setGeneratingSince(Date.now()); patch({ refusal: null });
+    setGenerating(true); setGeneratingSince(Date.now()); patch({ refusal: null, generationInputs: { ...request } });
     try {
       const result = await generateAuthoringDraft({ sectionId: run.options.sectionId, ...request,
         ...(run.options.reviewSession?.sources ? { sources: run.options.reviewSession.sources } : {}) }, run.current);
@@ -141,5 +144,5 @@ export function useAuthoringDraftReview(options: Options) {
     } finally { finish(run.token); }
   };
   return { state, generating, generatingSince, accepting, checking,
-    generate, accept, checkSaved, patch };
+    generate, accept, checkSaved, patch, setGenerationInputs };
 }

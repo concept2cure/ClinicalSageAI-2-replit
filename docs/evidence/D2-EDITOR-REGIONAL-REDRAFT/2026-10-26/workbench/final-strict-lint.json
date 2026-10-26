@@ -1,0 +1,51 @@
+{
+  "startedAt": "2026-10-26T17:10:50.822638+00:00",
+  "elapsedSeconds": 1.501,
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
+    "--max-warnings=0"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "exitCode": 0,
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": "0fb1db4d6b5e48a5abc5ae8678789b86509b50d41027d702202e13dde79211f3",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "350968ceb81b53c28ccf0a4cc5eb9f7dfe5c6463af229d4ccccfbb4c7504798f",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "5c3fb65d8af478633fe1ce02d84ec3c4bf989707e653c157bb447cc2998f33c0",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "526f06509355b3defe84c00b4318548325cd8c4618b4da85dd13a46351e7b806",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "b88acbafe55617a60a82d4e8962c5d96dbea1796e111f43c8deaa1078301e0ea",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "2754a8138eb6da23ffae115b937b73874d2e01e7c292cfc6ec6dbcb4284e98a6",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "9468bd00709ee33af5828696a6a222638422eec3ff36c447a2ab792586007761",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "8366364bdafb128c264a970719fa1a6a6c039fc94b6cfc6584a6879d3695ad22",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx": "0fb1db4d6b5e48a5abc5ae8678789b86509b50d41027d702202e13dde79211f3",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "350968ceb81b53c28ccf0a4cc5eb9f7dfe5c6463af229d4ccccfbb4c7504798f",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "5c3fb65d8af478633fe1ce02d84ec3c4bf989707e653c157bb447cc2998f33c0",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "c517b0d50a2b2128ef3ca91d03390c9c8ec9b632b93673f499afc997dc82b249",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "acc4d0c25880bdb88bc321634ec83bcc81b09dc30b331a4631663151dd5277c4",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "526f06509355b3defe84c00b4318548325cd8c4618b4da85dd13a46351e7b806",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "b88acbafe55617a60a82d4e8962c5d96dbea1796e111f43c8deaa1078301e0ea",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "2754a8138eb6da23ffae115b937b73874d2e01e7c292cfc6ec6dbcb4284e98a6",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "9468bd00709ee33af5828696a6a222638422eec3ff36c447a2ab792586007761",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "8366364bdafb128c264a970719fa1a6a6c039fc94b6cfc6584a6879d3695ad22",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package.json": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3"
+  },
+  "sourceDrift": [],
+  "sourceSnapshot": "final-strict-lint-source-snapshot.json.gz",
+  "sourceSnapshotSha256": "40c6c6be78d4145e4b4bf17d65ea738878042d09ecde10f1117625892712e566",
+  "rawOutput": "final-strict-lint.log",
+  "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
