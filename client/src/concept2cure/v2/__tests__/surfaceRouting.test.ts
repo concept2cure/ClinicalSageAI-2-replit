@@ -79,8 +79,9 @@ describe('the retired kit paths still land somewhere real', () => {
   // `?surface=` — and wouter hands this function `location.pathname`, which has
   // no query string at all — so both landed on home. A redirect that silently
   // goes to the wrong place is worse than no redirect, because it looks handled.
-  it('/concept2cure/mdx resolves to the kit entry surface', () => {
-    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('device-workstream');
+  it('/concept2cure/mdx resolves to Projects, including copied-link parameters', () => {
+    expect(surfaceIdFromLocation('/concept2cure/mdx')).toBe('projects');
+    expect(surfaceIdFromLocation('/concept2cure/mdx?view=compact#devices')).toBe('projects');
   });
 
   it('/concept2cure/pdev resolves to itself — it is a real surface id now', () => {

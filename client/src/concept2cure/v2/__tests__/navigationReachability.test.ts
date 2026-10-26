@@ -65,6 +65,17 @@ describe('navigation-registry ↔ shell reachability', () => {
     expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('biopharma')))).toBe(true);
   });
 
+  it('the retained MDX handle reaches admitted Projects while the device portfolio remains registered', () => {
+    const target = NAVIGATION_TARGETS.find(t => t.id === 'mdx');
+    expect(target?.scope).toBe('global');
+    expect(target?.description).toMatch(/Projects/);
+    expect(surfaceIdFromLocation(locationForSurface('mdx'))).toBe('projects');
+    expect(LAUNCH_SURFACE_IDS.has(surfaceIdFromLocation(locationForSurface('mdx')))).toBe(true);
+    expect(NAVIGATION_TARGETS.some(t => t.id === 'device-workstream')).toBe(true);
+    expect(UI_SURFACES.some(s => s.id === 'device-workstream')).toBe(true);
+    expect(SURFACE_VIEWS['device-workstream']).toBeTruthy();
+  });
+
   it('aliases only point AT real views — a dangling alias is drift in the other direction', () => {
     for (const [from, to] of Object.entries(DEEP_LINK_ALIASES)) {
       expect(SURFACE_VIEWS[to], `alias ${from} → ${to} points at a missing view`).toBeTruthy();

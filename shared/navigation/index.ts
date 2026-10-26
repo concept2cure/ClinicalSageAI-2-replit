@@ -87,7 +87,7 @@ export type NavigationResolution =
 export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Global destinations (no active project required) ──
   { id: 'projects', label: 'Projects', description: 'The projects list / workspace home — pick or create a project.', scope: 'global', group: 'global' },
-  { id: 'mdx', label: 'MDX (Medical Device & Diagnostics)', description: 'The MDX module home (510(k), PMA, CER, IVD surfaces).', scope: 'global', group: 'global' },
+  { id: 'mdx', label: 'MDX (Medical Device & Diagnostics)', description: 'Projects filtered to medical device and diagnostics projects. Open a project for its recorded pathway and workflow.', scope: 'global', group: 'global' },
   { id: 'biopharma', label: 'Biopharma', description: 'The biopharma module (IND, pathway, lifecycle, meetings).', scope: 'global', group: 'global' },
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
