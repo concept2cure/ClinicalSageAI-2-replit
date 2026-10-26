@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 254ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 70ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 198ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 109ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 80ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 30ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins Account reads and mutations to the validated captured actor 209ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before persona while auth context still shows the old owner 60ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before accept while auth context still shows the old owner 45ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before decline while auth context still shows the old owner 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/tenant-users/invitations/mine 19ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/users/me/persona 13ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after session change 30ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after unmount 26ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not refresh memberships or acknowledge a late invitation acceptance for a replaced session 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > rechecks ownership after response-body decoding 28ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins invitation acceptance and refreshes only after a current-owner confirmation 23ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not acknowledge or reload after a late decline for a replaced bearer 31ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > keeps the mutation lock until the saved record is confirmed 27ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  22:20:54
+   Duration  3.19s (transform 286ms, setup 184ms, import 497ms, tests 1.36s, environment 899ms)

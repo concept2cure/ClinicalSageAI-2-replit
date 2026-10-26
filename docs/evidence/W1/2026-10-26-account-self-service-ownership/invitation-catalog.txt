@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 284ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 91ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 215ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 137ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 98ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 31ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 27ms
+stderr | server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list
+{
+  "timestamp": "2026-10-26T22:16:22.285Z",
+  "level": "error",
+  "message": "[tenant-users] Error retrieving pending invitations",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI/server/services/tenant/invitation-consent.ts:26:9)
+    at Module.atomicAcceptInvitation (/workspace/ClinicalSageAI/server/services/atomicQuotaService.js:478:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI/server/routes/tenant-users.ts:232:20
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim
+{
+  "timestamp": "2026-10-26T22:16:22.355Z",
+  "level": "error",
+  "message": "[tenant-users] Error declining invitation",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller
+Atomic invitation accept failed: Error: audit-chain-probe refused audit_logs
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:188:29
+    at Mock (file:///workspace/ClinicalSageAI/node_modules/@vitest/spy/dist/index.js:332:34)
+    at recordInvitationConsent (/workspace/ClinicalSageAI/server/services/tenant/invitation-consent.ts:26:9)
+    at atomicAcceptInvitation (/workspace/ClinicalSageAI/server/services/atomicQuotaService.js:478:34)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI/server/routes/__tests__/invitation-consent.test.ts:391:20
+    at file:///workspace/ClinicalSageAI/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > uses the session caller despite body/query targets, then reads only their inviting organization in verified scope 207ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > an empty self-only list does not look up another person’s organization 5ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a missing organization name is null, never a fabricated name 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > a failed name read is 500 instead of a successful empty invitation list 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > GET invitations/mine — names belong only to the caller’s invitations > requires authentication before resolving invitations or names 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept refuses another person’s invitation without disclosing or changing it 14ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses another person’s invitation without disclosing or changing it 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept commits membership, accepted status and one chained audit on the same client, with the authenticated actor 10ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept audit refusal rolls membership and status back and returns 500 with no success claim 18ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accepting an already accepted invitation is 409 without audit, role overwrite or membership insertion 6ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > accept preserves an existing lower membership role and records that no membership was created 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline commits its conditional update and one chained audit on the same client, before commit 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline audit refusal rolls the status back and returns 500 with no success claim 4ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > a concurrent response makes the guarded decline 409 with no audit or success claim 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already accepted before any write 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > the invitee’s answer — scoped, atomic and recorded > decline refuses an invitation already declined before any write 3ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > reports a committed chained audit and binds its actor to callerUserId even if optional context names somebody else 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > rejects a non-invitee even if called directly in the inviting organization 1ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > returns DATABASE_ERROR and no persisted audit claim when audit fails, even without a route caller 2ms
+ ✓ server/routes/__tests__/invitation-consent.test.ts > real atomic accept service — defense in depth > continues to enforce the existing member quota before writes or audit 3ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  22:16:19
+   Duration  2.76s (transform 536ms, setup 224ms, import 579ms, tests 1.19s, environment 471ms)

@@ -23,7 +23,10 @@ vi.mock('@/services/portal/authService', () => ({
   },
   useAuth: () => ({ user: mocks.user }),
 }));
-vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token }));
+vi.mock('@/utils/authToken', () => ({ getAuthToken: () => mocks.token, capturedActorHeaders: (scope: { userId: number; organizationId: number }) => {
+  if (!mocks.token || scope.userId !== Number(mocks.user?.id) || scope.organizationId !== Number(mocks.user?.organizationId)) throw new Error('Session changed');
+  return { Authorization: `Bearer ${mocks.token}`, 'x-organization-id': String(scope.organizationId) };
+} }));
 
 import { queryClient } from '@/lib/queryClient';
 import { CatalogPanel } from '../surfaces/InsightsCatalogPanel';
@@ -86,6 +89,7 @@ describe('saved reporting role personalises the existing report catalog', () => 
     });
     render(<>{catalog()}<AccountOnboardingSettings userId="33" organizationId="1" /></>);
     await waitFor(() => expect((screen.getAllByRole('combobox', { name: 'Reporting role' })[0] as HTMLSelectElement).value).toBe('qa'));
+    await waitFor(() => expect(screen.getAllByRole('combobox', { name: 'Reporting role' })).toHaveLength(2));
     fireEvent.change(screen.getAllByRole('combobox', { name: 'Reporting role' })[1], { target: { value: 'ra_lead' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save reporting role' }));
     await screen.findByText('Reporting role saved. Your access role is unchanged.');
