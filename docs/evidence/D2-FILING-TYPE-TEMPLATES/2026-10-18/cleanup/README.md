@@ -398,3 +398,27 @@ is one commit; its red file is `sNN-red.txt`.
 The tables stay (Rule 1).
 
 **Red first:** `s01-red.txt` (exit 1, "Stale baseline entries … ectd.module_structure"). After: exit 0, 89 baselined.
+
+### S02 — delete the MDX `TemplatesSurface`, replaced by Authoring → New document → Start from
+
+**What already exists:** `AuthoringCreateExport.tsx` with `AuthoringTemplatePicker.tsx`, reading
+`GET /api/authoring/templates` (`builtin-authoring-templates.ts`). The earlier generation of this surface,
+`mdx/surfaces/TemplatesSurface.tsx`, was deleted in `e5a74a4df`. `62a8d5e7f` (2026-10-23) moved this one out of
+`Workbench.tsx` into its own file with a new hook, and nothing outside tests imported either.
+
+**Deleted:** `mdx/workbench/TemplatesSurface.tsx`, `mdx/hooks/useWorkbenchTemplates.ts`, their two tests, the
+`TemplatesSurface` case of `workbenchNoFixtures.test.tsx`, and `interface Template` in `mdx/data/workbench.ts` (no other
+user). The `.tpl-*` CSS is the client-journey session's (H10).
+
+**P-47 parity:**
+- List the organisation's templates → the picker's search and list (`authoringTemplateSearch.test.tsx`).
+- A failed read is a failure, never an empty library → `authoringTemplateSearch.test.tsx:169` ("keeps a http / network
+  / malformed failure separate from an empty list").
+- "New template" (a prompt to AnA) → any AnA turn; a real template is created in `TemplateLibrary.tsx`
+  (`templateLibraryReal.test.tsx`).
+- No user ever reached this surface.
+
+**Red first:** `s02-red.txt`: `ci:check-client-reachability` listed three files. After: one, `workflowDecisionService.ts`,
+from the 2026-10-23 device integration and outside this lens; it is reported, not deleted here.
+
+**Gates:** the four affected client test files, 64 pass.

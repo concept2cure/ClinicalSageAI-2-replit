@@ -93,17 +93,6 @@ export const SUBMISSION_PIPELINE: SubmissionStage[] = [
 ];
 
 
-// ── Templates ────────────────────────────────────────────────────────────
-
-export interface Template {
-  id: string;
-  name: string;
-  uses: number;
-  owner: string;
-  updated: string;
-  tags: string[];
-}
-
 /*
  * The seven row sets that used to live here — TASKS, TASKS_METRICS,
  * VALIDATION_SUMMARY, VALIDATION_PROGRAMS, VALIDATION_RULES, SUBMISSIONS and

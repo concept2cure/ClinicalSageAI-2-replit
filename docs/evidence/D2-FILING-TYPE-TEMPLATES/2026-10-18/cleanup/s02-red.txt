@@ -1,0 +1,8 @@
+S02 red: npm run ci:check-client-reachability on 0c69304aa — three unreachable files:
+  client/src/concept2cure/hooks/useRejectWorkflow.ts
+  client/src/concept2cure/mdx/hooks/useWorkbenchTemplates.ts
+  client/src/concept2cure/mdx/workbench/TemplatesSurface.tsx
+  client/src/concept2cure/services/workflowDecisionService.ts
+Nothing imports these from client/src/main.tsx, so they cannot mount, their handlers
+
+After S02: one remains, client/src/concept2cure/services/workflowDecisionService.ts (62a8d5e7f, 10-23 device integration; outside this lens, reported).
