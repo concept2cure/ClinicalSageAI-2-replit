@@ -26,6 +26,11 @@ export interface MarketSupportView {
   line: string;
   buildable: boolean;
   offered: boolean;
+  /** Rich build facts supplied by the same market read. Optional for older
+   * responses; absence must not turn into a claim about an outline/channel. */
+  outline?: { state: 'outline' | 'no_outline' | 'unmapped'; pack: { version: string; label: string } | null; detail: string };
+  module1?: { state: 'structured' | 'flat' | 'placeholder' | null; detail: string };
+  channel?: { state: 'unproven' | 'applicant_uploads' | 'portal' | 'refused' | 'none'; detail: string };
 }
 
 interface MarketSupportResponse {
@@ -49,6 +54,27 @@ export function useMarketSupport(applicationType: string | null | undefined, mar
 }
 
 const sentence = (t: string): string => (/[.!?]$/.test(t) ? t : `${t}.`);
+const hasText = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+
+function validOutline(outline: MarketSupportView['outline']): outline is NonNullable<MarketSupportView['outline']> {
+  if (!outline || !hasText(outline.detail) || !['outline', 'no_outline', 'unmapped'].includes(outline.state)) return false;
+  if (outline.state !== 'outline') return outline.pack === null;
+  return !!outline.pack && hasText(outline.pack.label) && hasText(outline.pack.version);
+}
+
+/** Build facts from the market's own response, never a catalog promise of
+ * validation or transmission. Null means the response omitted readable facts. */
+export function marketBuildText(market: Pick<MarketSupportView, 'outline' | 'module1' | 'channel'>): string | null {
+  const { outline, module1, channel } = market;
+  if (!validOutline(outline) || !module1 || !hasText(module1.detail)
+    || ![null, 'structured', 'flat', 'placeholder'].includes(module1.state)
+    || !channel || !hasText(channel.detail)
+    || !['unproven', 'applicant_uploads', 'portal', 'refused', 'none'].includes(channel.state)) return null;
+  const start = outline.state === 'outline'
+    ? `Uses the ${outline.pack!.label} outline (${outline.pack!.version}).`
+    : sentence(outline.detail);
+  return `${start} ${sentence(module1.detail)} ${sentence(channel.detail)}`;
+}
 
 /** The summary, then the line when it says more than the summary does; the
  *  line alone when it already opens with the summary ("Not offered: …"). */

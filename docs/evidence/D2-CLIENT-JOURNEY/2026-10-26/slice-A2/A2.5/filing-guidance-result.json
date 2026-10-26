@@ -1,0 +1,12 @@
+{
+  "supportStatus": 200,
+  "outlinePack": {
+    "version": "ich-m4-v2.2",
+    "label": "IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5"
+  },
+  "module1State": "structured",
+  "channelState": "unproven",
+  "questionPrefilled": true,
+  "projectWrites": 0,
+  "modelRequests": 0
+}

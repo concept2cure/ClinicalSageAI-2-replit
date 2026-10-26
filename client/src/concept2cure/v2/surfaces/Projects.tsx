@@ -33,7 +33,7 @@ import {
   useSurfaceActionHandlers,
   type DirectiveProgram,
 } from '../surfaceActions';
-import { usePublishSurfaceContext } from '../surfaceContext';
+import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -188,12 +188,29 @@ function documentClassLabel(programType: string): string | null {
  *  stay stale in another. */
 const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
 
+type WizardScreenContext = Omit<SurfaceContext, 'surfaceId'>;
+function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false): WizardScreenContext {
+  if (unavailable) return {
+    summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
+    facts: { wizardState: 'unavailable', selectedFiling: null },
+  };
+  return {
+    summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
+      (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
+    facts: { wizardState: 'open', wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null } : null },
+    availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
+  };
+}
+
 /** Exported for the failure-path test: the wizard's error surface is an
  *  acceptance criterion in its own right (a failed write must be visible and
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
-type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string };
+type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string;
+  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void };
 export function NewProjectWizard(props: NewProjectWizardProps) {
+  const { onContext } = props;
   const user = useAuthUser();
   const { currentOrganization } = useTenant();
   const actorUserId = projectIntakeId(user?.id);
@@ -202,6 +219,11 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   const key = actorUserId && organizationId && tenantOrganizationId === organizationId ? `${actorUserId}:${organizationId}` : 'unavailable';
   const current = useRef(key);
   current.current = key;
+  useEffect(() => {
+    if (key !== 'unavailable') return undefined;
+    onContext?.(wizardScreenContext(0, null, '', true));
+    return () => onContext?.(null);
+  }, [key, onContext]);
   if (!actorUserId || !organizationId || tenantOrganizationId !== organizationId) return (
     <section className="npw" aria-label="New project">
       <div className="npw-inner"><h1>New project</h1><p>The signed-in account or organization changed. Reopen New project after selecting your organization.</p><button className="btn ghost" onClick={props.onClose}>Back to projects</button></div>
@@ -210,7 +232,7 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   return <NewProjectWizardSession key={key} {...props} actor={{ actorUserId, organizationId }} isCurrent={() => current.current === key} />;
 }
 
-function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
   const { setCurrentClientWorkspace } = useTenant();
   const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
   // Retain the pending outcome in this view. A ref also protects an Escape or
@@ -322,11 +344,14 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
   const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
   const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
-  const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
-  const selTpl: SelTpl | null = ctx
+  const ctx = useMemo(() => tpl ? getSubmissionTypeContext(tpl) : null, [tpl]);
+  const selTpl = useMemo<SelTpl | null>(() => ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
-    : null;
+    : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
+  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired), [step, selTpl, programType, retired]);
+  useEffect(() => { onContext?.(screenContext); }, [onContext, screenContext]);
+  useEffect(() => () => onContext?.(null), [onContext]);
   /* The filing fixes the family when known; the person states any unresolved class. */
   // A filing document class asks, unless the filing names its class itself (an
   // sBLA is a biologics licence supplement): filing-document-classes.ts.
@@ -565,6 +590,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                 applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
+                onAsk={onAsk}
               />
             </div>
           )}
@@ -1126,6 +1152,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [view, setView] = useState('grid');
   const [q, setQ] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardContext, setWizardContext] = useState<WizardScreenContext | null>(null);
 
   // Real program portfolio — GET /api/c2c/projects projects one field per real
   // regulatory_programs column (server/routes/c2c/projects.ts). Fixture-free:
@@ -1209,11 +1236,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        screen that is not there — the same class of untruth as reporting an
        empty portfolio over a failed read, two branches down. */
     if (wizardOpen) {
-      return {
+      return wizardContext ?? {
         summary:
-          'The new-project wizard has the screen; the portfolio list is not visible. It walks ' +
-          `three steps — ${STEP_LABELS.join(', ')} — and the step the person is on is the ` +
-          'wizard\'s own state, which this surface does not hold.',
+          'The new-project wizard is opening; its current step has not been reported yet. The portfolio is not visible.',
         availableActions: [
           'Explain what a filing type commits the project to',
         ],
@@ -1287,7 +1312,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, health, measuredCover, truncated, counts]);
+  }, [wizardOpen, wizardContext, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, health, measuredCover, truncated, counts]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1320,6 +1345,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   useSurfaceActionHandlers('projects', {
     'projects.new-project': () => {
       if (wizardOpen) return { ok: true, detail: 'The new-project wizard is already open.' };
+      setWizardContext(null);
       setWizardOpen(true);
       return { ok: true, detail: 'Opened the new-project wizard.' };
     },
@@ -1410,7 +1436,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      the shell persists, and backing out of a half-filled form would then have to
      unwind that too. */
   if (wizardOpen) {
-    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} />;
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext} />;
   }
 
   return (

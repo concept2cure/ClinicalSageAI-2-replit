@@ -23,7 +23,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
-import { MarketSupportLine, marketSupportPath, marketSupportText } from '../MarketSupportLine';
+import { MarketSupportLine, marketBuildText, marketSupportPath, marketSupportText, type MarketSupportView } from '../MarketSupportLine';
 
 const PID = '6e0f3a2d-1b4c-4d5e-8f70-9a1b2c3d4e19';
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
@@ -132,5 +132,42 @@ describe('MarketSupportLine', () => {
       .toBe('Not offered: the UK has no IND application type.');
     expect(marketSupportText({ summary: 'Not supported', line: 'Not supported: the platform has no filing outline or channel for ANVISA' }))
       .toBe('Not supported: the platform has no filing outline or channel for ANVISA.');
+  });
+});
+
+describe('selected filing build facts use the existing market response', () => {
+  const facts = (): Pick<MarketSupportView, 'outline' | 'module1' | 'channel'> => ({
+    outline: { state: 'outline', pack: { label: 'The recorded filing pack', version: 'v7' }, detail: 'governed outline' },
+    module1: { state: 'structured', detail: 'Module 1 is built to the agency’s own headings' },
+    channel: { state: 'unproven', detail: 'The gateway is connected; acceptance has not been proved' },
+  });
+  it('names the recorded pack/version and keeps Module 1 and channel limitations', () => {
+    const text = marketBuildText(facts());
+    expect(text).toContain('The recorded filing pack');
+    expect(text).toContain('v7');
+    expect(text).toContain('Module 1 is built to the agency’s own headings');
+    expect(text).toContain('acceptance has not been proved');
+    expect(text).not.toMatch(/validation gates|transmission ready/i);
+  });
+  it('does not invent a pack when the response states no outline', () => {
+    const input = facts();
+    input.outline = { state: 'no_outline', pack: null, detail: 'No outline is recorded for this market' };
+    expect(marketBuildText(input)).toMatch(/^No outline is recorded for this market\./);
+  });
+  it.each(['outline', 'module1', 'channel'] as const)('requires readable %s facts', field => {
+    const input = facts();
+    delete input[field];
+    expect(marketBuildText(input)).toBeNull();
+  });
+  it('refuses malformed fields and contradictory outline identity', () => {
+    const malformed = facts();
+    malformed.channel = { state: 'none', detail: 17 } as never;
+    expect(marketBuildText(malformed)).toBeNull();
+    const noPack = facts();
+    noPack.outline!.pack = null;
+    expect(marketBuildText(noPack)).toBeNull();
+    const wrongState = facts();
+    wrongState.module1!.state = 'guaranteed' as never;
+    expect(marketBuildText(wrongState)).toBeNull();
   });
 });
