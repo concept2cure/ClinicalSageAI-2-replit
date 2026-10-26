@@ -80,7 +80,7 @@ describe('GET /api/dossier-map', () => {
     ]);
     const res = await request(appWith(7)).get('/api/dossier-map?projectId=5');
     expect(res.status).toBe(200);
-    expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 5);   // scoped by BOTH org and project
+    expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 5, expect.objectContaining({ query: expect.any(Function) }));
     expect(res.body.meta.source).toBe('project_sections');
     expect(res.body.meta.projectId).toBe(5);
     const row = res.body.data[0];
@@ -109,7 +109,7 @@ describe('GET /api/dossier-map', () => {
     expect(res.status).toBe(200);
     // Pre-fix: assembleProjectDossierMap(7, 6191805) — an unrelated integer id.
     expect(assembleProjectDossierMap).not.toHaveBeenCalledWith(7, 6191805);
-    expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 42);
+    expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 42, expect.objectContaining({ query: expect.any(Function) }));
     expect(resolveProgramProjectAnchor).toHaveBeenCalledTimes(1);
     expect(resolveProgramProjectAnchor.mock.calls[0][1]).toMatchObject({ programId: PROGRAM_UUID, orgId: 7 });
     expect(res.body.meta).toMatchObject({ programId: PROGRAM_UUID, projectId: 42, anchored: true, source: 'project_sections' });
@@ -147,5 +147,21 @@ describe('GET /api/dossier-map', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.pendingStore).toBe(true);
+    expect(res.body.meta.reason).toBe('TRACKING_STORE_UNAVAILABLE');
+  });
+
+  it('preserves a typed unavailable source as pending store instead of an ordinary empty map', async () => {
+    assembleProjectDossierMap.mockRejectedValueOnce(Object.assign(new Error('source unavailable'), { code: 'SECTION_TRACKING_STORE_UNAVAILABLE' }));
+    const res = await request(appWith(7)).get('/api/dossier-map?projectId=5');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ data: [], meta: { count: 0, pendingStore: true, reason: 'TRACKING_STORE_UNAVAILABLE' } });
+  });
+
+  it('keeps recorded placement problems separate from an empty map and a missing store', async () => {
+    assembleProjectDossierMap.mockRejectedValueOnce(Object.assign(new Error('placement review required'), { code: 'SECTION_TRACKING_REVIEW_REQUIRED' }));
+    const res = await request(appWith(7)).get('/api/dossier-map?projectId=5');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ data: [], meta: { count: 0, reviewRequired: true, reason: 'TRACKING_MAPPING_REVIEW_REQUIRED' } });
+    expect(res.body.meta.pendingStore).toBeUndefined();
   });
 });

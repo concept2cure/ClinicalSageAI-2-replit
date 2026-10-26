@@ -24,6 +24,7 @@ import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
 import { readDossier, readDossierFigures, type DossierFigure } from '../../services/c2c/dossier-read.js';
 import { readDossierArtifactReadiness } from '../../services/c2c/dossier-artifact-read.js';
+import { readProjectSectionTracking } from '../../services/dossier/dossier-map-view-assembler.js';
 import { requestPgClient } from '../../db/requestDb';
 import type { PoolClient } from 'pg';
 import {
@@ -1167,8 +1168,9 @@ router.get('/:id/dossier', async (req: Request, res: Response) => {
     }
     const dossier = await readDossier(q, orgId, identity.programId);
     const artifactReadiness = await readDossierArtifactReadiness(q, orgId, anchor.projectId);
+    const sectionTracking = await readProjectSectionTracking(q, orgId, anchor.projectId);
     await requireProgramScopeStillCurrent(q, identity, scope);
-    return res.json({ ...dossier, artifactReadiness });
+    return res.json({ ...dossier, artifactReadiness, sectionTracking });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
     return serverError(res, logger, 'reading the dossier', err, { programId: String(req.params.id) });

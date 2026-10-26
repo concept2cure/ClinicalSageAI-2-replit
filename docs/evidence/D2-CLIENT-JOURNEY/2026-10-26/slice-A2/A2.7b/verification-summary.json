@@ -1,0 +1,24 @@
+{
+  "base": "7d193063",
+  "regression": {
+    "passed": 163,
+    "files": 14
+  },
+  "serverTargeted": {
+    "passed": 50,
+    "files": 4
+  },
+  "nativeBrowser": {
+    "passed": 1,
+    "runtimeRole": "app_service",
+    "rls": true,
+    "developmentAuth": true,
+    "widths": [
+      1440,
+      390
+    ]
+  },
+  "build": "client, server, audit verifier passed",
+  "independentReview": "passed",
+  "legacyScreensAndRoutes": "retained; explicit store/review states"
+}

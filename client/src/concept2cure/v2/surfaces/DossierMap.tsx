@@ -80,6 +80,12 @@ function isUnanchoredProgram(meta: Record<string, unknown> | undefined): boolean
   return meta?.anchored === false;
 }
 
+function trackingReadIssue(meta: Record<string, unknown> | undefined): string | null {
+  if (meta?.pendingStore === true) return 'The tracking store is unavailable.';
+  if (meta?.reviewRequired === true) return 'Recorded tracking rows need mapping review.';
+  return null;
+}
+
 export function DossierMap({ onAsk }: SurfaceViewProps) {
   /* Real-data anchor — the current project's CTD / eCTD module map from
      GET /api/dossier-map?projectId=<id> (server/routes/dossier-map.routes.ts → the
@@ -92,6 +98,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
     [projectId],
   );
   const unanchored = !loading && !error && isUnanchoredProgram(meta);
+  const trackingIssue = !loading && !error ? trackingReadIssue(meta) : null;
 
   /* What AnA can see of this screen. "What is the critical path to filing?" is
      the question this surface's own button sends her, and it is unanswerable
@@ -129,6 +136,9 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
         facts: { projectId, anchored: false, modules: [] },
       };
     }
+    if (trackingIssue) {
+      return { summary: `Dossier map: ${trackingIssue} No module-completion figure can be supplied.`, facts: { projectId, modules: null, trackingUnavailable: trackingIssue } };
+    }
     if (empty) {
       return {
         summary: `Dossier map for project ${projectId}: the project tracks no CTD sections yet, so the module map is empty.`,
@@ -161,7 +171,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
         'Read which CTD sections each module rolls up (listed in this context)',
       ],
     };
-  }, [projectId, loading, error, empty, unanchored, modules]);
+  }, [projectId, loading, error, empty, unanchored, trackingIssue, modules]);
   usePublishSurfaceContext('dossier-map', anaContext);
 
   return (
@@ -198,6 +208,8 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
           title="This project has no CTD section-tracking store yet"
           hint="Section tracking is keyed by a PM-spine record, and this project was created without one (its organisation has no client workspace to anchor it to). No module completeness can be shown until the anchor exists — nothing here is a statement about the project's sections."
         />
+      ) : trackingIssue ? (
+        <EmptyState tone="error" icon={I.alertTriangle} title="Section tracking unavailable" hint={trackingIssue} />
       ) : empty ? (
         <EmptyState
           icon={I.fileText}

@@ -22,6 +22,8 @@ import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
 import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
 import { ArtifactSectionStatus, artifactReadinessOf } from './ProjectArtifactReadiness';
+import type { DossierSectionTracking } from '@shared/types/dossier-section-tracking';
+import { SectionTracking, sectionTrackingOf } from './ProjectSectionTracking';
 
 /** A figure as the server states it (dossier-read DossierFigure). */
 export type DossierFigure =
@@ -62,6 +64,8 @@ export interface DossierRead {
   rows: DossierRow[];
   /** Separate artifact lifecycle source; absent from older responses. */
   artifactReadiness?: ArtifactReadiness;
+  /** Existing project_sections records, with their own tracking lifecycle. */
+  sectionTracking?: DossierSectionTracking;
 }
 
 const isFigure = (v: unknown): v is DossierFigure => {
@@ -254,7 +258,7 @@ export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
       <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
       {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
       {body}
-    </section><ArtifactSectionStatus read={read} /></>
+    </section><ArtifactSectionStatus read={read} /><SectionTracking read={read} /></>
   );
 }
 
@@ -271,6 +275,7 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
       rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
       artifactReadiness: artifactReadinessOf(d.artifactReadiness),
+      sectionTracking: sectionTrackingOf(d.sectionTracking),
     },
     dossierUnavailable: null,
   };

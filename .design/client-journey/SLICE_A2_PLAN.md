@@ -15,9 +15,10 @@
 
 **Implementation status:** A2.1–A2.6 complete. A2.6 evidence is under
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.6/README.md`.
-Next is A2.7. Its A2.7a artifact-rollup carryover is complete; the separate
-`project_sections` tracking-map carryover remains before step aliases and the fold.
-Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`.
+Next is A2.7's step-aware aliases and coordinated fold. A2.7a artifact status
+and A2.7b separate tracking-record carryover are complete.
+Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7a/README.md`
+and the adjacent `A2.7b/README.md`.
 The inventory below describes discovery-time behavior.
 
 **Launch row:** D2 (launch catalog). **Workstream:** the client journey under D2, IA §8 A item 2, convergence 1 of §7. INFERRED: this is W1, because D2's own evidence lives under `docs/evidence/W1/`. **Evidence folder:** `docs/evidence/D2-CLIENT-JOURNEY/<date>/slice-A2/`, beside `slice0/` and `slice1/`. **Branch:** `concept2cure-v2` only.
@@ -594,6 +595,16 @@ The old map's `project_sections` tracking records are a separate source, not
 artifact-derived completion. Preserve their functions before removing that map.
 No alias, screen/route/catalog deletion or validation-inventory retirement is
 authorized by completion of the artifact-only prerequisite.
+
+**Completed tracking carryover (A2.7b):** reach `project_sections` from Author and AnA
+through the existing map assembler and the canonical dossier's verified exact
+anchor. Preserve section labels and recorded tracking states, server module
+figures, the approved/signed/locked completion rule and project/organisation
+isolation. Keep this source separate from governed document sections and
+artifact lifecycle status. Missing stores, unknown states and unclassifiable
+module data remain explicit. Existing-owner inventory and proof:
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.7b/README.md`.
+This carryover does not itself retire a screen or authorize a catalogue change.
 
 **The alias, reaching existing pieces.**
 - `DEEP_LINK_ALIASES` stays `Record<string,string>`. The two CI parsers and six readers depend on that.

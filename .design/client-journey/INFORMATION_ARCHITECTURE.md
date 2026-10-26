@@ -1286,8 +1286,9 @@ A2.1–A2.6 are complete, including the existing RegistryPicker's filing guidanc
 and ProjectDossier's counted section facts, visible status, module update time, home review/draft totals and
 critical-path question. **A2.7a** carries recorded artifact counts, weakest state and per-section artifact dates
 into Author through the same admitted project dossier response, separately from document-section figures.
-Next in **A2.7** (`SLICE_A2_PLAN.md`): preserve the old map's separate `project_sections` tracking records,
-then complete step-aware aliases and the no-project rule. A2.7a retires no old screen, route or identity;
+**A2.7b** reaches the old map's separate tracking records and figures in Author and AnA, preserving raw code
+identity, signed states, unknown observations and unmapped rows. Next in **A2.7** (`SLICE_A2_PLAN.md`):
+complete step-aware aliases, the no-project rule and the coordinated retirement. A2.7a–b retire no old screen, route or identity;
 the coordinated fold retains the plan's reachable-function proof requirement.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return

@@ -60,6 +60,16 @@ function legacyProjectId(raw: string): number | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
+function trackingFailureMeta(error: unknown): Record<string, unknown> | null {
+  const code = String((error as { code?: string })?.code);
+  if (code === 'SECTION_TRACKING_REVIEW_REQUIRED') {
+    return { count: 0, reviewRequired: true, reason: 'TRACKING_MAPPING_REVIEW_REQUIRED' };
+  }
+  if (['42P01', '42703', 'SECTION_TRACKING_STORE_UNAVAILABLE'].includes(code)) {
+    return { count: 0, pendingStore: true, reason: 'TRACKING_STORE_UNAVAILABLE' };
+  }
+  return null;
+}
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -114,7 +124,7 @@ router.get('/', async (req: Request, res: Response) => {
       projectId = legacyId as number;
     }
 
-    const data = await assembleProjectDossierMap(orgId, projectId);
+    const data = await assembleProjectDossierMap(orgId, projectId, requestPgClient(req));
     return res.json({
       data,
       meta: {
@@ -125,9 +135,8 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
-    }
+    const meta = trackingFailureMeta(err);
+    if (meta) return res.json({ data: [], meta });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read dossier map.' } });
   }
 });

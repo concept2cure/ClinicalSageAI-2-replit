@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 async function recordSyntheticArtifacts(page: Page, programId: string, stamp: string) {
   return page.evaluate(async ({ programId, stamp }) => {
@@ -25,7 +25,65 @@ async function recordSyntheticArtifacts(page: Page, programId: string, stamp: st
   }, { programId, stamp });
 }
 
-/** Actual scaffold, governed sections and carried artifact facts, without provider calls. */
+async function verifyRecordedTracking(page: Page, programId: string, home: unknown, testInfo: TestInfo) {
+  const recorded = await page.evaluate(async programId => {
+    const call = async (method: string, path: string, body?: unknown) => {
+      const token = localStorage.getItem('trialsage_access_token');
+      const response = await fetch(path, { method, credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: response.status, body: await response.json() };
+    };
+    const legacy = await call('GET', `/api/dossier-map?projectId=${programId}`);
+    const projectId = legacy.body.meta?.projectId;
+    if (!Number.isSafeInteger(projectId)) return { legacy, initialized: null, transitions: [], final: null, legacyFinal: null };
+    const initialized = await call('POST', '/api/project-sections/initialize', { project_id: projectId });
+    const initial = await call('GET', `/api/c2c/projects/${programId}/dossier`);
+    const code = initial.body.sectionTracking?.modules?.[0]?.sections?.[0]?.code;
+    const transitions = [];
+    if (code) for (const new_status of ['drafting', 'internal_review']) transitions.push(await call('PATCH', `/api/project-sections/${encodeURIComponent(code)}/status`, {
+      project_id: projectId, new_status, reason: 'Synthetic tracking browser test.',
+    }));
+    const final = await call('GET', `/api/c2c/projects/${programId}/dossier`);
+    const legacyFinal = await call('GET', `/api/dossier-map?projectId=${programId}`);
+    return { legacy, initialized, transitions: transitions.map(t => t.status), code, final, legacyFinal };
+  }, programId);
+  expect(recorded.legacy.status).toBe(200);
+  expect(recorded.initialized?.status, JSON.stringify(recorded.legacy.body)).toBe(200);
+  expect(recorded.transitions).toEqual([200, 200]);
+  expect(recorded.final?.status).toBe(200);
+  expect(recorded.final?.body.home).toEqual(home);
+  const tracking = recorded.final!.body.sectionTracking;
+  expect(tracking).toMatchObject({ basis: 'section_tracking', state: 'measured', unmapped: [] });
+  expect(tracking.modules.length).toBeGreaterThan(0);
+  expect(tracking.modules[0].sections.find((s: { code: string }) => s.code === recorded.code)?.status).toBe('internal_review');
+  expect(recorded.legacyFinal?.status).toBe(200);
+  expect(recorded.legacyFinal?.body.data).toEqual(tracking.modules.map((m: any) => ({ m: m.m, label: m.label, pct: m.pct, tone: m.tone, sections: m.sections.map((s: any) => s.label) })));
+  await page.reload();
+  const panel = page.getByRole('region', { name: 'Section tracking', exact: true });
+  await expect(panel.getByRole('heading', { name: `Module ${tracking.modules[0].m} · ${tracking.modules[0].label}` })).toBeVisible();
+  await panel.locator('summary').first().click();
+  await expect(panel.getByRole('list').first().getByRole('listitem')).toHaveCount(tracking.modules[0].counted);
+  await expect(panel.getByText('Internal review', { exact: true })).toBeVisible();
+  for (const [index, section] of tracking.modules[0].sections.entries()) {
+    const item = panel.getByRole('list').first().getByRole('listitem').nth(index);
+    await expect(item).toContainText(section.label);
+    await expect(item).toContainText(`Recorded code: ${section.code}`);
+  }
+  await panel.scrollIntoViewIfNeeded();
+  await testInfo.attach('author-section-tracking.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.keyboard.press('Escape');
+  await panel.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await testInfo.attach('author-section-tracking-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await testInfo.attach('section-tracking-result.json', { body: JSON.stringify({ coreStatus: recorded.final?.status, initializeStatus: recorded.initialized?.status,
+    transitions: recorded.transitions, moduleCount: tracking.modules.length, firstModule: tracking.modules[0], legacyMatches: true, homeUnchanged: true }, null, 2), contentType: 'application/json' });
+  return { moduleCount: tracking.modules.length, legacyMatches: true };
+}
+
+/** Actual scaffold, governed sections and carried source facts, without provider calls. */
 test('Author shows governed sections and artifact states, then hands the critical path to AnA', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -104,6 +162,7 @@ test('Author shows governed sections and artifact states, then hands the critica
   await testInfo.attach('author-artifact-status-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
   await page.setViewportSize({ width: 1440, height: 1000 });
 
+  const tracking = await verifyRecordedTracking(page, dossier.projectId, dossier.home, testInfo);
   const modelRequests: string[] = [];
   const writes: string[] = [];
   page.on('request', r => {
@@ -121,6 +180,7 @@ test('Author shows governed sections and artifact states, then hands the critica
     firstModuleSections: dossier.rows[0].sections.length, moduleUpdatedAt: dossier.rows[0].lastUpdated,
     homeInReview: inReview, homeDrafted: drafted, questionPrefilled: true,
     artifactReadiness: rollup, artifactCreates: artifacts.created, artifactReview: artifacts.review,
+    sectionTracking: tracking,
     modelRequests: modelRequests.length, writesAfterQuestion: writes.length,
   }, null, 2), contentType: 'application/json' });
 });

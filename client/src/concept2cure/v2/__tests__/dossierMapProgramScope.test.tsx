@@ -91,4 +91,15 @@ describe('DossierMap — program UUID scope (F-7)', () => {
     await waitFor(() => expect(text()).toMatch(/Open a project/));
     expect(apiRequest).not.toHaveBeenCalled();
   });
+
+  it.each([
+    { pendingStore: true, reason: 'The tracking store is unavailable.' },
+    { reviewRequired: true, reason: 'Recorded tracking rows need mapping review.' },
+  ])('keeps unavailable and mapping-review results distinct from an empty map', async metadata => {
+    apiRequest.mockResolvedValue(ok({ data: [], meta: { count: 0, ...metadata } }));
+    render(<DossierMap {...props()} />);
+    await waitFor(() => expect(text()).toContain(metadata.reason));
+    expect(text()).not.toContain('No dossier map yet');
+    expect(text()).not.toMatch(/\d+%/);
+  });
 });
