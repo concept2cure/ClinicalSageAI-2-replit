@@ -1,0 +1,6 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/navigationReachability.test.ts > navigation-registry ↔ shell reachability > "biopharma" opens Projects, where a project is opened and created, not a screen outside the release
+AssertionError: expected 'program-journey' to be 'projects' // Object.is equality
+Expected: "projects"
+Received: "program-journey"
+      Tests  1 failed | 3 passed (4)

@@ -49,8 +49,23 @@ function toSection(s: TemplateSection): ClinicalOverviewSection {
   };
 }
 
-export function clinicalOverviewOutline(): ClinicalOverviewSection[] {
+function servedTemplate() {
   const template = getDocumentTemplate('clinical_overview');
   if (!template) throw new Error('The template library serves no clinical_overview outline.');
-  return template.sections.map(toSection);
+  return template;
+}
+
+export function clinicalOverviewOutline(): ClinicalOverviewSection[] {
+  return servedTemplate().sections.map(toSection);
+}
+
+/**
+ * The served outline's own limits and basis, which travel with its sections:
+ * the briefs describe a marketing-application Clinical Overview, and content
+ * scales to the development phase (D2 cleanup C4c: the outline mode served the
+ * briefs without them).
+ */
+export function clinicalOverviewLimits(): { outline_limitations: string[]; basis: string } {
+  const template = servedTemplate();
+  return { outline_limitations: [...(template.outlineLimitations ?? [])], basis: template.basis?.note ?? template.regulatoryBasis ?? '' };
 }

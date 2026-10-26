@@ -177,7 +177,7 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
 const PERSONA_LABELS: Record<ReportPersona, string> = {
   executive: 'Executive', ra_lead: 'Regulatory affairs lead', ra_ops: 'Regulatory affairs operations',
   reg_strategy: 'Regulatory strategy', medical_writer: 'Medical writer', qa: 'Quality assurance', auditor: 'Auditor',
-  pm: 'Program manager', clinical_ops: 'Clinical operations', tmf_lead: 'Trial master file lead',
+  pm: 'Project manager', clinical_ops: 'Clinical operations', tmf_lead: 'Trial master file lead',
   submission_coordinator: 'Submission coordinator', compliance_officer: 'Compliance officer',
   nonclinical_lead: 'Nonclinical lead', labeling_lead: 'Labeling lead', biosafety_officer: 'Biosafety officer',
   iacuc_coordinator: 'IACUC coordinator', pi: 'Principal investigator', research_admin: 'Research administrator',

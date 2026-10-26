@@ -36,7 +36,7 @@ describe('welcomeFor — client-type-aware first-run welcome', () => {
     const unknown = welcomeFor('something-new', 'Riley');
     expect(unknown.greeting).toContain('Riley');
     expect(unknown.starters.length).toBeGreaterThanOrEqual(2);
-    expect(unknown.starters.some((s) => /first program/i.test(s.label))).toBe(true);
+    expect(unknown.starters.some((s) => /first project/i.test(s.label))).toBe(true);
   });
 
   it('uses a neutral name when none is supplied', () => {

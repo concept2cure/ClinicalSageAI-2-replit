@@ -1314,7 +1314,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             if (t.home.source === 'filing') {
               const filingId = t.home.nativeId;
               if (!isTrackedFilingId(filingId)) {
-                setFilingHomeError('This exact tracked filing could not be verified because its identifier is invalid. The current programme has not changed.');
+                setFilingHomeError('This exact tracked filing could not be verified because its identifier is invalid. The current project has not changed.');
                 return;
               }
               if (openingFiling === t.taskId) return;
@@ -1325,7 +1325,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               try {
                 const { home } = await loadTaskFilingHome(filingId, headers);
                 if (!stillSelected()) return;
-                if (home.programId) publishShellProject({ id: home.programId, title: home.programTitle || 'Tracked filing programme' });
+                if (home.programId) publishShellProject({ id: home.programId, title: home.programTitle || 'Tracked filing project' });
                 stashNavParamsForTarget('submission-center', { filingId, ws: 'portfolio' });
                 setSel(null); onNav('submission-center');
               } catch (error) {
@@ -1443,7 +1443,7 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
           {error && <div role="alert" className="tb-detail-note">{error}</div>}
           {home && (t.home?.source === 'filing' || t.home?.programId
               ? <button className="btn primary" disabled={opening} aria-busy={opening} onClick={() => void onOpenHome(t)}>Open in {home}</button>
-              : <div role="status" className="tb-detail-note">This task has no available program link. Open its program from Projects; the current program has not been changed.</div>)}
+              : <div role="status" className="tb-detail-note">This task has no available project link. Open its project from Projects; the current project has not been changed.</div>)}
         </div>
       </div>
     </div>
@@ -2105,9 +2105,9 @@ async function loadTaskFilingHome(filingId: string, headers: Record<string, stri
 function filingHomeErrorText(error: unknown): string {
   const status = error instanceof ApiRequestError ? error.status : null;
   if (status === 401) return 'Your session expired. Sign in again before opening this tracked filing.';
-  if (status === 403) return 'Your current access does not permit this tracked filing. The current programme has not changed.';
-  if (status === 404) return 'This tracked filing or its project is no longer available. The current programme has not changed.';
-  return 'This exact tracked filing could not be verified. Retry; the current programme has not changed.';
+  if (status === 403) return 'Your current access does not permit this tracked filing. The current project has not changed.';
+  if (status === 404) return 'This tracked filing or its project is no longer available. The current project has not changed.';
+  return 'This exact tracked filing could not be verified. Retry; the current project has not changed.';
 }
 function publishNativeTaskHome(t: TaskItem, projLabel: (id: string) => string): void {
   if (!t.home?.programId) return;

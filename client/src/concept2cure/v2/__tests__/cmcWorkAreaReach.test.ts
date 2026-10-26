@@ -166,8 +166,8 @@ function emptyStateElements(src: string): string[] {
   return out;
 }
 
-describe('a client told to open a program is given a way to open one', () => {
-  it('offers the door on every CMC empty state that asks for a program', () => {
+describe('a client told to open a project is given a way to open one', () => {
+  it('offers the door on every CMC empty state that asks for a project', () => {
     /* Four of six did. Specifications and Batch records said "Open a program"
        and gave no button, which is an instruction with no door. Asserted over
        every CMC surface file, because the rule is about the work area and not
@@ -176,24 +176,24 @@ describe('a client told to open a program is given a way to open one', () => {
     let asked = 0;
     for (const [name, src] of cmcSurfaceFiles()) {
       for (const el of emptyStateElements(src)) {
-        if (!/title=\{?"Open a program/.test(el)) continue;
+        if (!/title=\{?"Open a pro(?:ject|gram)\b/.test(el)) continue;
         asked += 1;
         if (!el.includes('openProgramAction(nav)')) doorless.push(`${name}: ${el.slice(0, 120).replace(/\s+/g, ' ')}`);
       }
     }
     /* The sweep must be finding them at all. */
-    expect(asked, 'no "Open a program" empty state was examined — the matcher is broken').toBeGreaterThanOrEqual(5);
-    expect(doorless, 'an "Open a program" empty state with no way to open one').toEqual([]);
+    expect(asked, 'no "Open a project" empty state was examined — the matcher is broken').toBeGreaterThanOrEqual(5);
+    expect(doorless, 'an "Open a project" empty state with no way to open one').toEqual([]);
   });
 
   it('would notice a doorless one', () => {
     /* Verified by making the check fail, over the real matcher. */
-    const withDoor = '<EmptyState icon={I.x} title="Open a program to see it" action={openProgramAction(nav)} />';
-    const without = '<EmptyState icon={I.x} title="Open a program to see it" hint="..." />';
+    const withDoor = '<EmptyState icon={I.x} title="Open a project to see it" action={openProgramAction(nav)} />';
+    const without = '<EmptyState icon={I.x} title="Open a project to see it" hint="..." />';
     expect(emptyStateElements(withDoor)[0]).toContain('openProgramAction(nav)');
     expect(emptyStateElements(without)[0]).not.toContain('openProgramAction(nav)');
     /* And an element far longer than any fixed window is still returned whole. */
-    const long = `<EmptyState icon={I.x} title="Open a program to see it" hint="${'x'.repeat(1200)}" action={openProgramAction(nav)} />`;
+    const long = `<EmptyState icon={I.x} title="Open a project to see it" hint="${'x'.repeat(1200)}" action={openProgramAction(nav)} />`;
     expect(emptyStateElements(long)[0]).toContain('openProgramAction(nav)');
   });
 });

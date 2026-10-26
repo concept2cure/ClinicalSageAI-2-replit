@@ -14,7 +14,7 @@
  *   · "Edit in Authoring" carries the document identity on the one editor
  *     channel, with the return route;
  *   · honest states: a failed read is an error with a retry, and a draft with
- *     no program says "Not filed under a program".
+ *     no program says "Not filed under a project".
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -174,10 +174,10 @@ describe('DocumentCanvas — collapsed', () => {
     expect(await screen.findByText('Module 2.5 Clinical Overview — C2C-101')).toBeTruthy();
   });
 
-  it('says "Not filed under a program" when the draft carried no program', async () => {
+  it('says "Not filed under a project" when the draft carried no program', async () => {
     render(<Host programId={null} />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-    expect(screen.getByTestId('dc-no-program').textContent).toContain('Not filed under a program');
+    expect(screen.getByTestId('dc-no-program').textContent).toContain('Not filed under a project');
   });
 
   it('"Edit in Authoring" carries the document identity and the return route on the editor channel', async () => {
@@ -297,7 +297,7 @@ describe('DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28)'
       method === 'GET' && url === `/api/c2c/projects/${PID}` ? answer() : base(method, url),
     );
     render(<Host />);
-    await waitFor(() => expect(screen.getByText(/Program details could not be read/)).toBeTruthy());
-    expect(screen.queryByText(/Reading the program…/)).toBeNull();
+    await waitFor(() => expect(screen.getByText(/Project details could not be read/)).toBeTruthy());
+    expect(screen.queryByText(/Reading the project…/)).toBeNull();
   });
 });

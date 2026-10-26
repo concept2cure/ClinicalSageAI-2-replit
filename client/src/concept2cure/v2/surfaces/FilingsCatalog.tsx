@@ -125,7 +125,7 @@ function FilingDetail({
             <button className="fc-loop-link" onClick={() => goSurf('submission-center')}><span className="ic">{I.rocket || I.send}</span><span className="t">Assemble &amp; dispatch</span><span className="s">Submission Center</span></button>
             <button className="fc-loop-link" onClick={() => goSurf('communication-center')}><span className="ic">{I.mail}</span><span className="t">Track the FDA loop</span><span className="s">Communication Center</span></button>
             <button className="fc-loop-link" onClick={() => goSurf('tasks')}><span className="ic">{I.checkSquare || I.check}</span><span className="t">Plan the work</span><span className="s">Tasking</span></button>
-            <button className="fc-loop-link" onClick={() => goSurf('program-journey')}><span className="ic">{I.gitBranch}</span><span className="t">See the journey</span><span className="s">Program journey</span></button>
+            <button className="fc-loop-link" onClick={() => goSurf('program-journey')}><span className="ic">{I.gitBranch}</span><span className="t">See the journey</span><span className="s">Project journey</span></button>
           </div>
         </>}
       </div>

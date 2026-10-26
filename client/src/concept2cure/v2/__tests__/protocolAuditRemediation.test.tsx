@@ -104,7 +104,7 @@ describe('Protocol F09/F11 completion', () => {
     expect(within(selector).getAllByRole('option')).toHaveLength(1);
     fireEvent.change(screen.getByRole('combobox', { name: 'Protocol scope' }), { target: { value: 'unfiled' } });
     await waitFor(() => expect(container.querySelector('.pd-title')?.textContent).toBe('Protocol 1'));
-    expect(screen.getByText(/It has no recorded program association/)).toBeTruthy();
+    expect(screen.getByText(/It has no recorded project association/)).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: /Study design/ }));
     expect((screen.getByRole('button', { name: 'Create a study design' }) as HTMLButtonElement).disabled).toBe(true);
   });
@@ -136,13 +136,13 @@ describe('Protocol F09/F11 completion', () => {
     });
     const { container } = mount();
     fireEvent.change(await screen.findByRole('combobox', { name: 'Protocol scope' }), { target: { value: 'unfiled' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open program' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open project' }));
     const form = within(await screen.findByRole('dialog'));
     fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(form.getByRole('button', { name: 'File protocol' }));
     await waitFor(() => expect(container.querySelector('.pd-title')?.textContent).toBe('Protocol 1'));
     await waitFor(() => expect((screen.getByRole('combobox', { name: 'Protocol scope' }) as HTMLSelectElement).value).toBe(PROGRAM));
-    expect(screen.queryByText(/It has no recorded program association/)).toBeNull();
+    expect(screen.queryByText(/It has no recorded project association/)).toBeNull();
   });
 
   it('requires a program for new protocols and leaves existing organization protocols readable', async () => {
@@ -242,7 +242,7 @@ describe("Protocol F09/F11 completion — recovery", () => {
     routeProtocol([document('1', null)], () => ({ ok: false, status: 403, json: async () => ({ error: 'PROGRAM_ACCESS_DENIED', message: 'Current program management permission is required.' }) }) as Response);
     mount();
     fireEvent.change(await screen.findByRole('combobox', { name: 'Protocol scope' }), { target: { value: 'unfiled' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open program' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open project' }));
     const form = within(await screen.findByRole('dialog'));
     fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(form.getByRole('button', { name: 'File protocol' }));

@@ -62,7 +62,7 @@ describe('Vault coverage', () => {
     );
     render(<Vault {...props()} />);
     const block = await screen.findByTestId('vault-coverage');
-    await waitFor(() => expect(block.textContent).toContain("ICH CTD baseline, not this program's own"));
+    await waitFor(() => expect(block.textContent).toContain("ICH CTD baseline, not this project's own"));
     expect(block.textContent).toContain('The program type is unknown.');
   });
 

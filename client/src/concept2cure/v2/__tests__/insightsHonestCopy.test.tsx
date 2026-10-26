@@ -81,7 +81,7 @@ describe('Insights — the canvas says what is true about itself', () => {
   it('the portfolio board credits no one with ranking, and says the average is taken here', async () => {
     current = overview('enterprise', true);
     await renderCanvas();
-    ask('Compare readiness across all my programs');
+    ask('Compare readiness across all my projects');
     await screen.findByText(/Portfolio — board view/);
     const note = document.querySelector('.ro-dash .ro-dash-note')?.textContent ?? '';
     expect(note).not.toMatch(/\bAnA\b/);
@@ -96,7 +96,7 @@ describe('Insights — the canvas says what is true about itself', () => {
     expect(screen.getByTestId('rc-tier-preview').textContent).toMatch(/Previewing Enterprise\. Your organization's plan is Standard\./);
     expect(screen.getByRole('button', { name: 'Enterprise' }).getAttribute('aria-pressed')).toBe('true');
 
-    ask('Compare readiness across all my programs');
+    ask('Compare readiness across all my projects');
     await screen.findByText(/"Portfolio readiness rollup" needs the Enterprise plan/);
     expect(document.body.textContent).not.toMatch(/Your plan unlocks the portfolio rollup/);
 

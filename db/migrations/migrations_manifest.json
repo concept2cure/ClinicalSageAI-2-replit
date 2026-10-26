@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-10-17T22:27:18.133Z",
+  "generatedAt": "2026-10-26T05:09:42.729Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 296,
+  "totalMigrations": 292,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -130,14 +130,6 @@
         "resolution": "Execute gcc_evidence_vault first"
       },
       {
-        "prefix": "043",
-        "files": [
-          "043_gcc_ectd_expanded_modules.sql",
-          "043_quality_step2_pro.sql"
-        ],
-        "resolution": "Execute gcc_ectd_expanded first"
-      },
-      {
         "prefix": "044",
         "files": [
           "044_gcc_cognitive_fabric_rag.sql",
@@ -254,7 +246,6 @@
         "014_gcc_regulatory_timeline.sql",
         "015_gcc_submission_package.sql",
         "038_gcc_ectd_seeder_service.sql",
-        "043_gcc_ectd_expanded_modules.sql",
         "050_gcc_ectd_v4_domain_registry.sql",
         "052_gcc_ectd_v4_cou_graph.sql",
         "060_regulatory_foundation.sql",
@@ -385,10 +376,6 @@
     "077_gcc_self_evolving_intelligence.sql",
     "078_gcc_cross_domain_transfer.sql",
     "080_gcc_21cfr_part11_compliance.sql",
-    "100_regulatory_templates.sql",
-    "101_complete_template_catalog.sql",
-    "102_load_all_templates.sql",
-    "103_load_complete_templates.sql",
     "20260130_add_assembly_docs_table.sql",
     "20260130_add_assembly_audit_logs.sql",
     "20260130_add_workflow_rls_and_step_runs_immutability.sql",

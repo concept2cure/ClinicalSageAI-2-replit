@@ -591,7 +591,7 @@ function ProtocolHeaderState(props: HeaderProps & { sourcePending: boolean; prog
   return <>
     <ProtocolHeader {...props} />
     {props.sourcePending && <p className="scaf-note">Save the protocol editor's pending changes before opening a saved working copy.</p>}
-    {!props.programId && <p className="scaf-note">Select a target program to open this saved protocol in Document authoring.</p>}
+    {!props.programId && <p className="scaf-note">Select a target project to open this saved protocol in Document authoring.</p>}
     {props.reloadError && <StaleNotice />}
   </>;
 }

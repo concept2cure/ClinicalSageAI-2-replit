@@ -142,22 +142,21 @@ export function toBuilderStudy(input: NonclinicalStudyInput, index: number): Non
 /**
  * Build the M2.4 Nonclinical Overview from ingest-shaped studies and enrich it
  * with the target-organ adversity profile. The classifier's overview paragraph
- * is appended into the returned summary narrative so the framing travels with
- * the document.
+ * goes into the composer, which prints it inside 2.4.4 Toxicology, so the
+ * framing travels with the document. (D2 cleanup C4c, 2026-10-26: it was
+ * appended after the whole overview as "2.4.4.1", a code the ICH M2–M5 record
+ * does not hold, and so landed after 2.4.5 and 2.4.6.)
  */
 export function buildEnrichedM24(input: EnrichedM24Input): EnrichedM24Result {
   const builderStudies = input.studies.map(toBuilderStudy);
+  const toxProfile: ToxFindingsSummary | null =
+    input.findings && input.findings.length > 0 ? classifyToxFindings(input.findings) : null;
   const summary = buildM24NonclinicalOverview({
     nonclinicalStudies: builderStudies,
     drugSubstanceName: input.drugSubstanceName,
     indication: input.indication,
+    ...(toxProfile ? { targetOrganProfile: toxProfile.overviewParagraph } : {}),
   });
-
-  let toxProfile: ToxFindingsSummary | null = null;
-  if (input.findings && input.findings.length > 0) {
-    toxProfile = classifyToxFindings(input.findings);
-    summary.narrative = `${summary.narrative}\n\n2.4.4.1 TARGET-ORGAN ADVERSITY PROFILE\n${toxProfile.overviewParagraph}`;
-  }
 
   return { summary, toxProfile };
 }

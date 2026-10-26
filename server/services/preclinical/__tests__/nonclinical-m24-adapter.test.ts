@@ -48,7 +48,7 @@ describe('buildEnrichedM24', () => {
     expect(summary.gaps).not.toContain('repeat-dose toxicology');
   });
 
-  it('appends the target-organ adversity profile when findings are supplied', () => {
+  it('adds the target-organ adversity profile when findings are supplied', () => {
     const { summary, toxProfile } = buildEnrichedM24({
       studies,
       findings: [
@@ -59,7 +59,9 @@ describe('buildEnrichedM24', () => {
     expect(toxProfile).not.toBeNull();
     expect(toxProfile!.adverseFindings.map(f => f.finding)).toContain('tubular necrosis');
     expect(toxProfile!.adaptiveFindings.map(f => f.finding)).toContain('hepatocellular hypertrophy');
-    expect(summary.narrative).toMatch(/TARGET-ORGAN ADVERSITY PROFILE/);
+    // Inside 2.4.4, unnumbered; never the invented "2.4.4.1" after the conclusions (D2 cleanup C4c).
+    expect(summary.narrative).toMatch(/^Target-organ adversity profile: /m);
+    expect(summary.narrative).not.toMatch(/2\.4\.4\.1/);
   });
 
   it('returns no tox profile when no findings are supplied', () => {

@@ -32,7 +32,7 @@ const SCIENCE_INPUT: C2CFormConfig = {
 
 export function BlaAssessmentWorkbench() {
   const programId = shellProgramId(useShellProject());
-  return programId ? <ProgramBlaWorkbench key={programId} programId={programId} /> : <p>Open a program to assess and save biologics evidence.</p>;
+  return programId ? <ProgramBlaWorkbench key={programId} programId={programId} /> : <p>Open a project to assess and save biologics evidence.</p>;
 }
 
 function ProgramBlaWorkbench({ programId }: { programId: string }) {
@@ -112,11 +112,11 @@ function BlaSavedRecords({ list, selected, onSelect }: { list: Read<{ assessment
   if (list.data?.pendingStore) return <p role="alert">The assessment store is unavailable; no saved count is established.</p>;
   return <><label htmlFor="bla-saved-record">Saved assessment</label><select id="bla-saved-record" value={selected ?? ''} onChange={event => onSelect(event.target.value || null)}>
     <option value="">Choose a saved record</option>{list.data?.assessments.map(row => <option key={row.id} value={row.id}>{row.title || row.kind} · {row.status} · {row.verdict || 'no verdict'}</option>)}
-  </select>{!list.data?.assessments.length && <p>No assessments are saved for this program.</p>}</>;
+  </select>{!list.data?.assessments.length && <p>No assessments are saved for this project.</p>}</>;
 }
 function BlaSavedSnapshot({ detail, record, onSign }: { detail: Read<Assessment & { input: unknown; result: unknown }>; record: (Assessment & { input: unknown; result: unknown }) | null; onSign: () => void }) {
   if (detail.loading) return <p role="status">Loading the saved snapshot…</p>;
-  if (detail.error || !record) return <p role="alert">{detail.error || 'This saved assessment is unavailable in the open program.'}</p>;
+  if (detail.error || !record) return <p role="alert">{detail.error || 'This saved assessment is unavailable in the open project.'}</p>;
   return <div><h3>{record.title}</h3><p>Saved status: {record.status} · {record.verdict || 'No verdict recorded'}</p>
     <RecordedSnapshot title="Recorded scientific inputs" value={record.input} /><RecordedSnapshot title="Saved science-engine result" value={record.result} />
     <button className="nda-open" disabled={record.status === 'signed'} onClick={onSign}>Review and sign saved assessment</button>

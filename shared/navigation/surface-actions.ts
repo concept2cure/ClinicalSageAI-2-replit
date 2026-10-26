@@ -115,9 +115,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
   {
     id: 'projects.open-program',
     surfaceId: 'projects',
-    label: 'Open a program',
+    label: 'Open a project',
     description:
-      'On the Projects portfolio, open a named regulatory program — sets it as the active project (so project-scoped screens work) and enters its project home. Pass the program title or code as shown on screen; the surface resolves it against the real portfolio and reports an honest miss for an unknown name.',
+      'On the Projects portfolio, open a named project — sets it as the active project (so project-scoped screens work) and enters its project home. Pass the project title or code as shown on screen; the surface resolves it against the real portfolio and reports an honest miss for an unknown name.',
     params: [
       {
         name: 'program',
@@ -131,7 +131,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'projects',
     label: 'Filter the portfolio',
     description:
-      'On the Projects portfolio, filter the program list by workstream and/or status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
+      'On the Projects portfolio, filter the project list by workstream and/or status. Omit a param to leave that axis unchanged; pass "all" to clear it.',
     params: [
       {
         name: 'workstream',
@@ -151,7 +151,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     id: 'projects.set-view',
     surfaceId: 'projects',
     label: 'Switch portfolio view',
-    description: 'On the Projects portfolio, switch between the grid and list presentation of the programs.',
+    description: 'On the Projects portfolio, switch between the grid and list presentation of the projects.',
     params: [
       {
         name: 'view',
@@ -211,7 +211,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'tasking',
     label: 'Filter the task board',
     description:
-      'On the task board, filter by programme and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
+      'On the task board, filter by project and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
     params: [
       {
         name: 'project',
@@ -275,7 +275,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'cmc',
     label: 'Open a CMC tab',
     description:
-      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.',
+      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or project records (pathway). Refused while a governed form is open in the current pane (spec edits, batch e-sign releases, stability registrations report themselves through the ceremony channel) — a switch would discard the person’s half-completed ceremony.',
     params: [
       {
         name: 'tab',

@@ -48,7 +48,7 @@ describe('Dossier — per-section readiness binding', () => {
 
   it('asks for a program honestly with no numeric project (no call)', () => {
     render(<Dossier {...props()} />);
-    expect(screen.getByText(/Open a program to see its dossier readiness/)).toBeTruthy();
+    expect(screen.getByText(/Open a project to see its dossier readiness/)).toBeTruthy();
     expect(apiRequest).not.toHaveBeenCalled();
   });
 });

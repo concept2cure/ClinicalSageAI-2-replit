@@ -1497,7 +1497,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
     const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
     return {
       summary:
-        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
+        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} project(s), ` +
         `${signed} with a Part 11 e-signature on the current version` +
         (stale ? `, ${stale} signed on an earlier version only (the current version is not signed)` : '') +
         '.',
@@ -1569,7 +1569,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
       ['Model', (r) => r.model ?? ''],
       ['Version', (r) => r.ver],
       ['Signed', (r) => ({ none: 'no', current: 'yes', stale: `earlier version only (v${r.sigVersion})`, unknown: 'yes, version not determined' })[signatureState(r)]],
-      ['Program', (r) => r.prog],
+      ['Project', (r) => r.prog],
       ['Updated', (r) => r.when],
     ];
     const csv = [
@@ -1625,7 +1625,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         >
           <div>Artifact</div>
           <div>Format</div>
-          <div>Program</div>
+          <div>Project</div>
           <div>Model</div>
           <div>Updated</div>
           <div>Sig</div>

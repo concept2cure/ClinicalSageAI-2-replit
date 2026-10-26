@@ -476,7 +476,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cm-body">
       {linked.id && <div className="pj-card" role={linked.state==='error'?'alert':'status'}>
         <div className="pj-card-b">{linked.state==='loading' ? 'Loading the linked transmittal…' : linked.state==='error'
-          ? <>The linked transmittal could not be read in this program, or is no longer available. No other row was selected. <button className="btn ghost" onClick={linked.retry}>Retry linked transmittal</button></>
+          ? <>The linked transmittal could not be read in this project, or is no longer available. No other row was selected. <button className="btn ghost" onClick={linked.retry}>Retry linked transmittal</button></>
           : <>Linked transmittal #{linked.record?.id} is selected in the log below.</>}</div>
       </div>}
       <div className="pj-card">

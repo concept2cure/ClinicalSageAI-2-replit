@@ -626,7 +626,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                     aria-describedby="npw-name-help"
                   />
                   <span className="npw-field-help" id="npw-name-help">
-                    Required. The program is listed under this name.
+                    Required. The project is listed under this name.
                   </span>
                 </label>
 
@@ -689,7 +689,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, actor, isCurrent }: 
                       {productChoices.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      {canRefine ? 'The filing default is selected. Choose the product type this project will record.' : <>Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.</>}
+                      {canRefine ? 'The filing default is selected. Choose the product type this project will record.' : <>Required. {filingTypeInSentence(programType)} covers drugs and biologics; the project records which.</>}
                     </span>
                   </label>
                 )}
@@ -1050,7 +1050,7 @@ function PortfolioPagedNote({ paged, settled, count }: { paged: boolean; settled
   if (!paged || !settled) return null;
   return (
     <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
-      Showing the first {count} programs. The totals, the average readiness and search cover these only.
+      Showing the first {count} projects. The totals, the average readiness and search cover these only.
     </div>
   );
 }
@@ -1117,7 +1117,7 @@ const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'war
    routes); a `blocked` row comes from data loaded some other way, and the list
    does not assess blockers. The card states the gap instead of a bare red chip. */
 const BLOCKED_NO_CAUSE = 'No cause recorded';
-const BLOCKED_NO_CAUSE_TITLE = 'This program’s status is recorded as blocked, and no blocker is recorded against it.';
+const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, and no blocker is recorded against it.';
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
@@ -1176,7 +1176,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     return d != null && d >= 0 && d < 60;
   }).length;
   const health = [
-    { l: 'Active programs', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
+    { l: 'Active projects', n: kv(countFloor(projects.length, truncated)), m: 'across MDX, Biotech, Pharma', t: '' },
     // A mean over some of the programs says how many it covers (`q`).
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
     { l: 'Filing < 60 days', n: kv(countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
@@ -1211,7 +1211,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           `three steps — ${STEP_LABELS.join(', ')} — and the step the person is on is the ` +
           'wizard\'s own state, which this surface does not hold.',
         availableActions: [
-          'Explain what a filing type commits the programme to',
+          'Explain what a filing type commits the project to',
           'Cancel the wizard and go back to the portfolio',
         ],
       };
@@ -1222,7 +1222,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     if (live.error) {
       return {
         summary:
-          'The project portfolio could not be read, so this screen is showing no programs because of a ' +
+          'The project portfolio could not be read, so this screen is showing no projects because of a ' +
           'failure, not because there are none.',
         availableActions: ['Retry the portfolio read'],
       };
@@ -1240,11 +1240,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     ].filter(Boolean);
     return {
       summary:
-        `Projects portfolio: ${projects.length} regulatory program(s)` +
+        `Projects portfolio: ${projects.length} regulatory project(s)` +
         (truncated ? ` — the first ${projects.length} only; more exist, and every figure here covers the first ${projects.length}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         `. Average readiness ${health[1].n}${measuredCover ? ` (${measuredCover})` : ''}; ${health[2].n} with a target filing date in the next 60 days. ` +
-        'Blockers are not assessed on this list; each program\'s readiness is on its project home. ' +
+        'Blockers are not assessed on this list; each project\'s readiness is on its project home. ' +
         `Shown as a ${view}.`,
       facts: {
         totalPrograms: projects.length,
@@ -1269,9 +1269,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         })),
       },
       availableActions: [
-        'Open a program to enter its project home',
+        'Open a project to enter its project home',
         'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
-        'Search the portfolio by program title or code',
+        'Search the portfolio by project title or code',
         'Switch between the grid and list views',
         'Create a new project through the new-project wizard',
       ],
@@ -1318,8 +1318,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         return { ok: false, reason: 'The portfolio is still loading.', retry: true };
       if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
       const programName = (p: (typeof projects)[number]) => `${p.code} — ${p.title}`;
-      const listed = () => listedChoices(projects.map(programName), 'Programs listed');
-      if (!wanted) return { ok: false, reason: `No program named.${listed()}` };
+      const listed = () => listedChoices(projects.map(programName), 'Projects listed');
+      if (!wanted) return { ok: false, reason: `No project named.${listed()}` };
       /* Exact first, on the keys the server resolves a reference by
          (drive-context.ts resolveProgramRef): the id, the trimmed code, the
          title. The id was not one of them here. AnA is handed each program's
@@ -1344,11 +1344,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           ok: false,
           reason:
             contains.length > 1
-              ? `"${params.program}" matches ${contains.length} programs — name one exactly.${listedChoices(
+              ? `"${params.program}" matches ${contains.length} projects — name one exactly.${listedChoices(
                   contains.map(programName),
                   'Matches',
                 )}`
-              : `No program named "${params.program}" in this portfolio.${listed()}`,
+              : `No project named "${params.program}" in this portfolio.${listed()}`,
         };
       }
       openProj(match);
@@ -1398,10 +1398,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title">Projects</h1>
-          <div className="ph-sub">Every regulatory program across all workstreams. Open one to enter its project home.</div>
+          <div className="ph-sub">Every regulatory project across all workstreams. Open one to enter its project home.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk('Which programs are at risk this week?')}>{I.sparkles} Ask AnA</button>
+          <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>
           <button className="btn primary" onClick={() => setWizardOpen(true)}>{I.plus} New project</button>
         </div>
       </div>
@@ -1457,7 +1457,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       )}
 
       {live.loading ? (
-        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
         // naming a governed store's table on screen: an information-disclosure
@@ -1474,16 +1474,16 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : live.empty ? (
         <EmptyState
           icon={I.folder}
-          title="No programs yet"
-          hint="Create a regulatory program and it appears here — every workstream across MDX, Biotech, and Pharma."
+          title="No projects yet"
+          hint="Create a regulatory project and it appears here — every workstream across MDX, Biotech, and Pharma."
         />
       ) : list.length === 0 ? (
         <EmptyState
           icon={I.filter}
-          title={needle ? `No programs match “${q.trim()}”` : 'No programs match these filters'}
+          title={needle ? `No projects match “${q.trim()}”` : 'No projects match these filters'}
           hint={
             needle
-              ? 'Search matches a program’s title or code. Clear the search, or adjust the workstream or status filter.'
+              ? 'Search matches a project’s title or code. Clear the search, or adjust the workstream or status filter.'
               : 'Adjust the workstream or status filter to see more.'
           }
         />
@@ -1526,7 +1526,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : (
         <div className="ctable">
           <div className="ct-head" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }}>
-            <div>Program</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
+            <div>Project</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
           </div>
           {list.map(p => (
             <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>

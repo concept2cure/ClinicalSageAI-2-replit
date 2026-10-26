@@ -514,7 +514,7 @@ describe('IndFormsPanel — the program record fills the forms', () => {
     render(<IndFormsPanel note={vi.fn()} />);
     await screen.findByText(/FDA 1571/);
     expect(apiRequest.mock.calls.find((c) => c[0] === 'GET')![1]).toBe('/api/ind-forms/');
-    expect(screen.queryByText(/Read from the program record/)).toBeNull();
+    expect(screen.queryByText(/Read from the project record/)).toBeNull();
     expect(screen.getByText('Sponsor name')).toBeTruthy();
     // Nothing to file into without a program, so no attach control is offered.
     expect(screen.queryByRole('button', { name: /Attach completed form/ })).toBeNull();

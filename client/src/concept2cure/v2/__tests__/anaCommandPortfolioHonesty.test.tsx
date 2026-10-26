@@ -48,7 +48,7 @@ describe('an organisation with no programs', () => {
   it('is the empty state, not a failed read that blames sign-in or plan', async () => {
     portfolio = () => ok({ data: null });
     mount();
-    expect(await screen.findByText('No programs in this organization yet')).toBeTruthy();
+    expect(await screen.findByText('No projects in this organization yet')).toBeTruthy();
     expect(screen.queryByText("Couldn't load the portfolio rollup")).toBeNull();
     expect(screen.queryByText(BLAMES_SIGN_IN_OR_PLAN)).toBeNull();
   });
@@ -56,7 +56,7 @@ describe('an organisation with no programs', () => {
   it('offers no role lens, which would filter nothing', async () => {
     portfolio = () => ok({ data: null });
     mount();
-    await screen.findByText('No programs in this organization yet');
+    await screen.findByText('No projects in this organization yet');
     expect(screen.queryByText('Lens')).toBeNull();
   });
 });

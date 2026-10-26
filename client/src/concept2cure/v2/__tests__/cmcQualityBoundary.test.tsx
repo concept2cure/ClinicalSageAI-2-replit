@@ -45,7 +45,7 @@ describe('CmQuality — the QbD read', () => {
       return { ok: true, status: 200, json: async () => ({ success: true, data: null }) } as Response;
     });
     render(<CmQuality ask={() => {}} />);
-    expect(await screen.findByText('Quality attributes are not derived here for this program')).toBeTruthy();
+    expect(await screen.findByText('Quality attributes are not derived here for this project')).toBeTruthy();
     expect(screen.getByText(REFUSAL)).toBeTruthy();
     expect(screen.queryByText('Couldn’t derive the quality attributes')).toBeNull();
   });

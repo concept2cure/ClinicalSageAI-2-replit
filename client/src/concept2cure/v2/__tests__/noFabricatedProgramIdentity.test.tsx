@@ -125,6 +125,6 @@ describe('the programme select reads the org’s own portfolio', () => {
     expect(src).toMatch(/useLiveRows<AmProgramOption>\('\/api\/c2c\/projects'\)/);
     expect(src).toMatch(/options: programOptions/);
     // And it says so when there are none, rather than falling back to a list.
-    expect(src).toMatch(/No programmes are recorded for your organization yet/);
+    expect(src).toMatch(/No projects are recorded for your organization yet/);
   });
 });

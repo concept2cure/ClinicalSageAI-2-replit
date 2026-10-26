@@ -126,7 +126,7 @@ describe('ClientPortal — live overview (fixture-free)', () => {
       }),
     );
     mount();
-    expect(await screen.findByText(/No active programs yet/)).toBeTruthy();
+    expect(await screen.findByText(/No active projects yet/)).toBeTruthy();
     expect(screen.getByText(/No deliverables have been shared with you yet/)).toBeTruthy();
     expect(screen.getByText(/No recent updates/)).toBeTruthy();
     expect(document.querySelector('.c2c-sample-tag')).toBeNull();

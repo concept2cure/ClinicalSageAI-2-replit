@@ -1989,7 +1989,7 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
         <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockedBy)}.</div>
       ) : !appNumber ? (
         <div className="scaf-note sc-mt">
-          No agency application number is recorded for this program. Enter the number the agency assigned; a package is never sent without one.
+          No agency application number is recorded for this project. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
       {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceNumber={seq.sequenceNumber} />}

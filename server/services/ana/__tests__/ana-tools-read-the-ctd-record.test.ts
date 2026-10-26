@@ -11,7 +11,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { IND_MODULE_TEMPLATES, buildIndModuleAuthoringPlan } from '../ind-module-authoring';
-import { clinicalOverviewOutline } from '../clinical-overview-outline';
+import { clinicalOverviewLimits, clinicalOverviewOutline } from '../clinical-overview-outline';
+import { DRAFT_CLINICAL_OVERVIEW_M2_5 } from '../legacy-import-tool-defs';
 import { ctdRecordSubtree } from '../../market-specs/ctd-component-outlines';
 import { ichHeadingTitle } from '../../ind/ctd/ich-m4-headings';
 
@@ -41,5 +42,44 @@ describe('draft_clinical_overview_m2_5 outlines the served Clinical Overview', (
     for (const s of o) expect(s.title, s.number).toBe(ichHeadingTitle(s.number));
     expect(o.find((s) => s.number === '2.5.6')?.subsections?.map((s) => s.number)).toEqual(['2.5.6.1', '2.5.6.2', '2.5.6.3', '2.5.6.4', '2.5.6.5']);
     expect(o.find((s) => s.number === '2.5.4')?.cite_from_module).toBe('2.7.3');
+  });
+});
+
+/*
+ * C4c (2026-10-26), the review of C4a (wf_4db15643-511): a fact named by a code
+ * below a planned section (2.7.4.2.1.2) was dropped and its section read "no
+ * source fact supplied"; the outline mode served the briefs without the
+ * template's own limits; the tool's description still promised six sections.
+ */
+describe('C4c: what the review of C4a found', () => {
+  it('a fact named by a code below a planned section lands in that section, with its own code', () => {
+    const plan = buildIndModuleAuthoringPlan({
+      module: '2.7', productName: 'X', indication: 'Y', provenance: 'not_assessed',
+      facts: [{ sectionId: '2.7.4.2.1.2', label: 'Deaths', value: '3 deaths' }, { sectionId: 'm2.7.3', label: 'ORR', value: '41%' }],
+    });
+    expect(plan.content).toMatch(/## 2\.7\.4 Summary of Clinical Safety[\s\S]*- Deaths \(2\.7\.4\.2\.1\.2\): 3 deaths/);
+    expect(plan.content).toMatch(/## 2\.7\.3 Summary of Clinical Efficacy[\s\S]*- ORR: 41%/);
+    expect(plan.sectionsWithoutFacts).not.toContain('2.7.4');
+    expect(plan.unplacedFacts).toEqual([]);
+  });
+
+  it('a fact naming no section of the template is returned as unplaced, never dropped silently', () => {
+    const plan = buildIndModuleAuthoringPlan({
+      module: '2.5', productName: 'X', indication: 'Y', provenance: 'not_assessed',
+      facts: [{ sectionId: '2.7.4', label: 'SAEs', value: '7' }],
+    });
+    expect(plan.unplacedFacts).toEqual([{ sectionId: '2.7.4', label: 'SAEs', value: '7' }]);
+    expect(plan.content).not.toMatch(/SAEs/);
+  });
+
+  it('the outline carries the served template’s limits and basis, scaling to the development phase included', () => {
+    const { outline_limitations, basis } = clinicalOverviewLimits();
+    expect(outline_limitations.join(' ')).toMatch(/Scale content to the development phase/);
+    expect(basis).toMatch(/Headings as the record holds them/);
+  });
+
+  it('the tool tells the model the shape it returns: 2.5.1–2.5.7, never six sections', () => {
+    expect(DRAFT_CLINICAL_OVERVIEW_M2_5.description).toContain('2.5.1–2.5.7');
+    expect(DRAFT_CLINICAL_OVERVIEW_M2_5.description).not.toMatch(/six-subsection|2\.5\.1–2\.5\.6/);
   });
 });

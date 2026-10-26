@@ -231,6 +231,6 @@ describe('ConversationThread artifact panel — the controls complete their chai
     mount();
     const btn = screen.getByText(/Route to review/).closest('button') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
-    expect(screen.getByText(/Open a program first/i)).toBeTruthy();
+    expect(screen.getByText('Open a project first — the review workflow is scoped to one.')).toBeTruthy();
   });
 });

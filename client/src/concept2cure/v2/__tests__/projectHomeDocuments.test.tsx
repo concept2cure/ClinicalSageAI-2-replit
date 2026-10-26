@@ -177,7 +177,7 @@ describe('Author — the project\'s documents', () => {
     expect(moduleRow('Module 5 · Clinical')?.tagName, 'a module with no document is not a button').toBe('DIV');
   });
 
-  it('offers the editor and the organisation\'s protocols as doors', async () => {
+  it('offers the editor and the protocol workspace as doors', async () => {
     serve();
     const p = props();
     (window as unknown as { C2C_EDITOR_TARGET?: unknown }).C2C_EDITOR_TARGET = { docId: 'stale', setAt: Date.now() };
@@ -185,7 +185,11 @@ describe('Author — the project\'s documents', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Open in Authoring/ }));
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
     expect(target(), 'an older target does not ride along').toBeUndefined();
-    fireEvent.click(screen.getByRole('button', { name: /Protocols \(organisation-wide\)/ }));
+    /* Slice 0: the door said "Protocols (organisation-wide)". Protocols carry the project's key since
+       20261014_protocol_program_scope.sql, and the workspace lists the open project's, so the door names
+       the job, not a scope that stopped being true. */
+    expect(screen.queryByText(/organisation-wide|organization-wide/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Write the protocol in the protocol workspace/ }));
     expect(p.onNav).toHaveBeenCalledWith('protocol-dev');
   });
 });

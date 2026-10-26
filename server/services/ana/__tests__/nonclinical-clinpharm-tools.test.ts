@@ -12,11 +12,19 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Module 2 tools read the program's completed CSRs (ana/module2-csr-inputs.ts);
-// the loader is mocked so the M2.7 cases stay offline.
+// the loader is mocked so the M2.7 cases stay offline. Since 3b Slice 1 the open
+// project is first resolved through the CSR scope, as the person asking; it is
+// mocked to resolve the project the context names (module2-csr-inputs.pglite.test.ts
+// runs both for real).
 const csrRecords = vi.hoisted(() => ({ rows: [] as unknown[] }));
 vi.mock('../../csr/load-csr-inputs-for-project.js', () => ({
   loadCsrInputsForProject: vi.fn(async () => csrRecords.rows),
 }));
+vi.mock('../../csr/project-scope.js', async (orig) => ({
+  ...await orig<typeof import('../../csr/project-scope.js')>(),
+  resolveCsrScope: vi.fn(async (_db: unknown, _org: number, input: { projectId?: number }) => ({ projectId: input.projectId })),
+}));
+vi.mock('../../../db.js', () => ({ db: {}, pool: { query: vi.fn() }, getPool: vi.fn() }));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';

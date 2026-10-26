@@ -63,7 +63,7 @@ describe('IND lifecycle deliverables carry no invented programme', () => {
     expect(byId['cover-letter'], 'the IND cover letter deliverable vanished').toBeTruthy();
     expect(byId['briefing-book'], 'the Pre-IND briefing book deliverable vanished').toBeTruthy();
     expect(byId['cover-letter'].ask).toBe('Draft the IND cover letter (m1.2) for this IND in the editor.');
-    expect(byId['briefing-book'].ask).toBe('Draft the Pre-IND briefing book for this program in the editor.');
+    expect(byId['briefing-book'].ask).toBe('Draft the Pre-IND briefing book for this project in the editor.');
   });
 
   it('INDL_PROGRAM is not re-exported', async () => {

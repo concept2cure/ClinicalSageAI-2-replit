@@ -74,7 +74,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     { v: kv(positions.length), l: 'Markets / payers' },
     { v: kv(covered), l: 'Covered', tone: 'ok' },
     { v: kv(inReview), l: 'In HTA review', tone: 'warn' },
-    { v: kv(programs), l: 'Programs' },
+    { v: kv(programs), l: 'Projects' },
   ];
   const tabs: [string, string][] = [
     ['coverage', 'Coverage status'],
@@ -121,7 +121,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     return {
       summary:
         `Market access and reimbursement, "${(tabs.find((t) => t[0] === tab) ?? [])[1] ?? tab}" tab: ` +
-        `${positions.length} payer position(s) across ${programs} program(s) — ${covered} covered, ` +
+        `${positions.length} payer position(s) across ${programs} project(s) — ${covered} covered, ` +
         `${inReview} in HTA review, ${coded.length} carrying a billing code.`,
       facts: {
         openTab: tab,
@@ -168,7 +168,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
             ask(
               program
                 ? `Build a US + EU market-access plan for ${program}`
-                : 'Build a US + EU market-access plan for my programme'
+                : 'Build a US + EU market-access plan for my project'
             )
           }
         >
@@ -382,7 +382,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
           <div className="ma-strat">
             <p className="ma-strat-empty">
               {I.info || I.alertTriangle} No access sequencing has been generated for
-              {program ? <> <b>{program}</b></> : ' this programme'} yet. Sequencing depends on the
+              {program ? <> <b>{program}</b></> : ' this project'} yet. Sequencing depends on the
               coverage landscape, the comparator set and the pricing position for your own
               product — nothing here is pre-computed, and a generic sequence would be a
               commercial recommendation made about a product this platform has not analysed.
@@ -393,7 +393,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
                 ask(
                   program
                     ? `Generate the full global market-access strategy document for ${program}`
-                    : 'Generate the full global market-access strategy document for my programme',
+                    : 'Generate the full global market-access strategy document for my project',
                 )
               }
             >

@@ -142,7 +142,7 @@ describe('Mission Control — reads the real program engine', () => {
       return ok({ unexpected: 'shape' });
     });
     render(<MissionControl {...props()} />);
-    expect(await screen.findByText(/No artifacts on this program yet/)).toBeTruthy();
+    expect(await screen.findByText(/No artifacts on this project yet/)).toBeTruthy();
     expect(screen.getByText(/No risks logged/)).toBeTruthy();
   });
 
@@ -152,21 +152,21 @@ describe('Mission Control — reads the real program engine', () => {
     expect(await screen.findByText(/Sign in to your tenant/)).toBeTruthy();
     // Not "No programs yet" — that would tell a signed-out user their
     // organization has no programs, which is a claim about their data.
-    expect(screen.queryByText('No programs yet')).toBeNull();
+    expect(screen.queryByText('No projects yet')).toBeNull();
   });
 
   it('offers the empty state when the organization genuinely has no programs', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) =>
       url.endsWith('/programs') ? ok([]) : ok([]));
     render(<MissionControl {...props()} />);
-    expect(await screen.findByText('No programs yet')).toBeTruthy();
+    expect(await screen.findByText('No projects yet')).toBeTruthy();
   });
 
   it('creates a program through the real endpoint and reloads the list', async () => {
     render(<MissionControl {...props()} />);
     await screen.findByRole('button', { name: /C2C-101/ });
-    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
-    fireEvent.change(screen.getByLabelText(/Program name/), { target: { value: 'C2C-303' } });
+    fireEvent.click(screen.getByRole('button', { name: /New project/ }));
+    fireEvent.change(screen.getByLabelText(/Project name/), { target: { value: 'C2C-303' } });
     fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
 
     await waitFor(() => {
@@ -181,7 +181,7 @@ describe('Mission Control — reads the real program engine', () => {
   it('refuses to create a program with no name, and says so out loud', async () => {
     render(<MissionControl {...props()} />);
     await screen.findByRole('button', { name: /C2C-101/ });
-    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
+    fireEvent.click(screen.getByRole('button', { name: /New project/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
 
     // The toast is the only channel for this refusal, so it has to be a live
@@ -194,7 +194,7 @@ describe('Mission Control — reads the real program engine', () => {
       if (!el) throw new Error('no toast');
       return el as HTMLElement;
     });
-    expect(toast.textContent).toContain('Enter a program name.');
+    expect(toast.textContent).toContain('Enter a project name.');
     // The create was REFUSED, so the toast interrupts (`role="alert"`) and
     // carries the error tone. It previously asserted `status` + `polite`,
     // which was the only thing a one-tone toast could produce.
@@ -228,8 +228,8 @@ describe('Mission Control — reads the real program engine', () => {
   it('creates a program with the canonical modality on the wire, and omits "Not set"', async () => {
     render(<MissionControl {...props()} />);
     await screen.findByRole('button', { name: /C2C-101/ });
-    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
-    fireEvent.change(screen.getByLabelText(/Program name/), { target: { value: 'C2C-404' } });
+    fireEvent.click(screen.getByRole('button', { name: /New project/ }));
+    fireEvent.change(screen.getByLabelText(/Project name/), { target: { value: 'C2C-404' } });
     fireEvent.change(screen.getByLabelText(/Modality/), { target: { value: 'gene_therapy' } });
     fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
     await waitFor(() => {
@@ -243,8 +243,8 @@ describe('Mission Control — reads the real program engine', () => {
   it('an unset modality is omitted from the create body, not sent as an empty string', async () => {
     render(<MissionControl {...props()} />);
     await screen.findByRole('button', { name: /C2C-101/ });
-    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
-    fireEvent.change(screen.getByLabelText(/Program name/), { target: { value: 'C2C-505' } });
+    fireEvent.click(screen.getByRole('button', { name: /New project/ }));
+    fireEvent.change(screen.getByLabelText(/Project name/), { target: { value: 'C2C-505' } });
     fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
     await waitFor(() => {
       const call = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/mission-control/programs');

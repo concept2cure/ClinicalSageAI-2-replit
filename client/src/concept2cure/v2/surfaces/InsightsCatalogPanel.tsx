@@ -89,7 +89,7 @@ function TypeCard({
             : 'Scope not declared'}
       </div>
       {type.computedScope === 'organization' && <div className="rl-card-meta">Organization-wide records</div>}
-      {type.computedScope === 'organization' && <div className="rl-card-meta">Counts are not narrowed to the selected program.</div>}
+      {type.computedScope === 'organization' && <div className="rl-card-meta">Counts are not narrowed to the selected project.</div>}
       {(type.region || type.allowedPersonas?.length) && <div className="rl-card-meta">{[type.region, type.allowedPersonas?.map(readable).join(', ')].filter(Boolean).join(' · ')}</div>}
       {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
       {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}
@@ -204,7 +204,7 @@ export function CatalogPanel({
       <PanelHead
         title="Report catalog"
         sub={
-          (programLabel ? `Applicable reports for ${programLabel}. ` : 'Organization reports can run before a product program exists. ') +
+          (programLabel ? `Applicable reports for ${programLabel}. ` : 'Organization reports can run before a project exists. ') +
           'Availability follows the supported computation, reporting scope and your organization’s plan.'
         }
       />
@@ -234,11 +234,11 @@ export function CatalogPanel({
       {byFamily.length === 0 && notComputed.length === 0 && needsContext.length === 0 && predictions.length === 0 ? (
         <EmptyState
           icon={I.grid}
-          title={searching ? `No report type matches "${q.trim()}"` : 'No report types for this program'}
+          title={searching ? `No report type matches "${q.trim()}"` : 'No report types for this project'}
           hint={
             searching
               ? 'Clear the search to see the whole catalog.'
-              : "The catalog follows the program's recorded product type and your plan. Nothing from another program is shown in its place."
+              : "The catalog follows the project's recorded product type and your plan. Nothing from another project is shown in its place."
           }
           testId="rl-catalog-empty"
         />
@@ -294,13 +294,13 @@ function DocumentTracePicker({ type, projectId, canRun, busy, onRun, unavailable
   const read = useLiveData<unknown>(url, [url, attempt], isRowList);
   const artifacts = rowsOf<TraceArtifact>(read.data).filter(a => typeof a.id === 'string' && typeof a.title === 'string');
   const picked = artifacts.find(a => a.id === selected);
-  if (!projectId) return <div className="ro-dash-note" role="note">{I.info} {type.label} requires a document. Open its program to choose the governed document.</div>;
+  if (!projectId) return <div className="ro-dash-note" role="note">{I.info} {type.label} requires a document. Open its project to choose the governed document.</div>;
   const run = () => { if (picked) onRun({ ...type, runnable: true, runScopeType: 'document', runScopeId: picked.id, computedScope: 'document', availabilityReason: null }); };
   const mayRun = Boolean(picked && canRun && !busy && type.entitled !== false && !unavailableReason);
   let content: React.ReactNode = <button type="button" className="btn ghost" onClick={() => setOpen(true)}>Choose a document</button>;
   if (open && read.loading) content = <EmptyState busy title="Loading governed documents…" />;
   else if (open && read.error) content = <ErrorState title="Couldn’t read governed documents" message={read.error} retry={() => setAttempt(n => n + 1)} />;
-  else if (open && !artifacts.length) content = <EmptyState title="No governed documents in this program" hint="Create or retain a document in the program before running its evidence trace." />;
+  else if (open && !artifacts.length) content = <EmptyState title="No governed documents in this project" hint="Create or retain a document in the project before running its evidence trace." />;
   else if (open) content = <div className="rl-filters"><div className="rl-filter rl-filter-wide"><label className="gov-label" htmlFor={id}>Document</label><select id={id} className="rl-input" value={selected} onChange={e => setSelected(e.target.value)}><option value="">Choose a governed document</option>{artifacts.map(a => <option key={a.id} value={a.id}>{a.title}{a.status ? ` · ${a.status}` : ''}</option>)}</select></div><button type="button" className="btn primary" disabled={!mayRun} title={unavailableReason} onClick={run}>Run document trace</button></div>;
   return <section className="rl-form" aria-label="Document evidence trace"><div className="rl-card-h">{type.label}</div><p className="rl-sub">Trace a retained document’s sources, versions and governed decisions. This reports its evidence record; it does not approve the document.</p>
     {content}

@@ -86,7 +86,7 @@ export type NavigationResolution =
 
 export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Global destinations (no active project required) ──
-  { id: 'projects', label: 'Projects', description: 'The projects list / workspace home — pick or create a regulatory program.', scope: 'global', group: 'global' },
+  { id: 'projects', label: 'Projects', description: 'The projects list / workspace home — pick or create a project.', scope: 'global', group: 'global' },
   { id: 'mdx', label: 'MDX (Medical Device & Diagnostics)', description: 'The MDX module home (510(k), PMA, CER, IVD surfaces).', scope: 'global', group: 'global' },
   { id: 'biopharma', label: 'Biopharma', description: 'The biopharma module (IND, pathway, lifecycle, meetings).', scope: 'global', group: 'global' },
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
@@ -99,7 +99,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
   { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
   // Reporting & analytics, a launch app since 2026-09-30 (founder decision of 2026-09-26).
-  { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the program records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
+  { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the project records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
   { id: 'compliance-reports', label: 'Audit & compliance reports', description: 'Reports an auditor or inspector asks for — user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, controlled documents — each sealed and recorded on the audit trail when run.', scope: 'global', group: 'global' },
   {
     id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
@@ -191,13 +191,13 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──
-  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — program cards and portfolio health KPIs.', scope: 'global', group: 'module' },
+  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — project cards and portfolio health KPIs.', scope: 'global', group: 'module' },
   { id: 'device-510k', label: '510(k) pathway', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
-  { id: 'device-pma', label: 'PMA pathway', description: 'The PMA pathway workspace — premarket-approval modules for the program in context.', scope: 'global', group: 'module' },
+  { id: 'device-pma', label: 'PMA pathway', description: 'The PMA pathway workspace — premarket-approval modules for the project in context.', scope: 'global', group: 'module' },
   { id: 'device-cer', label: 'Clinical Evaluation Report', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
-  { id: 'device-diagnostics', label: 'IVD pathway', description: 'The IVD pathway workspace for in-vitro diagnostic programs.', scope: 'global', group: 'module' },
-  { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device programs.', scope: 'global', group: 'module' },
-  { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device program in context.', scope: 'global', group: 'module' },
+  { id: 'device-diagnostics', label: 'IVD pathway', description: 'The IVD pathway workspace for in-vitro diagnostic projects.', scope: 'global', group: 'module' },
+  { id: 'device-clinical-studies', label: 'Device clinical studies', description: 'The clinical studies register for device projects.', scope: 'global', group: 'module' },
+  { id: 'device-software', label: 'Device software lifecycle', description: 'Software documentation completeness for the device project in context.', scope: 'global', group: 'module' },
   { id: 'device-engineering', label: 'Device engineering', description: 'The engineering and design-controls workspace.', scope: 'global', group: 'module' },
   { id: 'device-udi', label: 'UDI and labeling', description: 'The device UDI register.', scope: 'global', group: 'module' },
   { id: 'device-postmarket', label: 'Post-market vigilance', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
@@ -229,13 +229,13 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
-  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for each market of the open program: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
+  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for each market of the open project: its newest sequence’s validation errors, unacknowledged shadow-review criticals and release signature, each a named blocker until it is cleared, and a way to where each is fixed.', scope: 'project', group: 'module' },
   { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
   { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
   { id: 'labeling-pi', label: 'Prescribing information', description: 'The USPI / EU SmPC / SPL labeling workspace.', scope: 'global', group: 'module' },
   { id: 'precedent-intelligence', label: 'Precedent intelligence', description: 'The precedent search board — clearances, cycles, and risk analysis (runs only when a person searches).', scope: 'global', group: 'module' },
-  { id: 'program-journey', label: 'Program journey', description: 'The end-to-end program arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
+  { id: 'program-journey', label: 'Project journey', description: 'The end-to-end project arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },

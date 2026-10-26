@@ -1,0 +1,21 @@
+S03 proof of no reader, on 0fc2fc294 (before deletion).
+Full-path greps over the repo, excluding docs/ and the files themselves:
+  policy/reg:
+  templates/ectd/:
+    0fc2fc294:tests/regulatory/fda-module1-numbering.test.ts:16: *   templates/ectd/fda_template.xml                  the reference backbone
+    0fc2fc294:tests/regulatory/fda-module1-numbering.test.ts:149:  const xml = fs.readFileSync(path.join(ROOT, 'templates/ectd/fda_template.xml'), 'utf8');
+  templates/workflows:
+  module2_summary.docx:
+  form1571.docx.j2:
+  form1572.docx.j2:
+  form3674.docx.j2:
+  regulatory-document-requirements-matrix:
+    0fc2fc294:scripts/ci/check-image-runtime-assets.mjs:117:  // regulatory-document-requirements-matrix}.json and the directory entry: no
+  ich-guidelines-comprehensive:
+    0fc2fc294:scripts/ci/check-image-runtime-assets.mjs:116:  // server/data/{global-regulatory-authorities,ich-guidelines-comprehensive,
+  global-regulatory-authorities.json:
+    0fc2fc294:server/services/market-specs/market-submission-specs.ts:6: * facts were scattered across global-regulatory-authorities.json (authorities),
+    0fc2fc294:server/services/market-specs/market-submission-specs.ts:115:  /** Key into server/data/global-regulatory-authorities.json. */
+
+Dockerfile.optimized:217: 'Only acroforms/ — the rest of templates/ is not read by the server'.
+scripts/ci/prove-module-unused.mjs takes no file arguments (it evaluates the unreferenced-modules baseline), and its --controls run fails on an unrelated control (authAdapter.ts: a fixture key in check-password-hygiene.selftest.mjs:162 is scored as an import). Reported, not fixed here.

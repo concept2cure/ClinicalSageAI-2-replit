@@ -274,7 +274,7 @@ export function cmcQuestionFacts(read: CmcQuestionsRead): { facts: Record<string
     const u = f.unclassifiedOutstanding;
     const l = f.overdueLettersWithoutQuestions;
     sentence +=
-      ` On this program, ${plural(f.questionsOverdue, 'Module 3 agency question is', 'Module 3 agency questions are')} overdue on ` +
+      ` On this project, ${plural(f.questionsOverdue, 'Module 3 agency question is', 'Module 3 agency questions are')} overdue on ` +
       `${plural(f.lettersOverdue, 'letter', 'letters')}, and ${f.outstanding} ${f.outstanding === 1 ? 'is' : 'are'} outstanding` +
       (f.lettersWithoutQuestionsOverdue
         ? `; ${plural(f.lettersWithoutQuestionsOverdue, 'Module 3 letter is', 'Module 3 letters are')} overdue with no question to answer recorded`
@@ -335,14 +335,14 @@ function NotCountedLines({ d }: { d: Module3Payload }) {
   const lines: string[] = [];
   if (d.withheld > 0) {
     lines.push(
-      `${plural(d.withheld, 'letter on this program is', 'letters on this program are')} restricted from you; ` +
+      `${plural(d.withheld, 'letter on this project is', 'letters on this project are')} restricted from you; ` +
         'their questions are not listed or counted here.',
     );
   }
   const u = d.notCounted.unclassifiedOutstanding;
   if (u > 0) {
     lines.push(
-      `${plural(u, 'outstanding question on this program carries', 'outstanding questions on this program carry')} no CTD section, ` +
+      `${plural(u, 'outstanding question on this project carries', 'outstanding questions on this project carry')} no CTD section, ` +
         `so Module 3 cannot tell whether ${u === 1 ? 'it is' : 'they are'} its own; not counted here. ` +
         "Record each question's CTD section on its letter in Communication.",
     );
@@ -437,21 +437,21 @@ export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void })
       <div style={{ padding: 12 }}>
         <EmptyState
           icon={I.globe}
-          title="Open a program to see its agency questions"
-          hint="Agency questions are recorded on the letters a program receives, in Communication. Module 3 shows the ones about its sections here."
+          title="Open a project to see its agency questions"
+          hint="Agency questions are recorded on the letters a project receives, in Communication. Module 3 shows the ones about its sections here."
           action={openProgramAction(nav)}
         />
       </div>
     );
   } else if (m.loading) {
-    body = <div style={{ padding: 12 }}><EmptyState icon={I.globe} title="Reading this program's agency letters…" busy /></div>;
+    body = <div style={{ padding: 12 }}><EmptyState icon={I.globe} title="Reading this project's agency letters…" busy /></div>;
   } else if (m.error || !d) {
     body = (
       <div style={{ padding: 12 }}>
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
-          title="Couldn't read this program's agency questions"
+          title="Couldn't read this project's agency questions"
           hint={`${m.error ?? 'The read did not complete.'} This is a failed read, not an empty list.`}
         />
       </div>
@@ -473,7 +473,7 @@ export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void })
               icon={partialView ? I.globe : I.shieldCheck}
               title={partialView
                 ? 'No Module 3 questions are recorded on the letters read here'
-                : "No Module 3 questions are recorded on this program's letters"}
+                : "No Module 3 questions are recorded on this project's letters"}
               hint="Agency questions are recorded on the letter they came in, in Communication, with the CTD section they concern. Those about §3 are listed here."
             />
           </div>
@@ -495,7 +495,7 @@ export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void })
     <div className="pj-card" style={{ marginBottom: 16 }}>
       <div className="pj-card-h">
         <span className="t">Agency questions on Module 3</span>
-        <span className="s">read from this program's letters in Communication</span>
+        <span className="s">read from this project's letters in Communication</span>
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>{body}</div>
     </div>

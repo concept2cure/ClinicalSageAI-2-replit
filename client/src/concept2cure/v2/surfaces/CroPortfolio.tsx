@@ -447,10 +447,10 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
                 <button
                   className="btn ghost"
                   onClick={() => onNav && onNav('projects')}
-                  title="Open the organisation's programme portfolio"
+                  title="Open the organisation's project portfolio"
                   data-testid="cro-open-programs"
                 >
-                  Open programme portfolio {I.arrowRight}
+                  Open project portfolio {I.arrowRight}
                 </button>
               </div>
 

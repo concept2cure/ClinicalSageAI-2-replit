@@ -147,9 +147,18 @@ describe('existing input qualification and missing-string blockers remain visibl
   it('keeps both prior blockers when an unassessed plan also fails its own text check', async () => {
     const out = await run({ facts: [{ section_id: 'unknown_section', label: 'Unplaced', value: 'unplaced-value' }] });
     expectPlanningOnly(out);
-    expect(out.honesty.blockers).toHaveLength(3);
+    // C4c: the unplaced fact is now a blocker of its own, after the two it already had.
+    expect(out.honesty.blockers).toHaveLength(4);
     expect(out.honesty.blockers[1]).toContain('"not_assessed"');
     expect(out.honesty.blockers[2]).toContain('Verification incomplete');
+    expect(out.honesty.blockers[3]).toContain('unknown_section');
+  });
+
+  it('names a supplied fact that fits no section of the template, instead of dropping it (C4c)', async () => {
+    const out = await run({ facts: [{ section_id: '2.7.4', label: 'SAEs', value: 'SAEs-7' }], provenance: 'live' });
+    expect(out.honesty.unplacedFacts).toEqual([{ section_id: '2.7.4', label: 'SAEs', value: 'SAEs-7' }]);
+    expect(out.honesty.blockers.at(-1)).toMatch(/1 supplied fact names no section of the 2\.5 template: 2\.7\.4/);
+    expectPlanningOnly(out);
   });
 
   it('preserves normalization and ignores malformed facts without qualifying their sources', async () => {

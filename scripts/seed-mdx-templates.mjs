@@ -3,10 +3,11 @@
  * seed-mdx-templates.mjs — medtech document templates for AnA
  *
  * Backs the AnA `fetch_template_and_fill` tool for the MDX module.
- * The existing eCTD seed (scripts/seed-ectd-templates.js,
- * scripts/create-complete-ectd-templates.cjs) loads pharma IND/NDA
- * Module 3/4/5 templates; this script complements it with the medtech
- * surface area the kit covers:
+ * Pharma CTD outlines are served by the Authoring picker
+ * (server/services/authoring/builtin-authoring-templates.ts, from the ICH
+ * M2–M5 record); the laptop eCTD seeds that once sat beside this script were
+ * deleted (D2 cleanup S04, 2026-10-26). This script covers the medtech surface
+ * area the kit covers:
  *
  *   - 510(k) eSTAR sections — cover letter, IFU, SE comparison,
  *     device description, software, cybersecurity, biocompat, EMC,

@@ -516,7 +516,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
           properties: {
             section_id: {
               type: 'string',
-              description: 'Which template section the fact belongs in: its CTD code (e.g. 2.5.4, 2.7.4). The earlier ids (e.g. overview_efficacy, summary_clinical_safety) are still accepted.',
+              description: 'Which template section the fact belongs in: its CTD code (e.g. 2.5.4, 2.7.4) or a code below one (e.g. 2.7.4.2.1.2 goes in 2.7.4). The earlier ids (e.g. overview_efficacy, summary_clinical_safety) are still accepted. A fact that names no section is reported in honesty.unplacedFacts, not planned.',
             },
             label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
             value: {

@@ -55,7 +55,7 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
       return res({ success: true, data: null });
     });
     render(<CmModule3Build ask={() => {}} />);
-    expect(await screen.findByText('Module 3 is not composed here for this program')).toBeTruthy();
+    expect(await screen.findByText('Module 3 is not composed here for this project')).toBeTruthy();
     expect(screen.getByText(refusal)).toBeTruthy();
     expect(screen.queryByText('Couldn’t load the Module 3 build state')).toBeNull();
   });
@@ -70,9 +70,9 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
       return res({ success: true, data: null });
     });
     render(<CmModule3Build ask={() => {}} />);
-    expect(await screen.findByText('This program’s drug substance is not established yet')).toBeTruthy();
+    expect(await screen.findByText('This project’s drug substance is not established yet')).toBeTruthy();
     expect(screen.getByText(notYet)).toBeTruthy();
-    expect(screen.queryByText('Module 3 is not composed here for this program')).toBeNull();
+    expect(screen.queryByText('Module 3 is not composed here for this project')).toBeNull();
   });
 
   it('reports a read the boundary could not make (503) as a failure, with its retry, never as a verdict', async () => {
@@ -84,7 +84,7 @@ describe('CmModule3Build — the composition boundary’s answers', () => {
     });
     render(<CmModule3Build ask={() => {}} />);
     expect(await screen.findByText('Couldn’t load the Module 3 build state')).toBeTruthy();
-    expect(screen.queryByText('Module 3 is not composed here for this program')).toBeNull();
+    expect(screen.queryByText('Module 3 is not composed here for this project')).toBeNull();
   });
 
 });

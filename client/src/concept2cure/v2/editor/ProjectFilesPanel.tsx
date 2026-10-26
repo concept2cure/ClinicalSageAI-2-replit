@@ -340,7 +340,7 @@ function VaultSearchResults(props: RowsProps & {
           hint={searchError ?? 'Nothing was searched — this is not an empty result.'} retry={onRetry}
         />
       ) : hits.length === 0 ? (
-        <EmptyState icon={I.search} title="No matches" hint={`Nothing in ${programName ?? 'this program'}’s vault matches “${query.trim()}”.`} />
+        <EmptyState icon={I.search} title="No matches" hint={`Nothing in ${programName ?? 'this project'}’s vault matches “${query.trim()}”.`} />
       ) : (
         <>
           <div className="pf-count">{hits.length} of {hitsTotal} match{hitsTotal === 1 ? '' : 'es'}</div>
@@ -404,7 +404,7 @@ function VaultBrowseBody(props: RowsProps & {
         icon={I.vault} title="Nothing in the vault yet"
         hint={vault.pendingStore
           ? 'The document store is not provisioned in this environment.'
-          : `${programName ?? 'This program'} has no vault documents yet. Upload files in the Vault surface${editorAttached ? ', or file this document to the vault' : ''}.`}
+          : `${programName ?? 'This project'} has no vault documents yet. Upload files in the Vault surface${editorAttached ? ', or file this document to the vault' : ''}.`}
       />
     );
   }
@@ -479,8 +479,8 @@ function ProjectFilesForProgram({
     return (
       <>
         {header}
-        <EmptyState icon={I.vault} title="Not filed under a program" testId="pf-no-program"
-          hint="This document is not filed under a program, and the vault is program-scoped, so there are no project files to show. Open the document from its project, or create documents from a project so they are filed under it." />
+        <EmptyState icon={I.vault} title="Not filed under a project" testId="pf-no-program"
+          hint="This document is not filed under a project, and the vault is project-scoped, so there are no project files to show. Open the document from its project, or create documents from a project so they are filed under it." />
       </>
     );
   }

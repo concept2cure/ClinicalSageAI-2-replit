@@ -312,7 +312,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast }: S
           design is read-only — it generates nothing into the protocol’s sections.
         </div>
       )}
-      {!sd && !programId && <div className="pde-note">This protocol has no recorded program. Select or start a program-filed protocol to create a new study design here; existing tenant designs can still be bound.</div>}
+      {!sd && !programId && <div className="pde-note">This protocol has no recorded project. Select or start a project-filed protocol to create a new study design here; existing tenant designs can still be bound.</div>}
 
       {sd && !sd.resolved && (
         <div className="pde-refusal" role="alert">

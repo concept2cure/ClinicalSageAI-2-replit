@@ -83,12 +83,19 @@ function inputs(over: Partial<OrchestratorInputs> = {}): OrchestratorInputs {
   };
 }
 
-/** The record: submission 55 → project PROGRAM (application_number), organisation 1 (name). */
+/**
+ * The record: submission 55 (US market) → project PROGRAM (application_number,
+ * primary agency FDA), organisation 1 (name). Since P-44 (2026-10-22) a package
+ * reads the number of its own market, the project's home market being its
+ * primary agency's region; a project that records no agency is refused by name
+ * (package-identity.ts), so the fixture records one (2026-10-26: it did not,
+ * and every case read as a dry run).
+ */
 function record(opts: { applicationNumber: string | null; orgName: string | null; duns?: string | null; contactEmail?: string | null }) {
   hoisted.poolQuery.mockImplementation(async (sql: string) => {
-    if (/FROM submissions/i.test(sql) && /program_id/i.test(sql)) return { rows: [{ program_id: PROGRAM }], rowCount: 1 };
+    if (/FROM submissions/i.test(sql) && /program_id/i.test(sql)) return { rows: [{ program_id: PROGRAM, primary_region: 'US' }], rowCount: 1 };
     if (/JOIN ind_sponsors/i.test(sql)) return { rows: [{ organization_name: opts.orgName,
-      application_number: opts.applicationNumber, applicant_sponsor_id: '22222222-2222-4222-8222-222222222222',
+      application_number: opts.applicationNumber, primary_agency: 'FDA', applicant_sponsor_id: '22222222-2222-4222-8222-222222222222',
       sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_name: opts.orgName,
       duns: opts.duns === undefined ? '123456789' : opts.duns, contact_name: 'Regulatory Contact',
       contact_phone: '+1 212 555 0100', contact_email: opts.contactEmail === undefined ? 'ra@example.test' : opts.contactEmail,

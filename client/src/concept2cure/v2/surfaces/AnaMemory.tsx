@@ -182,7 +182,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={Ico.database || Ico.layers || I.dot}
           title="AnA hasn't formed any memories yet"
-          hint="As you work with AnA she records durable facts about your programs and how she should work with you. Nothing has been captured for your organization yet."
+          hint="As you work with AnA she records durable facts about your projects and how she should work with you. Nothing has been captured for your organization yet."
         />
       ) : (
         <>
@@ -193,11 +193,11 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
               <div className="amem-lead-eyebrow">AnA · cross-session memory</div>
               <div className="amem-lead-head">You and I have worked together across {prof?.interaction_count || 0} conversations — here's what I'm carrying into the next one.</div>
               <div className="amem-lead-sub">
-                I keep the read {tone.detail === 'exhaustive' ? 'thorough' : tone.detail || 'concise'}, tone {tone.formality || 'standard'}, and I lead with the answer because that's how you like to work. I'm holding {active.length} active {active.length === 1 ? 'memory' : 'memories'} about your programs
+                I keep the read {tone.detail === 'exhaustive' ? 'thorough' : tone.detail || 'concise'}, tone {tone.formality || 'standard'}, and I lead with the answer because that's how you like to work. I'm holding {active.length} active {active.length === 1 ? 'memory' : 'memories'} about your projects
                 {unverified > 0 ? <>, {unverified} still waiting for your confirmation</> : null}. Correct anything that's off and I'll update.
               </div>
               <div className="amem-lead-actions">
-                <button className="amem-go" onClick={() => ask('What do you remember about my active programs, and what should I do next?')}>{I.sparkles} Ask what AnA remembers</button>
+                <button className="amem-go" onClick={() => ask('What do you remember about my active projects, and what should I do next?')}>{I.sparkles} Ask what AnA remembers</button>
               </div>
             </div>
           </div>
@@ -241,9 +241,9 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
 
             {/* Right — memory atoms (verifiable) */}
             <div className="amem-col">
-              <div className="amem-sec">{Ico.database || Ico.layers || I.dot} What I remember about your programs <span className="amem-sec-x">-- verify what's right</span></div>
+              <div className="amem-sec">{Ico.database || Ico.layers || I.dot} What I remember about your projects <span className="amem-sec-x">-- verify what's right</span></div>
               {active.length === 0 ? (
-                <div className="amem-empty">No active memories yet — AnA records durable facts about your programs here as you work.</div>
+                <div className="amem-empty">No active memories yet — AnA records durable facts about your projects here as you work.</div>
               ) : (
                 <>
                   <div className="amem-filters">

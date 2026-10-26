@@ -1,0 +1,44 @@
+Affected set: every client test that imports a file the sweep changed, or names a string it changed: 406 files, 3,918 tests,
+run in 30-file batches. 3,732 passed; 186 failed, in 35 files. Those 35 files were then run twice, at 928b70996aed90dc6865e0ab8c6d77bb00050825 and with the sweep:
+
+at 928b70996aed90dc6865e0ab8c6d77bb00050825:      tests 319  failed 186  passed 133
+with sweep: tests 319  failed 186  passed 133
+failing only with the sweep: 0
+failing only at 928b70996aed90dc6865e0ab8c6d77bb00050825: 0
+
+The 35 files, each failing identically at 928b70996aed90dc6865e0ab8c6d77bb00050825:
+  client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx
+  client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx
+  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+  client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx
+  client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx
+  client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx
+  client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  client/src/concept2cure/v2/__tests__/anaSkillsInUse.test.tsx
+  client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx
+  client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx
+  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx
+  client/src/concept2cure/v2/__tests__/draftClaimsLine.test.tsx
+  client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx
+  client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+  client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+  client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx
+  client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+  client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+  client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+  client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx
+  client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx
+  client/src/concept2cure/v2/editor/__tests__/authoringConversationScope.test.tsx
+  client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx
+  client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx
+  client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx

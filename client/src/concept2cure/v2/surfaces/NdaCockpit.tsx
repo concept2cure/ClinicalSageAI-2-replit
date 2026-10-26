@@ -399,7 +399,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     if (filingState === 'unreadable') {
       return {
         summary:
-          'The NDA cockpit reads could not complete, so this screen shows no readiness figure and no Refuse-to-File position — that is a failed read, not a clean program.',
+          'The NDA cockpit reads could not complete, so this screen shows no readiness figure and no Refuse-to-File position — that is a failed read, not a clean project.',
         availableActions: ['Retry the CTD module and RTF reads'],
       };
     }
@@ -492,7 +492,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     unreadable: {
       tone: 'urgent',
       headline: <>Filing readiness could not be read.</>,
-      body: <>This is a failed read, not a clean program. Nothing here should be taken as an assessment of Refuse-to-File risk. Sign in to your tenant and retry.</>,
+      body: <>This is a failed read, not a clean project. Nothing here should be taken as an assessment of Refuse-to-File risk. Sign in to your tenant and retry.</>,
     },
     'not-assessed': {
       tone: 'calm',
@@ -575,7 +575,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
             : filingState === 'not-assessed'
               ? 'Assess this NDA/BLA application for Refuse-to-File triggers against 21 CFR 314.101, and list what evidence is missing before that assessment can be completed'
-              : 'Draft the final readiness plan for the open administrative items on this NDA program'),
+              : 'Draft the final readiness plan for the open administrative items on this NDA project'),
         alt: { label: 'See Refuse-to-File risks', onClick: () => setTab('rtf') },
       }}
       secondary="Or work the readiness detail below."
@@ -592,7 +592,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="reg-title">NDA filing cockpit</h1>
           <p className="reg-intro">{progName ? <>{progName} {I.dot} </> : null}The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
         </div>
-        {ask && <button className="reg-cta" onClick={() => ask('Assess filing readiness and the top Refuse-to-File risks for this NDA program')}>{I.sparkles} Assess with AnA</button>}
+        {ask && <button className="reg-cta" onClick={() => ask('Assess filing readiness and the top Refuse-to-File risks for this NDA project')}>{I.sparkles} Assess with AnA</button>}
       </div>
 
       {lead}
@@ -760,7 +760,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             </span>
             <span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               Analytical similarity · comparability · immunogenicity · filing risk
-              {ask && <button className="nda-open" onClick={() => ask('Run the BLA filing-risk (RTF/CRL) assessment for the biologics program and summarize the top triggers')}>{I.sparkles} Assess filing risk</button>}
+              {ask && <button className="nda-open" onClick={() => ask('Run the BLA filing-risk (RTF/CRL) assessment for the biologics project and summarize the top triggers')}>{I.sparkles} Assess filing risk</button>}
             </span>
           </div>
           {bla.length > 0 ? (

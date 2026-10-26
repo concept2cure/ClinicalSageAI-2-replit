@@ -715,7 +715,7 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
         : m.streaming
           ? unstoredDraftReason(false)
           : unstoredDraftReason(true)
-            + ' AnA files a draft against the open program, and does not re-file one that is '
+            + ' AnA files a draft against the open project, and does not re-file one that is '
             + 'identical to the version already stored.',
     });
   }
@@ -872,7 +872,7 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
   const routeBlockedBecause = !art.artifactId
     ? unstoredDraftReason(saveSettled)
     : projectId == null
-      ? 'Open a program first — the review workflow is scoped to one.'
+      ? 'Open a project first — the review workflow is scoped to one.'
       : null;
 
   return (

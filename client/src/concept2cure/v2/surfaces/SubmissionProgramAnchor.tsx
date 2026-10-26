@@ -208,7 +208,7 @@ export function SubmissionProgramAnchor({
       setOpen(false);
       onAnchored({
         tone: 'ok',
-        text: `${submission.title} is now anchored to ${chosen?.code ? `Program ${chosen.code}` : chosen?.title ?? 'the chosen project'} — server-confirmed. That project’s documents can now be placed in it.`,
+        text: `${submission.title} is now anchored to ${chosen?.code ? `Project ${chosen.code}` : chosen?.title ?? 'the chosen project'} — server-confirmed. That project’s documents can now be placed in it.`,
       });
       return;
     }

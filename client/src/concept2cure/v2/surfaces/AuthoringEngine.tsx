@@ -151,7 +151,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
   const anaContext = useMemo(() => {
     let summary =
       'AnA Authoring Engine — this page describes what the engine is built to do for each document type; ' +
-      `it reads no programs and reports no program status. The "${tabLabel}" tab is open.`;
+      `it reads no projects and reports no project status. The "${tabLabel}" tab is open.`;
     if (tab === 'systems') {
       summary += ` The ${sys.t} system (CTD ${sys.loc}) is selected.`;
     }
@@ -237,7 +237,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
           than the support conversation that follows finding out. */}
       <div className="scaf-note" style={{ marginTop: 12, marginBottom: 4, maxWidth: 820 }}>
         This page describes what the authoring engine is built to do for each document type.
-        It does not read your programs or report their status. Open the document editor to
+        It does not read your projects or report their status. Open the document editor to
         work on a real document.
       </div>
 

@@ -54,7 +54,7 @@ describe('deferred assessment UI completion', () => {
       saved.status = 'signed'; return ok({ id: ID, status: 'signed', signatureId: 'real-signature', signedAt: '2026-10-14T03:00:00Z', sha256Chain: 'a'.repeat(64) });
     });
     render(<BlaAssessmentWorkbench />);
-    await screen.findByText('No assessments are saved for this program.');
+    await screen.findByText('No assessments are saved for this project.');
     fireEvent.click(screen.getByRole('button', { name: 'Assess Q5E comparability' }));
     const form = fill({ ...common, 'Manufacturing change': 'Changed purification step', 'Quality attribute': 'Potency', 'Attribute criticality': 'high', 'Pre-change lot measurements': '95,96,97', 'Post-change lot measurements': '96,97,98' });
     fireEvent.click(form.getByRole('button', { name: 'Compute and save draft' }));

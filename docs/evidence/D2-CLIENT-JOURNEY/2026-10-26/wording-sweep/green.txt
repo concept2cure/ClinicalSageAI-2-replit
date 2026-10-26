@@ -1,0 +1,11 @@
+The same 54 test files against the working tree with the sweep (the new wording).
+
+tests 577  failed 6  passed 571
+Fail only with the sweep: 0
+
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx :: Vault — AnA operates the real surface registers on mount, and vault.search drives the SAME search state the surface renders
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx :: ConversationThread artifact panel — the controls complete their chain .docx POSTs the draft to the export route and hands the file to downloadBlob
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx :: ConversationThread artifact panel — the controls complete their chain Route to review PUTs the governed transition and adopts the new status
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx :: ConversationThread artifact panel — the controls complete their chain cannot route a draft the server never persisted, and gives the reason
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx :: ConversationThread artifact panel — the controls complete their chain cannot route when no program is open — the workflow is scoped to one
+  still failing, as at 928b70996aed90dc6865e0ab8c6d77bb00050825: client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx :: ConversationThread artifact panel — the controls complete their chain leaves the status alone when the server refuses the transition, and says so

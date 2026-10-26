@@ -1,0 +1,6 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > openProgramAction navigates when it holds nav, and reaches the shell when it does not
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'projects' ]
+Received:
++   "mission-control",
+      Tests  1 failed | 6 passed (7)

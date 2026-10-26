@@ -356,7 +356,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
           <div className="pj-card-b">
             <EmptyState
               icon={I.layers}
-              title="Open a program to build its Module 3"
+              title="Open a project to build its Module 3"
               hint="The §3.2 build state, its contradictions and its export readiness are all per-project."
               action={openProgramAction(nav)}
               regulation="Serves the CTD Module 3 record (ICH M4Q)"
@@ -398,8 +398,8 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
           icon={I.layers}
           title={
             build.code === 'CMC_MODALITY_NOT_ESTABLISHED'
-              ? 'This program’s drug substance is not established yet'
-              : 'Module 3 is not composed here for this program'
+              ? 'This project’s drug substance is not established yet'
+              : 'Module 3 is not composed here for this project'
           }
           hint={build.error}
           regulation="Serves the CTD Module 3 record (ICH M4Q)"
@@ -423,7 +423,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                 <div className="pj-con-t">Governed artifact registry not linked</div>
                 <div className="pj-con-d">
                   {build.data.artifactRegistry.detail ||
-                    'The artifact registry could not be addressed for this program, so no governed artifacts are shown — not because there are none.'}
+                    'The artifact registry could not be addressed for this project, so no governed artifacts are shown — not because there are none.'}
                 </div>
               </div>
             </div>
@@ -539,7 +539,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                       <EmptyState
                         icon={I.shieldAlert}
                         title="Not swept yet"
-                        hint="No contradiction sweep has run for this program, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it."
+                        hint="No contradiction sweep has run for this project, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it."
                       />
                     ) : (
                       <EmptyState

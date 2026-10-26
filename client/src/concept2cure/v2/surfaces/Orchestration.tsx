@@ -360,7 +360,7 @@ function NewRunDialog({
       >
         <div className="orch-newrun-h">Start a workflow run</div>
         <p className="orch-newrun-sub">
-          Runs against {progLabel || 'the open program'}. Every step, object touched and output
+          Runs against {progLabel || 'the open project'}. Every step, object touched and output
           is recorded for Part 11 traceability.
         </p>
         <div className="orch-newrun-list">
@@ -736,12 +736,12 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const anaContext = useMemo(() => {
     const parts: string[] = [];
     if (pid == null) {
-      parts.push('Orchestration — no lead program identified, so no runs, readiness or templates are being read.');
+      parts.push('Orchestration — no lead project identified, so no runs, readiness or templates are being read.');
     } else {
       parts.push(`Orchestration for ${progLabel}, ${view} view.`);
       if (runsState.loading) parts.push('Workflow runs are still loading.');
       else if (runsState.error) parts.push('The execution engine did not respond — a failed read, not a project with no runs.');
-      else if (runs.length === 0) parts.push('No workflow runs yet for this program.');
+      else if (runs.length === 0) parts.push('No workflow runs yet for this project.');
       else parts.push(`${activeRunCount} active run(s) of ${runs.length} total.`);
     }
     // The gates read is not program-scoped, so it is reported even with no program.
@@ -760,7 +760,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     if (pid != null) {
       if (rdState.loading) parts.push('Readiness is being evaluated.');
       else if (rdState.error) parts.push('The readiness engine did not respond — the score is unknown, not zero.');
-      else if (!r) parts.push('No readiness assessment yet — the engine has nothing to score for this program.');
+      else if (!r) parts.push('No readiness assessment yet — the engine has nothing to score for this project.');
       else
         parts.push(
           `Readiness ${r.overallScore}%, ${r.blockerCount} critical blocker(s), ` +
@@ -964,7 +964,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
           <div className="ph-sub">The persisted execution engine — <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
+          <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this project'))}>{I.sparkles} Ask AnA</button>
           {/* ── The primary CTA of the whole surface was hardcoded disabled ──
               `disabled` with no onClick at all, on the screen whose entire
               purpose is workflow runs. Its title said starting one "needs a
@@ -979,7 +979,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             disabled={pid == null || !tplSettled || templates.length === 0 || Boolean(busyRun)}
             title={
               pid == null
-                ? 'Open a program to start a workflow run against it.'
+                ? 'No lead project is identified for this organization yet, so there is nothing to start a workflow run against.'
                 : tplState.error
                   // An unreachable registry is NOT an empty registry. Saying
                   // "none are registered" here would render a failed read as a
@@ -1047,8 +1047,8 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             icon={I.workflow}
             title="No workflow runs yet"
             hint={pid == null
-              ? 'No lead program is identified for this organization yet. Once a program is in scope, its executed workflow runs appear here.'
-              : 'Runs appear here once a workflow is executed for this program (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.'}
+              ? 'No lead project is identified for this organization yet. Once a project is in scope, its executed workflow runs appear here.'
+              : 'Runs appear here once a workflow is executed for this project (readiness review, draft-validate-route, blocker scan). Ask AnA to run a pre-dispatch readiness evaluation to create the first one.'}
           />
         ) : (
         <div className="orch-split">
@@ -1281,7 +1281,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the readiness evaluation"
-            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — retry, or check the service is reachable."
+            hint="The readiness engine didn't respond. The score is computed on demand from this project's governed objects — retry, or check the service is reachable."
             retry={() => setRdEpoch((n) => n + 1)}
             retryLabel="Retry"
             busy={rdState.loading}
@@ -1295,7 +1295,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't read the readiness evaluation"
-            hint="The readiness engine answered, but its response could not be read as an evaluation. No readiness result is being reported for this program either way — re-evaluate, and tell your administrator if it repeats."
+            hint="The readiness engine answered, but its response could not be read as an evaluation. No readiness result is being reported for this project either way — re-evaluate, and tell your administrator if it repeats."
             retry={() => setRdEpoch((n) => n + 1)}
             retryLabel="Re-evaluate"
             busy={rdState.loading}
@@ -1305,8 +1305,8 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             icon={I.fileText}
             title="No readiness evaluation yet"
             hint={pid == null
-              ? 'No lead program is identified for this organization yet. Once a program is in scope, its readiness is computed here.'
-              : 'The readiness engine has nothing to score for this program yet. Add governed documents / CMC objects, then re-evaluate.'}
+              ? 'No lead project is identified for this organization yet. Once a project is in scope, its readiness is computed here.'
+              : 'The readiness engine has nothing to score for this project yet. Add governed documents / CMC objects, then re-evaluate.'}
           />
         ) : (
         <div>
@@ -1347,14 +1347,14 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             'readinessRules · required_item / quality_gate',
             r.findings.rules,
             r.documentsInventoried > 0,
-            'This evaluation inventoried no documents for the program, so the readiness rules had nothing to examine. That is not a clean rules pass.',
+            'This evaluation inventoried no documents for the project, so the readiness rules had nothing to examine. That is not a clean rules pass.',
           )}
           {findGroup(
             'Validation findings',
             'eCTD · CDISC · hyperlink integrity',
             r.findings.validation,
             r.documentsValidated > 0,
-            'No document in this program carries a recorded validation result, so no validation finding could be produced. That is not a clean validation pass.',
+            'No document in this project carries a recorded validation result, so no validation finding could be produced. That is not a clean validation pass.',
           )}
           <div style={{ marginBottom: 18 }}>
             <div className="orch-sec-l">AI-inferred findings <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} cross-reference · claim-evidence</span></div>

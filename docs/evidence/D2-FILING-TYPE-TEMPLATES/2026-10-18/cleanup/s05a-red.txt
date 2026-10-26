@@ -1,0 +1,7 @@
+S05a. The carried-over pin (tests/regulatory/record-cites-q2r2.test.ts) is green on HEAD, so it is shown failing on a planted copy: one 'Q2(R2)' in authoring-guidance.ts changed to 'Q2(R1)', then restored:
+ × tests/regulatory/record-cites-q2r2.test.ts > the record cites ICH Q2(R2) > no brief cites Q2(R1) 19ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ '3.2.P.5.2' ] to deeply equal []
+      Tests  1 failed | 4 passed (5)
+
+Applier check, on aaf83b232: 100–103 do not match install-fresh's *_gcc_* filter (scripts/db/install-fresh.mjs:1483); _legacy/ is a subdirectory that readdir does not enter; none is in C2C_MIGRATION_FILES (scripts/db/migration-set.mjs). scripts/db_migrate.sh globs 1[0-9][0-9]_*.sql but nothing runs it (.github/workflows/neon-preview-db.yml:92 says so).
