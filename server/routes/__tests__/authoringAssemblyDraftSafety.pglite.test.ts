@@ -340,6 +340,55 @@ describe('the existing section draft uses its admitted saved template reference'
 });
 
 describe('recorded section reference refusals precede source selection', () => {
+  it.each([undefined, 'narrative'])('keeps historical recorded E3 patient CRFs manual despite drafting mode %s', async draftingMode => {
+    const id = await section(); const metadata = savedMetadata(templateSource());
+    await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance,
+      source_reference: 'server/services/ind/ctd/csr-e3-guidance.ts#16.3.1',
+      ...(draftingMode ? { drafting_mode: draftingMode } : {}) } });
+    await expectDraftRefusal(id, 'TEMPLATE_NOT_DRAFTABLE');
+  }, T);
+
+  it('keeps historical recorded E3 synopsis drafting available without a new mode field', async () => {
+    const id = await section(); const metadata = savedMetadata(templateSource());
+    await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance,
+      source_reference: 'server/services/ind/ctd/csr-e3-guidance.ts#2' } });
+    const response = await generate(id);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(h.prompts[0]).toContain('server/services/ind/ctd/csr-e3-guidance.ts#2');
+  }, T);
+
+  it.each(['other/csr-e3-guidance.ts#16.3.1', 'server/services/ind/ctd/csr-e3-guidance.ts#17'])(
+    'does not infer a historical E3 policy from an unrelated or unknown reference %s', async reference => {
+      const id = await section(); const metadata = savedMetadata(templateSource());
+      await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance, source_reference: reference } });
+      const response = await generate(id);
+      expect(response.status, JSON.stringify(response.body)).toBe(200);
+    }, T);
+});
+
+describe('explicit saved section drafting modes precede source selection', () => {
+  it('refuses a saved manual section policy even when the parent is narrative', async () => {
+    const id = await section(); const metadata = savedMetadata(templateSource());
+    await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance, drafting_mode: 'manual' } });
+    await expectDraftRefusal(id, 'TEMPLATE_NOT_DRAFTABLE');
+  }, T);
+
+  it('refuses an unknown present saved drafting mode instead of losing its restriction', async () => {
+    const id = await section(); const metadata = savedMetadata(templateSource());
+    await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance, drafting_mode: 'anything' } });
+    const guide = await author(request(app).get(`/api/authoring/guidance/${id}`));
+    expect(guide.status, JSON.stringify(guide.body)).toBe(503);
+    await expectDraftRefusal(id, 'TEMPLATE_REFERENCE_UNAVAILABLE', 503);
+  }, T);
+
+  it('retains an explicit narrative section mode in the exact prompt without upgrading it to evidence', async () => {
+    const id = await section(); const metadata = savedMetadata(templateSource());
+    await recordGuidance(id, { ...metadata, templateGuidance: { ...metadata.templateGuidance, drafting_mode: 'narrative' } });
+    const response = await generate(id);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(h.prompts[0]).toMatch(/"drafting_mode"\s*:\s*"narrative"/);
+  }, T);
+
   it.each([{ aiDraftable: false }, { kind: 'preparation' }, { authoringMode: 'manual' }] as const)(
     'honors a recorded automatic-drafting limit %j before selected-source reads', async limit => {
       const id = await section(); const source = templateSource(limit);

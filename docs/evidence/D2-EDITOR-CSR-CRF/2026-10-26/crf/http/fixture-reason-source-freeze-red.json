@@ -1,0 +1,8 @@
+{
+  "files": {
+    "shared/authoring/source-import.ts": "2049a716104a9f59cb5dc49934bfc8a842b36c313587ac36c69c350e2eafb854",
+    "server/services/authoring/authoring-source-import.ts": "307a322e9f7fcca238c9f2fef9a2f6ec9ecadb5be305f34d736cd692fb1efeb4",
+    "server/services/authoring/workflow-source-import.ts": "e43333f47772502133b1b58119788ab825c87ec502fa263de0df97659a4cd248",
+    "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts": "406a6b063f4a017c416da429198e77ea0eca237a663a068d73fba9322810691f"
+  }
+}

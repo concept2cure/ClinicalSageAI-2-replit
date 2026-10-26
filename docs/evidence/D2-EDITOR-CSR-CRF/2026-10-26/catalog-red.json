@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-10-26T20:01:35.439394+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "server/services/authoring/__tests__/crf-authoring-templates.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.056,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "catalog-red-freeze.json",
+  "sourcesBefore": {
+    "server/services/authoring/__tests__/crf-authoring-templates.test.ts": "576eb7ecce97f6f9d863a04f837be23bd60d21a838b84b1d6070d0ebf2eb2094",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "3c786da1ae4d1c2be040880ca85ad2a4dab44dd5970118196caa42a2ba6a9579",
+    "server/services/regulatory/templateCatalog.ts": "679c00ebc2582d29adaf570a100c8d528cfd195cc765bd1f36437582f3e2f33a"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/__tests__/crf-authoring-templates.test.ts": "576eb7ecce97f6f9d863a04f837be23bd60d21a838b84b1d6070d0ebf2eb2094",
+    "server/services/authoring/builtin-authoring-templates.ts": "e183522698cc6199e2a10d0e4cbc349f58594465d920fce129d24e7207157e82",
+    "server/services/market-specs/document-template-library.ts": "3c786da1ae4d1c2be040880ca85ad2a4dab44dd5970118196caa42a2ba6a9579",
+    "server/services/regulatory/templateCatalog.ts": "679c00ebc2582d29adaf570a100c8d528cfd195cc765bd1f36437582f3e2f33a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "catalog-red.log.gz",
+  "rawGzipSha256": "32feea383c358354fb1fa8b3bc08ef1d791a2921d7d7897195205e37b7fe3957",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  3 failed (3)",
+    "Duration  1.35s (transform 785ms, setup 71ms, import 870ms, tests 164ms, environment 0ms)"
+  ]
+}

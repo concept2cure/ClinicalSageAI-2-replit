@@ -1,0 +1,23 @@
+{
+  "startedUtc": "2026-10-26T20:13:52.788290+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/market-specs/__tests__/document-template-library.test.ts",
+    "--reporter=verbose"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "elapsedSeconds": 1.561,
+  "sourceDrift": [],
+  "testSummary": [
+    "Test Files  1 passed (1)",
+    "Tests  41 passed (41)",
+    "Duration  1.15s (transform 708ms, setup 68ms, import 784ms, tests 69ms, environment 0ms)"
+  ],
+  "rawOutput": "green-library.log.gz",
+  "rawGzipSha256": "522131695e5f201147899b517adb35eea5e63ad56736be25e679c1852a2196ee"
+}

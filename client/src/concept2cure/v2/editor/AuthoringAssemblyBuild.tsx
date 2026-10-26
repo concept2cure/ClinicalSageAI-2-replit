@@ -38,7 +38,7 @@ function AssemblyCandidates({ controller }: { controller: AssemblyBuildControlle
       {slot.review.draft && slot.status !== 'accepted' && <button type="button" className="btn ghost authoring-oversight-action" disabled={slot.sourceSelectionKey !== selected} onClick={() => controller.review(slot.section.id)}>Review {slot.section.code}</button>}
     </li>)}</ul>
     {controller.phase === 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" onClick={controller.stop}>Stop preparation</button>}
-    {remaining && controller.phase !== 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" disabled={controller.busy || !!controller.disabledReason || controller.phase === 'unknown'} onClick={() => void controller.retryDrafts()}>{controller.targetCode ? 'Retry selected candidate' : 'Retry remaining candidates'}</button>}
+    {remaining && controller.phase !== 'drafting' && <button type="button" className="btn ghost authoring-oversight-action" disabled={controller.busy || !!controller.disabledReason || controller.phase === 'unknown'} onClick={() => void controller.retryDrafts()}>{controller.targetCode ? 'Prepare selected candidate' : 'Prepare next candidates (up to 20)'}</button>}
   </div>;
 }
 function assemblyCatalog(controller: AssemblyBuildController): TemplateCatalogState {

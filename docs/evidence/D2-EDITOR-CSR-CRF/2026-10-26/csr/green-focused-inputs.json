@@ -1,0 +1,155 @@
+{
+  "capturedUtc": "2026-10-26T20:05:12.906110+00:00",
+  "inputs": [
+    {
+      "path": "server/services/market-specs/document-template-library.ts",
+      "sha256": "f8948dba5106769fcadc1cd4751fcac4de17a8ee17b88bb5c361a4a958fff9c5",
+      "snapshot": "green-focused-00-document-template-library.ts.gz"
+    },
+    {
+      "path": "server/services/regulatory/templateCatalog.ts",
+      "sha256": "4470597d0ee85c1969b1d3bf52c7637fe2176ca6971207ecd9f946c26858ef1e",
+      "snapshot": "green-focused-01-templateCatalog.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/builtin-authoring-templates.ts",
+      "sha256": "2e351740ce7bbb2cd6c6e43d7848489eb9f6f65ceb96d998a5d7313a9f13a576",
+      "snapshot": "green-focused-02-builtin-authoring-templates.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/ind-template-types.ts",
+      "sha256": "f4f94eaeed85b3abff3d7100dd81689d485514dfccc275aee31fdd79a342a083",
+      "snapshot": "green-focused-03-ind-template-types.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/ind-template-outlines-m4-m5.ts",
+      "sha256": "94dc16f90407d755ca434ef7c1c3210d68932e50ce22c68f88f0127c499a6718",
+      "snapshot": "green-focused-04-ind-template-outlines-m4-m5.ts.gz"
+    },
+    {
+      "path": "server/services/ind/ctd/csr-e3-guidance.ts",
+      "sha256": "1d1752ddac6b10265acec215d372e604ea18611fb7cded1eb345e6f6f1cae571",
+      "snapshot": "green-focused-05-csr-e3-guidance.ts.gz"
+    },
+    {
+      "path": "server/services/ana/saved-template-review.ts",
+      "sha256": "32dc56a3068cd61c724fee898f16ce37374b486efd3875836680d94efe7367dd",
+      "snapshot": "green-focused-06-saved-template-review.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "sha256": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+      "snapshot": "green-focused-07-authoring-template-guidance.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "f1d41523c57aa670efef1689e11872f626da1f00a0be396f9e41369d45c2dd45",
+      "snapshot": "green-focused-08-authoring-draft-template.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-sections.ts",
+      "sha256": "38077467589bc226d55bd9c515ca3d6af2f2cced2d3144478a8ffaa0e3b31b7c",
+      "snapshot": "green-focused-09-authoring-template-sections.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-plan.ts",
+      "sha256": "a46bcadd905e313ba790254772f0d8b12c3678dba0b79d9bbee5330e7de4d0bf",
+      "snapshot": "green-focused-10-authoring-assembly-plan.ts.gz"
+    },
+    {
+      "path": "server/services/authoring/authoring-assembly-source.ts",
+      "sha256": "d2865ef5aae69886c35c8b982f96fefefb0300add6fc81275791663e2a174bad",
+      "snapshot": "green-focused-11-authoring-assembly-source.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts",
+      "sha256": "47d75066832a577eed5b428f3a0be29ead3003310477ea23876b4fdffc31a4a4",
+      "snapshot": "green-focused-12-assemblyDraftQueue.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx",
+      "sha256": "df8c4a00fdbae67e5b6587e5c5f59f02eefbeee92074ae0c96b8400c3f8b2cb4",
+      "snapshot": "green-focused-13-AuthoringAssemblyBuild.tsx.gz"
+    },
+    {
+      "path": "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+      "sha256": "98d83db3aa560e61088409ddc6b3230777061a2af7d17ec76c4748631b94c9d7",
+      "snapshot": "green-focused-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+      "sha256": "11530ea774ab278f5c788a82925fc6aa88bf4df0de57f093f71a31478b8fcc53",
+      "snapshot": "green-focused-15-authoringAssemblyDraftSafety.pglite.test.ts.gz"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+      "sha256": "8aa98d5291e625baa4d1d1e50d7635c7b4a296dd9f0c370c1a90803e0ca965a1",
+      "snapshot": "green-focused-16-authoringAssemblyBuild.test.tsx.gz"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-template-preparation.test.ts",
+      "sha256": "1d51c5335bcb2b0f18e300c1f1c435594d843f7f5a9b29a3bbd7c4b97990c85e",
+      "snapshot": "green-focused-17-document-template-preparation.test.ts.gz"
+    },
+    {
+      "path": "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "sha256": "8cd50512ff2a9ca9de8cfc8949059ceb41c48f31ff53067cad717d65d302fa28",
+      "snapshot": "green-focused-18-document-template-library.test.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_template-editor-fixture.ts",
+      "sha256": "9040f01e26558cc1e42ddaee338901c0a2ff106403e5ef31aa3c502b32395f8e",
+      "snapshot": "green-focused-19-_template-editor-fixture.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-canvas-fixture.ts",
+      "sha256": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+      "snapshot": "green-focused-20-_authoring-canvas-fixture.ts.gz"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-record-fixture.ts",
+      "sha256": "328fd5edc28a4f7d18baeeae35ca92efa333c03fb6680dde380abac91e038006",
+      "snapshot": "green-focused-21-_authoring-record-fixture.ts.gz"
+    },
+    {
+      "path": "shared/authoring/assembly.ts",
+      "sha256": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+      "snapshot": "green-focused-22-assembly.ts.gz"
+    },
+    {
+      "path": "shared/authoring/recorded-template-source.ts",
+      "sha256": "56c8e19a2ca0740232df86ee4e80f5ed89025bb7d4840040fa95440c4a985bb6",
+      "snapshot": "green-focused-23-recorded-template-source.ts.gz"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "snapshot": "green-focused-24-vitest.config.ts.gz"
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "snapshot": "green-focused-25-setup.ts.gz"
+    },
+    {
+      "path": "eslint.config.js",
+      "sha256": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+      "snapshot": "green-focused-26-eslint.config.js.gz"
+    },
+    {
+      "path": "package.json",
+      "sha256": "098c6418061f017dce05c2cb9074ffab9290ba515d0bc527c074b36b532d1a3f",
+      "snapshot": "green-focused-27-package.json.gz"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+      "snapshot": "green-focused-28-package-lock.json.gz"
+    },
+    {
+      "path": "server/services/market-specs/crf-authoring-templates.ts",
+      "sha256": "9be8ee27c41bd3634f04bd7cba9340c4ce6e260bbb9a985ca113f792b3b1f0d3",
+      "snapshot": "green-focused-29-crf-authoring-templates.ts.gz"
+    }
+  ]
+}

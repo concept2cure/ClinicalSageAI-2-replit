@@ -248,6 +248,7 @@ function resolvedBuiltin(builtin: BuiltinAuthoringTemplate, sections: TemplateSe
       'This preparation template or unresolved regional scope does not permit automatic AnA drafting. Retain its originals and complete it manually.',
     limitations: [...builtin.limitations],
     metadataFor: code => ({ template_id: builtin.id, seeded: true, ...builtinTemplateSectionMetadata(builtin, source, code) }),
+    draftingModeFor: code => builtin.sections.find(row => row.code === code)?.guidance.drafting_mode,
     guidanceFor: code => builtin.sections.find(row => row.code === code)?.guidance.guidance_text };
 }
 

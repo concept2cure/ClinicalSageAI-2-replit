@@ -1,0 +1,44 @@
+{
+  "startedAt": "2026-10-26T20:03:53.304951+00:00",
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx",
+    "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 9.443,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ui-green-freeze.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx": "62f627be14175f5c84cfd9dc90a10827ac94a78261baefc3dc099f4216da79a3",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx": "e27026de887813708ac153f0b04d7b6c16d2018679ab540e4dfb100c97f1d67f",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx": "bb3d8e9ec1f94b40fe3a9988067573f4eeb80dee1a476bdc42c9bf17e4815d21",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "3af47c80aec5e8b3d59e3afdb17e4c07d9e2c5cc302f888c75e6b7386e902b88",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "37f286fe3b5315470f43a046c2d58b47cdf8e330ef4a36ee3c1d6a45b5c16808",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "5aecf4515fbcba6a7832b3b5520c0978f9938e3fbe640cd3f3282477dc0b4783",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "e66fc0b2228c744b39b2d01823981d54a464c83ebd6b1fedfa029999c6a7ed7b"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/__tests__/protocolCrfEditorHandoff.test.tsx": "62f627be14175f5c84cfd9dc90a10827ac94a78261baefc3dc099f4216da79a3",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevProjections.tsx": "e27026de887813708ac153f0b04d7b6c16d2018679ab540e4dfb100c97f1d67f",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx": "bb3d8e9ec1f94b40fe3a9988067573f4eeb80dee1a476bdc42c9bf17e4815d21",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "3af47c80aec5e8b3d59e3afdb17e4c07d9e2c5cc302f888c75e6b7386e902b88",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "37f286fe3b5315470f43a046c2d58b47cdf8e330ef4a36ee3c1d6a45b5c16808",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "5aecf4515fbcba6a7832b3b5520c0978f9938e3fbe640cd3f3282477dc0b4783",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "e66fc0b2228c744b39b2d01823981d54a464c83ebd6b1fedfa029999c6a7ed7b"
+  },
+  "sourceDrift": [],
+  "rawOutput": "ui-green.log.gz",
+  "rawGzipSha256": "0d2300aafa643e4e3ffb3be3382ca722be2b8dc6caed3ccbcb82c1d698178d6d",
+  "testSummary": [
+    "Test Files  1 failed | 3 passed (4)",
+    "Tests  1 failed | 48 passed (49)",
+    "Duration  8.68s (transform 1.55s, setup 275ms, import 2.26s, tests 4.41s, environment 1.21s)"
+  ]
+}

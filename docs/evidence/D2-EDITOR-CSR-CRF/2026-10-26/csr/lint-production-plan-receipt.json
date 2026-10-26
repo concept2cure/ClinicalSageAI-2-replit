@@ -1,0 +1,17 @@
+{
+  "startedUtc": "2026-10-26T20:11:57.997568+00:00",
+  "argv": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "--format=json",
+    "server/services/authoring/authoring-assembly-plan.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "exitCode": 0,
+  "elapsedSeconds": 0.849,
+  "sourceDrift": [],
+  "testSummary": [],
+  "rawOutput": "lint-production-plan.log.gz",
+  "rawGzipSha256": "3918335f19b591c063a55cb5e6dd7b716b6209ee88b5e52ce623c05698ec06cf"
+}

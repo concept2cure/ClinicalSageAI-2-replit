@@ -1,0 +1,1900 @@
+{
+  "capturedUtc": "2026-10-26T20:16:03.205425+00:00",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "e49078a26d14c8ac81127af8a3263805ba26bdd26001947f55e88254ccf26937",
+      "bytes": 5904
+    },
+    {
+      "path": "baseline-00-document-template-library.ts.gz",
+      "sha256": "408b6141c4c412fc016a541040330d902af66c25eebbec3d32f311154732671a",
+      "bytes": 10577
+    },
+    {
+      "path": "baseline-01-templateCatalog.ts.gz",
+      "sha256": "82b27bd8856bddeaa69665cf40ac04f0ad7b3ce4c868923e9ba30519f860bba3",
+      "bytes": 2475
+    },
+    {
+      "path": "baseline-02-builtin-authoring-templates.ts.gz",
+      "sha256": "57c0dcb18f43526cd1a432c0a64b73f2b7ad39cac8532e9f6f762cacc34f0bbb",
+      "bytes": 4195
+    },
+    {
+      "path": "baseline-03-ind-template-types.ts.gz",
+      "sha256": "a04776a6e2654a2a3dc18afcc1b72432fe192a97846da190fac6dd1d634a4053",
+      "bytes": 409
+    },
+    {
+      "path": "baseline-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "db3a020d9444e64b810f9d9f9573f0bb9951dbb68d0e6d6aaca003b95051e78c",
+      "bytes": 2799
+    },
+    {
+      "path": "baseline-05-csr-e3-guidance.ts.gz",
+      "sha256": "7e8386c775a27ed8fda08999cb88310f3cfeb03bef2ecb14b72a7ffb40d37f5d",
+      "bytes": 3358
+    },
+    {
+      "path": "baseline-06-saved-template-review.ts.gz",
+      "sha256": "b20b06176f2c6fa075aa7d8edd4ae7e0a3ac7de80c5d6511ad3b7b355635d6d6",
+      "bytes": 4395
+    },
+    {
+      "path": "baseline-07-authoring-template-guidance.ts.gz",
+      "sha256": "02ced36270a3745c67aa2c4f0dbff1ca4e4e8f88b36ef53e5a6aa309607a8dbf",
+      "bytes": 2340
+    },
+    {
+      "path": "baseline-08-authoring-draft-template.ts.gz",
+      "sha256": "1349dc49f834277bc916f5896f273dbeb8ae5ca3e3a2e9d48b53d5d58e32acad",
+      "bytes": 2692
+    },
+    {
+      "path": "baseline-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "baseline-10-authoring-assembly-plan.ts.gz",
+      "sha256": "90fee88906ca66f97c7f9697dfa6a8680a09bd0238f40f173798808e1445d3ce",
+      "bytes": 2764
+    },
+    {
+      "path": "baseline-11-authoring-assembly-source.ts.gz",
+      "sha256": "a2647bc20d43543effc8b5a98b279f0b3ff23cef47f8a9e00ba486a2a2302eef",
+      "bytes": 5166
+    },
+    {
+      "path": "baseline-12-assemblyDraftQueue.ts.gz",
+      "sha256": "41d29c06865950bebfd353ee36ac2b0a9a9c4a1bbbd203df055bce60cbb1fb3d",
+      "bytes": 2272
+    },
+    {
+      "path": "baseline-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "b90e0ebbda40fa91b87fe6dce7f2d3addff22dfe7b60c96d6c4623c2a4bf8442",
+      "bytes": 2777
+    },
+    {
+      "path": "baseline-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "d148193a6a8f57b598e3af19246a7ed3723e6e5d41c679fa6230a615214d24e4",
+      "bytes": 6064
+    },
+    {
+      "path": "baseline-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "cf1d65ed5e526c7c5d043807f04e51c5218ffb6fb26d5950928fbd6b88feac47",
+      "bytes": 6710
+    },
+    {
+      "path": "baseline-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "5298704ab2b6a6a73fa82d994c5d6929ef3d7937fd9f4b22a209613744557092",
+      "bytes": 6484
+    },
+    {
+      "path": "baseline-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "baseline-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "baseline-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "baseline-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "baseline-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "baseline-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "baseline-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "baseline-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "baseline-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "baseline-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "baseline-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "baseline-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "baseline-inputs.json",
+      "sha256": "de7dce11ead033bdfa1a1ba140407a8f36651422220bc1dbe7bef775135df260",
+      "bytes": 6592
+    },
+    {
+      "path": "capture.py",
+      "sha256": "111cc6235db7c7e5ea7b1d118cb6d93d2501a873ea91cf21aad01e673e034bd1",
+      "bytes": 2414
+    },
+    {
+      "path": "final-inputs.json",
+      "sha256": "6e203f952d0cd142292f2ee2e009057e6b46d8928bbb2cd1f9a856ca5677f376",
+      "bytes": 7842
+    },
+    {
+      "path": "green-focused-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "green-focused-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "green-focused-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "green-focused-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "green-focused-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "green-focused-05-csr-e3-guidance.ts.gz",
+      "sha256": "db18e8c9b8436676f90737fc50480e97ceaa9324e7d4eb3ba9b2c4fe27195037",
+      "bytes": 3476
+    },
+    {
+      "path": "green-focused-06-saved-template-review.ts.gz",
+      "sha256": "c6de1f6f9c1ea124f24001e7efb85c03e3a33d11bb87abfdd828bb68447b24c4",
+      "bytes": 4404
+    },
+    {
+      "path": "green-focused-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "green-focused-08-authoring-draft-template.ts.gz",
+      "sha256": "5964d398ab577b25d07ea12758c36bfa31a28ac31da7d1f01a5ce39a7ce2ba14",
+      "bytes": 2723
+    },
+    {
+      "path": "green-focused-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "green-focused-10-authoring-assembly-plan.ts.gz",
+      "sha256": "114f1250c861d01ba64a2e20b6143c8187b164c89c3ef5fb6010bf5367d89805",
+      "bytes": 2870
+    },
+    {
+      "path": "green-focused-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "green-focused-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "green-focused-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "green-focused-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "b207ed4d3f3226d0938a9932cb596109291a7444da4dd58a31840f4c0f335bc0",
+      "bytes": 6968
+    },
+    {
+      "path": "green-focused-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "ffc386f8ec113356ef5d936c69fecb92fa65fa47516863c2fe495cb2a513f79d",
+      "bytes": 6895
+    },
+    {
+      "path": "green-focused-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "de494d612085622f29ca2d9d73fcf49681d05f6050d3adfcf225cc0d52b632f7",
+      "bytes": 6690
+    },
+    {
+      "path": "green-focused-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "green-focused-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "green-focused-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "green-focused-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "green-focused-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "green-focused-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "green-focused-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "green-focused-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "green-focused-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "green-focused-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "green-focused-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "green-focused-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "green-focused-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "green-focused-inputs.json",
+      "sha256": "d0589ad8c8c776a5f07ecfdf4b752d83a6f021fa9e52f1acd665fdb8995cdd07",
+      "bytes": 6974
+    },
+    {
+      "path": "green-focused-receipt.json",
+      "sha256": "239dbb5e34044c28a02d4eed48e9b8257af9288afe0086f39f7420629abe945f",
+      "bytes": 1022
+    },
+    {
+      "path": "green-focused.log.gz",
+      "sha256": "5d43a7bd7f267e129d1cc3c82a43b9e55cc343e92fb79316b39d42dfe7107fc5",
+      "bytes": 6387
+    },
+    {
+      "path": "green-global-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "green-global-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "green-global-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "green-global-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "green-global-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "green-global-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "green-global-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "green-global-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "green-global-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "green-global-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "green-global-10-authoring-assembly-plan.ts.gz",
+      "sha256": "114f1250c861d01ba64a2e20b6143c8187b164c89c3ef5fb6010bf5367d89805",
+      "bytes": 2870
+    },
+    {
+      "path": "green-global-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "green-global-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "green-global-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "green-global-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "green-global-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "2953392c90ac386109e76c4855be1b9b0aac0df8b7719a5411ccbc02ae65af5c",
+      "bytes": 7040
+    },
+    {
+      "path": "green-global-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "green-global-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "green-global-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "green-global-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "green-global-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "green-global-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "green-global-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "green-global-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "green-global-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "green-global-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "green-global-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "green-global-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "green-global-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "green-global-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "green-global-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "green-global-inputs.json",
+      "sha256": "b79ddf4cbe298f1384bd034e1557809512d8f06877153ba7935b6f07b2ec6d5e",
+      "bytes": 7205
+    },
+    {
+      "path": "green-global-receipt.json",
+      "sha256": "0fb6efd51fdd7acbaaf0b385ab863cc8ab592fee549bb5044b7301540daa3509",
+      "bytes": 761
+    },
+    {
+      "path": "green-global.log.gz",
+      "sha256": "5620d24fc674fe23d3ed6c1f77aa13c56de34ca2f8bd2b391ce0265f41414fdf",
+      "bytes": 4053
+    },
+    {
+      "path": "green-library-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "green-library-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "green-library-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "green-library-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "green-library-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "green-library-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "green-library-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "green-library-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "green-library-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "green-library-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "green-library-10-authoring-assembly-plan.ts.gz",
+      "sha256": "15cecb3e7eb5742d61a267cf1f730a2e693453b647d7afa403d6634ed3fd32a1",
+      "bytes": 2896
+    },
+    {
+      "path": "green-library-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "green-library-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "green-library-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "green-library-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "green-library-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "26767c1d16e6befb3e18d23295e841beed2cfff008f5e790b17bd442f34e2942",
+      "bytes": 7127
+    },
+    {
+      "path": "green-library-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "green-library-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "green-library-18-document-template-library.test.ts.gz",
+      "sha256": "d718b56939752f3f4720e332c5b34e73aca9eb43acfffc0c631649f57767f5c0",
+      "bytes": 6390
+    },
+    {
+      "path": "green-library-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "green-library-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "green-library-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "green-library-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "green-library-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "green-library-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "green-library-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "green-library-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "green-library-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "green-library-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "green-library-29-crf-authoring-templates.ts.gz",
+      "sha256": "7c0a62fcda56196f7c7131ce6b681afa1eb6a22741f202330db78897b4f080ad",
+      "bytes": 3069
+    },
+    {
+      "path": "green-library-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "green-library-31-authoring-draft-template.test.ts.gz",
+      "sha256": "13905289727d6cfb3756b5b4dacd5000baf13aeaca48ae98a395793e9134c90d",
+      "bytes": 4434
+    },
+    {
+      "path": "green-library-inputs.json",
+      "sha256": "20b258a4be16a9173a2469a636672dceb7c52496ec37dbf27fa3e6faba171034",
+      "bytes": 7492
+    },
+    {
+      "path": "green-library-receipt.json",
+      "sha256": "5e91afa908ae841de25f6cefcf90d951e580ff6eb958bcdc709e80de079b36ea",
+      "bytes": 687
+    },
+    {
+      "path": "green-library.log.gz",
+      "sha256": "522131695e5f201147899b517adb35eea5e63ad56736be25e679c1852a2196ee",
+      "bytes": 1819
+    },
+    {
+      "path": "green-related-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "green-related-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "green-related-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "green-related-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "green-related-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "green-related-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "green-related-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "green-related-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "green-related-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "green-related-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "green-related-10-authoring-assembly-plan.ts.gz",
+      "sha256": "15cecb3e7eb5742d61a267cf1f730a2e693453b647d7afa403d6634ed3fd32a1",
+      "bytes": 2896
+    },
+    {
+      "path": "green-related-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "green-related-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "green-related-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "green-related-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "green-related-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "26767c1d16e6befb3e18d23295e841beed2cfff008f5e790b17bd442f34e2942",
+      "bytes": 7127
+    },
+    {
+      "path": "green-related-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "green-related-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "green-related-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "green-related-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "green-related-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "green-related-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "green-related-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "green-related-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "green-related-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "green-related-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "green-related-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "green-related-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "green-related-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "green-related-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "green-related-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "green-related-31-authoring-draft-template.test.ts.gz",
+      "sha256": "13905289727d6cfb3756b5b4dacd5000baf13aeaca48ae98a395793e9134c90d",
+      "bytes": 4434
+    },
+    {
+      "path": "green-related-inputs.json",
+      "sha256": "c70725ef9b88b15fbff4ee406fb157218cc8cb62b63ec7dcbea05252fbd8a41e",
+      "bytes": 7492
+    },
+    {
+      "path": "green-related-receipt.json",
+      "sha256": "084c3703c54b191c123a85bb05677f153472df0c114c71d03449f605e32cad7e",
+      "bytes": 1358
+    },
+    {
+      "path": "green-related.log.gz",
+      "sha256": "f4a33eb80c2e87cf272c9b0899bf1ee269100d5afc5750716868731cd6cb0767",
+      "bytes": 9404
+    },
+    {
+      "path": "historical-red-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "historical-red-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "historical-red-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "historical-red-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "historical-red-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "historical-red-05-csr-e3-guidance.ts.gz",
+      "sha256": "db18e8c9b8436676f90737fc50480e97ceaa9324e7d4eb3ba9b2c4fe27195037",
+      "bytes": 3476
+    },
+    {
+      "path": "historical-red-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "historical-red-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "historical-red-08-authoring-draft-template.ts.gz",
+      "sha256": "5964d398ab577b25d07ea12758c36bfa31a28ac31da7d1f01a5ce39a7ce2ba14",
+      "bytes": 2723
+    },
+    {
+      "path": "historical-red-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "historical-red-10-authoring-assembly-plan.ts.gz",
+      "sha256": "114f1250c861d01ba64a2e20b6143c8187b164c89c3ef5fb6010bf5367d89805",
+      "bytes": 2870
+    },
+    {
+      "path": "historical-red-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "historical-red-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "historical-red-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "historical-red-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "historical-red-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "2953392c90ac386109e76c4855be1b9b0aac0df8b7719a5411ccbc02ae65af5c",
+      "bytes": 7040
+    },
+    {
+      "path": "historical-red-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "de494d612085622f29ca2d9d73fcf49681d05f6050d3adfcf225cc0d52b632f7",
+      "bytes": 6690
+    },
+    {
+      "path": "historical-red-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "historical-red-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "historical-red-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "historical-red-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "historical-red-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "historical-red-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "historical-red-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "historical-red-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "historical-red-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "historical-red-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "historical-red-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "historical-red-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "historical-red-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "historical-red-inputs.json",
+      "sha256": "6665858181ee9b77b28b4e9bebf21fa8bb48cc65001b03c19ace449ada9bf5de",
+      "bytes": 7004
+    },
+    {
+      "path": "historical-red-receipt.json",
+      "sha256": "264defe201fb58bd7e80d588ca7b2941fa0a3ad0464b44b485289160838f4c04",
+      "bytes": 755
+    },
+    {
+      "path": "historical-red.log.gz",
+      "sha256": "e00ee1fe6a50afae4ab71d87baab9014f4ef3b57985cd9b6a7f00843731d7878",
+      "bytes": 2294
+    },
+    {
+      "path": "lint-production-final-comparison.json",
+      "sha256": "efa32dc5afc898bcf0b8a199eb05307ede8029c7cd05bb76fc7a60b5571f19d9",
+      "bytes": 7445
+    },
+    {
+      "path": "lint-production-initial-baseline.json.gz",
+      "sha256": "792e47b6a0a56c820e0c109deb58cce3f2e8d9d9cd5be765e26886e8f37e52bc",
+      "bytes": 411
+    },
+    {
+      "path": "lint-production-initial-comparison.json",
+      "sha256": "59ba0da3788c51035cbdbf7c016e737a8ecab3efef8f050e5f450c7b11cf14ee",
+      "bytes": 10447
+    },
+    {
+      "path": "lint-production-initial-current.json.gz",
+      "sha256": "ccaa69102813cfa01108eb383ac457d9ef14bbc6422c76664c2ee03a9ec4f3cf",
+      "bytes": 3346
+    },
+    {
+      "path": "lint-production-plan-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "lint-production-plan-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "lint-production-plan-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "lint-production-plan-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "lint-production-plan-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "lint-production-plan-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "lint-production-plan-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "lint-production-plan-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "lint-production-plan-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "lint-production-plan-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "lint-production-plan-10-authoring-assembly-plan.ts.gz",
+      "sha256": "15cecb3e7eb5742d61a267cf1f730a2e693453b647d7afa403d6634ed3fd32a1",
+      "bytes": 2896
+    },
+    {
+      "path": "lint-production-plan-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "lint-production-plan-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "lint-production-plan-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "lint-production-plan-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "lint-production-plan-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "26767c1d16e6befb3e18d23295e841beed2cfff008f5e790b17bd442f34e2942",
+      "bytes": 7127
+    },
+    {
+      "path": "lint-production-plan-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "lint-production-plan-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "lint-production-plan-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "lint-production-plan-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "lint-production-plan-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "lint-production-plan-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "lint-production-plan-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "lint-production-plan-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "lint-production-plan-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "lint-production-plan-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "lint-production-plan-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "lint-production-plan-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "lint-production-plan-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "lint-production-plan-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "lint-production-plan-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "lint-production-plan-31-authoring-draft-template.test.ts.gz",
+      "sha256": "13905289727d6cfb3756b5b4dacd5000baf13aeaca48ae98a395793e9134c90d",
+      "bytes": 4434
+    },
+    {
+      "path": "lint-production-plan-inputs.json",
+      "sha256": "8d8d134f98983ca4c305a4565759234f13abeb85fcde8929b28c020575258007",
+      "bytes": 7716
+    },
+    {
+      "path": "lint-production-plan-receipt.json",
+      "sha256": "90dd84a8e758da5414d464ebc21687f66315b7d2e8eff86da9b319a6812062a1",
+      "bytes": 486
+    },
+    {
+      "path": "lint-production-plan.log.gz",
+      "sha256": "3918335f19b591c063a55cb5e6dd7b716b6209ee88b5e52ce623c05698ec06cf",
+      "bytes": 178
+    },
+    {
+      "path": "lint-production.py",
+      "sha256": "ac99a2c8301ed2aba78ba1ae8109c7250e8f4d5d7ee9eb625b40e39b922254cd",
+      "bytes": 2112
+    },
+    {
+      "path": "lint-tests-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "lint-tests-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "lint-tests-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "lint-tests-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "lint-tests-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "lint-tests-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "lint-tests-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "lint-tests-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "lint-tests-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "lint-tests-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "lint-tests-10-authoring-assembly-plan.ts.gz",
+      "sha256": "15cecb3e7eb5742d61a267cf1f730a2e693453b647d7afa403d6634ed3fd32a1",
+      "bytes": 2896
+    },
+    {
+      "path": "lint-tests-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "lint-tests-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "lint-tests-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "lint-tests-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "lint-tests-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "26767c1d16e6befb3e18d23295e841beed2cfff008f5e790b17bd442f34e2942",
+      "bytes": 7127
+    },
+    {
+      "path": "lint-tests-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "lint-tests-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "lint-tests-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "lint-tests-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "lint-tests-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "lint-tests-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "lint-tests-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "lint-tests-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "lint-tests-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "lint-tests-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "lint-tests-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "lint-tests-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "lint-tests-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "lint-tests-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "lint-tests-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "lint-tests-31-authoring-draft-template.test.ts.gz",
+      "sha256": "13905289727d6cfb3756b5b4dacd5000baf13aeaca48ae98a395793e9134c90d",
+      "bytes": 4434
+    },
+    {
+      "path": "lint-tests-final-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "lint-tests-final-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "lint-tests-final-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "lint-tests-final-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "lint-tests-final-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "lint-tests-final-05-csr-e3-guidance.ts.gz",
+      "sha256": "7d2ef666abb10b2b2b7b16e38d4e6a07739a88cac123f998ea9fc169fa0f371c",
+      "bytes": 3633
+    },
+    {
+      "path": "lint-tests-final-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "lint-tests-final-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "lint-tests-final-08-authoring-draft-template.ts.gz",
+      "sha256": "1652cbc2d73ecb62fa7400604cbf8d07dea350ea1d86d783a0993ac79d85a89c",
+      "bytes": 2788
+    },
+    {
+      "path": "lint-tests-final-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "lint-tests-final-10-authoring-assembly-plan.ts.gz",
+      "sha256": "15cecb3e7eb5742d61a267cf1f730a2e693453b647d7afa403d6634ed3fd32a1",
+      "bytes": 2896
+    },
+    {
+      "path": "lint-tests-final-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "lint-tests-final-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "lint-tests-final-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "lint-tests-final-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "lint-tests-final-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "26767c1d16e6befb3e18d23295e841beed2cfff008f5e790b17bd442f34e2942",
+      "bytes": 7127
+    },
+    {
+      "path": "lint-tests-final-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "58950deb1d143e7256ac63eb768bc24641065001bcd4a6afd9552be23d1f156f",
+      "bytes": 6707
+    },
+    {
+      "path": "lint-tests-final-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "lint-tests-final-18-document-template-library.test.ts.gz",
+      "sha256": "d718b56939752f3f4720e332c5b34e73aca9eb43acfffc0c631649f57767f5c0",
+      "bytes": 6390
+    },
+    {
+      "path": "lint-tests-final-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "lint-tests-final-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "lint-tests-final-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "lint-tests-final-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "lint-tests-final-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "lint-tests-final-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "lint-tests-final-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "lint-tests-final-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "lint-tests-final-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "lint-tests-final-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "lint-tests-final-29-crf-authoring-templates.ts.gz",
+      "sha256": "7c0a62fcda56196f7c7131ce6b681afa1eb6a22741f202330db78897b4f080ad",
+      "bytes": 3069
+    },
+    {
+      "path": "lint-tests-final-30-workbenchAssemblyBuild.test.tsx.gz",
+      "sha256": "d372c3966bb980f4d60e4311246182eba42fe224c2474627bc27df145b2e5eed",
+      "bytes": 6977
+    },
+    {
+      "path": "lint-tests-final-31-authoring-draft-template.test.ts.gz",
+      "sha256": "13905289727d6cfb3756b5b4dacd5000baf13aeaca48ae98a395793e9134c90d",
+      "bytes": 4434
+    },
+    {
+      "path": "lint-tests-final-inputs.json",
+      "sha256": "4ee816f001ac4ef01bb8e9406e18824f2afa2445024001b68827019ceb297632",
+      "bytes": 7588
+    },
+    {
+      "path": "lint-tests-final-receipt.json",
+      "sha256": "8df7f64845ff73c45438fff3eb077cc63bae0f6eda92ca26e43682ebbb4e3930",
+      "bytes": 884
+    },
+    {
+      "path": "lint-tests-final.log.gz",
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "bytes": 20
+    },
+    {
+      "path": "lint-tests-initial-00-document-template-library.ts.gz",
+      "sha256": "787f1fadffd709e42af5ecb1ac4922e87e2b97d4bf9771300f92898b884153e4",
+      "bytes": 10678
+    },
+    {
+      "path": "lint-tests-initial-01-templateCatalog.ts.gz",
+      "sha256": "dcc202b0df1c90d301f1b58a0d543ac41103efd44daf4c9c3451a1d18ff6698c",
+      "bytes": 2680
+    },
+    {
+      "path": "lint-tests-initial-02-builtin-authoring-templates.ts.gz",
+      "sha256": "e24a9d5baa74b1713d41e762077dc6706283eb9318ccc0abc7751bd3f1b637c0",
+      "bytes": 4220
+    },
+    {
+      "path": "lint-tests-initial-03-ind-template-types.ts.gz",
+      "sha256": "17cf9cb7b57bbfe2c5dc33f68a90b722180dffd78d3b4c926dc525efa9d81b79",
+      "bytes": 428
+    },
+    {
+      "path": "lint-tests-initial-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "a4327e8f590190e41b324b106e66a43594f296b3b6203b7ab08f3f7d05ca9fe5",
+      "bytes": 2868
+    },
+    {
+      "path": "lint-tests-initial-05-csr-e3-guidance.ts.gz",
+      "sha256": "db18e8c9b8436676f90737fc50480e97ceaa9324e7d4eb3ba9b2c4fe27195037",
+      "bytes": 3476
+    },
+    {
+      "path": "lint-tests-initial-06-saved-template-review.ts.gz",
+      "sha256": "d337c9432bb1c25ca7014a468238c82bae2b2313eac37369be7e8007200beae7",
+      "bytes": 4409
+    },
+    {
+      "path": "lint-tests-initial-07-authoring-template-guidance.ts.gz",
+      "sha256": "f80745bdcc23ff6b8462c89dd03efc6ed574c429ad90fd6b6eb9a7a4b250c500",
+      "bytes": 2431
+    },
+    {
+      "path": "lint-tests-initial-08-authoring-draft-template.ts.gz",
+      "sha256": "5964d398ab577b25d07ea12758c36bfa31a28ac31da7d1f01a5ce39a7ce2ba14",
+      "bytes": 2723
+    },
+    {
+      "path": "lint-tests-initial-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "lint-tests-initial-10-authoring-assembly-plan.ts.gz",
+      "sha256": "114f1250c861d01ba64a2e20b6143c8187b164c89c3ef5fb6010bf5367d89805",
+      "bytes": 2870
+    },
+    {
+      "path": "lint-tests-initial-11-authoring-assembly-source.ts.gz",
+      "sha256": "2b5b8058f47d36ba23ccb8bebd6ef934985cd595e3322d3ffee1c7894049a0de",
+      "bytes": 5181
+    },
+    {
+      "path": "lint-tests-initial-12-assemblyDraftQueue.ts.gz",
+      "sha256": "e8555ba991ae4e22419ba64912377007dbed97f3eb32565fcde33bb68fa674d9",
+      "bytes": 2241
+    },
+    {
+      "path": "lint-tests-initial-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "986e1c5a2e1a7c333284b1677ed73190a5f98d3b7100419906fb59373f32e1eb",
+      "bytes": 2786
+    },
+    {
+      "path": "lint-tests-initial-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "a79f719d546bd28d66d0bbc3428a799e10ddffeff2fef7b7ebffdd9927ad538e",
+      "bytes": 7116
+    },
+    {
+      "path": "lint-tests-initial-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "2953392c90ac386109e76c4855be1b9b0aac0df8b7719a5411ccbc02ae65af5c",
+      "bytes": 7040
+    },
+    {
+      "path": "lint-tests-initial-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "de494d612085622f29ca2d9d73fcf49681d05f6050d3adfcf225cc0d52b632f7",
+      "bytes": 6690
+    },
+    {
+      "path": "lint-tests-initial-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "lint-tests-initial-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "lint-tests-initial-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "lint-tests-initial-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "lint-tests-initial-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "lint-tests-initial-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "lint-tests-initial-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "lint-tests-initial-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "lint-tests-initial-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "lint-tests-initial-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "lint-tests-initial-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "lint-tests-initial-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "lint-tests-initial-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "lint-tests-initial-inputs.json",
+      "sha256": "46703bf6c7d0fbc4c374f6dd84d35ae96694be0f724c571aad7773bc74a45fc0",
+      "bytes": 7124
+    },
+    {
+      "path": "lint-tests-initial-receipt.json",
+      "sha256": "85b11ddf388c774596d1423179fe2d12b72b7715e69ae334f4102346c1b8c6b7",
+      "bytes": 730
+    },
+    {
+      "path": "lint-tests-initial.log.gz",
+      "sha256": "36e8b38c650d968a663a7b82b40deb7d71ad4ef7c23de1decc17f89940496249",
+      "bytes": 240
+    },
+    {
+      "path": "lint-tests-inputs.json",
+      "sha256": "30fd0b797bfdef9cf6b029398db54abe6495f3b8a3b6b427c7d1b9b2bd00d4fe",
+      "bytes": 7396
+    },
+    {
+      "path": "lint-tests-receipt.json",
+      "sha256": "d3cf518f80c67c6a2c6386fd1575d088113f49ab8c68eab903c5807f3ded42cd",
+      "bytes": 798
+    },
+    {
+      "path": "lint-tests.log.gz",
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "bytes": 20
+    },
+    {
+      "path": "red-00-document-template-library.ts.gz",
+      "sha256": "408b6141c4c412fc016a541040330d902af66c25eebbec3d32f311154732671a",
+      "bytes": 10577
+    },
+    {
+      "path": "red-01-templateCatalog.ts.gz",
+      "sha256": "82b27bd8856bddeaa69665cf40ac04f0ad7b3ce4c868923e9ba30519f860bba3",
+      "bytes": 2475
+    },
+    {
+      "path": "red-02-builtin-authoring-templates.ts.gz",
+      "sha256": "57c0dcb18f43526cd1a432c0a64b73f2b7ad39cac8532e9f6f762cacc34f0bbb",
+      "bytes": 4195
+    },
+    {
+      "path": "red-03-ind-template-types.ts.gz",
+      "sha256": "a04776a6e2654a2a3dc18afcc1b72432fe192a97846da190fac6dd1d634a4053",
+      "bytes": 409
+    },
+    {
+      "path": "red-04-ind-template-outlines-m4-m5.ts.gz",
+      "sha256": "db3a020d9444e64b810f9d9f9573f0bb9951dbb68d0e6d6aaca003b95051e78c",
+      "bytes": 2799
+    },
+    {
+      "path": "red-05-csr-e3-guidance.ts.gz",
+      "sha256": "7e8386c775a27ed8fda08999cb88310f3cfeb03bef2ecb14b72a7ffb40d37f5d",
+      "bytes": 3358
+    },
+    {
+      "path": "red-06-saved-template-review.ts.gz",
+      "sha256": "b20b06176f2c6fa075aa7d8edd4ae7e0a3ac7de80c5d6511ad3b7b355635d6d6",
+      "bytes": 4395
+    },
+    {
+      "path": "red-07-authoring-template-guidance.ts.gz",
+      "sha256": "02ced36270a3745c67aa2c4f0dbff1ca4e4e8f88b36ef53e5a6aa309607a8dbf",
+      "bytes": 2340
+    },
+    {
+      "path": "red-08-authoring-draft-template.ts.gz",
+      "sha256": "1349dc49f834277bc916f5896f273dbeb8ae5ca3e3a2e9d48b53d5d58e32acad",
+      "bytes": 2692
+    },
+    {
+      "path": "red-09-authoring-template-sections.ts.gz",
+      "sha256": "d543450294c4245c4e8c76b2badf4e4ad8d1ec709119b30230adaba143cdb60a",
+      "bytes": 2701
+    },
+    {
+      "path": "red-10-authoring-assembly-plan.ts.gz",
+      "sha256": "90fee88906ca66f97c7f9697dfa6a8680a09bd0238f40f173798808e1445d3ce",
+      "bytes": 2764
+    },
+    {
+      "path": "red-11-authoring-assembly-source.ts.gz",
+      "sha256": "a2647bc20d43543effc8b5a98b279f0b3ff23cef47f8a9e00ba486a2a2302eef",
+      "bytes": 5166
+    },
+    {
+      "path": "red-12-assemblyDraftQueue.ts.gz",
+      "sha256": "41d29c06865950bebfd353ee36ac2b0a9a9c4a1bbbd203df055bce60cbb1fb3d",
+      "bytes": 2272
+    },
+    {
+      "path": "red-13-AuthoringAssemblyBuild.tsx.gz",
+      "sha256": "b90e0ebbda40fa91b87fe6dce7f2d3addff22dfe7b60c96d6c4623c2a4bf8442",
+      "bytes": 2777
+    },
+    {
+      "path": "red-14-globalBiotechTemplateEditor.pglite.integration.test.ts.gz",
+      "sha256": "b207ed4d3f3226d0938a9932cb596109291a7444da4dd58a31840f4c0f335bc0",
+      "bytes": 6968
+    },
+    {
+      "path": "red-15-authoringAssemblyDraftSafety.pglite.test.ts.gz",
+      "sha256": "ffc386f8ec113356ef5d936c69fecb92fa65fa47516863c2fe495cb2a513f79d",
+      "bytes": 6895
+    },
+    {
+      "path": "red-16-authoringAssemblyBuild.test.tsx.gz",
+      "sha256": "de494d612085622f29ca2d9d73fcf49681d05f6050d3adfcf225cc0d52b632f7",
+      "bytes": 6690
+    },
+    {
+      "path": "red-17-document-template-preparation.test.ts.gz",
+      "sha256": "8a75981880ae6a88959cb3666ab64f9cdaabf550e18e9a265b75371404d604aa",
+      "bytes": 2665
+    },
+    {
+      "path": "red-18-document-template-library.test.ts.gz",
+      "sha256": "93689fd13279e40a13090f94fac8a5b72b22e299f3ff0aaa656e9024bef572df",
+      "bytes": 6236
+    },
+    {
+      "path": "red-19-_template-editor-fixture.ts.gz",
+      "sha256": "c205786b646c87b8868a3c9f896d22fbcdcca4206fe9d4ced624aaf65c68e43d",
+      "bytes": 1464
+    },
+    {
+      "path": "red-20-_authoring-canvas-fixture.ts.gz",
+      "sha256": "59f2ff2a9a81219afd1e0c29f7da9bbf248ab9b1a17e7f7d5b620884fc961ecc",
+      "bytes": 3730
+    },
+    {
+      "path": "red-21-_authoring-record-fixture.ts.gz",
+      "sha256": "b5a595c655e3f984c45d9344aee62909ade1c04fa89c034ca611ee92ef2a0ad6",
+      "bytes": 2692
+    },
+    {
+      "path": "red-22-assembly.ts.gz",
+      "sha256": "9e4d74650eea49156c70d258417fc44a3a6eed88bd3e217c2a4d7999126ef337",
+      "bytes": 604
+    },
+    {
+      "path": "red-23-recorded-template-source.ts.gz",
+      "sha256": "eed21cc37d03d448e35b9335bc6e718640ea8dd4a29bccb602d28e8ffd259cd7",
+      "bytes": 1277
+    },
+    {
+      "path": "red-24-vitest.config.ts.gz",
+      "sha256": "db4fab26c2cee0bdb1ead5ec224159ed606078894817bbc17b4f7f95731485ce",
+      "bytes": 1763
+    },
+    {
+      "path": "red-25-setup.ts.gz",
+      "sha256": "bb26463264eb4b852ed065e6648e0a08a955991525a93235bffd4c1181c15a08",
+      "bytes": 5501
+    },
+    {
+      "path": "red-26-eslint.config.js.gz",
+      "sha256": "0868872c7d8ee66277af5b8f9d9bddf17227e82b068f9d8d5bf9d76d2758ccd1",
+      "bytes": 5745
+    },
+    {
+      "path": "red-27-package.json.gz",
+      "sha256": "d7f66e9507222fe8b7360c238dd98989b4c3b9885a670965d218751bd833a808",
+      "bytes": 10297
+    },
+    {
+      "path": "red-28-package-lock.json.gz",
+      "sha256": "403446c7310ce4eb65151dc00bb6bb820f4159eafb22e8dc3c80b97bde93a5ea",
+      "bytes": 271640
+    },
+    {
+      "path": "red-29-crf-authoring-templates.ts.gz",
+      "sha256": "d2252f2b251661732f98abfa7dc5a28641a761c0f09bdf34f669eb907e7a7f39",
+      "bytes": 3058
+    },
+    {
+      "path": "red-inputs.json",
+      "sha256": "e0df7535605a5a400226a800ce4c0c318d5e6df8cc1e7c54cd9fc26e01d7da84",
+      "bytes": 6674
+    },
+    {
+      "path": "red-receipt.json",
+      "sha256": "a15a10da6500979ec4b45ef2aa103b401b14b29ac676d6c1d6a2bfded19240a2",
+      "bytes": 1011
+    },
+    {
+      "path": "red.log.gz",
+      "sha256": "939184e86b460eeffc35d92bc85db33a09e88d032562af1ccf618ef0a08968e9",
+      "bytes": 11191
+    }
+  ]
+}

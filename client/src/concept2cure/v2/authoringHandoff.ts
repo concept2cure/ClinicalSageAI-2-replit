@@ -144,6 +144,7 @@ export function openSavedAuthoring(result: AuthoringHandoffResult, onNav: (id: s
 export type { WorkflowImportSource } from '@shared/authoring/source-import';
 import type { AuthoringImportOrigin, AuthoringImportSource, AuthoringSourceImportData, AuthoringSourceImportPreviewData,
   BinaryImportOrigin, BinaryImportSource, WorkflowImportOrigin, WorkflowImportSource } from '@shared/authoring/source-import';
+import { studyDesignImportId } from '@shared/authoring/source-import';
 import { stableStringify } from '@shared/canonical-json';
 import { authoringCurrentReadPath } from './editor/authoringCurrentRead';
 
@@ -171,11 +172,12 @@ export type SourceImportInspection = { ok: true; inventory: Array<{ id: string; 
 export function isWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!source || typeof source !== 'object') return false;
   const kind = (source as { kind?: unknown }).kind;
-  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document';
+  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document' || kind === 'study-design-crf';
 }
 
 /** Stable selection identity; ordering does not change a CSR selection. */
 export function workflowSourceKey(source: WorkflowImportSource): string {
+  if (source.kind === 'study-design-crf') return `${source.kind}:${source.studyId}`;
   if (source.kind !== 'csr') return `${source.kind}:${source.documentId}`;
   if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
   return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
@@ -191,6 +193,7 @@ const uniqueCodes = (rows: Array<{ code: string }>): boolean => new Set(rows.map
 
 function validWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!isWorkflowSource(source)) return false;
+  if (source.kind === 'study-design-crf') return nonempty(source.studyId) && studyDesignImportId(source.studyId) === source.studyId;
   if (source.kind === 'protocol') return importInteger(source.documentId);
   if (source.kind !== 'csr') return importUuid(source.documentId);
   return importInteger(source.jobId) && (source.sectionNumbers === undefined || (Array.isArray(source.sectionNumbers)
@@ -206,6 +209,7 @@ function validSectionOrigin(section: WorkflowImportOrigin['sectionOrigins'][numb
     && ['unrecorded', 'recorded-name-only'].includes(section.modelEvidence) && nullableText(section.model);
 }
 const workflowConversions: Record<WorkflowImportSource['kind'], WorkflowImportOrigin['conversion']> = {
+  'study-design-crf': 'study-design-crf-projection',
   protocol: 'protocol-structure', csr: 'ich-e3-sections', 'ivd-assessment': 'ivd-assessment-snapshot', 'ivd-document': 'ivd-document-snapshot',
 };
 function validWorkflowScope(origin: WorkflowImportOrigin): boolean {
@@ -224,7 +228,7 @@ function validWorkflowOrigins(origin: WorkflowImportOrigin): boolean {
 }
 export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
   if (!origin || !importUuid(programId) || !validWorkflowSource(source) || origin.kind !== source.kind || origin.programId !== programId) return false;
-  const id = source.kind === 'csr' ? source.jobId : source.documentId;
+  const id = source.kind === 'csr' ? source.jobId : source.kind === 'study-design-crf' ? source.studyId : source.documentId;
   if (origin.id !== String(id) || !validWorkflowSource(origin.selection) || workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
   return importHash(origin.fingerprint) && nonempty(origin.title) && validWorkflowOrigins(origin);
 }

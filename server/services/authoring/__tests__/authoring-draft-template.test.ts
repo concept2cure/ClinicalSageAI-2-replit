@@ -147,6 +147,14 @@ describe('recorded limits are not replaced by current guidance or a parent templ
       templateSource: null, references: publicReferences(input) });
   });
 
+  it('does not treat current E3 reference identity as a retained historical section policy', async () => {
+    const input = reviewed();
+    input.references[0].authority = 'current-reference';
+    input.references[0].fields.source_reference = 'server/services/ind/ctd/csr-e3-guidance.ts#16.3.1';
+    h.review.mockResolvedValue(input);
+    await expect(read('FDA')).resolves.toMatchObject({ region: 'FDA' });
+  });
+
   it('retains historical identity-only source fields without filling missing eligibility', async () => {
     const input = reviewed(null);
     input.references[0].sourceVerification = 'identity-only';

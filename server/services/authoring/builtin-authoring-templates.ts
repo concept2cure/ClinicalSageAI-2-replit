@@ -76,6 +76,7 @@ function outlineSections(outline: DocumentTemplateStructure): IndTemplateOutline
   return flat.map((section, ordering) => ({
     code: section.number, title: section.heading, content: '', ordering,
     guidance: {
+      ...(section.drafting_mode ? { drafting_mode: section.drafting_mode } : {}),
       guidance_text: `${section.purpose}\n\nExisting scaffold expectation: ${section.required ? 'marked required' : 'not marked required'}. This flag does not determine legal applicability or waive applicable content.`,
       regulatory_references: [outline.regulatoryBasis],
       compliance_checklist: [], common_pitfalls: [], source_reference: sourceReference(outline),
