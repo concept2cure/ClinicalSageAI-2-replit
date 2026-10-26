@@ -457,6 +457,12 @@
 .c2c-v2 .pj-artifact-table{max-width:100%;overflow-x:auto;}
 .c2c-v2 .pj-artifact-table caption{text-align:left;margin:8px 0;}
 .c2c-v2 .pj-artifact-table th,.c2c-v2 .pj-artifact-table td{vertical-align:top;}
+.c2c-v2 .pj-tracking-module{padding:12px 0;border-top:1px solid var(--border);}
+.c2c-v2 .pj-tracking-module h3{margin:0 0 8px;}
+.c2c-v2 .pj-tracking-code{display:block;font-size:11px;color:var(--text-400);overflow-wrap:anywhere;}
+.c2c-v2 .pj-tracking-unmapped{padding-left:20px;}
+.c2c-v2 .pj-tracking-unmapped li{margin:8px 0;overflow-wrap:anywhere;}
+.c2c-v2 .pj-tracking-module .pj-lmod-sections li span:last-child{max-width:45%;overflow-wrap:anywhere;}
 /* Review tab: this filing's reviews, grouped by what they need from the
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}

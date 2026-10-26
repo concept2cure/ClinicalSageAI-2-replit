@@ -22,6 +22,8 @@ import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
 import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
 import { ArtifactSectionStatus, artifactReadinessOf } from './ProjectArtifactReadiness';
+import type { DossierSectionTracking } from '@shared/types/dossier-section-tracking';
+import { SectionTracking, sectionTrackingOf } from './ProjectSectionTracking';
 
 /** A figure as the server states it (dossier-read DossierFigure). */
 export type DossierFigure =
@@ -54,17 +56,8 @@ export interface DossierMarket {
   notHeld: Array<{ key: string; label: string }> | null;
 }
 
-interface SupportingUnavailable {
-  state: 'unavailable';
-  code: 'STORE_UNAVAILABLE' | 'READ_FAILED';
-  reason: string;
-}
-type SectionTracking = SupportingUnavailable | {
-  state: 'read';
-  modules: Array<{ m: string; label: string; pct: number; tone: string; sections: string[] }>;
-};
 export interface SupportingReadiness {
-  sectionTracking: SectionTracking;
+  sectionTracking: DossierSectionTracking;
 }
 
 export interface DossierRead {
@@ -73,10 +66,10 @@ export interface DossierRead {
   home: DossierFigure;
   markets: DossierMarket[];
   rows: DossierRow[];
-  /** Independent tracked records, not the governed filing figure. */
-  supportingReadiness?: SupportingReadiness;
   /** Separate artifact lifecycle source; absent from older responses. */
   artifactReadiness?: ArtifactReadiness;
+  /** Existing project_sections records, with their own tracking lifecycle. */
+  supportingReadiness?: SupportingReadiness;
 }
 
 const isFigure = (v: unknown): v is DossierFigure => {
@@ -126,46 +119,9 @@ const hasSectionDetails = (sections: unknown): sections is NonNullable<DossierRo
   Array.isArray(sections) && sections.every((s) => s && typeof s.key === 'string' && typeof s.label === 'string' && typeof s.status === 'string');
 
 const SECTION_STATUS_LABELS = new Map([
-  ['approved', 'Approved'], ['locked', 'Locked'], ['review', 'In review'], ['drafted', 'Drafted'], ['draft', 'Draft'], ['unknown', 'Unknown'], ['empty', 'Empty'],
+  ['approved', 'Approved'], ['locked', 'Locked'], ['review', 'In review'], ['drafted', 'Drafted'], ['empty', 'Empty'],
 ]);
 const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (status || 'Status not recorded');
-
-const SUPPORTING_UNAVAILABLE = 'Supporting section details are unavailable.';
-const unavailableDetail = (): SupportingUnavailable => ({ state: 'unavailable', code: 'READ_FAILED', reason: SUPPORTING_UNAVAILABLE });
-const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
-const isUnavailable = (v: unknown): v is SupportingUnavailable => record(v) && v.state === 'unavailable'
-  && (v.code === 'STORE_UNAVAILABLE' || v.code === 'READ_FAILED') && typeof v.reason === 'string' && v.reason.trim() !== '';
-
-/** Validate each independent read without converting an old/malformed answer to zero. */
-function supportingDetails(value: unknown): SupportingReadiness {
-  const data = record(value) ? value : {};
-  const t = data.sectionTracking;
-  const sectionTracking: SectionTracking = isUnavailable(t) ? t : (
-    record(t) && t.state === 'read' && Array.isArray(t.modules)
-    && t.modules.every((m: unknown) => record(m) && typeof m.m === 'string' && typeof m.label === 'string'
-      && typeof m.pct === 'number' && Number.isFinite(m.pct) && m.pct >= 0 && m.pct <= 100
-      && typeof m.tone === 'string' && Array.isArray(m.sections) && m.sections.every((s: unknown) => typeof s === 'string'))
-      ? t as SectionTracking : unavailableDetail()
-  );
-  return { sectionTracking };
-}
-
-/** The former map's existing tracking read, in Author. */
-function SupportingDossierDetails({ value }: { value: unknown }) {
-  const { sectionTracking: t } = supportingDetails(value);
-  return <div className="pj-dossier-supporting">
-    <section className="pj-card" aria-label="Tracked CTD sections">
-      <h3>Tracked CTD sections</h3>
-      <p className="pj-card-note">Progress recorded in section tracking, separate from governed document readiness.</p>
-      {t.state === 'unavailable' ? <p role="status" className="pj-card-note">{t.reason}</p> : t.modules.length === 0
-        ? <p className="pj-card-note">No tracked sections yet.</p>
-        : t.modules.map(m => <details key={m.m} className="pj-lmod-sections" open>
-          <summary>Module {m.m} · {m.label} · {m.pct}%</summary>
-          <ul aria-label={`Module ${m.m} tracked sections`}>{m.sections.map(s => <li key={s}>{s}</li>)}</ul>
-        </details>)}
-    </section>
-  </div>;
-}
 
 /** The aside card: the home filing's figure, and each added market's line. */
 export function DossierReadinessCard({ read }: { read: DossierState }) {
@@ -306,8 +262,7 @@ export function ModuleCompletion({ read, docForModule, onOpen, onAsk }: {
       <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
       {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
       {body}
-      {d && !state.error && <SupportingDossierDetails value={d.supportingReadiness} />}
-    </section><ArtifactSectionStatus read={read} /></>
+    </section><ArtifactSectionStatus read={read} /><SectionTracking read={read} /></>
   );
 }
 
@@ -324,7 +279,7 @@ export function dossierFacts(read: DossierState): Record<string, unknown> {
       markets: d.markets.map((m) => ({ market: marketName(m), scope: m.scope, figure: m.figure, notHeld: m.notHeld?.length ?? null })),
       rows: d.rows.map((r) => ({ label: r.label, module: r.module, agency: r.agency, counted: r.counted, complete: r.complete, inReview: r.inReview, drafted: r.drafted, figure: r.figure, lastUpdated: r.lastUpdated, sections: hasSectionDetails(r.sections) ? r.sections : null })),
       artifactReadiness: artifactReadinessOf(d.artifactReadiness),
-      supportingReadiness: supportingDetails(d.supportingReadiness),
+      supportingReadiness: { sectionTracking: sectionTrackingOf(d.supportingReadiness?.sectionTracking) },
     },
     dossierUnavailable: null,
   };

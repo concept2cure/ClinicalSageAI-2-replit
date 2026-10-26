@@ -18,7 +18,7 @@ function payload(modules: unknown[]) {
   return { projectId: PROGRAM, measuredAt: '2026-10-26T00:00:00Z', home: { state: 'no_sections', pct: null }, markets: [], rows: [],
     artifactReadiness: { basis: 'governed_artifacts', state: 'no_artifacts', sections: [], summary: { totalSections: 0, readySections: 0, inProgressSections: 0, draftSections: 0, notAssessedSections: 0 } },
     supportingReadiness: {
-      sectionTracking: { state: 'read', modules },
+      sectionTracking: { basis: 'section_tracking', state: modules.length ? 'measured' : 'no_sections', modules, unmapped: [] },
     },
   };
 }
@@ -31,7 +31,7 @@ afterEach(cleanup);
 
 describe('the former map read in project Author (F-7)', () => {
   it('asks by the exact program UUID and renders its tracking map', async () => {
-    apiRequest.mockImplementation(async (_m, url) => url === URL ? ok(payload([{ m: '3', label: 'Quality', pct: 25, tone: 'warn', sections: ['3.2.P Drug Product'] }])) : ok({}));
+    apiRequest.mockImplementation(async (_m, url) => url === URL ? ok(payload([{ m: '3', label: 'Quality', counted: 1, complete: 0, unknownCount: 0, pct: 0, tone: 'idle', sections: [{ code: '3.2.P', title: 'Drug Product', label: '3.2.P Drug Product', status: 'drafting', observedStatuses: ['drafting'] }] }])) : ok({}));
     render(<Author />);
     expect(await screen.findByText(/Module 3 · Quality/)).toBeTruthy();
     expect(screen.getByText('3.2.P Drug Product')).toBeTruthy();

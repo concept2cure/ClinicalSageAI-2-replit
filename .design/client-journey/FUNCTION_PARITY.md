@@ -201,11 +201,11 @@ The labeling-pi registry entry must claim /api/labeling-smpc. Any re-keying amen
 
 ### Into Project home (`project-home`)
 
-#### From `dossier` (safe to fold)
-Repoint every onNav('dossier') caller: `Nonclinical.tsx:799`, `NdaCockpit.tsx:633,684`, `AgencyMeetings.tsx:662` and `BiopharmaJourney.tsx:162,169`.
+#### From `dossier` (folded in A2.7)
+Legacy `onNav('dossier')` callers reach Author through the shared step-aware resolver; the old screen and HTTP route are retired without deleting stored artifacts.
 
 - [x] Readiness for each CTD section. A2.7: ProjectArtifactReadiness's Artifact section status table, reached by ProjectDossier, carries the old artifact rollup, total/status counts, weakest status and each section's own update date. One canonical artifact reader uses the exact accepted project/anchor/client scope; unknown artifact statuses remain not assessed. Governed section details and module dates stay separate. Proof: `projectArtifactReadiness.test.tsx`, `projectDossierParity.test.tsx`, `dossier-support.pglite.test.ts`, `projects-dossier.test.ts`, native `project-dossier-destinations.e2e.ts`.
-- [x] Summary counts. A2.6: in-review and drafted totals on DossierReadinessCard sum the server's home rows only; added-market rows stay separate. No new percentage is computed. Proof: `projectDossierDetails.test.tsx`, `projectHomeReadiness.test.tsx` and native `project-dossier-details.e2e.ts`.
+- [x] Summary counts. A2.6: in-review and drafted totals on DossierReadinessCard sum the server's home rows only; added-market rows stay separate. The canonical artifact panel independently prints the server's artifact-derived summary, including unassessed states. No client percentage is computed. Proof snapshots: `projectDossierDetails.test.tsx`, `projectArtifactReadiness.test.tsx`, `projectHomeReadiness.test.tsx` and native `project-dossier-details.e2e.ts`.
 - [x] AnA reads section readiness. A2.7: dossierFacts includes one canonical artifactReadiness source with section counts/status/date/totals, plus supportingReadiness.sectionTracking and governed sections. Semantic validation rejects inconsistent counts/summary/dates; missing/malformed reads stay unavailable rather than zero. Proof: `projectArtifactReadiness.test.tsx`, `projectDossierParity.test.tsx` and scoped SQL/route tests above.
 
 #### From `program-journey`
@@ -228,12 +228,12 @@ Move PJ_STAGES (`BiopharmaJourney.tsx:129-193`) into Plan, StageBand or a shared
 - [ ] AnA reads the program and its stages. From `BiopharmaJourney.tsx:303-351`. Goes to: Project home's AnA context. No further work is named. Not real today.
 - [ ] Record a journey and advance a stage (audited routes). From `program-journey.routes.ts:67,117`. Goes to: nothing to carry as a write. Whether to keep the routes is a founder decision. Not real today.
 
-#### From `dossier-map` (safe to fold)
-In one change, delete /api/dossier-map, DossierMap.tsx, the registry and nav entries and the catalogue row, and repoint the "Start Dossier Map" action and capability.
+#### From `dossier-map` (folded in A2.7)
+The incoming A2.7 fold retires the screen, HTTP route, standalone registry/navigation identities and old suggested capability; stored tracking records and subscriptions remain. Its prior native/retirement qualification is preserved. The merged tracking protections below passed 294 combined tests in 27 files, two native flows and the production build; proof is in `slice-A2/A2.7b/merged/`. Mandatory publication gates still apply.
 
-- [x] Section chips under each module. A2.7: ProjectDossier's Tracked CTD sections view reuses the old map assembler's real `project_sections` percentages and section labels. This corrects A2.6's imprecise description of that source as artifact-derived. The view is separate from governed sections and artifact rollups; Vault keeps the editable tree. Proof: tracking assembler PGlite tests, `dossierMapProgramScope.test.tsx`, `projectDossierParity.test.tsx`, native `project-dossier-destinations.e2e.ts`.
+- [x] Section chips under each module. A2.7 reaches the existing `project_sections` modules, recorded codes and labels in Author, separately from governed sections and artifact rollups. The concurrent A2.7b carryover preserves distinct raw alias records, literal signed states, deterministic known duplicates, unknown observations and visible unmapped records through the existing assembler/shared rules. Unknown or malformed tracking facts cannot become completion figures. Proof snapshots: `projectSectionTracking.test.tsx`, tracking/scope PGlite suites and native `project-dossier-details.e2e.ts` for A2.7b; `projectDossierParity.test.tsx` and `project-dossier-destinations.e2e.ts` for the incoming A2.7 fold. Combined-tree regression/native/build proof is recorded under `A2.7b/merged/`.
 - [x] Ask AnA for the critical path to filing. A2.6: ModuleCompletion on Author calls the existing onAsk with the exact question. Native `project-dossier-details.e2e.ts` proves the conversation prefill without a model request or dossier write.
-- [x] AnA reads module completeness and the section lists. A2.7: the old section-tracking modules/percentages/labels are in dossierFacts as their own read, as are the artifact rollups and governed section facts. No client-computed mean replaces the canonical filing figure. Proof: `projectDossierParity.test.tsx` and `dossier-support.pglite.test.ts`.
+- [x] AnA reads module completeness and the section lists. The reconciled Author composition supplies one typed `supportingReadiness.sectionTracking` source alongside top-level `artifactReadiness` and governed sections. Shared rules reject contradictory labels, placement, counts and figures; raw code identities and unknown observations remain available without a client-computed module mean. The incoming A2.7 aliases and coordinated retirement replace the old screen/HTTP route; data and subscriptions remain. A2.7 and A2.7b evidence qualify their respective pre-merge snapshots; final combined checks are required.
 
 #### From `haq-manager`
 Retire the second HAQ store (`server/routes/c2c/haq-sessions.ts`, which has no client caller) in the same change.
