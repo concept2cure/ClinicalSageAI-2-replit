@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T08:06:23.743Z",
+  "generatedAt": "2026-10-26T08:19:45.046Z",
   "git": {
-    "sha": "7855b51152fd9513eced14c816dc240c746caf7f",
+    "sha": "a7e58c38e0a88caa452c585a9669c0e4f24e82d4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2385,7 +2385,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 179868
+        "bytes": 180569
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2428,6 +2428,10 @@
         "bytes": 141216
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 138885
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 138807
       },
@@ -2446,10 +2450,6 @@
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 136298
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2473,7 +2473,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 123586
+        "bytes": 124254
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2647,7 +2647,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3141
+        "lines": 3153
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2670,12 +2670,12 @@
         "lines": 2889
       },
       {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 2857
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2864
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2821
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 2857
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2791,7 +2791,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 2124
+        "lines": 2133
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
@@ -2934,6 +2934,10 @@
         "lines": 1812
       },
       {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1802
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "lines": 1801
       },
@@ -2944,10 +2948,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1784
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
