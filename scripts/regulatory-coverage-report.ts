@@ -16,18 +16,21 @@
  * @module scripts/regulatory-coverage-report
  */
 
-import {
+const asJson = process.argv.includes('--json');
+const gapsOnly = process.argv.includes('--gaps');
+// Select the existing logger's diagnostic stream before application imports.
+if (asJson) process.env.C2C_CLI_LOG_STDERR = '1';
+
+const {
   buildCoverageReport,
   getLifecycleSpineStatus,
   getCatalogOnlyGaps,
-} from '../server/services/regulatory/registry/registryCoverage.js';
-import {
+} = await import('../server/services/regulatory/registry/registryCoverage.js');
+const {
   buildSubmittabilityReport,
   getUnsubmittableFilings,
-} from '../server/services/regulatory/registry/submittabilityCoverage.js';
-
-const asJson = process.argv.includes('--json');
-const gapsOnly = process.argv.includes('--gaps');
+} = await import('../server/services/regulatory/registry/submittabilityCoverage.js');
+const { buildUsBiotechAuthoringCoverage } = await import('../server/services/regulatory/registry/usBiotechAuthoringCoverage.js');
 
 const report = buildCoverageReport();
 const spine = getLifecycleSpineStatus();
@@ -36,15 +39,16 @@ const gaps = getCatalogOnlyGaps();
 // "can it be SUBMITTED" — the other end of project initiation → submission.
 const submittability = buildSubmittabilityReport();
 const unsubmittable = getUnsubmittableFilings();
+const usBiotechAuthoring = await buildUsBiotechAuthoringCoverage(report.entries);
 
 if (asJson) {
-  process.stdout.write(
+  await new Promise<void>((resolve, reject) => process.stdout.write(
     JSON.stringify(
-      { summary: report.summary, byRegion: report.byRegion, spine, gaps, submittability, unsubmittable },
+      { summary: report.summary, byRegion: report.byRegion, spine, gaps, submittability, unsubmittable, usBiotechAuthoring },
       null,
       2
-    ) + '\n'
-  );
+    ) + '\n', error => error ? reject(error) : resolve()
+  ));
   process.exit(0);
 }
 
@@ -57,6 +61,14 @@ const line = (s = '') => process.stdout.write(s + '\n');
 line('══════════════════════════════════════════════════════════════════');
 line('  REGULATORY DOCUMENT COVERAGE REPORT');
 line('══════════════════════════════════════════════════════════════════');
+line();
+line('Blueprint coverage is not complete authoring, agency readiness or Weave parity');
+line(`US biotech: ${usBiotechAuthoring.summary.editorLoadableDefinitions}/${usBiotechAuthoring.summary.filings} filing definitions have editor templates; ${usBiotechAuthoring.summary.reusableDocuments} US/GLOBAL component documents.`);
+line(`  ${usBiotechAuthoring.summary.scopedConcerns} filing definitions carry specific product-scope concerns; workflow and human acceptance require separate evidence.`);
+for (const filing of usBiotechAuthoring.filings.filter(row => row.scopeConcerns.length)) {
+  line(`  ${filing.registryId}: ${filing.scopeConcerns.join(' ')}`);
+}
+for (const need of usBiotechAuthoring.unrepresentedNeeds) line(`  To complete: ${need.need}`);
 line();
 line(`Total active document types: ${report.summary.total}`);
 line(`  production_ready : ${report.summary.byReadiness.production_ready}  (${pct(report.summary.byReadiness.production_ready, report.summary.total)})  — dedicated section + task blueprints`);

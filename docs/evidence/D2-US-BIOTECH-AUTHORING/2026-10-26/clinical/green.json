@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-26T23:07:22.889029+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/authoring/__tests__/clinical-template-eligibility.test.ts",
+    "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 11.222,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "clinical/green-inputs.json",
+  "sourcesBefore": {
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/authoring/__tests__/clinical-template-eligibility.test.ts": "009f5a9bb6497e057a2fca053a3db362c30d9786e0ea758868d6f9859e7c235a",
+    "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts": "f62dd86b5526a8ecfc6471ba26a63c6c086eb5d1e84d0f886e37070c88c10bd3",
+    "server/services/authoring/document-template-outline-sections.ts": "7b0695664e2d560950054d1dccc476ff2683f282dae2f3456fb62aa4ddee2eb7"
+  },
+  "sourcesAfter": {
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/authoring/__tests__/clinical-template-eligibility.test.ts": "009f5a9bb6497e057a2fca053a3db362c30d9786e0ea758868d6f9859e7c235a",
+    "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts": "f62dd86b5526a8ecfc6471ba26a63c6c086eb5d1e84d0f886e37070c88c10bd3",
+    "server/services/authoring/document-template-outline-sections.ts": "7b0695664e2d560950054d1dccc476ff2683f282dae2f3456fb62aa4ddee2eb7"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "0377b3d2a987467cd87e76baec974c4e5e88ebcbee999e200fb7c2949f51e673",
+  "testSummary": [
+    "Test Files  2 passed (2)",
+    "Tests  28 passed (28)",
+    "Duration  10.72s (transform 3.53s, setup 85ms, import 2.37s, tests 7.88s, environment 0ms)"
+  ]
+}

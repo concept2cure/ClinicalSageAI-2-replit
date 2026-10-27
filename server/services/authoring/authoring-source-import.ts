@@ -1,4 +1,4 @@
-import { isWorkflowSourceKind, studyDesignImportId } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, isWorkflowSourceKind, studyDesignImportId } from '../../../shared/authoring/source-import';
 /**
  * Pull an exact source into the existing authoring store. Source identities,
  * bytes and provenance come from the server; no pasted source receipt is
@@ -314,6 +314,9 @@ function csrWorkflowSelector(selected: Record<string, unknown>): WorkflowImportS
 }
 
 function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
+  if (selected.kind === 'agency-response' && agencyResponseImportId(selected.eventId, selected.questionId)) {
+    return { kind: 'agency-response', eventId: String(selected.eventId), questionId: Number(selected.questionId) };
+  }
   if (selected.kind === 'protocol' && workflowInteger(selected.documentId)) return { kind: 'protocol', documentId: Number(selected.documentId) };
   const studyId = studyDesignImportId(selected.studyId);
   if (selected.kind === 'study-design-crf' && studyId) return { kind: 'study-design-crf', studyId };

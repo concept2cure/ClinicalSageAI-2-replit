@@ -43,6 +43,8 @@ import { ProjectSide } from './ProjectSide';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { mdxProjectPlan } from './ProjectMdxWorkflow';
 import { ProjectPlan } from './ProjectPlan';
+import { biotechPlanEntry } from './ProjectBiotechPlan';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -85,6 +87,7 @@ declare global {
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
 interface ProgramRow {
   id: string;
+  registry_id?: string | null;
   code: string | null;
   name: string | null;
   program_type: string | null;
@@ -1443,8 +1446,11 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
 
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
-  const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
   const teamActor = useAuthUser();
+  const projectSession = useAuthoringReadSession(teamActor);
+  const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
+  const progState = useLiveData<ProgramRow>(projectPath, [projectPath], undefined,
+    { key: JSON.stringify([pid, projectSession.actor, projectSession.key]), current: projectSession.sameRevision });
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
@@ -1780,7 +1786,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
           {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
           <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
-            planListed={usInd || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
+            planListed={usInd || !!biotechPlanEntry(prog, pid) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
         </>
       )}
 

@@ -1,0 +1,7 @@
+{
+  "correction": "Removed a trailing blank line in two files after staged diff-check refusal; no semantic change. Original worker pins retained; root combined qualification uses final bytes.",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/_agency-response-editor-fixture.ts",
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts"
+  ]
+}

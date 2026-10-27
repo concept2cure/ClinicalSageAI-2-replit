@@ -1264,7 +1264,7 @@ export function DocumentWorkbench({
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
   // that defaulted every filing type to "M3".
-  const [module, setModule] = useState('M3');
+  const [module, setModule] = useState('');
   const [creationNoticeContainer, setCreationNoticeContainer] = useState<HTMLDivElement | null>(null);
 
   /* ── The project's governed filing outline ──
@@ -4533,6 +4533,9 @@ export function DocumentWorkbench({
               docStatus={activeDoc?.status ?? null}
               module={module}
               programId={programId}
+              filingContext={{ projectId: programId ?? '', filingDocumentId: filing.document?.id ?? null,
+                registryId: docTemplateContext?.templateSource?.filingContext?.registryId
+                  ?? (filing.document?.filing_scope === 'market' ? null : program?.id === programId ? program.registryId ?? null : null) }}
               programSwitchHeld={programSwitchHeld}
               documentStart={sourceDocumentStart}
               noticeContainer={creationNoticeContainer}

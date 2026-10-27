@@ -41,6 +41,9 @@ import { ctdComponentTemplate, ctdFrontMatter } from './ctd-component-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
+import { clinicalSectionDraftingMode, isClinicalWorkingComponent } from '../authoring/document-template-outline-sections';
+import { US_BIOTECH_LIFECYCLE_TEMPLATES } from './us-biotech-lifecycle-templates';
+import { MEDICINAL_WORKING_TEMPLATES, canonicalCtdRegistryOutline } from './medicinal-working-templates';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -75,7 +78,8 @@ export interface DocumentTemplateStructure {
   /** Which existing platform record supplies the headings; distinct from evidence of an agency requirement. */
   outlineSource?:
     | { kind: 'project-blueprint' | 'dedicated-blueprint'; registryId: string; blueprintId: string }
-    | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
+    | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string }
+    | { kind: 'lifecycle-component' | 'source-component'; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
   /** Unnumbered front matter (title page, table of contents …), with non-numeric codes. */
@@ -250,7 +254,7 @@ const SMPC_PURPOSE: Record<string, string> = {
   '10': 'Date the SmPC text was last revised.',
 };
 
-export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
+const CORE_DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
   // ── CTD Module 2 summaries (ICH M4) ─────────────────────────────────────────
   // The Quality Overall Summary is read from the ICH M2–M5 record since 2026-10-25
   // (D2 cleanup C2): a five-heading hand copy before, with its Introduction coded
@@ -447,9 +451,25 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
   },
   ...CRF_AUTHORING_TEMPLATES,
   ...EXISTING_BIOTECH_COMPONENT_OUTLINES,
+  ...US_BIOTECH_LIFECYCLE_TEMPLATES,
+  ...MEDICINAL_WORKING_TEMPLATES,
 ];
 
 // ── Lookups (pure) ────────────────────────────────────────────────────────────
+
+/** Working-narrative permission never authorizes original source records. */
+function clinicalDraftingPolicy(outline: DocumentTemplateStructure): DocumentTemplateStructure {
+  if (!isClinicalWorkingComponent(outline.id)) return outline;
+  const apply = (sections: TemplateSection[]): TemplateSection[] => sections.map(section => {
+    const mode = section.drafting_mode ?? clinicalSectionDraftingMode(outline.id, section.number);
+    return { ...section, drafting_mode: mode,
+      purpose: mode === 'manual' ? `${section.purpose} Manual/source preparation: retain the actual original or generated record; do not synthesize signatures, tabulations, schedules or approvals.` : section.purpose,
+      ...(section.subsections ? { subsections: apply(section.subsections) } : {}) };
+  });
+  return { ...outline, sections: apply(outline.sections), ...(outline.frontMatter ? { frontMatter: apply(outline.frontMatter) } : {}) };
+}
+
+export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = CORE_DOCUMENT_TEMPLATES.map(clinicalDraftingPolicy);
 
 const BY_ID = new Map(DOCUMENT_TEMPLATES.map((t) => [t.id, t]));
 
@@ -500,7 +520,10 @@ export function registryOutlineRequiresReview(registryId: string): boolean {
  */
 export async function getRegistryDocumentTemplate(registryId: string): Promise<DocumentTemplateStructure | undefined> {
   const entry = getApplicationType(registryId);
+  if (registryTemplateUnavailabilityReason(registryId)) return undefined;
   if (!entry?.active || registryOutlineRequiresReview(entry.id)) return undefined;
+  const moduleOutline = canonicalCtdRegistryOutline(entry.id);
+  if (moduleOutline) return moduleOutline;
   // Existing component records win over older project heading copies
   // (lifecycle-record-outlines.ts: the annual reports, PAS/sBLA, CBE, meetings).
   const lifecycle = lifecycleRecordOutlineFor(entry.id);
@@ -516,6 +539,12 @@ export async function getRegistryDocumentTemplate(registryId: string): Promise<D
   if (dedicated) return projectOutline(entry, dedicated, entry.id, 'dedicated-blueprint');
   const shared = exactBlueprint(entry);
   return shared ? projectOutline(entry, shared) : undefined;
+}
+
+/** Module1 has a regional owner; no default or IND tree can create a GLOBAL counterpart. */
+export function registryTemplateUnavailabilityReason(registryId: string): string | undefined {
+  return registryId === 'ICH_CTD_M1'
+    ? 'Module1 is jurisdiction-specific. No harmonized GLOBAL Module1 record exists; choose the exact supported regional source.' : undefined;
 }
 
 export interface RegistryDocumentTemplateCoverage {

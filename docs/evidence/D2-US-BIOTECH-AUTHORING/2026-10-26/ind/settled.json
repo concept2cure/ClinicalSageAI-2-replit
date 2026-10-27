@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-10-26T23:10:07.459682+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts",
+    "server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.106,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ind/settled-inputs.json",
+  "sourcesBefore": {
+    "server/services/authoring/ind-authoring-templates.ts": "9257c2ec3e49546ae80f2acbb31c6c2d96f113d07c12790b43f4b820f118a99c",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "d4b59a1805cc46ca13b3fe74cc412f7cef497321f28169892d5554b1db4e7cbc",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts": "6c3b3d5a1105c5e58b6e4088c9c9dfe8f0c7beaae40de2189c7d268e2a501f62"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/ind-authoring-templates.ts": "9257c2ec3e49546ae80f2acbb31c6c2d96f113d07c12790b43f4b820f118a99c",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "d4b59a1805cc46ca13b3fe74cc412f7cef497321f28169892d5554b1db4e7cbc",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts": "6c3b3d5a1105c5e58b6e4088c9c9dfe8f0c7beaae40de2189c7d268e2a501f62"
+  },
+  "sourceDrift": [],
+  "rawOutput": "settled.log.gz",
+  "rawGzipSha256": "b1f61481870e9cf1926f5b075e29b53790625f10f2419ed4f6f217a4768194f1",
+  "testSummary": [
+    "Test Files  2 passed (2)",
+    "Tests  35 passed (35)",
+    "Duration  1.60s (transform 769ms, setup 86ms, import 901ms, tests 261ms, environment 0ms)"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": "9b7733927f562deb6b3611041ab09d5bcc9fc87192b2bf2df1028c77c27cab44",
+    "client/src/concept2cure/v2/__tests__/agencyResponsesCurrentScope.test.tsx": "49859723370e1dedd0f9be0a42bfdc582e9510d1a0cecc9b70145cc72844fcb8",
+    "client/src/concept2cure/v2/dataConnect.tsx": "29a63b3daa64e84de3022f86638aaa921c00c7c52d143dd55fe53ce9eba44847"
+  }
+}

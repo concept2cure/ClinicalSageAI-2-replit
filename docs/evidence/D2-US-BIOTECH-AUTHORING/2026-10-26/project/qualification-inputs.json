@@ -1,0 +1,19 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": "56594f62879388f05099b373e98e4777bd7a19ac6ad68af256f46919bb51f151",
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "9126b440625b588c7c95a12d0cc70494940f524353f14af59cc59f6e86c7769f",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "d7ffb4b6198f501d7a09303f138d47ce716c12d57e52a09d280f96ba02ed9db1",
+    "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx": "6cbb43ba838d37a261213d34198dceed111cf75739cebabfe832c944b4a95f5e",
+    "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx": "3706ad63db825de52f3e8effe1ae643f399bb4b7a80764b294e5297ec3d28564",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "81700d181bd2e871b7af5d0092e486b4bab7af39461158256897f89592999402",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "e9dd96f24df8d18d4f886b3a3ab508282d3e1d44e67836e289e91471e4f1046c",
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts": "c3080749eefed1617cefdfc71443dc360ee10b1235e4f18098173d1cb6fe92a2",
+    "client/src/concept2cure/v2/editor/programSummary.ts": "8f40cb3203e6a26b684dd884191e23417f4aee8200ed46a4fd6dba2608c9cbe2",
+    "server/routes/c2c/projects.ts": "206905bdfdc16dbe0b084b303f6e7444f1dda2efcdaaeaa3ea40327c4dfde168",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "81dc09c3d3dc6b26e32d9b920c3d841292469286a7877b1dd6c2947417ecd6fe",
+    "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx": "51ca75a27fe926ac6a29a4bc53f01dc81386b61847af497a4b58465d1009b0e6",
+    "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts": "109f4b8905a2c3591477af0c2a73bd74967292624b95ac3dc35d2bfb38785c60",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx": "1ab19e43acd29f7da0af213b27fa3dcf3f7418efd65a767567e23d0ccffd582d",
+    "client/src/concept2cure/v2/editor/__tests__/programSummaryContext.test.tsx": "3af2c7747dd88de1668af1bf714bbd218641463c515a46760a638840dcb0d8f6"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "files": 35,
+  "errors": 0,
+  "warnings": 23,
+  "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+  "baselineWarningsInWarnedFiles": 23,
+  "warningCountGrowth": 0,
+  "newFilesWithWarnings": [],
+  "qualification": "Scoped ESLint only; current warnings persist in pre-existing functions/files (AgencyResponses body is now named ScopedAgencyResponses). Function/file sizes may change; no added warning count."
+}

@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:31:06.807664+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.492,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "report/pipe-inputs.json",
+  "sourcesBefore": {
+    "scripts/regulatory-coverage-report.ts": "702aba670bc99fdee5f519c573efd093dd875a23538a855d9f11bab9f542e4aa",
+    "server/services/regulatory/registry/usBiotechAuthoringCoverage.ts": "feb366667d2a8373687a21287debdb0b52d64371535e6b443f2549ca02e259e4",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  },
+  "sourcesAfter": {
+    "scripts/regulatory-coverage-report.ts": "702aba670bc99fdee5f519c573efd093dd875a23538a855d9f11bab9f542e4aa",
+    "server/services/regulatory/registry/usBiotechAuthoringCoverage.ts": "feb366667d2a8373687a21287debdb0b52d64371535e6b443f2549ca02e259e4",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts": "236b26f11215aae5ddbc6f5f51fbfbeaf67cf4b4b960d0b5c39016298ff678ec"
+  },
+  "sourceDrift": [],
+  "rawOutput": "pipe.log.gz",
+  "rawGzipSha256": "8ce5d08cee93a082eca00c04b8f9cc80cf158bcea72c192c25c675456cc363e6",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  6 skipped (6)",
+    "Duration  2.06s (transform 72ms, setup 75ms, import 15ms, tests 1.74s, environment 0ms)"
+  ]
+}

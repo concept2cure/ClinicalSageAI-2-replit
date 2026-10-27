@@ -1,0 +1,16 @@
+{
+  "files": {
+    "shared/authoring/source-import.ts": "bb74f02558de07f1d573c9181c7fad1380add55408ee223d34ce069053ca2360",
+    "server/services/authoring/workflow-source-import.ts": "c67815042f92884150d9dcd461ade99e8a6095849bec1b9ad9a281220002540d",
+    "server/services/authoring/authoring-source-import.ts": "a7d5a12cb6157c7e782152a0bdde03ec39e3d9f1b13feb2a1c1a9aa6aff8430f",
+    "server/services/authoring/agency-response-source.ts": "b74cd6832b8e54425b961fede66ff5c514839e0d1ddb7f0b89b15af140d009d4",
+    "server/services/authoring/import-source-references.ts": "d1d7b4f2e80c75db1e5fdf820eb10b3b3ec73fa790f1c0fb64fbeb4d1cac8111",
+    "server/services/authoring/workflow-import-governance.ts": "2acc106403b68ad16385f46cfae5b0e2fc9d20605071ab1e9767afac629d5ff2",
+    "client/src/concept2cure/v2/authoringHandoff.ts": "14ad25c46a8ef0bb2ac6af05a132792429ef68b3630c4905fa706ec031e9c677",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "766042392cc491ecd03ac1cdde2286d4fae7571234360d85db071cdbd34f441d",
+    "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts": "89dc4b07118b524ff91033e30f181dc16fff2b0c8fcb84606183be38b47ce5bc",
+    "server/routes/__tests__/_agency-response-authoring-fixture.ts": "b79e825629a52e4aab37a059d26b90bef436300b730bbcff292661040f3ccd2d",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "5ebd6c63a2828f88d7373e2ee5b36b9c04d8e17e734bb4e1baf3eec520c103f5",
+    "client/src/concept2cure/v2/editor/__tests__/sourceImportDialog.test.tsx": "b912e9548797ad209fed79b0c164aa0e44c1cb9866ea338100d37e205ab8817d"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-10-26T23:35:09.623847+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 3.727,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/writeback/text-red-pins.json",
+  "sourcesBefore": {
+    "server/services/agency-responses/editor-response.ts": "ac40df428befdbf629ca3ca197d248e07c0ac23ba4b770265f46ffe41551e09f",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  },
+  "sourcesAfter": {
+    "server/services/agency-responses/editor-response.ts": "ac40df428befdbf629ca3ca197d248e07c0ac23ba4b770265f46ffe41551e09f",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "text-red.log.gz",
+  "rawGzipSha256": "740f01ede2ab85c02642c9e647ba57f38741011be99f6ce51da9014fda9ea5e0",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 10 passed (11)",
+    "Duration  3.28s (transform 1.68s, setup 70ms, import 2.96s, tests 25ms, environment 0ms)"
+  ]
+}

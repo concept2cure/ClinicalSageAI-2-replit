@@ -65,7 +65,7 @@ async function retainedOrigin(q: Queryable, input: WorkflowGovernanceInput): Pro
   const rows = await q.query(`SELECT section_id::text, metadata->'provenance'->'importSource' AS origin,
       metadata->>'section_code' AS source_code
     FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'
-      AND metadata->'provenance'->'importSource'->>'kind' IN ('protocol','csr','ivd-assessment','ivd-document','study-design-crf')
+      AND metadata->'provenance'->'importSource'->>'kind' IN ('protocol','csr','ivd-assessment','ivd-document','study-design-crf','agency-response')
     ORDER BY created_at, id`, [input.doc.id, input.organizationId]);
   const first = rows.rows[0]?.origin as WorkflowImportOrigin | undefined;
   if (!first) {

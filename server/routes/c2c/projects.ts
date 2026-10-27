@@ -495,6 +495,8 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
   return {
     ...rest,
+    registry_id: meta.submissionTypeId != null && typeof meta.submissionTypeId !== 'string' ? null : registryContextForProgram({ submissionTypeId: str(meta.submissionTypeId),
+      programType: str(rest.program_type), primaryAgency: str(rest.primary_agency) })?.registryId ?? null,
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),

@@ -1,0 +1,120 @@
+{
+  "sources": [
+    {
+      "id": "fda-expanded-individual",
+      "url": "https://www.fda.gov/drugs/investigational-new-drug-ind-application/ind-applications-clinical-treatment-treatment-single-patient-emergency-setting",
+      "retrievedUtc": "2026-10-26T23:10:59.536139+00:00",
+      "status": "unavailable",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "id": "fda-expanded-group",
+      "url": "https://www.fda.gov/drugs/investigational-new-drug-ind-application/ind-applications-clinical-treatment-treatment-group-patients-non-emergency-setting",
+      "retrievedUtc": "2026-10-26T23:10:59.537043+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-applications-clinical-treatment-treatment-group-patients-non-emergency-setting",
+      "bytes": 37286,
+      "sha256": "78de2ae9955fd2cebe074c3363a3c33e278378131973dd568ea469958b06ec01"
+    },
+    {
+      "id": "fda-form3926",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/individual-patient-expanded-access-applications-form-fda-3926",
+      "retrievedUtc": "2026-10-26T23:10:59.537614+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/individual-patient-expanded-access-applications-form-fda-3926",
+      "bytes": 34797,
+      "sha256": "b138216704d5bdeb7508109b4803bbd337a04f0c4889adaf3b6c220b7a47624f"
+    },
+    {
+      "id": "fda-jurisdiction",
+      "url": "https://www.fda.gov/combination-products/jurisdictional-information",
+      "retrievedUtc": "2026-10-26T23:10:59.538426+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/combination-products/jurisdictional-information",
+      "bytes": 31501,
+      "sha256": "85fd94cf05f4b2932b51d5500388dc776268e58e09c2ce1201aeb950581517c8"
+    },
+    {
+      "id": "fda-formal-meetings",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/formal-meetings-between-fda-and-sponsors-or-applicants-pdufa-products",
+      "retrievedUtc": "2026-10-26T23:10:59.908747+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/formal-meetings-between-fda-and-sponsors-or-applicants-pdufa-products",
+      "bytes": 35428,
+      "sha256": "5a0e6d5d6c03e3f9c4fdbb3f1eba3d8e2400b60c99a99ab86d7f79390965f64b"
+    },
+    {
+      "id": "fda-cber-labeling",
+      "url": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/labeling-cber-regulated-products",
+      "retrievedUtc": "2026-10-26T23:10:59.920100+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/labeling-cber-regulated-products",
+      "bytes": 64921,
+      "sha256": "a79455c7678be4d6b36274aa6137ead9cd02a40426c76f68a4cb2e4698f615b1"
+    },
+    {
+      "id": "fda-cber-master-files",
+      "url": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/master-files-cber-regulated-products",
+      "retrievedUtc": "2026-10-26T23:10:59.946542+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/vaccines-blood-biologics/development-approval-process-cber/master-files-cber-regulated-products",
+      "bytes": 40191,
+      "sha256": "79fc0fc4e8378a3f71ca7390e7b2663fa75dc445f2aa574fca2f15876750ff33"
+    },
+    {
+      "id": "fda-pmr-pmc",
+      "url": "https://www.fda.gov/drugs/guidance-compliance-regulatory-information/postmarketing-requirements-and-commitments-introduction",
+      "retrievedUtc": "2026-10-26T23:11:00.275628+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/drugs/guidance-compliance-regulatory-information/postmarketing-requirements-and-commitments-introduction",
+      "bytes": 38018,
+      "sha256": "64a1b94c416a7954b577ae674532b12fd0fe66c96aaab81cfad4d8cc77979b8b"
+    },
+    {
+      "id": "ecfr-part601",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601",
+      "retrievedUtc": "2026-10-26T23:11:00.389148+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-601",
+      "bytes": 292841,
+      "sha256": "07c7aa018c174c0803ce94bb24c29bb7c71a1cd07eaa43f098f4df1f2bc9d90f"
+    },
+    {
+      "id": "ecfr-part600",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600",
+      "retrievedUtc": "2026-10-26T23:11:00.420168+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600",
+      "bytes": 253366,
+      "sha256": "9429ca749c2469a7a301463a379b0bab7c38f9df27c4182da5d10882688fe1c5"
+    },
+    {
+      "id": "fda-e2b",
+      "url": "https://www.fda.gov/drugs/fda-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-electronic-submissions",
+      "retrievedUtc": "2026-10-26T23:11:00.447959+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/fda-adverse-event-monitoring-system-aems-electronic-submissions",
+      "bytes": 49935,
+      "sha256": "668cc6278c4346409c9740c09a78788bd2c67345159127d821ae055585ec2714"
+    },
+    {
+      "id": "fda-spl",
+      "url": "https://www.fda.gov/industry/fda-data-standards-advisory-board/structured-product-labeling-resources",
+      "retrievedUtc": "2026-10-26T23:11:00.788895+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/industry/fda-data-standards-advisory-board/structured-product-labeling-resources",
+      "bytes": 60084,
+      "sha256": "1e69d0794d3b2336abbc5ee7f4b76cc1dc8397b2b48d4e7626377ea9767a5d61"
+    },
+    {
+      "id": "fda-rfd-guidance",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/how-write-request-designation-rfd",
+      "retrievedUtc": "2026-10-26T23:12:52.766510+00:00",
+      "status": 200,
+      "resolvedUrl": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/how-write-request-designation-rfd",
+      "bytes": 83324,
+      "sha256": "944b6b95b0942cdb06455e025560fdc8b06b735dac8611575a66953d80742780"
+    }
+  ],
+  "scope": "Read-only official-page discovery. Fetch success alone does not verify current application-specific obligations; summaries distinguish readable text from unread references. Raw HTML remains temporary research input."
+}

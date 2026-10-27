@@ -293,6 +293,7 @@ export function dueInWords(d: string | null | undefined, short = false): string 
 export interface InboxResponses {
   projectId: string;
   fire: (m: string, tone?: 'ok' | 'error') => void;
+  onNav?: (id: string) => void;
 }
 
 /** A request, from another screen, to open one letter (and one of its questions). */
@@ -418,6 +419,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               projectId={responses.projectId}
               letter={c}
               fire={responses.fire}
+              onNav={responses.onNav}
               focusQuestionId={targeted ? opening?.questionId ?? null : null}
             />
           </div>

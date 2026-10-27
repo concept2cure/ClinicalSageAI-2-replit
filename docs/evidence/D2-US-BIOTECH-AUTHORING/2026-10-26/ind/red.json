@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:06:07.867213+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 1.858,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "ind/red-inputs.json",
+  "sourcesBefore": {
+    "server/services/authoring/ind-authoring-templates.ts": "69f2e55d64cfe1c11e013287baf00a84aad9ee07a19a546544f62c169743cce4",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "94dc16f90407d755ca434ef7c1c3210d68932e50ce22c68f88f0127c499a6718",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts": "63b4e8e05171c06eba59d0740ec7ac3d99c8fa03b7402aa4bcfbfed0e980f280"
+  },
+  "sourcesAfter": {
+    "server/services/authoring/ind-authoring-templates.ts": "69f2e55d64cfe1c11e013287baf00a84aad9ee07a19a546544f62c169743cce4",
+    "server/services/authoring/ind-template-outlines-m4-m5.ts": "94dc16f90407d755ca434ef7c1c3210d68932e50ce22c68f88f0127c499a6718",
+    "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts": "63b4e8e05171c06eba59d0740ec7ac3d99c8fa03b7402aa4bcfbfed0e980f280"
+  },
+  "sourceDrift": [],
+  "rawOutput": "red.log.gz",
+  "rawGzipSha256": "ee7f7ffd0391d375ebcd06bd3a7f3a77ed3eee08bab2b0a4c0d7901864b2fdcc",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  4 failed | 1 passed (5)",
+    "Duration  1.38s (transform 691ms, setup 74ms, import 717ms, tests 321ms, environment 0ms)"
+  ]
+}

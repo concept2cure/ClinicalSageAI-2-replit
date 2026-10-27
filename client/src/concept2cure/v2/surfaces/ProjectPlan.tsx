@@ -28,6 +28,7 @@ import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from './P
 import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
 import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
+import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -92,7 +93,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   available, onNav, onStage, onAsk, onOpenDocument, team, tasks }: {
   pid: string;
   /** The verified project read (ProjectHome `prog`), for the device plan and the target date. */
-  prog: (MdxWorkflowProject & { target_submission_date?: string | null }) | null;
+  prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null }) | null;
   usInd: boolean;
   cmcComposes: boolean;
   deviceFiling: boolean;
@@ -119,6 +120,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       onAssigned={() => setEpoch(value => value + 1)} />
   );
   const devicePlan = deviceFiling && prog ? mdxProjectPlan(prog, otherFilings) : null;
+  const biotech = biotechPlanEntry(prog, pid);
   const assignmentsUnread = assignments.error && (
     <p className="pf-sel-m" role="status" data-testid="plan-assignments-error">
       Who each item is assigned to could not be read. An assignment you make is confirmed when it is saved.
@@ -148,6 +150,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
             onNav={onNav} onStage={onStage} onAsk={onAsk} available={available}
             assignmentOf={assignmentOf} assignAction={assignAction} />
         </div>
+      ) : biotech ? (
+        <ProjectBiotechPlan programId={pid} entry={biotech} onOpenDocument={onOpenDocument} onAsk={onAsk}
+          assignmentOf={assignmentOf} assignAction={assignAction} />
       ) : (
         <section className="pj-sec" aria-labelledby="pj-plan-h">
           <div className="pj-sec-h">

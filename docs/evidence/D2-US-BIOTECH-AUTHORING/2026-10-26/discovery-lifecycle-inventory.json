@@ -1,0 +1,313 @@
+{
+  "meetingTypes": [
+    "A",
+    "B",
+    "B(EOP)",
+    "C",
+    "D",
+    "INTERACT"
+  ],
+  "rows": [
+    {
+      "id": "pre_ind_meeting",
+      "title": "Pre-IND Meeting Briefing Document (Type B)",
+      "registryId": "US_PRE_IND",
+      "componentCount": 8,
+      "componentCodes": [
+        "MTG-REQ-CL",
+        "MTG-AGENDA",
+        "MTG-ATTEND",
+        "MTG-BKGD",
+        "MTG-NONCLIN",
+        "MTG-CMC",
+        "MTG-CLIN",
+        "MTG-QUES"
+      ]
+    },
+    {
+      "id": "end_of_phase_2_meeting",
+      "title": "End-of-Phase-2 Meeting Briefing Document (Type B(EOP))",
+      "registryId": null,
+      "componentCount": 9,
+      "componentCodes": [
+        "MTG-REQ-CL",
+        "MTG-AGENDA",
+        "MTG-ATTEND",
+        "MTG-BKGD",
+        "MTG-EFF",
+        "MTG-SAFETY",
+        "MTG-STATS",
+        "MTG-CMC-NC",
+        "MTG-QUES"
+      ]
+    },
+    {
+      "id": "pre_nda_meeting",
+      "title": "Pre-NDA Meeting Briefing Document (Type B)",
+      "registryId": null,
+      "componentCount": 9,
+      "componentCodes": [
+        "MTG-REQ-CL",
+        "MTG-AGENDA",
+        "MTG-ATTEND",
+        "MTG-BKGD",
+        "MTG-EFF",
+        "MTG-SAFETY",
+        "MTG-DATA",
+        "MTG-PLANS",
+        "MTG-QUES"
+      ]
+    },
+    {
+      "id": "pre_bla_meeting",
+      "title": "Pre-BLA Meeting Briefing Document (Type B)",
+      "registryId": null,
+      "componentCount": 10,
+      "componentCodes": [
+        "MTG-REQ-CL",
+        "MTG-AGENDA",
+        "MTG-ATTEND",
+        "MTG-BKGD",
+        "MTG-QUAL",
+        "MTG-MFG",
+        "MTG-EFF",
+        "MTG-SAFETY",
+        "MTG-DATA-PLANS",
+        "MTG-QUES"
+      ]
+    },
+    {
+      "id": "ind_initial",
+      "title": "Initial IND Application",
+      "registryId": "US_IND",
+      "componentCount": 9,
+      "componentCodes": [
+        "COVER-LETTER",
+        "FORM-FDA-1571",
+        "FORM-FDA-1572",
+        "FORM-FDA-3674",
+        "TOC",
+        "INTRO-GIP",
+        "IB",
+        "PROTOCOL",
+        "PREV-HUMAN-EXP"
+      ]
+    },
+    {
+      "id": "ind_protocol_amendment",
+      "title": "IND Protocol Amendment",
+      "registryId": "US_IND_AMENDMENT",
+      "componentCount": 4,
+      "componentCodes": [
+        "COVER-LETTER",
+        "FORM-FDA-1571",
+        "PROTOCOL-OR-CHANGE",
+        "SUPPORTING-INFO"
+      ]
+    },
+    {
+      "id": "ind_information_amendment",
+      "title": "IND Information Amendment",
+      "registryId": "US_IND_AMENDMENT",
+      "componentCount": 4,
+      "componentCodes": [
+        "COVER-LETTER",
+        "FORM-FDA-1571",
+        "INFO-SUMMARY",
+        "TECHNICAL-DATA"
+      ]
+    },
+    {
+      "id": "ind_cmc_amendment",
+      "title": "IND CMC Information Amendment",
+      "registryId": "US_IND_AMENDMENT",
+      "componentCount": 4,
+      "componentCodes": [
+        "COVER-LETTER",
+        "FORM-FDA-1571",
+        "CMC-CHANGE-SUMMARY",
+        "MODULE3-UPDATE"
+      ]
+    },
+    {
+      "id": "ind_response_to_clinical_hold",
+      "title": "IND Complete Response to Clinical Hold",
+      "registryId": "US_IND_AMENDMENT",
+      "componentCount": 4,
+      "componentCodes": [
+        "COVER-LETTER",
+        "FORM-FDA-1571",
+        "POINT-BY-POINT-RESPONSE",
+        "REVISED-DOCUMENTS"
+      ]
+    },
+    {
+      "id": "ind_safety_report",
+      "title": "IND Safety Report (Expedited 7/15-Day)",
+      "registryId": "US_IND_SR",
+      "componentCount": 7,
+      "componentCodes": [
+        "safety.cover",
+        "safety.icsr",
+        "safety.causality",
+        "safety.expectedness",
+        "safety.aggregate",
+        "safety.followup",
+        "safety.similar_reports"
+      ]
+    },
+    {
+      "id": "ind_annual_report",
+      "title": "IND Annual Report",
+      "registryId": "US_IND_ANNUAL",
+      "componentCount": 7,
+      "componentCodes": [
+        "annual.transmittal",
+        "annual.study_progress",
+        "annual.safety_summary",
+        "annual.drug_actions",
+        "annual.ind_changes",
+        "annual.ib_revisions",
+        "annual.admin"
+      ]
+    },
+    {
+      "id": "dsur",
+      "title": "Development Safety Update Report (DSUR, ICH E2F)",
+      "registryId": "ICH_DSUR",
+      "componentCount": 7,
+      "componentCodes": [
+        "dsur.title_exec",
+        "dsur.regulatory_status",
+        "dsur.trial_inventory",
+        "dsur.line_listings",
+        "dsur.safety_evaluation",
+        "dsur.important_risks",
+        "dsur.conclusion_appendices"
+      ]
+    },
+    {
+      "id": "nda_bla_annual_report",
+      "title": "NDA/BLA Post-Approval Annual Report",
+      "registryId": "US_NDA_ANNUAL",
+      "componentCount": 7,
+      "componentCodes": [
+        "annual.2252",
+        "annual.summary",
+        "annual.distribution",
+        "annual.labeling",
+        "annual.cmc",
+        "annual.nonclinical_clinical",
+        "annual.pmc_pmr_status"
+      ]
+    },
+    {
+      "id": "nda",
+      "title": "New Drug Application (NDA)",
+      "registryId": "US_NDA",
+      "componentCount": 11,
+      "componentCodes": [
+        "356h",
+        "cover-letter",
+        "toc-index",
+        "labeling",
+        "patent-exclusivity",
+        "financial-disclosure",
+        "debarment-cert",
+        "user-fee-cover",
+        "prea-pediatric",
+        "iss",
+        "ise"
+      ]
+    },
+    {
+      "id": "bla",
+      "title": "Biologics License Application (BLA)",
+      "registryId": "US_BLA",
+      "componentCount": 8,
+      "componentCodes": [
+        "356h",
+        "cover-letter",
+        "labeling",
+        "comparability",
+        "potency-lot-release",
+        "establishment-facilities",
+        "iss",
+        "ise"
+      ]
+    },
+    {
+      "id": "nda_pas",
+      "title": "Prior Approval Supplement (PAS)",
+      "registryId": "US_NDA_SUPP",
+      "componentCount": 9,
+      "componentCodes": [
+        "PAS-COVER",
+        "PAS-356H",
+        "PAS-SUMMARY",
+        "PAS-LABELING",
+        "PAS-CLINICAL",
+        "PAS-PEDIATRIC",
+        "PAS-PATENT",
+        "PAS-ENV",
+        "PAS-FEE"
+      ]
+    },
+    {
+      "id": "cbe_30",
+      "title": "Changes Being Effected in 30 Days Supplement (CBE-30)",
+      "registryId": "US_CBE",
+      "componentCount": 5,
+      "componentCodes": [
+        "CBE30-COVER",
+        "CBE30-356H",
+        "CBE30-CHANGE",
+        "CBE30-LABELING",
+        "CBE30-ENV"
+      ]
+    },
+    {
+      "id": "cbe_0",
+      "title": "Changes Being Effected Supplement (CBE-0, Immediate)",
+      "registryId": "US_CBE",
+      "componentCount": 6,
+      "componentCodes": [
+        "CBE0-COVER",
+        "CBE0-356H",
+        "CBE0-CHANGE",
+        "CBE0-ENV",
+        "CBE0-LABELING",
+        "CBE0-SAFETY"
+      ]
+    },
+    {
+      "id": "iss",
+      "title": "Integrated Summary of Safety (ISS)",
+      "registryId": null,
+      "componentCount": 7,
+      "componentCodes": [
+        "ISS-POOL",
+        "ISS-POP",
+        "ISS-EXP",
+        "ISS-DEMO",
+        "ISS-AE",
+        "ISS-LAB",
+        "ISS-SUBGROUP"
+      ]
+    },
+    {
+      "id": "ise",
+      "title": "Integrated Summary of Efficacy (ISE)",
+      "registryId": null,
+      "componentCount": 6,
+      "componentCodes": [
+        "ISE-POOL",
+        "ISE-POP",
+        "ISE-DEMO",
+        "ISE-PRIMARY",
+        "ISE-DOSE",
+        "ISE-SUBGROUP"
+      ]
+    }
+  ]
+}

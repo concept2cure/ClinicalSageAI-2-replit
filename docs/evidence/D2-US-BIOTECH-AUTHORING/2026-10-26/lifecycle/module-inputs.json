@@ -1,0 +1,7 @@
+{
+  "files": {
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "257e3ac0f418b9ecd827e6e4e25b86cf9ad5bd54bac02ddf97780c986d7c0032",
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts": "551ef74f26b9d05dc9ec445ba8e10ed70e83dede01050fba22919567e08c9eb8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb"
+  }
+}

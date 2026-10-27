@@ -6,6 +6,8 @@ import { getApplicationType, isDeviceRegistryEntry, isSharedPlanningRegistryEntr
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
 import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 import { componentTemplateIdForRegistry, getDocumentTemplate } from './document-template-library';
+import { isUsBiotechLifecycleComponent } from './us-biotech-lifecycle-templates';
+import { isUsMedicinalWorkingComponent } from './medicinal-working-templates';
 import { buildDeviceDocumentPreparation } from './device-document-preparation';
 import { buildSharedPlanningPreparation, SHARED_PLANNING_AUTHORING_GUIDANCE } from './shared-planning-preparation';
 
@@ -247,6 +249,7 @@ function preparationTemplateId(input: PreparationInput): string | undefined {
 /** The one regional/body identity of a standalone component, including aliases. */
 export function documentComponentContext(templateId: string | undefined): { region: 'US' | 'EU' | 'GLOBAL'; agency: string } {
   const canonical = templateId ? getDocumentTemplate(templateId)?.id ?? templateId : undefined;
+  if (canonical && (isUsBiotechLifecycleComponent(canonical) || isUsMedicinalWorkingComponent(canonical))) return { region: 'US', agency: 'FDA' };
   if (canonical === 'k510_summary') return { region: 'US', agency: 'FDA' };
   if (canonical && ['gspr_checklist', 'ivdr_gspr_checklist', 'performance_evaluation_report'].includes(canonical)) return { region: 'EU', agency: 'Notified_Body' };
   return canonical && ['smpc', 'impd', 'risk_management_plan', 'pil'].includes(canonical)

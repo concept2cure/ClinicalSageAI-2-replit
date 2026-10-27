@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-26T23:25:06.373032+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 10.238,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/writeback/green-source.json",
+  "sourcesBefore": {
+    "server/services/agency-responses/editor-response.ts": "412c0183650c4979b945a56b445ff34fb0f15204881eeb82150ba20bcc57a0bf",
+    "server/routes/c2c/agency-responses.ts": "78a56264ebf95f202cbfa95853a5846d7431804c9dc8c5a52a4065d456135375",
+    "server/services/agency-responses/response-service.ts": "92e7e1747cca820a3d8b3d3199aa6500181029139306e60969ce620ccef24084",
+    "server/services/agency-responses/visibility.ts": "9a06422905b42e775b31113a90c05d6a567b6501a38cc7524b979793071161df",
+    "server/services/authoring/agency-response-source.ts": "b74cd6832b8e54425b961fede66ff5c514839e0d1ddb7f0b89b15af140d009d4",
+    "server/services/authoring/import-source-references.ts": "d1d7b4f2e80c75db1e5fdf820eb10b3b3ec73fa790f1c0fb64fbeb4d1cac8111",
+    "server/services/authoring/workflow-import-governance.ts": "2acc106403b68ad16385f46cfae5b0e2fc9d20605071ab1e9767afac629d5ff2",
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts": "d207b3fe653220fff9db7fe454ad49125de8ef45eb3653b679b702c3243302c5",
+    "server/routes/__tests__/_agency-response-authoring-fixture.ts": "b79e825629a52e4aab37a059d26b90bef436300b730bbcff292661040f3ccd2d"
+  },
+  "sourcesAfter": {
+    "server/services/agency-responses/editor-response.ts": "412c0183650c4979b945a56b445ff34fb0f15204881eeb82150ba20bcc57a0bf",
+    "server/routes/c2c/agency-responses.ts": "78a56264ebf95f202cbfa95853a5846d7431804c9dc8c5a52a4065d456135375",
+    "server/services/agency-responses/response-service.ts": "92e7e1747cca820a3d8b3d3199aa6500181029139306e60969ce620ccef24084",
+    "server/services/agency-responses/visibility.ts": "9a06422905b42e775b31113a90c05d6a567b6501a38cc7524b979793071161df",
+    "server/services/authoring/agency-response-source.ts": "b74cd6832b8e54425b961fede66ff5c514839e0d1ddb7f0b89b15af140d009d4",
+    "server/services/authoring/import-source-references.ts": "d1d7b4f2e80c75db1e5fdf820eb10b3b3ec73fa790f1c0fb64fbeb4d1cac8111",
+    "server/services/authoring/workflow-import-governance.ts": "2acc106403b68ad16385f46cfae5b0e2fc9d20605071ab1e9767afac629d5ff2",
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts": "d207b3fe653220fff9db7fe454ad49125de8ef45eb3653b679b702c3243302c5",
+    "server/routes/__tests__/_agency-response-authoring-fixture.ts": "b79e825629a52e4aab37a059d26b90bef436300b730bbcff292661040f3ccd2d"
+  },
+  "sourceDrift": [],
+  "rawOutput": "green.log.gz",
+  "rawGzipSha256": "8468351e5f93cdf37c84231179c63fe5d0affc556e8d3b8ac9bdf84754694ceb",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  6 failed | 4 passed (10)",
+    "Duration  9.74s (transform 3.76s, setup 77ms, import 3.70s, tests 5.71s, environment 0ms)"
+  ]
+}

@@ -12,6 +12,7 @@
  *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId
  *   PATCH /projects/:projectId/agency-communications/:eventId/questions/:questionId/owner
  *   PUT  /projects/:projectId/agency-communications/:eventId/questions/:questionId/response
+ *   GET  /projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source
  *   POST /projects/:projectId/agency-communications/:eventId/questions/:questionId/approve
  *   POST /projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw
  *   POST /projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments
@@ -52,14 +53,16 @@
  * approved as they stand, and leaves the system through the audited export
  * path, which records the sha256 of the bytes delivered.
  *
- * No model is called here. AnA drafts in the conversation ("Draft response
- * with AnA" on the inbox card); a person saves the words and another person
- * signs them. No AnA tool can sign.
+ * No model is called here. Response authoring uses the existing document
+ * editor; explicit saved-section writeback rechecks the exact source question,
+ * response revision, section version and retained lineage. Another person
+ * signs the registered response. No AnA tool can sign.
  *
  * @module server/routes/c2c/agency-responses
  */
 
 import type { Request, Response, Router } from 'express';
+import { editorResponseRefusal, readResponseEditorSources, responseFromSavedEditor } from '../../services/agency-responses/editor-response';
 import { z } from 'zod';
 import { requestPgClient } from '../../db/requestDb';
 import { serverError } from '../../lib/api-response';
@@ -136,10 +139,12 @@ const questionBody = z.object({
 });
 
 const responseBody = z.object({
-  responseText: z.string().max(100000),
+  responseText: z.string().max(100000).optional(),
+  editorSource: z.object({ documentId: z.string().uuid(), sectionId: z.string().uuid(),
+    expectedSha256: z.string().regex(/^[a-f0-9]{64}$/), expectedUpdatedAt: z.string().datetime({ offset: true }) }).strict().optional(),
   expectedRevision: z.number().int().min(0).max(MAX_INT),
   reason: governedReason,
-});
+}).refine(input => (input.responseText !== undefined) !== (input.editorSource !== undefined), 'Supply either saved editor identity or response text, never both.');
 
 const approveBody = z.object({ expectedRevision: z.number().int().min(0).max(MAX_INT) });
 const sectionBody = z.object({ ctdSection: sectionField.nullable(), reason: governedReason });
@@ -229,6 +234,11 @@ function validation(res: Response, err: z.ZodError): void {
 }
 
 function refusal(res: Response, err: unknown, where: string): void {
+  const editorRefusal = editorResponseRefusal(err);
+  if (editorRefusal) {
+    sendError(res, editorRefusal.status, editorRefusal.message, undefined, editorRefusal.code);
+    return;
+  }
   if (err instanceof AgencyResponseError) {
     sendError(res, AGENCY_RESPONSE_CODE_STATUS[err.code] ?? 409, err.message, undefined, err.code);
     return;
@@ -324,6 +334,18 @@ async function viewerCapabilities(req: Request, scope: Scope, client: Queryable)
 }
 
 export function registerAgencyResponseRoutes(router: Router, canView: VisibilityCheck): void {
+  router.get(`${BASE}/questions/:questionId/editor-source`, async (req, res) => {
+    const scope = scopeOf(req, res); if (!scope) return;
+    const questionId = questionIdOf(req, res); if (questionId === null) return;
+    try {
+      const client = requestPgClient(req) as unknown as Queryable;
+      await visibleLetter(client, scope, req, canView);
+      const questions = await readQuestions(client, scope.orgId, scope.projectId, scope.eventId, today());
+      const question = questions.find(value => value.id === questionId);
+      if (!question) throw new AgencyResponseError('QUESTION_NOT_FOUND', 'That question was not found on this letter.');
+      return sendSuccess(res, await readResponseEditorSources(client, { ...scope, questionId }, question.responseRevision));
+    } catch (error) { return refusal(res, error, 'reading a saved editor response'); }
+  });
   router.get(`${BASE}/questions`, async (req, res) => {
     const scope = scopeOf(req, res);
     if (!scope) return;
@@ -418,13 +440,16 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
     const input = parsed.data;
     await governedWrite(req, res, { scope, command: 'update', reason: input.reason, domain: DOMAIN }, async (client) => {
       const letter = await visibleLetter(client, scope, req, canView, true);
-      const saved = await saveResponseTx(client, scope, letter, { questionId, ...input });
+      const editor = input.editorSource ? await responseFromSavedEditor(client, { ...scope, questionId }, input.editorSource, input.expectedRevision) : null;
+      const saved = await saveResponseTx(client, scope, letter, { questionId, expectedRevision: input.expectedRevision,
+        reason: input.reason, responseText: editor ? editor.responseText : input.responseText! });
       // Read back with the signatures, so the caller learns at once whether an
       // earlier approval no longer covers what was just written.
       const view = (await readQuestions(client, scope.orgId, scope.projectId, scope.eventId, today())).find((q) => q.id === questionId)!;
       return {
         target: `agency-question:${questionId}`,
-        payload: { communicationEventId: letter.eventId, questionRef: saved.question.questionRef, responseRevision: saved.revision, responseDigest: saved.digest },
+        payload: { communicationEventId: letter.eventId, questionRef: saved.question.questionRef, responseRevision: saved.revision, responseDigest: saved.digest,
+          ...(editor ? { editorSource: editor.source } : {}) },
         body: questionForViewer(view, scope.userId),
       };
     });

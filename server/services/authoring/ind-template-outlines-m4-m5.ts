@@ -7,6 +7,7 @@ import { e3BasisFor, e3SectionSummary, e3SectionDraftingMode, ICH_E3_GUIDANCE } 
 import type { E3Section } from '../ind/ctd/types';
 import { NONCLINICAL_STUDY_REPORT_STRUCTURE } from './nonclinical-study-report-structure';
 import type { IndTemplateOutlineSection } from './ind-template-types';
+import { clinicalSectionDraftingMode } from './document-template-outline-sections';
 
 const FACT_LIMIT = 'Populate from verified sponsor source records. Do not invent study findings, identifiers, signatures or GLP/GCP compliance. Retain original reports and datasets.';
 const LOCAL_LIMIT = 'This is a document-local working heading, not a CTD filing node or a completeness verdict.';
@@ -43,6 +44,7 @@ function clinicalReport(section: INDSection, records: readonly E3Section[] = ICH
 function protocol(section: INDSection): IndTemplateOutlineSection[] {
   return ICH_M11_PROTOCOL_SECTIONS.map((row, i) => heading(section, i + 1, {
     title: row.number ? `${row.number} ${row.title}` : row.title,
+    drafting_mode: clinicalSectionDraftingMode('protocol', row.code),
     guidance: `${row.purpose} Retaining a heading does not establish applicability of its content to this trial.`,
     checklist: ['Reconcile with the current sponsor protocol version and approved trial design.', 'Confirm current agency and country implementation and source-template details.'],
     pitfalls: i === 0 ? [...ICH_M11_PROTOCOL_LIMITATIONS] : ['Treating retained M11 headings as completed trial content or filing approval.'],

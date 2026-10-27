@@ -37,7 +37,9 @@ templateEditorFixture([
 ]);
 
 const regions = ['US', 'CA', 'EU', 'JP', 'GLOBAL'];
-const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)) && regions.includes(entry.region));
+const moduleStarts = new Set(['US_CTD_M1_REGIONAL', 'ICH_CTD_M2', 'ICH_CTD_M3', 'ICH_CTD_M4', 'ICH_CTD_M5']);
+const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)
+  || moduleStarts.has(entry.id)) && regions.includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
 const sharedPlanningIds = ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'];
 interface ListedTemplate extends IndAuthoringTemplate {
@@ -138,6 +140,35 @@ async function verifyCopy(template: ListedTemplate, outline: DocumentTemplateStr
   await verifySavedReview(doc.id, saved.length, doc.provenance.templateSource);
   return saved.length;
 }
+
+describe('canonically backed module starts preserve regional identity and source-only preparation', () => {
+  it.each([
+    { id: 'US_CTD_M1_REGIONAL', region: 'US', agency: 'FDA', module: 'M1', code: '1.2', minimum: 10 },
+    { id: 'ICH_CTD_M3', region: 'GLOBAL', agency: 'ICH', module: 'M3', code: '3.2.S.4.1', minimum: 40 },
+  ])('saves $id without borrowing a US IND filing identity or enabling whole-module drafting', async row => {
+    const template = await selected(`registry:${row.id}`);
+    expect(template).toMatchObject({ module: row.module, kind: 'preparation', aiDraftable: false, authoringMode: 'manual',
+      filingContext: { registryId: row.id, region: row.region, agency: row.agency } });
+    const made = await create(template);
+    expect(made.status, JSON.stringify(made.body)).toBe(201);
+    const document = made.body.document;
+    expect(document.provenance.templateSource.filingContext).toEqual(template.filingContext);
+    expect(document.provenance.templateSource.entryId).toBe(`registry:${row.id}`);
+    const saved = await sections(document.id);
+    expect(saved.length).toBeGreaterThan(row.minimum);
+    const original = saved.find(section => section.code === row.code);
+    expect(original, `The canonical ${row.code} record must reach the editor`).toBeDefined();
+    const before = await counts();
+    const refused = await author(request(app).post(`/api/authoring/sections/${original!.id}/ai/draft`)).send({ region: 'FDA' });
+    expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+    expect(refused.body.error.code).toBe('TEMPLATE_NOT_DRAFTABLE');
+    expect(await counts()).toEqual(before);
+  });
+
+  it('does not fabricate a harmonized GLOBAL Module 1 from the US regional source', async () => {
+    expect((await listed()).some(template => template.entryId === 'registry:ICH_CTD_M1')).toBe(false);
+  });
+});
 
 describe('the full CSR remains one editable saved report', () => {
   it.each(['registry:ICH_CSR', 'component:clinical_study_report'])('saves and reopens every canonical E3 heading from %s with its section policy', async entryId => {

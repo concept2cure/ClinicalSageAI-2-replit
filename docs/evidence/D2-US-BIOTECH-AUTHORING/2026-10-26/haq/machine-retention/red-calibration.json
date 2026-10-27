@@ -1,0 +1,6 @@
+{
+  "receipt": "red.json",
+  "validBoundaryFailures": 2,
+  "fixtureDefect": "Tiny legacy reply was identical and correctly refused NO_CHANGE. Calibrated to punctuation-only change with equal comparable full-response text.",
+  "productionChanged": false
+}

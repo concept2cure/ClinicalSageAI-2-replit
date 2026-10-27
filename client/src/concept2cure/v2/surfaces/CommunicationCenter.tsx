@@ -691,7 +691,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             onAdvance={(id) => void triage(id)}
             onAsk={onAsk}
             onOpenTask={() => nav('tasks')}
-            responses={projectId ? { projectId, fire } : undefined}
+            responses={projectId ? { projectId, fire, onNav: nav } : undefined}
             opening={opening}
           />
         </>

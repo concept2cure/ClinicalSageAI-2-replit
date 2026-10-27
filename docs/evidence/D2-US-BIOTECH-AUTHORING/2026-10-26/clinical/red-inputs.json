@@ -1,0 +1,10 @@
+{
+  "files": {
+    "server/services/regulatory/templateCatalog.ts": "4470597d0ee85c1969b1d3bf52c7637fe2176ca6971207ecd9f946c26858ef1e",
+    "server/services/market-specs/document-template-library.ts": "f8948dba5106769fcadc1cd4751fcac4de17a8ee17b88bb5c361a4a958fff9c5",
+    "server/services/market-specs/document-preparation.ts": "ce0f5192ac48054b52bb0f608c0866f03bcebd33d6fd2536da728dc34af5108c",
+    "server/services/authoring/builtin-authoring-templates.ts": "2e351740ce7bbb2cd6c6e43d7848489eb9f6f65ceb96d998a5d7313a9f13a576",
+    "server/services/authoring/__tests__/clinical-template-eligibility.test.ts": "009f5a9bb6497e057a2fca053a3db362c30d9786e0ea758868d6f9859e7c235a",
+    "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts": "f62dd86b5526a8ecfc6471ba26a63c6c086eb5d1e84d0f886e37070c88c10bd3"
+  }
+}

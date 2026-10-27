@@ -1,0 +1,6 @@
+{
+  "initialReceipt": "red.json",
+  "category": "Fixture setup, not valid editorSource boundary RED",
+  "reason": "Minimal source-only fixture lacked client_workspaces and the project description/metadata/time columns used by the real Communication project-admission reader. Added exact current-admission prerequisites, preserving actual admission instead of mocking it.",
+  "productionCodeChangedForSetup": false
+}

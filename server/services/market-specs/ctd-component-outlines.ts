@@ -45,6 +45,12 @@ const BRIEFED: ReadonlyMap<string, CtdSection> = new Map(Object.values(CTD_AUTHO
 const STRUCTURAL = new Map(ICH_M4_HEADINGS.map((h) => [h.code, h] as const));
 const parentOf = (code: string) => code.slice(0, code.lastIndexOf('.'));
 
+/** Source-supported CMC prose only; mixed/original tables and unknown parts stay source preparation. */
+export function ctdRecordDraftingMode(code: string): 'narrative' | 'manual' {
+  const source = BRIEFED.get(code);
+  return source?.module === 3 && source.contentType === 'narrative' ? 'narrative' : 'manual';
+}
+
 /** Every heading the record holds below `root` (exclusive), in CTD order. Throws on a root the record does not hold. */
 export function ctdRecordSubtree(root: string): CtdRecordHeading[] {
   if (!BRIEFED.has(root) && !STRUCTURAL.has(root)) throw new Error(`The ICH M2–M5 record holds no heading ${root}.`);
@@ -140,7 +146,8 @@ export function ctdComponentSections(root: string): TemplateSection[] {
   const top: TemplateSection[] = [];
   for (const h of headings) {
     const others = titles.filter((t) => t !== h.title.toLowerCase());
-    const section: TemplateSection = { number: h.code, heading: h.title, purpose: purposeOf(h, others), required: requiredOf(h) };
+    const section: TemplateSection = { number: h.code, heading: h.title, purpose: purposeOf(h, others), required: requiredOf(h),
+      ...(root === '3' || root.startsWith('3.') ? { drafting_mode: ctdRecordDraftingMode(h.code) } : {}) };
     nodes.set(h.code, section);
     const parent = nodes.get(parentOf(h.code));
     if (parent) (parent.subsections ??= []).push(section);

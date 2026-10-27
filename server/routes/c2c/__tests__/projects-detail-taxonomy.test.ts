@@ -197,3 +197,23 @@ describe('POST /api/c2c/projects — the create answers with the same serializer
     expect(detailSql).toContain('o.name AS sponsor_name');
   });
 });
+
+
+describe('project detail retains exact public filing identity', () => {
+  it.each(['US_NDA', 'US_BLA', 'US_351K', 'US_505B2'])('retains %s without leaking raw metadata', registryId => {
+    const value = serializeProgramDetail({ ...drugRow(), program_type: 'bla', primary_agency: 'FDA',
+      metadata: { submissionTypeId: registryId.toLowerCase(), createdVia: 'private-internal-marker' } });
+    expect(value.registry_id).toBe(registryId); expect(value).not.toHaveProperty('metadata');
+    expect(JSON.stringify(value)).not.toContain('private-internal-marker');
+  });
+  it('uses only canonical type/agency fallback and keeps unknown choices unconfirmed', () => {
+    expect(serializeProgramDetail({ ...drugRow(), metadata: {} }).registry_id).toBe('US_IND');
+    expect(serializeProgramDetail({ ...drugRow(), primary_agency: 'EMA', metadata: {} }).registry_id).toBeNull();
+    expect(serializeProgramDetail({ ...drugRow(), metadata: { submissionTypeId: 'not-a-filing' } }).registry_id).toBeNull();
+  });
+});
+
+
+it.each([{ value: 42 }, { value: {} }, { value: [] }])('keeps malformed recorded filing identity unconfirmed: %j', ({ value }) => {
+  expect(serializeProgramDetail({ ...drugRow(), metadata: { submissionTypeId: value } }).registry_id).toBeNull();
+});

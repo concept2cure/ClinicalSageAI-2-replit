@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-10-26T23:31:11.845578+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+    "-t",
+    "keeps agency question identities separate"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 2.091,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/intake/response-door-red-source.json",
+  "sourcesBefore": {
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "766042392cc491ecd03ac1cdde2286d4fae7571234360d85db071cdbd34f441d",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "18058397412e3bdefabd2f0b33f648f4b23c0f09e14d1584a7e077ed9d4864dd"
+  },
+  "sourcesAfter": {
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "766042392cc491ecd03ac1cdde2286d4fae7571234360d85db071cdbd34f441d",
+    "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx": "18058397412e3bdefabd2f0b33f648f4b23c0f09e14d1584a7e077ed9d4864dd"
+  },
+  "sourceDrift": [],
+  "rawOutput": "response-door-red.log.gz",
+  "rawGzipSha256": "59ffc987e4691048ec4887b3d3467b8d6a8bcd7c90dbec25ffc382521362849a",
+  "testSummary": [
+    "Test Files  1 failed (1)",
+    "Tests  1 failed | 1 passed | 14 skipped (16)",
+    "Duration  1.66s (transform 533ms, setup 121ms, import 648ms, tests 320ms, environment 425ms)"
+  ]
+}

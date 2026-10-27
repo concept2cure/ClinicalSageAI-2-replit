@@ -1,0 +1,410 @@
+{
+  "baseline": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+  "results": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 0,
+      "growth": [
+        "1:complexity"
+      ],
+      "previous": {},
+      "current": {
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'TemplateStart' has a complexity of 17. Maximum allowed is 15.",
+          "line": 38,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 38,
+          "endColumn": 23
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "errors": 0,
+      "warnings": 6,
+      "baselineWarnings": 6,
+      "growth": [],
+      "previous": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 3,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 3,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DataRoom' has too many lines (303). Maximum allowed is 100.",
+          "line": 388,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 388,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'DataRoom' has a complexity of 61. Maximum allowed is 15.",
+          "line": 388,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 388,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1457). Maximum allowed is 500.",
+          "line": 667,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1907,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has too many lines (364). Maximum allowed is 100.",
+          "line": 1413,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1413,
+          "endColumn": 28
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has a complexity of 140. Maximum allowed is 15.",
+          "line": 1413,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1413,
+          "endColumn": 28
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 50. Maximum allowed is 15.",
+          "line": 1575,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 1575,
+          "endColumn": 35
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "errors": 0,
+      "warnings": 12,
+      "baselineWarnings": 12,
+      "growth": [],
+      "previous": {
+        "1:complexity": 8,
+        "1:max-lines": 1,
+        "1:max-lines-per-function": 2,
+        "1:react-hooks/exhaustive-deps": 1
+      },
+      "current": {
+        "1:complexity": 8,
+        "1:max-lines": 1,
+        "1:max-lines-per-function": 2,
+        "1:react-hooks/exhaustive-deps": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+          "line": 346,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 346,
+          "endColumn": 38
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (5031). Maximum allowed is 500.",
+          "line": 782,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 6596,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DocumentWorkbench' has too many lines (4195). Maximum allowed is 100.",
+          "line": 1245,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1245,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'DocumentWorkbench' has a complexity of 461. Maximum allowed is 15.",
+          "line": 1245,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1245,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 2145,
+          "column": 82,
+          "messageId": "complex",
+          "endLine": 2145,
+          "endColumn": 84
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 32. Maximum allowed is 15.",
+          "line": 2413,
+          "column": 16,
+          "messageId": "complex",
+          "endLine": 2413,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 3140,
+          "column": 50,
+          "messageId": "complex",
+          "endLine": 3140,
+          "endColumn": 52
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+          "line": 3196,
+          "column": 55,
+          "messageId": "complex",
+          "endLine": 3196,
+          "endColumn": 57
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+          "line": 3361,
+          "column": 5,
+          "endLine": 3361,
+          "endColumn": 50,
+          "suggestions": [
+            {
+              "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+              "fix": {
+                "range": [
+                  172173,
+                  172218
+                ],
+                "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 3728,
+          "column": 43,
+          "messageId": "complex",
+          "endLine": 3728,
+          "endColumn": 45
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+          "line": 6221,
+          "column": 28,
+          "messageId": "exceed",
+          "endLine": 6221,
+          "endColumn": 30
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+          "line": 6221,
+          "column": 28,
+          "messageId": "complex",
+          "endLine": 6221,
+          "endColumn": 30
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/programSummary.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "server/routes/c2c/projects.ts",
+      "errors": 0,
+      "warnings": 3,
+      "baselineWarnings": 3,
+      "growth": [],
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (296). Maximum allowed is 100.",
+          "line": 657,
+          "column": 54,
+          "messageId": "exceed",
+          "endLine": 657,
+          "endColumn": 56
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 107. Maximum allowed is 15.",
+          "line": 657,
+          "column": 54,
+          "messageId": "complex",
+          "endLine": 657,
+          "endColumn": 56
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1404). Maximum allowed is 500.",
+          "line": 846,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2118,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "previous": {},
+      "current": {},
+      "messages": []
+    }
+  ]
+}

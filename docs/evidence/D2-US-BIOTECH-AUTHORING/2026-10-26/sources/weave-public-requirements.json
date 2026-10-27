@@ -1,0 +1,120 @@
+{
+  "title": "Weave public authoring benchmark requirements",
+  "asOf": "2026-10-26",
+  "sourceId": "weave-home",
+  "sourceUrl": "https://www.weave.bio/",
+  "sourceHashIndex": "public-source-index.json",
+  "basis": "Paraphrases of current public vendor marketing/FAQ, not independent product testing or private feature documentation.",
+  "requirements": [
+    {
+      "id": "connected-source-content",
+      "vendorPublicClaim": "Source information, documents and teams remain connected across program work.",
+      "concept2cureAcceptance": "Upload/ingest controlled source versions, select admitted project evidence, preserve exact citations/spans and source hashes in saved prose, and expose changed/unread inputs.",
+      "existingOwners": [
+        "Vault/data catalogue",
+        "authoring-source-import",
+        "authoring section evidence and drafting-source lineage"
+      ],
+      "qualification": "End-to-end current-source access/drift and saved-citation proof; homepage does not establish exact citation granularity."
+    },
+    {
+      "id": "document-family-depth",
+      "vendorPublicClaim": "Connected authoring spans IND/CTA/NDA/BLA and named clinical, nonclinical and CMC documents.",
+      "concept2cureAcceptance": "Each relevant US filing and reusable document must select its actual outline, scope and manual/narrative policy, then create/edit/reopen/source-review/export through one editor.",
+      "existingOwners": [
+        "canonical filing registry",
+        "document-template-library",
+        "builtin-authoring-templates",
+        "DocumentWorkbench"
+      ],
+      "qualification": "A registry/blueprint/template count is not completed workflow coverage."
+    },
+    {
+      "id": "draft-revise-verify",
+      "vendorPublicClaim": "AI assists drafting, review, verification and source retrieval; humans retain final responsibility.",
+      "concept2cureAcceptance": "AnA can prepare supported narrative, propose tracked changes, review the exact saved section, preserve source attribution and refuse original-record/statistical fabrication; changes stay versioned and reviewable.",
+      "existingOwners": [
+        "saved template references",
+        "section drafting",
+        "tracked AnA remedies",
+        "saved review and numerical/source checks"
+      ],
+      "qualification": "Scripted provider fixtures do not establish live model factual accuracy or human expert quality."
+    },
+    {
+      "id": "reuse-and-context-continuity",
+      "vendorPublicClaim": "Teams can reuse connected content across application types and jurisdictions while carrying context forward.",
+      "concept2cureAcceptance": "Reuse actual controlled source/previous document versions while retaining parent and child template identity, product/filing/jurisdiction context, permissions, evidence gaps and change history.",
+      "existingOwners": [
+        "workflow source copies",
+        "source assembly",
+        "saved assembly sources",
+        "exact saved-section context"
+      ],
+      "qualification": "Copied text alone is not connected reuse; source drift and new-target scope must be proved."
+    },
+    {
+      "id": "collaboration-review",
+      "vendorPublicClaim": "Team collaboration and review stay connected to the program/dossier.",
+      "concept2cureAcceptance": "Current project/section access, assignments, review requests/comments, revisions and independently governed signatures must work without parallel authoring surfaces.",
+      "existingOwners": [
+        "ProjectPlan/Author",
+        "DocumentWorkbench",
+        "review/assignment services",
+        "signature ceremonies"
+      ],
+      "qualification": "Team names or static task blueprints do not prove live collaboration, conflict handling or access safety."
+    },
+    {
+      "id": "authority-responses",
+      "vendorPublicClaim": "HAQ Manager provides question intake, collaboration/tracking and response generation.",
+      "concept2cureAcceptance": "Admit current letter visibility, extract/retain exact questions, assign/track them, draft and amend in the sole editor, then explicitly write the exact saved response revision back through the existing governed writer before approval/package generation.",
+      "existingOwners": [
+        "ProjectRespond",
+        "AgencyResponses",
+        "agency-responses response-service",
+        "source import/editor bridge"
+      ],
+      "qualification": "Import-only reachability does not update response_text or preserve question-signature validity automatically."
+    },
+    {
+      "id": "dossier-and-filing-preparation",
+      "vendorPublicClaim": "Submission Builder supports named submissions, briefing books, annual reports and amendments across the lifecycle.",
+      "concept2cureAcceptance": "Project filing guidance must lead to applicable documents and source needs; packaging/validation and real agency delivery must remain separate measurable functions.",
+      "existingOwners": [
+        "ProjectPlan",
+        "canonical template picker",
+        "Submission Center",
+        "eCTD package/readiness services"
+      ],
+      "qualification": "The public homepage does not establish direct agency transmission or every formatting/technical standard; do not use it to invent a comparative winner."
+    },
+    {
+      "id": "enterprise-security",
+      "vendorPublicClaim": "Vendor states encryption, SAML-compatible SSO, MFA, role-based access, monitoring, segregated customer environments and no LLM-provider data retention/training.",
+      "concept2cureAcceptance": "Measure actual access isolation, authentication, source privacy, audit, provider configuration/contracts and operational evidence for Concept2Cure.",
+      "existingOwners": [
+        "tenant/project permissions",
+        "authentication and governed audit",
+        "approved provider/gateway controls"
+      ],
+      "qualification": "Vendor statements are not independent audit evidence, and Concept2Cure cannot inherit the vendor's security or privacy claims."
+    },
+    {
+      "id": "planning-announcement",
+      "vendorPublicClaim": "Homepage labels Program Planner as launching Q4 2026.",
+      "concept2cureAcceptance": "Current project planning should be judged on its own reachable biotech workflows; any competitor planning comparison must distinguish announced from demonstrated/released capabilities.",
+      "existingOwners": [
+        "ProjectPlan",
+        "canonical section/task blueprints"
+      ],
+      "qualification": "Do not present this announced product as independently evaluated current functionality."
+    }
+  ],
+  "notEstablished": [
+    "Live head-to-head performance, speed, accuracy or cost metrics.",
+    "Complete scope/depth of competitor templates, regulatory verification, citation granularity, document fidelity or direct agency transmission.",
+    "Concept2Cure feature maturity, compliance, security or superiority from source-code names, route counts or shared infrastructure."
+  ],
+  "comparisonRule": "Do not claim parity or superiority until agreed workflow acceptance is demonstrated on each product or the comparison is clearly limited to verified public statements and separately qualified Concept2Cure behavior."
+}

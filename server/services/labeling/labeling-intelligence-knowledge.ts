@@ -761,6 +761,34 @@ const SPL_LOINC_CODES = {
   'spl_unclassified': '42231-1',
 } as const;
 
+/** Shared source format, copied for each caller; no product applicability is inferred. */
+const BOXED_WARNING_FORMAT: BoxedWarningFormatRequirements = {
+  headerText: 'WARNING: [Descriptive Title in ALL CAPS]',
+  borderStyle: 'The boxed warning must be set off by a prominently printed box with a black border. In Highlights, "See full prescribing information for complete boxed warning" must appear.',
+  placement: [
+    'Highlights of Prescribing Information: Concise summary in a box immediately after the product header',
+    'Full Prescribing Information: Complete text in a box preceding Section 1 Indications and Usage',
+    'Medication Guide (if applicable): Boxed warning text must be included',
+  ],
+  fontRequirements: 'Text within the box must be in bold type. The word "WARNING" must appear at the top of the box in bold capital letters.',
+  symbolRequirements: 'An inverted black triangle symbol (or text reference) must appear in Highlights adjacent to each section that is described in the Boxed Warning, cross-referencing to the relevant section of the FPI.',
+};
+
+function copyBoxedWarningFormat(): BoxedWarningFormatRequirements {
+  return { ...BOXED_WARNING_FORMAT, placement: [...BOXED_WARNING_FORMAT.placement] };
+}
+
+/** Existing PLR source structure for a blank working document, without a product assessment. */
+export function getPLRAuthoringSections(): {
+  highlightsStructure: PLRSectionDescriptor[]; fullPIStructure: PLRSectionDescriptor[];
+  boxedWarningFormat: BoxedWarningFormatRequirements;
+} {
+  const copy = (section: PLRSectionDescriptor): PLRSectionDescriptor => ({ ...section,
+    ...(section.subsections ? { subsections: [...section.subsections] } : {}) });
+  return { highlightsStructure: HIGHLIGHTS_SECTIONS.map(copy), fullPIStructure: FPI_SECTIONS.map(copy),
+    boxedWarningFormat: copyBoxedWarningFormat() };
+}
+
 /** Boxed Warning Common Categories with Real Drug Examples */
 const BOXED_WARNING_CATEGORIES: BoxedWarningCategory[] = [
   {
@@ -1371,17 +1399,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   }
 
   // Format requirements
-  const formatRequirements: BoxedWarningFormatRequirements = {
-    headerText: 'WARNING: [Descriptive Title in ALL CAPS]',
-    borderStyle: 'The boxed warning must be set off by a prominently printed box with a black border. In Highlights, "See full prescribing information for complete boxed warning" must appear.',
-    placement: [
-      'Highlights of Prescribing Information: Concise summary in a box immediately after the product header',
-      'Full Prescribing Information: Complete text in a box preceding Section 1 Indications and Usage',
-      'Medication Guide (if applicable): Boxed warning text must be included',
-    ],
-    fontRequirements: 'Text within the box must be in bold type. The word "WARNING" must appear at the top of the box in bold capital letters.',
-    symbolRequirements: 'An inverted black triangle symbol (or text reference) must appear in Highlights adjacent to each section that is described in the Boxed Warning, cross-referencing to the relevant section of the FPI.',
-  };
+  const formatRequirements = copyBoxedWarningFormat();
 
   // Filter relevant categories based on safety signal type
   const relevantCategories = BOXED_WARNING_CATEGORIES.filter(cat => {

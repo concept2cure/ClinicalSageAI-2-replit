@@ -3,7 +3,7 @@ import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance';
 import { getIchM4Heading, ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
 import type { CtdSection } from '../ind/ctd/types';
-import { ctdComponentSections, ctdRecordSubtree } from '../market-specs/ctd-component-outlines';
+import { ctdComponentSections, ctdRecordSubtree, ctdRecordDraftingMode } from '../market-specs/ctd-component-outlines';
 import type { TemplateSection } from '../market-specs/document-template-library';
 import type { IndTemplateOutlineSection } from './ind-template-types';
 
@@ -69,7 +69,8 @@ export function buildModule2Or3Outline(section: INDSection): IndTemplateOutlineS
       title: ichHeadingTitle(c)!,
       content: '',
       ordering: (index + 1) * 100,
-      guidance: guidance ? briefGuidance(c, reference, guidance) : headingGuidance(c, section, purposes.get(c)),
+      guidance: { ...(guidance ? briefGuidance(c, reference, guidance) : headingGuidance(c, section, purposes.get(c))),
+        ...(section.module === 'M3' ? { drafting_mode: ctdRecordDraftingMode(c) } : {}) },
     };
   });
 }

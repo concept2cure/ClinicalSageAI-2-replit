@@ -1,0 +1,8 @@
+{
+  "files": {
+    "server/routes/c2c/agency-responses.ts": "d120e49ea062be21f663119147e842d8c01642c2c2c7a4dc05fea38f286cb7bd",
+    "server/services/agency-responses/response-service.ts": "92e7e1747cca820a3d8b3d3199aa6500181029139306e60969ce620ccef24084",
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts": "06881891dd5725ed6e90b6c8daf734ded843642207927efbfb091189fc317751",
+    "server/routes/__tests__/_agency-response-authoring-fixture.ts": "a2655e06a2a8812f82b954d7fd6a5ee60cab3ca8287f3db4893265549bb6e77c"
+  }
+}

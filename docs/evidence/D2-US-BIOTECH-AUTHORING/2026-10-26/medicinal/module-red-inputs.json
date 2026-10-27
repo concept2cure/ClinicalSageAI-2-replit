@@ -1,0 +1,7 @@
+{
+  "files": {
+    "server/services/authoring/builtin-authoring-templates.ts": "38f6cd2d3e17e0863f4b596bdf54c3f5720300ce52a44078dafea8ef372885f7",
+    "server/services/market-specs/document-template-library.ts": "fb1a4ee1b3d3e1f62a3d2936f1c5804852f0c517a86e81d7f1e4eaa3f4eeb3d2",
+    "server/services/authoring/__tests__/ctd-module-registry-templates.test.ts": "d973f9d9483839ee7080df0aaf2d84432c242e105278e30c830debf66aae8054"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "receipt": "green.json",
+  "kind": "test-source attribution correction",
+  "detail": "SAP is projected by existing project-blueprint:ICH_SAP:ich_sap_sections, not a library filename. The expected substring was wrong; retain exact canonical source reference. Production change was not required."
+}

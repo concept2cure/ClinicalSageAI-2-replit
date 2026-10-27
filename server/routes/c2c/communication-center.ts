@@ -16,6 +16,8 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { canViewVisibilityTier } from '../../services/agency-responses/visibility';
+export { canViewVisibilityTier } from '../../services/agency-responses/visibility';
 import { z } from 'zod';
 import * as crypto from 'crypto';
 import { db, pool } from '../../db';
@@ -127,24 +129,6 @@ export async function resolveCommunicationProject(req: Request): Promise<number>
   });
   return access.projectId;
 }
-export function canViewVisibilityTier(
-  visibilityTier: CommunicationVisibilityTier,
-  userRole?: string
-): boolean {
-  const role = (userRole || '').toLowerCase();
-  if (!COMMUNICATION_VISIBILITY_TIERS.includes(visibilityTier)) return false;
-  if (visibilityTier === 'restricted_legal_sensitive') {
-    return ['admin', 'owner', 'compliance', 'legal'].some(r => role.includes(r));
-  }
-  if (visibilityTier === 'publishops_only') {
-    return role.includes('publishops') || role.includes('admin');
-  }
-  if (visibilityTier === 'c2c_internal') {
-    return role.includes('c2c') || role.includes('admin');
-  }
-  return true;
-}
-
 export function communicationCenterErrorStatus(error: unknown): number {
   const message = (error as any)?.message || '';
   if (typeof message === 'string' && message.includes('persistence tables')) {

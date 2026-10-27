@@ -1,0 +1,81 @@
+{
+  "results": [
+    {
+      "file": "server/services/regulatory/templateCatalog.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/market-specs/document-template-library.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/market-specs/document-preparation.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/builtin-authoring-templates.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/clinical-template-eligibility.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/document-template-outline-sections.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    }
+  ]
+}

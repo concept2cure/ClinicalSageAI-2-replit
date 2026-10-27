@@ -1,0 +1,7 @@
+{
+  "receipt": "green.json",
+  "passed": 31,
+  "failed": 1,
+  "fixtureCorrection": "The existing canonical source-intake route returns200 for reuse,201 only for new creation. Correct test reuse expectation only; production untouched.",
+  "originalRedValid": true
+}

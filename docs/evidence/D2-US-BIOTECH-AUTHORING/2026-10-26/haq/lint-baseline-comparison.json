@@ -1,0 +1,602 @@
+[
+  {
+    "file": "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "d9c70d9d24fe3574a110649be493321bfd16b4df10d3b8b0eaba61a7f2d3e898",
+    "baselineWarnings": 2,
+    "currentWarnings": 2,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (150). Maximum allowed is 100.",
+        "line": 260,
+        "column": 45,
+        "messageId": "exceed",
+        "endLine": 260,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (120). Maximum allowed is 100.",
+        "line": 423,
+        "column": 81,
+        "messageId": "exceed",
+        "endLine": 423,
+        "endColumn": 83
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (150). Maximum allowed is 100.",
+        "line": 274,
+        "column": 45,
+        "messageId": "exceed",
+        "endLine": 274,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (120). Maximum allowed is 100.",
+        "line": 437,
+        "column": 81,
+        "messageId": "exceed",
+        "endLine": 437,
+        "endColumn": 83
+      }
+    ]
+  },
+  {
+    "file": "client/src/concept2cure/v2/authoringHandoff.ts",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "a45c6ebd8a0508e42f07e6016e3b4e50cb4dac5654f5cdf5b419aa3360d252de",
+    "baselineWarnings": 1,
+    "currentWarnings": 1,
+    "baselineMessages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'writeHandoffStage' has a complexity of 19. Maximum allowed is 15.",
+        "line": 56,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 56,
+        "endColumn": 33
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'writeHandoffStage' has a complexity of 19. Maximum allowed is 15.",
+        "line": 56,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 56,
+        "endColumn": 33
+      }
+    ]
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "ca01183744db3d5073691e6a0a91377272248b32d89442beef8695bd9c017f95",
+    "baselineWarnings": 2,
+    "currentWarnings": 2,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AgencyInboxCard' has too many lines (105). Maximum allowed is 100.",
+        "line": 319,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 319,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'AgencyInboxCard' has a complexity of 38. Maximum allowed is 15.",
+        "line": 319,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 319,
+        "endColumn": 25
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AgencyInboxCard' has too many lines (106). Maximum allowed is 100.",
+        "line": 320,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 320,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'AgencyInboxCard' has a complexity of 38. Maximum allowed is 15.",
+        "line": 320,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 320,
+        "endColumn": 25
+      }
+    ]
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "b6685583c9071b33a788cb07d40389cc4ff57db70b01566ba11406714203bb32",
+    "baselineWarnings": 7,
+    "currentWarnings": 7,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'QuestionCard' has too many lines (201). Maximum allowed is 100.",
+        "line": 183,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 183,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'QuestionCard' has a complexity of 54. Maximum allowed is 15.",
+        "line": 183,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 183,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AgencyResponses' has too many lines (455). Maximum allowed is 100.",
+        "line": 398,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 398,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'AgencyResponses' has a complexity of 64. Maximum allowed is 15.",
+        "line": 398,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 398,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "preserve-caught-error",
+        "severity": 1,
+        "message": "There is no `cause` attached to the symptom error being thrown.",
+        "line": 595,
+        "column": 11,
+        "messageId": "missingCause",
+        "endLine": 595,
+        "endColumn": 99,
+        "suggestions": [
+          {
+            "messageId": "includeCause",
+            "fix": {
+              "range": [
+                25307,
+                25307
+              ],
+              "text": ", { cause: e }"
+            },
+            "desc": "Include the original caught error as the `cause` of the symptom error."
+          }
+        ]
+      },
+      {
+        "ruleId": "preserve-caught-error",
+        "severity": 1,
+        "message": "There is no `cause` attached to the symptom error being thrown.",
+        "line": 597,
+        "column": 9,
+        "messageId": "missingCause",
+        "endLine": 597,
+        "endColumn": 41,
+        "suggestions": [
+          {
+            "messageId": "includeCause",
+            "fix": {
+              "range": [
+                25358,
+                25358
+              ],
+              "text": ", { cause: e }"
+            },
+            "desc": "Include the original caught error as the `cause` of the symptom error."
+          }
+        ]
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (768). Maximum allowed is 500.",
+        "line": 606,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 888,
+        "endColumn": 1
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'QuestionCard' has too many lines (167). Maximum allowed is 100.",
+        "line": 184,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 184,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'QuestionCard' has a complexity of 51. Maximum allowed is 15.",
+        "line": 184,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 184,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'ScopedAgencyResponses' has too many lines (456). Maximum allowed is 100.",
+        "line": 378,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 378,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'ScopedAgencyResponses' has a complexity of 64. Maximum allowed is 15.",
+        "line": 378,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 378,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "preserve-caught-error",
+        "severity": 1,
+        "message": "There is no `cause` attached to the symptom error being thrown.",
+        "line": 571,
+        "column": 11,
+        "messageId": "missingCause",
+        "endLine": 571,
+        "endColumn": 99,
+        "suggestions": [
+          {
+            "messageId": "includeCause",
+            "fix": {
+              "range": [
+                24661,
+                24661
+              ],
+              "text": ", { cause: e }"
+            },
+            "desc": "Include the original caught error as the `cause` of the symptom error."
+          }
+        ]
+      },
+      {
+        "ruleId": "preserve-caught-error",
+        "severity": 1,
+        "message": "There is no `cause` attached to the symptom error being thrown.",
+        "line": 573,
+        "column": 9,
+        "messageId": "missingCause",
+        "endLine": 573,
+        "endColumn": 41,
+        "suggestions": [
+          {
+            "messageId": "includeCause",
+            "fix": {
+              "range": [
+                24712,
+                24712
+              ],
+              "text": ", { cause: e }"
+            },
+            "desc": "Include the original caught error as the `cause` of the symptom error."
+          }
+        ]
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (749). Maximum allowed is 500.",
+        "line": 605,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 867,
+        "endColumn": 1
+      }
+    ]
+  },
+  {
+    "file": "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "77525039f33c9b32db37daf9273c4ccc786360321f98508b2c6bd2fef8a986b4",
+    "baselineWarnings": 4,
+    "currentWarnings": 4,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'CommunicationCenter' has too many lines (696). Maximum allowed is 100.",
+        "line": 215,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 215,
+        "endColumn": 36
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'CommunicationCenter' has a complexity of 48. Maximum allowed is 15.",
+        "line": 215,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 215,
+        "endColumn": 36
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 25. Maximum allowed is 15.",
+        "line": 327,
+        "column": 39,
+        "messageId": "complex",
+        "endLine": 327,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (822). Maximum allowed is 500.",
+        "line": 664,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 995,
+        "endColumn": 1
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'CommunicationCenter' has too many lines (696). Maximum allowed is 100.",
+        "line": 215,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 215,
+        "endColumn": 36
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'CommunicationCenter' has a complexity of 48. Maximum allowed is 15.",
+        "line": 215,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 215,
+        "endColumn": 36
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 25. Maximum allowed is 15.",
+        "line": 327,
+        "column": 39,
+        "messageId": "complex",
+        "endLine": 327,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (822). Maximum allowed is 500.",
+        "line": 664,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 995,
+        "endColumn": 1
+      }
+    ]
+  },
+  {
+    "file": "server/routes/c2c/agency-responses.ts",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "d120e49ea062be21f663119147e842d8c01642c2c2c7a4dc05fea38f286cb7bd",
+    "baselineWarnings": 2,
+    "currentWarnings": 2,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'registerAgencyResponseRoutes' has too many lines (305). Maximum allowed is 100.",
+        "line": 326,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 326,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (518). Maximum allowed is 500.",
+        "line": 656,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 674,
+        "endColumn": 1
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'registerAgencyResponseRoutes' has too many lines (320). Maximum allowed is 100.",
+        "line": 336,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 336,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (541). Maximum allowed is 500.",
+        "line": 657,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 699,
+        "endColumn": 1
+      }
+    ]
+  },
+  {
+    "file": "server/routes/c2c/communication-center.ts",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "10fae988ddc369a18aa8fc5bacbbe13479c5d17997845c54124ce26b2394430a",
+    "baselineWarnings": 4,
+    "currentWarnings": 4,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (111). Maximum allowed is 100.",
+        "line": 255,
+        "column": 97,
+        "messageId": "exceed",
+        "endLine": 255,
+        "endColumn": 99
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (107). Maximum allowed is 100.",
+        "line": 374,
+        "column": 113,
+        "messageId": "exceed",
+        "endLine": 374,
+        "endColumn": 115
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1077). Maximum allowed is 500.",
+        "line": 569,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1234,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (109). Maximum allowed is 100.",
+        "line": 780,
+        "column": 95,
+        "messageId": "exceed",
+        "endLine": 780,
+        "endColumn": 97
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (111). Maximum allowed is 100.",
+        "line": 239,
+        "column": 97,
+        "messageId": "exceed",
+        "endLine": 239,
+        "endColumn": 99
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (107). Maximum allowed is 100.",
+        "line": 358,
+        "column": 113,
+        "messageId": "exceed",
+        "endLine": 358,
+        "endColumn": 115
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1062). Maximum allowed is 500.",
+        "line": 568,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1218,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (109). Maximum allowed is 100.",
+        "line": 764,
+        "column": 95,
+        "messageId": "exceed",
+        "endLine": 764,
+        "endColumn": 97
+      }
+    ]
+  },
+  {
+    "file": "server/services/agency-responses/response-service.ts",
+    "baselineCommit": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+    "baselineSourceSha256": "92e7e1747cca820a3d8b3d3199aa6500181029139306e60969ce620ccef24084",
+    "baselineWarnings": 1,
+    "currentWarnings": 1,
+    "baselineMessages": [
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (617). Maximum allowed is 500.",
+        "line": 628,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 766,
+        "endColumn": 1
+      }
+    ],
+    "currentMessages": [
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (617). Maximum allowed is 500.",
+        "line": 628,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 766,
+        "endColumn": 1
+      }
+    ]
+  }
+]

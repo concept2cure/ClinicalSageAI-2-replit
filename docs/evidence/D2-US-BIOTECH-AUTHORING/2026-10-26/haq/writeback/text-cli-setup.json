@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-26T23:34:59.030169+00:00",
+  "argv": [
+    "node_modules/.bin/vitest",
+    "run",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts",
+    "--maxWorkers=1",
+    "--minWorkers=1"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 0.076,
+  "exitCode": 1,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "haq/writeback/text-red-pins.json",
+  "sourcesBefore": {
+    "server/services/agency-responses/editor-response.ts": "ac40df428befdbf629ca3ca197d248e07c0ac23ba4b770265f46ffe41551e09f",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  },
+  "sourcesAfter": {
+    "server/services/agency-responses/editor-response.ts": "ac40df428befdbf629ca3ca197d248e07c0ac23ba4b770265f46ffe41551e09f",
+    "server/services/agency-responses/__tests__/editor-response-text.test.ts": "feee84b0833e280a48450f81d11473e3bd6678371df9f282681e77da8780643a"
+  },
+  "sourceDrift": [],
+  "rawOutput": "text-red.log.gz",
+  "rawGzipSha256": "1bb61813177273c810b347e6ab0140d3b00e943dff3bc6717f04a39479cde1af",
+  "testSummary": []
+}

@@ -1,0 +1,13 @@
+{
+  "files": {
+    "server/services/market-specs/ctd-component-outlines.ts": "5b1d041bd7de8ac501ecde8a25dfe6bfe59debe42e268cd3303cc8c334eb36ed",
+    "server/services/labeling/labeling-intelligence-knowledge.ts": "faef5a07cf7fe53bd1e096785363aad25b466a55bee728f0930035db00289ee8",
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/authoring/document-template-outline-sections.ts": "7b0695664e2d560950054d1dccc476ff2683f282dae2f3456fb62aa4ddee2eb7",
+    "server/services/authoring/__tests__/medicinal-working-templates.test.ts": "0599cf503a4783c4703bbe375abd5acd6dd2dd3cc468733a339b9a7f54812e30",
+    "server/routes/__tests__/medicinalTemplateEligibility.pglite.integration.test.ts": "52eca23fdf5dfe03f7913cd24f9951b35a54054a9223b72b9b07447a25e636bf"
+  }
+}

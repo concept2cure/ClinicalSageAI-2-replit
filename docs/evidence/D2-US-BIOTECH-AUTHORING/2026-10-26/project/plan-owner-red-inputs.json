@@ -1,0 +1,8 @@
+{
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "81700d181bd2e871b7af5d0092e486b4bab7af39461158256897f89592999402",
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": "9126b440625b588c7c95a12d0cc70494940f524353f14af59cc59f6e86c7769f",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx": "efad1e7cf1bf48296ddb9f37e11df10f76d561c2bd3d667be4de98fdead78d52",
+    "client/src/concept2cure/v2/dataConnect.tsx": "29a63b3daa64e84de3022f86638aaa921c00c7c52d143dd55fe53ce9eba44847"
+  }
+}

@@ -13,7 +13,10 @@ import { searchTemplates, type CatalogTemplateEntry } from '../regulatory/templa
 import {
   getIndAuthoringTemplate, getIndAuthoringTemplates, indTemplateReference, indTemplateSnapshot,
 } from './ind-authoring-templates';
-import type { IndAuthoringTemplate, IndTemplateOutlineSection } from './ind-template-types';
+import type { IndAuthoringTemplate } from './ind-template-types';
+import { documentTemplateOutlineSections } from './document-template-outline-sections';
+import { isUsBiotechLifecycleComponent } from '../market-specs/us-biotech-lifecycle-templates';
+import { isUsMedicinalWorkingComponent, isCanonicalCtdModuleTemplate } from '../market-specs/medicinal-working-templates';
 
 export interface BuiltinAuthoringTemplate extends IndAuthoringTemplate {
   filingContext?: RecordedTemplateFilingContext;
@@ -54,36 +57,6 @@ function singleModule(outline: DocumentTemplateStructure): IndAuthoringTemplate[
   return match ? `M${match[1]}` as IndAuthoringTemplate['module'] : null;
 }
 
-function sourceReference(outline: DocumentTemplateStructure): string {
-  const source = outline.outlineSource;
-  if (!source) return `server/services/market-specs/document-template-library.ts:${outline.id}`;
-  return 'blueprintId' in source
-    ? `${source.kind}:${source.registryId}:${source.blueprintId}`
-    : `${source.kind}:${source.registryId}:${source.record}`;
-}
-
-/**
- * Every section a template carries: front matter, then each section followed
- * by its subsections, in outline order. The picker's document holds the same
- * nodes as the governed pack minted from the same outline (review finding,
- * 2026-10-18: a PBRER's title page and 16.2, a PAS's 3.2.P, were in the pack
- * and not in the picker's document).
- */
-function outlineSections(outline: DocumentTemplateStructure): IndTemplateOutlineSection[] {
-  const flat: DocumentTemplateStructure['sections'] = [];
-  const walk = (list: DocumentTemplateStructure['sections']) => { for (const s of list) { flat.push(s); if (s.subsections?.length) walk(s.subsections); } };
-  walk([...(outline.frontMatter ?? []), ...outline.sections]);
-  return flat.map((section, ordering) => ({
-    code: section.number, title: section.heading, content: '', ordering,
-    guidance: {
-      ...(section.drafting_mode ? { drafting_mode: section.drafting_mode } : {}),
-      guidance_text: `${section.purpose}\n\nExisting scaffold expectation: ${section.required ? 'marked required' : 'not marked required'}. This flag does not determine legal applicability or waive applicable content.`,
-      regulatory_references: [outline.regulatoryBasis],
-      compliance_checklist: [], common_pitfalls: [], source_reference: sourceReference(outline),
-    },
-  }));
-}
-
 function projectOutline(input: {
   entryId: string; outline: DocumentTemplateStructure; filingContext: RecordedTemplateFilingContext;
   metadata?: CatalogTemplateEntry; originalFormat: string; limitations: string[]; description?: string;
@@ -99,7 +72,7 @@ function projectOutline(input: {
     description: input.description ?? `${outline.title}. ${filingContext.region} ${filingContext.agency} working outline.`,
     limitations: [...LIMITATIONS, ...(outline.outlineLimitations ?? []), ...input.limitations,
       ...(!outline.basis ? ['This existing outline supplies advisory citations; regulator-text verification and current currency are not recorded for this projection.'] : [])],
-    version: 1, sections: outlineSections(outline), filingContext: { ...filingContext }, families: [...outline.families],
+    version: 1, sections: documentTemplateOutlineSections(outline), filingContext: { ...filingContext }, families: [...outline.families],
   };
 }
 
@@ -136,7 +109,9 @@ function componentTemplate(outline: DocumentTemplateStructure): BuiltinAuthoring
       ? 'Shared document structure only. Confirm the target jurisdiction and regional placement; harmonization does not establish identical regional requirements.'
       : region === 'EU' && agency === 'EMA'
         ? 'EU document structure. Confirm the current applicable European procedure and client template.'
-        : `${region} device document structure. Confirm the current applicable procedure, device/assay/version and client template.`],
+        : isUsBiotechLifecycleComponent(outline.id) || isUsMedicinalWorkingComponent(outline.id)
+          ? 'US regulatory working document. Confirm the current applicable FDA procedure, application, product, document subtype and client template.'
+          : `${region} device document structure. Confirm the current applicable procedure, device/assay/version and client template.`],
   });
 }
 
@@ -159,7 +134,7 @@ function leafletPreparation(): BuiltinAuthoringTemplate {
 }
 
 function regionalEntries(): RegulatoryApplicationType[] {
-  return GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry))
+  return GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry) || isSharedPlanningRegistryEntry(entry) || isCanonicalCtdModuleTemplate(entry.id))
     && REGIONS.includes(entry.region as typeof REGIONS[number]));
 }
 

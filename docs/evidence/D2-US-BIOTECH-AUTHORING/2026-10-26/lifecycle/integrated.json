@@ -1,0 +1,48 @@
+{
+  "startedAt": "2026-10-26T23:08:11.536906+00:00",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts",
+    "server/services/market-specs/__tests__/document-template-library.test.ts",
+    "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+    "server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts",
+    "server/services/market-specs/__tests__/regional-template-source-selection.test.ts"
+  ],
+  "cwd": "/workspace/ClinicalSageAI",
+  "elapsedSeconds": 4.461,
+  "exitCode": 0,
+  "nodeVersion": "v22.23.3",
+  "nodeOptions": "--max-old-space-size=4096",
+  "sourceFreeze": "lifecycle/integrated-inputs.json",
+  "sourcesBefore": {
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "0b75a289be0a65eec8a191a052324165585c52cdaeca208361bb3bc2993c6703",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts": "4c239f9ec45f08859f9b3c4af132f044fa5298377430ebca11f1bc207b6075ee",
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts": "551ef74f26b9d05dc9ec445ba8e10ed70e83dede01050fba22919567e08c9eb8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32"
+  },
+  "sourcesAfter": {
+    "server/services/market-specs/us-biotech-lifecycle-templates.ts": "0b75a289be0a65eec8a191a052324165585c52cdaeca208361bb3bc2993c6703",
+    "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts": "4c239f9ec45f08859f9b3c4af132f044fa5298377430ebca11f1bc207b6075ee",
+    "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts": "551ef74f26b9d05dc9ec445ba8e10ed70e83dede01050fba22919567e08c9eb8",
+    "server/services/ind/ctd/lifecycle-document-types.ts": "ead028d233d4f780c0a3e56cbd053bf58b947a7472ab9a46a8c1286ea41efacb",
+    "server/services/market-specs/document-template-library.ts": "92c4a879b42b3a2c2169bbf79c2932abe7eb89bc7bf364bc738f55759b950ef1",
+    "server/services/regulatory/templateCatalog.ts": "a888dabfa4fb67d18e25cca20a4d9577fea3f9eb31c4c8d7aef44c431a25ef8d",
+    "server/services/authoring/builtin-authoring-templates.ts": "cdc285281d18f3499472758cc61422b0322527817001c019e68d1d03f02392be",
+    "server/services/market-specs/document-preparation.ts": "3e0746ed2ae09af567549a6354f9371bf3bd090d548cff6576b254523156df32"
+  },
+  "sourceDrift": [],
+  "rawOutput": "integrated.log.gz",
+  "rawGzipSha256": "0a5426785f62b2bef1b064475b80c68dd903e1b63b7c8ceb7c01e3e6da93768f",
+  "testSummary": [
+    "Test Files  6 passed (6)",
+    "Tests  296 passed (296)",
+    "Duration  3.94s (transform 1.04s, setup 167ms, import 1.62s, tests 1.28s, environment 1ms)"
+  ]
+}

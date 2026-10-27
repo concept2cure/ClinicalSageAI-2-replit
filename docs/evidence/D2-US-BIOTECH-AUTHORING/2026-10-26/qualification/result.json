@@ -1,0 +1,20 @@
+{
+  "suite": "server/routes/__tests__/usBiotechLifecycleEditor.pglite.integration.test.ts",
+  "result": {
+    "passed": 17,
+    "suites": 1,
+    "namedInputDrift": []
+  },
+  "lifecycleSubtypes": 12,
+  "recordedParts": 76,
+  "manualOriginalParts": 17,
+  "narrativeWorkingParts": 59,
+  "testReceipt": "settled.json",
+  "strictLintReceipt": "lint.json",
+  "strictLintWarnings": 0,
+  "strictLintErrors": 0,
+  "calibration": "calibration.json",
+  "coverageBoundary": "HTTP/JWT+current project/member checks+canonical writes/reopen/manual editing and real saved-section template admission; no provider response, native RLS/concurrency, dispatch or human/clinical qualification.",
+  "broadCatalogueProofOwner": "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts (root combined run)",
+  "testSha256": "595270bf185b69fad837944abd114987537e7cda9dae696203d7eba860095868"
+}

@@ -1,0 +1,300 @@
+{
+  "results": [
+    {
+      "file": "server/services/market-specs/ctd-component-outlines.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+      "errors": 0,
+      "warnings": 12,
+      "baselineErrors": 0,
+      "baselineWarnings": 12,
+      "previous": {
+        "1:max-lines": 1,
+        "1:@typescript-eslint/no-unused-vars": 1,
+        "1:max-lines-per-function": 6,
+        "1:complexity": 4
+      },
+      "current": {
+        "1:max-lines": 1,
+        "1:@typescript-eslint/no-unused-vars": 1,
+        "1:max-lines-per-function": 6,
+        "1:complexity": 4
+      },
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1894). Maximum allowed is 500.",
+          "line": 624,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2296,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'SPL_LOINC_CODES' is assigned a value but never used.",
+          "line": 741,
+          "column": 7,
+          "messageId": "unusedVar",
+          "endLine": 741,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessPLRStructure' has too many lines (154). Maximum allowed is 100.",
+          "line": 1115,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1115,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'assessPLRStructure' has a complexity of 18. Maximum allowed is 15.",
+          "line": 1115,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1115,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'assessBoxedWarning' has a complexity of 25. Maximum allowed is 15.",
+          "line": 1333,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1333,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'designREMS' has too many lines (137). Maximum allowed is 100.",
+          "line": 1467,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1467,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'designREMS' has a complexity of 20. Maximum allowed is 15.",
+          "line": 1467,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1467,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessPregnancyLactationLabeling' has too many lines (112). Maximum allowed is 100.",
+          "line": 1645,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1645,
+          "endColumn": 49
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'structureSmPC' has too many lines (167). Maximum allowed is 100.",
+          "line": 1794,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1794,
+          "endColumn": 30
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessOTCLabeling' has too many lines (267). Maximum allowed is 100.",
+          "line": 2000,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 2000,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (104). Maximum allowed is 100.",
+          "line": 2018,
+          "column": 78,
+          "messageId": "exceed",
+          "endLine": 2018,
+          "endColumn": 80
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 2018,
+          "column": 78,
+          "messageId": "complex",
+          "endLine": 2018,
+          "endColumn": 80
+        }
+      ]
+    },
+    {
+      "file": "server/services/regulatory/templateCatalog.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/market-specs/document-template-library.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/market-specs/document-preparation.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/builtin-authoring-templates.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/document-template-outline-sections.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/medicinal-working-templates.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/routes/__tests__/medicinalTemplateEligibility.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/market-specs/medicinal-working-templates.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/ind-template-outlines-m2-m3.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/cmc-ind-source-policy.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/ctd-module-registry-templates.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/medicinal-source-records.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "previous": {},
+      "current": {},
+      "growth": [],
+      "messages": []
+    }
+  ]
+}
