@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-26T21:37:07.285Z",
+  "generatedAt": "2026-10-27T00:22:51.712Z",
   "git": {
-    "sha": "1f6a8bf7c65017749aae7f685f07918f2a75aa7f",
+    "sha": "88c295b43e24dad8771db324989d0c73b769212b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2366,7 +2366,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 230141
+        "bytes": 230243
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2533,12 +2533,12 @@
         "bytes": 114271
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 111736
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 112175
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 111698
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 111736
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2553,16 +2553,16 @@
         "bytes": 108337
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 103659
-      },
-      {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101286
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 100392
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 100255
       }
     ],
     "largeFilesByLines": [
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 4461
+        "lines": 4459
       },
       {
         "file": "server/storage.ts",
@@ -2695,10 +2695,6 @@
         "lines": 2694
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 2692
-      },
-      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
       },
@@ -2779,6 +2775,10 @@
         "lines": 2166
       },
       {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 2164
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
@@ -2795,12 +2795,12 @@
         "lines": 2124
       },
       {
-        "file": "server/routes/submissions.ts",
+        "file": "server/routes/c2c/projects.ts",
         "lines": 2122
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2116
+        "file": "server/routes/submissions.ts",
+        "lines": 2122
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2871,12 +2871,12 @@
         "lines": 1931
       },
       {
-        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
-        "lines": 1908
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 1910
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1905
+        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
+        "lines": 1908
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2987,16 +2987,16 @@
         "lines": 1639
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1623
+      },
+      {
         "file": "server/routes/taskManagement.routes.ts",
         "lines": 1623
       },
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1617
       },
       {
         "file": "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
@@ -3020,7 +3020,7 @@
       },
       {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
-        "lines": 1521
+        "lines": 1505
       }
     ]
   },
@@ -3029,7 +3029,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 464,
-      "largeByBytes": 41,
+      "largeByBytes": 40,
       "largeByLines": 88
     },
     {
@@ -3047,7 +3047,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 59,
-      "largeByBytes": 12,
+      "largeByBytes": 13,
       "largeByLines": 18
     },
     {
