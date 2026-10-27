@@ -36,7 +36,7 @@ The [existing completion matrix](BIOTECH_DOCUMENT_COMPLETION_MATRIX.md) records 
 
 Scoped actual HTTP/PGlite, client and source-policy receipts are evidence only for their stated cases and source pins. A successful listing, empty working copy, saved-section admission, review, export or package stage does not qualify every later stage. No entry is marked `VERIFIED` under the full work-order definition solely by this manifest or inventory report.
 
-Final generated CLI totals, combined test counts, build/compiler/gate outcomes and canonical publication proof are **pending lead integration/publication** and must be read from the evidence packet when filed. No totals or release outcome are invented here. Human acceptance, live AnA/model competence and actual agency transmission remain not run or separately unqualified.
+The retained CLI inventory reports 34 US filing definitions with exact editor starts, 30 reusable components and 24 shared registry documents, of which 22 have exact starts; these are source-scoped inventory facts. The pre-reconciliation combined test selection passed 2,152 distinct cases across 122 suites. Final merged qualification, build/compiler/gates and canonical publication proof are recorded in the evidence packet when filed; publication remains pending at this checkpoint. Human acceptance, live AnA/model competence and actual agency transmission remain not run or separately unqualified.
 
 ## Explicit unclosed scope
 

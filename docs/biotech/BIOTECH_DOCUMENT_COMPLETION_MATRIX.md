@@ -66,9 +66,9 @@ Use the [current evidence packet](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26
 
 | Final acceptance item | State at this documentation update |
 | --- | --- |
-| Current CLI inventory artifact and totals | Pending lead-generated final report; use `usBiotechAuthoring` and its source limitations, not the withdrawn denominator. |
-| Combined source-qualified test count | Pending lead integration; scoped receipts are available in the packet. |
-| Final build/editor/UI/size gates and compiler | Pending lead final qualification; no final pass is invented here. |
+| Current CLI inventory artifact and totals | [Retained CLI inventory](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/authoring-inventory-merged.json): 34 US filing definitions, 34 editor-loadable, 30 reusable components; 24 shared registry documents with 22 exact starts. GLOBAL Module 1 and eCTD backbone have no exact editor start. These are inventory facts, not completeness verdicts. |
+| Combined source-qualified test count | 2,152 distinct passes across 122 suites before the final canonical reconciliation; 67 affected merged suites/1,116 tests also pass. These overlap and are not added to the distinct count. |
+| Final build/editor/UI/size gates and compiler | Merged build, scoped lint (zero errors/no warning growth) and all seven editor/UI/size gates pass. Normal pre-push compiler is pending at this checkpoint. |
 | Canonical publication SHA/source and artifact proof | Pending lead publication, recorded in the same packet. |
 | Human/live-provider/agency acceptance | Not run or separately unqualified; no blanket release/parity verdict. |
 

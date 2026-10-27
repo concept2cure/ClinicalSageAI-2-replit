@@ -348,7 +348,8 @@ describe('RegistryPicker states only what the verdict states for that filing', (
     expect(document.activeElement).toBe(within(screen.getByRole('alert')).getByRole('button'));
     release();
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
-    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /search filing types/i }));
+    // List visibility can precede the passive effect that transfers focus.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: /search filing types/i })));
   });
 });
 

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const packet = dirname(fileURLToPath(import.meta.url));
 const baseline = JSON.parse(readFileSync(resolve(packet, 'checkpoint-source.json'), 'utf8')).base;
-const targets = JSON.parse(readFileSync(resolve(packet, 'lint-targets.json'), 'utf8'));
+const targets = JSON.parse(readFileSync(resolve(packet, process.argv[2] ?? 'lint-targets.json'), 'utf8'));
 const eslint = new ESLint();
 const results = [];
 const ruleCounts = messages => messages.reduce((counts, item) => {

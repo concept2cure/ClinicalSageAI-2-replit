@@ -2,6 +2,28 @@
   "baseline": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
   "results": [
     {
+      "file": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/OrganizationAccess.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/OrganizationSwitcher.tsx",
       "baselineErrors": 0,
       "errors": 0,
@@ -115,6 +137,17 @@
       "growth": []
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/croPortfolioCompanyType.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx",
       "baselineErrors": 0,
       "errors": 0,
@@ -170,6 +203,39 @@
       "growth": []
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx",
       "baselineErrors": 0,
       "errors": 0,
@@ -203,6 +269,39 @@
       "growth": []
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/projectDestination.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectDestinationShell.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx",
       "baselineErrors": 0,
       "errors": 0,
@@ -214,7 +313,29 @@
       "growth": []
     },
     {
+      "file": "client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/switchOrganization.test.ts",
       "baselineErrors": 0,
       "errors": 0,
       "baselineWarnings": 0,
@@ -492,6 +613,17 @@
       "growth": []
     },
     {
+      "file": "client/src/concept2cure/v2/organizationAccessData.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "client/src/concept2cure/v2/registryModel.ts",
       "baselineErrors": 0,
       "errors": 0,
@@ -511,7 +643,7 @@
           "line": 734,
           "column": 1,
           "messageId": "exceed",
-          "endLine": 1135,
+          "endLine": 1136,
           "endColumn": 1
         }
       ],
@@ -724,21 +856,21 @@
         {
           "ruleId": "max-lines-per-function",
           "severity": 1,
-          "message": "Function 'RegistryPicker' has too many lines (249). Maximum allowed is 100.",
-          "line": 143,
+          "message": "Function 'RegistryPicker' has too many lines (272). Maximum allowed is 100.",
+          "line": 136,
           "column": 8,
           "messageId": "exceed",
-          "endLine": 143,
+          "endLine": 136,
           "endColumn": 31
         },
         {
           "ruleId": "complexity",
           "severity": 1,
-          "message": "Function 'RegistryPicker' has a complexity of 50. Maximum allowed is 15.",
-          "line": 143,
+          "message": "Function 'RegistryPicker' has a complexity of 58. Maximum allowed is 15.",
+          "line": 136,
           "column": 8,
           "messageId": "complex",
-          "endLine": 143,
+          "endLine": 136,
           "endColumn": 31
         }
       ],
@@ -821,6 +953,86 @@
           "column": 1,
           "messageId": "exceed",
           "endLine": 995,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/CroPortfolio.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 6,
+      "warnings": 6,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:react-hooks/exhaustive-deps": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:react-hooks/exhaustive-deps": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'CroPortfolio' has too many lines (509). Maximum allowed is 100.",
+          "line": 92,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 92,
+          "endColumn": 29
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'CroPortfolio' has a complexity of 18. Maximum allowed is 15.",
+          "line": 92,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 92,
+          "endColumn": 29
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 18. Maximum allowed is 15.",
+          "line": 137,
+          "column": 59,
+          "messageId": "complex",
+          "endLine": 137,
+          "endColumn": 61
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "The 'selStudies' logical expression could make the dependencies of useMemo Hook (at line 280) change on every render. To fix this, wrap the initialization of 'selStudies' in its own useMemo() Hook.",
+          "line": 202,
+          "column": 9,
+          "endLine": 202,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "The 'selSubs' logical expression could make the dependencies of useMemo Hook (at line 280) change on every render. To fix this, wrap the initialization of 'selSubs' in its own useMemo() Hook.",
+          "line": 203,
+          "column": 9,
+          "endLine": 203,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (573). Maximum allowed is 500.",
+          "line": 588,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 663,
           "endColumn": 1
         }
       ],
@@ -991,61 +1203,61 @@
         {
           "ruleId": "max-lines-per-function",
           "severity": 1,
-          "message": "Function 'NewProjectWizardSession' has too many lines (666). Maximum allowed is 100.",
-          "line": 241,
+          "message": "Function 'NewProjectWizardSession' has too many lines (664). Maximum allowed is 100.",
+          "line": 239,
           "column": 1,
           "messageId": "exceed",
-          "endLine": 241,
+          "endLine": 239,
           "endColumn": 33
         },
         {
           "ruleId": "complexity",
           "severity": 1,
           "message": "Function 'NewProjectWizardSession' has a complexity of 136. Maximum allowed is 15.",
-          "line": 241,
+          "line": 239,
           "column": 1,
           "messageId": "complex",
-          "endLine": 241,
+          "endLine": 239,
           "endColumn": 33
         },
         {
           "ruleId": "complexity",
           "severity": 1,
           "message": "Async arrow function has a complexity of 39. Maximum allowed is 15.",
-          "line": 407,
+          "line": 403,
           "column": 29,
           "messageId": "complex",
-          "endLine": 407,
+          "endLine": 403,
           "endColumn": 31
         },
         {
           "ruleId": "max-lines",
           "severity": 1,
-          "message": "File has too many lines (1227). Maximum allowed is 500.",
+          "message": "File has too many lines (1223). Maximum allowed is 500.",
           "line": 699,
           "column": 1,
           "messageId": "exceed",
-          "endLine": 1627,
+          "endLine": 1623,
           "endColumn": 1
         },
         {
           "ruleId": "max-lines-per-function",
           "severity": 1,
           "message": "Function 'Projects' has too many lines (352). Maximum allowed is 100.",
-          "line": 1157,
+          "line": 1153,
           "column": 8,
           "messageId": "exceed",
-          "endLine": 1157,
+          "endLine": 1153,
           "endColumn": 25
         },
         {
           "ruleId": "complexity",
           "severity": 1,
           "message": "Arrow function has a complexity of 27. Maximum allowed is 15.",
-          "line": 1242,
+          "line": 1238,
           "column": 33,
           "messageId": "complex",
-          "endLine": 1242,
+          "endLine": 1238,
           "endColumn": 35
         }
       ],
@@ -1071,6 +1283,39 @@
       "previous": {},
       "current": {},
       "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/switchOrganization.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/services/portal/authService.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:null": 1
+      },
+      "current": {
+        "1:null": 1
+      },
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ],
       "growth": []
     },
     {
@@ -1375,6 +1620,65 @@
     },
     {
       "file": "server/services/agency-responses/visibility.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana-ri/mdx-command-handlers-phase2.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 3,
+      "warnings": 3,
+      "previous": {
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'postMarketDocumentCreate' has a complexity of 27. Maximum allowed is 15.",
+          "line": 225,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 225,
+          "endColumn": 47
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'evidenceSufficiencyAssess' has a complexity of 18. Maximum allowed is 15.",
+          "line": 411,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 411,
+          "endColumn": 48
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (619). Maximum allowed is 500.",
+          "line": 731,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 861,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/ana/__tests__/ana-launch-scope.test.ts",
       "baselineErrors": 0,
       "errors": 0,
       "baselineWarnings": 0,
@@ -1938,7 +2242,29 @@
       "growth": []
     },
     {
+      "file": "tests/db/project-client-workspace-intake.dbtest.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
       "file": "tests/e2e/filing-catalog-core-workflow.e2e.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/e2e/filing-catalog-fold.e2e.ts",
       "baselineErrors": 0,
       "errors": 0,
       "baselineWarnings": 0,

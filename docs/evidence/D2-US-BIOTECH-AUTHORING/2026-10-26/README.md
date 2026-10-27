@@ -31,7 +31,13 @@ The workstream source checkpoint is `14b27100d9006ed3719597630bd93a747b736c89`. 
 
 ## Final automated qualification and publication
 
-Lead qualification is in progress. Final receipts, source publication and artifact manifest will replace this paragraph before the final evidence push. No scoped count is represented here as a combined result.
+The combined selection passed 2,152 distinct tests across 122 suites (`integrated-regression.json`, `supplemental-regression.json`, deduplicated in `qualification-bridge.json`). The full catalogue probe created/reopened 175 filing definitions and 37 components/3,111 sections through actual HTTP/JWT/PGlite. The existing source scope is bounded; these counts are not regulatory completeness or human outcomes.
+
+Canonical reconciliation then passed 67 affected suites/1,116 tests in `merged-regression-corrected.json`. The first merged run's focus assertion race and unchanged requirement are retained in `retry-focus-review.json`; only its asynchronous observation was corrected. `merge-impact.json` compares actual input hashes. These overlapping merged tests are not added to the earlier distinct count.
+
+`publication-lint.json` records 125 targets, zero errors and no warning growth (two configured-ignored scripts reported separately in lint details). The seven existing editor/UI/size gates and production build pass in `publication-editor-ui-size-gates.json` and `publication-build.json`. The existing CLI's full stdout parses as one JSON value; `authoring-inventory-merged.json` reports 34 US filing definitions with exact editor starts, 30 reusable components and 24 shared registry documents/22 exact starts. The unavailable global Module 1 and backbone are disclosed. Four filing scope concerns and remaining needs stay explicit.
+
+Normal pre-push compiler/publication and actual accepted-Git source/artifact proofs are pending this checkpoint. Final publication receipts will replace this paragraph.
 
 ## Practical limits and human testing
 
