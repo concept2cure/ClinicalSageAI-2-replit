@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-27",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "previous_head": "1c846bdf6b8ee60988df41cb85adf191f4f6d385",
+  "verified_implementation_head": "85b42e527bd591a0f5dc3ff2ac25237a472dc66c",
+  "implementation_tree": "3b47f0b9c26966d3812a793f15a624c22b2ce170",
+  "validated_local_commit": "713adf0f467aa5fc1aec65aa937ce89fa64600a5",
+  "exact_tree_match": true,
+  "expected_head_checked": true,
+  "force": false,
+  "pull_request": null,
+  "conflicts": false,
+  "integrated_tests": {
+    "files": 19,
+    "passed": 373,
+    "failed": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "exit_code": 0
+  },
+  "pre_push": {
+    "status": "not_passed",
+    "initial_full_hook_exit_code": 1,
+    "static_and_lint_gates": "passed_in_initial_run",
+    "typecheck": {
+      "status": "incomplete_heap_exhaustion",
+      "files_per_process": 1000,
+      "heap_mb": 6144,
+      "completed_targets": 1000,
+      "total_targets": 14583,
+      "duration_seconds": 1210.02
+    },
+    "retry": {
+      "status": "blocked_before_typecheck_by_lint_scratch_copies",
+      "files_per_process": 500,
+      "exit_code": 1,
+      "duration_seconds": 206.44
+    }
+  },
+  "full_typecheck_passed": false,
+  "remote_ci_observed": "queued_or_pending",
+  "ci_run_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/40553520861",
+  "live_deployment_verified": false,
+  "evidence_note": "Full-hook results are observations captured before the local execution environment became unavailable; raw full-hook logs could not be uploaded. Existing regression and build logs are already in this directory."
+}

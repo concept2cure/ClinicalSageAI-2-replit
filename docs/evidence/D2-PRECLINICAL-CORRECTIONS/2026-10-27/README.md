@@ -1,7 +1,8 @@
 # W1 / D2 — existing preclinical intake and calculation corrections
 
-Status: implemented; 373 integrated tests and application build passed.
-Required publication gates and remote state are recorded after they complete.
+Status: landed directly on concept2cure-v2; 373 integrated tests and application build passed.
+Implementation commit: 85b42e527bd591a0f5dc3ff2ac25237a472dc66c.
+The full TypeScript check is incomplete; this is not an all-gates-green or release-clearance claim.
 Base: 1c846bdf6b8ee60988df41cb85adf191f4f6d385.
 
 ## What already exists
@@ -84,7 +85,10 @@ TypeScript 5.6.3. No package/lockfile changes.
 | Targeted changed-file ESLint | Exit 0, no errors or warnings in corrected engine/extractor/ingestion/routes/tests | Recorded command below |
 | Whitespace/error check | git diff --check, exit 0 | Lead verification |
 | Application build | Exit 0: Vite, server and audit-chain verifier built | build.txt |
-| Required pre-push gates | Pending | Post-push verification will record actual outcome |
+| Static and pushed-file lint gates | Passed in the initial full-hook run; net three fewer warnings | publication.json records observed outcomes |
+| Full TypeScript gate | Did not complete: V8 heap exhaustion at 6,144 MiB; 1,000 of 14,583 targets covered | publication.json |
+| Smaller-batch retry | Blocked before TypeScript by leftover lint-ratchet scratch copies | publication.json |
+| Direct branch publication | Remote head verified at implementation commit; no PR or conflict | publication.json |
 
 The integrated suite covers all existing preclinical tests, canonical
 toxicology consistency, common intake/OCR budget, route/service failure cases,
@@ -95,14 +99,30 @@ EPERM) is excluded from failing-first evidence.
 
 Targeted ESLint ran with --max-warnings=0 on the corrected engine, extractor,
 ingestion service, route and their changed test files. The two-line toxicology
-adapter edit retains its existing warning set; the canonical pushed-file warning
-ratchet is still required before publication.
+adapter edit retains its existing warning set. The initial canonical pushed-file
+warning ratchet passed, with a net reduction of three warnings.
 
-Full project checks on this 8 GiB host use the repository's existing
-memory-bounded full-program TypeScript mode, TYPECHECK_FILES_PER_PROCESS=1000
-and TYPECHECK_HEAP_MB=6144, without narrowing roots or changing the zero-error
-baseline. No typecheck pass is claimed until every worker and final snapshot
-verification complete.
+The initial full-hook run used the existing memory-bounded TypeScript mode,
+TYPECHECK_FILES_PER_PROCESS=1000 and TYPECHECK_HEAP_MB=6144, without narrowing
+roots or changing the zero-error baseline. It exited 1 after 1,210.02 seconds:
+the second diagnostic worker exhausted its V8 heap. Discovery and only 1,000 of
+14,583 targets completed. This is an incomplete check, not a passing typecheck.
+
+A 500-target retry exited 1 after 206.44 seconds before reaching TypeScript
+because the lint ratchet found its temporary previous-source copies already
+present. Those untracked copies were excluded from the published tree. This
+retry is not compiler-capacity evidence. The retry and initial run observations
+are recorded in publication.json; the raw full-hook logs remained in the local
+execution environment, which became unavailable during final evidence saving.
+
+After being informed of the incomplete compiler check, the user explicitly
+requested immediate direct publication. The GitHub file tree exactly matched
+the tested local commit: 3b47f0b9c26966d3812a793f15a624c22b2ce170.
+The branch update was a fast-forward from the audited base with an expected-head
+check. No PR, force update, branch conflict, source change, typecheck-baseline
+change or compiler-gate change was introduced. GitHub CI and other checks were
+queued or pending when publication was verified; no remote CI pass or live
+deployment outcome is claimed.
 
 ## Scope still open
 
