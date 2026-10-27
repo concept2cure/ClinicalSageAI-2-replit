@@ -37,7 +37,7 @@ Canonical reconciliation then passed 67 affected suites/1,116 tests in `merged-r
 
 `publication-lint.json` records 125 targets, zero errors and no warning growth (two configured-ignored scripts reported separately in lint details). The seven existing editor/UI/size gates and production build pass in `publication-editor-ui-size-gates.json` and `publication-build.json`. The existing CLI's full stdout parses as one JSON value; `authoring-inventory-merged.json` reports 34 US filing definitions with exact editor starts, 30 reusable components and 24 shared registry documents/22 exact starts. The unavailable global Module 1 and backbone are disclosed. Four filing scope concerns and remaining needs stay explicit.
 
-Normal pre-push compiler/publication and actual accepted-Git source/artifact proofs are pending this checkpoint. Final publication receipts will replace this paragraph.
+The first normal push was blocked by 48 completed TypeScript diagnostics across 8 files, retained in `source-push.json`/`compiler-diagnostics.json`. The unchanged zero-error baseline and exact 10 type-remediation inputs are recorded in `compiler-remediation.json`. Canonical database results, optional roles, source union narrowing and actual roster identity are now explicit; the HTTP/traced pool and authorization policy are preserved. The post-fix 34-suite regression passes 669 tests, including exact saved-template reuse; post-fix lint/build/seven gates and final inventory pass with no source drift. The overlapping 669 tests are not added to the earlier count. The normal compiler/push retry and accepted-Git proof remain pending at this checkpoint.
 
 ## Practical limits and human testing
 

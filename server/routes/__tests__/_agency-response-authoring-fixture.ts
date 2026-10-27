@@ -2,10 +2,15 @@
  * Each test retains its own explicit migration list; no migration is hidden here. */
 import { agencyResponseDigest } from '../../services/agency-responses/response-logic';
 import { recordGovernedAction } from '../c2c/actions';
-import type { Queryable } from '../../services/authoring/authoring-evidence';
+import type { JourneyDb } from '../../../tests/golden-journeys/harness';
+
+/** The real typed PGlite executor for services whose SQL contract is generic. */
+export function agencyFixtureExecutor(db: Pick<JourneyDb, 'pglite'>) {
+  return { query: <R = unknown>(sql: string, params?: unknown[]) => db.pglite.query<R>(sql, params) };
+}
 
 /** Seed a historical fixture revision with the actual canonical governed receipt writer. */
-export async function seedAgencyResponseReceipt(q: Queryable, input: {
+export async function seedAgencyResponseReceipt(q: Pick<JourneyDb['pool'], 'query'>, input: {
   organizationId: number; questionId: number; eventId: string; questionRef: string; questionText: string;
   responseText: string; revision: number; userId: number;
 }) {
@@ -15,10 +20,14 @@ export async function seedAgencyResponseReceipt(q: Queryable, input: {
     (organization_id,question_id,revision,response_text,response_digest,written_by,reason)
     VALUES($1,$2,$3,$4,$5,$6,'Retained historical fixture response') RETURNING id`,
   [input.organizationId, input.questionId, input.revision, input.responseText, digest, input.userId]);
+  const row = inserted.rows[0];
+  if (!row || typeof row !== 'object' || !('id' in row) || typeof row.id !== 'number') {
+    throw new Error('The historical fixture response did not return its recorded revision id.');
+  }
   const receipt = await recordGovernedAction(q, { orgId: input.organizationId, userId: input.userId, command: 'update',
     target: `agency-question:${input.questionId}`, domain: 'correspondence', surface: 'communication-center', reason: 'Retained historical fixture response',
     payload: { communicationEventId: input.eventId, questionRef: input.questionRef, responseRevision: input.revision, responseDigest: digest } });
-  return { ...receipt, revisionId: inserted.rows[0].id };
+  return { ...receipt, revisionId: row.id };
 }
 
 export const AGENCY_EVENT = 'agency-source-event';

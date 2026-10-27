@@ -388,7 +388,7 @@ function ScopedAgencyResponses({
   const reload = () => { if (readOwner.current()) setVersion((v) => v + 1); };
   const fire = (message: string, tone?: 'ok' | 'error') => { if (readOwner.current()) hostFire(message, tone); };
   const read = useLiveData<QuestionsPayload>(`${base}/questions`, [base, version],
-    value => isQuestionsPayload(value) && value.letter.id === letter.id, readOwner);
+    (value: unknown): value is QuestionsPayload => isQuestionsPayload(value) && value.letter.id === letter.id, readOwner);
   const authUser = useAuthUser();
   const [busy, setBusy] = React.useState(false);
   const [adding, setAdding] = React.useState(false);

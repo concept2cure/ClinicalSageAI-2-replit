@@ -1,0 +1,34 @@
+{
+  "failedNormalPush": "source-push.json",
+  "completedCompilerErrors": 48,
+  "diagnostics": "compiler-diagnostics.json",
+  "beforeFreeze": "publication-source-freeze.json",
+  "correctedFreeze": "compiler-corrected-source-freeze.json",
+  "changedInputs": [
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx",
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx",
+    "server/routes/__tests__/_agency-response-authoring-fixture.ts",
+    "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+    "server/services/authoring/agency-response-machine-origin.ts",
+    "server/services/authoring/agency-response-source.ts",
+    "server/services/authoring/document-template-outline-sections.ts"
+  ],
+  "fixes": [
+    "Explicit current-question shape predicate",
+    "Runtime narrowing of actual canonical template_id roster field; exact reuse versus matching-title control added",
+    "Correctly typed response candidate fixture",
+    "Typed unknown machine-origin SQL rows before existing runtime validation",
+    "Null role normalized at existing optional-role visibility boundary",
+    "Narrow outline source identity by recorded registryId presence",
+    "Native PGlite typed reads/generic service executor; HTTP/traced pool retained"
+  ],
+  "baselineErrorCount": 0,
+  "baselineUnchanged": true,
+  "baselineSha256": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+  "noCompilerOrHookBypass": true,
+  "noWeakeningOfAssertionsOrPolicies": true,
+  "regression": "compiler-fix-regression.json"
+}

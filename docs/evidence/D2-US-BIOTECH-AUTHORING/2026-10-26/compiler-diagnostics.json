@@ -1,0 +1,841 @@
+{
+  "sourceHead": "ee23d165e215b6d466d09371e3b80f917602bb16",
+  "failedHook": "source-push.json",
+  "completedCompilerErrors": 48,
+  "files": {
+    "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx": 1,
+    "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx": 1,
+    "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx": 1,
+    "server/services/authoring/document-template-outline-sections.ts": 1,
+    "server/services/authoring/agency-response-machine-origin.ts": 5,
+    "server/services/authoring/agency-response-source.ts": 1,
+    "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts": 4,
+    "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts": 34
+  },
+  "cacheSha256": "7f22d1a062cb4c25dc3da0eb148ffc0103ed1a39aab8cf9f711460ca7bf5c8cd",
+  "diagnostics": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx",
+      "line": 391,
+      "column": 5,
+      "code": 2345,
+      "message": "Argument of type '(value: unknown) => boolean' is not assignable to parameter of type 'ShapeGuard<QuestionsPayload>'. Signature '(value: unknown): boolean' must be a type predicate.",
+      "sourceSha256": "ac6675669e449d4b9b4732812c1f06826f0399a8ca23dfa8d0615470168eec1e",
+      "originalDiagnostic": {
+        "start": 16796,
+        "length": 67,
+        "code": 2345,
+        "category": 1,
+        "messageText": {
+          "messageText": "Argument of type '(value: unknown) => boolean' is not assignable to parameter of type 'ShapeGuard<QuestionsPayload>'.",
+          "category": 1,
+          "code": 2345,
+          "next": [
+            {
+              "messageText": "Signature '(value: unknown): boolean' must be a type predicate.",
+              "category": 1,
+              "code": 1224
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx",
+      "line": 65,
+      "column": 50,
+      "code": 2339,
+      "message": "Property 'template_id' does not exist on type 'AuthDoc'.",
+      "sourceSha256": "e3916f54199af9fd483dd1762145b006558166d91e70cf59c3a919f416219a70",
+      "originalDiagnostic": {
+        "start": 4223,
+        "length": 11,
+        "code": 2339,
+        "category": 1,
+        "messageText": "Property 'template_id' does not exist on type 'AuthDoc'."
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+      "line": 118,
+      "column": 88,
+      "code": 2322,
+      "message": "Type 'string' is not assignable to type 'null'.",
+      "sourceSha256": "748323a7d01795856e3a8e49c17b7e2528e3e5323774c280c63350b6ba290688",
+      "originalDiagnostic": {
+        "start": 9175,
+        "length": 7,
+        "code": 2322,
+        "category": 1,
+        "messageText": "Type 'string' is not assignable to type 'null'.",
+        "relatedInformation": [
+          {
+            "start": 2483,
+            "length": 13,
+            "messageText": "The expected type comes from property 'refusal' which is declared here on type '{ documentId: string; sectionId: string; sha256: string; updatedAt: string; sourceRevision: number; ready: boolean; refusal: null; text: string; }'",
+            "category": 3,
+            "code": 6500
+          }
+        ]
+      }
+    },
+    {
+      "file": "server/services/authoring/document-template-outline-sections.ts",
+      "line": 27,
+      "column": 32,
+      "code": 2339,
+      "message": "Property 'registryId' does not exist on type '{ kind: \"lifecycle-record\" | \"document-outline\"; registryId: string; record: string; } | { kind: \"lifecycle-component\" | \"source-component\"; record: string; }'. Property 'registryId' does not exist on type '{ kind: \"lifecycle-component\" | \"source-component\"; record: string; }'.",
+      "sourceSha256": "24f15bad33d12d8f2bedb3cb731fe17abe52db63fc450bcaabbcde2090b29c64",
+      "originalDiagnostic": {
+        "start": 1497,
+        "length": 10,
+        "code": 2339,
+        "category": 1,
+        "messageText": {
+          "messageText": "Property 'registryId' does not exist on type '{ kind: \"lifecycle-record\" | \"document-outline\"; registryId: string; record: string; } | { kind: \"lifecycle-component\" | \"source-component\"; record: string; }'.",
+          "category": 1,
+          "code": 2339,
+          "next": [
+            {
+              "messageText": "Property 'registryId' does not exist on type '{ kind: \"lifecycle-component\" | \"source-component\"; record: string; }'.",
+              "category": 1,
+              "code": 2339
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "line": 124,
+      "column": 37,
+      "code": 7006,
+      "message": "Parameter 'row' implicitly has an 'any' type.",
+      "sourceSha256": "a025c4e3925b72b486dd95bb40389b0e29e61acc6a789955958cc45ad04956fd",
+      "originalDiagnostic": {
+        "start": 8695,
+        "length": 3,
+        "messageText": "Parameter 'row' implicitly has an 'any' type.",
+        "category": 1,
+        "code": 7006
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "line": 125,
+      "column": 28,
+      "code": 7006,
+      "message": "Parameter 'row' implicitly has an 'any' type.",
+      "sourceSha256": "a025c4e3925b72b486dd95bb40389b0e29e61acc6a789955958cc45ad04956fd",
+      "originalDiagnostic": {
+        "start": 8760,
+        "length": 3,
+        "messageText": "Parameter 'row' implicitly has an 'any' type.",
+        "category": 1,
+        "code": 7006
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "line": 126,
+      "column": 33,
+      "code": 7006,
+      "message": "Parameter 'row' implicitly has an 'any' type.",
+      "sourceSha256": "a025c4e3925b72b486dd95bb40389b0e29e61acc6a789955958cc45ad04956fd",
+      "originalDiagnostic": {
+        "start": 8894,
+        "length": 3,
+        "messageText": "Parameter 'row' implicitly has an 'any' type.",
+        "category": 1,
+        "code": 7006
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "line": 128,
+      "column": 46,
+      "code": 7006,
+      "message": "Parameter 'a' implicitly has an 'any' type.",
+      "sourceSha256": "a025c4e3925b72b486dd95bb40389b0e29e61acc6a789955958cc45ad04956fd",
+      "originalDiagnostic": {
+        "start": 9074,
+        "length": 1,
+        "messageText": "Parameter 'a' implicitly has an 'any' type.",
+        "category": 1,
+        "code": 7006
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "line": 128,
+      "column": 49,
+      "code": 7006,
+      "message": "Parameter 'b' implicitly has an 'any' type.",
+      "sourceSha256": "a025c4e3925b72b486dd95bb40389b0e29e61acc6a789955958cc45ad04956fd",
+      "originalDiagnostic": {
+        "start": 9077,
+        "length": 1,
+        "messageText": "Parameter 'b' implicitly has an 'any' type.",
+        "category": 1,
+        "code": 7006
+      }
+    },
+    {
+      "file": "server/services/authoring/agency-response-source.ts",
+      "line": 56,
+      "column": 111,
+      "code": 2345,
+      "message": "Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | undefined'. Type 'null' is not assignable to type 'string | undefined'.",
+      "sourceSha256": "f97ab89319cdbe800f2f881e78cf5dc15e51284b668e0dec2206a5f7f32ed284",
+      "originalDiagnostic": {
+        "start": 4830,
+        "length": 10,
+        "code": 2345,
+        "category": 1,
+        "messageText": {
+          "messageText": "Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | undefined'.",
+          "category": 1,
+          "code": 2345,
+          "next": [
+            {
+              "messageText": "Type 'null' is not assignable to type 'string | undefined'.",
+              "category": 1,
+              "code": 2322
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+      "line": 120,
+      "column": 30,
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type '{ provenance?: unknown; client_program_id?: unknown; }'.",
+      "sourceSha256": "4ac89a2df79f8b8204ef1497de05da86a49e2e0fdf9c8255c4f4cc2b12970672",
+      "originalDiagnostic": {
+        "start": 8114,
+        "length": 6,
+        "code": 2345,
+        "category": 1,
+        "messageText": "Argument of type 'unknown' is not assignable to parameter of type '{ provenance?: unknown; client_program_id?: unknown; }'."
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+      "line": 121,
+      "column": 44,
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type '{ provenance?: unknown; client_program_id?: unknown; }'.",
+      "sourceSha256": "4ac89a2df79f8b8204ef1497de05da86a49e2e0fdf9c8255c4f4cc2b12970672",
+      "originalDiagnostic": {
+        "start": 8213,
+        "length": 6,
+        "code": 2345,
+        "category": 1,
+        "messageText": "Argument of type 'unknown' is not assignable to parameter of type '{ provenance?: unknown; client_program_id?: unknown; }'."
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+      "line": 124,
+      "column": 14,
+      "code": 18046,
+      "message": "'revision' is of type 'unknown'.",
+      "sourceSha256": "4ac89a2df79f8b8204ef1497de05da86a49e2e0fdf9c8255c4f4cc2b12970672",
+      "originalDiagnostic": {
+        "start": 8513,
+        "length": 8,
+        "messageText": "'revision' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+      "line": 125,
+      "column": 14,
+      "code": 18046,
+      "message": "'revision' is of type 'unknown'.",
+      "sourceSha256": "4ac89a2df79f8b8204ef1497de05da86a49e2e0fdf9c8255c4f4cc2b12970672",
+      "originalDiagnostic": {
+        "start": 8579,
+        "length": 8,
+        "messageText": "'revision' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 99,
+      "column": 118,
+      "code": 2339,
+      "message": "Property 'email' does not exist on type '{}'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 6644,
+        "length": 5,
+        "code": 2339,
+        "category": 1,
+        "messageText": "Property 'email' does not exist on type '{}'."
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 100,
+      "column": 98,
+      "code": 2339,
+      "message": "Property 'role' does not exist on type '{}'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 6750,
+        "length": 4,
+        "code": 2339,
+        "category": 1,
+        "messageText": "Property 'role' does not exist on type '{}'."
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 162,
+      "column": 17,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 11704,
+        "length": 98,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 167,
+      "column": 10,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 12053,
+        "length": 98,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 196,
+      "column": 158,
+      "code": 18046,
+      "message": "'row' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 14147,
+        "length": 3,
+        "messageText": "'row' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 215,
+      "column": 158,
+      "code": 18046,
+      "message": "'row' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 15628,
+        "length": 3,
+        "messageText": "'row' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 255,
+      "column": 22,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 19073,
+        "length": 103,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 273,
+      "column": 12,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 20500,
+        "length": 103,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 284,
+      "column": 10,
+      "code": 18046,
+      "message": "'revision' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 21478,
+        "length": 8,
+        "messageText": "'revision' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 284,
+      "column": 39,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 21507,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 285,
+      "column": 10,
+      "code": 18046,
+      "message": "'revision' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 21538,
+        "length": 8,
+        "messageText": "'revision' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 291,
+      "column": 36,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 22072,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 294,
+      "column": 10,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 22348,
+        "length": 85,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 309,
+      "column": 20,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 23713,
+        "length": 109,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 311,
+      "column": 10,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 23925,
+        "length": 85,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 313,
+      "column": 18,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 24129,
+        "length": 151,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 330,
+      "column": 19,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 25595,
+        "length": 103,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 334,
+      "column": 52,
+      "code": 2345,
+      "message": "Argument of type '{ query: (text: string, params?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>; connect: () => Promise<{ query: (text: string, params?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>; release: () => void; }>; }' is not assignable to parameter of type 'Queryable'. The types returned by 'query(...)' are incompatible between these types. Type 'Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type 'Promise<{ rows: R[]; rowCount?: number | null | undefined; }>'. Type '{ rows: unknown[]; rowCount: number; }' is not assignable to type '{ rows: R[]; rowCount?: number | null | undefined; }'. Types of property 'rows' are incompatible. Type 'unknown[]' is not assignable to type 'R[]'. Type 'unknown' is not assignable to type 'R'. 'R' could be instantiated with an arbitrary type which could be unrelated to 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 26038,
+        "length": 7,
+        "code": 2345,
+        "category": 1,
+        "messageText": {
+          "messageText": "Argument of type '{ query: (text: string, params?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>; connect: () => Promise<{ query: (text: string, params?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>; release: () => void; }>; }' is not assignable to parameter of type 'Queryable'.",
+          "category": 1,
+          "code": 2345,
+          "next": [
+            {
+              "messageText": "The types returned by 'query(...)' are incompatible between these types.",
+              "category": 1,
+              "code": 2201,
+              "next": [
+                {
+                  "messageText": "Type 'Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type 'Promise<{ rows: R[]; rowCount?: number | null | undefined; }>'.",
+                  "category": 1,
+                  "code": 2322,
+                  "next": [
+                    {
+                      "messageText": "Type '{ rows: unknown[]; rowCount: number; }' is not assignable to type '{ rows: R[]; rowCount?: number | null | undefined; }'.",
+                      "category": 1,
+                      "code": 2322,
+                      "next": [
+                        {
+                          "messageText": "Types of property 'rows' are incompatible.",
+                          "category": 1,
+                          "code": 2326,
+                          "next": [
+                            {
+                              "messageText": "Type 'unknown[]' is not assignable to type 'R[]'.",
+                              "category": 1,
+                              "code": 2322,
+                              "next": [
+                                {
+                                  "messageText": "Type 'unknown' is not assignable to type 'R'.",
+                                  "category": 1,
+                                  "code": 2322,
+                                  "next": [
+                                    {
+                                      "messageText": "'R' could be instantiated with an arbitrary type which could be unrelated to 'unknown'.",
+                                      "category": 1,
+                                      "code": 5082
+                                    }
+                                  ]
+                                }
+                              ],
+                              "canonicalHead": {
+                                "code": 2322,
+                                "messageText": "Type '{ rows: unknown[]; rowCount: number; }' is not assignable to type '{ rows: R[]; rowCount?: number | null | undefined; }'."
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "canonicalHead": {
+                    "code": 2322,
+                    "messageText": "Type '(text: string, params?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type '<R = any>(sql: string, params?: unknown[] | undefined) => Promise<{ rows: R[]; rowCount?: number | null | undefined; }>'."
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 395,
+      "column": 18,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30390,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 397,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30453,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 398,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30528,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 399,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30616,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 400,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30682,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 401,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30741,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 402,
+      "column": 10,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30823,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 404,
+      "column": 88,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 30964,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 405,
+      "column": 113,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31088,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 405,
+      "column": 128,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31103,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 407,
+      "column": 118,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31238,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 408,
+      "column": 116,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31365,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 408,
+      "column": 136,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31385,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 409,
+      "column": 95,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31493,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 410,
+      "column": 143,
+      "code": 18046,
+      "message": "'saved' is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 31647,
+        "length": 5,
+        "messageText": "'saved' is of type 'unknown'.",
+        "category": 1,
+        "code": 18046
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "line": 478,
+      "column": 10,
+      "code": 2571,
+      "message": "Object is of type 'unknown'.",
+      "sourceSha256": "19576be7f633f99218bd9af66b428d3df71cfa868fc68f5ecec9f6295709d503",
+      "originalDiagnostic": {
+        "start": 37339,
+        "length": 9,
+        "messageText": "Object is of type 'unknown'.",
+        "category": 1,
+        "code": 2571
+      }
+    }
+  ]
+}

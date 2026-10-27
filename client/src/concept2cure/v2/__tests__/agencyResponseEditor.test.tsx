@@ -16,6 +16,7 @@ vi.mock('../editor/SourceImportDialog', async original => {
 import { AgencyResponseEditor } from '../surfaces/AgencyResponseEditor';
 import type { ResponseEditorProps } from '../surfaces/useAgencyResponseEditor';
 import { useAgencyResponseEditor } from '../surfaces/useAgencyResponseEditor';
+import type { ResponseEditorRead } from '../surfaces/agencyResponseEditorState';
 import { authService } from '@/services/portal/authService';
 import { clearAuthToken } from '@/utils/authToken';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
@@ -26,7 +27,7 @@ const DOC = '30000000-0000-4000-8000-000000000001';
 const SECTION = '40000000-0000-4000-8000-000000000001';
 const TOKEN = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
-function payload(eventId = 'ace_1', text = 'Saved answer.', revision = 2) {
+function payload(eventId = 'ace_1', text = 'Saved answer.', revision = 2): { success: true; data: ResponseEditorRead } {
   return { success: true, data: { programId: PROGRAM, currentRevision: revision,
     source: { kind: 'agency-response', eventId, questionId: 7 }, copies: [{ documentId: DOC, sectionId: SECTION,
       sha256: 'a'.repeat(64), updatedAt: '2026-10-26T10:00:00.000Z', sourceRevision: revision,
@@ -115,7 +116,7 @@ describe('current response ownership', () => {
   });
   it('refreshes the separate question read without rebasing an older working copy', async () => {
     const values = props(); const fresh = payload('ace_1', 'Current answer.', 3);
-    fresh.data.copies[0] = { ...fresh.data.copies[0], sourceRevision: 2, ready: false, refusal: 'Prepare a fresh source copy.', text: null as unknown as string };
+    fresh.data.copies[0] = { ...fresh.data.copies[0], sourceRevision: 2, ready: false, refusal: 'Prepare a fresh source copy.', text: null };
     apiRequest.mockResolvedValueOnce(ok(payload())).mockResolvedValue(ok(fresh));
     const view = render(<AgencyResponseEditor {...values} />); await screen.findByText('Saved answer.');
     fireEvent.click(screen.getByRole('button', { name: 'Refresh saved response' }));

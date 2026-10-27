@@ -53,7 +53,7 @@ async function admittedSource(input: AgencyInput, q: Queryable) {
   if (!anchor || anchor.id !== input.target.projectId) return fail(409, 'AGENCY_SOURCE_SCOPE_MISMATCH', 'The agency response target project could not be verified.');
   if (!await canAccessReportProject(input.organizationId, actor, anchor.id, q)) return fail(403, 'AGENCY_SOURCE_ACCESS_DENIED', 'Current project access is required to read this agency response.');
   const letter = await readLetter(q, input.organizationId, anchor.id, input.source.eventId);
-  if (!letter || !canViewVisibilityTier(letter.visibilityTier as Parameters<typeof canViewVisibilityTier>[0], actor.role)) {
+  if (!letter || !canViewVisibilityTier(letter.visibilityTier as Parameters<typeof canViewVisibilityTier>[0], actor.role ?? undefined)) {
     return fail(404, 'AGENCY_SOURCE_NOT_FOUND', 'Agency response source not found in this project.');
   }
   if (letter.closureStatus === 'closed') return fail(409, 'AGENCY_SOURCE_CLOSED', 'This agency letter is closed. Its response cannot start a new editing copy.');

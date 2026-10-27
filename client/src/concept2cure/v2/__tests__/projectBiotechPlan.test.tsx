@@ -135,6 +135,24 @@ describe('US biotech filings use the existing project plan', () => {
 
 });
 
+describe('exact saved template reuse', () => {
+  it('opens the renamed existing copy by its canonical list template_id without creating another copy', async () => {
+    const initial = apiRequest.getMockImplementation()!;
+    const saved = { id: DOC, title: 'Renamed saved CSR', module: null, product_code: null, locale: 'en-US', status: 'DRAFT',
+      created_at: '2026-10-26T10:00:00Z', updated_at: '2026-10-26T11:00:00Z', created_by: '7', template_id: TPL,
+      program_id: PID, c2c_document_id: null, readScope: 'document', section_count: '119', total_content_length: '0' };
+    apiRequest.mockImplementation((method, url, body) => url.startsWith('/api/authoring/docs?')
+      ? Promise.resolve(reply({ success: true, documents: [saved, { ...saved, id: OTHER, title: 'Clinical study report', template_id: OTHER }] }))
+      : initial(method, url, body));
+    const p = props(); render(<ProjectPlan {...p} />);
+    const row = (await screen.findByText('Clinical study report')).closest('details')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Open Renamed saved CSR' }));
+    expect(p.onOpenDocument).toHaveBeenCalledExactlyOnceWith(DOC);
+    expect(within(row).queryByRole('button', { name: 'Open Clinical study report' })).toBeNull();
+    expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
+  });
+});
+
 describe('project guidance belongs to the current actor', () => {
   it('retires an earlier organization template catalog immediately at the same project', async () => {
     let finish!: (value: Response) => void;

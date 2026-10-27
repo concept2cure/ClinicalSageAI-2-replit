@@ -116,11 +116,11 @@ describe('exact saved agency response through the existing source working-copy r
     const opened = await author(request(app).get(`/api/authoring/docs/${docId}/sections`));
     expect(opened.status).toBe(200);
     expect(opened.body.sections.map((row: { content: string }) => row.content)).toEqual(copy.map((row: { content: string }) => row.content));
-    const stored = (await db.pool.query('SELECT provenance,client_program_id FROM authoring_documents WHERE id=$1', [docId])).rows[0];
+    const stored = (await db.pglite.query<{ provenance: unknown; client_program_id: string }>('SELECT provenance,client_program_id FROM authoring_documents WHERE id=$1', [docId])).rows[0];
     expect(savedImportSource(stored)).toMatchObject({ fingerprint: p.fingerprint });
     await expect(verifySavedWorkflowImport(stored, db.pool, { organizationId: ORG, actor: AUTHOR })).resolves.toMatchObject({ fingerprint: p.fingerprint });
     for (const section of copy) {
-      const revision = (await db.pool.query('SELECT content_sha256,inputs FROM doc_revisions WHERE section_id=$1', [section.id])).rows[0];
+      const revision = (await db.pglite.query<{ content_sha256: string; inputs: { importSource: { fingerprint: string } } }>('SELECT content_sha256,inputs FROM doc_revisions WHERE section_id=$1', [section.id])).rows[0];
       expect(revision.content_sha256).toBe(sha(section.content));
       expect(revision.inputs.importSource.fingerprint).toBe(p.fingerprint);
     }

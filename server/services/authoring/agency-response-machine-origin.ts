@@ -110,10 +110,10 @@ function retainsMachine(current: string, original: string): boolean {
 }
 
 export async function retainedAgencyResponseMachineOrigin(q: Queryable, input: Input) {
-  const stored = await q.query(`SELECT id::text,revision,response_text,response_digest FROM agency_question_response_revisions
+  const stored: { rows: Row[] } = await q.query(`SELECT id::text,revision,response_text,response_digest FROM agency_question_response_revisions
     WHERE organization_id=$1 AND question_id=$2 ORDER BY revision LIMIT 201`, [input.organizationId, input.questionId]);
   const history = revisions(stored.rows, input);
-  const actions = await q.query(`SELECT a.id AS action_id,a.domain,a.surface,a.command,a.payload,a.audit_row_id::text,
+  const actions: { rows: Row[] } = await q.query(`SELECT a.id AS action_id,a.domain,a.surface,a.command,a.payload,a.audit_row_id::text,
       l.id::text AS audit_id,l.tenant_id AS audit_tenant,l.target AS audit_target,l.action AS audit_action,
       l.ana_action_id,l.payload_hash,l.sha256_chain
     FROM c2c_ana_actions a LEFT JOIN audit_logs l ON l.id::text=a.audit_row_id::text AND l.tenant_id=a.org_id

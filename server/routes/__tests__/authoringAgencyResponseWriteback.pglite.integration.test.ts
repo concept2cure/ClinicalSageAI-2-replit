@@ -15,10 +15,21 @@ import { projectAdmissionMiddleware } from '../c2c/project-access';
 import { agencyResponseDigest, assembleResponsePackage } from '../../services/agency-responses/response-logic';
 import { readQuestions } from '../../services/agency-responses/response-service';
 import { PROGRAM_B } from './_authoring-canvas-fixture';
-import { AGENCY_RESPONSE_SOURCE_DDL, AGENCY_RESPONSE_WRITEBACK_DDL, seedAgencyResponseReceipt } from './_agency-response-authoring-fixture';
+import { AGENCY_RESPONSE_SOURCE_DDL, AGENCY_RESPONSE_WRITEBACK_DDL, agencyFixtureExecutor, seedAgencyResponseReceipt } from './_agency-response-authoring-fixture';
 import { recordGovernedAction, type RecordGovernedActionParams } from '../c2c/actions';
 import { recordMachineSpan } from '../../services/clinical-regulatory-evidence/span-lineage.service';
 import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID } from '../../services/authoring/revision-ledger';
+import type { WorkflowImportOrigin } from '../../../shared/authoring/source-import';
+import type { responseFromSavedEditor } from '../../services/agency-responses/editor-response';
+
+type FixtureAnswer = { response_text: string; response_revision: number };
+type FixtureContent = { content: string };
+type FixtureCount = { n: number };
+type FixtureResponsePayload = Record<string, unknown> & {
+  communicationEventId: string; questionRef: string; responseRevision: number; responseDigest: string;
+  editorSource: Awaited<ReturnType<typeof responseFromSavedEditor>>['source'];
+};
+type FixtureCreateMetadata = Record<string, unknown> & { provenance: { importSource: WorkflowImportOrigin } };
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({ get db() { return h.db; }, get pool() { return h.pool; }, getPool: () => h.pool,
@@ -93,7 +104,7 @@ beforeAll(async () => {
   agency.use(async (req, res, next) => {
     try {
       const payload = verifyJwtWithRotation<{ userId: string; organizationId: number }>(String(req.headers.authorization ?? '').replace(/^Bearer /, ''));
-      const member = (await db.pool.query('SELECT u.email,ou.role FROM users u JOIN organization_users ou ON ou.user_id=u.id WHERE u.id=$1 AND ou.organization_id=$2',
+      const member = (await db.pglite.query<{ email: string | null; role: string }>('SELECT u.email,ou.role FROM users u JOIN organization_users ou ON ou.user_id=u.id WHERE u.id=$1 AND ou.organization_id=$2',
         [Number(payload.userId), payload.organizationId])).rows[0];
       if (!member) return void res.status(401).json({ error: 'Current member required' });
       Object.assign(req, { user: { id: Number(payload.userId), organizationId: payload.organizationId, email: member.email },
@@ -156,15 +167,15 @@ async function prepared(text: string, rawHtml = false, questionId = QUESTION, ev
 type EditorSource = Awaited<ReturnType<typeof prepared>>;
 const recordResponse = (editorSource: EditorSource, expectedRevision = 1, extra: Record<string, unknown> = {}) =>
   author(request(app).put(responsePath)).send({ editorSource, expectedRevision, reason: REASON, ...extra });
-const currentQuestion = async () => (await db.pool.query('SELECT response_text,response_revision FROM agency_communication_questions WHERE id=$1', [QUESTION])).rows[0];
+const currentQuestion = async () => (await db.pglite.query<FixtureAnswer>('SELECT response_text,response_revision FROM agency_communication_questions WHERE id=$1', [QUESTION])).rows[0];
 async function unchangedRefusal(source: EditorSource, statuses: number[], expectedRevision = 1) {
   const before = await currentQuestion();
-  const count = (await db.pool.query('SELECT count(*)::int AS n FROM agency_question_response_revisions')).rows[0].n;
+  const count = (await db.pglite.query<FixtureCount>('SELECT count(*)::int AS n FROM agency_question_response_revisions')).rows[0].n;
   const payloadCount = sealing.payloads.length;
   const result = await recordResponse(source, expectedRevision);
   expect(statuses, JSON.stringify(result.body)).toContain(result.status);
   expect(await currentQuestion()).toEqual(before);
-  expect((await db.pool.query('SELECT count(*)::int AS n FROM agency_question_response_revisions')).rows[0].n).toBe(count);
+  expect((await db.pglite.query<FixtureCount>('SELECT count(*)::int AS n FROM agency_question_response_revisions')).rows[0].n).toBe(count);
   expect(sealing.payloads).toHaveLength(payloadCount);
   return result;
 }
@@ -193,7 +204,7 @@ describe('saved-editor version and exact target admission', () => {
 
   it('refuses revoked section/document access before reading its saved content', async () => {
     const source = await prepared('Working answer before object access is revoked.');
-    const grants = (await db.pool.query('SELECT id::text FROM doc_permissions WHERE doc_id=$1 AND revoked_at IS NULL', [source.documentId])).rows.map(row => row.id);
+    const grants = (await db.pglite.query<{ id: string }>('SELECT id::text FROM doc_permissions WHERE doc_id=$1 AND revoked_at IS NULL', [source.documentId])).rows.map(row => row.id);
     await db.pool.query('UPDATE doc_permissions SET revoked_at=NOW() WHERE id=ANY($1::uuid[])', [grants]);
     try { await unchangedRefusal(source, [404]); }
     finally { await db.pool.query('UPDATE doc_permissions SET revoked_at=NULL WHERE id=ANY($1::uuid[])', [grants]); }
@@ -212,7 +223,7 @@ describe('current response source, visibility and recorded lineage', () => {
       sha256: source.expectedSha256, updatedAt: source.expectedUpdatedAt, sourceRevision: 1,
       ready: true, refusal: null, text: 'The exact saved answer shown before the explicit governed write.' });
     expect(await currentQuestion()).toEqual(before); expect(sealing.payloads).toHaveLength(0);
-    const grants = (await db.pool.query('SELECT id::text FROM doc_permissions WHERE doc_id=$1 AND revoked_at IS NULL', [source.documentId])).rows.map(row => row.id);
+    const grants = (await db.pglite.query<{ id: string }>('SELECT id::text FROM doc_permissions WHERE doc_id=$1 AND revoked_at IS NULL', [source.documentId])).rows.map(row => row.id);
     await db.pool.query('UPDATE doc_permissions SET revoked_at=NOW() WHERE id=ANY($1::uuid[])', [grants]);
     const mark = trace.stmts.length;
     try {
@@ -252,7 +263,7 @@ describe('current response source, visibility and recorded lineage', () => {
 
   it('refuses unrecorded section-content tampering even when its supplied hash and time match', async () => {
     const source = await prepared('A saved response with verified clause lineage.');
-    const original = (await db.pool.query('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content;
+    const original = (await db.pglite.query<FixtureContent>('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content;
     const unrecorded = '<p>Unrecorded alteration that has no canonical saved lineage.</p>';
     await db.pool.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', [unrecorded, source.sectionId]);
     try { await unchangedRefusal({ ...source, expectedSha256: sha(unrecorded) }, [409]); }
@@ -270,7 +281,7 @@ describe('current response source, visibility and recorded lineage', () => {
     const source = await prepared('<p>The recorded dose is <del data-author-name="Author">10</del><ins data-author-name="Author">20</ins> mg.</p>', true);
     const result = await unchangedRefusal(source, [409]);
     expect(result.body.error.code).toBe('EDITOR_RESPONSE_PENDING_CHANGES');
-    expect((await db.pool.query('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content).toContain('<ins');
+    expect((await db.pglite.query<FixtureContent>('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content).toContain('<ins');
   });
 });
 
@@ -278,9 +289,9 @@ it('records actual saved editor text through the existing governed answer writer
   const editorSource = await prepared('A reviewed answer from the saved editor section.');
   const result = await author(request(app).put(responsePath)).send({ editorSource, expectedRevision: 1, reason: REASON });
   expect(result.status, JSON.stringify(result.body)).toBe(200);
-  const saved = (await db.pool.query('SELECT response_text,response_revision FROM agency_communication_questions WHERE id=$1', [QUESTION])).rows[0];
+  const saved = (await db.pglite.query<FixtureAnswer>('SELECT response_text,response_revision FROM agency_communication_questions WHERE id=$1', [QUESTION])).rows[0];
   expect(saved).toMatchObject({ response_text: 'A reviewed answer from the saved editor section.', response_revision: 2 });
-  const revision = (await db.pool.query('SELECT response_text,response_digest FROM agency_question_response_revisions WHERE question_id=$1 AND revision=2', [QUESTION])).rows[0];
+  const revision = (await db.pglite.query<{ response_text: string; response_digest: string }>('SELECT response_text,response_digest FROM agency_question_response_revisions WHERE question_id=$1 AND revision=2', [QUESTION])).rows[0];
   expect(revision.response_text).toBe(saved.response_text);
   expect(revision.response_digest).toMatch(/^[a-f0-9]{64}$/);
   expect(sealing.payloads).toHaveLength(1);
@@ -291,7 +302,7 @@ it('records actual saved editor text through the existing governed answer writer
     .toMatchObject({ responseText: saved.response_text, responseRevision: 2, state: 'changed-after-approval', approval: null });
   const questions = await readQuestions(db.pool, ORG, 42, EVENT, '2026-10-26');
   expect(questions[0].revisions.find(row => row.revision === 1)?.responseText).toBe(ANSWER);
-  expect((await db.pool.query('SELECT count(*)::int AS n FROM electronic_signatures')).rows[0].n).toBe(1);
+  expect((await db.pglite.query<FixtureCount>('SELECT count(*)::int AS n FROM electronic_signatures')).rows[0].n).toBe(1);
   const stale = await editorSources();
   expect(stale.status, JSON.stringify(stale.body)).toBe(200);
   expect(stale.body.data).toMatchObject({ programId: PROGRAM, currentRevision: 2 });
@@ -306,11 +317,11 @@ it('records actual saved editor text through the existing governed answer writer
   const second = await recordResponse(nextSource, 2);
   expect(second.status, JSON.stringify(second.body)).toBe(200);
   expect(await currentQuestion()).toMatchObject({ response_revision: 3, response_text: 'A second reviewed amendment from the existing editor.' });
-  const retained = (await db.pool.query('SELECT content FROM authoring_sections WHERE id=$1', [editorSource.sectionId])).rows[0].content;
+  const retained = (await db.pglite.query<FixtureContent>('SELECT content FROM authoring_sections WHERE id=$1', [editorSource.sectionId])).rows[0].content;
   expect(retained).toBe('<p>A reviewed answer from the saved editor section.</p>');
-  expect((await db.pool.query('SELECT count(*)::int AS n FROM electronic_signatures')).rows[0].n).toBe(1);
+  expect((await db.pglite.query<FixtureCount>('SELECT count(*)::int AS n FROM electronic_signatures')).rows[0].n).toBe(1);
   const third = await prepared('A third saved answer before a forged genesis receipt.');
-  const origin = (await db.pool.query(`SELECT metadata FROM authoring_audit_trail
+  const origin = (await db.pglite.query<{ metadata: FixtureCreateMetadata }>(`SELECT metadata FROM authoring_audit_trail
     WHERE doc_id=$1 AND operation_type='CREATE' LIMIT 1`, [third.documentId])).rows[0].metadata;
   await db.pool.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,tenant_id,metadata)
     VALUES($1,$2,'CREATE',$3,$4,$5)`, [third.documentId, third.sectionId, AUTHOR.email, ORG,
@@ -327,11 +338,11 @@ async function storedMachineAnswer(questionId: number, text: string, machineAuth
   await seedAgencyResponseReceipt(db.pool, { organizationId: ORG, questionId, eventId: EVENT, questionRef: `Q${questionId}`,
     questionText: 'Explain the recorded exposure rationale.', responseText: ANSWER, revision: 1, userId: Number(AUTHOR.id) });
   const source = await prepared(text, false, questionId);
-  const content = (await db.pool.query('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content;
+  const content = (await db.pglite.query<FixtureContent>('SELECT content FROM authoring_sections WHERE id=$1', [source.sectionId])).rows[0].content;
   // Retained fixture attribution, not a provider turn or a qualification assertion.
   await recordMachineSpan(ORG, { documentTable: 'authoring_sections', documentId: source.sectionId,
     charStart: 0, charEnd: content.length, spanText: content, machineAuthorId: machineAuthor,
-    assertedBy: AUTHOR.id, createdBy: AUTHOR.id }, db.pool);
+    assertedBy: AUTHOR.id, createdBy: AUTHOR.id }, agencyFixtureExecutor(db));
   const path = responsePath.replace(`/questions/${QUESTION}/`, `/questions/${questionId}/`);
   const saved = await author(request(app).put(path)).send({ editorSource: source, expectedRevision: 1, reason: REASON });
   expect(saved.status, JSON.stringify(saved.body)).toBe(200);
@@ -384,7 +395,7 @@ it('refuses altered, missing and ambiguous governed machine provenance instead o
   const questionId = 708;
   await storedMachineAnswer(questionId, 'The retained machine assessment records a response rate of 37%.');
   const payload = sealing.payloads.at(-1)!;
-  const saved = (await db.pool.query(`SELECT id,audit_row_id::text,payload FROM c2c_ana_actions
+  const saved = (await db.pglite.query<{ id: string; audit_row_id: string; payload: FixtureResponsePayload }>(`SELECT id,audit_row_id::text,payload FROM c2c_ana_actions
     WHERE org_id=$1 AND target=$2 AND payload->>'responseRevision'='2'`, [ORG, `agency-question:${questionId}`])).rows[0];
   const selected = { kind: 'agency-response', eventId: EVENT, questionId };
   const refuse = async () => {
@@ -472,7 +483,7 @@ it('exports the actual saved-editor answer only after independent current-text a
   expect(download.status, JSON.stringify(download.body)).toBe(200);
   expect(download.text).toContain(text); expect(download.text).not.toContain(ANSWER);
   expect(download.headers['x-export-sha256']).toBe(sha(download.text));
-  const audits = (await db.pool.query(`SELECT new_values FROM audit_logs
+  const audits = (await db.pglite.query<{ new_values: { sha256: string; questionCount: number } }>(`SELECT new_values FROM audit_logs
     WHERE tenant_id=$1 AND action='EXPORT_GENERATED' AND record_id=$2`, [ORG, eventId])).rows;
   expect(audits).toHaveLength(1);
   expect(audits[0].new_values).toMatchObject({ sha256: download.headers['x-export-sha256'], questionCount: 1 });

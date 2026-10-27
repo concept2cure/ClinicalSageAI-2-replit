@@ -62,7 +62,7 @@ function TemplateStart({ template, programId, docs, ready, refresh, onOpenDocume
     onCheckCreation: refresh });
   const state = creation.state('document');
   const message = state?.message ?? notice;
-  const existing = docs.filter(doc => String(doc.template_id) === String(template.id));
+  const existing = docs.filter(doc => 'template_id' in doc && typeof doc.template_id === 'string' && doc.template_id === String(template.id));
   const deliverableId = `template:${template.id}`;
   const title = templateLabel(template);
   return <details className="pf-sel pf-library-entry">

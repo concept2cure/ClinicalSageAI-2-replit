@@ -21,7 +21,7 @@ export function clinicalSectionDraftingMode(componentId: string, code: string): 
 function sourceReference(outline: DocumentTemplateStructure): string {
   const source = outline.outlineSource;
   if (!source) return `server/services/market-specs/document-template-library.ts:${outline.id}`;
-  if (source.kind === 'lifecycle-component' || source.kind === 'source-component') return `${source.kind}:${source.record}`;
+  if (!('registryId' in source)) return `${source.kind}:${source.record}`;
   return 'blueprintId' in source
     ? `${source.kind}:${source.registryId}:${source.blueprintId}`
     : `${source.kind}:${source.registryId}:${source.record}`;

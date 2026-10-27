@@ -793,8 +793,8 @@
               "messageId": "includeCause",
               "fix": {
                 "range": [
-                  24661,
-                  24661
+                  24699,
+                  24699
                 ],
                 "text": ", { cause: e }"
               },
@@ -816,8 +816,8 @@
               "messageId": "includeCause",
               "fix": {
                 "range": [
-                  24712,
-                  24712
+                  24750,
+                  24750
                 ],
                 "text": ", { cause: e }"
               },
