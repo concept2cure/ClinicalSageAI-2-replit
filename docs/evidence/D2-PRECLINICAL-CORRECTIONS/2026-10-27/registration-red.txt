@@ -1,0 +1,1598 @@
+
+ RUN  v4.1.7 /workspace/scratch/dd8ef47af5ed/concept2cure-v2-audit
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset
+{
+  "timestamp": "2026-10-27T17:06:01.904Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer
+{
+  "timestamp": "2026-10-27T17:06:01.937Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-27T17:06:01.965Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-27T17:06:01.966Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-abc-123",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-27T17:06:02.015Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-27T17:06:02.017Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-f08c9674-0af1-4b08-9804-44276fac2c31",
+    "message": "Invalid studyType: expected enum value"
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset 334ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer 15ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when no file is attached 11ms
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds 36ms
+   → expected undefined to deeply equal { status: 'not_requested' }
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422 31ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42junk instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.030Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42junk instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.031Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-1d9e9bfd-4cea-440b-8b3a-458de2621606",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42.5 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.049Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42.5 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.050Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-44a040a3-6871-4e3e-baf0-5cdccf9a485f",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 1e2 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.061Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 1e2 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.061Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 1,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-2e8724f5-5d55-40b4-9413-4ee018a5afcf",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID +42 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.079Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID +42 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.080Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-b381a9ab-7b37-4988-8ce5-151a5b9d0477",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0x2a instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.095Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.105Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.106Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 9007199254740992,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-76d00dd7-3219-4c01-b2e1-7d3d3b5d7f83",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.135Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42junk instead of interpreting a numeric prefix 17ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42.5 instead of interpreting a numeric prefix 16ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 1e2 instead of interpreting a numeric prefix 13ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID +42 instead of interpreting a numeric prefix 19ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0x2a instead of interpreting a numeric prefix 13ms
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix 13ms
+   → expected 200 to be 400 // Object.is equality
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID -1 instead of interpreting a numeric prefix
+{
+  "timestamp": "2026-10-27T17:06:02.144Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.153Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.153Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-49bf7b70-d1d4-4080-b0b8-f5b76a989e83",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"submissionId":"19"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.161Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"submissionId":"19"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.161Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-f32946fb-bcf5-43e2-b6c3-b8852ff911ee",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.169Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.170Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-ba08c503-40e2-49a6-a22e-58ca8a79e676",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.179Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.179Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-d08d8bff-9000-41ef-8321-1c1ab3e724e8",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.188Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.188Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-01b62fd2-3388-4a51-b74d-75855d69b3c0",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.197Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.197Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-aed35640-2257-45b9-8501-64d6622ed442",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.206Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.207Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-dcb3dd4c-1702-423f-818d-f6c5c77dbddc",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.221Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.222Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-5bfa76a8-37c4-4a5e-a7f3-e1a06cac65f8",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.238Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.238Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-416713c7-f032-4267-b4ce-9e2cbfdff808",
+    "confidence": 0.87
+  }
+}
+
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0 instead of interpreting a numeric prefix 27ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID -1 instead of interpreting a numeric prefix 9ms
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true"} without trusted context before extraction 9ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"submissionId":"19"} without trusted context before extraction 8ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction 9ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction 9ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction 8ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction 10ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction 9ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction 17ms
+   → expected 200 to be 403 // Object.is equality
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.257Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.257Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-cd50bcc8-0a7b-4afa-8cc1-4ff8b855e798",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.272Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.272Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-6114b536-a29d-4fb8-b186-d257ee058f99",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.289Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.289Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-81908094-c559-4277-be97-61475c4da9c5",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.315Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.318Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-291846c4-6f52-46a0-8fdb-d31605bedd5b",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19junk before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.330Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19junk before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.330Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-b753bb62-d1a7-4ad0-9335-611ceac259a9",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19.5 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.340Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19.5 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.340Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-4ca0630e-5e6e-48c3-adf3-827fd618629a",
+    "confidence": 0.87
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction 17ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction 17ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction 15ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction 18ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction 31ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19junk before extraction 8ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19.5 before extraction 9ms
+   → expected 200 to be 400 // Object.is equality
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.350Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.351Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-151e8b32-d3fd-4729-8bb2-44f9b3087c5d",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId -19 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.358Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId -19 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.358Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-32a2cb6d-60e4-4b26-8cca-c37bfb7e935c",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 9007199254740992 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.366Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 9007199254740992 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.366Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-a8c52c8d-df60-4bd0-85a2-5fc8ed6c7a21",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 23junk before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.374Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 23junk before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.374Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-41921b44-f0f7-4ba9-9a27-d195b1977d3d",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 1e2 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.384Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 1e2 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.385Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-a9635424-e528-4c82-aa85-c16c548b527c",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.395Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 0 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.396Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-74a7cfb8-2a3c-4be4-b43a-17caf1453ed0",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId -23 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.411Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId -23 before extraction
+{
+  "timestamp": "2026-10-27T17:06:02.411Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-a13853e9-dc4b-4a90-8d08-9bfb735f79b0",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > passes validated context to registration and reports that review is still required
+{
+  "timestamp": "2026-10-27T17:06:02.425Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > passes validated context to registration and reports that review is still required
+{
+  "timestamp": "2026-10-27T17:06:02.425Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-4307b1a1-837b-44f2-8696-7b7a8236a0aa",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns a failed requested registration with the retained study ID and safe message
+{
+  "timestamp": "2026-10-27T17:06:02.440Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns a failed requested registration with the retained study ID and safe message
+{
+  "timestamp": "2026-10-27T17:06:02.440Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-retained",
+    "confidence": 0.87
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 0 before extraction 10ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId -19 before extraction 9ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 9007199254740992 before extraction 8ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 23junk before extraction 8ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 1e2 before extraction 11ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 0 before extraction 12ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId -23 before extraction 14ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > passes validated context to registration and reports that review is still required 16ms
+   → expected undefined to deeply equal { status: 'registered', …(3) }
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns a failed requested registration with the retained study ID and safe message 14ms
+   → expected 200 to be 500 // Object.is equality
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.458Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.459Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-133ed711-ee1c-48de-93d3-9affe539903f",
+    "err": "SENTINEL-INTERNAL-PDF-DETAIL",
+    "correlationId": null,
+    "code": "PRECLINICAL_NO_TEXT"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.479Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.479Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-4515f2de-3082-414a-8a9c-4891c6206527",
+    "err": "SENTINEL-INTERNAL-PDF-DETAIL",
+    "correlationId": null,
+    "code": "PRECLINICAL_INCOMPLETE_TEXT"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.488Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+{
+  "timestamp": "2026-10-27T17:06:02.488Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-252b32de-59a3-4239-bed1-71672fc0afac",
+    "err": "SENTINEL-INTERNAL-PDF-DETAIL",
+    "correlationId": null,
+    "code": "PRECLINICAL_REPORT_TOO_LARGE"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains internal error text even when it resembles validation failure
+{
+  "timestamp": "2026-10-27T17:06:02.498Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains internal error text even when it resembles validation failure
+{
+  "timestamp": "2026-10-27T17:06:02.498Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-21c70cb8-c00c-494d-a765-f9b43d448f87",
+    "message": "Invalid database response: expected relation SENTINEL-INTERNAL-TABLE"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains ordinary server failures without revealing provider or database details
+{
+  "timestamp": "2026-10-27T17:06:02.512Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains ordinary server failures without revealing provider or database details
+{
+  "timestamp": "2026-10-27T17:06:02.512Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-b79b8a12-9417-4842-bbe8-e03e617a5bda",
+    "err": "SENTINEL-INTERNAL-PROVIDER-SECRET",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422 18ms
+   → expected 500 to be 422 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422 20ms
+   → expected 500 to be 422 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422 8ms
+   → expected 500 to be 422 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains internal error text even when it resembles validation failure 13ms
+   → expected { success: false, …(2) } to deeply equal { success: false, …(2) }
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains ordinary server failures without revealing provider or database details 11ms
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains program-only extraction and explicitly reports registration was not requested 29ms
+   → expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > reports unreviewed registration only after the bridge, audit and commit succeed 3ms
+   → expected { studyId: 1234, …(5) } to match object { studyId: 1234, …(3) }
+(23 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when connect fails 3ms
+   → SENTINEL-INTERNAL-connect: private database detail
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when begin fails 4ms
+   → expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when bridge fails 8ms
+   → expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when audit fails 4ms
+   → expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when commit fails 3ms
+   → expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains the extraction and discards the client when rollback also fails 2ms
+   → expected { studyId: 1234, …(3) } to match object { studyId: 1234, …(1) }
+(23 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not lose the retained extraction if releasing the client throws 8ms
+   → promise rejected "Error: SENTINEL-RELEASE" instead of resolving
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > preserves a confirmed commit if only client release throws 3ms
+   → promise rejected "Error: SENTINEL-RELEASE" instead of resolving
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses disabled ingestion before extraction or persistence 2ms
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 0 before extraction 3ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID -1 before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 1.5 before extraction 1ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID NaN before extraction 3ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 9007199254740992 before extraction 5ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"userId":11} before extraction 3ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":0,"userId":11} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":-7,"userId":11} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7.5,"userId":11} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":0} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":-11} before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":null} before extraction 1ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":9007199254740992} before extraction 1ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId 0 before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId -2 before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId 1.5 before extraction 1ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId NaN before extraction 2ms
+   → promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_NO_TEXT 2ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_INCOMPLETE_TEXT 1ms
+ ✓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_REPORT_TOO_LARGE 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 62 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+AssertionError: expected undefined to deeply equal { status: 'not_requested' }
+
+- Expected:
+{
+  "status": "not_requested",
+}
+
++ Received:
+undefined
+
+ ❯ tests/integration/preclinical-ingest.test.ts:139:40
+    137|     expect(res.body.data.extractionConfidence).toBeCloseTo(0.87);
+    138|     expect(res.body.data.model).toBe('claude-opus-4-7');
+    139|     expect(res.body.data.registration).toEqual({ status: 'not_requeste…
+       |                                        ^
+    140|     expect(ingestStudyMock).toHaveBeenCalledTimes(1);
+    141|     const arg = ingestStudyMock.mock.calls[0][0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42junk instead of interpreting a numeric prefix
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42.5 instead of interpreting a numeric prefix
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 1e2 instead of interpreting a numeric prefix
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID +42 instead of interpreting a numeric prefix
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:165:26
+    163|     'refuses malformed program ID %s instead of interpreting a numeric…
+    164|       const res = await uploadStudy(await buildApp('on'), { programId …
+    165|       expect(res.status).toBe(400);
+       |                          ^
+    166|       expect(res.body.code).toBe('PRECLINICAL_INGEST_BAD_PROGRAM_ID');
+    167|       expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true"} without trusted context before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"submissionId":"19"} without trusted context before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:176:24
+    174|   ])('refuses requested registration %j without trusted context before…
+    175|     const res = await uploadStudy(await buildApp('on'), fields);
+    176|     expect(res.status).toBe(403);
+       |                        ^
+    177|     expect(res.body.code).toBe('PRECLINICAL_INGEST_GOVERNANCE_CONTEXT_…
+    178|     expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:189:24
+    187|   ])('refuses invalid trusted governance context %j before extraction'…
+    188|     const res = await uploadStudy(await buildApp('on', context), { gov…
+    189|     expect(res.status).toBe(403);
+       |                        ^
+    190|     expect(res.body.code).toBe('PRECLINICAL_INGEST_GOVERNANCE_CONTEXT_…
+    191|     expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19junk before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19.5 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 0 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId -19 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 9007199254740992 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 23junk before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 1e2 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 0 before extraction
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId -23 before extraction
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:206:24
+    204|   ])('refuses malformed %s %s before extraction', async (key, value, c…
+    205|     const res = await uploadStudy(await buildApp('on', CONTEXT), { gov…
+    206|     expect(res.status).toBe(400);
+       |                        ^
+    207|     expect(res.body.code).toBe(code);
+    208|     expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > passes validated context to registration and reports that review is still required
+AssertionError: expected undefined to deeply equal { status: 'registered', …(3) }
+
+- Expected:
+{
+  "ctdSection": "4.2.3.2",
+  "governedStudyId": 77,
+  "reviewRequired": true,
+  "status": "registered",
+}
+
++ Received:
+undefined
+
+ ❯ tests/integration/preclinical-ingest.test.ts:223:40
+    221|     expect(res.status).toBe(200);
+    222|     expect(res.body.success).toBe(true);
+    223|     expect(res.body.data.registration).toEqual(registration);
+       |                                        ^
+    224|     expect(ingestStudyMock).toHaveBeenCalledWith(expect.objectContaini…
+    225|       governance: { organizationId: 7, userId: 11, submissionId: 19, i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns a failed requested registration with the retained study ID and safe message
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:233:24
+    231|     ingestStudyMock.mockResolvedValueOnce({ ...EXTRACTED, registration…
+    232|     const res = await uploadStudy(await buildApp('on', CONTEXT), { gov…
+    233|     expect(res.status).toBe(500);
+       |                        ^
+    234|     expect(res.body).toMatchObject({
+    235|       success: false, code: 'PRECLINICAL_GOVERNED_REGISTRATION_FAILED',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+AssertionError: expected 500 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 500
+
+ ❯ tests/integration/preclinical-ingest.test.ts:248:26
+    246|       ingestStudyMock.mockRejectedValueOnce(new ExtractionInputError(c…
+    247|       const res = await uploadStudy(await buildApp('on'));
+    248|       expect(res.status).toBe(422);
+       |                          ^
+    249|       expect(res.body).toMatchObject({ success: false, code, coverage …
+    250|       expect(res.body.error).toEqual(expect.any(String));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/62]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains internal error text even when it resembles validation failure
+AssertionError: expected { success: false, …(2) } to deeply equal { success: false, …(2) }
+
+- Expected
++ Received
+
+  {
+    "code": "PRECLINICAL_INGEST_VALIDATION",
+-   "error": "The extracted study did not pass validation.",
++   "error": "Invalid database response: expected relation SENTINEL-INTERNAL-TABLE",
+    "success": false,
+  }
+
+ ❯ tests/integration/preclinical-ingest.test.ts:259:22
+    257|     const res = await uploadStudy(await buildApp('on'));
+    258|     expect(res.status).toBe(422);
+    259|     expect(res.body).toEqual({
+       |                      ^
+    260|       success: false, code: 'PRECLINICAL_INGEST_VALIDATION',
+    261|       error: 'The extracted study did not pass validation.',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains program-only extraction and explicitly reports registration was not requested
+AssertionError: expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -19,10 +19,7 @@
+      "studyTitle": "13-week study in rat",
+      "studyType": "repeat_dose_tox",
+      "targetOrganToxicity": [],
+      "testingFacility": null,
+    },
+-   "registration": {
+-     "status": "not_requested",
+-   },
+    "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:67:20
+     65|   it('retains program-only extraction and explicitly reports registrat…
+     66|     const result = await ingestStudy({ ...INPUT, governance: undefined…
+     67|     expect(result).toMatchObject({ studyId: 1234, data: STUDY, registr…
+       |                    ^
+     68|     expect(mocks.values).toHaveBeenCalledWith(expect.objectContaining({
+     69|       programId: 42, sourcePdfId: 'pdf-retained', extractionModel: 'te…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > reports unreviewed registration only after the bridge, audit and commit succeed
+AssertionError: expected { studyId: 1234, …(5) } to match object { studyId: 1234, …(3) }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ctdSection": "4.2.3.2",
+    "governedStudyId": 77,
+-   "registration": {
+-     "ctdSection": "4.2.3.2",
+-     "governedStudyId": 77,
+-     "reviewRequired": true,
+-     "status": "registered",
+-   },
+    "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:77:20
+     75|   it('reports unreviewed registration only after the bridge, audit and…
+     76|     const result = await ingestStudy(INPUT);
+     77|     expect(result).toMatchObject({
+       |                    ^
+     78|       studyId: 1234, governedStudyId: 77, ctdSection: '4.2.3.2',
+     79|       registration: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when connect fails
+Error: SENTINEL-INTERNAL-connect: private database detail
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:98:21
+     96|   it.each(['connect', 'begin', 'bridge', 'audit', 'commit'] as const)(
+     97|     'keeps the extracted study ID and reports failure when %s fails', …
+     98|       const error = new Error(`SENTINEL-INTERNAL-${stage}: private dat…
+       |                     ^
+     99|       if (stage === 'connect') mocks.connect.mockRejectedValueOnce(err…
+    100|       if (stage === 'bridge') mocks.bridge.mockRejectedValueOnce(error…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when begin fails
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when bridge fails
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when audit fails
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when commit fails
+AssertionError: expected { studyId: 1234, …(3) } to match object { Object (studyId, data, ...) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -19,11 +19,7 @@
+      "studyTitle": "13-week study in rat",
+      "studyType": "repeat_dose_tox",
+      "targetOrganToxicity": [],
+      "testingFacility": null,
+    },
+-   "registration": {
+-     "code": "PRECLINICAL_GOVERNED_REGISTRATION_FAILED",
+-     "status": "failed",
+-   },
+    "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:110:22
+    108|
+    109|       const result = await ingestStudy(INPUT);
+    110|       expect(result).toMatchObject({ studyId: 1234, data: STUDY, regis…
+       |                      ^
+    111|       expect(result.governedStudyId).toBeUndefined();
+    112|       expect(result.ctdSection).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains the extraction and discards the client when rollback also fails
+AssertionError: expected { studyId: 1234, …(3) } to match object { studyId: 1234, …(1) }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "registration": {
+-     "code": "PRECLINICAL_GOVERNED_REGISTRATION_FAILED",
+-     "status": "failed",
+-   },
+    "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:135:20
+    133|     });
+    134|     const result = await ingestStudy(INPUT);
+    135|     expect(result).toMatchObject({ studyId: 1234, registration: REGIST…
+       |                    ^
+    136|     expect(mocks.client.release).toHaveBeenCalledWith(rollbackError);
+    137|     expect(JSON.stringify(result)).not.toContain('SENTINEL');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not lose the retained extraction if releasing the client throws
+AssertionError: promise rejected "Error: SENTINEL-RELEASE" instead of resolving
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:143:36
+    141|     mocks.bridge.mockRejectedValueOnce(new Error('SENTINEL-BRIDGE'));
+    142|     mocks.client.release.mockImplementationOnce(() => { throw new Erro…
+    143|     await expect(ingestStudy(INPUT)).resolves.toMatchObject({ studyId:…
+       |                                    ^
+    144|   });
+    145|
+
+Caused by: Error: SENTINEL-RELEASE
+ ❯ Object.<anonymous> server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:142:63
+ ❯ Module.ingestStudy server/services/preclinical/preclinical-ingest-service.ts:147:14
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:143:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > preserves a confirmed commit if only client release throws
+AssertionError: promise rejected "Error: SENTINEL-RELEASE" instead of resolving
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:148:36
+    146|   it('preserves a confirmed commit if only client release throws', asy…
+    147|     mocks.client.release.mockImplementationOnce(() => { throw new Erro…
+    148|     await expect(ingestStudy(INPUT)).resolves.toMatchObject({
+       |                                    ^
+    149|       studyId: 1234, registration: { status: 'registered', reviewRequi…
+    150|     });
+
+Caused by: Error: SENTINEL-RELEASE
+ ❯ Object.<anonymous> server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:147:63
+ ❯ Module.ingestStudy server/services/preclinical/preclinical-ingest-service.ts:147:14
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:148:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 0 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID -1 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 1.5 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID NaN before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 9007199254740992 before extraction
+AssertionError: promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "ctdSection": "4.2.3.2",
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": null,
++     "extractionConfidence": 0.91,
++     "genotoxicityResults": null,
++     "glpCompliant": null,
++     "keyFindings": null,
++     "loael": null,
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": null,
++     "safetyMargins": [],
++     "species": "rat",
++     "strain": null,
++     "studyCompletionDate": null,
++     "studyReportNumber": null,
++     "studyTitle": "13-week study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [],
++     "testingFacility": null,
++   },
++   "extractionConfidence": 0.91,
++   "governedStudyId": 77,
++   "model": "test-model",
++   "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:164:56
+    162|   it.each([0, -1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1])(
+    163|     'refuses invalid program ID %s before extraction', async programId…
+    164|       await expect(ingestStudy({ ...INPUT, programId })).rejects.toMat…
+       |                                                        ^
+    165|       expect(mocks.extract).not.toHaveBeenCalled();
+    166|       expect(mocks.insert).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"userId":11} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":0,"userId":11} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":-7,"userId":11} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7.5,"userId":11} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":0} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":-11} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":null} before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":9007199254740992} before extraction
+AssertionError: promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "ctdSection": "4.2.3.2",
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": null,
++     "extractionConfidence": 0.91,
++     "genotoxicityResults": null,
++     "glpCompliant": null,
++     "keyFindings": null,
++     "loael": null,
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": null,
++     "safetyMargins": [],
++     "species": "rat",
++     "strain": null,
++     "studyCompletionDate": null,
++     "studyReportNumber": null,
++     "studyTitle": "13-week study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [],
++     "testingFacility": null,
++   },
++   "extractionConfidence": 0.91,
++   "governedStudyId": 77,
++   "model": "test-model",
++   "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:177:75
+    175|     { organizationId: 7, userId: Number.MAX_SAFE_INTEGER + 1 },
+    176|   ])('refuses invalid governance context %j before extraction', async …
+    177|     await expect(ingestStudy({ ...INPUT, governance } as IngestStudyIn…
+       |                                                                           ^
+    178|       code: 'PRECLINICAL_INGEST_GOVERNANCE_CONTEXT_REQUIRED',
+    179|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/62]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId 0 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId -2 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId 1.5 before extraction
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId NaN before extraction
+AssertionError: promise resolved "{ studyId: 1234, …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "ctdSection": "4.2.3.2",
++   "data": {
++     "carcinogenicityFindings": null,
++     "durationWeeks": null,
++     "extractionConfidence": 0.91,
++     "genotoxicityResults": null,
++     "glpCompliant": null,
++     "keyFindings": null,
++     "loael": null,
++     "mtd": null,
++     "noael": "50 mg/kg/day",
++     "reproductiveToxicity": null,
++     "routeOfAdministration": null,
++     "safetyMargins": [],
++     "species": "rat",
++     "strain": null,
++     "studyCompletionDate": null,
++     "studyReportNumber": null,
++     "studyTitle": "13-week study in rat",
++     "studyType": "repeat_dose_tox",
++     "targetOrganToxicity": [],
++     "testingFacility": null,
++   },
++   "extractionConfidence": 0.91,
++   "governedStudyId": 77,
++   "model": "test-model",
++   "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:190:95
+    188|     ['iacucProtocolId', Number.NaN, 'PRECLINICAL_INGEST_BAD_IACUC_PROT…
+    189|   ] as const)('refuses invalid %s %s before extraction', async (key, v…
+    190|     await expect(ingestStudy({ ...INPUT, governance: { ...INPUT.govern…
+       |                                                                                               ^
+    191|       .rejects.toMatchObject({ code });
+    192|     expect(mocks.extract).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/62]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  62 failed | 12 passed (74)
+   Start at  11:06:00
+   Duration  3.04s (transform 609ms, setup 248ms, import 502ms, tests 1.05s, environment 0ms)
+

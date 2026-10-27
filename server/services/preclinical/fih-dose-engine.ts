@@ -82,16 +82,23 @@ export function kmForSpecies(species: string | null | undefined): number | null 
 }
 
 /**
- * Parse a NOAEL expressed as a dose in mg/kg/day (or mg/kg). Returns null when
- * the value is absent or not expressed per body weight (the engine refuses to
- * guess a mg→mg/kg conversion).
+ * Parse one explicit NOAEL dose in mg/kg/day (or mg/kg), optionally prefixed
+ * with "NOAEL =" or "NOAEL:". Accept decimal, thousands-grouped and scientific
+ * notation as whole numbers, never a numeric fragment inside prose. Ranges,
+ * inequalities, negative doses and unsupported units require human resolution;
+ * this parser does not infer a NOAEL or guess a mg→mg/kg conversion.
  */
 export function parseDoseMgPerKg(text: string | null | undefined): number | null {
-  if (!text) return null;
-  const match = text.match(/([\d.]+)\s*mg\s*\/\s*kg/i);
+  if (typeof text !== 'string') return null;
+  const match = text.trim().match(/^(?:NOAEL\s*[:=]\s*)?(\+?(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?)\s*mg\s*\/\s*kg(?:\s*\/\s*day)?$/i);
   if (!match) return null;
-  const value = Number.parseFloat(match[1]);
-  return Number.isFinite(value) && value >= 0 ? value : null;
+  const numericText = match[1].replaceAll(',', '');
+  const value = Number(numericText);
+  if (!Number.isFinite(value)) return null;
+  // A nonzero coefficient may underflow to zero (e.g. 1e-999). That is a
+  // numeric-range failure, not a reported zero NOAEL.
+  if (value === 0 && /[1-9]/.test(numericText.split(/e/i)[0])) return null;
+  return value;
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -194,47 +201,85 @@ export interface FihDoseInput {
 
 // ── Core math ────────────────────────────────────────────────────────────────
 
+function requireFiniteNonNegative(value: unknown, name: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error(`${name} must be a finite non-negative number.`);
+  }
+}
+
+function requireFinitePositive(value: unknown, name: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) {
+    throw new Error(`${name} must be > 0 and finite.`);
+  }
+}
+
+/** A positive derivation that underflows to zero is not a usable result. */
+function checkedResult(value: number, name: string, positiveExpected: boolean): number {
+  if (!Number.isFinite(value) || value < 0 || (positiveExpected && value === 0)) {
+    throw new Error(`${name} must be a finite ${positiveExpected ? 'positive' : 'non-negative'} representable number; inputs exceed the numeric range.`);
+  }
+  return value;
+}
+
 /** HED (mg/kg) = animal NOAEL (mg/kg) × (animal Km / human Km). */
 export function computeHED(noaelMgPerKg: number, animalKm: number): number {
-  return noaelMgPerKg * (animalKm / HUMAN_KM);
+  requireFiniteNonNegative(noaelMgPerKg, 'computeHED: NOAEL');
+  requireFinitePositive(animalKm, 'computeHED: Km');
+  return checkedResult(noaelMgPerKg * (animalKm / HUMAN_KM), 'computeHED: HED', noaelMgPerKg > 0);
 }
 
-function round(value: number, dp = 4): number {
-  const f = 10 ** dp;
-  return Math.round(value * f) / f;
+interface DoseParameters {
+  humanWeight: number;
+  safetyFactor: number;
 }
 
-/**
- * Compute the FIH starting dose, returning both the MRSD and MABEL derivations
- * with every intermediate number exposed.
- *
- * @throws if no species NOAEL resolves to a usable HED.
- */
-export function computeFirstInHumanDose(input: FihDoseInput): FihDoseResult {
-  const warnings: string[] = [];
-  const humanWeight = input.humanReferenceWeightKg ?? HUMAN_REFERENCE_WEIGHT_KG;
+/** Validate the request before any species or dose derivation. */
+function validateDoseInput(input: FihDoseInput): DoseParameters {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw new Error('computeFirstInHumanDose: input must be an object');
+  }
+  // Only omission selects a default. An explicit null or other invalid input
+  // must not silently become a different calculation.
+  const humanWeight = input.humanReferenceWeightKg === undefined
+    ? HUMAN_REFERENCE_WEIGHT_KG : input.humanReferenceWeightKg;
+  requireFinitePositive(humanWeight, 'computeFirstInHumanDose: humanReferenceWeightKg');
+  const safetyFactor = input.safetyFactor === undefined ? 10 : input.safetyFactor;
+  requireFinitePositive(safetyFactor, 'computeFirstInHumanDose: safetyFactor');
+
+  if (input.mostAppropriateSpecies !== undefined &&
+      (typeof input.mostAppropriateSpecies !== 'string' || !input.mostAppropriateSpecies.trim())) {
+    throw new Error('computeFirstInHumanDose: mostAppropriateSpecies must be a non-empty species name');
+  }
 
   if (!Array.isArray(input.speciesNoaels) || input.speciesNoaels.length === 0) {
     throw new Error('computeFirstInHumanDose: at least one species NOAEL is required');
   }
+  return { humanWeight, safetyFactor };
+}
 
+/** Preserve each usable study and report unresolved species explicitly. */
+function deriveSpeciesHeds(speciesNoaels: SpeciesNoael[], warnings: string[]): HedResult[] {
   const hedBySpecies: HedResult[] = [];
-  for (const s of input.speciesNoaels) {
-    const km = s.km ?? kmForSpecies(s.species);
-    if (km == null) {
+  for (const s of speciesNoaels) {
+    if (!s || typeof s.species !== 'string' || !s.species.trim()) {
+      throw new Error('computeFirstInHumanDose: each species NOAEL must have a non-empty species name');
+    }
+    requireFiniteNonNegative(s.noaelMgPerKg, 'computeFirstInHumanDose: NOAEL');
+    const km = s.km === undefined ? kmForSpecies(s.species) : s.km;
+    if (km === null && s.km === undefined) {
       warnings.push(`Skipped "${s.species}" — no Km factor could be resolved; supply km explicitly.`);
       continue;
     }
-    if (!(s.noaelMgPerKg >= 0) || !Number.isFinite(s.noaelMgPerKg)) {
-      warnings.push(`Skipped "${s.species}" — NOAEL is not a finite non-negative number.`);
-      continue;
-    }
+    // An invalid explicit Km is refused; never use a species
+    // default or drop that study in response to a bad override.
+    requireFinitePositive(km, 'computeFirstInHumanDose: Km');
+    const hedMgPerKg = computeHED(s.noaelMgPerKg, km);
     hedBySpecies.push({
       species: s.species,
       studyRef: s.studyRef,
       noaelMgPerKg: s.noaelMgPerKg,
       km,
-      hedMgPerKg: round(computeHED(s.noaelMgPerKg, km)),
+      hedMgPerKg,
     });
   }
 
@@ -244,36 +289,41 @@ export function computeFirstInHumanDose(input: FihDoseInput): FihDoseResult {
 
   // Most sensitive first.
   hedBySpecies.sort((a, b) => a.hedMgPerKg - b.hedMgPerKg);
+  return hedBySpecies;
+}
 
-  // Select the species that carries the MRSD.
-  let selected = hedBySpecies[0];
-  if (input.mostAppropriateSpecies) {
-    const forced = hedBySpecies.find(
-      h => h.species.toLowerCase() === input.mostAppropriateSpecies!.toLowerCase(),
+/** An explicit species choice cannot fall back to another study. */
+function selectSpeciesHed(hedBySpecies: HedResult[], mostAppropriateSpecies?: string): HedResult {
+  if (mostAppropriateSpecies === undefined) return hedBySpecies[0];
+  const requestedSpecies = mostAppropriateSpecies.trim().toLowerCase();
+  const forced = hedBySpecies.find(
+    h => h.species.trim().toLowerCase() === requestedSpecies,
+  );
+  if (!forced) {
+    throw new Error(
+      `computeFirstInHumanDose: mostAppropriateSpecies must be the name of a species with a usable HED; "${mostAppropriateSpecies}" was not found.`,
     );
-    if (forced) {
-      selected = forced;
-    } else {
-      warnings.push(
-        `Requested most-appropriate species "${input.mostAppropriateSpecies}" not found; using most sensitive (${selected.species}).`,
-      );
-    }
   }
+  return forced;
+}
 
-  const safetyFactor = input.safetyFactor ?? 10;
-  if (!(safetyFactor > 0)) {
-    throw new Error('computeFirstInHumanDose: safetyFactor must be > 0');
-  }
+function deriveMrsd(input: FihDoseInput, hedBySpecies: HedResult[], parameters: DoseParameters): MrsdResult {
+  const { humanWeight, safetyFactor } = parameters;
+  const selected = selectSpeciesHed(hedBySpecies, input.mostAppropriateSpecies);
   const safetyFactorRationale =
     input.safetyFactorRationale ??
     (safetyFactor === 10
       ? 'Default safety factor of 10 per FDA 2005 MRSD guidance.'
       : `Safety factor of ${safetyFactor} (deviation from default 10).`);
 
-  const mrsdMgPerKg = round(selected.hedMgPerKg / safetyFactor);
-  const mrsdTotalMg = round(mrsdMgPerKg * humanWeight, 3);
+  const mrsdMgPerKg = checkedResult(
+    selected.hedMgPerKg / safetyFactor, 'computeFirstInHumanDose: MRSD mg/kg', selected.hedMgPerKg > 0,
+  );
+  const mrsdTotalMg = checkedResult(
+    mrsdMgPerKg * humanWeight, 'computeFirstInHumanDose: MRSD total', mrsdMgPerKg > 0,
+  );
 
-  const mrsd: MrsdResult = {
+  return {
     hedBySpecies,
     selectedSpecies: selected.species,
     selectedHedMgPerKg: selected.hedMgPerKg,
@@ -283,32 +333,38 @@ export function computeFirstInHumanDose(input: FihDoseInput): FihDoseResult {
     mrsdTotalMg,
     humanReferenceWeightKg: humanWeight,
   };
+}
 
-  // MABEL derivation (optional).
-  let mabel: MabelResult | null = null;
-  if (input.mabel) {
-    const m = input.mabel;
-    if (!(m.exposurePerMgDose > 0)) {
-      throw new Error('computeFirstInHumanDose: mabel.exposurePerMgDose must be > 0');
-    }
-    const mabelSafetyFactor = m.mabelSafetyFactor ?? 1;
-    if (!(mabelSafetyFactor > 0)) {
-      throw new Error('computeFirstInHumanDose: mabel.mabelSafetyFactor must be > 0');
-    }
-    const rawDoseMg = m.minAnticipatedEffectiveExposure / m.exposurePerMgDose;
-    mabel = {
-      mabelDoseMg: round(rawDoseMg / mabelSafetyFactor, 3),
-      mabelSafetyFactor,
-      basis: m.basis ?? 'MABEL from minimum anticipated effective exposure and dose↔exposure factor.',
-      minAnticipatedEffectiveExposure: m.minAnticipatedEffectiveExposure,
-      exposurePerMgDose: m.exposurePerMgDose,
-    };
+function deriveMabel(m: MabelInput | undefined): MabelResult | null {
+  if (m === undefined) return null;
+  if (!m || typeof m !== 'object' || Array.isArray(m)) {
+    throw new Error('computeFirstInHumanDose: mabel must be an object');
   }
+  requireFiniteNonNegative(m.minAnticipatedEffectiveExposure, 'computeFirstInHumanDose: mabel.minAnticipatedEffectiveExposure');
+  requireFinitePositive(m.exposurePerMgDose, 'computeFirstInHumanDose: mabel.exposurePerMgDose');
+  const mabelSafetyFactor = m.mabelSafetyFactor === undefined ? 1 : m.mabelSafetyFactor;
+  requireFinitePositive(mabelSafetyFactor, 'computeFirstInHumanDose: mabel.mabelSafetyFactor');
+  const rawDoseMg = checkedResult(
+    m.minAnticipatedEffectiveExposure / m.exposurePerMgDose,
+    'computeFirstInHumanDose: MABEL raw dose', m.minAnticipatedEffectiveExposure > 0,
+  );
+  return {
+    mabelDoseMg: checkedResult(rawDoseMg / mabelSafetyFactor, 'computeFirstInHumanDose: MABEL dose', rawDoseMg > 0),
+    mabelSafetyFactor,
+    basis: m.basis ?? 'MABEL from minimum anticipated effective exposure and dose↔exposure factor.',
+    minAnticipatedEffectiveExposure: m.minAnticipatedEffectiveExposure,
+    exposurePerMgDose: m.exposurePerMgDose,
+  };
+}
 
-  // Select the more conservative derivation.
+/** Compare the unrounded derivations and explain which one governs. */
+function selectStartingDose(
+  mrsd: MrsdResult, mabel: MabelResult | null, explicitSpecies: boolean,
+): Pick<FihDoseResult, 'recommendedStartingDoseMg' | 'limitedBy' | 'rationale'> {
   let recommendedStartingDoseMg = mrsd.mrsdTotalMg;
   let limitedBy: LimitingApproach = 'MRSD';
   let rationale: string;
+  const speciesSelection = explicitSpecies ? 'explicitly selected species' : 'most sensitive species';
 
   if (mabel && mabel.mabelDoseMg < mrsd.mrsdTotalMg) {
     recommendedStartingDoseMg = mabel.mabelDoseMg;
@@ -319,14 +375,36 @@ export function computeFirstInHumanDose(input: FihDoseInput): FihDoseResult {
       `per the EMA FIH risk-mitigation approach for pharmacologically high-risk molecules.`;
   } else if (mabel) {
     rationale =
-      `MRSD-limited: the MRSD (${mrsd.mrsdTotalMg} mg) from the most sensitive species ` +
+      `MRSD-limited: the MRSD (${mrsd.mrsdTotalMg} mg) from the ${speciesSelection} ` +
       `(${mrsd.selectedSpecies}, HED ${mrsd.selectedHedMgPerKg} mg/kg ÷ SF ${mrsd.safetyFactor}) ` +
       `is at or below the MABEL-derived dose (${mabel.mabelDoseMg} mg).`;
   } else {
     rationale =
-      `MRSD-limited: starting dose set by the MRSD (${mrsd.mrsdTotalMg} mg) from the most ` +
-      `sensitive species (${mrsd.selectedSpecies}). No MABEL derivation supplied.`;
+      `MRSD-limited: starting dose set by the MRSD (${mrsd.mrsdTotalMg} mg) from the ${speciesSelection} ` +
+      `(${mrsd.selectedSpecies}). No MABEL derivation supplied.`;
   }
 
-  return { mrsd, mabel, recommendedStartingDoseMg, limitedBy, rationale, warnings };
+  return { recommendedStartingDoseMg, limitedBy, rationale };
+}
+
+/**
+ * Compute the FIH starting dose, returning both the MRSD and MABEL derivations
+ * with every intermediate number exposed.
+ *
+ * Keep numeric results unrounded: rounding before species/approach selection
+ * can change the limiting derivation, raise a dose or erase a small dose. This
+ * engine does not introduce a clinical dose-rounding policy.
+ *
+ * @throws if an explicit numeric parameter is invalid, a result is outside the
+ * representable range, an explicitly selected species is unusable, or no
+ * species NOAEL resolves to a usable HED.
+ */
+export function computeFirstInHumanDose(input: FihDoseInput): FihDoseResult {
+  const parameters = validateDoseInput(input);
+  const warnings: string[] = [];
+  const hedBySpecies = deriveSpeciesHeds(input.speciesNoaels, warnings);
+  const mrsd = deriveMrsd(input, hedBySpecies, parameters);
+  const mabel = deriveMabel(input.mabel);
+  const selection = selectStartingDose(mrsd, mabel, input.mostAppropriateSpecies !== undefined);
+  return { mrsd, mabel, ...selection, warnings };
 }

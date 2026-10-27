@@ -1,0 +1,21 @@
+PASS grouped numeric text keeps all digits
+PASS negative numeric text is refused
+PASS scientific notation is read as a whole
+PASS scientific notation with negative exponent is read as a whole
+PASS semantic prose does not become a NOAEL
+PASS malformed decimal is refused
+PASS non-finite Km is refused
+PASS negative NOAEL is refused
+PASS non-finite safety factor is refused
+PASS negative reference weight is refused
+PASS null explicit Km is not defaulted
+PASS negative MABEL exposure is refused
+PASS non-finite MABEL conversion factor is refused
+PASS missing explicit species is not replaced
+PASS HED overflow is refused
+PASS MRSD overflow is refused
+PASS MABEL overflow is refused
+PASS MRSD is not increased by intermediate rounding
+PASS small positive doses retain the correct limiting derivation
+PASS species selection precedes display rounding
+RESULT 20 passed, 0 failed, 20 total; Node v22.23.4

@@ -1,0 +1,296 @@
+
+ RUN  v4.1.7 /workspace/scratch/dd8ef47af5ed/concept2cure-v2-audit
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "TRUE" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:12.975Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "TRUE" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:12.979Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-c90129da-b4ba-4d23-b555-19aee83fde57",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when no file is attached
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42junk instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 42.5 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 1e2 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID +42 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0x2a instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 9007199254740992 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID 0 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed program ID -1 instead of interpreting a numeric prefix
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true"} without trusted context before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"submissionId":"19"} without trusted context before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"iacucProtocolId":"23"} without trusted context before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses requested registration {"governed":"true","organizationId":"7","userId":"11"} without trusted context before extraction
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "yes" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.021Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "yes" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.023Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-5c93352c-ef70-44be-99d6-dae4d96c4241",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "1" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.052Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "1" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.053Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-af646493-e00d-4ffb-9a71-42c0c7bdda2e",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.087Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "" instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.087Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-1b4c161e-c546-4e09-8028-356149df8d01",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "TRUE" instead of silently downgrading 395ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "yes" instead of silently downgrading 27ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "1" instead of silently downgrading 29ms
+   → expected 200 to be 400 // Object.is equality
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "" instead of silently downgrading 32ms
+   → expected 200 to be 400 // Object.is equality
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses duplicate governed fields instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.106Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses duplicate governed fields instead of silently downgrading
+{
+  "timestamp": "2026-10-27T17:09:13.107Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study extraction retained",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-1dc91e75-7482-4d9f-af3d-6662779ed9aa",
+    "confidence": 0.87,
+    "registrationStatus": "not_requested"
+  }
+}
+
+ × tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses duplicate governed fields instead of silently downgrading 23ms
+   → expected 200 to be 400 // Object.is equality
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > accepts an explicit false governed flag as program-only extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":0,"userId":11} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":-7,"userId":11} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7.5,"userId":11} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":"7junk","userId":11} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":0} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":-11} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":"1e2"} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":true} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses invalid trusted governance context {"tenantId":7,"userId":9007199254740992} before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19junk before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 19.5 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 0 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId -19 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed submissionId 9007199254740992 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 23junk before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 1e2 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId 0 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed iacucProtocolId -23 before extraction
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > passes validated context to registration and reports that review is still required
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns a failed requested registration with the retained study ID and safe message
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_NO_TEXT to a safe 422
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_INCOMPLETE_TEXT to a safe 422
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps the typed extraction refusal PRECLINICAL_REPORT_TOO_LARGE to a safe 422
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains internal error text even when it resembles validation failure
+ ↓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > contains ordinary server failures without revealing provider or database details
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains program-only extraction and explicitly reports registration was not requested
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > reports unreviewed registration only after the bridge, audit and commit succeed
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when connect fails
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when begin fails
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when bridge fails
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when audit fails
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > keeps the extracted study ID and reports failure when commit fails
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > retains the extraction and discards the client when rollback also fails
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt ROLLBACK 24ms
+   → expected { studyId: 1234, …(6) } to match object { studyId: 1234, …(1) }
+(28 matching properties omitted from actual)
+ × server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt undefined 3ms
+   → expected { studyId: 1234, …(6) } to match object { studyId: 1234, …(1) }
+(28 matching properties omitted from actual)
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not lose the retained extraction if releasing the client throws
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > preserves a confirmed commit if only client release throws
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses disabled ingestion before extraction or persistence
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 0 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID -1 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 1.5 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID NaN before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid program ID 9007199254740992 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"userId":11} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":0,"userId":11} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":-7,"userId":11} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7.5,"userId":11} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":0} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":-11} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":null} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid governance context {"organizationId":7,"userId":9007199254740992} before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId 0 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid submissionId -2 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId 1.5 before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > refuses invalid iacucProtocolId NaN before extraction
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_NO_TEXT
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_INCOMPLETE_TEXT
+ ↓ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy admission > does not persist or register a study when extraction refuses with PRECLINICAL_REPORT_TOO_LARGE
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "TRUE" instead of silently downgrading
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "yes" instead of silently downgrading
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "1" instead of silently downgrading
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses malformed governed flag "" instead of silently downgrading
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:183:24
+    181|   it.each(['TRUE', 'yes', '1', ''])('refuses malformed governed flag %…
+    182|     const res = await uploadStudy(await buildApp('on'), { governed });
+    183|     expect(res.status).toBe(400);
+       |                        ^
+    184|     expect(res.body.code).toBe('PRECLINICAL_INGEST_BAD_GOVERNED');
+    185|     expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > refuses duplicate governed fields instead of silently downgrading
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/integration/preclinical-ingest.test.ts:192:24
+    190|       .field('programId', '42').field('governed', 'true').field('gover…
+    191|       .attach('file', Buffer.from('%PDF-1.4 fake'), { filename: 'study…
+    192|     expect(res.status).toBe(400);
+       |                        ^
+    193|     expect(res.body.code).toBe('PRECLINICAL_INGEST_BAD_GOVERNED');
+    194|     expect(ingestStudyMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt ROLLBACK
+ FAIL  server/services/preclinical/__tests__/preclinical-ingest-service.test.ts > ingestStudy registration outcome > does not report registration for an unconfirmed commit receipt undefined
+AssertionError: expected { studyId: 1234, …(6) } to match object { studyId: 1234, …(1) }
+(28 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "registration": {
+-     "code": "PRECLINICAL_GOVERNED_REGISTRATION_FAILED",
+-     "status": "failed",
++     "status": "registered",
+    },
+    "studyId": 1234,
+  }
+
+ ❯ server/services/preclinical/__tests__/preclinical-ingest-service.test.ts:145:20
+    143|     }));
+    144|     const result = await ingestStudy(INPUT);
+    145|     expect(result).toMatchObject({ studyId: 1234, registration: REGIST…
+       |                    ^
+    146|     expect(result.governedStudyId).toBeUndefined();
+    147|     expect(result.ctdSection).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 75 skipped (82)
+   Start at  11:09:10
+   Duration  2.69s (transform 611ms, setup 259ms, import 539ms, tests 549ms, environment 0ms)
+

@@ -970,9 +970,9 @@ export function calculateSafetyMargin(params: CalculateSafetyMarginInput): Safet
   }
 
   return {
-    hed: Math.round(hed * 10000) / 10000,
+    hed,
     hedMethod: 'body_surface_area (Km factor)',
-    mrsd: Math.round(mrsd * 10000) / 10000,
+    mrsd,
     mrsdUnit: 'mg/kg',
     safetyFactor: effectiveSafetyFactor,
     safetyMargin: effectiveSafetyFactor,

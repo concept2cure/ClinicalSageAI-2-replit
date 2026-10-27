@@ -1,0 +1,33 @@
+{
+  "base_commit": "1c846bdf6b8ee60988df41cb85adf191f4f6d385",
+  "runtime": "Node22.23.4 / Vitest4.1.7 / TypeScript5.6.3",
+  "source_sha256": {
+    "server/routes/__tests__/preclinical-error-containment.test.ts": "7a5a3d35fab0bd99685099ff62f48416490771898e5122e4808474cf2192ceb8",
+    "server/routes/__tests__/preclinical-upload-guards.test.ts": "461ee4fdd601125541f5e4dfa0b851413754de98c2c3fbfe3616d2665395258c",
+    "server/routes/preclinical.ts": "b442ef156aaf7b2cb2f92c4428e6838896eb35be7c0c119b169f5b343f777236",
+    "server/services/preclinical/__tests__/fih-dose-engine.test.ts": "d15892f27831e5b3c2d7c01b620a40697a606f2b5c07e67b4680fb2d0f438145",
+    "server/services/preclinical/__tests__/preclinical-extractor.test.ts": "6d503a5b45fd03afed08ca30b1686388756b174372d6b2c7cbeb018db204880b",
+    "server/services/preclinical/__tests__/preclinical-ingest-service.test.ts": "a97b760926fb1a1869c72412b4337280c8357c6bd3b5e73bded38679d34fd3a2",
+    "server/services/preclinical/fih-dose-engine.ts": "626714e97892dcec71fb0d9794bd472aeeeaacc36232da1dd9a1508e33c0a9ea",
+    "server/services/preclinical/preclinical-extractor.ts": "7e3a508ea23753044e1a052b75422b06ca6b3177025841cb231a0651b2539428",
+    "server/services/preclinical/preclinical-ingest-service.ts": "ea9e49859451b07acd90928282e9453b7ac5216b60e6f92a652f02826fb1f0d8",
+    "server/services/toxicology/toxicology-knowledge.ts": "270a29be9ea2c8d5b69a709b8b08308579bbd91c115d8139248aeafd4a7781b9",
+    "tests/integration/preclinical-ingest.test.ts": "97fa42742732a126a7bb236c387d62162a076d86e84dfacaa989bc8f219fe2ed"
+  },
+  "integrated_tests": {
+    "files": 19,
+    "passed": 373,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "exit_code": 0
+  },
+  "targeted_eslint": {
+    "exit_code": 0,
+    "warnings": 0
+  },
+  "pre_push": "pending",
+  "production_deployment": "not_attempted"
+}
