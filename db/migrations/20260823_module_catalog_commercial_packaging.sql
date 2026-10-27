@@ -1,3 +1,7 @@
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
+-- The discovery functions now live in Projects. Remove the retired identity's
+-- packaging reference too: a fresh database need not hold its old row, while
+-- replayed databases retain deprecated rows and subscriptions unchanged.
 -- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: 'ectd-publishing' is assigned 'standard', beside ectd-compile,
 -- ectd-coauthor and dossier-map — the same eCTD publishing group.
@@ -129,9 +133,9 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- already caps it at 5 runs on free; gating it twice would turn the free tier
   -- into a wall of locks instead of a demonstration.
   --
-  -- authoring-engine, filings-catalog and intelligence-catalog are here for a
+  -- authoring-engine and intelligence-catalog are here for a
   -- different reason: they render NO organization data at all (verified -- no
-  -- fetch in AuthoringEngine.tsx, a static FILINGS_TAXONOMY, and a static tool
+  -- fetch in AuthoringEngine.tsx and a static tool
   -- registry). They are reference and wayfinding pages. Selling a static page
   -- is not something to do at any tier.
   ('artifacts-center', 'free'),
@@ -139,7 +143,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('crl-library', 'free'),
   ('deep-research', 'free'),
   ('evidence-search', 'free'),
-  ('filings-catalog', 'free'),
   ('intelligence-catalog', 'free'),
   ('precedent-intelligence', 'free'),
   ('projects', 'free'),

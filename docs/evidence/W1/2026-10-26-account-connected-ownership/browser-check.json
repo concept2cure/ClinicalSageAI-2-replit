@@ -1,0 +1,269 @@
+{
+  "basis": "Actual AccountPanel, AccountOnboardingSettings, OrganizationSwitcher, useCurrentReportPersona, canonical API/cache and capturedActorHeaders with canonical CSS. Synthetic auth-service adapter, JWTs and API replies. Workspace selection deliberately receives a 403; credential adoption is covered by real AuthService regression tests, not this browser harness. No hosted authenticated journey tested.",
+  "results": [
+    {
+      "width": 1440,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/enterprise/select-organization",
+          "actorHeadersMatched": true
+        }
+      ],
+      "reads": [
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/organizations?membershipOnly=true",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleRotationRefused": true,
+      "lateProfileWithheld": true,
+      "lateMembershipsWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-connected-1440-light.png"
+    },
+    {
+      "width": 1440,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/enterprise/select-organization",
+          "actorHeadersMatched": true
+        }
+      ],
+      "reads": [
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/organizations?membershipOnly=true",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleRotationRefused": true,
+      "lateProfileWithheld": true,
+      "lateMembershipsWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-connected-1440-dark.png"
+    },
+    {
+      "width": 390,
+      "dark": false,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/enterprise/select-organization",
+          "actorHeadersMatched": true
+        }
+      ],
+      "reads": [
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/organizations?membershipOnly=true",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleRotationRefused": true,
+      "lateProfileWithheld": true,
+      "lateMembershipsWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-connected-390-light.png"
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "overflow": false,
+      "errors": [],
+      "writes": [
+        {
+          "method": "PUT",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/enterprise/select-organization",
+          "actorHeadersMatched": true
+        }
+      ],
+      "reads": [
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/organizations?membershipOnly=true",
+          "actorHeadersMatched": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/users/me/persona",
+          "actorHeadersMatched": true
+        }
+      ],
+      "staleRotationRefused": true,
+      "lateProfileWithheld": true,
+      "lateMembershipsWithheld": true,
+      "savedCache": {
+        "persona": "qa",
+        "role": "reviewer",
+        "availablePersonas": [
+          "executive",
+          "ra_lead",
+          "ra_ops",
+          "reg_strategy",
+          "medical_writer",
+          "qa",
+          "auditor",
+          "pm",
+          "clinical_ops",
+          "tmf_lead",
+          "submission_coordinator",
+          "compliance_officer",
+          "nonclinical_lead",
+          "labeling_lead",
+          "biosafety_officer",
+          "iacuc_coordinator",
+          "pi",
+          "research_admin",
+          "research_ops",
+          "research_security",
+          "finance"
+        ]
+      },
+      "screenshot": "account-connected-390-dark.png"
+    }
+  ]
+}

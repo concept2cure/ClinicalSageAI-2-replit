@@ -32,6 +32,7 @@ async function editorAndAccount() {
 
 const LIST = '/api/organizations?membershipOnly=true';
 const SELECT = '/api/auth/enterprise/select-organization';
+const SOURCE_TOKEN = `test.${btoa(JSON.stringify({ userId: 33, organizationId: 1 }))}.synthetic`;
 const SESSION = '/api/v1/auth/session';
 const user = (organizationId = '1', id = '33') => ({ id, email: 'ada.rowe@c2c.test', organizationId, organizationName: organizationId === '1' ? 'First sponsor' : 'Second sponsor', roles: ['member'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false });
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -51,7 +52,7 @@ beforeEach(() => {
   routes.clear();
   navigate.mockReset();
   onClose.mockReset();
-  authService.setToken('old-workspace-token', user(), 'old-workspace-refresh', 3600);
+  authService.setToken(SOURCE_TOKEN, user(), 'old-workspace-refresh', 3600);
   routes.set(`GET ${LIST}`, () => json(200, { success: true, organizations: [{ id: '1', name: 'First sponsor' }, { id: '71', name: 'Second sponsor' }] }));
   routes.set(`POST ${SELECT}`, () => json(200, { success: true, token: 'new-workspace-token', organization: { id: '71', name: 'Second sponsor' } }));
   routes.set(`GET ${SESSION}`, auth => auth === 'Bearer new-workspace-token'
@@ -82,7 +83,7 @@ describe('verified account workspace switching', () => {
   it('lists actual memberships, requires a calm confirmation, and can cancel without rotating the session', async () => {
     open();
     expect(await screen.findByRole('option', { name: 'First sponsor (current)' })).toBeTruthy();
-    expect(calls[0]).toMatchObject({ method: 'GET', path: LIST, auth: 'Bearer old-workspace-token' });
+    expect(calls[0]).toMatchObject({ method: 'GET', path: LIST, auth: `Bearer ${SOURCE_TOKEN}` });
     await choose();
     expect(screen.getByText(/Save or resolve unsaved work before switching/)).toBeTruthy();
     expect(calls.some(call => call.method === 'POST')).toBe(false);
@@ -99,7 +100,7 @@ describe('verified account workspace switching', () => {
     await choose();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/concept2cure/projects'));
-    expect(calls.find(call => call.path === SELECT)).toMatchObject({ method: 'POST', auth: 'Bearer old-workspace-token', body: { organizationId: '71' } });
+    expect(calls.find(call => call.path === SELECT)).toMatchObject({ method: 'POST', auth: `Bearer ${SOURCE_TOKEN}`, body: { organizationId: '71' } });
     expect(calls.find(call => call.path === SESSION)).toMatchObject({ auth: 'Bearer new-workspace-token' });
     expect(authService.getUser()).toMatchObject({ id: '33', organizationId: '71', roles: ['member'] });
     expect(localStorage.getItem('trialsage_access_token')).toBe('new-workspace-token');

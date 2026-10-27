@@ -50,7 +50,8 @@ import {
   usesDeviceClassification, type DeviceFlagId,
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
-import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
+import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling, resolveFilingCatalogEntry, filingWfCode } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReferenceFor, FILING_WF_LABEL } from '@shared/regulatory/filing-lifecycle-reference';
 import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
 
@@ -188,17 +189,22 @@ function documentClassLabel(programType: string): string | null {
  *  stay stale in another. */
 const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
 
+type FilingBrowse = { segment: string; query: string };
 type WizardScreenContext = Omit<SurfaceContext, 'surfaceId'>;
-function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false): WizardScreenContext {
+function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false, browse?: FilingBrowse): WizardScreenContext {
   if (unavailable) return {
     summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
     facts: { wizardState: 'unavailable', selectedFiling: null },
   };
+  const catalog = filing ? resolveFilingCatalogEntry(filing.id) : null;
   return {
     summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
       (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
-    facts: { wizardState: 'open', wizardStep: { number: step + 1, label: STEP_LABELS[step] },
-      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null } : null },
+    facts: { wizardState: 'open', filingBrowse: browse ?? null,
+      filingLifecycleReference: filingLifecycleReferenceFor(filing?.id), wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+      selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null,
+        ...(catalog ? { description: catalog.description, submissionFormat: catalog.submissionFormat, ctdModule: catalog.ctdModule,
+          workflowLabel: FILING_WF_LABEL[filingWfCode(catalog)] ?? null } : {}) } : null },
     availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
   };
 }
@@ -251,6 +257,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   const viewRef = useDialog(closeIfSettled);
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
+  const [filingBrowse, setFilingBrowse] = useState<FilingBrowse | undefined>();
+  const reportFilingBrowse = useCallback((next: FilingBrowse) => setFilingBrowse(previous =>
+    previous?.segment === next.segment && previous.query === next.query ? previous : next), []);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
   /* The indication, as the person states it, or nothing (P-21). Step 2 used to
@@ -349,7 +358,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
-  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired), [step, selTpl, programType, retired]);
+  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowse), [step, selTpl, programType, retired, filingBrowse]);
   useEffect(() => { onContext?.(screenContext); }, [onContext, screenContext]);
   useEffect(() => () => onContext?.(null), [onContext]);
   /* The filing fixes the family when known; the person states any unresolved class. */
@@ -590,6 +599,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
+                onBrowseChange={reportFilingBrowse}
                 onAsk={onAsk}
               />
             </div>

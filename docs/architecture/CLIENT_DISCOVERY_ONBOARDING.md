@@ -97,3 +97,16 @@ including after response-body decoding. A changed session cannot inherit a late
 saved acknowledgement, membership refresh or reporting-cache update. Requests
 do not adopt another session or automatically retry a mutation. Server-side
 self-only invitation and current-membership authority remain authoritative.
+
+Reporting-catalog persona reads now pin the same actor/organization headers and
+consume query cancellation. Late network or body-decoding results cannot
+populate another session's cache; an invalid current bearer also withholds a
+previously cached persona from presentation. Explicit catalog filters remain
+under the person's control while their owner is current.
+
+Account's organization membership reader pins its source owner, withholds late
+or malformed reads and reports failures explicitly. The existing confirmed
+workspace-rotation POST also pins source-account headers before spending that
+session. Its unsaved-editor reservation, replacement-session probe and fresh
+shell handoff remain the existing ceremony. The separate organization-access
+entry remains an identified follow-up rather than an implied completed audit.

@@ -45,6 +45,7 @@ import { mdxProjectPlan } from './ProjectMdxWorkflow';
 import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
+import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -91,6 +92,8 @@ interface ProgramRow {
   code: string | null;
   name: string | null;
   program_type: string | null;
+  /** Exact recorded filing identity; absent on an older server. */
+  submission_type_id?: string | null;
   status: string | null;
   phase: string | null;
   priority: string | null;
@@ -1612,6 +1615,8 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
       facts: {
         projectId: pid,
         openStage: stage,
+        filingLifecycleReference: prog?.id === pid ? filingLifecycleReferenceFor(prog.submission_type_id,
+          { programType: prog.program_type, primaryAgency: prog.primary_agency }) : null,
         ...(workflow ? { mdxWorkflow: {
           title: workflow.title,
           accountableFunction: workflow.lead,

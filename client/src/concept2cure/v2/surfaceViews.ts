@@ -314,7 +314,6 @@ const EctdCompile = lazySurface(() => import('./surfaces/EctdCompile').then((m) 
 const PublishingCenter = lazySurface(() => import('./surfaces/PublishingCenter').then((m) => ({ default: m.PublishingCenter })));
 const Etmf = lazySurface(() => import('./surfaces/Etmf').then((m) => ({ default: m.Etmf })));
 const Evidence = lazySurface(() => import('./surfaces/Evidence').then((m) => ({ default: m.Evidence })));
-const FilingsCatalog = lazySurface(() => import('./surfaces/FilingsCatalog').then((m) => ({ default: m.FilingsCatalog })));
 const HaqManager = lazySurface(() => import('./surfaces/HaqManager').then((m) => ({ default: m.HaqManager })));
 const HumanFactors = lazySurface(() => import('./surfaces/HumanFactors').then((m) => ({ default: m.HumanFactors })));
 const Inconsistency = lazySurface(() => import('./surfaces/Inconsistency').then((m) => ({ default: m.Inconsistency })));
@@ -470,7 +469,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'ectd-publishing': { component: PublishingCenter },
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
-  'filings-catalog': { component: FilingsCatalog },
   'global-ri': { component: GlobalRiBrowser, full: true },
   'haq-manager': { component: HaqManager },
   'human-factors': { component: HumanFactors },

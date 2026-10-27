@@ -29,6 +29,7 @@ import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable 
 import { ComingLater } from './ProjectComingLater';
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
+import { FilingLifecycleReference } from './FilingLifecycleReference';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -93,7 +94,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   available, onNav, onStage, onAsk, onOpenDocument, team, tasks }: {
   pid: string;
   /** The verified project read (ProjectHome `prog`), for the device plan and the target date. */
-  prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null }) | null;
+  prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null; submission_type_id?: string | null }) | null;
   usInd: boolean;
   cmcComposes: boolean;
   deviceFiling: boolean;
@@ -165,6 +166,7 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
           <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>{STEP_DOORS.filingDocuments} {I.right}</button></div>
         </section>
       )}
+      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
       {team}
       {/* Read again after each Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>

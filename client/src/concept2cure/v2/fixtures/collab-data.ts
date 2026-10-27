@@ -53,7 +53,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   projects:                 { mod: 'Regulatory',      noun: 'portfolio',                et: 'portfolio' },
   'artifacts-center':       { mod: 'Evidence',        noun: 'artifact',                 et: 'artifact' },
   'cro-portfolio':          { mod: 'Regulatory',      noun: 'sponsor portfolio',        et: 'sponsor' },
-  'filings-catalog':        { mod: 'Regulatory',      noun: 'filing type',              et: 'filing' },
   'project-home':           { mod: 'Regulatory',      noun: 'project',                  et: 'project' },
   'conversation-thread':    { mod: 'Regulatory',      noun: 'conversation',             et: 'conversation' },
   'document-authoring':     { mod: 'Clinical',        noun: 'document section',          et: 'section' },

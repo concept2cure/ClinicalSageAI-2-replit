@@ -493,10 +493,16 @@ export function serializeProgramDetail(row: Record<string, unknown>): Record<str
     : {};
   const predicates = jsonColumn(rawPredicates);
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  // submission_type_id carries only the exact recorded catalogue choice;
+  // registry_id separately retains canonical program/agency fallback semantics.
+  const statedFiling = str(meta.submissionTypeId)?.trim() ?? null;
+  const exactFiling = statedFiling ? resolveFilingCatalogEntry(statedFiling) : null;
+  const submissionTypeId = exactFiling && statedFiling?.toLowerCase() === exactFiling.id ? exactFiling.id : null;
   return {
     ...rest,
     registry_id: meta.submissionTypeId != null && typeof meta.submissionTypeId !== 'string' ? null : registryContextForProgram({ submissionTypeId: str(meta.submissionTypeId),
       programType: str(rest.program_type), primaryAgency: str(rest.primary_agency) })?.registryId ?? null,
+    submission_type_id: submissionTypeId,
     product_type: str(rest.product_type),
     device_class: str(rest.device_class),
     regulatory_path: str(rest.regulatory_path),

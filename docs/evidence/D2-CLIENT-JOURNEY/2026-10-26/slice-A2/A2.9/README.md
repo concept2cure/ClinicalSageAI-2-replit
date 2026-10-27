@@ -182,3 +182,15 @@ checks pass **141 tests in seven suites** (25.32 seconds); these overlap earlier
 proof and are not added to 523. The production client/server/audit-verifier
 build passes again (frontend **22.30 seconds**). `merged/editor-*.log.gz` records
 these results. Final normal publication gates run on this combined source.
+
+## Accepted publication
+
+The combined source was accepted on `concept2cure-v2` as `b07f35dd452d520d908fa44da65829bc0bf3c4bd`.
+Every normal publication gate passed, including full TypeScript (**zero errors,
+unchanged zero baseline**) and no added lint warnings. The source guard/self-test
+passed in the real pre-push chain; `merged/accepted-push.log.gz` records the
+accepted ref. All 38 pinned A2.9/canonical inputs still matched, and a fresh remote
+check matched the clean local branch. This evidence-only follow-up records that
+acceptance; no production source changes. The local test app/database are stopped.
+A2.10 is next, with each remaining fold still subject to its own parity/admission
+prerequisites; no formal OQ or whole-product launch-completion claim is made.

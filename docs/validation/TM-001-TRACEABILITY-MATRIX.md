@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-10-26T20:09:56.392Z |
+| Version | generated 2026-10-26T23:10:44.295Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-00* requirement tables · RA-001 rows · docs/evidence/W3/2026-09-27/OQ-*/result.json · IQ/iq-results.json |
@@ -12,13 +12,13 @@
 
 ## Summary
 
-- Requirements: **116** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 45
+- Requirements: **117** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 46
 - OQ steps executed: **103** — pass 101 · fail 0 · deviation 2 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-28T01:18:32.421Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
-| Projects | 14 | 13 | 0 | 0 | 0 | 1 |
+| Projects | 15 | 13 | 0 | 0 | 0 | 2 |
 | Vault | 21 | 10 | 0 | 0 | 0 | 11 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 15 | 12 | 0 | 0 | 0 | 3 |
@@ -47,7 +47,8 @@
 | URS-PROJ-004 | Program creation is attributable: the activity feed shows who created it and when, the write is entered in the hash-chained audit log, and the organisation's audit ledger surface shows governed writes, each naming the account that acted by reference as well as by name: two accounts may share a display name. | §11.10(e) | high | scripted | OQ-PROJ-06 (pass)<br>OQ-PROJ-06b (pass) | **pass** |
 | URS-PROJ-005 | The Projects and Project Home surfaces render the organisation's programs and the open program without runtime errors. | none | medium | unscripted | OQ-PROJ-02 (pass)<br>OQ-PROJ-07 (pass)<br>OQ-PROJ-08 (pass) | **pass** |
 | URS-PROJ-006 | A task can be created with a title, module and priority; it is persisted for the organisation, listed on the task board and its creation is written to the governed ledger. | §11.10(e) | medium | scripted | OQ-PROJ-09 (pass)<br>OQ-PROJ-10 (pass) | **pass** |
-| URS-PROJ-007 | The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). | none | low | ad-hoc | OQ-PROJ-11 (pass)<br>OQ-PROJ-12 (pass) | **pass** |
+| URS-PROJ-007 | The Program Journey read model answers honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). The earlier standalone Filings Catalog clause and its OQ-PROJ-12 results are historical, superseded by URS-PROJ-007a. | none | low | ad-hoc | OQ-PROJ-11 (pass)<br>OQ-PROJ-12 (pass) | **pass** |
+| URS-PROJ-007a | The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash. Filing browsing/search and selected description, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available. | none | low | ad-hoc | — | **uncovered** |
 | URS-PROJ-008 | With launch scope enforced, the navigation payload marks every out-of-catalog surface as not entitled with source `launch-scope`, the six launch apps are entitled, and a deep link to an out-of-catalog surface renders the "not in this release" gate rather than the surface. | §11.10(d) | medium | scripted | OQ-PROJ-13 (pass)<br>OQ-PROJ-14 (pass) | **pass** |
 | URS-PROJ-009 | A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500. | §11.10(d) | high | scripted | OQ-PROJ-15 (pass) | **pass** |
 | URS-PROJ-010 | Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in. | §11.10(e) | high | scripted | OQ-PROJ-16 (pass) | **pass** |
