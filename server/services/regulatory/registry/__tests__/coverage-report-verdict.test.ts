@@ -29,28 +29,7 @@ const SCRIPT = path.resolve(process.cwd(), 'scripts/regulatory-coverage-report.t
 const run = (...args: string[]): string =>
   execFileSync('npx', ['tsx', SCRIPT, ...args], { encoding: 'utf8', timeout: 180_000 });
 
-/* The pool logger writes JSON lines to stdout both BEFORE and AFTER the report,
-   so the report object has to be cut out of the stream rather than parsed from
-   the whole of it: it is the pretty-printed object that starts on a line of its
-   own, and it ends where its braces balance. */
-function reportJson(stdout: string): string {
-  const at = stdout.search(/^\{$/m);
-  if (at < 0) throw new Error(`no report object in --json output:\n${stdout.slice(0, 400)}`);
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = at; i < stdout.length; i++) {
-    const ch = stdout[i];
-    if (esc) { esc = false; continue; }
-    if (ch === '\\') { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (ch === '{') depth++;
-    else if (ch === '}' && --depth === 0) return stdout.slice(at, i + 1);
-  }
-  throw new Error('report object never closed');
-}
-
+// JSON mode must produce one complete parseable value; diagnostics belong on stderr.
 interface ReportJson {
   usBiotechAuthoring?: {
     format: string;
@@ -72,7 +51,7 @@ describe('regulatory coverage report — the closing verdict', () => {
   let text: string;
 
   beforeAll(() => {
-    json = JSON.parse(reportJson(run('--json'))) as ReportJson;
+    json = JSON.parse(run('--json')) as ReportJson;
     text = run();
   }, 300_000);
 

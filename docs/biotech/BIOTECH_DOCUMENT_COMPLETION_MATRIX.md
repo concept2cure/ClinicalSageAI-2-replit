@@ -1,16 +1,75 @@
 # Biotech Document Completion Matrix
 
-## Status
+Updated 2026-10-27 for the US biotech authoring workstream. **Complete US biotech filing coverage and Weave Bio parity have not been established.** This matrix separates current authoring capability, fixture evidence and remaining product work.
 
-The previous 101-row matrix was withdrawn on 2026-07-29 after repository review found that its lexical scanner treated comments, fixtures, and shared candidate services as document-specific implementation evidence. It is not a release verifier and must not be used as product truth.
+The old 101-row lexical matrix was withdrawn on 2026-07-29 because it treated comments, fixtures and shared services as document-specific implementation proof. It remains withdrawn. No registry entry is promoted to `VERIFIED` under the full work-order definition of done by this update.
 
-No registry entry is currently classified `VERIFIED` under the work-order definition of done.
+## How to read current coverage
 
-## Canonical sources
+The single registry is `shared/regulatory/global-document-registry.ts`. Obtain current per-entry facts through the existing report:
 
-- Registry truth: `shared/regulatory/global-document-registry.ts`
-- Registry validation: `server/services/regulatory/registry/registryValidation.ts`
-- Existing biotech capability audit: `docs/reports/biotech-documentation-completeness-audit.md`
-- Platform findings and evidence tiers: `docs/audit-2026-07/01-method-and-coverage.md` and `docs/audit-2026-07/12-findings-register.md`
+```sh
+npm run report:regulatory-coverage -- --json
+```
 
-A replacement per-entry matrix must be produced through the existing registry-validation architecture, distinguish direct wiring from shared/lexical evidence, and provide executable proof before changing any row from `IMPLEMENTED_UNVERIFIED` to `VERIFIED`.
+Its `usBiotechAuthoring` field derives US medicinal filings, relevant cross-segment EUA/RFD, shared registry documents and US/GLOBAL reusable component templates from current owners. It reports exact editor IDs, section counts, narrative/manual policy, source limitations and scoped concerns. It **does not create documents or verify the full workflow**. Its separate `production_ready` blueprint tier measures static section/task backing, not commercial readiness, regulatory completeness or agency acceptance.
+
+Registered, outlined, editor-loadable, narrative-eligible, source-grounded, reviewed, faithfully exported and technically submittable are separate observations. Whole filings and whole modules can be manual preparation workspaces while their exact component documents permit source-supported AnA drafting. An original form, dataset, signed record or validated table is not replaced by generated prose. Existing saved manual snapshots are not silently upgraded when current metadata changes.
+
+## US filing and document families
+
+Rows group existing canonical IDs for readability; they are not a second registry or an additive filing denominator. The final CLI report owns current inventory totals.
+
+| Canonical family / IDs | Current authoring position | Qualification and remaining limit |
+| --- | --- | --- |
+| Initial IND — `US_IND` | Existing IND record-derived templates, sources/assembly and the same editor support document preparation. The protocol-outline and SAP deliverable starts now select their own detailed records. | Exact document-selection and source/manual policies have scoped fixtures. A populated IND tree does not establish complete studies, original forms, review, package validation or dispatch. See `ind/` evidence. |
+| IND changes and safety — `US_IND_AMENDMENT`, `US_IND_SR`, `US_IND_ANNUAL` | Generic filing starts remain; exact lifecycle components distinguish protocol, information and CMC amendments and clinical-hold responses. | Original forms/supporting records remain manual. IND case safety and annual progress are different obligations. An ICSR worksheet is not the validated safety message or delivery channel. |
+| Meetings — `US_PRE_IND`, `US_TYPE_A_MEETING`, `US_TYPE_B_MEETING`, `US_TYPE_C_MEETING` | Existing generic meeting support is supplemented by exact pre-IND, EOP2, pre-NDA and pre-BLA working components. | Scoped persistence/source-policy fixtures exist. Type D/INTERACT reference and AnA support are credited, but separately retained editor starts remain a gap. PDUFA parts do not establish BsUFA procedures. |
+| Marketing — `US_NDA`, `US_505B2`, `US_BLA`, `US_351K`, `US_ANDA` | Filing-specific plan guidance and recommended existing/shared templates now lead to the same create/recovery/editor flow. Whole-application starts remain preparation workspaces. | Do not substitute an IND outline for a marketing dossier or confuse 351(a), 351(k), 505(b)(1), 505(b)(2) and ANDA evidence. Product/modality, reference-product/reliance permissions and current filing-specific content still require evidence. |
+| Designations and development procedures — `US_ORPHAN`, `US_BTD`, `US_FAST_TRACK`, `US_RMAT`, `US_ACCEL_APPROVAL`, `US_PRIORITY_REVIEW`, `US_ROLLING`, `US_PSP` | Existing registry/blueprint/template owners provide request/planning starts and shared document choices. | These are not interchangeable approvals. Eligibility, current program rules, pediatric assessment/waiver/deferral variants and original agency decisions need application-specific review. Template availability alone does not qualify each procedure. |
+| Supplements/changes — `US_NDA_SUPP`, `US_BLA_SUPP`, `US_CBE`, `US_SUPAC` | Existing lifecycle-backed supplement outlines remain; exact CBE-30/CBE-0 components preserve distinct source identities and original-form/labeling policy. | CBE components read NDA/ANDA 21 CFR 314.70 records. Licensed-biologic changes need the applicable 21 CFR 601.12 classification and records. SUPAC is not a universal biologics change procedure. |
+| Postapproval annual reporting — `US_NDA_ANNUAL` | Existing combined NDA/BLA-labelled start remains available with explicit source limits. | Its underlying parts primarily follow 21 CFR 314.81(b)(2). It does not independently model BLA minor-change 601.12(d), pediatric 601.28, study-status 601.70 and distribution 600.81 reports. Distribution reporting is not merely an NDA annual-report section. |
+| Postmarketing safety — `US_ICSR_15DAY`, `US_PADER`; shared `ICH_DSUR`, `ICH_SUSAR` | Existing safety-reference, reporting and E2B composer/message owners are credited; source-supported safety prose uses the editor. | Actual case data, current regional schema/terminology, sponsor/report/channel rules, validated messages and acknowledgments are separate. DSUR/PBRER/PADER are not automatic substitutes for one another or for IND annual obligations. |
+| Risk management and commitments — `US_REMS`, `US_PMR` | Existing filing/reference structures and lifecycle sources support working documents and source review. | Exact REMS elements, PMR/PMC source letters, protocols, milestones, status/fulfillment submissions and actual regulatory decisions need their own workflow evidence. A saved document or completed task does not prove fulfillment. |
+| Master files/environment — `US_DMF`, `US_EA` | Existing template/source owners support working preparation and cross-reference material. | Preserve holder/applicant distinction, confidential-part permission and original LOAs. CDER DMF and CBER master-file applicability are not identical. EA versus categorical exclusion depends on the actual action and sources. |
+| Vaccine/therapeutic emergency authorization — cross-segment `US_EUA` | Existing row/outline is credited and exposed as a scope concern by the report. | Current device/assay-oriented content does not substantiate drug/vaccine EUA coverage. Actual product, center, declaration, source data and current authorization conditions require a medicinal-specific completion. |
+| Combination-product jurisdiction — cross-segment `US_RFD` | Existing RFD identity and pre-submission owners are credited. | Generic meeting headings do not supply the constituent/modes-of-action/PMOA/jurisdiction rationale in FDA's RFD guidance. Complete the existing owner before claiming combination-product RFD authoring coverage. |
+
+## Reusable working documents and the connected workflow
+
+| Area | Current implementation and evidence | Boundary |
+| --- | --- | --- |
+| Clinical/safety components — `ICH_PROTOCOL`, `ICH_IB`, `ICH_SAP`, `ICH_ICF`, `ICH_CSR`, `ICH_DSUR`, plus PBRER/blank CRF components | Exact clinical metadata now admits source-supported narrative where appropriate. Generated contents, signatures, original tabulations and appendices retain explicit manual/source policy. Actual HTTP/PGlite create/reopen/saved-draft admission/refusal fixtures are recorded in `clinical/`, `qualification/` and earlier CSR/CRF evidence. | This establishes controlled working-document behavior, not scientific correctness, completed patient forms or live AnA competence. |
+| Integrated clinical and detailed lifecycle work | Exact existing records for ISS/ISE, meetings, IND variants and CBE variants reach editor starts with retained source identity and per-part policy. See `lifecycle/` and `qualification/`. | Original datasets/statistical tables and application-specific pooling/analysis decisions remain source-controlled; a full heading set does not establish a complete submission. |
+| CMC — `ICH_QOS`, `ICH_M3_DS`, `ICH_M3_DP`, `ICH_COMPARABILITY`, `ICH_STABILITY_PROTOCOL` | Canonical Module 3 content types now distinguish narrative from manual/source parts in exact DS/DP components and IND aliases. See `medicinal/`. | Deterministic CMC composition remains limited to its recorded small-molecule USIND scope. Broader editor authoring does not establish biologic/marketing composition, assay validation or manufacturing readiness. |
+| Nonclinical — `ICH_NONCLIN_OVERVIEW`, `ICH_NONCLIN_SUMMARY`, existing M4 records | A nonclinical working-report component reaches the existing seven-part source structure, with original GLP/approval records and tabulations protected. See `medicinal/`. | Study-specific applicability, actual GLP statements, signed reports and validated numerical outputs require original evidence. |
+| Shared clinical summaries/tabulations — `ICH_CLIN_OVERVIEW`, `ICH_CLIN_SUMMARY`, `ICH_TABULATED_SUMMARIES` | Existing component and CTD record projections remain the shared preparation source. | Names and generic applicability do not establish the appropriate study population, cutoff, original tables or exact filing placement. |
+| CTD module workspaces | US regional Module 1 and global Modules 2–5 use their existing canonical records, exact identities and manual whole-module policy. Focused persistence/refusal cases are in `qualification/`. | There is no harmonized global Module 1 start. Module availability is not a complete dossier or permission to generate original data. |
+| US prescribing information | An exact USPI working component reaches existing PLR Highlights/full-PI records with US/FDA scope; original label/SPL and warning-source parts remain protected. See `medicinal/`. | EU SmPC is not USPI. Current FDA validation, product-specific labeling decisions, listing and real SPL transmission remain separately qualified. |
+| Project initialization and authoring | Recorded filing identity drives biotech plan guidance and template recommendations. Global search stays available; exact selection enters the existing create/recovery flow. Blank documents no longer acquire an invented Module 3 placement. Current session/project/filing and stale-form guards have scoped fixtures in `project/`. | Guidance and recommended choices do not adjudicate legal applicability or prove a complete deliverable list. Transport fixtures do not establish all live operational behavior. |
+| Authority responses | Exact question/answer source copies reach DocumentWorkbench. Explicit saved-section/version-checked writeback uses the existing governed response writer; signatures remain on the question's actual answer digest. See `haq/`. | Current response-register/package format is plain text and unstyled paragraphs/hard breaks. Rich tables, media, references and pending changes refuse; full rich response packages are not qualified. |
+| Source traceability, review and export | Existing source intake/assembly, saved guidance, AnA remedies, revisions, review, signature and export owners are retained and exercised where receipts say so. | Source-grounded prose, approval, rendering fidelity, validated structured outputs and agency acceptance require distinct evidence. |
+
+## Concrete remaining product gaps
+
+- **Expanded access/Form FDA 3926:** framework/recommendation routes exist. An exact source-guided editor/official-form path for individual-patient emergency/nonemergency versus group/treatment mechanisms remains unrepresented in the audited template path.
+- **Type D/INTERACT:** reference/timeline and AnA meeting support exist; exact editor starts and the correct meeting-program context still need completion and qualification.
+- **Biologics postapproval reporting:** the combined annual-report label does not close the distinct Part 600/601 obligations described above. NDA CBE parts do not close BLA change classification.
+- **Medicinal EUA and RFD:** retain the existing owners, complete the product-specific content and prove the correct scope; do not count a device-oriented or generic pre-sub scaffold as completed biotech coverage.
+- **Sponsor-template binding and formatting:** the company formatting-template store and UUID editor template bank are separate existing owners; ordinary editor starts do not yet bind the extracted sponsor formatting specification. The extraction retains limited geometry/basic typography rather than arbitrary Word layout and controls. Faithful long CSR/protocol/IB output, contents, pagination, tables, figures and cross-references need actual export/render evidence.
+- **Structured source/output and delivery:** original datasets, official forms, SPL/E2B validation, current technical versions, credentials, live channel acknowledgments and correct application/report routing are not established by narrative editor templates or static channel configuration.
+- **Live provider and human acceptance:** no live-provider accuracy, full native PostgreSQL/RLS/concurrency, clinical/statistical/regulatory validation, human acceptance or live agency dispatch is inferred from these isolated fixtures. Those results remain not run or separately unqualified.
+
+## Evidence and final integration state
+
+Use the [current evidence packet](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/README.md), [source/benchmark review](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/sources/scope-and-benchmark-review.md) and [implementation contract](../design/US_BIOTECH_AUTHORING_COMPLETION_2026-10-26.md). Each scope retains actual prepatch failures, final scoped receipts, source pins and fixture boundaries. Scoped counts overlap and must not be added together.
+
+| Final acceptance item | State at this documentation update |
+| --- | --- |
+| Current CLI inventory artifact and totals | Pending lead-generated final report; use `usBiotechAuthoring` and its source limitations, not the withdrawn denominator. |
+| Combined source-qualified test count | Pending lead integration; scoped receipts are available in the packet. |
+| Final build/editor/UI/size gates and compiler | Pending lead final qualification; no final pass is invented here. |
+| Canonical publication SHA/source and artifact proof | Pending lead publication, recorded in the same packet. |
+| Human/live-provider/agency acceptance | Not run or separately unqualified; no blanket release/parity verdict. |
+
+The scope and source inventory are maintained in [BIOTECH_SCOPE_MANIFEST.md](BIOTECH_SCOPE_MANIFEST.md). The existing platform findings register and release-gate ladder remain authoritative for release decisions; this matrix does not create a competing blocker ledger.

@@ -1,0 +1,2007 @@
+{
+  "baseline": "b07f35dd452d520d908fa44da65829bc0bf3c4bd",
+  "results": [
+    {
+      "file": "client/src/concept2cure/v2/OrganizationSwitcher.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/_agency-response-editor-fixture.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponseEditor.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponseEditorState.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponsesCurrentScope.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 2
+      },
+      "current": {
+        "1:max-lines-per-function": 2
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (150). Maximum allowed is 100.",
+          "line": 274,
+          "column": 45,
+          "messageId": "exceed",
+          "endLine": 274,
+          "endColumn": 47
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (120). Maximum allowed is 100.",
+          "line": 437,
+          "column": 81,
+          "messageId": "exceed",
+          "endLine": 437,
+          "endColumn": 83
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/connectedAccountOwnership.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/dataConnectOwnedRead.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/filingLifecyclePlan.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectBiotechPlan.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:complexity": 1
+      },
+      "current": {
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'writeHandoffStage' has a complexity of 19. Maximum allowed is 15.",
+          "line": 56,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 56,
+          "endColumn": 33
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/dataConnect.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 12,
+      "warnings": 12,
+      "previous": {
+        "1:complexity": 8,
+        "1:max-lines": 1,
+        "1:max-lines-per-function": 2,
+        "1:react-hooks/exhaustive-deps": 1
+      },
+      "current": {
+        "1:complexity": 8,
+        "1:max-lines": 1,
+        "1:max-lines-per-function": 2,
+        "1:react-hooks/exhaustive-deps": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+          "line": 346,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 346,
+          "endColumn": 38
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (5031). Maximum allowed is 500.",
+          "line": 782,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 6596,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DocumentWorkbench' has too many lines (4195). Maximum allowed is 100.",
+          "line": 1245,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1245,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'DocumentWorkbench' has a complexity of 461. Maximum allowed is 15.",
+          "line": 1245,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1245,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15.",
+          "line": 2145,
+          "column": 82,
+          "messageId": "complex",
+          "endLine": 2145,
+          "endColumn": 84
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 32. Maximum allowed is 15.",
+          "line": 2413,
+          "column": 16,
+          "messageId": "complex",
+          "endLine": 2413,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 3140,
+          "column": 50,
+          "messageId": "complex",
+          "endLine": 3140,
+          "endColumn": 52
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+          "line": 3196,
+          "column": 55,
+          "messageId": "complex",
+          "endLine": 3196,
+          "endColumn": 57
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+          "line": 3361,
+          "column": 5,
+          "endLine": 3361,
+          "endColumn": 50,
+          "suggestions": [
+            {
+              "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+              "fix": {
+                "range": [
+                  172173,
+                  172218
+                ],
+                "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+          "line": 3728,
+          "column": 43,
+          "messageId": "complex",
+          "endLine": 3728,
+          "endColumn": 45
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+          "line": 6221,
+          "column": 28,
+          "messageId": "exceed",
+          "endLine": 6221,
+          "endColumn": 30
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+          "line": 6221,
+          "column": 28,
+          "messageId": "complex",
+          "endLine": 6221,
+          "endColumn": 30
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/programSummaryContext.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/programSummary.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/fixtures/collab-data.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/registryModel.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (760). Maximum allowed is 500.",
+          "line": 734,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1135,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/reportingPersona.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaceViews.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'AgencyInboxCard' has too many lines (106). Maximum allowed is 100.",
+          "line": 320,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 320,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'AgencyInboxCard' has a complexity of 38. Maximum allowed is 15.",
+          "line": 320,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 320,
+          "endColumn": 25
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AgencyResponseEditor.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AgencyResponses.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 7,
+      "warnings": 7,
+      "previous": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 2,
+        "1:preserve-caught-error": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 2,
+        "1:preserve-caught-error": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'QuestionCard' has too many lines (167). Maximum allowed is 100.",
+          "line": 184,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 184,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'QuestionCard' has a complexity of 51. Maximum allowed is 15.",
+          "line": 184,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 184,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ScopedAgencyResponses' has too many lines (456). Maximum allowed is 100.",
+          "line": 378,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 378,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ScopedAgencyResponses' has a complexity of 64. Maximum allowed is 15.",
+          "line": 378,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 378,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "preserve-caught-error",
+          "severity": 1,
+          "message": "There is no `cause` attached to the symptom error being thrown.",
+          "line": 571,
+          "column": 11,
+          "messageId": "missingCause",
+          "endLine": 571,
+          "endColumn": 99,
+          "suggestions": [
+            {
+              "messageId": "includeCause",
+              "fix": {
+                "range": [
+                  24661,
+                  24661
+                ],
+                "text": ", { cause: e }"
+              },
+              "desc": "Include the original caught error as the `cause` of the symptom error."
+            }
+          ]
+        },
+        {
+          "ruleId": "preserve-caught-error",
+          "severity": 1,
+          "message": "There is no `cause` attached to the symptom error being thrown.",
+          "line": 573,
+          "column": 9,
+          "messageId": "missingCause",
+          "endLine": 573,
+          "endColumn": 41,
+          "suggestions": [
+            {
+              "messageId": "includeCause",
+              "fix": {
+                "range": [
+                  24712,
+                  24712
+                ],
+                "text": ", { cause: e }"
+              },
+              "desc": "Include the original caught error as the `cause` of the symptom error."
+            }
+          ]
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (749). Maximum allowed is 500.",
+          "line": 605,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 867,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'RegistryPicker' has too many lines (249). Maximum allowed is 100.",
+          "line": 143,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 143,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'RegistryPicker' has a complexity of 50. Maximum allowed is 15.",
+          "line": 143,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 143,
+          "endColumn": 31
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/AuthoringTemplatePicker.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 4,
+      "warnings": 4,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'CommunicationCenter' has too many lines (696). Maximum allowed is 100.",
+          "line": 215,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 215,
+          "endColumn": 36
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'CommunicationCenter' has a complexity of 48. Maximum allowed is 15.",
+          "line": 215,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 215,
+          "endColumn": 36
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 25. Maximum allowed is 15.",
+          "line": 327,
+          "column": 39,
+          "messageId": "complex",
+          "endLine": 327,
+          "endColumn": 41
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (822). Maximum allowed is 500.",
+          "line": 664,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 995,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/FilingLifecycleReference.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectBiotechPlan.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 6,
+      "warnings": 6,
+      "previous": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 3,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 2,
+        "1:complexity": 3,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'DataRoom' has too many lines (303). Maximum allowed is 100.",
+          "line": 392,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 392,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'DataRoom' has a complexity of 61. Maximum allowed is 15.",
+          "line": 392,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 392,
+          "endColumn": 18
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1465). Maximum allowed is 500.",
+          "line": 668,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1916,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has too many lines (369). Maximum allowed is 100.",
+          "line": 1417,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1417,
+          "endColumn": 28
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ProjectHome' has a complexity of 140. Maximum allowed is 15.",
+          "line": 1417,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1417,
+          "endColumn": 28
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 52. Maximum allowed is 15.",
+          "line": 1582,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 1582,
+          "endColumn": 35
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 7,
+      "warnings": 7,
+      "previous": {
+        "1:complexity": 4,
+        "1:max-lines-per-function": 2,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:complexity": 4,
+        "1:max-lines-per-function": 2,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'programTypeFor' has a complexity of 43. Maximum allowed is 15.",
+          "line": 117,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 117,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'NewProjectWizardSession' has too many lines (666). Maximum allowed is 100.",
+          "line": 241,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 241,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'NewProjectWizardSession' has a complexity of 136. Maximum allowed is 15.",
+          "line": 241,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 241,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 39. Maximum allowed is 15.",
+          "line": 407,
+          "column": 29,
+          "messageId": "complex",
+          "endLine": 407,
+          "endColumn": 31
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1227). Maximum allowed is 500.",
+          "line": 699,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1627,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'Projects' has too many lines (352). Maximum allowed is 100.",
+          "line": 1157,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1157,
+          "endColumn": 25
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 27. Maximum allowed is 15.",
+          "line": 1242,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 1242,
+          "endColumn": 35
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/agencyResponseEditorState.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/useAgencyResponseEditor.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "scripts/ci/check-ana-surface-context.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:null": 1
+      },
+      "current": {
+        "1:null": 1
+      },
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "scripts/regulatory-coverage-report.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:null": 1
+      },
+      "current": {
+        "1:null": 1
+      },
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/_agency-response-authoring-fixture.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseSourceImport.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/clinicalTemplateEligibility.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/medicinalTemplateEligibility.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/__tests__/usBiotechLifecycleEditor.pglite.integration.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-detail-taxonomy.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/routes/c2c/agency-responses.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 2,
+      "warnings": 2,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'registerAgencyResponseRoutes' has too many lines (320). Maximum allowed is 100.",
+          "line": 336,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 336,
+          "endColumn": 45
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (541). Maximum allowed is 500.",
+          "line": 657,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 699,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/routes/c2c/communication-center.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 4,
+      "warnings": 4,
+      "previous": {
+        "1:max-lines-per-function": 3,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 3,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (111). Maximum allowed is 100.",
+          "line": 239,
+          "column": 97,
+          "messageId": "exceed",
+          "endLine": 239,
+          "endColumn": 99
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (107). Maximum allowed is 100.",
+          "line": 358,
+          "column": 113,
+          "messageId": "exceed",
+          "endLine": 358,
+          "endColumn": 115
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1062). Maximum allowed is 500.",
+          "line": 568,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1218,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (109). Maximum allowed is 100.",
+          "line": 764,
+          "column": 95,
+          "messageId": "exceed",
+          "endLine": 764,
+          "endColumn": 97
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/routes/c2c/projects.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 3,
+      "warnings": 3,
+      "previous": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1,
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines-per-function": 1,
+        "1:complexity": 1,
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async arrow function has too many lines (296). Maximum allowed is 100.",
+          "line": 668,
+          "column": 54,
+          "messageId": "exceed",
+          "endLine": 668,
+          "endColumn": 56
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async arrow function has a complexity of 107. Maximum allowed is 15.",
+          "line": 668,
+          "column": 54,
+          "messageId": "complex",
+          "endLine": 668,
+          "endColumn": 56
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1411). Maximum allowed is 500.",
+          "line": 849,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2129,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/agency-responses/__tests__/editor-response-text.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/agency-responses/editor-response.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/agency-responses/visibility.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/builtin-authoring-templates.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/clinical-template-eligibility.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/cmc-ind-source-policy.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/ctd-module-registry-templates.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/ind-deliverable-clinical-source.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/medicinal-source-records.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/medicinal-working-templates.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/agency-response-machine-origin.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/agency-response-source.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/authoring-source-import.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/builtin-authoring-templates.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/document-template-outline-sections.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/import-source-references.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/ind-authoring-templates.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/ind-template-outlines-m2-m3.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/ind-template-outlines-m4-m5.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/workflow-import-governance.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/authoring/workflow-source-import.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/entitlements/__tests__/launch-scope.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 12,
+      "warnings": 12,
+      "previous": {
+        "1:max-lines": 1,
+        "1:@typescript-eslint/no-unused-vars": 1,
+        "1:max-lines-per-function": 6,
+        "1:complexity": 4
+      },
+      "current": {
+        "1:max-lines": 1,
+        "1:@typescript-eslint/no-unused-vars": 1,
+        "1:max-lines-per-function": 6,
+        "1:complexity": 4
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1894). Maximum allowed is 500.",
+          "line": 624,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 2296,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "message": "'SPL_LOINC_CODES' is assigned a value but never used.",
+          "line": 741,
+          "column": 7,
+          "messageId": "unusedVar",
+          "endLine": 741,
+          "endColumn": 22
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessPLRStructure' has too many lines (154). Maximum allowed is 100.",
+          "line": 1115,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1115,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'assessPLRStructure' has a complexity of 18. Maximum allowed is 15.",
+          "line": 1115,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1115,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'assessBoxedWarning' has a complexity of 25. Maximum allowed is 15.",
+          "line": 1333,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1333,
+          "endColumn": 35
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'designREMS' has too many lines (137). Maximum allowed is 100.",
+          "line": 1467,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1467,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'designREMS' has a complexity of 20. Maximum allowed is 15.",
+          "line": 1467,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1467,
+          "endColumn": 27
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessPregnancyLactationLabeling' has too many lines (112). Maximum allowed is 100.",
+          "line": 1645,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1645,
+          "endColumn": 49
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'structureSmPC' has too many lines (167). Maximum allowed is 100.",
+          "line": 1794,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1794,
+          "endColumn": 30
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'assessOTCLabeling' has too many lines (267). Maximum allowed is 100.",
+          "line": 2000,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 2000,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Arrow function has too many lines (104). Maximum allowed is 100.",
+          "line": 2018,
+          "column": 78,
+          "messageId": "exceed",
+          "endLine": 2018,
+          "endColumn": 80
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 2018,
+          "column": 78,
+          "messageId": "complex",
+          "endLine": 2018,
+          "endColumn": 80
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/ctd-component-outlines.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/document-preparation.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/document-template-library.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/medicinal-working-templates.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/market-specs/us-biotech-lifecycle-templates.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/regulatory/registry/usBiotechAuthoringCoverage.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/services/regulatory/templateCatalog.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "server/utils/logger.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "shared/authoring/source-import.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "shared/constants/__tests__/deferred-capability-inventory.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "shared/constants/deferred-capability-inventory.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 1,
+      "warnings": 1,
+      "previous": {
+        "1:max-lines": 1
+      },
+      "current": {
+        "1:max-lines": 1
+      },
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1254). Maximum allowed is 500.",
+          "line": 565,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1505,
+          "endColumn": 1
+        }
+      ],
+      "growth": []
+    },
+    {
+      "file": "shared/regulatory/__tests__/filing-lifecycle-reference.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "shared/regulatory/filing-lifecycle-reference.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/e2e/filing-catalog-core-workflow.e2e.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/schema-contract/catalog-module-claims.contract.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/schema-contract/filings-catalog-retirement.contract.test.ts",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/validation/oq/projects/filing-reference.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "tests/validation/oq/projects/run.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    },
+    {
+      "file": "docs/evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/run-lint.mjs",
+      "baselineErrors": 0,
+      "errors": 0,
+      "baselineWarnings": 0,
+      "warnings": 0,
+      "previous": {},
+      "current": {},
+      "messages": [],
+      "growth": []
+    }
+  ]
+}

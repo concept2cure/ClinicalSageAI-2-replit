@@ -1,0 +1,6 @@
+[
+  "server/services/ana/__tests__/shared-planning-template-preparation.test.ts",
+  "client/src/concept2cure/v2/editor/__tests__/sourceImportScope.test.tsx",
+  "server/services/authoring/__tests__/assembly-filing-scope.test.ts",
+  "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts"
+]
