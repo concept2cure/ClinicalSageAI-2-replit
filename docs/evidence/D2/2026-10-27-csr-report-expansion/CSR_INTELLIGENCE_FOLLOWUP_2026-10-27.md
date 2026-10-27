@@ -47,3 +47,9 @@ Total additional staged: **2 redacted report bodies, 2,417 pages**. Their 951,94
 **Rights status: RESTRICTED.** No model training, commercial retrieval, redistribution or production Cortex admission is authorized by this processing. Registration/disclosure of a CSR on a sponsor portal does not itself confer those rights. Full scientific source review, license review and tenant-safe admission remain uncompleted.
 
 Combined newly staged source extracts in this session: **13 report bodies / 6,238 pages** (11 NIH + 2 GSK). This count is not 13 newly acquired original files: all originals were already retained in the user's Library. No independent new PDF download is claimed.
+
+## Existing legacy dataset quarantine / provenance gap
+
+`data/csr_dataset.csv` is a historical committed CSV (536 data rows, 11 columns at inspection). It includes `success` labels but no underlying source-referenced human adjudication fields; early rows include `HC-1240` etc. Repository code search found no runtime consumer for the literal filename other than the corrected export script. This is NOT evidence that the CSV is safe for model training. Retain the historical file for audit and reproducibility, but do not use its success labels as regulatory evidence, scientific precedent, or supervised training targets without independent provenance review and regeneration by the corrected exporter. The exporter fix does not retroactively clean historical CSVs or downstream datasets.
+
+The Python regression suite was executed locally: 7 passed, 0 failed. No full repository CI or production deployment approval is inferred.
