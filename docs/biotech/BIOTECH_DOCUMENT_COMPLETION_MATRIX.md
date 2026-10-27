@@ -66,10 +66,10 @@ Use the [current evidence packet](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26
 
 | Final acceptance item | State at this documentation update |
 | --- | --- |
-| Current CLI inventory artifact and totals | [Retained CLI inventory](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/authoring-inventory-merged.json): 34 US filing definitions, 34 editor-loadable, 30 reusable components; 24 shared registry documents with 22 exact starts. GLOBAL Module 1 and eCTD backbone have no exact editor start. These are inventory facts, not completeness verdicts. |
+| Current CLI inventory artifact and totals | [Retained CLI inventory](../evidence/D2-US-BIOTECH-AUTHORING/2026-10-26/authoring-inventory-final.json): 34 US filing definitions, 34 editor-loadable, 30 reusable components; 24 shared registry documents with 22 exact starts. GLOBAL Module 1 and eCTD backbone have no exact editor start. These are inventory facts, not completeness verdicts. |
 | Combined source-qualified test count | 2,152 distinct passes across 122 suites before the final canonical reconciliation; 67 affected merged suites/1,116 tests also pass. These overlap and are not added to the distinct count. |
-| Final build/editor/UI/size gates and compiler | Merged build, scoped lint (zero errors/no warning growth) and all seven editor/UI/size gates pass. Normal pre-push compiler is pending at this checkpoint. |
-| Canonical publication SHA/source and artifact proof | Pending lead publication, recorded in the same packet. |
+| Final build/editor/UI/size gates and compiler | Merged build, scoped lint (zero errors/no warning growth) and all seven editor/UI/size gates pass. Normal pre-push TypeScript reports zero errors. The first 48-error rejection, fixes and 34-suite/669-check rerun are retained. |
+| Canonical publication SHA/source and artifact proof | Accepted source `3835453cbcfed3827f91851aafd03b092e99f938` on `origin/concept2cure-v2`; exact source/artifact proofs and the final manifest are in the same packet. |
 | Human/live-provider/agency acceptance | Not run or separately unqualified; no blanket release/parity verdict. |
 
 The scope and source inventory are maintained in [BIOTECH_SCOPE_MANIFEST.md](BIOTECH_SCOPE_MANIFEST.md). The existing platform findings register and release-gate ladder remain authoritative for release decisions; this matrix does not create a competing blocker ledger.
