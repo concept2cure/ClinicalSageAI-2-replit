@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filingLifecycleReferenceFor, FILING_LOOP } from '../filing-lifecycle-reference';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor, FILING_LOOP } from '../filing-lifecycle-reference';
 
 const projectMatches = [
   ['US_IND', 'ind', 'FDA', 'clinical'], ['US_IDE', 'ide', 'FDA', 'clinical'],
@@ -80,5 +80,19 @@ describe('lifecycle reference selection uses exact filing and recorded context',
       expect(filingLifecycleReferenceFor(id, { programType: 'ind', primaryAgency: 'EMA' })).toBeNull();
       expect(filingLifecycleReferenceFor(id, { programType: 'maa', primaryAgency: 'EMA' })).toBeNull();
     }
+  });
+});
+
+// Metadata/search resolution must not widen the stricter lifecycle admission.
+describe('catalogue metadata does not imply a lifecycle admission', () => {
+  it('keeps Canada clinical-trial facts inspectable without attaching a US review clock', () => {
+    const reference = filingReferenceFactsFor('CA_CTA');
+    expect(reference?.entry).toMatchObject({ id: 'ca_cta', agency: 'Health Canada' });
+    expect(reference).not.toHaveProperty('loop');
+    expect(filingLifecycleReferenceFor('CA_CTA')).toBeNull();
+    expect(filingLifecycleReferenceFor('CA_CTA', { programType: 'ind', primaryAgency: 'FDA' })).toBeNull();
+  });
+  it.each(['IND', 'ind', 'fda_510k', '__proto__', 'not_a_filing'])('does not use a broad legacy alias for metadata identity %s', id => {
+    expect(filingReferenceFactsFor(id)).toBeNull();
   });
 });

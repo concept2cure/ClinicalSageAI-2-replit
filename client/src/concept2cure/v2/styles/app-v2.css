@@ -846,10 +846,7 @@
 @media (prefers-reduced-motion: reduce){
   .c2c-v2 .tt-panel,.c2c-v2 .tt-scrim,
   .c2c-v2 .tb-detail,.c2c-v2 .tb-create,
-  .c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast,
-  /* The filings-catalog detail drawer and its backdrop are the same slide-over
-     shape as .tt-panel above, and were the one pair never registered here. */
-  .c2c-v2 .fc-detail,.c2c-v2 .fc-detail-bd{animation:none;}
+  .c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast{animation:none;}
 }
 .c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .c2c-v2 .tt-head b{font-size:14px;font-weight:600;}

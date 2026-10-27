@@ -234,11 +234,22 @@ describe('Apps catalog module descriptions', () => {
 
 
 describe('Retired filing catalogue subscriptions', () => {
+  it('fresh replay neither creates a retired filing identity nor requires it for packaging', async () => {
+    const reconcile = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+    const packaging = fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile);
+      await pg.exec(packaging);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'filings-catalog'")).rows).toEqual([]);
+      expect((await pg.query("SELECT module_id FROM available_modules WHERE module_id = 'projects' AND COALESCE((metadata->>'deprecated')::boolean, false) = false")).rows).toEqual([{ module_id: 'projects' }]);
+    }
+  });
+
   it('keeps an existing filing catalogue and subscription retired across catalogue and packaging replay', async () => {
     await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (210010, 'A2.10 historical subscriber', 'a210-historical-subscriber');
       INSERT INTO available_modules (module_id, name, description, category, metadata)
-      VALUES ('filings-catalog', 'Historical filing catalogue', '', 'Reference', '{"legacyMarker":"kept"}')
-      ON CONFLICT (module_id) DO UPDATE SET metadata = '{"legacyMarker":"kept"}';
+      VALUES ('filings-catalog', 'Historical filing catalogue', '', 'Reference', '{"legacyMarker":"kept","tiers":["recorded"]}')
+      ON CONFLICT (module_id) DO UPDATE SET metadata = '{"legacyMarker":"kept","tiers":["recorded"]}';
       ALTER TABLE module_subscriptions ADD CONSTRAINT a210_subscription_retirement_fk
         FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;
       INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata)
@@ -249,7 +260,7 @@ describe('Retired filing catalogue subscriptions', () => {
     for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile); await pg.exec(packaging); }
     const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id='filings-catalog'");
     expect(catalog.rows).toHaveLength(1);
-    expect(catalog.rows[0].metadata).toMatchObject({ deprecated: true, legacyMarker: 'kept' });
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: ['recorded'] });
     const after = await pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 210010');
     expect(after.rows).toEqual(before.rows);
   });

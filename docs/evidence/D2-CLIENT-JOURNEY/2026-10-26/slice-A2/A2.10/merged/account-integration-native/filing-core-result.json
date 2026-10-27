@@ -1,0 +1,18 @@
+{
+  "alias": "filings-catalog",
+  "destination": "projects/new-project",
+  "copiedQueryAndHashPreserved": true,
+  "createStatus": 201,
+  "readStatus": 200,
+  "filingId": "us_ind",
+  "metadataWithheld": true,
+  "recordedPlanGuideReached": true,
+  "reloadPreservedPlan": true,
+  "viewportWidths": [
+    1440,
+    390
+  ],
+  "questionPrefilled": true,
+  "modelRequests": 0,
+  "writesAfterQuestion": 0
+}

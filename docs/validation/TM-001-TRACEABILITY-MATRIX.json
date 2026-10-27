@@ -1,6 +1,6 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-26T23:10:44.295Z",
+  "generatedAt": "2026-10-26T23:35:03.591Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
@@ -388,15 +388,15 @@
       "id": "URS-PROJ-007a",
       "app": "Projects",
       "doc": "URS-001-PROJECTS.md",
-      "requirement": "The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash. Filing browsing/search and selected description, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available.",
+      "requirement": "The former filings-catalog bookmark opens the Projects New-project wizard through the shared alias/action, retaining query and hash without creating a project. Filing browsing/search and selected description, segment, authority/region, submission format, CTD and workflow reference remain reachable there, beside the server's offer/build limits or explicit read failure; unavailable filings remain read-only. The wizard and the recorded project's Plan show a collapsed, clearly authored filing-family lifecycle guide (stages, timing examples and return loop) only where the exact filing has a guide; project selection also requires matching recorded program type and agency. Missing, unknown or conflicting identity gives explicit unavailability. Reference content creates no offer, task, deadline or readiness verdict; the existing project plan remains available.",
       "part11": "none",
-      "risk": "low",
+      "risk": "medium",
       "steps": [],
       "ra": {
         "intendedUse": "Reach filing reference in Projects intake and the exact recorded project's Plan",
-        "risk": "low — informational authored guidance, explicitly separate from project deadlines, readiness and the server's offer",
-        "assurance": "ad-hoc",
-        "rationale": "record legacy-bookmark destination, selected facts, collapsed authored guide and missing-identity state beside the existing plan; actual offer-read failures remain explicit. OQ-PROJ-12 v0.10 awaits formal execution and review; focused automated/browser proof is supplemental"
+        "risk": "medium — incorrect identity, support or clock presentation can misdirect recoverable filing work",
+        "assurance": "scripted",
+        "rationale": "assert legacy-bookmark destination, retained query/hash, no browser project creation, selected facts, collapsed authored guide and missing-identity state beside the existing plan; actual offer-read failures remain explicit. OQ-PROJ-12 v0.10 awaits formal execution and review; focused automated/browser proof is supplemental"
       },
       "verdict": "uncovered"
     },

@@ -5,6 +5,12 @@
 -- their metadata, subscription FKs and stored records; do not DELETE them.
 -- Evidence: docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10a/README.md.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 filing catalogue fold (Rule 1).
+-- RegistryPicker, FilingReference and ProjectPlan now carry every filing
+-- discovery/reference function. Remove filings-catalog from this keep-list
+-- and upsert so step 1 deprecates it on every deploy, preserving the existing
+-- row, metadata and all tenant subscriptions. No cascading DELETE.
+-- Evidence and replay proof: slice-A2/A2.10/README.md.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.7 dossier fold (CLAUDE.md Rule 1).
 -- Dossier artifact rollups and section tracking now live on project Author in
 -- ProjectDossier.tsx. Remove dossier/dossier-map from this writer's keep-list

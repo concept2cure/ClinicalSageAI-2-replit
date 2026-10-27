@@ -24,12 +24,7 @@ the production client/server/audit-verifier build. Merged proof is under
 A2.8 resolves `mdx` to Projects with the existing MDX filter, through the same
 destination/action owner. Its red/green routing, native portfolio and scope
 regression proof is in `slice-A2/A2.8/README.md`. The device-workstream shell,
-target and catalogue remain for their own A2.10 parity. A2.9 retirement is
-complete. A2.10a carries the filing catalog into the existing Projects wizard
-and exact recorded Plan, then retires only that standalone screen/identity;
-proof is in `slice-A2/A2.10a/README.md`. The other four folds remain pending
-their own per-function and stored-record gates. Revised formal OQ-PROJ-12 is
-unexecuted/unsigned; engineering/native evidence is supplemental.
+target and catalogue remain for A2.10. A2.9 retirement is complete. A2.10 has completed the filing-catalogue fold; the other four folds retain the specific parity/admission gaps recorded in A2_10_REMAINING_PARITY_REVIEW.md.
 The inventory below describes
 discovery-time behavior.
 
@@ -739,8 +734,7 @@ tests in 33 suites, 24 native PostgreSQL audit/role checks, both real Create/ref
 browser flows and production build. Existing-owner inventory and limits:
 `A2_9_PROJECT_CREATION_RETIREMENT.md`; evidence:
 `docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`.
-After A2.10a's filing-catalog completion, continue the other four A2.10
-per-function/store checks, without automatic shell or stored-record removal.
+A2.10 disposition is recorded below; its four unqualified shells stay.
 
 - **Delete these handlers, not their routers:**
   - `concept2cure.ts:1047-1135`, :1934-1990
@@ -815,6 +809,24 @@ audit with accepted scope. Route retirement does not confer support for legacy
 specialist stores on the canonical wizard or retire their existing records.
 
 ### A2.10 Close the remaining folds, each gated by its parity row (A.2's closing step)
+
+**2026-10-26 implementation:** filings-catalog's ten functions are confirmed in
+`FUNCTION_PARITY.md`. The existing wizard/Plan now carry its authored reference,
+metadata, search, offered/refused browsing, Ask AnA and actual browser/inspected
+context. Legacy links use the existing wizard action; the old shell is removed.
+Creator and commercial-packaging seeds are amended in place with real double-
+replay proof for old subscriptions and fresh installs. No project deadline,
+readiness verdict or commercial offer is derived from reference clocks.
+
+The expanded actual-source audit is `A2_10_REMAINING_PARITY_REVIEW.md`. It corrects
+two discovery assumptions: CRO onboarding writes `/api/cro/clients`, a different
+engagement store from `/api/clients`; the two device commands are already
+independently in scope, so their carryover is a historical ownership/metadata
+clarification with unchanged handlers/guards. Current CRO company-type labels
+are corrected. **Mission control, device, CRO and journey folds remain open**;
+no data, shell or grant is removed for them. Supplemental qualification and
+formal-validation impact: `slice-A2/A2.10/README.md`. Continue A3 while tracking
+these specific prerequisites; A2.10 is not blanket-complete.
 
 No shell is removed and no catalogue row is deprecated until `FUNCTION_PARITY.md` confirms its row (IA §5.8). When a row needs a §5.9 decision, its shell stays.
 

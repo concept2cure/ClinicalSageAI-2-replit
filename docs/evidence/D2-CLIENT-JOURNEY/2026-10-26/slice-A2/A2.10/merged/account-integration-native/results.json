@@ -1,0 +1,26 @@
+{
+  "source": "56325f62551ac3a6e8f04a0831347cb6b11ff671",
+  "tests": [
+    {
+      "test": "the old filing catalogue reaches the core selection and recorded project reference",
+      "status": "passed",
+      "durationMs": 26249
+    },
+    {
+      "test": "us_ind: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 10781
+    },
+    {
+      "test": "us_510k: legacy filing link reaches reference, canonical creation and recorded Plan",
+      "status": "passed",
+      "durationMs": 10433
+    },
+    {
+      "test": "the New project action preserves intake and waits for the person to create",
+      "status": "passed",
+      "durationMs": 7631
+    }
+  ],
+  "passed": 4
+}

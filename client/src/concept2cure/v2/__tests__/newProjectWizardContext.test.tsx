@@ -8,13 +8,14 @@ vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: Stri
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: h.tenant }, setCurrentClientWorkspace: vi.fn() }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: h.request }));
 vi.mock('../surfaces/AnaVerbs', () => ({ RegistryPicker: ({ value, onChange, onAsk, onBrowseChange }: {
-  value: string; onChange: (id: string) => void; onAsk?: (question: string) => void;
-  onBrowseChange?: (browse: { segment: string; query: string }) => void;
+  value: string; onChange: (id: string) => void; onAsk?: (question: string) => void; onBrowseChange?: (state: { segment: string; searchTerm: string; inspectedReference?: { id: string; name: string; agency: string } | null }) => void;
 }) => <>
-  <button onClick={() => onBrowseChange?.({ segment: 'medical_devices', query: 'device clearance' })}>Browse device filings</button>
-  <button onClick={() => onBrowseChange?.({ segment: 'pharma_biotech', query: '' })}>Clear filing search</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'medical_devices', searchTerm: 'device clearance' })}>Browse device filings</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'pharma_biotech', searchTerm: '' })}>Clear filing search</button>
   <button onClick={() => onChange('us_ind')}>Pick IND</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'medical_devices', searchTerm: 'predicate evidence' })}>Search device references</button>
   <button onClick={() => onChange('us_nda')}>Pick NDA</button>
+  <button onClick={() => onBrowseChange?.({ segment: 'pharma_biotech', searchTerm: '', inspectedReference: { id: 'eu_maa', name: 'Marketing Authorisation Application', agency: 'EMA' } })}>Inspect unavailable filing</button>
   {value && onAsk && <button onClick={() => onAsk(`Question about ${value}`)}>Ask about filing</button>}
 </> }));
 vi.mock('../surfaces/RegistryBridge', () => ({ getSubmissionTypeContext: (id: string) => ({ id,
@@ -59,24 +60,50 @@ describe('the actual wizard reports its public state through the Projects publis
     expect(facts(seen)?.selectedFiling).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Pick IND' }));
     await waitFor(() => expect(facts(seen)?.selectedFiling).toMatchObject({ id: 'us_ind', name: 'Investigational New Drug Application', applicationType: 'ind', agency: 'FDA', region: 'US' }));
+    expect(facts(seen)?.filingLifecycleReference).toMatchObject({ basis: 'authored_reference', scope: 'filing_family', filing: { id: 'us_ind' } });
+    expect(facts(seen)?.selectedFiling).toMatchObject({ submissionFormat: 'eCTD', ctdModule: 'M1–M5', workflowLabel: 'IND' });
     fireEvent.click(screen.getByRole('button', { name: 'Ask about filing' }));
     expect(onAsk).toHaveBeenCalledExactlyOnceWith('Question about us_ind');
     expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 
+  it('reports actual picker segment and search alongside the selected filing', async () => {
+    const { seen } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Search device references' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowser).toEqual({ segment: 'medical_devices', searchTerm: 'predicate evidence', inspectedReference: null }));
+    expect(facts(seen)?.selectedFiling).toBeNull();
+    expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it('keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor', async () => {
+    const { seen, view } = mount(); await open();
+    fireEvent.click(screen.getByRole('button', { name: 'Inspect unavailable filing' }));
+    await waitFor(() => expect((facts(seen)?.filingBrowser as { inspectedReference?: unknown })?.inspectedReference).toMatchObject({ id: 'eu_maa', agency: 'EMA' }));
+    expect(facts(seen)?.selectedFiling).toBeNull();
+    expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+    h.tenant = 8;
+    view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
+    await waitFor(() => expect(facts(seen)?.wizardState).toBe('unavailable'));
+    expect(facts(seen)?.filingBrowser).toBeUndefined();
+    expect(facts(seen)?.selectedFiling).toBeNull();
+  });
+
   it('reports the visible filing segment and search, and clears the browsing context on close', async () => {
     const { seen } = mount(); await open();
     fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
-    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowser).toEqual({ segment: 'medical_devices', searchTerm: 'device clearance', inspectedReference: null }));
     expect(facts(seen)?.selectedFiling).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Clear filing search' }));
-    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'pharma_biotech', query: '' }));
+    await waitFor(() => expect(facts(seen)?.filingBrowser).toEqual({ segment: 'pharma_biotech', searchTerm: '', inspectedReference: null }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(facts(seen)?.filingBrowse).toBeUndefined());
+    await waitFor(() => expect(facts(seen)?.filingBrowser).toBeUndefined());
     expect(JSON.stringify(seen.ctx)).not.toMatch(/Private client|actorUserId|clientWorkspaceId/);
     expect(h.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 
+});
+
+describe('wizard context preserves configuration and actor boundaries', () => {
   it('tracks Configure, Review and Back while excluding entered/private fields', async () => {
     const { seen } = mount(); await open(); await configure();
     await waitFor(() => expect(facts(seen)?.wizardStep).toEqual({ number: 2, label: 'Configure project' }));
@@ -119,15 +146,12 @@ describe('the actual wizard reports its public state through the Projects publis
   it('retires selected metadata if the signed-in organization no longer matches', async () => {
     const { seen, view } = mount(); await open();
     fireEvent.click(screen.getByRole('button', { name: 'Pick IND' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
     await waitFor(() => expect(facts(seen)?.selectedFiling).toMatchObject({ id: 'us_ind' }));
-    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
     h.tenant = 8;
     view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
     await screen.findByText(/signed-in account or organization changed/i);
     await waitFor(() => expect(facts(seen)?.wizardState).toBe('unavailable'));
     expect(facts(seen)?.selectedFiling).toBeNull();
-    expect(facts(seen)?.filingBrowse).toBeUndefined();
     view.unmount();
     render(<Probe seen={seen} />);
     expect(seen.ctx).toBeNull();
@@ -136,13 +160,12 @@ describe('the actual wizard reports its public state through the Projects publis
   it('starts a matching new account at the first step with no prior selection', async () => {
     const { seen, view } = mount(); await open();
     fireEvent.click(screen.getByRole('button', { name: 'Browse device filings' }));
-    await waitFor(() => expect(facts(seen)?.filingBrowse).toEqual({ segment: 'medical_devices', query: 'device clearance' }));
     await configure();
     Object.assign(h, { actor: 13, org: 8, tenant: 8 }); token();
     view.rerender(<><Projects {...props()} /><Probe seen={seen} /></>);
     await waitFor(() => expect(facts(seen)?.wizardStep).toMatchObject({ number: 1 }));
     expect(facts(seen)?.selectedFiling).toBeNull();
     expect(screen.queryByRole('button', { name: 'Ask about filing' })).toBeNull();
-    expect(JSON.stringify(facts(seen)?.filingBrowse ?? null)).not.toContain('device clearance');
+    expect(JSON.stringify(facts(seen)?.filingBrowser ?? null)).not.toContain('device clearance');
   });
 });

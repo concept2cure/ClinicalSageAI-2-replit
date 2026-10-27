@@ -489,7 +489,7 @@ function exactRecordedFiling(value: unknown): string | null {
   return entry && stated.toLowerCase() === entry.id ? entry.id : null;
 }
 
-/** The detail read model: the stored row plus the device fields intake keeps in
+/** The detail read model: the stored row plus the filing identity/device fields intake keeps in
  *  `metadata`, lifted to first-class keys. Nothing is invented: a program
  *  without a device taxonomy answers null for each field, and `metadata` itself
  *  is not exposed (it holds internal provenance such as createdVia). */

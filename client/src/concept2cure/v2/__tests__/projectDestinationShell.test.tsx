@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const observed = vi.hoisted(() => ({ calls: 0, filterCalls: [] as string[], visits: [] as string[] }));
+const observed = vi.hoisted(() => ({ calls: 0, wizardCalls: 0, filterCalls: [] as string[], visits: [] as string[] }));
 vi.mock('../surfaceViews', async () => {
   const React = await import('react');
   const { useSurfaceActionHandlers } = await import('../surfaceActions');
@@ -13,8 +13,14 @@ vi.mock('../surfaceViews', async () => {
   function Projects({ onNav }: { onNav: (id: string) => void }) {
     observed.visits.push('projects');
     const [workstream, setWorkstream] = React.useState('all');
+    const [wizard, setWizard] = React.useState(false);
     const [, rerender] = React.useState(0);
     useSurfaceActionHandlers('projects', {
+      'projects.new-project': () => {
+        observed.wizardCalls += 1;
+        setWizard(true);
+        return { ok: true };
+      },
       'projects.filter': params => {
         observed.filterCalls.push(params.workstream);
         setWorkstream(params.workstream);
@@ -23,6 +29,9 @@ vi.mock('../surfaceViews', async () => {
     });
     return <>
       <h1>Projects destination</h1><p role="status">Workstream: {workstream}</p>
+      {wizard && <div role="dialog" aria-label="Canonical intake"><input aria-label="Draft name" />
+        <button onClick={() => setWizard(false)}>Close intake</button></div>}
+      <button onClick={() => onNav('filings-catalog')}>Open legacy filings</button>
       <button onClick={() => onNav('dossier')}>Open legacy dossier</button>
       <button onClick={() => onNav('mdx')}>Open legacy MDX</button>
       <button onClick={() => setWorkstream('Biotech')}>Choose Biotech</button>
@@ -71,7 +80,7 @@ function mount(location: string, strict = false) {
 }
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); clearShellProject();
-  observed.calls = 0; observed.filterCalls = []; observed.visits = [];
+  observed.calls = 0; observed.wizardCalls = 0; observed.filterCalls = []; observed.visits = [];
   __resetSurfaceActionBus();
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) })));
   window.matchMedia ??= ((q: string) => ({ matches: false, media: q, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
@@ -81,6 +90,35 @@ beforeEach(() => {
 afterEach(() => {
   cleanup(); __resetSurfaceActionBus(); clearShellProject(); localStorage.clear(); sessionStorage.clear();
   vi.unstubAllGlobals(); window.history.replaceState({}, '', '/');
+});
+
+describe('filing catalogue destination in the real shell', () => {
+  it.each([false, true])('copied filing links open intake once in StrictMode with an open project=%s', async projectOpen => {
+    if (projectOpen) publishShellProject({ id: PROGRAM, step: 'review' });
+    mount(`/concept2cure/filings-catalog?view=all${projectOpen ? `&program=${PROGRAM}` : ''}#filings`, true);
+    expect(await screen.findByRole('dialog', { name: 'Canonical intake' })).toBeTruthy();
+    await waitFor(() => expect(window.location.pathname).toBe('/concept2cure/projects'));
+    expect(window.location.search).toBe(`?view=all${projectOpen ? `&program=${PROGRAM}` : ''}`);
+    expect(window.location.hash).toBe('#filings');
+    expect(observed.wizardCalls).toBe(1);
+    expect(observed.visits.every(id => id === 'projects')).toBe(true);
+    if (projectOpen) expect(readShellProject()?.step).toBe('review');
+    fireEvent.click(screen.getByRole('button', { name: 'Close intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh portfolio view' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(observed.wizardCalls).toBe(1);
+  });
+
+  it('imperative legacy navigation reaches mounted intake and preserves its typed draft', async () => {
+    mount('/concept2cure/projects');
+    fireEvent.click(await screen.findByRole('button', { name: 'Open legacy filings' }));
+    expect(await screen.findByRole('dialog', { name: 'Canonical intake' })).toBeTruthy();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Draft name' }), { target: { value: 'Retained draft' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open legacy filings' }));
+    expect((screen.getByRole('textbox', { name: 'Draft name' }) as HTMLInputElement).value).toBe('Retained draft');
+    expect(window.location.pathname).toBe('/concept2cure/projects');
+    expect(observed.visits.every(id => id === 'projects')).toBe(true);
+  });
 });
 
 describe('MDX destination in the real shell', () => {

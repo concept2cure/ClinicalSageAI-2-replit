@@ -41,7 +41,7 @@ import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext
 // wizard's first step hung on "Loading registry…" and could never complete).
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
-import { RegistryPicker } from './AnaVerbs';
+import { RegistryPicker, type FilingBrowseState } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
@@ -50,8 +50,8 @@ import {
   usesDeviceClassification, type DeviceFlagId,
 } from '../../../../../shared/constants/domain/device-classification';
 import { MDR_DECLARED_CLASSES, IVDR_CLASSES } from '@shared/regulatory/device-class';
-import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling, resolveFilingCatalogEntry, filingWfCode } from '@shared/regulatory/filing-catalog';
-import { filingLifecycleReferenceFor, FILING_WF_LABEL } from '@shared/regulatory/filing-lifecycle-reference';
+import { deviceClassScopeForFiling, regionalDeviceApplicationClassForFiling } from '@shared/regulatory/filing-catalog';
+import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { getSegment } from '../registryModel';
 import '../styles/project-home-v2.css';
 
@@ -189,22 +189,20 @@ function documentClassLabel(programType: string): string | null {
  *  stay stale in another. */
 const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create'] as const;
 
-type FilingBrowse = { segment: string; query: string };
 type WizardScreenContext = Omit<SurfaceContext, 'surfaceId'>;
-function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false, browse?: FilingBrowse): WizardScreenContext {
+function wizardScreenContext(step: number, filing: SelTpl | null, applicationType: string, unavailable = false, browser: { segment: string | null; searchTerm: string; inspectedReference?: FilingBrowseState['inspectedReference'] } = { segment: null, searchTerm: '', inspectedReference: null }): WizardScreenContext {
   if (unavailable) return {
     summary: 'The new-project wizard cannot continue because the signed-in account or organization changed. Reopen New project before continuing.',
     facts: { wizardState: 'unavailable', selectedFiling: null },
   };
-  const catalog = filing ? resolveFilingCatalogEntry(filing.id) : null;
+  const catalog = filing ? filingReferenceFactsFor(filing.id) : null;
   return {
     summary: `The new-project wizard is on step ${step + 1} of ${STEP_LABELS.length}: ${STEP_LABELS[step]}. ` +
       (filing ? `Selected filing: ${filing.label} (${filing.agency ?? 'agency not recorded'}, ${filing.region ?? 'region not recorded'}).` : 'No filing type is selected.'),
-    facts: { wizardState: 'open', filingBrowse: browse ?? null,
-      filingLifecycleReference: filingLifecycleReferenceFor(filing?.id), wizardStep: { number: step + 1, label: STEP_LABELS[step] },
+    facts: { wizardState: 'open', filingLifecycleReference: filingLifecycleReferenceFor(filing?.id), filingBrowser: { ...browser, inspectedReference: browser.inspectedReference ?? null }, wizardStep: { number: step + 1, label: STEP_LABELS[step] },
       selectedFiling: filing ? { id: filing.id, name: filing.label, applicationType, agency: filing.agency ?? null, region: filing.region ?? null,
-        ...(catalog ? { description: catalog.description, submissionFormat: catalog.submissionFormat, ctdModule: catalog.ctdModule,
-          workflowLabel: FILING_WF_LABEL[filingWfCode(catalog)] ?? null } : {}) } : null },
+        ...(catalog ? { description: catalog.entry.description, submissionFormat: catalog.entry.submissionFormat, ctdModule: catalog.entry.ctdModule,
+          workflowLabel: catalog.workflowLabel } : {}) } : null },
     availableActions: [filing ? 'Explain what the selected filing contains and which evidence it needs' : 'Explain the filing choices'],
   };
 }
@@ -257,9 +255,6 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   const viewRef = useDialog(closeIfSettled);
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
-  const [filingBrowse, setFilingBrowse] = useState<FilingBrowse | undefined>();
-  const reportFilingBrowse = useCallback((next: FilingBrowse) => setFilingBrowse(previous =>
-    previous?.segment === next.segment && previous.query === next.query ? previous : next), []);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
   /* The indication, as the person states it, or nothing (P-21). Step 2 used to
@@ -350,6 +345,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   /* The tab the user is LOOKING at, which is the lane they arrived in until
      they switch. The banner reads this, not the arrival lane. */
   const [tabSeg, setTabSeg] = useState<string | null>(null);
+  const [filingBrowser, setFilingBrowser] = useState<FilingBrowseState | null>(null);
   const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
   const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
@@ -358,7 +354,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
-  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowse), [step, selTpl, programType, retired, filingBrowse]);
+  const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowser ?? { segment: regSeg ?? null, searchTerm: '', inspectedReference: null }), [step, selTpl, programType, retired, filingBrowser, regSeg]);
   useEffect(() => { onContext?.(screenContext); }, [onContext, screenContext]);
   useEffect(() => () => onContext?.(null), [onContext]);
   /* The filing fixes the family when known; the person states any unresolved class. */
@@ -599,8 +595,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
-                onBrowseChange={reportFilingBrowse}
                 onAsk={onAsk}
+                onBrowseChange={setFilingBrowser}
               />
             </div>
           )}

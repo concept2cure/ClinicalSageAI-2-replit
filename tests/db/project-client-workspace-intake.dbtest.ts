@@ -25,10 +25,23 @@ let runtime: typeof import('../../server/db/runtime');
 let store: typeof import('../../server/db/tenantStore');
 let router: express.Router;
 let clients: express.Router;
+let closeOwner: (() => Promise<void>) | undefined;
+let closeRuntime: (() => Promise<void>) | undefined;
 let lostCommit = false;
 let projectionFailure = false;
 let discards = 0;
 let beforeAnchor: (() => Promise<void>) | undefined;
+
+/** pool.end() can resolve before its clients acknowledge connection end. */
+function closePoolAfterClientsEnd(pool: Pool): () => Promise<void> {
+  const closing = new Set<Promise<void>>();
+  pool.on('connect', client => {
+    const ended = new Promise<void>(resolve => { client.once('end', resolve); });
+    closing.add(ended);
+    void ended.then(() => { closing.delete(ended); });
+  });
+  return async () => { await pool.end(); await Promise.all(closing); };
+}
 
 async function tableDdl(file: string, tables: string[]) {
   const sql = await readFile(file, 'utf8');
@@ -66,6 +79,7 @@ beforeAll(async () => {
   await maintenance.query(`CREATE DATABASE ${databaseName}`);
   const isolatedUrl = new URL(databaseUrl); isolatedUrl.pathname = `/${databaseName}`;
   owner = new Pool({ connectionString: isolatedUrl.toString() });
+  closeOwner = closePoolAfterClientsEnd(owner);
   await owner.query(await tableDdl('migrations/0000_sweet_joseph.sql', [
     'organizations', 'users', 'organization_users', 'client_workspaces', 'projects', 'audit_logs',
   ]));
@@ -104,6 +118,7 @@ beforeAll(async () => {
   process.env.AUDIT_HMAC_SECRET = 'pm05-synthetic-tamper-seal-not-a-production-secret';
   runtime = await import('../../server/db/runtime'); store = await import('../../server/db/tenantStore');
   const pool = runtime.getPool();
+  closeRuntime = closePoolAfterClientsEnd(pool);
   h.pool = {
     async query(sql: string, params?: unknown[]) {
       if (projectionFailure && sql.includes('LEFT JOIN LATERAL public.actor_name')) throw new Error('Synthetic committed projection failure');
@@ -144,10 +159,10 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  if (runtime) await runtime.getPool().end();
-  if (owner) { await owner.query(`DROP OWNED BY ${runtimeRole}`).catch(() => undefined); await owner.end(); }
+  await closeRuntime?.();
+  if (owner) { await owner.query(`DROP OWNED BY ${runtimeRole}`).catch(() => undefined); await closeOwner?.(); }
   if (maintenance) {
-    await maintenance.query(`DROP DATABASE IF EXISTS ${databaseName} WITH (FORCE)`);
+    await maintenance.query(`DROP DATABASE IF EXISTS ${databaseName}`);
     await maintenance.query(`DROP ROLE IF EXISTS ${runtimeRole}`);
     await maintenance.end();
   }

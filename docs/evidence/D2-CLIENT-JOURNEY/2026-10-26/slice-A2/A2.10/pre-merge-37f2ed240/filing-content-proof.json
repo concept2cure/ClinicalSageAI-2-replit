@@ -1,0 +1,9 @@
+{
+  "base": "f033cc722",
+  "original": "client/src/concept2cure/v2/fixtures/filings-catalog-data.ts",
+  "replacement": "shared/regulatory/filing-lifecycle-reference.ts",
+  "authoredTablesByteIdentical": true,
+  "sha256": "ac1dd45599d426e3aed1b65530b02a345093185499aa62e5e0bcce9d4e5cb0de",
+  "archetypes": 9,
+  "noAddedArchetypeForSamd": true
+}

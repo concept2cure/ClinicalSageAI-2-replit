@@ -319,13 +319,13 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-12',
-    kind: 'ad-hoc',
+    kind: 'scripted',
     urs: ['URS-PROJ-007a'],
     title: 'Former filing catalog reaches Projects intake and recorded Plan reference',
-    action: 'Open the former catalog bookmark with query/hash; browse/search the Projects wizard and select the offered US IND. Inspect its facts, offer/build limits and authored reference; cancel. Create an exact US_IND/FDA record through the public API and inspect Plan, then inspect the OQ-PROJ-04 program without an exact filing id',
+    action: 'Open the former catalog bookmark with query/hash; browse/search the Projects wizard and select the offered US IND. Inspect its facts, offer/build limits and authored reference; cancel and verify no browser project creation request. Create an exact US_IND/FDA record through the public API and inspect Plan, then inspect the OQ-PROJ-04 program without an exact filing id',
     expected: 'Canonical Projects wizard retains query/hash. Selected facts and collapsed authored stages/timing/return guidance remain reachable, separate from server support. Exact recorded US IND/FDA Plan shows the guide beside the existing plan; missing exact identity explicitly withholds it. A real offer-read failure stays explicit and the unreached positive path is a deviation. Screenshots, URLs and text are retained for reviewer judgement',
     dependsOn: ['OQ-PROJ-04'],
-    note: 'v0.10 replaces the historical standalone catalog-render observation. This is ad-hoc evidence for review, not a computed regulatory verdict. The runner neither injects an offer failure nor edits stored identity to manufacture negative cases.',
+    note: 'v0.10 replaces the historical standalone catalog-render observation. This scripted step checks the declared filing-reference behavior; it is not a computed regulatory verdict and has not been formally executed. The runner neither injects an offer failure nor edits stored identity to manufacture negative cases.',
   },
   async (ctx) => filingReferenceStep(ctx, stamp),
 );

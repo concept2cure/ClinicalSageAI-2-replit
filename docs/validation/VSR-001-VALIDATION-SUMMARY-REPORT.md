@@ -1624,7 +1624,7 @@ or platform offer. An offer-read failure remains explicit and offers Retry.
 The unchanged Journey clause in URS-PROJ-007 remains in force; its former
 standalone-catalog clause and earlier OQ-PROJ-12 results remain historical.
 New URS-PROJ-007a and revised OQ-PROJ-12 in OQ-001 v0.10 are **not formally
-executed and unsigned**. The revised ad-hoc procedure records the legacy URL,
+executed and unsigned**. The revised scripted procedure records the legacy URL and no-write discovery,
 selected wizard reference, an exact US IND/FDA Plan guide and the existing
 generic IND Plan's explicit missing-identity state. An actual offer-read
 failure records the unreached positive observations as a deviation. A reviewer
@@ -1643,3 +1643,13 @@ historical 2026-09-27 evidence set: **117 requirements — 69 pass, 2 partial,
 46 uncovered**. Historical step totals remain 101 pass and 2 deviations across
 103 steps. URS-PROJ-007a has no executed step and is **uncovered**; the prior
 Journey/catalog requirement retains its historical OQ-PROJ-11/12 attribution.
+
+The merged A2.10 continuation also preserves supplemental engineering evidence in
+`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.10/`. It corrects CRO
+company-type labels and clarifies already in-scope project-command metadata;
+their handlers, executable scope arrays, access policy and audit behavior remain
+unchanged. No client-store unification or completed CRO/device fold is claimed.
+The conservative medium/scripted 007a assessment is retained because incorrect
+identity, offer or clock presentation can misdirect recoverable filing work.
+The incoming stronger Plan/reference checks and the local no-write observation
+are one revised OQ-PROJ-12 v0.10, still unexecuted and unsigned.

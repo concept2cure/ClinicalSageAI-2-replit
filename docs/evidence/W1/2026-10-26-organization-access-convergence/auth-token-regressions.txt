@@ -1,0 +1,112 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > checks the synchronous adoption disposition before storing or purging anything 91ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 0 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id -1 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 33::34 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 9007199254740992 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not let an old account read replace the adopted organization 52ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > refuses account and policy refreshes begun while adoption is awaiting verification 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after the browser session has ended 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after logout has completed 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not let a deferred idle refusal for the old account end the adopted session 52ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not replace the adopted policy with a deferred previous-session policy 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after a different account has signed in 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > keeps the newest of overlapping session adoption attempts 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > pins a refreshed same-actor bearer without trusting the organization storage fallback 4ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":8,"organizationId":12} 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":13} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":"7garbage","organizationId":12} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":7,"organizationId":"12garbage"} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: {"userId":null,"organizationId":12} 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses a replaced or malformed captured identity: null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > captured actor headers for governed ceremonies > refuses missing or unreadable bearer instead of falling back to persisted identity 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > reads the canonical trialsage_access_token key fresh on every call 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > prefers sessionStorage over localStorage (tier precedence) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > falls back to localStorage when sessionStorage has no token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > does NOT mutate storage on read (no lazy migration) 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getAuthToken — fresh, non-mutating reads > returns null when no token is present anywhere 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D2 — remember-me (localStorage) token survives the first API call > reading the token never deletes the persisted localStorage copy 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D3 — a token refresh propagates > a refreshed trialsage_access_token is seen on the next read 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > clearAuthToken wipes the token from both tiers so getAuthToken returns null 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 — no stale bearer survives logout > no leftover mirror in either tier can revive the bearer after logout 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken keeps the token in exactly one tier (session) and clears the other 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > setAuthToken / clearAuthToken — single-tier invariant > setAuthToken clears legacy keys from both tiers 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > resolves a legacy "token" key but never migrates or deletes it 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > legacy fallback — read only > prefers the canonical key over a legacy key 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > keeps a tab-scoped bearer and its organization together despite another tab changing shared selection 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > uses a remembered bearer organization without moving its token into session storage 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > follows a replaced session on the next read and returns to legacy selection after logout 1ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: unreadable-token 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > preserves persisted fallback for a token without a readable organization: fixture.e30.fixture 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > retains the default when browser privacy settings refuse local-storage reads 2ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > reads currentOrganizationId as the primary org source 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to legacy currentOrganization 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > falls back to the persisted user payload organizationId 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > defaults to "1" when nothing is persisted 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders always carries x-organization-id, and the bearer when present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > getOrgId / x-organization-id header contract > getAuthHeaders still sends x-organization-id when no token is present 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > a legacy bearer left in either tier cannot outlive clearAuthToken 0ms
+ ✓ client/src/utils/__tests__/authToken.test.ts > D1 (upgraded session) — logout purges legacy bearer keys > the authService logout key list stays in sync with the legacy fallback 19ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > retains the adopted account and its session clocks after the old successful probe returns 27ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 401 refusal without revoking or ending the adopted session 7ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 403 refusal without revoking or ending the adopted session 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores a stale 200 refusal without revoking or ending the adopted session 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > does not restore the predecessor after a late server failure 5ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > does not restore the predecessor after a late network failure 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a deferred bootstrap cannot change a later verified session > ignores an expired probe after its provider has unmounted 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not install old user data whose JSON decoding finishes after adoption 56ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not expire a replacement login while an old refusal body is being decoded 55ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > bootstrap checks ownership after response body decoding > does not overwrite a newer account/role read for the same bearer 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > revokes the current refused bearer and its stored refresh token 8ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > keeps the original account on a current server failure 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > current bootstrap outcomes retain the existing revocation and transient behavior > keeps the original account on a current network failure 4ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 29ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives 55ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > still revokes the settled rotated pair when the original session remains current 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > revokes the rotated pair returned by a refresh that began before logout 2ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > does not finish an earlier pending adoption while logout awaits its server answer 52ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > logout clears its credential session after same-session account metadata changes > ends the same bearer after a newer role read replaces the user object while logout waits 53ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 20ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old SESSION_IDLE answer 54ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > a deferred API refusal belongs to its originally presented session > does not expire or refresh a replacement login after an old AUTH_002 answer 52ms
+ ✓ client/src/services/portal/__tests__/authService-sso-mfa.test.ts > SAML challenge adoption uses only the canonical factor verifier > stores only a tab-scoped challenge and remains anonymous when the server refuses the code 22ms
+ ✓ client/src/services/portal/__tests__/authService-sso-mfa.test.ts > SAML challenge adoption uses only the canonical factor verifier > authenticates only from a successful canonical verification response, then erases the challenge 3ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 7ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 6ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > the client singleton addresses /api/v1/auth, where the auth router is mounted 2ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > reads every api call in the client (none is skipped for its shape) 2ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > each one is registered on server/routes/auth.ts 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 1ms
+
+ Test Files  10 passed (10)
+      Tests  104 passed (104)
+   Start at  23:23:57
+   Duration  6.50s (transform 356ms, setup 634ms, import 321ms, tests 927ms, environment 3.42s)

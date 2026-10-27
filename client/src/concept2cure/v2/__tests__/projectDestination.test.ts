@@ -27,6 +27,13 @@ describe('one destination for a project-scoped visit', () => {
     expect(destinationFor('projects', false)).toEqual({ surfaceId: 'projects' });
   });
 
+  it.each([false, true])('old filing links open canonical intake with projectOpen=%s', projectOpen => {
+    expect(destinationFor('filings-catalog', projectOpen)).toEqual({
+      surfaceId: 'projects', applies: { actionId: 'projects.new-project', params: {} },
+    });
+    expect(surfaceSegmentFromLocation('/concept2cure/filings-catalog?view=all#filings')).toBe('filings-catalog');
+  });
+
   it.each([false, true])('MDX reaches the same filtered portfolio with projectOpen=%s', projectOpen => {
     expect(destinationFor('mdx', projectOpen)).toEqual({
       surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } },

@@ -352,6 +352,12 @@ UPDATE available_modules m
  WHERE p.module_id = m.module_id;
 
 COMMIT;
+-- AMENDED IN PLACE 2026-10-26 — D2 A2.10 (CLAUDE.md Rule 1).
+-- Filing discovery/reference now lives in the existing New project picker
+-- and ProjectPlan. Remove the retired filings-catalog packaging reference:
+-- fresh deployments have no such row, and existing rows keep their recorded
+-- metadata/subscriptions while 20260810 deprecates them on every replay.
+-- Evidence: slice-A2/A2.10/README.md, double-apply SQL checks.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.7 (CLAUDE.md Rule 1).
 -- The dossier and dossier-map read functions now live in ProjectDossier on
 -- project Author. 20260810 no longer upserts their standalone identities.

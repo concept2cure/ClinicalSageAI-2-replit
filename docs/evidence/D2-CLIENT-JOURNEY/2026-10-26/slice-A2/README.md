@@ -72,7 +72,7 @@ limits and native browser checks are in [A2.5/README.md](A2.5/README.md).
 
 ## Implemented sequence and remaining gates
 
-A2.6 completes counted governed section details, regulatory order, module dates, home review/draft totals and the critical-path AnA handoff. A2.7 carries the artifact rollups/counts/section dates and actual tracking map into Author, then folds standalone dossier screens/routes/identities. String aliases carry Author or the project chooser through one resolver; stored data and subscriptions remain. Incoming fold qualification and limits are in [A2.7/README.md](A2.7/README.md). [A2.7a/README.md](A2.7a/README.md) records the canonical artifact carryover. Concurrent [A2.7b/README.md](A2.7b/README.md) adds raw tracking identity, unknown-observation withholding, label/placement validation and explicit unmapped records; its **163 tests in 14 files**, native initialization/status/reload/mobile flow and build qualify the pre-merge tracking snapshot. The merged contract keeps one typed `supportingReadiness.sectionTracking` beside top-level `artifactReadiness`; raw-record/unknown/unmapped validation is retained. Combined qualification under `A2.7b/merged/` records 294 tests in 27 files, both native browser flows and the production build passing; mandatory publication gates still apply. **A2.8 is implemented:** MDX links now reach Projects with its existing MDX filter, applied once through the shared destination/action owner. The reconciled concurrent changes pass 398 tests in 30 suites, both complementary native device/IVD portfolio/Plan flows and the production build; red-first proof, source attribution and limits are in [A2.8/README.md](A2.8/README.md). Device-workstream stays for A2.10. **A2.9 is complete:** 12 alternate creation POSTs and three dead controller methods retired, with retained APIs/data unchanged and a red-first bounded-writer/registration guard in CI/pre-push. Qualification: 523 focused tests, 24 native PostgreSQL checks, both actual Create/refusal flows and build ([A2.9/README.md](A2.9/README.md)). **A2.10a is complete for filings-catalog only:** the old bookmark opens Projects' existing wizard; filing facts, honest server support and unchanged authored guides live there and on the exact recorded project's Plan ([A2.10a/README.md](A2.10a/README.md)). Mission-control, CRO portfolio, device-workstream and program-journey retain their own function, stored-record and admission gates; A2.10 as a whole remains open.
+A2.6 completes counted governed section details, regulatory order, module dates, home review/draft totals and the critical-path AnA handoff. A2.7 carries the artifact rollups/counts/section dates and actual tracking map into Author, then folds standalone dossier screens/routes/identities. String aliases carry Author or the project chooser through one resolver; stored data and subscriptions remain. Incoming fold qualification and limits are in [A2.7/README.md](A2.7/README.md). [A2.7a/README.md](A2.7a/README.md) records the canonical artifact carryover. Concurrent [A2.7b/README.md](A2.7b/README.md) adds raw tracking identity, unknown-observation withholding, label/placement validation and explicit unmapped records; its **163 tests in 14 files**, native initialization/status/reload/mobile flow and build qualify the pre-merge tracking snapshot. The merged contract keeps one typed `supportingReadiness.sectionTracking` beside top-level `artifactReadiness`; raw-record/unknown/unmapped validation is retained. Combined qualification under `A2.7b/merged/` records 294 tests in 27 files, both native browser flows and the production build passing; mandatory publication gates still apply. **A2.8 is implemented:** MDX links now reach Projects with its existing MDX filter, applied once through the shared destination/action owner. The reconciled concurrent changes pass 398 tests in 30 suites, both complementary native device/IVD portfolio/Plan flows and the production build; red-first proof, source attribution and limits are in [A2.8/README.md](A2.8/README.md). Device-workstream stays for A2.10. **A2.9 is complete:** 12 alternate creation POSTs and three dead controller methods retired, with retained APIs/data unchanged and a red-first bounded-writer/registration guard in CI/pre-push. Qualification: 523 focused tests, 24 native PostgreSQL checks, both actual Create/refusal flows and build ([A2.9/README.md](A2.9/README.md)). **A2.10** completes the filing-catalogue fold; four other folds retain their documented parity/admission gaps (see its evidence below).
 
 ## Final integration
 
@@ -87,46 +87,25 @@ The first push met a newer remote head, `133de1428`, containing qualified assemb
 [A2.9/README.md](A2.9/README.md) records twelve retired POST handlers across
 eight files and their unreachable private creation helpers. Existing readers,
 updates, stored data and canonical intake remain. The contract pins exact
-insert owners plus retained routes and rejects planted regressions. The original local proof records 427 targeted tests and 20 real database
-audit checks, native core-wizard/12-404 flow and production build. The accepted
-combined source `b07f35dd4` is qualified by 523 tests in 33 suites, 24 native
-PostgreSQL checks, both real Create/refusal flows, build and all normal push
-gates; the source-specific counts remain distinct in its evidence. Two internal
-rule/quota writers remain explicitly deferred. A2.10a now closes only the filing
-catalog; each other fold remains conditional on its own parity/store row.
+insert owners plus retained routes and rejects planted regressions. Proof:
+427 targeted tests, 20 real database audit checks, native core-wizard/12-404
+flow and production build. Two internal rule/quota writers remain explicitly
+deferred. A2.10 has since completed the qualified filing fold; four others remain conditional on their parity rows.
 
-## A2.10a — filing catalog folded into the core project workflow
 
-[A2.10a/README.md](A2.10a/README.md) records the completed thirteen-function
-filing-catalog carry-over, red/green source proof, native wizard-to-recorded-Plan
-flow, regression and production build. Its old bookmark now opens the existing
-Projects New-project wizard through the shared alias/action with query/hash
-retained, with or without an open project. The standalone screen, fixture and
-registry/view/navigation identity are removed. Existing catalogue keep-list
-reconciliation preserves historical module/subscription rows and metadata.
+## A2.10 — filing reference/discovery fold and expanded parity review
 
-The wizard retains category/segment browsing, description/workflow search,
-visible authority/region, format, CTD and reference workflow facts, server
-offer/build limits, shared Ask AnA and public browse/selection context. Not
-offered filings remain readable as nonselectable reference; a failed offer read
-states unavailability with Retry. All nine original authored lifecycle guides
-remain unchanged in one shared regulatory owner and are labelled reference
-content. The recorded Plan uses only its exact filing id plus matching program
-type and agency; missing, malformed, generic, conflicting or excluded identity
-explicitly withholds a guide. These examples create no platform offer,
-deadline, task or readiness verdict. Existing project steps/tasks/correspondence
-retain the loop work, with no new service or store.
+[A2.10/README.md](A2.10/README.md) records the ten-function filing carryover in
+canonical intake/Plan and the shared one-time legacy wizard destination.
+Existing subscription rows survive repeated creator/packaging application;
+reference clocks never become project deadlines or readiness. The expanded
+review corrects existing CRO company-type labels and clarifies project-command
+ownership without changing execution or admission. Mission control, device,
+CRO and journey shells/stores remain pending their documented parity gaps.
+Continue A3's existing prompt-key convergence while tracking those gaps.
 
-Formal URS-PROJ-007a and revised OQ-PROJ-12 v0.10 remain **unexecuted and
-unsigned**. Native and automated evidence is supplemental; historical catalog
-OQ passes are not transferred. TM-001 retains its historical result attribution
-and marks the new requirement uncovered.
 
-**A2.10 remains open for four folds:** mission-control needs its tenant/store
-and recorded product-fact check; CRO portfolio needs its actual engagement,
-client, study, submission and onboarding relationships; device-workstream
-needs client-review, portfolio-figure and live-command parity; program-journey
-needs its stored journey/stage readers and nine-stage/reference fields.
-Existing Projects filters and A2.9 write retirement do not satisfy these gates.
-No remaining shell or stored record is retired by A2.10a. Normal publication
-gates continue to apply to the completed filing-catalog fold.
+A2.10 convergence accepted `acc74a7a3` with all normal gates passing,
+TypeScript zero and no added lint warnings. Final integration proof is 930 tests
+in 73 suites, 16 unique native database cases, four native browser flows and
+client/server/audit-verifier build. Earlier snapshot counts stay attributed.

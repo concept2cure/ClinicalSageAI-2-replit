@@ -292,7 +292,7 @@ Remove the id from LAUNCH_SHELL_SURFACES, the segment lists and the demo script.
 
 ### Into Projects (`projects`: Projects.tsx, the New project wizard and Project home)
 
-#### From `filings-catalog` (folded in A2.10a)
+#### From `filings-catalog` (A2.10/A2.10a converged fold)
 
 All thirteen audited functions have reachable canonical homes: the three already
 present functions (segment tabs, starting a filing and returning through the
@@ -302,18 +302,20 @@ owner, retaining query/hash with or without an open project. The old screen,
 fixture and standalone registry/view/navigation identity are removed. Existing
 catalogue reconciliation deprecates an old row without deleting that row or its
 subscriptions; replay proof preserves their metadata. No redundant migration or
-new commercial grant is needed. Evidence: `slice-A2/A2.10a/README.md`.
+new commercial grant is needed. Pre-merge proofs remain in `slice-A2/A2.10a/README.md`
+and `slice-A2/A2.10/pre-merge-37f2ed240/README.md`; the combined qualification
+is recorded in `slice-A2/A2.10/README.md`.
 
 - [x] Search by description and workflow label, with the segment named on cross-segment results: `AnaVerbs.tsx` RegistryPicker uses the shared catalog and workflow labels.
 - [x] Category descriptions: RegistryPicker reaches the shared category metadata under its category headings.
 - [x] List every filing type, including those not offered: the nonselectable Not offered disclosure retains descriptions/reference facts and applicable authored guidance with the server's refusal. A failed offer read stays explicit with Retry; it invents no selectable filing.
 - [x] Filing description as visible text: the chosen-filing note and Not offered reference display it.
-- [x] Filing detail: authority/region, submission format, CTD module and reference workflow family remain visible in `FilingReferenceFacts` beside the selected filing.
+- [x] Filing detail: authority/region, submission format, CTD module and reference workflow family remain visible in `FilingReferenceDetails` beside the selected filing.
 - [x] Lifecycle stages, timing examples and return loop: all nine original authored tables are unchanged in `shared/regulatory/filing-lifecycle-reference.ts`; `FilingLifecycleReference.tsx` reaches them in the wizard and Plan. A project guide requires its exact recorded active filing id plus matching program type and agency. Missing, unknown, conflicting or excluded identity explicitly withholds a guide; no generic US/regional fallback or computed deadline is supplied.
 - [x] "How you'll build it": the selected note and review step retain server-derived offer, outline/format/channel facts and explicit build limitations. Reference guidance grants no platform support.
 - [x] Ask AnA about a filing type: the selected filing uses the existing shared `filingAskPrompt`; the native control prefills the question without sending it or writing a record.
 - [x] Links to run the whole loop: canonical creation preserves the selected filing and reaches the project's existing Plan, Author, Review, Submit and Respond work, tasks and correspondence. The old unscoped shortcuts are replaced by these scoped project destinations; the separate program-journey fold remains pending.
-- [x] AnA sees the visible segment, exact search and selection: the wizard's single public context publisher carries browse state, selected description/format/CTD/workflow and typed authored guide, clearing on exit or actor/tenant change and excluding private configuration.
+- [x] AnA sees the visible segment, exact search and selection: the wizard's single public context publisher carries browse state, selected description/format/CTD/workflow and typed authored guide, plus distinct read-only `filingBrowser.inspectedReference`; closing/changing the inspected reference or actor/tenant clears it, and private configuration stays excluded.
 
 Focused engineering and native-browser proof qualifies this fold. Revised
 URS-PROJ-007a and OQ-PROJ-12 v0.10 remain unexecuted/unsigned; historical OQ
@@ -339,7 +341,7 @@ Do not carry listPrograms' missing access, deleted and archived filters.
 - [ ] Ask AnA chip on each program. From `Overview.tsx:263-268`. Goes to: projects.open-program and Project home AnA. No further work is named. Real today.
 - [ ] Readiness report across device programs. From `Overview.tsx:114-121`. Goes to: Projects' "at risk this week" prompt. No further work is named. Real today.
 - [ ] Client Review Room. From `ClientReviewZone.tsx`. Goes to: a mount on Project home that passes the integer projects.id, not the UUID. Real today.
-- [ ] AnA's evidence_sufficiency.assess and reviewer_simulation.run commands. From `mdx-command-handlers-phase2.ts:411-600`. Goes to: reclassify them to project-home or device-510k before the surface leaves launch scope. Real today.
+- [x] AnA's evidence_sufficiency.assess and reviewer_simulation.run commands. A2.10 actual-source review proves both were already independently in the flat in-scope command inventory and dispatch to the same governed handlers without device-workstream. Historical note/metadata now name project-context use; scope/ownership/confirmation/audit regressions pass. No parallel classification map, new PM-anchor check or grant is claimed. The remaining device shell stays for its other functions. Proof: A2_10_REMAINING_PARITY_REVIEW.md and A2.10 evidence.
 - [ ] Two AnA guided tours. From `demo-scripts.ts:285-287,355-357`. Goes to: retarget them to 'projects' with the MDX filter. Real today.
 - [x] The `/concept2cure/mdx` alias and AnA's `mdx` target. A2.8 routes both through the existing destination resolver to Projects, applying `projects.filter {workstream: 'MDX'}` once. Proof: `surfaceRouting.test.ts`, `projectDestination.test.ts`, `projectDestinationShell.test.tsx` and native `projects-pathway-counts.e2e.ts`; evidence under `slice-A2/A2.8/`. No new filter, query or admission.
 - [ ] The separate `device-workstream` AnA target, shell and catalogue row. Retained for A2.10 until the rest of this row's parity work is complete; A2.8 changes the alias only.

@@ -828,7 +828,7 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'evidence_sufficiency.assess',
     description:
-      'Run an evidence-sufficiency assessment for a regulatory program. ' +
+      'Run an evidence-sufficiency assessment for the selected project, identified by programId. ' +
       'Persists the assessment row. Requires confirm + reason.',
     parameters: 'programId (UUID), pathway (PMA|DE_NOVO|510K), profile (DeviceProfileFlags), confirm="yes", reason',
     example:
@@ -837,7 +837,7 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'reviewer_simulation.run',
     description:
-      'Run a multi-persona reviewer simulation against a program. Persists ' +
+      'Run a multi-persona reviewer simulation for the selected project, identified by programId. Persists ' +
       'the run. Requires confirm + reason.',
     parameters:
       'programId (UUID), program (object), personas?, defensePacketId?, ctdProgramId?, confirm="yes", reason',

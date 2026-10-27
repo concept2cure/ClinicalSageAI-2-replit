@@ -1,0 +1,22 @@
+{
+  "source": "56325f62551ac3a6e8f04a0831347cb6b11ff671",
+  "incoming": "12417dac0",
+  "coreFilingHashesMatched": 45,
+  "incomingImplementationSha256": {
+    "client/src/concept2cure/v2/AccountOnboardingSettings.tsx": "5bc74bbe879060175728717fd066102b12f051c316faf6a7a58fa28df5d839e6",
+    "client/src/concept2cure/v2/OrganizationAccess.tsx": "6421c172fb1b949fe5fb6e5225e77caf59bda7f32ae110dc85ddc1291165e878",
+    "client/src/concept2cure/v2/OrganizationSwitcher.tsx": "59fdb9f8d2742d618c106b7bd9dd3eb3290f1ded98ff3e1c48e040781b46398b",
+    "client/src/concept2cure/v2/organizationAccessData.ts": "e5cccaf6167427a635434e030974b6077b4342622af96e8f5bb8f536614916d5",
+    "client/src/concept2cure/v2/switchOrganization.ts": "bc7aa888139e621efe6f7a3da3e513fce05cec504de82e89048b7d78a6199127",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54"
+  },
+  "qualified": {
+    "tests": 930,
+    "suites": 73,
+    "seconds": 139.22,
+    "nativeBrowserFlows": 4,
+    "browserSeconds": 56.7,
+    "clientBuildSeconds": 22.07
+  },
+  "nativeSql": "16 unique cases on unchanged backend;two clean teardown runs;not counted twice"
+}

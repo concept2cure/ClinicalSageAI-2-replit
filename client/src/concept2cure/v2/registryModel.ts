@@ -952,6 +952,7 @@ export const ESIGN_MEANINGS = [
  * entries (BUILD_STATE): task-board → tasks board view · device-submission →
  * governed editor (eSTAR pathway) · ind-lifecycle → deliverable-first IND view. */
 export const DEEP_LINK_ALIASES: Record<string, string> = {
+  // Filing discovery and its authored reference now live in canonical intake.
   'filings-catalog': 'projects',
   // Former dossier screens now reach all three recorded reads on Author.
   dossier: 'project-home',

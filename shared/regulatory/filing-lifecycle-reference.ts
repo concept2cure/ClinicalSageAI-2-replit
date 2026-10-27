@@ -1,6 +1,6 @@
 /** Existing authored filing-family guides, relocated from the catalogue owner.
  * These static examples are reference prose, never project clocks or verdicts. */
-import { AGENCY_LABEL, resolveFilingCatalogEntry, type FilingCatalogEntry } from './filing-catalog';
+import { AGENCY_LABEL, filingWfCode, resolveFilingCatalogEntry, type FilingCatalogEntry } from './filing-catalog';
 
 export interface FilingLoopReturn {
   label: string;
@@ -169,4 +169,14 @@ export function filingLifecycleReferenceFor(id: string | null | undefined, recor
   const { registryId, displayName, agency, region } = entry;
   return { basis: 'authored_reference', state: 'matched', scope: 'filing_family',
     filing: { id: entry.id, registryId, displayName, agency, region }, archetype: admission.archetype, loop };
+}
+
+/** Exact catalogue facts for metadata and workflow-label search. Resolving
+ * these facts never admits a lifecycle guide or a project/build capability. */
+export function filingReferenceFactsFor(id: string | null | undefined) {
+  if (typeof id !== 'string' || !id.trim()) return null;
+  const entry = resolveFilingCatalogEntry(id.trim());
+  if (!entry || id.trim().toLowerCase() !== entry.id) return null;
+  const workflow = filingWfCode(entry);
+  return { entry, workflowLabel: FILING_WF_LABEL[workflow] ?? workflow };
 }

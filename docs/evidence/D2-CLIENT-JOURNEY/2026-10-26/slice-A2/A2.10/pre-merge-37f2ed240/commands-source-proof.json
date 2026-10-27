@@ -1,0 +1,31 @@
+{
+  "baseline": "f033cc722be329cd50c0bdac2e0bfce816f8eafd",
+  "handler_changes": "two metadata descriptions only",
+  "inventory_changes": "historical-note clarification only; all executable arrays byte-equivalent as parsed JSON",
+  "unchanged": [
+    {
+      "path": "server/services/ana/ana-launch-scope.ts",
+      "sha256": "afa74ba9c7fc3249ed44bee7d60bf96fadd50f8de118f26357d4ef34c598a7ad"
+    },
+    {
+      "path": "server/services/ana-ri/command-executor.ts",
+      "sha256": "e0e319e7f169d9289d4f33fd3bb3a944d1b3b90cc8bd1ec928d76da21bc107c5"
+    },
+    {
+      "path": "server/services/ana-ri/mdx-tool-policy.ts",
+      "sha256": "f3a4de6b3d2bda4b96f25b5ac183b82f3044d44454c2273767ef4881817d759e"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "d48130f694e182aab8f81449377631cfc244743a8ab1d63dea2927364a33b28f"
+    },
+    {
+      "path": "server/services/evidence-sufficiency/evidence-sufficiency.service.ts",
+      "sha256": "66db611b016a0e0bb4c468849ef898d056d8116343264622d812ab473ca5457a"
+    },
+    {
+      "path": "server/services/intelligence-engine/reviewer-simulator.service.ts",
+      "sha256": "3e3fe1ac4b5233086b4df6ad0dd82ab3f9e76dd33d45829112f442410599a9a3"
+    }
+  ]
+}

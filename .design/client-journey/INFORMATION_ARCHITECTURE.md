@@ -836,7 +836,7 @@ row. A function not carried as it is goes on the founder's list (section 5.9).
 | `mission-control` | Projects | partial | no | `projects` | Portfolio list → Projects. Create a project → Projects' New project, on the canonical store (it would create one in a second store). "Choose or create a project" target → `OPEN_PROGRAM_SURFACE` = `projects` (slice 0). Readiness and blockers per project → the project's readiness card and the dispatch verdict; its nine-dimension readiness engine may later score the project if it reads `regulatory_programs`. | FOLD IN | To carry |
 | `device-workstream` | Projects, filtered by pathway | works | yes | `projects` | Device portfolio list → Projects. Pathway filter (510(k), PMA, CER) → a filter on Projects for device clients (Projects already has workstream tabs and device-family mapping). Portfolio health strip → a summary on Projects, unrecorded readiness reading "Not recorded", not 0%. The `mdx` alias now reaches `projects` with its MDX filter (A2.8); the separate device-workstream target remains until A2.10 parity. Its commands `evidence_sufficiency.assess` and `reviewer_simulation.run`, which run in production, keep their claim on the device project. | FOLD IN | To carry |
 | `cro-portfolio` | Projects, grouped by sponsor | partial | no | `projects` | Every sponsor served, with contract and SOW status → a sponsor filter on Projects (needs a sponsor key on projects and on `/api/c2c/projects`; today the sponsor name is the organisation's). Studies and submissions per sponsor → the filtered project list. Onboarding a sponsor (client workspace, SOW, contract dates) → Admin. | FOLD IN | To carry |
-| `filings-catalog` | Projects' New-project filing picker and the recorded project's Plan | works | through Projects | `projects` | A2.10a carries all thirteen audited functions: segment/category browsing and descriptions, cross-segment search, filing/reference facts, honest server offer/build limits, shared Ask AnA and actual wizard context. All nine unchanged authored lifecycle guides live in shared regulatory reference data; project display requires exact recorded filing, program type and agency, otherwise explicit unavailability. Start is canonical project creation; the project's existing steps/tasks/correspondence own the loop work. The old bookmark opens the wizard through the shared alias/action with query/hash retained. Standalone screen/identity and fixture are removed; historical catalogue/subscription records remain. | FOLDED (A2.10a) | Complete; engineering/native proof in `slice-A2/A2.10a/README.md`; revised formal OQ unexecuted/unsigned |
+| `filings-catalog` | New project’s filing picker | partial | no (retired identity) | `projects` | A2.10 confirms all ten parity functions in RegistryPicker/New project and recorded ProjectPlan: search/segments/categories, metadata, visible descriptions, server build facts, Ask AnA, authored lifecycle and distinct inspected-reference context. Lifecycle clocks are general reference, never project deadlines. Legacy links open the wizard once through the shared resolver. Old shell/registry/view/nav rows are removed; creating and packaging seeds amended in place, preserving subscriptions. Evidence: `slice-A2/A2.10/README.md`. | FOLD IN | Confirmed; folded A2.10 |
 
 #### Into the project (Plan, Author, Respond)
 
@@ -1302,24 +1302,17 @@ preserving canonical intake, all 50 retained HTTP registrations, data and the
 two explicitly deferred internal writers. A red-first bounded-writer/retired-route
 contract runs in CI and pre-push; 523 focused tests, 24 native PostgreSQL checks,
 both canonical Create/refusal browser flows and build pass (`slice-A2/A2.9/README.md`).
-A2.10a now completes only the filing-catalog fold: its old URL opens Projects'
-existing New-project wizard, with selected filing facts, server offer/build limits,
-Ask AnA and public browse/selection context. The nine original lifecycle guides
-remain unchanged authored reference in the wizard and the exact recorded
-project's Plan, with type/agency guards and explicit unavailability. They create
-no deadline, task, readiness verdict or platform offer. Engineering/native proof
-is in `slice-A2/A2.10a/README.md`; revised URS-PROJ-007a/OQ-PROJ-12 remain
-unexecuted and unsigned. Historical OQ results remain attributed to their old
-procedure.
-
-**A2.10 remains open** for mission-control, cro-portfolio, device-workstream and
-program-journey. The first needs a tenant/store and recorded product-fact check;
-CRO needs its actual engagement/client/study/submission/onboarding relationship
-carried; device-workstream retains its client-review, portfolio-figure and live
-command functions; program-journey retains its stored journey/stage reads and
-nine-stage/reference fields. Existing Projects filters and A2.9's retired writes
-do not satisfy those gates. No stored record or remaining shell is retired by
-the filing-reference fold.
+A2.10 now completes the filing-catalogue fold into canonical intake and recorded
+Plan, including labelled authored lifecycle reference and read-only unavailable
+filing inspection. Its former identity is an alias with the existing wizard
+action; catalogue replay retains subscriptions. The expanded review corrects CRO
+company-type labels and clarifies already independent project-command ownership.
+**Four folds remain open:** mission-control, device-workstream, cro-portfolio
+and program-journey retain shells/stores until the concrete per-function gaps in
+`A2_10_REMAINING_PARITY_REVIEW.md` and any required admission decisions are met.
+No empty synthetic database establishes absence of legacy tenant records.
+Continue A3’s existing AnA prompt-key convergence while those fold prerequisites
+are tracked; do not recreate or auto-retire their functions.
 After A3–A5, the first direct specialized-feature placement is A6's existing device clinical-studies door on
 Evidence. Reuse `ProjectMdxWorkflow.tsx`'s recorded scope and availability contract and `shellProject.ts`'s return
 path; prove placement, unavailable/wrong-project behavior and return to Evidence before any former destination folds.

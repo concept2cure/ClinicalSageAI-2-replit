@@ -100,11 +100,11 @@ describe('verified account workspace switching', () => {
     await choose();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/concept2cure/projects'));
-    expect(calls.find(call => call.path === SELECT)).toMatchObject({ method: 'POST', auth: `Bearer ${SOURCE_TOKEN}`, body: { organizationId: '71' } });
+    expect(calls.find(call => call.path === SELECT)).toMatchObject({ method: 'POST', auth: `Bearer ${SOURCE_TOKEN}`, body: { organizationId: 71 } });
     expect(calls.find(call => call.path === SESSION)).toMatchObject({ auth: 'Bearer new-workspace-token' });
     expect(authService.getUser()).toMatchObject({ id: '33', organizationId: '71', roles: ['member'] });
     expect(localStorage.getItem('trialsage_access_token')).toBe('new-workspace-token');
-    expect(localStorage.getItem('trialsage_refresh_token')).toBe('');
+    expect(localStorage.getItem('trialsage_refresh_token')).toBeNull();
     expect(sessionStorage.getItem('token')).toBeNull();
     expect(sessionStorage.getItem('c2c.shell-project')).toBeNull();
     expect(window.C2C_PROJECT).toBeUndefined();

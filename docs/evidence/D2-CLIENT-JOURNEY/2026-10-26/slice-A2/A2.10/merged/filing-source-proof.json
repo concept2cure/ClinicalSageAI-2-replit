@@ -1,0 +1,7 @@
+{
+  "strictApiSourceUnchangedFrom": "c7f320403",
+  "strictApiAndAdmissionsByteIdentical": true,
+  "sharedOwner": "shared/regulatory/filing-lifecycle-reference.ts",
+  "projectionOwner": "client/src/concept2cure/v2/surfaces/FilingLifecycleReference.tsx",
+  "duplicateProjectionDeleted": true
+}

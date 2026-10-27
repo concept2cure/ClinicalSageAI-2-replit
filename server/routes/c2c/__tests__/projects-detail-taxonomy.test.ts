@@ -98,6 +98,30 @@ beforeEach(() => {
 });
 
 describe('GET /api/c2c/projects/:id — device taxonomy', () => {
+  it('reaches the exact recorded filing identity without exposing internal metadata', async () => {
+    query.mockResolvedValueOnce({ rows: [{ ...deviceRow(), metadata: {
+      submissionTypeId: 'us_510k', createdVia: 'private-provenance', privateNote: 'not a public fact',
+    } }] });
+    const res = await request(app(2)).get(`/api/c2c/projects/${PID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.submission_type_id).toBe('us_510k');
+    expect(res.body).not.toHaveProperty('metadata');
+    expect(JSON.stringify(res.body)).not.toContain('private-provenance');
+    expect(JSON.stringify(res.body)).not.toContain('not a public fact');
+  });
+
+  it.each([null, 'not json', [], {}, { submissionTypeId: 510 }, { submissionTypeId: '  ' }])(
+    'does not infer a filing identity from program_type when metadata is %j', metadata => {
+      expect(serializeProgramDetail({ ...deviceRow(), metadata }).submission_type_id).toBeNull();
+    },
+  );
+
+  it('withholds an unknown recorded identity instead of silently remapping it to a known guide', () => {
+    const row = serializeProgramDetail({ ...drugRow(), metadata: JSON.stringify({ submissionTypeId: 'legacy_reference_id' }) });
+    expect(row.submission_type_id).toBeNull();
+    expect(row).not.toHaveProperty('metadata');
+  });
+
   it('selects the stored device columns and returns them for a 510(k) IVD program', async () => {
     query.mockResolvedValueOnce({ rows: [deviceRow()] });
     const res = await request(app(2)).get(`/api/c2c/projects/${PID}`);

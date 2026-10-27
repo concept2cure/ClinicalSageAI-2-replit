@@ -152,7 +152,7 @@ describe('the scope list itself', () => {
   // behind the flag.
   it.each([
     ['program-journey', 'projects', 'fixture-demo: empty for every program a client creates'],
-    ['filings-catalog', 'projects', 'retired discovery screen: the Projects wizard retains the selected filing and its reference'],
+    ['filings-catalog', 'projects', 'folded identity: reference discovery and creation live in the New project wizard'],
     ['regulatory-workspace', 'authoring', 'a fixed paragraph where the editor should be'],
     ['template-library', 'authoring', 'a saved template formats no document'],
     ['ectd-coauthor', 'submission-center', 'a second editor whose checks report a fixed failure'],
