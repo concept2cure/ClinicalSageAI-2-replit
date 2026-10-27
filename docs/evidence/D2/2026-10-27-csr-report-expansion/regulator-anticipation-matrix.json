@@ -1,0 +1,1280 @@
+{
+  "schemaVersion": 1,
+  "title": "LMN-201 RePreve/CDI02 \u2014 proposed regulator-anticipation matrix",
+  "createdAt": "2026-10-27T22:59:04.269400+00:00",
+  "targetStudyId": "NCT05330182",
+  "protocol": "CDI02",
+  "evidenceRole": "external_reference",
+  "clientStudyEvidence": false,
+  "trainingApproved": false,
+  "applicationAdmission": "not_performed",
+  "scope": [
+    "This is a proposed CSR-readiness checklist, not a record of agency feedback to Lumen, a finding of noncompliance or a verified review of LMN-201 patient data.",
+    "Target is RePreve/CDI02/NCT05330182. CDI01/NCT04893239 is an earlier separate study. Public registry and sponsor statements require reconciliation with the approved client record.",
+    "The public record does not provide the final LMN-201 protocol, SAP, patient data or Bayesian implementation used for the reported results. The report therefore specifies inputs and checks rather than deciding those results are adequate.",
+    "Historical comparator concerns and accepted solutions are product-, population-, design- and time-specific. They do not transfer automatically across intravenous antitoxin, oral antibiotic, live-microbiota and oral multicomponent products.",
+    "All originals are external reference material. None of the seven new documents is a full sponsor CSR. No application/database admission or model training was performed."
+  ],
+  "targetProfileSource": {
+    "sha256": "303e3d30368cde59a8f9924b42fde7edcb45a71ed7840c6765f8cdd41182f541",
+    "registryUrl": "https://clinicaltrials.gov/study/NCT05330182",
+    "snapshotDate": "2026-10-27",
+    "existingRepositoryPath": "server/data/public-csr-reference/lmn-target-profile.json"
+  },
+  "indispensableClientInputs": [
+    {
+      "item": "Authoritative design and analysis record",
+      "needed": "Signed CDI02 protocol and every amendment; final and prior dated SAPs; approved estimand and success rule; database-cut, lock and unblinding chronology; relevant agency correspondence, if any."
+    },
+    {
+      "item": "Traceable clinical and derived data",
+      "needed": "Randomization and actual treatment; disposition/deviations; initial cure and recurrence components; diagnostics, symptom diaries, medication/rescue timelines and follow-up; analysis-set flags and derivation specifications."
+    },
+    {
+      "item": "Bayesian implementation",
+      "needed": "Actual model, priors, decision thresholds, simulations, interim history, executable analysis code and outputs. Establish whether Part A or external/historical data contribute; do not infer this from the press release."
+    },
+    {
+      "item": "Safety and product evidence",
+      "needed": "Actual unique-person exposure by cohort and lot; AE/SAE/death narratives and safety windows; product-specific immunogenicity strategy; relevant potency, stability and comparability documentation."
+    }
+  ],
+  "sources": [
+    {
+      "id": "ema_zinplava_epar_2016",
+      "title": "EMA Zinplava public assessment report EMA/853812/2016",
+      "documentClass": "regulatory_assessment_report",
+      "sourceUrl": "https://www.ema.europa.eu/en/documents/assessment-report/zinplava-epar-public-assessment-report_en.pdf",
+      "sha256": "b88328353dfc39e11cb55cba972cb14e4fae4c7782975bbd687aaa90cd58af04",
+      "bytes": 4337913,
+      "pageCount": 110,
+      "label": "EMA-ZIN",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "currentStatusContext": {
+        "observedAt": "2026-10-27T22:59:04.269400+00:00",
+        "status": "EU marketing authorisation withdrawn 2026-10-20 at holder request for commercial reasons",
+        "sourceUrl": "https://www.ema.europa.eu/en/medicines/human/EPAR/zinplava",
+        "artifactNote": "Downloaded historical assessment includes the current Medicinal product no longer authorised watermark; original bytes preserved."
+      },
+      "downloadPackagePath": "originals/ema_zinplava_epar_2016.pdf"
+    },
+    {
+      "id": "ema_dificlir_epar_2011",
+      "title": "EMA Dificlir public assessment report EMA/857570/2011",
+      "documentClass": "regulatory_assessment_report",
+      "sourceUrl": "https://www.ema.europa.eu/en/documents/assessment-report/dificlir-epar-public-assessment-report_en.pdf",
+      "sha256": "17267ca5f1d623521247529166cf4996ec9ce49751090ab41b075b83127c06dd",
+      "bytes": 989595,
+      "pageCount": 83,
+      "label": "EMA-DIF",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "downloadPackagePath": "originals/ema_dificlir_epar_2011.pdf"
+    },
+    {
+      "id": "fda_zinplava_statistical_2016",
+      "title": "FDA Zinplava statistical review and addendum BLA761046",
+      "documentClass": "regulatory_statistical_review",
+      "sourceUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+      "sha256": "5149523670148ab46f48367a5f382eda475755c9a5c1accc6c885161e567525e",
+      "bytes": 988815,
+      "pageCount": 68,
+      "label": "FDA-ZIN-STAT",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "reviewHistory": {
+        "originalReviewDate": "2016-05-10",
+        "addendumDate": "2016-09-16",
+        "interpretationLimit": "The original statistical critique must be read with the later addendum and final medical review; it is not a standalone final agency rejection."
+      },
+      "downloadPackagePath": "originals/fda_zinplava_statistical_2016.pdf"
+    },
+    {
+      "id": "fda_rebyota_sbra_2022",
+      "title": "FDA Rebyota Summary Basis for Regulatory Action 30 November 2022",
+      "documentClass": "regulatory_summary_basis",
+      "sourceUrl": "https://www.fda.gov/media/163879/download",
+      "sha256": "b899b3568712601a28fc5a70c7949b73bdd338d1e4e72ca8654bb9e934e38cbc",
+      "bytes": 573196,
+      "pageCount": 21,
+      "label": "FDA-REB-SBRA",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "downloadPackagePath": "originals/fda_rebyota_sbra_2022.pdf"
+    },
+    {
+      "id": "fda_vowst_sbra_2023",
+      "title": "FDA Vowst Summary Basis for Regulatory Action 26 April 2023",
+      "documentClass": "regulatory_summary_basis",
+      "sourceUrl": "https://www.fda.gov/media/168002/download",
+      "sha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+      "bytes": 540737,
+      "pageCount": 19,
+      "label": "FDA-VOW-SBRA",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "downloadPackagePath": "originals/fda_vowst_sbra_2023.pdf"
+    },
+    {
+      "id": "ich_e3_1995",
+      "title": "ICH E3 Structure and Content of Clinical Study Reports Step4",
+      "documentClass": "ich_guideline",
+      "sourceUrl": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+      "sha256": "032d53bb6d693151b64bdc87aa4cf42b90e096db6e52dad73c2093cd62ffa24d",
+      "bytes": 482932,
+      "pageCount": 49,
+      "label": "ICH-E3",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "downloadPackagePath": "originals/ich_e3_1995.pdf"
+    },
+    {
+      "id": "ich_e9_r1_2019",
+      "title": "ICH E9(R1) Estimands and Sensitivity Analysis Step4",
+      "documentClass": "ich_guideline",
+      "sourceUrl": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+      "sha256": "f7471f411f1c87ee76783d5b2b9faaeca31d01d530213f71b50d136b39e3b0d9",
+      "bytes": 160629,
+      "pageCount": 22,
+      "label": "ICH-E9R1",
+      "newlyAcquired": true,
+      "archiveMember": null,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "downloadPackagePath": "originals/ich_e9_r1_2019.pdf"
+    },
+    {
+      "id": "fda_rebyota_statistical_2022",
+      "label": "FDA-REB-STAT",
+      "title": "FDA Rebyota statistical review, BLA 125739",
+      "documentClass": "regulatory_statistical_review",
+      "sourceKey": "cdi-rebyota-10-statistical-review---rebyota",
+      "sourceUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "archiveMember": "Statistical Review - REBYOTA.pdf",
+      "sha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+      "bytes": 1523729,
+      "pageCount": 42,
+      "pagesPath": "/workspace/scratch/1b45122383de/ClinicalSageAI-2-replit/server/data/public-csr-reference/pages/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.jsonl",
+      "newlyAcquired": false,
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "downloadPackagePath": "previously_retained_supporting_reviews/fda_rebyota_statistical_2022.pdf",
+      "existingRepositoryPath": "server/data/public-csr-reference/originals/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.pdf"
+    },
+    {
+      "id": "fda_vowst_statistical_2023",
+      "label": "FDA-VOW-STAT",
+      "title": "FDA Vowst statistical review, BLA 125757",
+      "documentClass": "regulatory_statistical_review",
+      "sourceKey": "cdi-vowst-10-statistical-review---vowst",
+      "sourceUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "archiveMember": "Statistical Review - VOWST.pdf",
+      "sha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+      "bytes": 772030,
+      "pageCount": 36,
+      "pagesPath": "/workspace/scratch/1b45122383de/ClinicalSageAI-2-replit/server/data/public-csr-reference/pages/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.jsonl",
+      "newlyAcquired": false,
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "downloadPackagePath": "previously_retained_supporting_reviews/fda_vowst_statistical_2023.pdf",
+      "existingRepositoryPath": "server/data/public-csr-reference/originals/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.pdf"
+    },
+    {
+      "id": "fda_vowst_clinical_2023",
+      "label": "FDA-VOW-CLIN",
+      "title": "FDA Vowst clinical review, BLA 125757",
+      "documentClass": "regulatory_clinical_review",
+      "sourceKey": "cdi-vowst-05-clinical-review-memo---vowst",
+      "sourceUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "archiveMember": "Clinical Review Memo - VOWST.pdf",
+      "sha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+      "bytes": 2149393,
+      "pageCount": 104,
+      "pagesPath": "/workspace/scratch/1b45122383de/ClinicalSageAI-2-replit/server/data/public-csr-reference/pages/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.jsonl",
+      "newlyAcquired": false,
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "downloadPackagePath": "previously_retained_supporting_reviews/fda_vowst_clinical_2023.pdf",
+      "existingRepositoryPath": "server/data/public-csr-reference/originals/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.pdf"
+    },
+    {
+      "id": "fda_zinplava_medical_2016",
+      "label": "FDA-ZIN-MED",
+      "title": "FDA Zinplava medical review, BLA 761046",
+      "documentClass": "regulatory_clinical_review",
+      "sourceKey": "cdi-zinplava-761046-medical-review",
+      "sourceUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000MedR.pdf",
+      "archiveMember": null,
+      "sha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d",
+      "bytes": 6689397,
+      "pageCount": 126,
+      "pagesPath": "/workspace/scratch/1b45122383de/ClinicalSageAI-2-replit/server/data/public-csr-reference/pages/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.jsonl",
+      "newlyAcquired": false,
+      "fullSponsorCsr": false,
+      "clientStudyEvidence": false,
+      "trainingApproved": false,
+      "pageNumbering": "One-based physical PDF page ordinal; printed page is separately identified when different.",
+      "downloadPackagePath": "previously_retained_supporting_reviews/fda_zinplava_medical_2016.pdf",
+      "existingRepositoryPath": "server/data/public-csr-reference/originals/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.pdf"
+    }
+  ],
+  "issues": [
+    {
+      "id": "R01",
+      "issue": "Design, amendments and the actual reporting cut",
+      "priority": "high",
+      "observedComparatorPrecedent": "ICH E3 asks for the timing, reasons and data available when plans changed. FDA describes a Vowst enrollment reduction with the success criterion maintained.",
+      "applicabilityLimits": "A registry estimate or press release cannot establish the final approved LMN-201 design or analyzed database.",
+      "requiredClientEvidence": "Signed protocol and amendments; dated SAP versions; unblinding and data-cut records; enrollment and cohort reconciliation.",
+      "proposedCheck": "Resolve the public 375-versus-45 enrollment and 16-week-versus-earlier-window descriptions against approved documents. Explain each change and its timing; preserve separate Part A/Part B accounting.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "ich_e3_1995",
+          "pdfPages": [
+            20
+          ],
+          "printedPages": [
+            12
+          ],
+          "sectionOrContext": "Sections 9.8 and 10.1",
+          "officialUrl": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+          "archiveMember": null,
+          "sourceSha256": "032d53bb6d693151b64bdc87aa4cf42b90e096db6e52dad73c2093cd62ffa24d",
+          "pageEvidence": [
+            {
+              "pdfPage": 20,
+              "pageTextSha256": "b0d5f3e24b31f20b1204e83bfd93e51750669104bb388f53988f1007258ac55e",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_sbra_2023",
+          "pdfPages": [
+            13,
+            14
+          ],
+          "printedPages": null,
+          "sectionOrContext": "SERES-012 design and sample-size change",
+          "officialUrl": "https://www.fda.gov/media/168002/download",
+          "archiveMember": null,
+          "sourceSha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+          "pageEvidence": [
+            {
+              "pdfPage": 13,
+              "pageTextSha256": "71ede11c1a61689cbfea01c2ce05cef0c2c92a9281a44c6313b3ba3d5d42f99f",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 14,
+              "pageTextSha256": "a85f4501bb58d785108d261ae2a3dcf13b46457b5de587aa992722609b2b8644",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R02",
+      "issue": "Global cure, initial cure and recurrence denominators",
+      "priority": "high",
+      "observedComparatorPrecedent": "The original FDA Zinplava reviewer questioned counting initial-cure failures as nonrecurrences in an all-subject recurrence denominator. A later addendum found that expanded cure definitions reduced the imbalance and maintained recurrence reduction; remaining clinical interpretation was referred to the Medical Division.",
+      "applicabilityLimits": "This historical critique does not prescribe a bezlotoxumab denominator for LMN-201. Adjunct treatment, endpoint and time origin differ.",
+      "requiredClientEvidence": "Approved estimand; participant-level initial-cure, recurrence and follow-up flags; derivation specifications and analysis-set membership.",
+      "proposedCheck": "Show a traceable flow from randomized participants to initial cure, then recurrence and global cure. Reconcile numerator/denominator changes and distinguish conditional recurrence from the all-participant global-cure estimand.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_zinplava_statistical_2016",
+          "pdfPages": [
+            62
+          ],
+          "printedPages": [
+            47
+          ],
+          "sectionOrContext": "Original May 2016 statistical review: interpretability of recurrence and global cure",
+          "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+          "archiveMember": null,
+          "sourceSha256": "5149523670148ab46f48367a5f382eda475755c9a5c1accc6c885161e567525e",
+          "pageEvidence": [
+            {
+              "pdfPage": 62,
+              "pageTextSha256": "e9cb4d8f2656db0e403d83452163476cb0adfb8dd4bc0937de596e330fadb049",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_zinplava_statistical_2016",
+          "pdfPages": [
+            13
+          ],
+          "printedPages": [
+            12
+          ],
+          "sectionOrContext": "September 2016 addendum: summary and conclusions",
+          "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+          "archiveMember": null,
+          "sourceSha256": "5149523670148ab46f48367a5f382eda475755c9a5c1accc6c885161e567525e",
+          "pageEvidence": [
+            {
+              "pdfPage": 13,
+              "pageTextSha256": "bdfb047931e622ab866cb074fbf79bd5935c65378878736995d6ac7dfd7a2afe",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "issue": "A reproducible CDI diagnosis and recurrence case rule",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA explains why Vowst development moved from PCR-based detection toward a toxin-based case definition after concerns about distinguishing colonization from infection. The later endpoint combined symptoms, toxin testing and clinical need for antibacterial treatment.",
+      "applicabilityLimits": "Assay choice and adjudication must follow LMN-201\u2019s approved design; the comparator rule cannot be substituted after observing results.",
+      "requiredClientEvidence": "Laboratory methods and validation; collection dates; stool diaries; episode forms; retreatment decisions; adjudication charter and outputs.",
+      "proposedCheck": "Reconstruct each potential recurrence from dated component evidence. Tabulate discordant assays, absent specimens, non-CDI diarrhea and adjudication overrides; explain handling without automatically classifying absent evidence as no recurrence.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_clinical_2023",
+          "pdfPages": [
+            40
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Clinical reviewer comments on diagnostic specificity and recurrence",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Clinical Review Memo - VOWST.pdf",
+          "sourceSha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+          "pageEvidence": [
+            {
+              "pdfPage": 40,
+              "pageTextSha256": "cfc8a1d7c9c032a09136b1e92972b24b963359378d7d78b1b12e6a773123b8d3",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_sbra_2023",
+          "pdfPages": [
+            13
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Primary endpoint recurrence components",
+          "officialUrl": "https://www.fda.gov/media/168002/download",
+          "archiveMember": null,
+          "sourceSha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+          "pageEvidence": [
+            {
+              "pdfPage": 13,
+              "pageTextSha256": "71ede11c1a61689cbfea01c2ce05cef0c2c92a9281a44c6313b3ba3d5d42f99f",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R04",
+      "issue": "Time origin, recurrence window and durability claims",
+      "priority": "high",
+      "observedComparatorPrecedent": "EMA Dificlir assessed recurrence within 30 days after treatment. Vowst used multiple post-treatment windows; FDA notes that later cumulative separation does not establish a new interval-specific benefit.",
+      "applicabilityLimits": "Antibiotic treatment and post-antibiotic recurrence prevention have different starting points. These durations are examples, not LMN-201 windows.",
+      "requiredClientEvidence": "Protocol-defined anchors, scheduled windows, treatment and standard-antibiotic dates, initial-cure dates, event dates and last contact.",
+      "proposedCheck": "Make one event-time specification spanning therapy initiation, end of antibiotics, initial cure and follow-up. Label cumulative versus interval recurrence and reconcile the binary endpoint with censoring in time-to-event analyses.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "ema_dificlir_epar_2011",
+          "pdfPages": [
+            42
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Outcome measures: initial cure, recurrence and global cure",
+          "officialUrl": "https://www.ema.europa.eu/en/documents/assessment-report/dificlir-epar-public-assessment-report_en.pdf",
+          "archiveMember": null,
+          "sourceSha256": "17267ca5f1d623521247529166cf4996ec9ce49751090ab41b075b83127c06dd",
+          "pageEvidence": [
+            {
+              "pdfPage": 42,
+              "pageTextSha256": "786c7a0bb65f298f463a4b857ef5ab8026ea9320b5c535eb587e58d0304674f3",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_statistical_2023",
+          "pdfPages": [
+            14,
+            21
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Follow-up windows and time-to-recurrence analysis",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Statistical Review - VOWST.pdf",
+          "sourceSha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+          "pageEvidence": [
+            {
+              "pdfPage": 14,
+              "pageTextSha256": "1c551ee5b3b1c01d739835c3e02e915da5a3d4eab3a9a1399544a94d9f0a3513",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 21,
+              "pageTextSha256": "e473d67b5523a9d1e0090c1267cce4bafad2a7512e3230f1538b9951d2b09ca6",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_clinical_2023",
+          "pdfPages": [
+            40
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Interpretation of later cumulative recurrence results",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Clinical Review Memo - VOWST.pdf",
+          "sourceSha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+          "pageEvidence": [
+            {
+              "pdfPage": 40,
+              "pageTextSha256": "cfc8a1d7c9c032a09136b1e92972b24b963359378d7d78b1b12e6a773123b8d3",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R05",
+      "issue": "Analysis populations, assigned treatment and received treatment",
+      "priority": "high",
+      "observedComparatorPrecedent": "The Vowst review distinguishes efficacy analysis by original randomization from safety by treatment received after forced assignments. ICH E3 requires exact analysis-set membership and reasons for exclusions.",
+      "applicabilityLimits": "No forced assignment is known for LMN-201. ITT, mITT, safety and per-protocol labels alone do not establish membership.",
+      "requiredClientEvidence": "Randomization list; dosing records; deviation log; blinded review decisions; all population flags and exclusion reasons.",
+      "proposedCheck": "Reconcile every enrolled/randomized/treated participant across the disposition figure, efficacy tables and safety tables. Trace exclusions to prespecified criteria and show when decisions occurred relative to unblinding.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_statistical_2023",
+          "pdfPages": [
+            11,
+            16
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Efficacy and safety population definitions and forced assignment",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Statistical Review - VOWST.pdf",
+          "sourceSha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+          "pageEvidence": [
+            {
+              "pdfPage": 11,
+              "pageTextSha256": "6080baf0f6ff078898bee3d0b11f833a6e390345a22a80d9f9ec684da8bed268",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 16,
+              "pageTextSha256": "f72aa9e3d59bc6582cab040d184a2d2924c4df712065b833f30fde75b6ca75f8",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "ich_e3_1995",
+          "pdfPages": [
+            21
+          ],
+          "printedPages": [
+            13
+          ],
+          "sectionOrContext": "Sections 10.2 and 11.1",
+          "officialUrl": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+          "archiveMember": null,
+          "sourceSha256": "032d53bb6d693151b64bdc87aa4cf42b90e096db6e52dad73c2093cd62ffa24d",
+          "pageEvidence": [
+            {
+              "pdfPage": 21,
+              "pageTextSha256": "785c79b9e13e6517c0c9178103a0823bc1e5f2759cbe18c73b815a0adbf70faa",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R06",
+      "issue": "Missing observations, intercurrent events and robustness",
+      "priority": "high",
+      "observedComparatorPrecedent": "Vowst used explicit component-level rules for incomplete recurrence evidence and sensitivity analyses. ICH E9(R1) distinguishes intercurrent events from missing observations and assesses sensitivity against the same estimand.",
+      "applicabilityLimits": "Comparator failure imputation is not automatically appropriate for LMN-201. Death, treatment cessation and missing assessments are distinct problems.",
+      "requiredClientEvidence": "Estimand attributes and event strategies; reasons/timing for missingness; planned estimators; sensitivity specifications; continued follow-up records.",
+      "proposedCheck": "Create a participant-level missingness and intercurrent-event inventory. Reproduce approved primary and sensitivity analyses; explain assumptions and identify supplementary analyses that answer a different question.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_statistical_2023",
+          "pdfPages": [
+            14,
+            15
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Primary missing-data rules and sensitivity analyses",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Statistical Review - VOWST.pdf",
+          "sourceSha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+          "pageEvidence": [
+            {
+              "pdfPage": 14,
+              "pageTextSha256": "1c551ee5b3b1c01d739835c3e02e915da5a3d4eab3a9a1399544a94d9f0a3513",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 15,
+              "pageTextSha256": "d16dc4e8a50df0bdb4f8ccb7b16095531a75b661dd8efda9f55f82d17cb181ed",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_clinical_2023",
+          "pdfPages": [
+            38
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Clinical interpretation of missingness",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Clinical Review Memo - VOWST.pdf",
+          "sourceSha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+          "pageEvidence": [
+            {
+              "pdfPage": 38,
+              "pageTextSha256": "bcb1ebd85d6b78d476e3afa89fe4604b5bcc46b63075f5bea9cb6f1ea43000f8",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "ich_e9_r1_2019",
+          "pdfPages": [
+            7,
+            8,
+            19,
+            20
+          ],
+          "printedPages": [
+            5,
+            6,
+            17,
+            18
+          ],
+          "sectionOrContext": "A.3.1 and A.5.2\u2013A.5.3",
+          "officialUrl": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+          "archiveMember": null,
+          "sourceSha256": "f7471f411f1c87ee76783d5b2b9faaeca31d01d530213f71b50d136b39e3b0d9",
+          "pageEvidence": [
+            {
+              "pdfPage": 7,
+              "pageTextSha256": "9fc0f232450920ad77c880b61b4f7a2a1a28417e9bdf897fc96295e71924539e",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 8,
+              "pageTextSha256": "531157c9229e35040525135781b6a22ea544ecf124e724ea1c994351d1c8493a",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 19,
+              "pageTextSha256": "cd8a52b86d8055aa9dbdc131e0ae4133e9d64bfd576c4a18131cbe336ea649fb",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 20,
+              "pageTextSha256": "4ff9a2a8f414182dd5ad306f3017617e48edbb85c5b7e62448cc7805e4b50f3a",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R07",
+      "issue": "Standard antibiotics, rescue therapy and other CDI interventions",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA\u2019s Zinplava sensitivity analyses included rules for incomplete follow-up and medications/procedures potentially useful against CDI. E9(R1) requires clarity about events that change interpretation of outcomes.",
+      "applicabilityLimits": "LMN-201 is administered during and after standard treatment; medication effects and the estimand cannot be copied from an IV adjunct trial.",
+      "requiredClientEvidence": "Standard-antibiotic regimen; adherence; rescue indication/date; concomitant antibiotics; microbiota interventions; protocol/SAP event rules.",
+      "proposedCheck": "Align medication and episode timelines, distinguish planned standard treatment from rescue, and verify every relevant event\u2019s treatment in the estimand and analysis. Label any new analysis as post hoc.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_zinplava_statistical_2016",
+          "pdfPages": [
+            35
+          ],
+          "printedPages": [
+            20
+          ],
+          "sectionOrContext": "Sensitivity analyses for global cure and recurrence",
+          "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+          "archiveMember": null,
+          "sourceSha256": "5149523670148ab46f48367a5f382eda475755c9a5c1accc6c885161e567525e",
+          "pageEvidence": [
+            {
+              "pdfPage": 35,
+              "pageTextSha256": "e0c33f34b36b5ba81027a9c74029aaacf675a970e2a8f6b6a7f8588eb404dddc",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "ich_e9_r1_2019",
+          "pdfPages": [
+            7,
+            8
+          ],
+          "printedPages": [
+            5,
+            6
+          ],
+          "sectionOrContext": "A.3.1: additional treatment and other intercurrent events",
+          "officialUrl": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+          "archiveMember": null,
+          "sourceSha256": "f7471f411f1c87ee76783d5b2b9faaeca31d01d530213f71b50d136b39e3b0d9",
+          "pageEvidence": [
+            {
+              "pdfPage": 7,
+              "pageTextSha256": "9fc0f232450920ad77c880b61b4f7a2a1a28417e9bdf897fc96295e71924539e",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 8,
+              "pageTextSha256": "531157c9229e35040525135781b6a22ea544ecf124e724ea1c994351d1c8493a",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R08",
+      "issue": "Open-label Part A and randomized Part B",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA treated Vowst\u2019s uncontrolled study as primarily safety support; its efficacy was descriptive. The clinical review separately accounts for rollover exposure and distinct dosing cohorts.",
+      "applicabilityLimits": "This illustrates design-specific reporting. It does not establish whether LMN-201 Part A can contribute to any specified analysis.",
+      "requiredClientEvidence": "Cohort allocation, eligibility and dosing versions; overlap/reenrollment identifiers; SAP authority for any pooling; participant-level exposure.",
+      "proposedCheck": "Keep randomized Part B efficacy interpretable on its own. Present Part A transparently, justify any pooled summary and remove duplicate people from integrated exposure totals.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_sbra_2023",
+          "pdfPages": [
+            14
+          ],
+          "printedPages": null,
+          "sectionOrContext": "SERES-013 uncontrolled safety support and descriptive efficacy",
+          "officialUrl": "https://www.fda.gov/media/168002/download",
+          "archiveMember": null,
+          "sourceSha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+          "pageEvidence": [
+            {
+              "pdfPage": 14,
+              "pageTextSha256": "a85f4501bb58d785108d261ae2a3dcf13b46457b5de587aa992722609b2b8644",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_vowst_clinical_2023",
+          "pdfPages": [
+            84
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Unique subjects, rollover and different dose cohorts",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Clinical Review Memo - VOWST.pdf",
+          "sourceSha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+          "pageEvidence": [
+            {
+              "pdfPage": 84,
+              "pageTextSha256": "495d843d5c34502d96acd7e9510fc2bd600190101d2a5bae94ae1df51919681e",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R09",
+      "issue": "Bayesian model, decision rule and interim history",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA\u2019s Rebyota review describes study-specific borrowing, priors, interim boundaries and two distinct success criteria; the evidence did not meet both criteria.",
+      "applicabilityLimits": "A sponsor statement that LMN-201 used a prespecified Bayesian SAP does not disclose its model. Rebyota\u2019s priors or thresholds must not be imported.",
+      "requiredClientEvidence": "Final dated SAP; prior distributions and justification; model/code; estimand; success threshold; simulation report; interim access and decisions.",
+      "proposedCheck": "Reproduce posterior estimates and the exact success rule from approved specifications. Reconcile the public OR 7.8 with the crude OR 8.75 without assuming either is an error; identify model, adjustment, estimand and interval. Explain prior sensitivity and interim changes.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_rebyota_statistical_2022",
+          "pdfPages": [
+            19,
+            22,
+            23,
+            28
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Bayesian design, hierarchical model, interim criteria and result interpretation",
+          "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+          "archiveMember": "Statistical Review - REBYOTA.pdf",
+          "sourceSha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+          "pageEvidence": [
+            {
+              "pdfPage": 19,
+              "pageTextSha256": "58d44cfe762962f6802de875c5e13adf0f71c777b10d6e5ab6ffb800d9db670b",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 22,
+              "pageTextSha256": "421c8b04385e5083549f86742dd159d7194094236572af130ffe1fbe7644acd1",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 23,
+              "pageTextSha256": "628a17b972414a52bf20d2a157e1be9928613a3ec739b70d817aadb756b0f4d7",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 28,
+              "pageTextSha256": "a9d6feb5250578e31010f182f2fb988248288d3020a2150bb163dac296e7c3e3",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "issue": "Borrowing or pooling: exchangeability and dataset versions",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA requested Rebyota alignment of endpoints, follow-up windows and populations across studies. The review also documents correction of historical ITT exclusions and a requested covariate analysis.",
+      "applicabilityLimits": "Only relevant if LMN-201 actually borrows or pools evidence. No historical borrowing has been verified for RePreve.",
+      "requiredClientEvidence": "All contributing datasets and locked versions; inclusion rules; endpoint harmonization; baseline comparisons; borrowing weights and prior sensitivity.",
+      "proposedCheck": "First establish whether borrowing exists. If it does, document population and time-window compatibility, reconcile design-stage versus final datasets, and examine sensitivity to heterogeneity and reduced/no borrowing.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_rebyota_statistical_2022",
+          "pdfPages": [
+            21
+          ],
+          "printedPages": null,
+          "sectionOrContext": "IR#28: alignment to improve exchangeability",
+          "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+          "archiveMember": "Statistical Review - REBYOTA.pdf",
+          "sourceSha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+          "pageEvidence": [
+            {
+              "pdfPage": 21,
+              "pageTextSha256": "56dff9b24e92084264bb0bd22034e1012448dacef878c7ef38afde8433dacb97",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "fda_rebyota_statistical_2022",
+          "pdfPages": [
+            29,
+            30
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Non-final historical ITT data, correction and IR#15 covariate analysis",
+          "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+          "archiveMember": "Statistical Review - REBYOTA.pdf",
+          "sourceSha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+          "pageEvidence": [
+            {
+              "pdfPage": 29,
+              "pageTextSha256": "5734ed8e140513c8869a2f800958a5f70f57e1e1343cd994fe26be45ac17a7f0",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 30,
+              "pageTextSha256": "5bb501d66ba1c95e13e3e838daf5a5cf9563104a0f866c67670a8c18f9f04e69",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "issue": "Multiplicity, subgroup and post hoc language",
+      "priority": "high",
+      "observedComparatorPrecedent": "Vowst\u2019s statistical review specifies a fixed sequence for two primary hypotheses while identifying other testing without multiplicity adjustment. This makes the hierarchy necessary to interpret a claim.",
+      "applicabilityLimits": "LMN-201 may use a different Bayesian decision framework. Frequentist comparator testing rules do not define its confirmatory claims.",
+      "requiredClientEvidence": "Endpoint hierarchy; Bayesian/frequentist decision framework; subgroup prespecification; amendment dates; full output inventory.",
+      "proposedCheck": "Map every efficacy claim to its planned endpoint, population, time point and decision rule. Separate confirmatory, supportive and exploratory findings; retain uncertainty and avoid subgroup claims based only on within-group significance.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_statistical_2023",
+          "pdfPages": [
+            14
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Multiplicity adjustment and remaining endpoints",
+          "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+          "archiveMember": "Statistical Review - VOWST.pdf",
+          "sourceSha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+          "pageEvidence": [
+            {
+              "pdfPage": 14,
+              "pageTextSha256": "1c551ee5b3b1c01d739835c3e02e915da5a3d4eab3a9a1399544a94d9f0a3513",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "issue": "Safety exposure, crossovers and follow-up comparability",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA\u2019s Rebyota integrated safety review highlights open-label dosing, recurrence-triggered crossover and longer follow-up after multiple doses; excluding crossovers does not preserve randomization. E3 asks for actual exposure.",
+      "applicabilityLimits": "Neither these imbalances nor their clinical interpretation are LMN-201 safety findings.",
+      "requiredClientEvidence": "Unique participants; actual doses/duration; follow-up time; crossover/retreatment; cohort and treatment-emergent windows; safety denominators.",
+      "proposedCheck": "Reconcile safety totals to actual exposure. Present cohort-specific windows and unique subjects before pooling; explain differential follow-up and distinguish descriptive integrated comparisons from randomized comparisons.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_rebyota_sbra_2022",
+          "pdfPages": [
+            17
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Integrated safety comparability and narrative assessment",
+          "officialUrl": "https://www.fda.gov/media/163879/download",
+          "archiveMember": null,
+          "sourceSha256": "b899b3568712601a28fc5a70c7949b73bdd338d1e4e72ca8654bb9e934e38cbc",
+          "pageEvidence": [
+            {
+              "pdfPage": 17,
+              "pageTextSha256": "efcbeadf88ce3a862fbbc62a74f367b707070baf740576c964e109f72470f104",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "ich_e3_1995",
+          "pdfPages": [
+            28
+          ],
+          "printedPages": [
+            20
+          ],
+          "sectionOrContext": "Section 12.1: extent of exposure",
+          "officialUrl": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+          "archiveMember": null,
+          "sourceSha256": "032d53bb6d693151b64bdc87aa4cf42b90e096db6e52dad73c2093cd62ffa24d",
+          "pageEvidence": [
+            {
+              "pdfPage": 28,
+              "pageTextSha256": "70abc7ce9f62087711a43d882be31dd78fbc21b0d658782e14933be08bde20b1",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "issue": "SAEs, deaths, comorbidity and event narratives",
+      "priority": "high",
+      "observedComparatorPrecedent": "EMA discussed Zinplava\u2019s numeric imbalances among participants with baseline heart failure and infusion-event evidence, including the applicant\u2019s explanation and assessment of causality.",
+      "applicabilityLimits": "Bezlotoxumab\u2019s IV infusion and product-specific risk profile do not establish an LMN-201 heart-failure or infusion risk.",
+      "requiredClientEvidence": "LMN-201 protocol-defined safety events; baseline comorbidity; laboratory and clinical trends; complete SAE/death narratives and causality assessments.",
+      "proposedCheck": "Assess prespecified risks and observed LMN-201 events using dates, exposure, alternative causes and follow-up. Ensure narratives explain clinically important events without adopting unrelated comparator risk labels.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "ema_zinplava_epar_2016",
+          "pdfPages": [
+            93
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Discussion of clinical safety: baseline CHF and infusion events",
+          "officialUrl": "https://www.ema.europa.eu/en/documents/assessment-report/zinplava-epar-public-assessment-report_en.pdf",
+          "archiveMember": null,
+          "sourceSha256": "b88328353dfc39e11cb55cba972cb14e4fae4c7782975bbd687aaa90cd58af04",
+          "pageEvidence": [
+            {
+              "pdfPage": 93,
+              "pageTextSha256": "02e2c1f03ef499a1723d41be846bb0b6e23fcfdec53182095c90f6a50e15e56c",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "issue": "Immunogenicity: assay interpretability and repeat exposure",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA\u2019s Zinplava review distinguishes negative from inconclusive ADA results: 28% were inconclusive under assay conditions. It also limits conclusions on repeated dosing because evidence was sparse.",
+      "applicabilityLimits": "An IV antibody\u2019s immunogenicity findings do not determine requirements for an oral multicomponent product. No LMN-201 ADA program is assumed.",
+      "requiredClientEvidence": "Product-specific immunogenicity risk assessment; justified testing/absence of testing; assay validation and interference; component coverage; sampling and repeat exposure.",
+      "proposedCheck": "If ADA is measured, distinguish evaluable, negative, inconclusive, missing and treatment-emergent results. Link timing to exposure and clinical findings; otherwise document the approved rationale and evidence supporting the approach.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_zinplava_medical_2016",
+          "pdfPages": [
+            112,
+            113
+          ],
+          "printedPages": [
+            111,
+            112
+          ],
+          "sectionOrContext": "Immunogenicity assay interpretation and repeated-dose limitation",
+          "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000MedR.pdf",
+          "archiveMember": null,
+          "sourceSha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d",
+          "pageEvidence": [
+            {
+              "pdfPage": 112,
+              "pageTextSha256": "9f081e4ab2f6a516947527128e90822a8ba4cc19ba1d1457ddae2d2d395d6d59",
+              "extractionMethod": "native_pdf_text",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            },
+            {
+              "pdfPage": 113,
+              "pageTextSha256": "f0b69654bbe172db3cef87bd62bb8b09cc2a1aecac7909f2830d4fe69ac4cd6d",
+              "extractionMethod": "tesseract 5.3.4 / eng / psm3 / local-offline",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "issue": "Clinical lot identity, potency and manufacturing changes",
+      "priority": "high",
+      "observedComparatorPrecedent": "FDA\u2019s Vowst SBRA records potency and donor-screening assay deficiencies that the applicant addressed during review before CMC support for approval.",
+      "applicabilityLimits": "Donor screening and live-microbiota controls are not transferable to LMN-201. Its relevant product controls require its own development documentation.",
+      "requiredClientEvidence": "Clinical lot/batch mapping; component identity and potency specifications; release/stability evidence; formulation/process changes; comparability assessment.",
+      "proposedCheck": "Trace administered product to lots and relevant versions, explain changes affecting clinical interpretation, and cross-reference the appropriate CMC evidence rather than treating the CSR as a manufacturing dossier.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "fda_vowst_sbra_2023",
+          "pdfPages": [
+            6
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Manufacturing, potency/assay deficiencies and resolution",
+          "officialUrl": "https://www.fda.gov/media/168002/download",
+          "archiveMember": null,
+          "sourceSha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+          "pageEvidence": [
+            {
+              "pdfPage": 6,
+              "pageTextSha256": "decd28ffb1aa73c5836d78cebca50eccfe0752c55ab7e41a0fff9332086deb6f",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_visually_verified",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "issue": "Eligibility, baseline disease and generalizability",
+      "priority": "medium",
+      "observedComparatorPrecedent": "EMA Dificlir notes limits from recurrent-CDI exclusions and uncertain strain subgroup findings. EMA Zinplava notes that severity measured after standard antibiotics may affect interpretation.",
+      "applicabilityLimits": "These products enrolled different clinical populations; cross-trial percentages do not establish comparative LMN-201 efficacy.",
+      "requiredClientEvidence": "Actual eligibility; prior episodes and severity definitions; baseline timing relative to antibiotics; diagnostic/strain availability; demographic and comorbidity tables.",
+      "proposedCheck": "Reconcile the enrolled population with the intended claim, make timing of baseline measures explicit and qualify sparse subgroups. Describe study differences before using comparator examples.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [
+        {
+          "sourceId": "ema_dificlir_epar_2011",
+          "pdfPages": [
+            63
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Discussion of clinical efficacy and population/subgroup limitations",
+          "officialUrl": "https://www.ema.europa.eu/en/documents/assessment-report/dificlir-epar-public-assessment-report_en.pdf",
+          "archiveMember": null,
+          "sourceSha256": "17267ca5f1d623521247529166cf4996ec9ce49751090ab41b075b83127c06dd",
+          "pageEvidence": [
+            {
+              "pdfPage": 63,
+              "pageTextSha256": "764c3a92b8e708fc5e2b58aa208b80db26b0ad3e161a3a8a9008749f147442f0",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        },
+        {
+          "sourceId": "ema_zinplava_epar_2016",
+          "pdfPages": [
+            82
+          ],
+          "printedPages": null,
+          "sectionOrContext": "Baseline severity after SOC and interpretability",
+          "officialUrl": "https://www.ema.europa.eu/en/documents/assessment-report/zinplava-epar-public-assessment-report_en.pdf",
+          "archiveMember": null,
+          "sourceSha256": "b88328353dfc39e11cb55cba972cb14e4fae4c7782975bbd687aaa90cd58af04",
+          "pageEvidence": [
+            {
+              "pdfPage": 82,
+              "pageTextSha256": "d1aa87c7c47d6af9209feffeedae326292942c9c1d8edc6e9a7fab4357848da2",
+              "extractionMethod": "pdftotext-layout",
+              "review": "cited_passage_text_inspected",
+              "wholePageTablesQualified": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "R17",
+      "issue": "Public effect-measure labels and reproducible estimates",
+      "priority": "high",
+      "observedComparatorPrecedent": "Public sponsor reporting, not agency feedback: the odds ratio in Lumen\u2019s release, which references a Bayesian SAP, differs from the crude ratio implied by its published counts and from the secondary summary hosted by Lumen.",
+      "applicabilityLimits": "A posterior or adjusted model estimate need not equal the crude two-by-two ratio. The difference alone does not establish an error.",
+      "requiredClientEvidence": "Final SAP, estimand/effect direction, model and priors, stratification/adjustment, analysis population, code and exact TLFs including intervals.",
+      "proposedCheck": "Reconcile the reported OR 7.8 with the crude OR 8.75. Identify each estimator and posterior summary, state the interval type and limits, and reproduce the approved decision rule without inferring recurrence denominators.",
+      "proposedCheckClassification": "analyst_inference_for_readiness_review",
+      "isLmnAgencyFeedback": false,
+      "isVerifiedClientFinding": false,
+      "sourceEvidence": [],
+      "sourceEvidenceType": "public_sponsor_reporting_not_agency_observation",
+      "publicReportingEvidence": [
+        {
+          "url": "https://www.lumen.bio/news/2026/10/22/lumen-bio-reports-positive-phase-2-results-from-the-re-preve-clinical-trial-lmn-201-for-c-difficile-infection",
+          "pageDate": "2026-10-22",
+          "releaseDateline": "2026-10-21",
+          "reportedPartBGlobalCure": {
+            "LMN201": {
+              "n": 10,
+              "N": 12
+            },
+            "placebo": {
+              "n": 4,
+              "N": 11
+            }
+          },
+          "reportedOddsRatio": 7.8,
+          "reportedMethod": "prespecified Bayesian statistical analysis plan"
+        },
+        {
+          "url": "https://www.lumen.bio/news/2026/10/22/lmn-201-reduces-c-difficile-recurrence",
+          "pageDate": "2026-10-22",
+          "provenance": "Lumen-hosted summary linking to Contagion; secondary reporting, not an independent clinical dataset",
+          "reportedOddsRatio": 8.75
+        }
+      ]
+    }
+  ],
+  "statusContext": {
+    "observedAt": "2026-10-27T22:59:04.269400+00:00",
+    "status": "EU marketing authorisation withdrawn 2026-10-20 at holder request for commercial reasons",
+    "sourceUrl": "https://www.ema.europa.eu/en/medicines/human/EPAR/zinplava",
+    "artifactNote": "Downloaded historical assessment includes the current Medicinal product no longer authorised watermark; original bytes preserved."
+  },
+  "verificationLimits": [
+    "Cited passages were inspected; ten key original PDF pages were additionally visually checked. This is not scientific qualification of every page or table.",
+    "Rebyota statistical PDF21 native table column ordering is unreliable; the narrative claim and original rendered page were checked.",
+    "Zinplava medical PDF113 uses an existing OCR derivative; its cited passage was checked on the original rendered page.",
+    "The EMA Zinplava download includes an authorisation-status watermark that intrudes on native extraction; PDF93 was visually checked.",
+    "FDA bundle URLs identify ZIP archives. Exact PDF member names and physical page numbers are preserved; no page fragment is attached to a ZIP URL."
+  ],
+  "publicReportingReconciliation": {
+    "classification": "public_sponsor_reporting_reconciliation_not_agency_feedback",
+    "observedAt": "2026-10-27T22:59:04.269400+00:00",
+    "primarySponsorSource": {
+      "url": "https://www.lumen.bio/news/2026/10/22/lumen-bio-reports-positive-phase-2-results-from-the-re-preve-clinical-trial-lmn-201-for-c-difficile-infection",
+      "pageDate": "2026-10-22",
+      "releaseDateline": "2026-10-21",
+      "reportedPartBGlobalCure": {
+        "LMN201": {
+          "n": 10,
+          "N": 12
+        },
+        "placebo": {
+          "n": 4,
+          "N": 11
+        }
+      },
+      "reportedOddsRatio": 7.8,
+      "reportedMethod": "prespecified Bayesian statistical analysis plan"
+    },
+    "secondaryReportingHostedBySponsor": {
+      "url": "https://www.lumen.bio/news/2026/10/22/lmn-201-reduces-c-difficile-recurrence",
+      "pageDate": "2026-10-22",
+      "provenance": "Lumen-hosted summary linking to Contagion; secondary reporting, not an independent clinical dataset",
+      "reportedOddsRatio": 8.75
+    },
+    "analystCalculation": {
+      "label": "unadjusted odds ratio of global cure computed only from published counts",
+      "expression": "(10 * (11 - 4)) / ((12 - 10) * 4)",
+      "value": 8.75,
+      "clientDataVerified": false
+    },
+    "inference": "The difference is a reconciliation trigger, not proof that 7.8 is wrong: a model-based/posterior/adjusted estimate may differ from the crude cross-product ratio.",
+    "requiredClientEvidence": [
+      "Approved SAP and exact estimand/effect direction",
+      "Bayesian model and priors, any stratification or adjustment, estimator/posterior summary",
+      "Traceable tables/listings/figures, analysis code and corresponding population",
+      "Exact interval type, limits, posterior probability and success criterion"
+    ],
+    "proposedCheck": "Label the crude and model-based estimates distinctly and reconcile the published statement with the CSR and approved outputs. Do not infer recurrence denominators or statistical significance from a press release."
+  }
+}

@@ -1,0 +1,995 @@
+{
+  "schemaVersion": 1,
+  "collectionId": "lmn201-public-csr-expansion-2026-10-27",
+  "reportingDate": "2026-10-27",
+  "target": {
+    "sponsor": "Lumen Bioscience",
+    "product": "LMN-201",
+    "study": "RePreve / CDI02",
+    "registry_id": "NCT05330182"
+  },
+  "scope": "Acquired external reference originals and proposed readiness checks; not client study evidence, application admission or model training.",
+  "counts": {
+    "new_main_csr_body_pdfs": 12,
+    "new_main_csr_body_pages": 4712,
+    "new_main_csr_body_bytes": 88050085,
+    "nih_main_report_pdfs": 11,
+    "nih_main_report_pages": 3821,
+    "nih_explicit_item_public_domain_records": 8,
+    "nih_conditional_source_package_rights_records": 3,
+    "new_full_cdi_csrs": 0,
+    "mixed_identity_csr_compilations": 1,
+    "mixed_identity_compilation_pages": 8027,
+    "csr_tables_listings_results": 1,
+    "new_cdi_csr_synopsis_pdfs": 2,
+    "new_cdi_csr_synopsis_pages": 48,
+    "other_csr_synopsis_pdfs": 1,
+    "registry_basic_results_docx": 1,
+    "new_regulatory_reviews": 5,
+    "new_ich_guidelines": 2,
+    "new_regulatory_and_guideline_pages": 372,
+    "excluded_false_full_csr_protocol_leads": 1,
+    "download_bundle_new_original_files": 25,
+    "download_bundle_new_pdf_pages": 13255,
+    "download_bundle_new_original_bytes": 158657022,
+    "previously_retained_supporting_pdfs": 4,
+    "nih_original_source_archives": 11,
+    "nih_archive_pdf_member_records": 77,
+    "nih_archive_unique_pdf_hashes": 76,
+    "nih_unique_non_main_companion_pdfs": 65,
+    "nih_companion_pdf_pages": 6199,
+    "new_application_admissions": 0,
+    "new_model_training_runs": 0,
+    "reacquired_previous_main_report_pdfs": 1,
+    "reacquired_previous_main_report_pages": 87
+  },
+  "records": [
+    {
+      "id": "nih-bpca-nbk556632",
+      "title": "An Open Label Study to Describe the Pharmacokinetics of Acyclovir in Premature Infants",
+      "study_ids": [
+        "NICHD-2011-ACY01",
+        "NCT00942084"
+      ],
+      "study_family": "bpca-acyclovir-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/55/37/nichdacy01csr_NBK556632.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK556632/",
+      "bytes": 5832933,
+      "sha256": "b11107a43ee263e463fb6e4f0b59830a6ba7524f4cd9f2da36df0038a16d6612",
+      "pages": 215,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Population PK, sampling schedule, protocol changes, safety tables and SAE narratives.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk564955",
+      "title": "Safety and Efficacy of Caffeine Citrate in Premature Infants",
+      "study_ids": [
+        "NICHD-2014-CAF01"
+      ],
+      "study_family": "bpca-caffeine-integrated",
+      "document_class": "retrospective_integrated_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/9b/34/nichdcaf01_NBK564955.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK564955/",
+      "bytes": 2149153,
+      "sha256": "3055a9c4cb34e154ad5f83a12110a42a66392bd43623988688bb890935e39061",
+      "pages": 122,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Integrated safety, exposure-response, multiple data-source reporting.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk567697",
+      "title": "Safety and Pharmacokinetics of Multiple-Dose Intravenous and Oral Clindamycin in Pediatric Subjects with BMI ≥ 85th Percentile",
+      "study_ids": [
+        "NICHD-2012-CLN01",
+        "NCT01744730"
+      ],
+      "study_family": "bpca-pop01-overlap-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/b3/3f/nichdcln01_NBK567697.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK567697/",
+      "bytes": 3932733,
+      "sha256": "aa349d14c36dd86f68994d3f4d3f776d590f85eed9b9720795fe4d826844f27d",
+      "pages": 163,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Antimicrobial PK and safety, empirical Bayesian PK estimates, population definitions and pooled-data traceability.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk574271",
+      "title": "Ampicillin Pharmacokinetics and Safety in Infants",
+      "study_ids": [
+        "NICHD-2012-AMP01"
+      ],
+      "study_family": "bpca-pop01-overlap-family",
+      "document_class": "retrospective_integrated_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/9b/eb/nichdamp01_NBK574271.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK574271/",
+      "bytes": 1404512,
+      "sha256": "2a3c2e6bbe5c9521d4b1906ff1997238bc64138dcdbccbca8c0a438485f78710",
+      "pages": 60,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Antimicrobial PK analysis, retrospective safety synthesis and main-report/PK-appendix organization.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk575799",
+      "title": "Pharmacokinetics of Understudied Drugs Administered to Children per Standard of Care - Doxycycline",
+      "study_ids": [
+        "NICHD-2011-POP01",
+        "NCT01431326"
+      ],
+      "study_family": "bpca-pop01-overlap-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/56/4e/nichdpop01_NBK575799.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK575799/",
+      "bytes": 819221,
+      "sha256": "2bc06e0f8fd4b669d33d9a03d5989744d9f39c1ac2bef6c34be870a812844763",
+      "pages": 43,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "PK and safety reporting, opportunistic sampling, analysis-population definitions.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk576920",
+      "title": "A Randomized, Double-Blind, Placebo Controlled Study of the Efficacy of Lithium for the Treatment of Pediatric Mania Followed by an Open Label Long-Term Safety Period, Double-Blind, Placebo-Controlled Discontinuation Phase, and Open Label Restabilization Period (COLT2)",
+      "study_ids": [
+        "NICHD-2005-07-2",
+        "NCT01166425"
+      ],
+      "study_family": "bpca-colt2-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/62/c9/nichdcolt2_NBK576920.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK576920/",
+      "bytes": 14843295,
+      "sha256": "4c0d53ca20dfe745abd99d011218e63ccb38bae86d2953e7d73fdb0f220f1fb3",
+      "pages": 1563,
+      "rights_class": "public_domain_candidate_per_source_package_default_pending_document_review",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Multiphase efficacy/safety reporting, interim monitoring, participant disposition, large TFL section.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk585490",
+      "title": "Safety and Efficacy of High-Dose Acyclovir in Infants with HSV or Suspected HSV",
+      "study_ids": [
+        "NICHD-2013-ACY02"
+      ],
+      "study_family": "bpca-acyclovir-family",
+      "document_class": "retrospective_integrated_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/47/f6/nichdacy02csr_NBK585490.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK585490/",
+      "bytes": 1991539,
+      "sha256": "bdaa489c2c4f7f452e0fbab41ca1e6b3f7c4e39344e009f0b7aa79b19326c5df",
+      "pages": 184,
+      "rights_class": "public_domain_candidate_per_source_package_default_pending_document_review",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Retrospective safety narratives, data-source reconciliation and integrated report structure.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk587070",
+      "title": "Pharmacokinetics of Anti-epileptic Drugs in Obese Children - Levetiracetam",
+      "study_ids": [
+        "NICHD-2015-AED01",
+        "NCT02993861"
+      ],
+      "study_family": "bpca-pop01-overlap-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/1c/23/nichdaed01_NBK587070.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK587070/",
+      "bytes": 7528588,
+      "sha256": "b18919f8dbf7c13c70bbd6af48851761164b63e62b6b33e081cec07bb42cf275",
+      "pages": 108,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Body-size covariate modeling, PK/safety and exposure reporting.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk587541",
+      "title": "A Phase II, Multicenter, Randomized, Double-Blind, Placebo-Controlled, Parallel Group Study to Determine the Pharmacodynamics of Sodium Nitroprusside During Prolonged Infusion in Pediatric Subjects",
+      "study_ids": [
+        "NICHD-2003-09-LT",
+        "NCT00621816"
+      ],
+      "study_family": "bpca-snp2-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/5d/84/nichdsnp02_NBK587541.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK587541/",
+      "bytes": 14171531,
+      "sha256": "1c42940b1e05fef1f7e0a4d935d48615b3db92f96d19eae7779fd9104a19a019",
+      "pages": 500,
+      "rights_class": "public_domain_candidate_per_source_package_default_pending_document_review",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Randomized withdrawal design, short blinded phase, pharmacodynamics and safety/TFL presentation.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk588407",
+      "title": "Use of Lorazepam for the Treatment of Pediatric Status Epilepticus: A Randomized, Double-Blinded Trial of Lorazepam and Diazepam",
+      "study_ids": [
+        "NICHD-2003-10-2",
+        "NCT00621478"
+      ],
+      "study_family": "bpca-status2-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/c4/eb/nichdstatus02_NBK588407.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK588407/",
+      "bytes": 4027008,
+      "sha256": "f15b4a1f0f461aa8616be9583e63031dfca5ca0764a560c8bdd7aca5b64bd55d",
+      "pages": 410,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Adaptive sample-size review, interim monitoring, missing-data handling and efficacy/safety separation.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "nih-bpca-nbk588444",
+      "title": "Multiple Dose Pharmacokinetic Study of Meropenem in Young Infants (<91 days) with Suspected or Complicated Intra-abdominal Infections",
+      "study_ids": [
+        "NICHD-2005-18",
+        "NCT00621192"
+      ],
+      "study_family": "bpca-meropenem-family",
+      "document_class": "prospective_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://ftp.ncbi.nlm.nih.gov/pub/litarch/49/fd/nichdmeropen_NBK588444.tar.gz",
+      "source_page_url": "https://www.ncbi.nlm.nih.gov/books/NBK588444/",
+      "bytes": 3648496,
+      "sha256": "16eff36e44ee1a036828f07a12775f4f6f400579ee578d70fce0ccea3e1e07b1",
+      "pages": 453,
+      "rights_class": "public_domain_per_NLM_item_and_source_package_conditions",
+      "rights_notes": "Compatible for public-domain portions under the source conditions. Preserve attribution and exclude any separately credited third-party material.",
+      "proposed_use": "Antimicrobial PK/safety, GI/intra-abdominal infection context, extensive safety tables and report-package structure.",
+      "quality_flags": "The complete underlying Section 16 package, signed forms, participant CRFs, datasets and every referenced appendix are not certified present. Retained source archives contain selected published companion documents only.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "fda-spartan-arn509003",
+      "title": "SPARTAN: A Multicenter, Randomized, Double-Blind, Placebo-Controlled, Phase III Study of ARN-509 in Men with Non-Metastatic (M0) Castration-Resistant Prostate Cancer",
+      "study_ids": [
+        "ARN-509-003",
+        "NCT01946204"
+      ],
+      "study_family": "spartan-arn509003-family",
+      "document_class": "prospective_sponsor_CSR_body_redacted",
+      "main_csr_body": true,
+      "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/rev_210951_arn-509-003_CSR_Redacted.pdf",
+      "source_page_url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/Erleada_210951_toc.cfm",
+      "bytes": 27701076,
+      "sha256": "b3d438c19ef3e5d8165a37ff218de9706450906559bbb685087b9645d5b7cf5c",
+      "pages": 891,
+      "rights_class": "review_required_sponsor_notice",
+      "rights_notes": "Unresolved; no automatic commercial/training permission inferred from FDA hosting.",
+      "proposed_use": "Potential reporting example after rights, identity and quality review.",
+      "quality_flags": "",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "zenodo-1193962-quetiapine",
+      "title": "Quetiapine Study 5077US/0049 CSR compilation with errata and appendices",
+      "study_ids": [
+        "5077US/0049",
+        "NCT00214578"
+      ],
+      "study_family": "quetiapine-compilation-review",
+      "document_class": "sponsor_CSR_compilation_identity_review_required",
+      "main_csr_body": false,
+      "source_url": "https://zenodo.org/api/records/1193962/files/Study_049_CSR.pdf/content",
+      "source_page_url": "https://zenodo.org/records/1193962",
+      "bytes": 54629647,
+      "sha256": "4aa913ffe178382c15a4b816009dd17430501762ad828eb7cbf09589725ee897",
+      "pages": 8027,
+      "rights_class": "CC_BY_4_0_repository_claim_with_authority_and_identity_review",
+      "rights_notes": "CC BY 4.0 permits commercial sharing/adaptation subject to attribution if validly licensed. Depositor authority over sponsor-origin material and mixed study identity remain unverified.",
+      "proposed_use": "Potential reporting example after rights, identity and quality review.",
+      "quality_flags": "8,027-page original with November 2005 errata and July 2005 CSR. Final page names Study D1447L00001; source compilation identity/boundaries require review before treating this as one homogeneous trial report.",
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "isrctn-salvo-51750695",
+      "title": "Salmonella Vaccines in Oxford (SALVO) — published CSR tables, listings and results",
+      "study_ids": [
+        "ISRCTN51750695",
+        "SALVO"
+      ],
+      "study_family": "salvo-isrctn51750695",
+      "document_class": "csr_tables_listings_results",
+      "main_csr_body": false,
+      "source_url": "https://www.isrctn.com/editorial/retrieveFile/697308f3-7c0b-4fb8-8e87-85f6711130a7/41103",
+      "source_page_url": "https://www.isrctn.com/ISRCTN51750695",
+      "bytes": 1862327,
+      "sha256": "a34b5592972000481173cc0bcbb7b164af24bab964fc9d7ba49bc2161a4bbe51",
+      "pages": 88,
+      "rights_class": "CC_BY_4_0_registry_additional_file_candidate",
+      "rights_notes": "ISRCTN terms section 7.3 expressly covers Additional files; FAQ identifies CC BY 4.0 and permits commercial adaptation with attribution, source and access date. Third-party exceptions still require item review.",
+      "proposed_use": "Aggregate safety/immunogenicity TLF structure and report-to-listing reconciliation examples; not an LMN-201 clinical comparator.",
+      "quality_flags": [
+        "Not a complete integrated narrative CSR.",
+        "Coded participant-level listings and exact dates are present; select aggregate exemplars only after appropriate review."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ctgov-restart-tmc114fd2htx4007",
+      "title": "ReSTART HIV study — clinical study report main body",
+      "study_ids": [
+        "NCT04388904",
+        "TMC114FD2HTX4007",
+        "ReSTART"
+      ],
+      "study_family": "restart-nct04388904",
+      "document_class": "prospective_csr_main_body_appendices_incomplete",
+      "main_csr_body": true,
+      "source_url": "https://cdn.clinicaltrials.gov/large-docs/04/NCT04388904/SAP_001.pdf",
+      "source_page_url": "https://clinicaltrials.gov/study/NCT04388904",
+      "bytes": 982067,
+      "sha256": "fe3e6a16e4edef8ca006ce6df7362f66aa93c37cdd1f9c35278b3aca0041154b",
+      "pages": 87,
+      "rights_class": "review_required_sponsor_origin",
+      "rights_notes": "No affirmative reuse license found in the retained PDF. Government hosting does not establish public-domain status for this sponsor-origin report.",
+      "proposed_use": "Potential structure and quality-control benchmark after rights/quality review; deficiencies are negative examples, not approved wording to copy.",
+      "quality_flags": [
+        "Title-page report date 05-06-2024 differs from header 05-04-2024.",
+        "Title-page Study Design field contains the product name SYMTUZA.",
+        "Protocol/amendments, sample CRF, signatures and serious-event CRFs are listed as attachments to be provided.",
+        "Coded participant-level listings require review before any model-facing reuse."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": true,
+      "newly_acquired": false,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "isrctn-s337395-jsi-cst-001",
+      "title": "S-337395 RSV human challenge study — CSR synopsis only",
+      "study_ids": [
+        "JSI-CST-001",
+        "2212T1421"
+      ],
+      "study_family": "s337395-jsi-cst-001",
+      "document_class": "csr_synopsis",
+      "main_csr_body": false,
+      "source_url": "https://www.isrctn.com/editorial/retrieveFile/984766d8-bc9c-470a-b635-e39c8cfea1b7/46864",
+      "source_page_url": "https://www.isrctn.com/",
+      "bytes": 385009,
+      "sha256": "550e00de8dc5f2f4747fe112a68c182c47b0ae13be676ad7f32acdf855fe697c",
+      "pages": 8,
+      "rights_class": "CC_BY_4_0_registry_additional_file_candidate_with_legacy_notice",
+      "rights_notes": "Registry terms cover Additional files under CC BY 4.0; original contains a legacy Confidential marking. Resolve scope/third-party exceptions before model-facing admission.",
+      "proposed_use": "Optional synopsis-format comparison; low priority for LMN-201 and excluded from all full-CSR counts.",
+      "quality_flags": [
+        "Synopsis only, not the 120-page full CSR suggested by inherited pagination."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ctgov-rnhe2041-protocol-extract",
+      "title": "RNHE2041 protocol amendment — false-full-CSR search lead",
+      "study_ids": [
+        "RNHE2041",
+        "NCT03515044"
+      ],
+      "study_family": "rnhe2041",
+      "document_class": "protocol_appendix_extract",
+      "main_csr_body": false,
+      "source_url": "https://cdn.clinicaltrials.gov/large-docs/44/NCT03515044/Prot_SAP_000.pdf",
+      "source_page_url": "https://clinicaltrials.gov/study/NCT03515044",
+      "bytes": 1248162,
+      "sha256": "717ad034e845251cfd26ce53444950b88b3b1b2ce6ff64681857a53a58c1c02f",
+      "pages": 63,
+      "rights_class": "review_required_sponsor_origin",
+      "rights_notes": "Not admitted or treated as a reusable CSR. Retained only as search verification evidence.",
+      "proposed_use": "Negative acquisition example only.",
+      "quality_flags": [
+        "CSR header does not establish full-CSR content.",
+        "Excluded from the new reference download bundle and CSR counts."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": false,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "fidaxomicin-opt80-003-csr-synopsis-and-supplements",
+      "title": "Fidaxomicin Study 101.1.C.003 CSR synopsis with protocol-amendment summary and investigator appendix",
+      "study_ids": [
+        "101.1.C.003",
+        "OPT-80-003"
+      ],
+      "study_family": "fidaxomicin-opt80-003-and-supplements",
+      "document_class": "csr_synopsis_with_supporting_appendix",
+      "main_csr_body": false,
+      "source_url": "https://portal.dimdi.de/data/ctr/O-2708095-1-0-C13550-20190116183713.pdf",
+      "source_page_url": "https://portal.dimdi.de/data/ctr/O-2708095-1-0-C13550-20190116183713.pdf",
+      "bytes": 3479775,
+      "sha256": "7accd9be24f99e4c715b1ac6b5a96d7d730b2fcb2ea5b3d3d3cd6e5c9a6bcea6",
+      "pages": 34,
+      "rights_class": "review_required",
+      "rights_notes": [
+        {
+          "url": "https://www.gesetze-im-internet.de/amg_1976/__42b.html",
+          "finding": "Current section 42b(2) preserves intellectual-property and trade-secret protections; statutory public posting is not an open reuse/training license."
+        },
+        {
+          "url": "https://portal.dimdi.de/data/ctr/O-2708095-1-0-C13550-20190116183713.pdf",
+          "finding": "Original carries Confidential footer; no document-level open license identified."
+        }
+      ],
+      "proposed_use": "Same disease; randomized blinded oral active-treatment trial, recurrence and global cure reported. Limit: Antibiotic treatment of active CDI versus vancomycin, not LMN-201 adjunctive passive oral biologic; recurrence follow-up 28 +/-2 days after treatment, not the LMN client window",
+      "quality_flags": [
+        "PDF1 states 629 randomized, gives arm figures 300 and 323 (sum 623), and separately states six did not receive drug. Preserve this source wording/denominator ambiguity; do not silently relabel the arm counts.",
+        "Poppler emitted an optional-content-group-list warning. PDF page count, partial text extraction and representative page renders completed; retain the warning for document validation.",
+        "28 scanned/image appendix pages yield no native text; no OCR performed."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "pfizer-clover-b5091007-csr-synopsis",
+      "title": "CLOVER B5091007 final CSR synopsis",
+      "study_ids": [
+        "B5091007",
+        "NCT03090191",
+        "2016-003866-14"
+      ],
+      "study_family": "pfizer-clover-b5091007",
+      "document_class": "redacted_csr_synopsis",
+      "main_csr_body": false,
+      "source_url": "https://cdn.pfizer.com/pfizercom/clinical%20trials/csr%20synopsis/B5091007%20Public%20Disclosure%20Synopsis%20.pdf?x3VaXdL03b5oPg45aB7BpanLbo.jLMX3=",
+      "source_page_url": "https://cdn.pfizer.com/pfizercom/clinical%20trials/csr%20synopsis/B5091007%20Public%20Disclosure%20Synopsis%20.pdf?x3VaXdL03b5oPg45aB7BpanLbo.jLMX3=",
+      "bytes": 2106787,
+      "sha256": "88dc0402a347f6c714e35ed39a14c983de2e0a436e55de1d2c42e1f06f58b4ab",
+      "pages": 14,
+      "rights_class": "review_required",
+      "rights_notes": [
+        {
+          "url": "https://www.pfizer.com/general/terms",
+          "finding": "Copyrights section restricts copying to noncommercial individual reference with notices, requires written consent for other reuse and prohibits automated collection. No further Pfizer automated acquisition after review."
+        },
+        {
+          "url": "https://www.pfizer.com/science/clinical-trials/trial-data-and-results/data-requests",
+          "finding": "Scientifically valid research proposals use Pfizer/Vivli data-access route; public synopsis availability is not full-CSR access or training permission."
+        }
+      ],
+      "proposed_use": "CDI case definitions, multiplicity, vaccine efficacy and safety reporting, useful negative/uncertain efficacy reporting precedent. Limit: Intramuscular active immunization in adults >=50 to prevent primary CDI; different route, mechanism, population, timing and follow-up from LMN-201 oral passive-biologic recurrence adjunct.",
+      "quality_flags": [
+        "PDF3-5 are image/redacted pages without extracted text; PDF14 visually contains redactions and no usable text. Do not interpret these as missing original pages or recover redactions."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "polycab-rd-673-25477-basic-results",
+      "title": "PolyCAb ISRCTN80902301 Basic Results, 16 May 2017",
+      "study_ids": [
+        "ISRCTN80902301",
+        "RD/673/25477",
+        "2014-002623-96"
+      ],
+      "study_family": "polycab-rd-673-25477-basic-results",
+      "document_class": "registry_basic_results",
+      "main_csr_body": false,
+      "source_url": "https://www.isrctn.com/editorial/retrieveFile/e8f49775-bb93-4c71-928e-024ac9145f61/31646",
+      "source_page_url": "https://www.isrctn.com/ISRCTN80902301",
+      "bytes": 69575,
+      "sha256": "be41fbfaac9a02173b93b9b088656c9738a404febb8293018497874fb6ffc866",
+      "pages": null,
+      "rights_class": "CC-BY-4.0 via registry Additional files terms; document-level/third-party and intended-use review remains required",
+      "rights_notes": [
+        {
+          "url": "https://www.isrctn.com/page/terms",
+          "finding": "Section7.3 includes Additional files within CC BY; section8.2 reserves separate third-party rights where indicated."
+        },
+        {
+          "url": "https://www.isrctn.com/page/faqs",
+          "finding": "FAQ identifies CC BY4.0, commercial reuse/adaptation with attribution, source and acquisition date."
+        }
+      ],
+      "proposed_use": "Passive antibodies directed against C. difficile toxins; safety and immunogenicity reporting. Limit: Intravenous ovine polyclonal IgG in healthy volunteers, not oral LMN-201 in CDI patients; no recurrence-efficacy result.",
+      "quality_flags": [
+        "XML text extraction duplicates drawing text and loses table layout; not admitted as searchable text. No rendered pagination verified."
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ema_zinplava_epar_2016",
+      "title": "EMA Zinplava public assessment report EMA/853812/2016",
+      "study_ids": [],
+      "study_family": "zinplava",
+      "document_class": "regulatory_assessment_report",
+      "main_csr_body": false,
+      "source_url": "https://www.ema.europa.eu/en/documents/assessment-report/zinplava-epar-public-assessment-report_en.pdf",
+      "source_page_url": "https://www.ema.europa.eu/en/medicines/human/EPAR/zinplava",
+      "bytes": 4337913,
+      "sha256": "b88328353dfc39e11cb55cba972cb14e4fae4c7782975bbd687aaa90cd58af04",
+      "pages": 110,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ema_dificlir_epar_2011",
+      "title": "EMA Dificlir public assessment report EMA/857570/2011",
+      "study_ids": [],
+      "study_family": "dificlir",
+      "document_class": "regulatory_assessment_report",
+      "main_csr_body": false,
+      "source_url": "https://www.ema.europa.eu/en/documents/assessment-report/dificlir-epar-public-assessment-report_en.pdf",
+      "source_page_url": "https://www.ema.europa.eu/en/medicines/human/EPAR/dificlir",
+      "bytes": 989595,
+      "sha256": "17267ca5f1d623521247529166cf4996ec9ce49751090ab41b075b83127c06dd",
+      "pages": 83,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "fda_zinplava_statistical_2016",
+      "title": "FDA Zinplava statistical review and addendum BLA761046",
+      "study_ids": [],
+      "study_family": "zinplava",
+      "document_class": "regulatory_statistical_review",
+      "main_csr_body": false,
+      "source_url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+      "source_page_url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000StatR.pdf",
+      "bytes": 988815,
+      "sha256": "5149523670148ab46f48367a5f382eda475755c9a5c1accc6c885161e567525e",
+      "pages": 68,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "fda_rebyota_sbra_2022",
+      "title": "FDA Rebyota Summary Basis for Regulatory Action 30 November 2022",
+      "study_ids": [],
+      "study_family": "rebyota",
+      "document_class": "regulatory_summary_basis",
+      "main_csr_body": false,
+      "source_url": "https://www.fda.gov/media/163879/download",
+      "source_page_url": "https://www.fda.gov/vaccines-blood-biologics/vaccines/rebyota",
+      "bytes": 573196,
+      "sha256": "b899b3568712601a28fc5a70c7949b73bdd338d1e4e72ca8654bb9e934e38cbc",
+      "pages": 21,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "fda_vowst_sbra_2023",
+      "title": "FDA Vowst Summary Basis for Regulatory Action 26 April 2023",
+      "study_ids": [],
+      "study_family": "vowst",
+      "document_class": "regulatory_summary_basis",
+      "main_csr_body": false,
+      "source_url": "https://www.fda.gov/media/168002/download",
+      "source_page_url": "https://www.fda.gov/vaccines-blood-biologics/vowst",
+      "bytes": 540737,
+      "sha256": "3d822c7897653544df33923a9fadddc17e3929a860f8d883d5b687e6212f61eb",
+      "pages": 19,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ich_e3_1995",
+      "title": "ICH E3 Structure and Content of Clinical Study Reports Step4",
+      "study_ids": [],
+      "study_family": "e3",
+      "document_class": "ich_guideline",
+      "main_csr_body": false,
+      "source_url": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+      "source_page_url": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+      "bytes": 482932,
+      "sha256": "032d53bb6d693151b64bdc87aa4cf42b90e096db6e52dad73c2093cd62ffa24d",
+      "pages": 49,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    },
+    {
+      "id": "ich_e9_r1_2019",
+      "title": "ICH E9(R1) Estimands and Sensitivity Analysis Step4",
+      "study_ids": [],
+      "study_family": "e9",
+      "document_class": "ich_guideline",
+      "main_csr_body": false,
+      "source_url": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+      "source_page_url": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+      "bytes": 160629,
+      "sha256": "f7471f411f1c87ee76783d5b2b9faaeca31d01d530213f71b50d136b39e3b0d9",
+      "pages": 22,
+      "rights_class": "official_reference_document_training_use_not_approved",
+      "rights_notes": "Use as attributed regulatory/reference evidence; review document-specific notices and third-party material before training or broad redistribution.",
+      "proposed_use": "Source for the page-cited LMN-201 readiness matrix.",
+      "quality_flags": [
+        "unreviewed_except_explicit_evidence_pages"
+      ],
+      "exact_duplicate_of_prior_retained_manifest": false,
+      "newly_acquired": true,
+      "include_in_reference_bundle": true,
+      "evidence_role": "external_reference",
+      "client_study_evidence": false,
+      "training_approved": false,
+      "application_admission": "not_performed"
+    }
+  ],
+  "studyFamilyRules": [
+    "Keep CLN01, AMP01, POP01/doxycycline and AED01/levetiracetam together for evaluation leakage review because reports use or identify POP01 data.",
+    "Keep ACY01 and ACY02 in the acyclovir family pending overlap review.",
+    "COLT2 phases are one report family, not separate independent studies.",
+    "Do not count package containers, source XML, repeated TOC/CSR bytes, companion reports, or the Section 16 appendix indices as independent full trial CSRs.",
+    "Full available main body does not mean unredacted or every underlying Appendix 16 document retained.",
+    "This batch does not add a full CDI CSR.",
+    "CAF01, AMP01 and ACY02 use Pediatrix-derived retrospective data. Their patient-level overlap has not been resolved; different product/protocol names do not establish independent evaluation samples."
+  ],
+  "fullCdiSearch": [
+    {
+      "family": "Fidaxomicin / Dificlir / OPT-80",
+      "finding": "OPT80-003 new synopsis retained; OPT80-004, EXTEND and SUNSHINE synopses already retained. Astellas full supporting documents require a research request; no new full CSR acquired.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT02254967",
+        "https://www.clinicaltrials.astellas.com/transparency/",
+        "https://portal.dimdi.de/data/ctr/O-2708095-1-0-D7B6F1-20180130181325.pdf"
+      ],
+      "status": "synopses_only_full_not_acquired"
+    },
+    {
+      "family": "Bezlotoxumab / MODIFY / Zinplava",
+      "finding": "Three existing synopses not recounted. MODIFY I/II registry snapshots have no uploaded original report. FDA/EMA review documents are separate document classes, not full CSRs. MSD research-request route identified; no request submitted.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01241552",
+        "https://clinicaltrials.gov/study/NCT01513239",
+        "https://trialstransparency.msdclinicaltrials.com/policies-perspectives.aspx",
+        "https://trialstransparency.msdclinicaltrials.com/pdf/ProcedureAccessClinicalTrialData.pdf"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "SER-109 / Vowst / ECOSPOR III-IV",
+      "finding": "Registry snapshots list protocols and SAPs already retained, not CSR originals. Primary papers/FDA reviews are not CSRs.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT03183128",
+        "https://clinicaltrials.gov/study/NCT03183141"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "RBX2660 / Rebyota / PUNCH CD2-CD3",
+      "finding": "CD2 snapshot has no uploaded study originals; CD3 protocol/SAP already retained. Journal final report and FDA reviews not counted as CSRs.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT02299570",
+        "https://clinicaltrials.gov/study/NCT03244644",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC9925615/"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "Ridinilazole / Ri-CoDIFy",
+      "finding": "NCT03595553/566 snapshots list protocol and SAP, not CSR. EUCTR result page has structured results and no full-CSR attachment identified. The linked trials share a study family; do not treat as independent evaluation documents.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT03595553",
+        "https://clinicaltrials.gov/study/NCT03595566",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2017-001641-27/results"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "Cadazolid / IMPACT",
+      "finding": "Existing AC061A201 synopsis and AC061A301 protocol/SAP remain correctly classified. A SAP named for the Clinical Study Report is still a SAP. No full CSR obtained from the AC061A301/302 primary-source searches.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01987895",
+        "https://clinicaltrials.gov/study/NCT01983683",
+        "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2010-020941-29/1/16303"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "Surotomycin / MK4261 / CB183315",
+      "finding": "MK4261-005/006 registry snapshots have no uploaded study document PDFs. EUCTR results are structured summaries; MSD policy links a research-proposal route.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01597505",
+        "https://clinicaltrials.gov/study/NCT01598311",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2012-000252-34/results",
+        "https://trialstransparency.msdclinicaltrials.com/policies-perspectives.aspx"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "NTCD-M3 / VP20621",
+      "finding": "Exact phase2 identifier confirmed VP20621-200 / NCT01259726, not the initially searched -201. CTgov snapshot has no documentSection; EUCTR offers structured results with no full CSR attachment identified.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01259726",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2010-020484-20/results"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "Pfizer CLOVER vaccine",
+      "finding": "New14-page CSR synopsis retained. Uploaded registry protocol/SAP not redundantly acquired; full report access requires research proposal.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT03090191",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2016-003866-14/results",
+        "https://www.pfizer.com/science/clinical-trials/trial-data-and-results/data-requests"
+      ],
+      "status": "synopsis_only_full_not_acquired"
+    },
+    {
+      "family": "Sanofi Cdiffense vaccine",
+      "finding": "NCT01887912 / H-030-014 publicly lists protocol/SAP; sponsor registry statement routes qualified researchers to Vivli for CSR access. EUCTR is structured results, not a full CSR attachment.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01887912",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-000775-32/results"
+      ],
+      "status": "request_route_not_used"
+    },
+    {
+      "family": "Valneva IC84 / VLA84 vaccines",
+      "finding": "NCT01296386 (IC84-101) and NCT02316470 (VLA84-201) snapshots contain no uploaded document originals; no public full CSR identified. Financial reports and program press releases excluded.",
+      "urls": [
+        "https://clinicaltrials.gov/study/NCT01296386",
+        "https://clinicaltrials.gov/study/NCT02316470"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "GSK CDI studies116509 /208109",
+      "finding": "Sponsor listings show protocol for116509 and synopsis/protocol/SAP for208109 and direct users to contact for full report. The former is a serology study; the latter a phase1 vaccine, not LMN-201 recurrence treatment.",
+      "urls": [
+        "https://www.gsk-studyregister.com/trials/116509",
+        "https://www.gsk-studyregister.com/trials/208109"
+      ],
+      "status": "request_route_not_used"
+    },
+    {
+      "family": "RAPID rifaximin recurrence prevention",
+      "finding": "ISRCTN65163992 API record lists journal results and HRA summary, no report attachment. EUCTR links the journal article; not a full CSR.",
+      "urls": [
+        "https://www.isrctn.com/ISRCTN65163992",
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2012-003205-10/results"
+      ],
+      "status": "no_open_full_csr_found"
+    },
+    {
+      "family": "PROFIT FMT (adjacent, cirrhosis)",
+      "finding": "EUCTR labels an attachment Clinical Study report, but direct acquisition returned HTTP200 text/html Request Rejected (244bytes); no original PDF retained. ISRCTN record describes final report as available by written request. Condition is cirrhosis, not CDI.",
+      "urls": [
+        "https://www.clinicaltrialsregister.eu/ctr-search/trial/2017-003629-13/results",
+        "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2017-003629-13/1/33912",
+        "https://www.isrctn.com/ISRCTN11814003"
+      ],
+      "status": "download_blocked_scope_unverified"
+    },
+    {
+      "family": "PLACIDE probiotic CDI prevention",
+      "finding": "Substantial140-page NIHR HTA trial monograph located; not an ICH CSR. Commercial reproduction permission notice means it is not assumed training-cleared. No additional download made.",
+      "urls": [
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC4781647/",
+        "https://www.ncbi.nlm.nih.gov/books/NBK261335/"
+      ],
+      "status": "non_csr_lead_not_downloaded"
+    }
+  ],
+  "licensedNotAcquired": [
+    {
+      "title": "Alveavax-v1.2 Phase I randomized active-controlled vaccine study",
+      "registry_id": "NCT05844202",
+      "dataset_doi": "10.17632/pjrs3rrnfc.1",
+      "source_url": "https://data.mendeley.com/datasets/pjrs3rrnfc/1",
+      "license": "CC BY 4.0",
+      "license_evidence": "Mendeley item and author data-availability statement explicitly cover CSR, protocol, SAP, ICF and deidentified data.",
+      "author_evidence_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12704268/",
+      "web_references": [
+        "turn104view0",
+        "turn101search0"
+      ],
+      "status": "HTTP_403_from_item_and_public_file_API",
+      "attempted_api_urls": [
+        "https://data.mendeley.com/public-api/datasets/pjrs3rrnfc",
+        "https://data.mendeley.com/public-api/datasets/pjrs3rrnfc/files?folder_id=root&version=1"
+      ],
+      "action": "No bypass attempted. File-level access and PDF identity still unverified; no original retained."
+    }
+  ]
+}
