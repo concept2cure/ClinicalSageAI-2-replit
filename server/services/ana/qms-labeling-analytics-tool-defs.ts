@@ -193,15 +193,19 @@ export const QMS_CHANGE_LINK: AnaTool = {
 export const SEARCH_CLINICAL_REGULATORY_EVIDENCE: AnaTool = {
   name: 'search_clinical_regulatory_evidence',
   description:
-    "Search the shared clinical-regulatory evidence spine — comparable study designs, structured result observations, FDA regulatory findings (CRL deficiencies), regulatory outcomes, and governed design lessons — for an indication/phase. Returns provenance-carrying records, honest about coverage. Use when asked what comparable studies did, what FDA objected to, or what evidence exists.",
+    "Search the shared clinical-regulatory evidence spine — comparable studies, FDA findings, outcomes, design lessons, and explicitly public reference documents. The sources catalog identifies full/redacted CSRs, synopses, protocols and regulatory reviews separately. Query filters public source title/product/study metadata. Give source_id to read one to four retained pages after checksum and permitted-use verification. External examples are never the client's study results; extracted text remains unreviewed and training is not approved.",
   input_schema: {
     type: 'object',
     properties: {
       indication:  { type: 'string' },
       phase:       { type: 'string' },
-      query:       { type: 'string', description: 'Free-text keywords (endpoint, deficiency, design term).' },
-      entity_types: { type: 'array', items: { type: 'string', enum: ['studies', 'findings', 'outcomes', 'lessons'] }, description: 'Which entities to search; default all.' },
-      limit:       { type: 'number' },
+      query:       { type: 'string', description: 'Public source title, sponsor, product, study identifier, document class or recorded applicability (for example LMN-201 or NCT05330182; maximum 300 characters).' },
+      entity_types: { type: 'array', items: { type: 'string', enum: ['studies', 'findings', 'outcomes', 'lessons', 'sources'] }, description: 'Which entities to search; default all. sources returns catalog metadata; source_id reads retained pages.' },
+      limit:       { type: 'number', description: 'Whole number from 1 to 100; default 25.' },
+      source_offset: { type: 'number', description: 'Public source catalog pagination offset, 0–100000; default 0.' },
+      source_id:   { type: 'number', description: 'Source id returned by the public source catalog. Reads verified pages instead of running a catalog search.' },
+      page_start:  { type: 'number', description: 'First PDF page (1-based); default 1. Requires source_id.' },
+      page_end:    { type: 'number', description: 'Last PDF page inclusive; default page_start, at most four pages. Response is capped at 16000 characters with explicit truncation.' },
     },
     required: [],
   },

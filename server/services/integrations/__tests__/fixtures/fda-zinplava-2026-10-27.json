@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+    "terms": "https://open.fda.gov/terms/",
+    "license": "https://open.fda.gov/license/",
+    "last_updated": "2026-10-26",
+    "results": {
+      "skip": 0,
+      "limit": 1,
+      "total": 1
+    }
+  },
+  "results": [
+    {
+      "submissions": [
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "12",
+          "submission_status": "AP",
+          "submission_status_date": "20230526",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "application_docs": [
+            {
+              "id": "74397",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2023/761046s012lbl.pdf",
+              "date": "20230530",
+              "type": "Label"
+            },
+            {
+              "id": "74398",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/761046Orig1s012ltr.pdf",
+              "date": "20230530",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20161021",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "TYPE 1",
+          "submission_class_code_description": "Type 1 - New Molecular Entity",
+          "application_docs": [
+            {
+              "id": "45639",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/appletter/2016/761046Orig1s000ltr.pdf",
+              "date": "20161025",
+              "type": "Letter"
+            },
+            {
+              "id": "45683",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2016/761046s000lbl.pdf",
+              "date": "20161028",
+              "type": "Label"
+            },
+            {
+              "id": "46104",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046_toc.html",
+              "date": "20161209",
+              "type": "Review"
+            },
+            {
+              "id": "46110",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000SumR.pdf",
+              "date": "20161209",
+              "type": "Summary Review"
+            }
+          ]
+        }
+      ],
+      "application_number": "BLA761046",
+      "sponsor_name": "MERCK SHARP DOHME",
+      "openfda": {
+        "application_number": [
+          "BLA761046"
+        ],
+        "brand_name": [
+          "ZINPLAVA"
+        ],
+        "generic_name": [
+          "BEZLOTOXUMAB"
+        ],
+        "manufacturer_name": [
+          "Merck Sharp & Dohme LLC"
+        ],
+        "product_ndc": [
+          "0006-3025"
+        ],
+        "product_type": [
+          "HUMAN PRESCRIPTION DRUG"
+        ],
+        "route": [
+          "INTRAVENOUS"
+        ],
+        "substance_name": [
+          "BEZLOTOXUMAB"
+        ],
+        "rxcui": [
+          "1855052",
+          "1855057"
+        ],
+        "spl_id": [
+          "12338d29-efb0-4943-b5f5-826350e9ec46"
+        ],
+        "spl_set_id": [
+          "8f479bfe-2bfa-4cc5-9aee-1357364480b0"
+        ],
+        "package_ndc": [
+          "0006-3025-01",
+          "0006-3025-00"
+        ],
+        "unii": [
+          "4H5YMK1H2E"
+        ]
+      },
+      "products": [
+        {
+          "product_number": "001",
+          "reference_drug": "No",
+          "brand_name": "ZINPLAVA",
+          "active_ingredients": [
+            {
+              "name": "BEZLOTOXUMAB",
+              "strength": "1000ML/40ML"
+            }
+          ],
+          "dosage_form": "INJECTABLE",
+          "route": "INJECTION",
+          "marketing_status": "Prescription"
+        }
+      ]
+    }
+  ]
+}

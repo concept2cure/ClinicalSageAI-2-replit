@@ -14860,22 +14860,35 @@ registerToolHandler('qms_change_link', async (input, ctx) => {
 registerToolHandler('search_clinical_regulatory_evidence', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'search_clinical_regulatory_evidence requires tenant context.' });
   const org = ctx.organizationId;
-  const indication = typeof input.indication === 'string' ? input.indication : undefined;
-  const phase = typeof input.phase === 'string' ? input.phase : undefined;
-  const limit = typeof input.limit === 'number' ? Math.min(Math.max(input.limit, 1), 100) : 25;
-  const types = Array.isArray(input.entity_types) && input.entity_types.length
-    ? (input.entity_types as string[]) : ['studies', 'findings', 'outcomes', 'lessons'];
   try {
+    const references = await import('../clinical-regulatory-evidence/public-reference-sources.js');
+    const parsed = references.publicReferenceToolInputSchema.safeParse(input);
+    if (!parsed.success) return JSON.stringify({ error: 'Invalid evidence search input.', details: parsed.error.issues.map(issue => issue.message) });
+    const { indication, phase, query } = parsed.data;
+    const limit = parsed.data.limit ?? 25;
+    if (parsed.data.source_id !== undefined) {
+      const source = await references.readPublicReferencePages(org, { sourceId: parsed.data.source_id,
+        pageStart: parsed.data.page_start, pageEnd: parsed.data.page_end });
+      return JSON.stringify({ ok: true, source, provenance: buildProvenance({
+        sourceId: 'clinical_regulatory_evidence',
+        citation: { title: source.title ?? 'Public reference source', identifier: String(source.sourceId), url: source.officialUrl },
+        query: null, confidence: 'moderate',
+      }), note: source.note });
+    }
+    const types = parsed.data.entity_types?.length ? parsed.data.entity_types : ['studies', 'findings', 'outcomes', 'lessons', 'sources'];
     const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
     const result: Record<string, unknown> = {};
     if (types.includes('studies')) result.studies = await spine.listStudies(org, { indication, phase, limit });
     if (types.includes('findings')) result.findings = await spine.listFindings(org, { limit });
     if (types.includes('outcomes')) result.outcomes = await spine.listOutcomes(org, { limit });
     if (types.includes('lessons')) result.designLessons = await spine.listDesignLessons(org, { limit });
+    if (types.includes('sources')) result.sources = await references.searchPublicReferenceSources(org, {
+      indication, phase, query, limit, offset: parsed.data.source_offset,
+    });
     const provenance = buildProvenance({
       sourceId: 'clinical_regulatory_evidence',
       citation: { title: 'Clinical regulatory evidence spine', identifier: indication ?? null, url: null },
-      query: [indication, phase].filter(Boolean).join(' ') || null,
+      query: [indication, phase, query].filter(Boolean).join(' ') || null,
       confidence: 'moderate',
     });
     return JSON.stringify({ ok: true, ...result, provenance, note: 'Precedent evidence from the shared spine (global-public + your org). This is evidence, not a prediction.' });

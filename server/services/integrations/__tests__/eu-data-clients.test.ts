@@ -20,6 +20,7 @@ import {
   normalizeMedicine,
   searchEmaEpar,
   EMA_EPAR_SOURCE,
+  clearEmaEparCache,
 } from '../ema-epar-client';
 import {
   buildEuCtisBody,
@@ -72,13 +73,14 @@ const EU_CTIS_FIXTURE = {
 };
 
 function okJson(json: unknown) {
-  return { ok: true, status: 200, json: async () => json } as any;
+  return new Response(JSON.stringify(json), { headers: { 'content-type': 'application/json' } });
 }
 
 describe('eu-data clients', () => {
   const realFetch = global.fetch;
   afterEach(() => {
     global.fetch = realFetch;
+    clearEmaEparCache();
     delete process.env.EUDAMED_API_BASE_URL;
     delete process.env.EMA_EPAR_API_BASE_URL;
     delete process.env.EU_CTIS_API_BASE_URL;
@@ -172,7 +174,8 @@ describe('eu-data clients', () => {
     });
 
     it('returns status ok with mapped medicines on success', async () => {
-      global.fetch = vi.fn().mockResolvedValue(okJson(EMA_EPAR_FIXTURE)) as any;
+      global.fetch = vi.fn(async (url: string) => okJson({ data: url.includes('medicines_json')
+        ? [{ category: 'Human', name_of_medicine: 'Onco-Drug', ema_product_number: 'EMEA/H/C/004842', active_substance: 'examplemab' }] : [] })) as any;
       const r = await searchEmaEpar({ query: 'examplemab' });
       expect(r.source).toBe(EMA_EPAR_SOURCE);
       expect(r.status).toBe('ok');

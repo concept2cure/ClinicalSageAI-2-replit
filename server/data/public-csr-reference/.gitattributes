@@ -1,0 +1,2 @@
+# Evidence originals are byte-exact PDFs, including their original whitespace.
+originals/*.pdf binary

@@ -1,0 +1,100 @@
+{
+  "target_study_id": "NCT05330182",
+  "sponsor_protocol": "CDI02",
+  "registry_snapshot_date": "2026-10-27",
+  "source_url": "https://clinicaltrials.gov/api/v2/studies/NCT05330182",
+  "registry_design": {
+    "studyType": "INTERVENTIONAL",
+    "phases": [
+      "PHASE2",
+      "PHASE3"
+    ],
+    "designInfo": {
+      "allocation": "RANDOMIZED",
+      "interventionModel": "PARALLEL",
+      "primaryPurpose": "PREVENTION",
+      "maskingInfo": {
+        "masking": "QUADRUPLE",
+        "maskingDescription": "An open label sentinel cohort will be followed by a double-blind placebo-controlled main cohort.",
+        "whoMasked": [
+          "PARTICIPANT",
+          "CARE_PROVIDER",
+          "INVESTIGATOR",
+          "OUTCOMES_ASSESSOR"
+        ]
+      }
+    },
+    "enrollmentInfo": {
+      "count": 375,
+      "type": "ESTIMATED"
+    }
+  },
+  "registry_primary_outcomes": [
+    {
+      "measure": "Proportion of participants who achieve global cure",
+      "description": "Proportion of total participants with both successful initial CDI treatment and no CDI recurrence during the Prevention and Observation Phases (by treatment assignment).",
+      "timeFrame": "Up to 16 weeks after initiation of therapy"
+    }
+  ],
+  "registry_status": {
+    "statusVerifiedDate": "2026-10",
+    "overallStatus": "ACTIVE_NOT_RECRUITING",
+    "startDateStruct": {
+      "date": "2024-08-29",
+      "type": "ACTUAL"
+    },
+    "primaryCompletionDateStruct": {
+      "date": "2026-08-31",
+      "type": "ACTUAL"
+    },
+    "completionDateStruct": {
+      "date": "2026-12-01",
+      "type": "ESTIMATED"
+    },
+    "studyFirstSubmitDate": "2022-04-08",
+    "studyFirstSubmitQcDate": "2022-04-08",
+    "studyFirstPostDateStruct": {
+      "date": "2022-04-15",
+      "type": "ACTUAL"
+    },
+    "lastUpdateSubmitDate": "2026-10-01",
+    "lastUpdatePostDateStruct": {
+      "date": "2026-10-05",
+      "type": "ACTUAL"
+    }
+  },
+  "public_protocol_or_sap_or_csr_available": false,
+  "public_sponsor_release": {
+    "date": "2026-10-21",
+    "source_url": "https://www.prnewswire.com/news-releases/lumen-bio-reports-positive-phase-2-results-from-the-repreve-clinical-trial-lmn-201-for-c-difficile-infection-302915046.html",
+    "provenance_class": "sponsor_reported_press_release_not_verified_client_database",
+    "reported_total": 45,
+    "reported_part_a": 22,
+    "reported_part_b": 23,
+    "reported_part_b_global_cure": {
+      "lmn201": {
+        "n": 10,
+        "N": 12
+      },
+      "placebo": {
+        "n": 4,
+        "N": 11
+      }
+    },
+    "reported_analysis": "prespecified Bayesian SAP; detailed prior/model/threshold not publicly available here"
+  },
+  "requires_reconciliation": [
+    "Registry still estimates enrollment375 versus sponsor release45participants",
+    "Registry phases2/3 versus sponsor phase2 report",
+    "Registry global cure up to16weeks versus earlier sponsor description of12week endpoint: final approved protocol governs",
+    "PartA sentinel versus PartB randomized populations, treatment duration, and inclusion must be reconciled",
+    "Client final approved SAP, model, priors, estimand, success criterion, missing-data handling, data cut, and amendments required"
+  ],
+  "csr_authoring_controls": [
+    "Do not turn sponsor press release into verified client data",
+    "Do not infer recurrence denominator from percentages",
+    "Do not pool PartA with PartB without SAP authority",
+    "Do not transfer comparator priors/endpoint windows/population definitions",
+    "All external references must be explicitly labeled external and source/version/page grounded"
+  ]
+}

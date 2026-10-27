@@ -3517,6 +3517,12 @@ export const C2C_MIGRATION_FILES = [
   // organization_id INTEGER NOT NULL; additive and IF NOT EXISTS; drops nothing.
   'migrations/20261022c_ana_project_skills.sql',
 
+  // Curated CDI reporting references for the existing CRE/AnA source reader.
+  // Retained FDA/CC-BY originals ship under server/data/public-csr-reference;
+  // sponsor sources without admitted content stay catalog-only. Replay asserts
+  // exact source identity/content and never overwrites an existing source.
+  'migrations/20261027_cdi_public_reference_seed.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
