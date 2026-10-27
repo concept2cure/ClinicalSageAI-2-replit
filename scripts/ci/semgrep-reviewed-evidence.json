@@ -197,16 +197,6 @@
       "reason": "Original synthetic regression stdout or structured test report, retained with its original hash. The token-shaped match records test execution or confirmation fixtures, not executable application input or a live provider credential. Full-history credential scanning remains enabled."
     },
     {
-      "file": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/scripts/start_qa.py",
-      "sha256": "aaabdb4134a84a603867733059b37ac567a38f07b103b80fdbb5624757bca61f",
-      "kind": "historical_fixture_bootstrap",
-      "reviewedRules": [
-        "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected",
-        "python.lang.security.audit.insecure-transport.urllib.insecure-urlopen.insecure-urlopen"
-      ],
-      "reason": "Retained local QA bootstrap source uses a fixed loopback HTTP readiness probe. It is historical test evidence, is not imported by the application, and carries no provider transport or caller-selected target."
-    },
-    {
       "file": "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/adjacent-confirmation-01-red.txt",
       "sha256": "73a000473cca511024303c56c68d5d5c813da9145af8b20c4585db69a8b58e50",
       "kind": "historical_test_output",
