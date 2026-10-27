@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-27T00:22:51.712Z",
+  "generatedAt": "2026-10-27T23:50:04.330Z",
   "git": {
-    "sha": "88c295b43e24dad8771db324989d0c73b769212b",
+    "sha": "5cf64691ccc4616a72756120cccbab0a9ce6c601",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2342,7 +2342,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1170054
+        "bytes": 1170957
       },
       {
         "file": "shared/schema.ts",
@@ -2362,7 +2362,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 332531
+        "bytes": 332865
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2458,7 +2458,7 @@
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 130218
+        "bytes": 131118
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2534,7 +2534,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 112175
+        "bytes": 112577
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2557,18 +2557,18 @@
         "bytes": 101286
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "bytes": 100392
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 100688
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 100255
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "bytes": 100392
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22215
+        "lines": 22228
       },
       {
         "file": "shared/schema.ts",
@@ -2580,7 +2580,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6593
+        "lines": 6596
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2727,6 +2727,10 @@
         "lines": 2319
       },
       {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2296
+      },
+      {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2294
       },
@@ -2736,10 +2740,6 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2278
-      },
-      {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2278
       },
       {
@@ -2791,12 +2791,12 @@
         "lines": 2133
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 2124
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2129
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 2122
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 2124
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2872,7 +2872,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 1910
+        "lines": 1916
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
