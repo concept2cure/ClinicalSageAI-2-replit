@@ -32,3 +32,18 @@ The old CSV export script treated `significant` as trial success, so `not statis
 5. Preserve one canvas, one governed editor and one AnA. Never present benchmark references as client study evidence.
 
 Not claimed: additional independent PDF downloads in this turn, commercial model fine-tuning, production source admission, TypeScript gate completion or agency-submission readiness.
+
+## Additional GSK CSR main-body staging — rights-restricted
+
+Two previously retained original redacted GSK clinical study reports were independently opened, inspected and converted to hash-bound **unreviewed** page extracts:
+
+| Original Library file | Pages | Original SHA-256 |
+|---|---:|---|
+| GSK104106_Final_Year10_Redacted_Clinical_Study_Report.pdf | 1,940 | b078056109314724f37141ba331ff244a49894d513b7f0629846918960fc34dc |
+| GSK114312_Redacted_Clinical_Study_Report.pdf | 477 | 175cc7970c2283fb13d4425987cb7e3e6ed7f2c00709a8ec38c4318fcdd4eecd |
+
+Total additional staged: **2 redacted report bodies, 2,417 pages**. Their 951,949-byte page-derivative zip is retained in Library as `Concept2Cure_GSK_CSR_Restricted_Derivatives_2026-10-27.zip`, SHA-256 `e4a8c5d47d4345535fcd1e6c79e0a9710db61d9c6e762f995d9b67fd4a8fa27d`. Each page's content hash and source PDF identity were checked.
+
+**Rights status: RESTRICTED.** No model training, commercial retrieval, redistribution or production Cortex admission is authorized by this processing. Registration/disclosure of a CSR on a sponsor portal does not itself confer those rights. Full scientific source review, license review and tenant-safe admission remain uncompleted.
+
+Combined newly staged source extracts in this session: **13 report bodies / 6,238 pages** (11 NIH + 2 GSK). This count is not 13 newly acquired original files: all originals were already retained in the user's Library. No independent new PDF download is claimed.
