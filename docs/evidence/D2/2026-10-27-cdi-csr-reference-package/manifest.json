@@ -1,0 +1,3015 @@
+{
+  "schemaVersion": 1,
+  "collectionId": "cdi-csr-reference-2026-10-27-v1",
+  "targetStudyId": "NCT05330182",
+  "records": [
+    {
+      "sourceKey": "cdi-rbx2660-s12879-022-07256-y",
+      "sourceType": "publication",
+      "title": "s12879-022-07256-y",
+      "agency": null,
+      "sponsor": "Rebiotix / Ferring",
+      "product": "RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://link.springer.com/content/pdf/10.1186/s12879-022-07256-y.pdf",
+      "version": "2026-10-27-34e7993c9224",
+      "originalPath": "originals/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.pdf",
+      "pagesPath": "pages/34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333.jsonl",
+      "sha256": "34e7993c9224ed9794d894e3506715509e3b4a29526fe91b47ba9ba641ef7333",
+      "bytes": 1595585,
+      "pageCount": 13,
+      "archiveMember": null,
+      "documentClass": "primary_trial_publication",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "CC BY 4.0 license verified in the retained publication. Preserve attribution and identify extraction as a derivative.",
+        "sourceUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is primary_trial_publication; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-01-bioresearch-monitoring-final-discipline-review--october-20--2022---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "01 Bioresearch Monitoring Final Discipline Review  October 20  2022 - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-d178317cefb7",
+      "originalPath": "originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf",
+      "pagesPath": "pages/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.jsonl",
+      "sha256": "d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474",
+      "bytes": 223512,
+      "pageCount": 4,
+      "archiveMember": "Bioresearch Monitoring Final Discipline Review, October 20, 2022 - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-02-cber-cmc-bla-review-memo---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "02 CBER CMC BLA Review Memo - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-08472601ef56",
+      "originalPath": "originals/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.pdf",
+      "pagesPath": "pages/08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a.jsonl",
+      "sha256": "08472601ef56acf46bfcbfb0d4c359dc55880e9080f38e3946a5f175e415e99a",
+      "bytes": 629053,
+      "pageCount": 51,
+      "archiveMember": "CBER CMC BLA Review Memo - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-03-cber-dmpq-cmc-facility-bla-review-memo---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "03 CBER DMPQ CMC-Facility BLA Review Memo - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-3d760b139dad",
+      "originalPath": "originals/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.pdf",
+      "pagesPath": "pages/3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0.jsonl",
+      "sha256": "3d760b139dad60246f713a52acdd57ca08bb344e34cb8d8ed6a3fd835df1a0e0",
+      "bytes": 481775,
+      "pageCount": 30,
+      "archiveMember": "CBER DMPQ CMC-Facility BLA Review Memo - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-04-clinical-review-memo--november-30--2022---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "04 Clinical Review Memo  November 30  2022 - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-696b72c64453",
+      "originalPath": "originals/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.pdf",
+      "pagesPath": "pages/696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2.jsonl",
+      "sha256": "696b72c644537028f11f2a94afaa14a178f36de8a5b8f98be8e3def112a78bd2",
+      "bytes": 1982384,
+      "pageCount": 135,
+      "archiveMember": "Clinical Review Memo, November 30, 2022 - REBYOTA.pdf",
+      "documentClass": "regulatory_clinical_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-05-cmc-statistical-review---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "05 CMC Statistical Review - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-8028f46f640e",
+      "originalPath": "originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf",
+      "pagesPath": "pages/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.jsonl",
+      "sha256": "8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3",
+      "bytes": 284728,
+      "pageCount": 9,
+      "archiveMember": "CMC Statistical Review - REBYOTA.pdf",
+      "documentClass": "regulatory_cmc_statistical_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_cmc_statistical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-06-employee-officer-list-memo--november-21--2022---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "06 Employee-Officer List Memo  November 21  2022 - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-c329524d4ca9",
+      "originalPath": "originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf",
+      "pagesPath": "pages/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.jsonl",
+      "sha256": "c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8",
+      "bytes": 151141,
+      "pageCount": 2,
+      "archiveMember": "Employee-Officer List Memo, November 21, 2022 - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-07-late-cycle-meeting-summary--august-30--2022---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "07 Late-Cycle Meeting Summary  August 30  2022 - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-11ae2acf961b",
+      "originalPath": "originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf",
+      "pagesPath": "pages/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.jsonl",
+      "sha256": "11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e",
+      "bytes": 230334,
+      "pageCount": 9,
+      "archiveMember": "Late-Cycle Meeting Summary, August 30, 2022 - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-08-mid-cycle-communication-summary--may-31--2022---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "08 Mid-Cycle Communication Summary  May 31  2022 - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-37c342c886f0",
+      "originalPath": "originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf",
+      "pagesPath": "pages/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.jsonl",
+      "sha256": "37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604",
+      "bytes": 210764,
+      "pageCount": 6,
+      "archiveMember": "Mid-Cycle Communication Summary, May 31, 2022 - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-09-pharmacovigilance-plan-review-memo---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "09 Pharmacovigilance Plan Review Memo - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-39da5a51507d",
+      "originalPath": "originals/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.pdf",
+      "pagesPath": "pages/39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7.jsonl",
+      "sha256": "39da5a51507d9e73954cb739a627378aff7c4270c330bd84a1e1d87bea5933c7",
+      "bytes": 357920,
+      "pageCount": 11,
+      "archiveMember": "Pharmacovigilance Plan Review Memo - REBYOTA.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-rebyota-10-statistical-review---rebyota",
+      "sourceType": "fda_review_memo",
+      "title": "10 Statistical Review - REBYOTA",
+      "agency": "FDA",
+      "sponsor": "Rebiotix / Ferring",
+      "product": "REBYOTA / RBX2660",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/164039/download?attachment=",
+      "version": "2026-10-27-abe9a6ca3f8f",
+      "originalPath": "originals/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.pdf",
+      "pagesPath": "pages/abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9.jsonl",
+      "sha256": "abe9a6ca3f8f9326951712558d9214c2e633bc6c35ec61a8acf7b6585b06beb9",
+      "bytes": 1523729,
+      "pageCount": 42,
+      "archiveMember": "Statistical Review - REBYOTA.pdf",
+      "documentClass": "regulatory_statistical_review",
+      "studyFamily": "RBX2660-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_statistical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-01-analytical-method-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "01 Analytical Method Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-6976c9fd3e91",
+      "originalPath": "originals/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.pdf",
+      "pagesPath": "pages/6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81.jsonl",
+      "sha256": "6976c9fd3e912ee14dd9c0f3bc14d1aaca604de15807b8052ac806aed6780e81",
+      "bytes": 353263,
+      "pageCount": 11,
+      "archiveMember": "Analytical Method Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-02-bioresearch-monitoring-final-discipline-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "02 Bioresearch Monitoring Final Discipline Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-90a9014683db",
+      "originalPath": "originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf",
+      "pagesPath": "pages/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.jsonl",
+      "sha256": "90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe",
+      "bytes": 196985,
+      "pageCount": 2,
+      "archiveMember": "Bioresearch Monitoring Final Discipline Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-03-cber-cmc-bla-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "03 CBER CMC BLA Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-07c4d118b38f",
+      "originalPath": "originals/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.pdf",
+      "pagesPath": "pages/07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd.jsonl",
+      "sha256": "07c4d118b38faa2c4a3115640a398fcc8c946aae8e4233f458589f7bc55cadfd",
+      "bytes": 792172,
+      "pageCount": 42,
+      "archiveMember": "CBER CMC BLA Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-04-cber-dmpq-cmc-facility-bla-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "04 CBER DMPQ CMC-Facility BLA Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-d6b110fe39f6",
+      "originalPath": "originals/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.pdf",
+      "pagesPath": "pages/d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea.jsonl",
+      "sha256": "d6b110fe39f6c2ed0e36a7129b35cc5936e81ed770df618adbc750c775269bea",
+      "bytes": 637534,
+      "pageCount": 47,
+      "archiveMember": "CBER DMPQ CMC-Facility BLA Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-05-clinical-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "05 Clinical Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-510419aa353b",
+      "originalPath": "originals/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.pdf",
+      "pagesPath": "pages/510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e.jsonl",
+      "sha256": "510419aa353badbc138185e67c64a7f78c2d0d9d8d95f30851946d0cdddb1c9e",
+      "bytes": 2149393,
+      "pageCount": 104,
+      "archiveMember": "Clinical Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_clinical_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-06-cmc-statistical-review---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "06 CMC Statistical Review - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-6252063c1772",
+      "originalPath": "originals/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.pdf",
+      "pagesPath": "pages/6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c.jsonl",
+      "sha256": "6252063c1772eb20d01b87521636fc6b9abb0f73fa416fe620f6c3c9bf79ac3c",
+      "bytes": 545791,
+      "pageCount": 19,
+      "archiveMember": "CMC Statistical Review - VOWST.pdf",
+      "documentClass": "regulatory_cmc_statistical_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_cmc_statistical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-07-employee-officer-list-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "07 Employee-Officer List Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-0aa6f061f208",
+      "originalPath": "originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf",
+      "pagesPath": "pages/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.jsonl",
+      "sha256": "0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525",
+      "bytes": 130456,
+      "pageCount": 1,
+      "archiveMember": "Employee-Officer List Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-08-mid-cycle-communication-agenda---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "08 Mid-Cycle Communication Agenda - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-a4eb50cb0e68",
+      "originalPath": "originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf",
+      "pagesPath": "pages/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.jsonl",
+      "sha256": "a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263",
+      "bytes": 178500,
+      "pageCount": 3,
+      "archiveMember": "Mid-Cycle Communication Agenda - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-09-pharmacovigilance-plan-review-memo---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "09 Pharmacovigilance Plan Review Memo - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-e97d4d57c784",
+      "originalPath": "originals/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.pdf",
+      "pagesPath": "pages/e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7.jsonl",
+      "sha256": "e97d4d57c7849fa6b5e4e431644cd50b8b5d5c0508b9b45d2a2653b1d5ca2dc7",
+      "bytes": 332632,
+      "pageCount": 15,
+      "archiveMember": "Pharmacovigilance Plan Review Memo - VOWST.pdf",
+      "documentClass": "regulatory_supporting_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_supporting_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-vowst-10-statistical-review---vowst",
+      "sourceType": "fda_review_memo",
+      "title": "10 Statistical Review - VOWST",
+      "agency": "FDA",
+      "sponsor": "Seres Therapeutics",
+      "product": "VOWST / SER-109",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.fda.gov/media/168273/download?attachment=",
+      "version": "2026-10-27-3bc9a4de916e",
+      "originalPath": "originals/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.pdf",
+      "pagesPath": "pages/3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37.jsonl",
+      "sha256": "3bc9a4de916e3ae4f46cad8323eef0d27405d8c2a5fb849c9054c0fec5436f37",
+      "bytes": 772030,
+      "pageCount": 36,
+      "archiveMember": "Statistical Review - VOWST.pdf",
+      "documentClass": "regulatory_statistical_review",
+      "studyFamily": "SER-109-development-program",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_statistical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Microbiota intervention and treatment timing differ from the oral LMN-201 biologic cocktail used during and after standard antibiotics."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    },
+    {
+      "sourceKey": "cdi-zinplava-761046-medical-review",
+      "sourceType": "fda_review_memo",
+      "title": "761046-medical-review",
+      "agency": "FDA",
+      "sponsor": "Merck",
+      "product": "ZINPLAVA / bezlotoxumab",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "therapeuticArea": "Infectious diseases / gastroenterology",
+      "phase": null,
+      "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2016/761046Orig1s000MedR.pdf",
+      "version": "2026-10-27-9a5d5fbacbc5",
+      "originalPath": "originals/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.pdf",
+      "pagesPath": "pages/9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d.jsonl",
+      "sha256": "9a5d5fbacbc50cb435741fa122b76702129c3d963339b3867cb1583157ce1a8d",
+      "bytes": 6689397,
+      "pageCount": 126,
+      "archiveMember": null,
+      "documentClass": "regulatory_clinical_review",
+      "studyFamily": "MODIFY-I-II",
+      "permittedUse": {
+        "retrieval": "allowed",
+        "basis": "FDA-authored public review memorandum; FDA website policy permits reuse unless otherwise noted. This admits attributed reference retrieval, not model training or an endorsement.",
+        "sourceUrl": "https://www.fda.gov/about-fda/about-website/website-policies"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI recurrence prevention reporting, endpoint definitions, analysis populations, follow-up and safety; consult the study-specific protocol and SAP before applying a reporting pattern.",
+        "limitations": [
+          "External comparator evidence; never the LMN-201 client study results.",
+          "Document scope is regulatory_clinical_review; not a sponsor clinical study report.",
+          "Extraction is unreviewed; table alignment, figures, redactions and numerical claims require original-page verification.",
+          "Intravenous single antitoxin intervention differs from LMN-201 oral multicomponent treatment; recurrence analysis sets and follow-up windows must be matched explicitly."
+        ]
+      },
+      "acquiredAt": "2026-10-27",
+      "scientificReview": "not_assessed",
+      "tableSemanticsVerified": false,
+      "trainingApproved": false,
+      "clientStudyEvidence": false
+    }
+  ],
+  "catalog": [
+    {
+      "sourceKey": "catalog-8f4f174102fe84c4cd10",
+      "sourceType": "csr",
+      "title": "Cadazolid AC-061A201 clinical study report synopsis",
+      "sponsor": "Actelion Pharmaceuticals Ltd",
+      "product": "AC-061A201",
+      "indication": "Clostridioides difficile infection",
+      "phase": "2",
+      "trialRegistryIdentifier": "NCT01222702",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2010-020941-29/1/16303",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "cadazolid-ac061a201",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public EU CTR posting; PDF permissions disallow copy. No reusable extracted text or embeddings produced. Commercial use clearance unassessed; do not infer it from publication.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2010-020941-29/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI reporting exemplar; antibiotic treatment study, not adjunctive LMN-201 recurrence-prevention evidence.",
+        "limitations": [
+          "Ten-page synopsis only; source pagination refers to a much larger CSR. Original full CSR is not possessed.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "445473407cc4572a682c0cfe74434bd95b821a511125587517e0993ac29281f6",
+        "bytes": 859601,
+        "pageCount": 10,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-8f35e8cddc15fbe8ea1d",
+      "sourceType": "csr",
+      "title": "Clinical Study Report ARN-509-003 (redacted body) — SPARTAN: apalutamide report body",
+      "sponsor": "Janssen",
+      "product": "ARN-509-003",
+      "indication": "Prostate cancer",
+      "trialRegistryIdentifier": "NCT01946204",
+      "officialUrl": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/rev_210951_arn-509-003_CSR_Redacted.pdf",
+      "documentClass": "redacted_csr_listing",
+      "studyFamily": "ARN-509-003",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. A long-form sponsor report body for structural review. Not a CDI clinical comparator; appendices are not implied.",
+        "sourceUrl": "https://www.jnjmedicalconnect.com/products/erleada/medical-content/erleada-falls-and-fractures"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "A long-form sponsor report body for structural review. Not a CDI clinical comparator; appendices are not implied.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-6098f40b941378cf2082",
+      "sourceType": "csr",
+      "title": "Clinical study report — HPV vaccine immunogenicity and safety in Chinese adolescents",
+      "sponsor": "GSK",
+      "product": "GSK-112022",
+      "indication": "HPV infection prevention",
+      "trialRegistryIdentifier": "NCT00996125",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=112022&attachmentIdentifier=e626b176-c6a7-47d2-82cc-60363b4c45ab&versionIdentifier=&fileName=gsk-112022-clinical-study-report-redact.pdf",
+      "documentClass": "redacted_csr_listing",
+      "studyFamily": "GSK-112022",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Biologic writing example. Sponsor listing offers a redacted CSR and separately says full reports may be requested.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/112022"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Biologic writing example. Sponsor listing offers a redacted CSR and separately says full reports may be requested.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-74e80932e9e233cbb22f",
+      "sourceType": "csr",
+      "title": "Clinical study report — ZOSTER-006: herpes zoster vaccine in adults aged 50 and older",
+      "sponsor": "GSK",
+      "product": "GSK-110390",
+      "indication": "Herpes zoster prevention",
+      "trialRegistryIdentifier": "NCT01165177",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=110390&attachmentIdentifier=7ac65d45-7220-4a32-83ca-0d6692451b81&versionIdentifier=13c6112f-f34f-47b4-8deb-c8a31204f564&fileName=gsk-110390-clinical-study-report-redact.pdf",
+      "documentClass": "redacted_csr_listing",
+      "studyFamily": "GSK-110390",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Biologic/vaccine reporting example. Linked filename identifies redaction; full appendices and scientific quality are not verified.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/110390"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Biologic/vaccine reporting example. Linked filename identifies redaction; full appendices and scientific quality are not verified.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-1c355081915fdf3c5631",
+      "sourceType": "csr",
+      "title": "Clinical study report — ZOSTER-022: herpes zoster vaccine in adults aged 70 and older",
+      "sponsor": "GSK",
+      "product": "GSK-113077",
+      "indication": "Herpes zoster prevention",
+      "trialRegistryIdentifier": "NCT01165229",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=113077&attachmentIdentifier=e6336c8a-8751-4f20-bf0d-af46fb317474&versionIdentifier=&fileName=gsk-113077-clinical-study-report-redact.pdf",
+      "documentClass": "redacted_csr_listing",
+      "studyFamily": "GSK-113077",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Related to ZOSTER-006; keep both studies in the same training/evaluation split to avoid leakage. Corrected HTML-escaped query separators; corrected binary URL remains untested.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/113077"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Related to ZOSTER-006; keep both studies in the same training/evaluation split to avoid leakage. Corrected HTML-escaped query separators; corrected binary URL remains untested.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-f555ad9b856743df9116",
+      "sourceType": "csr",
+      "title": "GeparX CSR synopsis — GeparX: factorial breast cancer study",
+      "sponsor": "GBG Forschungs GmbH",
+      "product": "GBG88",
+      "indication": "Breast cancer",
+      "trialRegistryIdentifier": "NCT02682693",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2015-001755-72/1/39287",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "GBG88",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for factorial-design synopsis reporting, not CDI evidence.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-001755-72/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Candidate for factorial-design synopsis reporting, not CDI evidence.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-3eb515ead99ad6a9ac30",
+      "sourceType": "csr",
+      "title": "A536-03 CSR Synopsis — Luspatercept dose escalation and expansion in MDS",
+      "sponsor": "Acceleron Pharma",
+      "product": "A536-03",
+      "indication": "Myelodysplastic syndromes",
+      "trialRegistryIdentifier": "NCT01749514",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2012-002523-14/1/29506",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "A536-03",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for open-label dose-cohort and expansion reporting.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2012-002523-14/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Candidate for open-label dose-cohort and expansion reporting.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-0a62558f52b9ae43fb7e",
+      "sourceType": "csr",
+      "title": "GAIN-2 CSR Synopsis — GAIN-2: comparison of dose-dense chemotherapy regimens",
+      "sponsor": "GBG Forschungs GmbH",
+      "product": "GBG-68",
+      "indication": "Breast cancer",
+      "trialRegistryIdentifier": "NCT01690702",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2011-005214-11/1/40093",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "GBG-68",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for comparative regimen and follow-up writing.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2011-005214-11/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Candidate for comparative regimen and follow-up writing.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-68d7c644d1820ae44cd8",
+      "sourceType": "csr",
+      "title": "WA20495 Redacted CSR Synopsis — Ocrelizumab after inadequate response to anti-TNF therapy",
+      "sponsor": "Roche",
+      "product": "WA20495",
+      "indication": "Rheumatoid arthritis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2006-005330-20/results",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "WA20495",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Registry listing is version 3; resolve the current labeled attachment rather than constructing a version-1 URL. Biologic comparator writing, not CDI evidence.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2006-005330-20/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Registry listing is version 3; resolve the current labeled attachment rather than constructing a version-1 URL. Biologic comparator writing, not CDI evidence.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-f1146e1d3de92e140699",
+      "sourceType": "csr",
+      "title": "CDX011-04 CSR Synopsis — Glematumumab vedotin pivotal study in triple-negative breast cancer",
+      "sponsor": "Celldex Therapeutics",
+      "product": "CDX011-04",
+      "indication": "Breast cancer",
+      "trialRegistryIdentifier": "NCT01997333",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-003693-33/results",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "CDX011-04",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Antibody-drug-conjugate reporting example. Results must be read before any outcome classification; do not assume success.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-003693-33/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Antibody-drug-conjugate reporting example. Results must be read before any outcome classification; do not assume success.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-437f2d8c95686a42b73f",
+      "sourceType": "csr",
+      "title": "study-report-dv2-hbv-17 synopsis — HEPLISAV versus Engerix-B in adults with chronic kidney disease",
+      "sponsor": "Dynavax Technologies",
+      "product": "DV2-HBV-17",
+      "indication": "Hepatitis B prevention",
+      "trialRegistryIdentifier": "NCT00985426",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2009-015877-11/1/38707",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "DV2-HBV-17",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Vaccine immunogenicity and noninferiority reporting candidate. Incidental CDI adverse-event mentions do not make this a CDI efficacy comparator.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2009-015877-11/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Vaccine immunogenicity and noninferiority reporting candidate. Incidental CDI adverse-event mentions do not make this a CDI efficacy comparator.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-70e8d8a6b959242fb746",
+      "sourceType": "csr",
+      "title": "CSR Synopsis redacted — MEDI3506 pharmacokinetics, immunogenicity and safety",
+      "sponsor": "AstraZeneca",
+      "product": "D9182C00002",
+      "indication": "Healthy volunteers",
+      "trialRegistryIdentifier": "NCT05070312",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217111&parentIdentifier=D9182C00002&attachmentIdentifier=c9fb8ccb-485a-4875-a19b-1037c513c8c6&versionIdentifier=&fileName=d9182c00002-clinical-study-report-synopsis_29Mar2023_Redacted.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "D9182C00002",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for early-phase biologic PK, tolerability, and immunogenicity writing.",
+        "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D9182C00002/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Candidate for early-phase biologic PK, tolerability, and immunogenicity writing.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-97c721c922468cc6d9d2",
+      "sourceType": "csr",
+      "title": "CSR Synopsis redacted — DESTINY-Gastric06: trastuzumab deruxtecan",
+      "sponsor": "AstraZeneca",
+      "product": "D9676C00002",
+      "indication": "Gastric or gastroesophageal junction cancer",
+      "trialRegistryIdentifier": "NCT04989816",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217111&parentIdentifier=D9676C00002&attachmentIdentifier=ad306a1d-acf7-433e-bbdf-fe2676eb9672&versionIdentifier=&fileName=d9676c00002-clinical-study-report-Synopsis-Redacted-12Jun24.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "D9676C00002",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Sponsor also lists a protocol and SAP, enabling a matched-document consistency benchmark after acquisition.",
+        "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D9676C00002/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Sponsor also lists a protocol and SAP, enabling a matched-document consistency benchmark after acquisition.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-f47a2448cadeb5e5a048",
+      "sourceType": "csr",
+      "title": "D8450R00005 Clinical Study Report (CSR) Synopsis_Redacted — PRIMER: retrospective hATTR polyneuropathy registry",
+      "sponsor": "AstraZeneca",
+      "product": "D8450R00005",
+      "indication": "Hereditary transthyretin amyloidosis",
+      "trialRegistryIdentifier": "NCT06365593",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217111&parentIdentifier=D8450R00005&attachmentIdentifier=4a91e694-1643-428d-a946-55f53b8ee7e2&versionIdentifier=&fileName=D8450R00005__Clinical_Study_Report_%28CSR%29_Synopsis_Redacted.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "D8450R00005",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Observational, not randomized interventional evidence. Useful for design-classification and causal-language challenge tests.",
+        "sourceUrl": "https://www.astrazenecaclinicaltrials.com/study/D8450R00005/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Observational, not randomized interventional evidence. Useful for design-classification and causal-language challenge tests.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-6f0de124098ec600d5a1",
+      "sourceType": "csr",
+      "title": "GS-US-352-1154 Final CSR Synopsis — Momelotinib long-term safety and efficacy follow-up",
+      "sponsor": "Sierra Oncology",
+      "product": "GS-US-352-1154",
+      "indication": "Myelofibrosis and related myeloproliferative disorders",
+      "trialRegistryIdentifier": "NCT02124746",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-004476-36/results",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "GS-US-352-1154",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Candidate for long-term open-label follow-up and exposure reporting.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-004476-36/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Candidate for long-term open-label follow-up and exposure reporting.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-51a3d7d92f4d091b3b3a",
+      "sourceType": "csr",
+      "title": "Sodium thiosulfate calciphylaxis abbreviated CSR",
+      "sponsor": "Dr. F. Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "phase": "2/3",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28087",
+      "documentClass": "abbreviated_csr",
+      "studyFamily": "sts-csm113",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Footer explicitly restricts duplication, referencing, publication and disclosure without Assign DMB consent. Do not automatically admit to shared commercial retrieval/training.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Abbreviated-report structure only; not CDI comparator.",
+        "limitations": [
+          "35-page abbreviated CSR with synopsis. Separate appendix and signatures not acquired in this batch.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "e16faec69674b0210007475d894d08dc5cb7c069c58aee49b4ef77a208f53ce6",
+        "bytes": 512340,
+        "pageCount": 35,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-9d0b4c01708c5304e839",
+      "sourceType": "csr",
+      "title": "CSR 12 month — NexoBrid thermal-burn study: 12-month report",
+      "sponsor": "MediWound",
+      "product": "MW2010-03-02",
+      "indication": "Thermal burns",
+      "trialRegistryIdentifier": "NCT02148705",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-001672-55/1/41006",
+      "documentClass": "report_scope_unverified",
+      "studyFamily": "MW2010-03-02",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Keep distinct from the 24-month report and link by study. Exact report completeness unverified.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-001672-55/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Keep distinct from the 24-month report and link by study. Exact report completeness unverified.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-e6b72304bb03246eb54f",
+      "sourceType": "csr",
+      "title": "CSR 24 month — NexoBrid thermal-burn study: 24-month report",
+      "sponsor": "MediWound",
+      "product": "MW2010-03-02",
+      "indication": "Thermal burns",
+      "trialRegistryIdentifier": "NCT02148705",
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-001672-55/1/41007",
+      "documentClass": "report_scope_unverified",
+      "studyFamily": "MW2010-03-02",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Follow-up report, not a new independent study; same evaluation split as the 12-month report.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-001672-55/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Follow-up report, not a new independent study; same evaluation split as the 12-month report.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-d2115f614567713399a5",
+      "sourceType": "csr",
+      "title": "TAS-120-302 CSR Synopsis — TAGS: TAS-102 plus supportive care in gastric cancer",
+      "sponsor": "Taiho Oncology",
+      "product": "TO-TAS-102-302",
+      "indication": "Gastric cancer",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-002683-16/results",
+      "documentClass": "csr_synopsis_identity_review",
+      "studyFamily": "TO-TAS-102-302",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. SOURCE MISMATCH: attachment label says TAS-120-302; registry protocol says TO-TAS-102-302. Preserve both and quarantine until document identity is verified. Do not silently correct.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2015-002683-16/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "SOURCE MISMATCH: attachment label says TAS-120-302; registry protocol says TO-TAS-102-302. Preserve both and quarantine until document identity is verified. Do not silently correct.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-ef98fc0e8f95785356e3",
+      "sourceType": "csr",
+      "title": "Appendix to Clinical Study Report — Appendix to Clinical Study Report",
+      "sponsor": "Dr. Franz Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28088",
+      "documentClass": "csr_supporting_attachment",
+      "studyFamily": "STS-CSM-1/13",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-b48d0e9d846b1b6ce3ed",
+      "sourceType": "csr",
+      "title": "CSR signature page Sponsor and Data Management — CSR signature page Sponsor and Data Management",
+      "sponsor": "Dr. Franz Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28089",
+      "documentClass": "csr_supporting_attachment",
+      "studyFamily": "STS-CSM-1/13",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-5753a2672f989d06c9fa",
+      "sourceType": "csr",
+      "title": "CSR Signature Page Principal Investigator Site Feldkirch Austria — CSR Signature Page Principal Investigator Site Feldkirch Austria",
+      "sponsor": "Dr. Franz Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28090",
+      "documentClass": "csr_supporting_attachment",
+      "studyFamily": "STS-CSM-1/13",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-72d91c2f983172ba3f3e",
+      "sourceType": "csr",
+      "title": "CSR Signature Page Coordinating Investigator Site Salzburg Austria — CSR Signature Page Coordinating Investigator Site Salzburg Austria",
+      "sponsor": "Dr. Franz Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28091",
+      "documentClass": "csr_supporting_attachment",
+      "studyFamily": "STS-CSM-1/13",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-5902947cc38705fd51b9",
+      "sourceType": "csr",
+      "title": "CSR Signature Page Principal Investigator Site Vienna Austria — CSR Signature Page Principal Investigator Site Vienna Austria",
+      "sponsor": "Dr. Franz Koehler Chemie GmbH",
+      "product": "STS-CSM-1/13",
+      "indication": "Calciphylaxis",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.clinicaltrialsregister.eu/ctr-search/rest/download/result/attachment/2014-002128-28/1/28092",
+      "documentClass": "csr_supporting_attachment",
+      "studyFamily": "STS-CSM-1/13",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Source listing only; document completeness, retained application bytes and permitted commercial reference use not yet admitted. Companion evidence; do not count as another study or standalone CSR.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2014-002128-28/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Companion evidence; do not count as another study or standalone CSR.",
+        "limitations": [
+          "Catalog listing does not establish a full retained CSR.",
+          "Not the client study data."
+        ]
+      },
+      "acquisition": {
+        "status": "not_acquired_this_run",
+        "listingVerifiedAt": "2026-10-27"
+      }
+    },
+    {
+      "sourceKey": "catalog-84eecc84127e60e91bbf",
+      "sourceType": "protocol",
+      "title": "Cadazolid AC-061A301 protocol version 3",
+      "sponsor": "Actelion Pharmaceuticals Ltd",
+      "product": "AC-061A301",
+      "indication": "Clostridioides difficile infection",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT01987895",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/95/NCT01987895/Prot_001.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "cadazolid-impact",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public ClinicalTrials.gov sponsor attachment; document-level commercial retrieval/training rights unassessed.",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT01987895"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "CDI endpoint, follow-up and clinical-response definitions; do not substitute for client's protocol.",
+        "limitations": [
+          "Protocol, 138 PDF pages; not a report of results.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "f6dfbb28d6f65aa60f79176b456ecac2ce68e93c45e65aed30a5da9fef6c66ac",
+        "bytes": 3202515,
+        "pageCount": 138,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-15482bde83c6860bafbe",
+      "sourceType": "sap",
+      "title": "Cadazolid AC-061A301/302 shared statistical analysis plan",
+      "sponsor": "Actelion Pharmaceuticals Ltd",
+      "product": "AC-061A301",
+      "indication": "Clostridioides difficile infection",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT01987895",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/95/NCT01987895/SAP_000.pdf",
+      "documentClass": "statistical_analysis_plan",
+      "studyFamily": "cadazolid-impact",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public ClinicalTrials.gov sponsor attachment; commercial retrieval/training rights unassessed.",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT01987895"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Endpoint handling and analysis-set reporting example; keep linked studies within one benchmark split.",
+        "limitations": [
+          "One shared SAP covers two trials; 164 PDF pages, internal main-document pagination 155. Not a CSR.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "6492828309a64241b6f70f76bc001a59608c11069ca9ca7bcb6cfe8b95e76e44",
+        "bytes": 3153502,
+        "pageCount": 164,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-196c75f2901513fcb953",
+      "sourceType": "csr",
+      "title": "GSK 110390 ZOSTER-006 end-of-study redacted CSR",
+      "sponsor": "GlaxoSmithKline Biologicals SA",
+      "product": "110390",
+      "indication": "Herpes zoster prevention",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT01165177",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=110390&attachmentIdentifier=7ac65d45-7220-4a32-83ca-0d6692451b81&fileName=gsk-110390-clinical-study-report-redact.pdf&versionIdentifier=13c6112f-f34f-47b4-8deb-c8a31204f564",
+      "documentClass": "redacted_csr",
+      "studyFamily": "gsk-zoster006-zoster022",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "GSK terms allow personal noncommercial copying with attribution; commercial reuse not established. Do not ingest into commercial AnA retrieval or training before clearance.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/110390"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General regulated-report architecture only; not CDI comparator.",
+        "limitations": [
+          "Substantial redacted CSR with body and appendices; no certification of completeness. Patient listings are removed; linked pooled analyses belong to ZOSTER-022.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "b375a6bd48e43afbf541535a61946a9ac49ce562975527fbcbb4fe64cce8bbe4",
+        "bytes": 125497819,
+        "pageCount": 10698,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-67ca8102e72d0d8e2fc5",
+      "sourceType": "csr",
+      "title": "GSK varicella Phase A report part 1",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "100388",
+      "indication": "Varicella prevention",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT00226499",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=c9e366a4-97a4-47f0-ab09-7481ec8f6218&fileName=gsk-100388-clinical-study-report-redact-01.pdf&versionIdentifier=",
+      "documentClass": "redacted_csr_part",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "GSK noncommercial limitation. Additional parts not acquired. Commercial reuse clearance required.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/100388"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General report organization and linked follow-up only; not CDI comparator.",
+        "limitations": [
+          "Part 1 of a large split report. Covers Phase A and linked follow-up studies; not full package and not three independent reports.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "41733fad8277212a86e61b060d469d93f94bf764b25a11d85132bc70ed1adbdd",
+        "bytes": 19810959,
+        "pageCount": 1503,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-d535d653ccabe1d4e949",
+      "sourceType": "csr",
+      "title": "GSK2647544 repeat-dose and simvastatin interaction study report",
+      "sponsor": "GlaxoSmithKline",
+      "product": "200592",
+      "indication": "Healthy volunteer pharmacology / Alzheimer disease development",
+      "phase": "1",
+      "trialRegistryIdentifier": "NCT01978327",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=200592&attachmentIdentifier=fb98160a-9592-45b1-8166-064a8253d9ae&fileName=gsk-200592-clinical-study-report-redact.pdf&versionIdentifier=",
+      "documentClass": "redacted_clinical_pharmacology_report",
+      "studyFamily": "gsk200592",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "GSK noncommercial limitation plus PDF copy:no. No corpus text derivatives or embeddings.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/200592"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General pharmacology/safety report structure only.",
+        "limitations": [
+          "Redacted phase 1 report for prematurely terminated study; not a CDI comparator.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "8be50e9140a2416815ac4daab9884eff9387eaf918580c178702c8f45a4bfe43",
+        "bytes": 11873751,
+        "pageCount": 601,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-c8ef262904401b2be402",
+      "sourceType": "csr",
+      "title": "GW766994 asthma and sputum eosinophilia study report",
+      "sponsor": "GlaxoSmithKline",
+      "product": "114312",
+      "indication": "Asthma",
+      "phase": "2",
+      "trialRegistryIdentifier": "NCT01160224",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=114312&attachmentIdentifier=2ca89d45-4862-40f2-b46a-5e87f68b9a10&fileName=gsk-114312-clinical-study-report-redact.pdf&versionIdentifier=",
+      "documentClass": "redacted_csr",
+      "studyFamily": "gsk114312",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "GSK noncommercial limitation plus PDF copy:no. No corpus text derivatives or embeddings.",
+        "sourceUrl": "https://www.gsk-studyregister.com/trials/114312"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General reporting exemplar only.",
+        "limitations": [
+          "Redacted phase 2 report. Source landing page title says GW766944 while title page/description says GW766994; discrepancy retained.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "175cc7970c2283fb13d4425987cb7e3e6ed7f2c00709a8ec38c4318fcdd4eecd",
+        "bytes": 14421764,
+        "pageCount": 477,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-a799c311c2c103940c4c",
+      "sourceType": "csr",
+      "title": "Crofoot SYMTUZA phase 4 study report",
+      "sponsor": "The Crofoot Research Center, Inc",
+      "product": "TMC114FD2HTX4007",
+      "indication": "HIV-1 infection",
+      "phase": "4",
+      "trialRegistryIdentifier": "NCT04388904",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/04/NCT04388904/SAP_001.pdf",
+      "documentClass": "csr_body",
+      "studyFamily": "crofoot-symtuza",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor-uploaded public file; document includes subject-coded listings. Privacy and commercial-use review required before shared retrieval. No assumption of public domain solely from government hosting.",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT04388904"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General report structure; not CDI comparator.",
+        "limitations": [
+          "87 PDF pages including a wrapper and 86 numbered pages; body with results; several appendices explicitly to be provided separately and absent. Filename SAP_001 is not the actual document type.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "fe3e6a16e4edef8ca006ce6df7362f66aa93c37cdd1f9c35278b3aca0041154b",
+        "bytes": 982067,
+        "pageCount": 87,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-91e1767126ed7c9e7f70",
+      "sourceType": "csr",
+      "title": "AZD1222 Phase IV non-interventional active surveillance PASS report",
+      "sponsor": "AstraZeneca AB",
+      "product": "D8111R00003",
+      "indication": "COVID-19 vaccination safety",
+      "phase": "4 observational",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/D8111R00003%20EUPAS41335%20clinical-study-report%20Final%2020%20Apr%202022_Redacted.pdf",
+      "documentClass": "redacted_post_authorisation_safety_report",
+      "studyFamily": "azd1222-d8111r00003",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public EMA catalogue file with commercial-confidential redactions; commercial reuse/training permission not established.",
+        "sourceUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/D8111R00003%20EUPAS41335%20clinical-study-report%20Final%2020%20Apr%202022_Redacted.pdf"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Safety-surveillance report structure only.",
+        "limitations": [
+          "47 PDF pages; body 46 pages plus signature page. Report of noninterventional surveillance, not randomized efficacy CSR.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "4154b6144bf5cec27555e55f12db540522dab0d45dc3bf48887cd808ae040799",
+        "bytes": 1899044,
+        "pageCount": 47,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-e93bb9f71c066c8f0d28",
+      "sourceType": "csr",
+      "title": "Dolutegravir hypersensitivity and hepatotoxicity cohort interim report",
+      "sponsor": "GSK / ViiV Healthcare",
+      "product": "201177",
+      "indication": "HIV-1 pharmacovigilance",
+      "phase": "observational",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/viiv-201177-clinical-study-report-redact.pdf",
+      "documentClass": "redacted_observational_interim_report",
+      "studyFamily": "viiv201177",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public redacted file retains a no-third-party-release notice. Commercial use, redistribution and training require review; do not auto-admit.",
+        "sourceUrl": "https://catalogues.ema.europa.eu/sites/default/files/document_files/viiv-201177-clinical-study-report-redact.pdf"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Interim pharmacovigilance reporting only.",
+        "limitations": [
+          "176 PDF pages; first interim report of a planned five-year cohort. Not a final interventional CSR.",
+          "Acquired original has not been admitted to commercial reference retrieval."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "d4f94a6e7aa4094c79c393a452c358d7f156c1e6cf900f8128e9a9fabf5d1f28",
+        "bytes": 1558900,
+        "pageCount": 176,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-bafd7597b20ca7a37f7d",
+      "sourceType": "protocol",
+      "title": "CONSORTIUM (VE303) — Study Protocol",
+      "sponsor": null,
+      "product": "CONSORTIUM (VE303)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03788434",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/34/NCT03788434/Prot_002.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "NCT03788434",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03788434"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9 amendments and dose groups; E3 Section11 diagnostic sensitivity definitions; E3 Section12 safety/PD organization",
+        "limitations": [
+          "Eight-strain live commensal bacterial consortium, not nonviable spirulina biologic",
+          "Dosing after completing successful SOC",
+          "Prior recurrence or high-risk first CDI; three arms",
+          "Primary recurrence at8weeks uses toxin-positive/lab-confirmed/clinically treated definitions whose hierarchy must be preserved",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "6b1486289204c2a92d0d767cb46cf194427516ac7c17c2d93b69192bf41fe1bb",
+        "bytes": 3600453,
+        "pageCount": 95,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-9f7a8d25226b24a60e85",
+      "sourceType": "sap",
+      "title": "CONSORTIUM (VE303) — Statistical Analysis Plan",
+      "sponsor": null,
+      "product": "CONSORTIUM (VE303)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03788434",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/34/NCT03788434/SAP_003.pdf",
+      "documentClass": "statistical_analysis_plan",
+      "studyFamily": "NCT03788434",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03788434"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9 amendments and dose groups; E3 Section11 diagnostic sensitivity definitions; E3 Section12 safety/PD organization",
+        "limitations": [
+          "Eight-strain live commensal bacterial consortium, not nonviable spirulina biologic",
+          "Dosing after completing successful SOC",
+          "Prior recurrence or high-risk first CDI; three arms",
+          "Primary recurrence at8weeks uses toxin-positive/lab-confirmed/clinically treated definitions whose hierarchy must be preserved",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "862887793261114a51e9923faa7d42587c1d25c37780f0d53b91e91b31fed8f3",
+        "bytes": 908096,
+        "pageCount": 45,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-3b7ebc8d4865488352eb",
+      "sourceType": "protocol",
+      "title": "LMN-201 CDI01 exploratory ostomy study — Study Protocol",
+      "sponsor": null,
+      "product": "LMN-201 CDI01 exploratory ostomy study",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT04893239",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/39/NCT04893239/Prot_000.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "NCT04893239",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT04893239"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Cross-reference product rationale and earlier clinical study while preserving trial identity",
+        "limitations": [
+          "Phase1 exploratory open-label ostomy delivery study",
+          "12participants, not RePreve population",
+          "Protocol supports planned methods only; cannot substitute for study CSR or final data",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "f9f7b802b5fc6ef32cd6bb55d2e227e851a6615870b01bd691dd8a821becc6a8",
+        "bytes": 819343,
+        "pageCount": 28,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-c951a58a0241222f8662",
+      "sourceType": "protocol",
+      "title": "PUNCH CD3 (RBX2660/Rebyota) — Study Protocol",
+      "sponsor": null,
+      "product": "PUNCH CD3 (RBX2660/Rebyota)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03244644",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/44/NCT03244644/Prot_000.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "NCT03244644",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03244644"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9.7 statistical plan and amendments; E3 Section11 sensitivity analyses and participant accounting; How to document Bayesian prior/borrowing, posterior criterion, and sensitivity assumptions",
+        "limitations": [
+          "Rectal microbiota rather than oral antitoxin/lysin",
+          "Treatment after successful SOC; baseline must be controlled",
+          "Primary no-CDI-diarrhea success at8weeks; prior phase2b borrowing is study-specific",
+          "Eligibility recurrent/severe CDI rather than same LMN target population",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "7e5be77ffa1999198460566d29ffc148c1b48ddcca2d4a62e2ebae5d51c048a7",
+        "bytes": 845801,
+        "pageCount": 75,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-9798cbb8f7c9c73a58eb",
+      "sourceType": "sap",
+      "title": "PUNCH CD3 (RBX2660/Rebyota) — Statistical Analysis Plan",
+      "sponsor": null,
+      "product": "PUNCH CD3 (RBX2660/Rebyota)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03244644",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/44/NCT03244644/SAP_001.pdf",
+      "documentClass": "statistical_analysis_plan",
+      "studyFamily": "NCT03244644",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03244644"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9.7 statistical plan and amendments; E3 Section11 sensitivity analyses and participant accounting; How to document Bayesian prior/borrowing, posterior criterion, and sensitivity assumptions",
+        "limitations": [
+          "Rectal microbiota rather than oral antitoxin/lysin",
+          "Treatment after successful SOC; baseline must be controlled",
+          "Primary no-CDI-diarrhea success at8weeks; prior phase2b borrowing is study-specific",
+          "Eligibility recurrent/severe CDI rather than same LMN target population",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "146d1232d78c1d1dfcc47d1ed21b0c8c7a017310e0f7fdf44fd574c996f432ab",
+        "bytes": 2346051,
+        "pageCount": 57,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-1a888b8b57e6e70a061d",
+      "sourceType": "protocol",
+      "title": "ECOSPOR III (SER-109/Vowst) — Study Protocol",
+      "sponsor": null,
+      "product": "ECOSPOR III (SER-109/Vowst)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03183128",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/28/NCT03183128/Prot_000.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "NCT03183128",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03183128"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9 recurrence adjudication and diagnostic requirements; E3 Section10 disposition and missing follow-up; E3 Section11 estimand/population/sensitivity reporting",
+        "limitations": [
+          "Microbiota spores rather than antitoxin/lysin",
+          "At least3CDI episodes in12months including qualifying episode",
+          "Qualifying CDI already responded to antibiotics before investigational dosing",
+          "Primary recurrence up to8weeks; secondary4/12/24weeks; does not study active-CDI initial cure adjunct in same way",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "f3c6ac19fed94af1cad023bbdd8d82e2f1d85a3304f62885ec6f0c0701b2e1c7",
+        "bytes": 6062764,
+        "pageCount": 69,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-283f93f4fe1b3cd88dfe",
+      "sourceType": "sap",
+      "title": "ECOSPOR III (SER-109/Vowst) — Statistical Analysis Plan",
+      "sponsor": null,
+      "product": "ECOSPOR III (SER-109/Vowst)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03183128",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/28/NCT03183128/SAP_001.pdf",
+      "documentClass": "statistical_analysis_plan",
+      "studyFamily": "NCT03183128",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03183128"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section9 recurrence adjudication and diagnostic requirements; E3 Section10 disposition and missing follow-up; E3 Section11 estimand/population/sensitivity reporting",
+        "limitations": [
+          "Microbiota spores rather than antitoxin/lysin",
+          "At least3CDI episodes in12months including qualifying episode",
+          "Qualifying CDI already responded to antibiotics before investigational dosing",
+          "Primary recurrence up to8weeks; secondary4/12/24weeks; does not study active-CDI initial cure adjunct in same way",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "b5a3e62636878ce300dc46e97642305d40a8a2a3b22ec14b3a3a6dbef6b79351",
+        "bytes": 1081456,
+        "pageCount": 56,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-78dc7c4fb2f56838983a",
+      "sourceType": "protocol",
+      "title": "ECOSPOR IV (SER-109) — Study Protocol",
+      "sponsor": null,
+      "product": "ECOSPOR IV (SER-109)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03183141",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/41/NCT03183141/Prot_000.pdf",
+      "documentClass": "protocol",
+      "studyFamily": "NCT03183141",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03183141"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Cohort-specific disposition; Separate open-label and randomized populations; Do not combine related studies across training/test partitions",
+        "limitations": [
+          "Single-arm open-label; no randomized concurrent comparator",
+          "Cohort1 patients from ECOSPORIII recurrence; cohort2 broader recurrence history",
+          "Mechanism and timing differ from LMN",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "3921ba4775d770741d6e5553495c7c053f2c336c3877299c54c86cdabc719111",
+        "bytes": 7396062,
+        "pageCount": 80,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-a4ba9a0e22deebfed528",
+      "sourceType": "sap",
+      "title": "ECOSPOR IV (SER-109) — Statistical Analysis Plan",
+      "sponsor": null,
+      "product": "ECOSPOR IV (SER-109)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03183141",
+      "officialUrl": "https://cdn.clinicaltrials.gov/large-docs/41/NCT03183141/SAP_001.pdf",
+      "documentClass": "statistical_analysis_plan",
+      "studyFamily": "NCT03183141",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; sponsor_document_reuse_not_automatically_cleared; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://clinicaltrials.gov/study/NCT03183141"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Cohort-specific disposition; Separate open-label and randomized populations; Do not combine related studies across training/test partitions",
+        "limitations": [
+          "Single-arm open-label; no randomized concurrent comparator",
+          "Cohort1 patients from ECOSPORIII recurrence; cohort2 broader recurrence history",
+          "Mechanism and timing differ from LMN",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "8b8dd5a253ea33a712aa088872c85c026c61e4c120ca091f7abc06ef9a16b705",
+        "bytes": 2991912,
+        "pageCount": 40,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-5a0132031288f89ec721",
+      "sourceType": "csr",
+      "title": "MODIFY III (pediatric bezlotoxumab) — CLINICAL STUDY REPORT P001MK6072: 2 SYNOPSIS",
+      "sponsor": null,
+      "product": "MODIFY III (pediatric bezlotoxumab)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT03182907",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-3708_01-2-0-6A5234-20230220143759.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "NCT03182907",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "proprietary legend; commercial reuse review required; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://portal.dimdi.de/data/ctr/O-3708_01-2-0-6A5234-20230220143759.pdf"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 synopsis structure and safety tabulation organization",
+        "limitations": [
+          "Pediatric ages1to<18; LMN target adults",
+          "IV dose; primary PK/safety rather than LMN primary global cure",
+          "3:1randomization and historical adult PK comparison",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "1d12924675b4e05e27ffad02d8a0db8f1c3796c8c2bc85db914503265150cec2",
+        "bytes": 1137219,
+        "pageCount": 33,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-e110c37fbedc0c78db3f",
+      "sourceType": "csr",
+      "title": "MODIFY I / MODIFY II (bezlotoxumab / actoxumab) — 02 CSR Section 2 - Synopsis",
+      "sponsor": null,
+      "product": "MODIFY I / MODIFY II (bezlotoxumab / actoxumab)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT01241552",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-55531B-20170320163525.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "NCT01241552",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; commercial reuse/redistribution/training review required; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-55531B-20170320163525.pdf"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section2 synopsis; E3 Section9 trial plan and endpoint definitions; E3 Section11 analysis populations and global cure versus recurrence denominators; E3 Section12 safety reporting",
+        "limitations": [
+          "Single intravenous infusion rather than repeated oral biologic",
+          "Phase3 larger trials; recurrence primary and global cure secondary",
+          "Week12 window and population definitions must not be imported into LMN-201",
+          "MODIFY I multiarm adaptive design; MODIFY II different arm structure",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "23681f486d142f3ed0cf0a2c836e875978ca61168dbeb4afab78ca779a6d36ed",
+        "bytes": 3828634,
+        "pageCount": 41,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-c17d72f0293b64a0e73b",
+      "sourceType": "csr",
+      "title": "MODIFY I / MODIFY II (bezlotoxumab / actoxumab) — 02 CSR Section 2 - Synopsis",
+      "sponsor": null,
+      "product": "MODIFY I / MODIFY II (bezlotoxumab / actoxumab)",
+      "indication": "Clostridioides difficile infection; recurrent CDI; C. difficile recurrence prevention",
+      "trialRegistryIdentifier": "NCT01513239",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-0C69AC-20170320165835.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "NCT01513239",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "public_access_confirmed; commercial reuse/redistribution/training review required; pending_document_rights_and_extraction_review",
+        "sourceUrl": "https://portal.dimdi.de/data/ctr/O-2672933-1-0-0C69AC-20170320165835.pdf"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "E3 Section2 synopsis; E3 Section9 trial plan and endpoint definitions; E3 Section11 analysis populations and global cure versus recurrence denominators; E3 Section12 safety reporting",
+        "limitations": [
+          "Single intravenous infusion rather than repeated oral biologic",
+          "Phase3 larger trials; recurrence primary and global cure secondary",
+          "Week12 window and population definitions must not be imported into LMN-201",
+          "MODIFY I multiarm adaptive design; MODIFY II different arm structure",
+          "Sponsor original is retained for review; commercial retrieval has not been cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "e4e8d7f77853256092e5baf9aba94b164bb29e24a938cd57609c509d917c1c82",
+        "bytes": 3982864,
+        "pageCount": 52,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-8710b9deeb0654e411fd",
+      "sourceType": "csr",
+      "title": "EXTEND fidaxomicin CSR synopsis and Germany disclosure supplements",
+      "sponsor": "Astellas Pharma Europe Ltd.",
+      "product": "2819-MA-1002",
+      "indication": "Clostridioides difficile infection",
+      "phase": "3b/4",
+      "trialRegistryIdentifier": "NCT02254967",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-4040043-2-0-584AF6-20210217210037.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "fidaxomicin-extend",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-004619-31/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Antibiotic-treatment sustained-cure and recurrence-reporting example in older adults; distinct from adjunctive LMN-201 recurrence prevention.",
+        "limitations": [
+          "47 PDF pages. Synopsis internally numbered 1-38, followed by investigator-site information, protocol-amendment summary and Germany-specific ICH E3 disclosure. Not a full CSR. Some pages have no extractable text; extraction coverage not qualified.",
+          "Sponsor original retained for review; commercial retrieval not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "4d2b990e7d8971761509b2aff94b5a04d62e210a03db842f28a70432d8c68ebe",
+        "bytes": 1048584,
+        "pageCount": 47,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-df6627bc39317b5708b3",
+      "sourceType": "csr",
+      "title": "SUNSHINE pediatric fidaxomicin CSR synopsis and Germany disclosure supplements",
+      "sponsor": "Astellas Pharma Europe B.V.",
+      "product": "2819-CL-0202",
+      "indication": "Clostridioides difficile-associated diarrhea",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT02218372",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-4040036-2-0-CD5EB5-20210208184057.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "fidaxomicin-sunshine",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2013-000508-40/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Pediatric antibiotic-treatment reporting example for clinical response and recurrence; lower direct similarity to adult adjunctive LMN-201 design.",
+        "limitations": [
+          "36 PDF pages. Synopsis internally numbered 1-19, followed by investigator-site information, protocol-amendment summary and Germany-specific ICH E3 disclosure. Not a full CSR. Some pages have no extractable text; extraction coverage not qualified.",
+          "Sponsor original retained for review; commercial retrieval not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "95a7f3925f667ccb93189057d5e8d22e4ef12a51b97df6873fad273ddfcd2731",
+        "bytes": 503696,
+        "pageCount": 36,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-f32e3f6bac390b932efd",
+      "sourceType": "csr",
+      "title": "Optimer 101.1.C.004 fidaxomicin pivotal CSR synopsis and supplements",
+      "sponsor": "Optimer Pharmaceuticals, Inc.",
+      "product": "101.1.C.004",
+      "indication": "Clostridioides difficile-associated diarrhea",
+      "phase": "3",
+      "trialRegistryIdentifier": "NCT00468728",
+      "officialUrl": "https://portal.dimdi.de/data/ctr/O-2708095-1-0-D7B6F1-20180130181325.pdf",
+      "documentClass": "csr_synopsis",
+      "studyFamily": "fidaxomicin-pivotal",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public regulator-hosted sponsor PDF retained as an original. Contains confidentiality marking; an affirmative commercial database, embedding, redistribution or training license has not been established. No ingestion derivative prepared; rights review required.",
+        "sourceUrl": "https://www.clinicaltrialsregister.eu/ctr-search/trial/2006-004291-12/results"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Pivotal antibiotic noninferiority reporting and post-treatment recurrence example; not an adjunctive prevention study.",
+        "limitations": [
+          "33 PDF pages. The clinical-study-report synopsis is pages 1-5; remaining content includes protocol-amendment summary and investigator-site information. Not a full CSR.",
+          "Sponsor original retained for review; commercial retrieval not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "473cb5dfcad6197e77a92974fd2b2ecd073b5280ac35f9e021e737836feaa8a4",
+        "bytes": 758475,
+        "pageCount": 33,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-9ab7eeaf8d0557645e54",
+      "sourceType": "publication",
+      "title": "Novartis CLFF571X2201 abbreviated scientific trial-results summary",
+      "sponsor": "Novartis",
+      "product": "CLFF571X2201",
+      "indication": "Clostridioides difficile infection",
+      "phase": "2",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://www.novctrd.com/ctrdweb/trialresult/trialresults/pdf?trialResultId=12263",
+      "documentClass": "scientific_results_summary",
+      "studyFamily": "lff571x2201",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Public sponsor-hosted PDF; no affirmative commercial database, redistribution, embedding or training license has been established. Review required.",
+        "sourceUrl": "https://www.novctrd.com/ctrdweb/trialresult/trialresults/pdf?trialResultId=12263"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "Scientific reporting example for dose-ranging trial disposition, efficacy/safety summaries and early-termination explanation. Does not increase CSR count.",
+        "limitations": [
+          "8-page sponsor results summary for the dose-ranging portion of a phase 2 study. Refers to a clinical trial report dated 26 June 2014. This retained file is not the original full CSR and is not labelled a CSR synopsis. Counted separately.",
+          "Sponsor original retained for review; commercial retrieval not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "2759c758abd3f029a948ce79bf93aeaeb144af290d4018c593b6387769e76e81",
+        "bytes": 92283,
+        "pageCount": 8,
+        "publicRedistributionAuthorized": false
+      }
+    },
+    {
+      "sourceKey": "catalog-191a1ff81b7e39f9bc51",
+      "sourceType": "csr",
+      "title": "GSK 100388/103494/104105 Phase A final clinical study report, public redacted original",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "100388",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": "NCT00226499",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=3c53fb95-3e11-4eb3-a6ae-dc45e1dc8534&fileName=gsk-100388-clinical-study-report-redact.pdf&versionIdentifier=ba572f27-bf49-45e8-b3c9-ece3b9d4e290",
+      "version": "ba572f27-bf49-45e8-b3c9-ece3b9d4e290",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "6,134-page sponsor-published redacted report original. Title page and detailed efficacy, immunogenicity and safety table of contents visually inspected. Includes original Phase A final report; overlaps the already retained 100388 split part 1. Complete downloaded file, not an unredacted sponsor submission. All appendix completeness remains unqualified.",
+          "Same Phase A report and study family as GSK100388_csr_part1.pdf; do not count as an additional independent study.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "814ecae2e60fbe9d71d7d60cfa26d5ed94e8f1b7e484babd45cabdfcc4d14623",
+        "bytes": 254057581,
+        "pageCount": 6134,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-100388-clinical-study-report-redact.pdf",
+        "sourceAttachmentIdentifier": "3c53fb95-3e11-4eb3-a6ae-dc45e1dc8534",
+        "sourceVersionIdentifier": "ba572f27-bf49-45e8-b3c9-ece3b9d4e290",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2010-08-23",
+        "packageRelationship": "Same Phase A report and study family as GSK100388_csr_part1.pdf; do not count as an additional independent study.",
+        "primaryStudyIdentifier": "100388",
+        "studyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "OKAH-179",
+          "OKAH-180",
+          "OKAH-181",
+          "NCT00226499",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": false,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": ""
+      }
+    },
+    {
+      "sourceKey": "catalog-96dbc7d882104093fc6d",
+      "sourceType": "csr",
+      "title": "GSK 100388/103494/104105 Phase A CSR split file 2, beginning with Amendment 1",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "100388",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": "NCT00226499",
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=0406d5c2-74de-4278-b05b-23ad72df67cc&fileName=gsk-100388-clinical-study-report-redact-02.pdf&versionIdentifier=fae2cccf-1efe-484e-a2d0-f3d95904e3a5",
+      "version": "fae2cccf-1efe-484e-a2d0-f3d95904e3a5",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr_part",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "2,071-page sponsor split report original. First title page identifies Phase A Report Amendment 1 Final dated 5 March 2012. Detailed methods, efficacy, safety, references and serious-adverse-event sections listed in the contents. This numbered file is a report-version component, not an independent study; complete package/version coverage is not established by its filename.",
+          "Linked Phase A report-version component; retain with base and part 1.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "0f439f62bded83a2ae5d97af3aaad3801f9a18d131c33740d344ed865c0b858f",
+        "bytes": 28540720,
+        "pageCount": 2071,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-100388-clinical-study-report-redact-02.pdf",
+        "sourceAttachmentIdentifier": "0406d5c2-74de-4278-b05b-23ad72df67cc",
+        "sourceVersionIdentifier": "fae2cccf-1efe-484e-a2d0-f3d95904e3a5",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2012-03-05",
+        "packageRelationship": "Linked Phase A report-version component; retain with base and part 1.",
+        "primaryStudyIdentifier": "100388",
+        "studyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "OKAH-179",
+          "OKAH-180",
+          "OKAH-181",
+          "NCT00226499",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": ""
+      }
+    },
+    {
+      "sourceKey": "catalog-75a4a87253de4df4226a",
+      "sourceType": "csr",
+      "title": "GSK 104106 Year 6 annex clinical study report, 2016 public file",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "104106",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=c2920cc4-ef86-443f-ba8a-4f9f217a289b&fileName=gsk-104106-clinical-study-report-redact.pdf&versionIdentifier=45cb79fd-1d98-430b-b6aa-27d3fa6d8097",
+      "version": "45cb79fd-1d98-430b-b6aa-27d3fa6d8097",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr_annex",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "1,837-page redacted Year 6 Annex Clinical Study Report with methods, efficacy, immunogenicity and safety reporting. This is the Year 6 follow-up annex, not the final Year 10 report. Same report title/date as the smaller 2019 public file; full page-by-page equivalence has not been established.",
+          "Same Year 6 report version as GSK104106_csr_8ac17f81.pdf, with different public file size/page count. Count once at logical report level.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "797167a522d499a05ef53cd27a049c27198de236b7caaee4bd12669fb4c564d9",
+        "bytes": 387698922,
+        "pageCount": 1837,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-104106-clinical-study-report-redact.pdf",
+        "sourceAttachmentIdentifier": "c2920cc4-ef86-443f-ba8a-4f9f217a289b",
+        "sourceVersionIdentifier": "45cb79fd-1d98-430b-b6aa-27d3fa6d8097",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2016-03-23",
+        "packageRelationship": "Same Year 6 report version as GSK104106_csr_8ac17f81.pdf, with different public file size/page count. Count once at logical report level.",
+        "primaryStudyIdentifier": "104106",
+        "studyIdentifiers": [
+          "104106",
+          "OKAH-182",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": "Syntax Error: Expected the optional content group list, but wasn't able to find it, or it isn't an Array"
+      }
+    },
+    {
+      "sourceKey": "catalog-c034baf10f459df6f231",
+      "sourceType": "csr",
+      "title": "GSK 104106 Year 6 annex clinical study report, 2019 public file",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "104106",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=8ac17f81-3b6b-4321-8dec-ca74e941b942&fileName=gsk-104106-clinical-study-report-redact.pdf&versionIdentifier=124b4b57-01a5-4ea4-b958-43fb702c4fab",
+      "version": "124b4b57-01a5-4ea4-b958-43fb702c4fab",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr_annex",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "1,331-page alternative public file of the same Year 6 annex report dated 23 March 2016. Title and contents checked. Its page count differs from the 1,837-page public file; not counted as a second report or study. No claim that either public file contains every original appendix.",
+          "Alternate public file of gsk-varicella-year6-annex-original2016; logical report duplicate.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "71be1124f828c76c982826d9edfdacc910629458f3e3478aa93173642592616d",
+        "bytes": 21674181,
+        "pageCount": 1331,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-104106-clinical-study-report-redact.pdf",
+        "sourceAttachmentIdentifier": "8ac17f81-3b6b-4321-8dec-ca74e941b942",
+        "sourceVersionIdentifier": "124b4b57-01a5-4ea4-b958-43fb702c4fab",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2016-03-23",
+        "packageRelationship": "Alternate public file of gsk-varicella-year6-annex-original2016; logical report duplicate.",
+        "primaryStudyIdentifier": "104106",
+        "studyIdentifiers": [
+          "104106",
+          "OKAH-182",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": "Syntax Error: Expected the optional content group list, but wasn't able to find it, or it isn't an Array"
+      }
+    },
+    {
+      "sourceKey": "catalog-eb3522ba6415f436aa54",
+      "sourceType": "csr",
+      "title": "GSK 104106 final Year 10 clinical study report",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "104106",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=893db535-0a34-46c5-8264-dae242a6c68a&fileName=gsk-104106-clinical-study-report-redact.pdf&versionIdentifier=df1edf6e-2446-40b5-9dff-67259058b8e7",
+      "version": "df1edf6e-2446-40b5-9dff-67259058b8e7",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "1,940-page sponsor-published final redacted CSR for Phase B through Year 10, including whole-study analyses across Phases A and B. Title, detailed investigational-plan and methods contents, efficacy, immunogenicity, safety and appendices/report tables inspected. Complete public original retained; patient listings have been removed under sponsor disclosure policy and all-appendix completeness is not certified.",
+          "Final 10-year follow-up in the same 100388/104106 longitudinal study family; keep related documents together for benchmarking.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "b078056109314724f37141ba331ff244a49894d513b7f0629846918960fc34dc",
+        "bytes": 13543127,
+        "pageCount": 1940,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-104106-clinical-study-report-redact.pdf",
+        "sourceAttachmentIdentifier": "893db535-0a34-46c5-8264-dae242a6c68a",
+        "sourceVersionIdentifier": "df1edf6e-2446-40b5-9dff-67259058b8e7",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2017-07-10",
+        "packageRelationship": "Final 10-year follow-up in the same 100388/104106 longitudinal study family; keep related documents together for benchmarking.",
+        "primaryStudyIdentifier": "104106",
+        "studyIdentifiers": [
+          "104106",
+          "OKAH-182",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": ""
+      }
+    },
+    {
+      "sourceKey": "catalog-e1cf2ec06725b73f4edd",
+      "sourceType": "csr",
+      "title": "GSK 104106 abridged annex report 2, immunogenicity and protection correlations",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "104106",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=e1856bf4-d231-41f2-824c-4c3ea9f4ec6f&fileName=gsk-104106-clinical-study-report-redact-02.pdf&versionIdentifier=5f8e43f5-f79f-4bdc-a119-9449d03ea25c",
+      "version": "5f8e43f5-f79f-4bdc-a119-9449d03ea25c",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "abridged_csr_annex",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "60-page Abridged Annex Report 2. The title expressly refers readers to the main Phase A amendment and Phase B report for complete study design, conduct, objectives, endpoints and results. Supporting annex, not a full standalone CSR.",
+          "Supporting annex to the same longitudinal study family; no independent study count.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "5b912f572ac748fe768d81c6d2e4489264f035dcaf194087bda1deca5f4a3606",
+        "bytes": 4900262,
+        "pageCount": 60,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-104106-clinical-study-report-redact-02.pdf",
+        "sourceAttachmentIdentifier": "e1856bf4-d231-41f2-824c-4c3ea9f4ec6f",
+        "sourceVersionIdentifier": "5f8e43f5-f79f-4bdc-a119-9449d03ea25c",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2020-01-09",
+        "packageRelationship": "Supporting annex to the same longitudinal study family; no independent study count.",
+        "primaryStudyIdentifier": "104106",
+        "studyIdentifiers": [
+          "104106",
+          "OKAH-182",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": false,
+        "pdfParserNotes": ""
+      }
+    },
+    {
+      "sourceKey": "catalog-65d7bc975f686153c4d5",
+      "sourceType": "csr",
+      "title": "GSK 104106 Year 10 CSR Amendment 1 body",
+      "sponsor": "GlaxoSmithKline Biologicals",
+      "product": "104106",
+      "indication": "Varicella prevention",
+      "phase": "3/3b",
+      "trialRegistryIdentifier": null,
+      "officialUrl": "https://filehosting-v2.pharmacm.com/api/Attachment/Download?tenantId=80217381&parentIdentifier=100388&attachmentIdentifier=61ea94a9-b4f9-453e-a6be-f1f8c2930a1d&fileName=gsk-104106-clinical-study-report-redact-03.pdf&versionIdentifier=3cdd47ec-d028-4f3c-8560-6c851a32c2ee",
+      "version": "3cdd47ec-d028-4f3c-8560-6c851a32c2ee",
+      "acquiredAt": "2026-10-27",
+      "documentClass": "redacted_csr_amendment_body",
+      "studyFamily": "gsk-varicella100388",
+      "trainingApproved": false,
+      "clientStudyEvidence": false,
+      "permittedUse": {
+        "retrieval": "review_required",
+        "basis": "Sponsor public disclosure removes patient data listings. Title pages reserve copyright and prohibit unauthorized use. GSK website terms permit personal noncommercial use; commercial reuse, public redistribution, database admission and model training permission are not established. Original retained privately for review. No reusable text, embeddings or training derivatives generated.",
+        "sourceUrl": "https://www.gsk.com/en-gb/terms-of-use/"
+      },
+      "fit": {
+        "targetStudyId": "NCT05330182",
+        "rationale": "General longitudinal report and amendment organization exemplar. Not a CDI clinical comparator or client study evidence.",
+        "limitations": [
+          "144-page Report Amendment 1 Final body. Title states the same Phase A and B study coverage; PDF contains report body, not a demonstrated complete appendix package. PDF metadata reports JavaScript; never execute embedded document actions.",
+          "Amended report body for the same Year 10 report; no independent study count.",
+          "All related originals belong to the existing GSK 100388/104106 longitudinal family; no new independent study is counted.",
+          "Original retained outside the application. Commercial reference retrieval, redistribution, database admission, embeddings and model training are not cleared."
+        ]
+      },
+      "acquisition": {
+        "status": "original_retained_outside_application",
+        "sha256": "40f60388c2a81b4f3ac84ee664c129e4f7b19c8deddae9bc640af187220e6803",
+        "bytes": 4140179,
+        "pageCount": 144,
+        "publicRedistributionAuthorized": false,
+        "sourceFilename": "gsk-104106-clinical-study-report-redact-03.pdf",
+        "sourceAttachmentIdentifier": "61ea94a9-b4f9-453e-a6be-f1f8c2930a1d",
+        "sourceVersionIdentifier": "3cdd47ec-d028-4f3c-8560-6c851a32c2ee",
+        "sourcePageUrl": "https://www.gsk-studyregister.com/trials/100388",
+        "reportDate": "2021-03-22",
+        "packageRelationship": "Amended report body for the same Year 10 report; no independent study count.",
+        "primaryStudyIdentifier": "104106",
+        "studyIdentifiers": [
+          "104106",
+          "OKAH-182",
+          "2004-002676-41"
+        ],
+        "relatedFamilyStudyIdentifiers": [
+          "100388",
+          "103494",
+          "104105",
+          "104106",
+          "NCT00226499"
+        ],
+        "newIndependentStudyCount": 0,
+        "pdfCopyPermitted": true,
+        "pdfJavaScriptPresent": true,
+        "pdfParserNotes": "Syntax Error: Expected the optional content group list, but wasn't able to find it, or it isn't an Array"
+      }
+    }
+  ],
+  "documentaryPublication": {
+    "purpose": "reference_retention_and_review_only",
+    "assetPathBase": "this_manifest_directory",
+    "applicationDatabaseImported": false,
+    "liveAnaAdmissionEstablished": false,
+    "modelTrainingRun": false,
+    "implementationReviewCommit": "e6efa61109eddbe0d9e508642a28e710a48f3b1f",
+    "implementationReviewTree": "311538c0cc6e66cfb75383ea7dc50921d0c587bf",
+    "implementationWholeRepositoryTypecheck": "incomplete_resource_limit",
+    "sourceManifestSha256": "c6bec0591a9421d3f3720a9797b9cac9d986dc22f8801bb20b7d99b96dbd7650",
+    "sourceManifestPathAtReviewCommit": "server/data/public-csr-reference/manifest.json",
+    "packagingChange": "Only originalPath/pagesPath were made package-relative; source records and original bytes are preserved."
+  }
+}
