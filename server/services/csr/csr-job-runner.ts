@@ -403,8 +403,14 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         aiCtx
       );
 
+      // A model response must target the section being drafted. An unexpected
+      // section identifier must not overwrite another section via the upsert.
+      if (drafted.number !== section.number) {
+        throw new Error('CSR_DRAFT_SECTION_MISMATCH: Generated section identifier differs from the requested ICH E3 section.');
+      }
+
       // Missing output remains retryable work; never persist whitespace as a draft.
-      if (!drafted.content?.trim()) {
+      if (typeof drafted.content !== 'string' || !drafted.content.trim()) {
         continue;
       }
 
