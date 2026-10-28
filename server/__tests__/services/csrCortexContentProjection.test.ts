@@ -51,3 +51,23 @@ describe('CSR privacy and revision safeguards', () => {
     expect(atoms[0].confidence).toBeLessThan(1);
   });
 });
+
+describe('Cortex free-text screening', () => {
+  it('keeps explicitly identified subjects out of the retrieval corpus', () => {
+    const atoms = projectCsrContentEvidence({
+      ...base,
+      content: { adverse_events: 'Subject ID: TEST-101 experienced nausea' },
+    });
+    expect(atoms).toEqual([]);
+  });
+
+  it('continues to admit aggregate, source-linked statistical narrative', () => {
+    const atoms = projectCsrContentEvidence({
+      ...base,
+      content: { statistical_analyses: 'ANCOVA was applied to the ITT population.' },
+    });
+    expect(atoms).toHaveLength(1);
+    expect(atoms[0].structuredData.sourceLocation).toBe('csr_reports.content.statistical_analyses');
+    expect(atoms[0].structuredData.verificationStatus).toBe('unverified');
+  });
+});
