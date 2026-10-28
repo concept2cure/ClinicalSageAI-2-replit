@@ -226,18 +226,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     }
   }
 
-  // 3. Transition queued|failed -> drafting
-  await d
-    .update(csrBuildJobs)
-    .set({
-      status: 'drafting',
-      startedAt: new Date(),
-      updatedAt: new Date(),
-      error: null,
-    })
-    .where(eq(csrBuildJobs.id, jobId));
-
-  // 4. Rebuild the CSRBuildRequest from the persisted snapshot
+  // 3. Rebuild the CSRBuildRequest from the persisted snapshot
   const { studyInfo, deepResearchJobId } = readStudyInfoSnapshot(
     job.studyInfoSnapshot
   );
@@ -256,6 +245,20 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
     return;
   }
+
+  // Claim the job only after identity validation, and only if its state
+  // remains runnable. A competing runner must not draft the same job.
+  const [claimed] = await d.update(csrBuildJobs).set({
+    status: 'drafting',
+    startedAt: new Date(),
+    updatedAt: new Date(),
+    error: null,
+  }).where(and(
+    eq(csrBuildJobs.id, jobId),
+    eq(csrBuildJobs.organizationId, job.organizationId),
+    eq(csrBuildJobs.status, job.status),
+  )).returning({ id: csrBuildJobs.id });
+  if (!claimed) return;
 
   const persistedSubset = job.sectionsToGenerate ?? null;
   const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
