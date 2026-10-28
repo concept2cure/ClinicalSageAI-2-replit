@@ -67,4 +67,15 @@ describe('CSR evidence-bound claim reconciliation', () => {
     expect(result.findings.some(f => f.code === 'INVALID_CLAIM')).toBe(true);
   });
 
+  it('detects internally inconsistent observed proportions in qualified source data', () => {
+    const result = check(claim, { ...fact, estimate: 0.80 });
+    expect(result.accepted).toBe(false);
+    expect(result.findings.some(f => f.code === 'NUMERIC_MISMATCH')).toBe(true);
+  });
+  it('does not recompute model-based estimates from raw counts', () => {
+    const modelFact = { ...fact, estimate: 0.80, method: 'Bayesian posterior mean' };
+    const modelClaim = { ...claim, estimate: 0.80, method: 'Bayesian posterior mean' };
+    expect(check(modelClaim, modelFact).accepted).toBe(true);
+  });
+
 });
