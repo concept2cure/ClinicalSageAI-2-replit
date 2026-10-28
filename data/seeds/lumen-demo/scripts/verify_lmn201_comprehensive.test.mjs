@@ -22,6 +22,19 @@ test('cross-domain reconciliation and corruption detection',()=>{
     writeFileSync(dm,original.replace('DEMO-LMN201-0001','INVALID-PATIENT'));
     assert.throws(()=>verifyGeneratedCsr(dir),/unknown participant/);
     writeFileSync(dm,original);
+    const changeFirst=(filename,from,to,pattern)=>{
+      const file=join(dir,filename);
+      const originalFile=readFileSync(file,'utf8');
+      assert.ok(originalFile.includes(from),filename+' fixture value absent');
+      writeFileSync(file,originalFile.replace(from,to));
+      assert.throws(()=>verifyGeneratedCsr(dir),pattern);
+      writeFileSync(file,originalFile);
+    };
+    // Subject IDs remain valid: these errors previously passed a count-only audit.
+    changeFirst('DM.csv','DEMO-LMN201-0001','DEMO-LMN201-0002',/duplicate subject|mismatch/);
+    changeFirst('RS.csv','\"Y\"','\"N\"',/Clinical efficacy and analysis mismatch/);
+    changeFirst('FA.csv','\"N\"','\"Y\"',/Clinical efficacy and analysis mismatch/);
+    changeFirst('ADLB.csv',',13\n',',999\n',/Analysis laboratory or vital-sign mismatch/);
     const source=join(dir,'csr_source_v1_500_synthetic.json');
     writeFileSync(source,readFileSync(source,'utf8')+' ');
     assert.throws(()=>verifyGeneratedCsr(dir),/checksum mismatch/);
