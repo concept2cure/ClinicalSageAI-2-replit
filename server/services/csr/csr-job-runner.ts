@@ -234,6 +234,20 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     return;
   }
 
+  // Legacy unanchored jobs cannot resume into a regulated dossier.
+  // Refuse before any source reads or model calls.
+  if (job.projectId == null) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'project_anchor_missing',
+        message: 'This CSR job has no project anchor. Select a project and start a new build.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
+
   // Permission is checked again when work starts, not retained from enqueue.
   // Refuse before section/source reads or AI calls; preserve prior outputs.
   if (job.projectId != null) {
