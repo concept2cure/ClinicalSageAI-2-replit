@@ -301,10 +301,22 @@ async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
   });
 }
 
+/** Reject invalid section targets before quota reservation or job enqueue. */
+export function validateCSRSectionSelection(sectionsToGenerate?: string[]): void {
+  if (sectionsToGenerate === undefined) return;
+  const valid = new Set(flattenICHE3Sections(ICH_E3_STRUCTURE).map(section => section.number));
+  if (!Array.isArray(sectionsToGenerate) || sectionsToGenerate.length === 0 ||
+      sectionsToGenerate.some(code => typeof code !== 'string' || !valid.has(code)) ||
+      new Set(sectionsToGenerate).size !== sectionsToGenerate.length) {
+    throw new Error('CSR_SECTION_SELECTION_INVALID: Choose unique existing ICH E3 section numbers.');
+  }
+}
+
 /**
  * Launch a CSR build job.
  */
 export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
+  validateCSRSectionSelection(request.sectionsToGenerate);
   await resolveCsrBuildContext(db, request, { organizationId: request.organizationId, projectId: request.projectId, requestedBy: request.userId });
   await reserveCSRBuilderQuota(request);
 
@@ -348,6 +360,7 @@ export async function launchCSRBuildAsync(
   request: CSRBuildRequest,
   ctx: { organizationId: number; projectId?: number; programId?: string; clientWorkspaceId?: number; requestedBy?: number }
 ): Promise<{ jobId: number; status: 'queued' }> {
+  validateCSRSectionSelection(request.sectionsToGenerate);
   const scope = await resolveCsrBuildContext(db, request, ctx);
   // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
   // billing. Throws the same upgrade-required error as launchCSRBuild on
