@@ -78,7 +78,7 @@ export interface AudienceRegister {
 export const GLOBAL_STYLE_RULES: string[] = [
   'Lead with the conclusion; structure top-down (BLUF). Every section answers a regulatory or scientific question.',
   'One claim per sentence; prefer the active voice and past tense for completed methods/results.',
-  'Quantify everything: effect sizes with 95% CIs and p-values, denominators with every percentage, absolute not just relative risk.',
+  'Report supplied, method-appropriate estimates with denominators, precision and uncertainty (frequentist confidence intervals/p-values or Bayesian posterior summaries/credible intervals as prespecified); never invent or demand absent statistics.',
   'Define each abbreviation at first use; keep a single abbreviation list; do not abbreviate terms used <3 times.',
   'Numbers: numerals for data; consistent decimal places justified by the measurement precision; SI units (with conventional units where the region expects them).',
   'Never overstate: distinguish statistical significance from clinical relevance; label post-hoc and exploratory analyses as such; do not imply causation from association.',
@@ -477,6 +477,18 @@ export function composeMedicalWritingGuidance(req: MedicalWritingRequest): Medic
     parts.push(
       `\n_Document type not recognized — applying general medical-writing craft. Supported types: ${DOCUMENT_TYPES.map(d => d.id).join(', ')}._`
     );
+  }
+
+  if (doc?.id === 'csr') {
+    parts.push(`\n## CSR exemplar intelligence and error controls
+External full CSRs and regulatory reviews teach document architecture, transitions, table-footnote discipline, and how to discuss limitations. They are not evidence of the client's results and must not be copied as patient data, numerical findings, safety conclusions, or unsupported causal claims.
+First classify each retrieved document as full CSR, redacted CSR, synopsis, regulatory review, protocol, SAP, TLF, or publication; do not treat a synopsis or regulatory review as a full CSR.
+Before writing each results section, identify the governing protocol and SAP versions, analysis population, endpoint definition, data cut, actual TLF/analysis output, source location and applicable method. If absent, state the precise gap and mark the section awaiting evidence.
+For every percentage, preserve numerator, denominator and analysis set. For every comparison, distinguish crude arithmetic from model-based or adjusted estimands. Respect Bayesian and frequentist methods exactly as prespecified; never back-calculate a reported adjusted odds ratio from aggregate percentages.
+For safety, distinguish all-cause AEs/SAEs from investigator-assessed related events, and describe exposure, severity, seriousness, discontinuation, outcomes and missingness separately.
+Check that tables and narrative agree in counts, units, dates, visits, populations, SOC/PT coding, figure legends, footnotes, abbreviations and cross-references. Flag contradictory public sources rather than choosing whichever looks better.
+Avoid overclaiming: no unsupported significance, no spin, no invented CI, p-value, posterior, event, participant, or approval. Human medical-writing and biostatistical review remains required.
+Retain source originals and derivatives with page/version/hash lineage; enforce source rights before commercial retrieval, embedding, or training. Use the existing governed canvas and editor.`);
   }
 
   if (ta) {
