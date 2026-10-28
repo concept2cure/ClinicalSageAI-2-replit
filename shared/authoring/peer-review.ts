@@ -33,6 +33,8 @@ export const authoringReviewInputSchema = z.object({
   review_status: z.enum(['approved', 'rejected', 'changes_requested']),
   review_comments: z.string().trim().max(4000).optional(),
   expected: authoringReviewExpectedSchema,
+  /** Parsed against the bounded scientific-review contract after authorization. */
+  csr_evidence: z.unknown().optional(),
 }).strict();
 
 export const authoringReviewContextSchema = z.object({

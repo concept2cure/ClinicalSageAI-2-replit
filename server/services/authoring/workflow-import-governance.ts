@@ -196,6 +196,7 @@ async function approvedAssignment(q: Queryable, input: WorkflowGovernanceInput) 
 /** Called after the parent document lock, before credential consumption. This
  * permits a reviewer to record review while a known-machine release hold stands. */
 export async function prepareWorkflowImportAdoption(q: Queryable, input: WorkflowGovernanceInput & { explicit: boolean }): Promise<WorkflowSourceAdoption | null> {
+  await requireCsrScientificRelease(q, input);
   const state = await inspectedWorkflow(q, input);
   if (!state || !input.explicit) return null;
   const review = await approvedAssignment(q, input);
@@ -250,7 +251,24 @@ async function hasCurrentAdoption(q: Queryable, input: WorkflowGovernanceInput, 
 /** Every controlled boundary calls this on the same reserved document/source
  * snapshot it releases. A review may adopt uncertain authorship; it cannot turn
  * positively generated text without a qualified generation receipt into PQ. */
+
+/** Same reserved transaction as the native freeze/sign/export caller. */
+async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  try {
+    const { assertCsrScientificRelease } = await import('./csr-scientific-review.js');
+    await assertCsrScientificRelease(q, input);
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error &&
+        typeof error.code === 'string' && error.code.startsWith('CSR_')) {
+      throw new WorkflowImportGovernanceError(sourceVerificationStatus(error), error.code,
+        'No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.');
+    }
+    throw error;
+  }
+}
+
 export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  await requireCsrScientificRelease(q, input);
   const state = await inspectedWorkflow(q, input);
   if (!state) return;
   if (state.knownMachineRemains) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',

@@ -198,6 +198,58 @@ async function assignedVerdict(client: RequestSqlClient, input: PeerReviewInput,
   return { ...current, before };
 }
 
+
+/** Existing assigned human review remains the qualification ceremony. The model
+ * cannot assert qualified facts; this adapter binds exact source cells and the
+ * complete current saved document to the authenticated review decision. */
+async function scientificReviewForApproval(client: RequestSqlClient, input: PeerReviewInput,
+  current: AdmittedReview, body: AuthoringReviewInput) {
+  if (body.review_status !== 'approved') return null;
+  try {
+    const { prepareCsrScientificApproval } = await import('./csr-scientific-review.js');
+    return await prepareCsrScientificApproval(client, {
+      tenantId: input.tenantId, actorId: current.actor.id, document: current.document,
+      snapshot: current.snapshot, snapshotHash: current.snapshotHash,
+      reviewId: body.expected.reviewId, submission: body.csr_evidence,
+    });
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error &&
+        typeof error.code === 'string' && error.code.startsWith('CSR_')) {
+      const status = Number((error as { status?: unknown }).status);
+      throw new AuthoringPeerReviewRefused(status === 403 ? 403 : status === 404 ? 404 : status === 503 ? 503 : 409,
+        error.code, 'The CSR scientific evidence is incomplete, stale or unavailable. Review the current saved source tables before approving.');
+    }
+    throw error;
+  }
+}
+
+/** Authorized aggregate-table preview in the existing review workflow. */
+export async function previewAuthoringCsrReview(connection: RequestConnectable,
+  input: PeerReviewInput & { runIds: unknown }) {
+  return transaction(connection, async client => {
+    const current = await admit(client, input, 'view', false);
+    const { previewCsrScientificEvidence, requiresCsrScientificReview } = await import('./csr-scientific-review.js');
+    const context = { tenantId: input.tenantId, actorId: current.actor.id, document: current.document,
+      snapshot: current.snapshot, snapshotHash: current.snapshotHash };
+    try {
+      if (!await requiresCsrScientificReview(client, context)) {
+        throw new AuthoringPeerReviewRefused(409, 'CSR_EVIDENCE_SCOPE_INVALID', 'Select the saved CSR, not another document class.');
+      }
+      const preview = await previewCsrScientificEvidence(client, context, input.runIds);
+      await recheckAdmission(client, input, current, 'view', false);
+      return { ...preview, snapshot: current.snapshot, humanReviewRequired: true };
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error &&
+          typeof error.code === 'string' && error.code.startsWith('CSR_')) {
+        const status = Number((error as { status?: unknown }).status);
+        throw new AuthoringPeerReviewRefused(status === 403 ? 403 : status === 404 ? 404 : status === 503 ? 503 : 409,
+          error.code, 'Current project access, approved source versions and retained clinical tables must be available.');
+      }
+      throw error;
+    }
+  }, true);
+}
+
 export async function submitAuthoringPeerReview(connection: RequestConnectable, input: PeerReviewInput & { body: AuthoringReviewInput }, deps: {
   audit: AuditFacts;
   closeTasks: (client: RequestSqlClient, input: PeerReviewTaskInput) => Promise<PeerReviewTaskClosure>;
@@ -208,6 +260,7 @@ export async function submitAuthoringPeerReview(connection: RequestConnectable, 
   const body = { ...parsed, review_comments: stated.reason ?? undefined };
   return transaction(connection, async client => {
     const current = await assignedVerdict(client, input, body);
+    const csrScientificEvidence = await scientificReviewForApproval(client, input, current, body);
     const result = await client.query(`UPDATE authoring_reviews SET review_status=$1, review_comments=$2,
       reviewed_at=clock_timestamp(), updated_at=clock_timestamp(), reviewer_name=$3, reviewer_email=$4,
       reviewed_snapshot=$5::jsonb, reviewed_snapshot_hash=$6, review_binding_basis=$7
@@ -224,7 +277,8 @@ export async function submitAuthoringPeerReview(connection: RequestConnectable, 
       changeReason: body.review_comments ?? null, executor: client,
       metadata: { review_status: body.review_status, review_comments: body.review_comments ?? null,
         request: body.expected, beforeReview: current.before, afterReview: result.rows[0],
-        reviewedSnapshot: current.snapshot, snapshotHash: current.snapshotHash, bindingBasis: AUTHORING_REVIEW_BINDING_BASIS },
+        reviewedSnapshot: current.snapshot, snapshotHash: current.snapshotHash, bindingBasis: AUTHORING_REVIEW_BINDING_BASIS,
+        ...(csrScientificEvidence ? { csrScientificEvidence } : {}) },
     });
     await tasks.record();
     const confirmed = await assignedVerdict(client, input, body);

@@ -9,7 +9,8 @@ import { validateCsrSourceReceipts } from './source-receipt-eligibility.js';
 /** A retained run is a historical record. Reconstruction still honors explicit
  * source data dispositions and current project ACL on every aggregate read.
  * Never serialize input_snapshot: it contains private participant observations. */
-export async function readSavedClinicalTables(q: RequestSqlClient, scope: CsrSourceScope, runId: string) {
+export async function readSavedClinicalTables(q: RequestSqlClient, scope: CsrSourceScope, runId: string,
+  options: { forRelease?: boolean } = {}) {
   await authorizeCsrSourceProgram(q, scope);
   const { rows } = await q.query(`SELECT i.input_snapshot, i.input_digest, i.input_seal
     FROM submission_orchestrator_runs r JOIN submission_orchestrator_inputs i
@@ -25,7 +26,10 @@ export async function readSavedClinicalTables(q: RequestSqlClient, scope: CsrSou
     throw new CsrSourceInputError(409, 'CSR_RUN_INPUTS_INVALID', 'The retained inputs do not match the selected project.');
   }
   const studies: Array<{ source: CsrSourceReceipt; tables: CSRTables }> = [];
-  const receipts = await validateCsrSourceReceipts(q, scope, input.clinicalSourceReceipts, { historical: true });
+  // Release/review reads require the current approved source and reserve it
+  // against concurrent withdrawal. Ordinary historical reads remain unchanged.
+  const receipts = await validateCsrSourceReceipts(q, scope, input.clinicalSourceReceipts,
+    { historical: options.forRelease !== true, lock: options.forRelease === true });
   for (const receipt of receipts) {
     if (receipt.adapter !== CSR_SOURCE_FORMAT || receipt.sourceApproval !== 'canonical-lifecycle' || receipt.clinicalVerification !== 'not-established') {
       throw new CsrSourceInputError(409, 'CSR_RUN_INPUTS_INVALID', 'The retained source receipt did not verify.');
@@ -34,5 +38,5 @@ export async function readSavedClinicalTables(q: RequestSqlClient, scope: CsrSou
     if (matches.length !== 1) throw new CsrSourceInputError(409, 'CSR_RUN_INPUTS_INVALID', 'The retained source receipt does not identify one study.');
     studies.push({ source: receipt, tables: buildCSRTables(matches[0]) });
   }
-  return { runId, programId: scope.programId, historical: true as const, studies };
+  return { runId, programId: scope.programId, historical: true as const, releaseEligibilityVerified: options.forRelease === true, studies };
 }
