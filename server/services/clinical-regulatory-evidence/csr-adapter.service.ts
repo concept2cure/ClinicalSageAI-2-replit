@@ -175,6 +175,19 @@ export async function atomizeCsrReport(orgId: number, csrReportId: number, opts:
   for (const f of features) {
     drafts.push(...projectDesignFeature(f, { sourceId: adapted.source.id, indication: read.report.indication, phase: read.report.phase }));
   }
+  // Capture the remaining explicitly recorded CSR domains using the same
+  // tenant-scoped CRE atom persistence and retrieval pathway. Do not infer
+  // statistical validity from free text or re-compute submitted results.
+  const { projectCsrContentEvidence } = await import('./csr-content-projection');
+  drafts.push(...projectCsrContentEvidence({
+    reportId: read.report.report_id,
+    sourceId: adapted.source.id,
+    studyId: adapted.study.id,
+    content: read.report.content,
+    detailResults: read.detail?.results,
+    detailEndpoints: read.detail?.endpoints,
+    reportMetadata: read.report.metadata,
+  }));
   return persistCsrDerivedAtoms(orgId, drafts, { embed: opts.embed });
 }
 
