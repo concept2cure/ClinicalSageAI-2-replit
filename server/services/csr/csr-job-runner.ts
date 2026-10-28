@@ -515,8 +515,10 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       return;
     }
 
-    // 6b. Success — every requested section is saved, nonblank and placeholder-free.
-    await d
+    // 6b. Success — only the actively claimed drafting job may transition
+    // to complete. A revoked, cancelled, or superseded job must not be
+    // resurrected by a late section-drafting worker.
+    const completed = await d
       .update(csrBuildJobs)
       .set({
         status: 'complete',
@@ -524,7 +526,11 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         completedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(and(eq(csrBuildJobs.id, jobId),
+        eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')))
+      .returning({ id: csrBuildJobs.id });
+    if (completed.length !== 1) return;
     // Continue dependent submission work only after the CSR completion is durable.
     // This callback has its own failure boundary: a release/readiness refusal
     // must never relabel successfully generated CSR sections as a failed job.
