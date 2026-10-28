@@ -78,6 +78,17 @@ export function reconcileCsrClaims(
     if (!matches.length) { add(id, 'MISSING_SOURCE'); continue; }
     if (matches.length !== 1) { add(id, 'DUPLICATE_SOURCE'); continue; }
     const fact = matches[0];
+    // A qualified label cannot rescue impossible or malformed source-side
+    // numbers. Validate the evidence fact independently of the draft claim.
+    if ((fact.numerator !== undefined &&
+         (!Number.isSafeInteger(fact.numerator) || fact.numerator < 0)) ||
+        (fact.denominator !== undefined &&
+         (!Number.isSafeInteger(fact.denominator) || fact.denominator <= 0)) ||
+        (fact.numerator !== undefined && fact.denominator !== undefined &&
+         fact.numerator > fact.denominator) ||
+        (fact.estimate !== undefined && !finite(fact.estimate))) {
+      add(id, 'INVALID_CLAIM');
+    }
     if (fact.status !== 'qualified') add(id, 'SOURCE_NOT_QUALIFIED');
     if (!sha.test(fact.sourceSha256) || claim.sourceSha256 !== fact.sourceSha256) add(id, 'SOURCE_VERSION_MISMATCH');
     if (!present(fact.sourceId) || !present(fact.sourceLocation)) add(id, 'MISSING_SOURCE_LOCATION');
