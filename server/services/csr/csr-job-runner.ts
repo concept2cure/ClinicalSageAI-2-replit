@@ -250,16 +250,14 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
   // Permission is checked again when work starts, not retained from enqueue.
   // Refuse before section/source reads or AI calls; preserve prior outputs.
-  if (job.projectId != null) {
-    try {
-      await resolveCsrScope(d, job.organizationId, { projectId: job.projectId }, { actorUserId: job.requestedBy ?? undefined });
-    } catch (error) {
-      await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
-        reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
-        code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
-      } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
-      return;
-    }
+  try {
+    await resolveCsrScope(d, job.organizationId, { projectId: job.projectId }, { actorUserId: job.requestedBy ?? undefined });
+  } catch (error) {
+    await d.update(csrBuildJobs).set({ status: 'failed', updatedAt: new Date(), error: {
+      reason: error instanceof CsrScopeError ? 'project_access_refused' : 'project_access_verification_failed',
+      code: error instanceof CsrScopeError ? error.code : 'CSR_PROJECT_ACCESS_UNAVAILABLE',
+    } }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
   }
 
   // 3. Rebuild the CSRBuildRequest from the persisted snapshot
