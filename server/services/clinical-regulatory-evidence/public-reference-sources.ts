@@ -160,9 +160,16 @@ export async function searchPublicReferenceSources(organizationId: number, input
   const sources = pageRows.flatMap(row => {
     const reference = referenceOf(row); return reference ? [summary(row, reference)] : [];
   });
+  // A corrupt manifest must not masquerade as an ordinary empty search result.
+  // Preserve pagination but expose the integrity failure as an explicit error.
+  const invalidCount = pageRows.length - sources.length;
+  if (invalidCount > 0) {
+    throw new PublicReferenceReadError('SOURCE_MANIFEST_INVALID',
+      `Public reference catalog contains ${invalidCount} invalid source manifest(s) in the requested page. No results returned.`);
+  }
   const hasMore = rows.length > limit;
   return { sources, offset, limit, hasMore, nextOffset: hasMore ? offset + limit : null,
-    excludedInvalidManifests: pageRows.length - sources.length,
+    excludedInvalidManifests: 0,
     note: 'Public source catalog metadata. Text requires a separate integrity-checked page read. External examples are not client study results.' };
 }
 
