@@ -7,10 +7,10 @@ describe('CSR Cortex evidence projection', () => {
     const atoms = projectCsrContentEvidence({
       ...base,
       content: {
-        efficacy_results: { primary: { estimate: 1.2, p_value: 0.03 } },
-        statistical_analyses: { model: 'ANCOVA', population: 'ITT' },
-        adverse_events: { serious: 2 },
-        participant_disposition: { randomized: 128 },
+        efficacy_results: 'Primary endpoint estimate 1.2; p=0.03',
+        statistical_analyses: 'ANCOVA in ITT population',
+        adverse_events: 'Two serious adverse events',
+        participant_disposition: '128 randomized',
       },
     });
     expect(atoms).toHaveLength(4);
@@ -30,10 +30,24 @@ describe('CSR Cortex evidence projection', () => {
     const again = projectCsrContentEvidence({ ...base, content: { efficacy_results: 'Observed value A' } });
     const revised = projectCsrContentEvidence({ ...base, content: { efficacy_results: 'Observed value B' } });
     expect(one[0].sourceRef).toBe(again[0].sourceRef);
-    expect(one[0].sourceRef).not.toBe(revised[0].sourceRef);
+    expect(one[0].sourceRef).toBe(revised[0].sourceRef);
+    expect(one[0].structuredData.valueHash).not.toBe(revised[0].structuredData.valueHash);
   });
 
   it('does not put oversized participant-level source payloads into retrieval snippets', () => {
     expect(projectCsrContentEvidence({ ...base, content: { adverse_events: 'x'.repeat(12001) } })).toEqual([]);
+  });
+});
+
+describe('CSR privacy and revision safeguards', () => {
+  it('does not embed structured patient-level payloads', () => {
+    const atoms = projectCsrContentEvidence({
+      ...base, content: { adverse_events: [{ subject_id: 'PATIENT-001', event: 'headache' }] },
+    });
+    expect(atoms).toEqual([]);
+  });
+  it('does not use an unverified clinical confidence of 1', () => {
+    const atoms = projectCsrContentEvidence({ ...base, content: { efficacy_results: 'Observed endpoint result' } });
+    expect(atoms[0].confidence).toBeLessThan(1);
   });
 });
