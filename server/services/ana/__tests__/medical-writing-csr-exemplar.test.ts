@@ -37,4 +37,11 @@ describe('AnA CSR exemplar intelligence safeguards', () => {
     const brief = composeMedicalWritingGuidance({ documentType: 'protocol' }).brief;
     expect(brief).not.toContain('## CSR exemplar intelligence and error controls');
   });
+  it('requires structured numerical claim receipts instead of citation-only prose', () => {
+    const brief = guidance();
+    expect(brief).toContain('structured claim-to-evidence receipt');
+    expect(brief).toContain('A prose citation alone does not prove numerical reconciliation');
+    expect(brief).toContain('withhold review-ready status');
+  });
+
 });
