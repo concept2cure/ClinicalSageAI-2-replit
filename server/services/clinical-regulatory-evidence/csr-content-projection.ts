@@ -65,12 +65,6 @@ function safeText(value: unknown): string | null {
   if (typeof value === 'string') return value.trim() || null;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (typeof value === 'boolean') return String(value);
-  if (value !== null && typeof value === 'object') {
-    try {
-      const serialized = JSON.stringify(value);
-      return serialized.length > 0 ? serialized : null;
-    } catch { return null; }
-  }
   return null;
 }
 
@@ -96,6 +90,9 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
         // Never index a full, possibly participant-level CSR payload as a
         // retrieval snippet. Oversized source data stays in the governed source.
         if (text.length > 12000) continue;
+        // Free-text values can still include subject identifiers. Only explicitly
+        // screened aggregate text may be indexed; otherwise keep source in Vault.
+        if (/(?:subject|patient|participant)[ _-]?(?:id|identifier|number)\\s*[:=#]/i.test(text)) continue;
         const sourceLocation = location + '.' + key;
         const fingerprint = createHash('sha256').update(text).digest('hex');
         drafts.push({
