@@ -342,8 +342,10 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   // output must not be treated as finished merely because its row exists.
   const persistedSet = new Set(alreadyPersisted.filter(row =>
     targetNumbers.has(row.sectionNumber) &&
-    Boolean(row.content?.trim()) &&
+    typeof row.content === 'string' &&
+    Boolean(row.content.trim()) &&
     !hasUnresolvedPlaceholders(row.content) &&
+    typeof row.contentHash === 'string' &&
     row.contentHash === sha256Hex(row.content)
   ).map(row => row.sectionNumber));
 
