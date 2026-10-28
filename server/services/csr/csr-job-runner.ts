@@ -535,6 +535,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       .set({
         status: 'complete',
         progress: 100,
+        error: null,
         completedAt: new Date(),
         updatedAt: new Date(),
       })
