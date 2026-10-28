@@ -33,6 +33,23 @@ describe('LMN-201-like 500-subject synthetic CSR table journey', () => {
       expect(tables.aeOverallSummary.rows.length).toBeGreaterThan(0);
       expect(tables.aeBySOC.rows.length).toBeGreaterThan(0);
       expect(tables.deathsSAEsDiscontinuations.rows.length).toBeGreaterThan(0);
+      // Confirm the same data are represented in the actual CSR table cells.
+      // A table object existing is not evidence that it reconciles to source.
+      const disposition = tables.disposition.rows;
+      const completed = disposition.find(row => row[0] === 'Completed treatment');
+      const discontinued = disposition.find(row => row[0] === 'Discontinued (any reason)');
+      expect(completed).toEqual(['Completed treatment', '240', '240', '480']);
+      expect(discontinued).toEqual(['Discontinued (any reason)', '10', '10', '20']);
+      const primaryRows = tables.primaryEfficacy.rows;
+      expect(primaryRows).toHaveLength(2);
+      expect(primaryRows.map(row => row[2])).toEqual([
+        '190/250 simulated participants', '140/250 simulated participants',
+      ]);
+      // No SAP or verified inferential analysis was provided.
+      expect(primaryRows.every(row => row[3] === '—' && row[4] === '—')).toBe(true);
+      expect(tables.analysisPopulations.headers.length).toBeGreaterThan(1);
+      expect(tables.aeOverallSummary.headers.length).toBeGreaterThan(1);
+
     } finally { rmSync(directory, { recursive: true, force: true }); }
   }, 30_000);
 });
