@@ -151,7 +151,7 @@ export async function enqueueCSRBuildJob(
       : null;
 
   const snapshot: CSRStudyInfoSnapshot = {
-    studyInfo: req.studyInfo,
+    studyInfo: { ...req.studyInfo, protocolNumber: protocolNumber.trim() },
     deepResearchJobId: req.deepResearchJobId,
   };
 
