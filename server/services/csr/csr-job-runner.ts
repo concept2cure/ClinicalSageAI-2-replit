@@ -352,7 +352,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   // and require a governed correction rather than silently regenerating it.
   const damaged = alreadyPersisted.filter(row =>
     targetNumbers.has(row.sectionNumber) &&
-    row.contentHash !== sha256Hex(row.content)
+    (typeof row.content !== 'string' ||
+      typeof row.contentHash !== 'string' ||
+      row.contentHash !== sha256Hex(row.content))
   );
   if (damaged.length > 0) {
     await d.update(csrBuildJobs).set({
