@@ -347,6 +347,26 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     row.contentHash === sha256Hex(row.content)
   ).map(row => row.sectionNumber));
 
+  // A stored hash mismatch is evidence of changed or damaged source output.
+  // Never overwrite that record during a resume: preserve it for investigation
+  // and require a governed correction rather than silently regenerating it.
+  const damaged = alreadyPersisted.filter(row =>
+    targetNumbers.has(row.sectionNumber) &&
+    row.contentHash !== sha256Hex(row.content)
+  );
+  if (damaged.length > 0) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'saved_section_integrity_failed',
+        sections: damaged.map(row => row.sectionNumber),
+        message: 'Saved CSR section integrity verification failed. Existing content was preserved; review the affected sections before restarting.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
+
   const totalSections = allTargets.length;
   let sectionsCompleted = persistedSet.size;
   const currentSection = { number: '' as string };
