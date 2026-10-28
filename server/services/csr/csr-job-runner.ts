@@ -136,6 +136,18 @@ export async function enqueueCSRBuildJob(
   if (typeof protocolNumber !== 'string' || !protocolNumber.trim()) {
     throw new Error('CSR_STUDY_IDENTIFIER_REQUIRED: Record the study protocol number before starting CSR drafting. No job was created.');
   }
+  // Reject malformed section selections before creating a persistent job.
+  // Undefined or [] retains the established whole-report behavior.
+  const requestedSections = req.sectionsToGenerate;
+  if (requestedSections !== undefined) {
+    const supported = new Set(flattenICHE3Sections(ICH_E3_STRUCTURE).map(section => section.number));
+    if (!Array.isArray(requestedSections) ||
+        requestedSections.some(number => typeof number !== 'string' || !supported.has(number)) ||
+        new Set(requestedSections).size !== requestedSections.length) {
+      throw new CsrScopeError('CSR_SECTION_SELECTION_INVALID', 400,
+        'Choose unique ICH E3 section numbers from the CSR template. No job was created.');
+    }
+  }
   const d = requireDb();
   const scope = await resolveCsrBuildContext(d, req, ctx);
 
