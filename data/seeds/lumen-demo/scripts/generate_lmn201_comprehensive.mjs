@@ -71,4 +71,31 @@ sourceSha256:createHash('sha256').update(pretty).digest('hex'),participants:500,
 domains:Object.fromEntries(Object.entries(rows).map(([k,v])=>[k,v.length])),
 limitations:['All observations are invented','Not validated SDTM/ADaM conformance','No clinical inference, model-based odds ratios, posterior probabilities or p-values','No live tenant, Vault upload, or AnA run']};
 writeFileSync(resolve(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+// Negative test cases are separate mutation instructions, never inserted into
+// the approved clean source. The harness must verify each is rejected or flagged.
+const negativeCases=[];
+const categories=[
+ ['duplicate_subject','participants','Duplicate a subjectId and require uniqueness rejection'],
+ ['arm_mismatch','participants','Change subject arm without changing related records'],
+ ['population_mismatch','studyData.treatmentArms','Change randomized denominator'],
+ ['missing_demographic','studyData.demographics','Remove a required subject demographic'],
+ ['disposition_mismatch','studyData.disposition','Disagree with completed participant flag'],
+ ['unknown_ae_subject','studyData.adverseEvents','Reference a nonexistent safety subject'],
+ ['endpoint_duplicate','studyData.efficacy','Duplicate the same endpoint and arm'],
+ ['unsupported_inference','studyData.efficacy','Add an invented p-value not supported by an SAP'],
+ ['source_version_conflict','governance','Withdraw the selected source version'],
+ ['protocol_sap_discordance','documents','Change endpoint definition between protocol and SAP'],
+ ['unreadable_pdf_page','ingestion','Supply a scanned page with no extracted text'],
+ ['missing_table_footnote','tables','Omit a denominator or table footnote'],
+];
+for(let i=0;i<120;i++){
+ const [code,domain,expected]=categories[i%categories.length];
+ negativeCases.push({id:'NEG-'+String(i+1).padStart(3,'0'),category:code,
+ domain,subjectId:participants[i%participants.length].subjectId,
+ expectedBehavior:expected,sourceType:'mutation_instruction_only',
+ status:'not_executed',mustNotAlterCleanFixture:true});
+}
+writeFileSync(resolve(output,'negative_cases.json'),JSON.stringify({
+ synthetic:true,notClinicalEvidence:true,cases:negativeCases},null,2)+'\n');
+
 console.log(JSON.stringify({output,...manifest},null,2));
