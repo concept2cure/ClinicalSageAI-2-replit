@@ -1,13 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { evaluateChallengeSet } from './evaluate-csr-challenge-set.mjs';
 
 const spec = { targetStudy: 'NCT05330182', cases: [
   { id: 'A', severity: 'critical', expected: ['Correct denominator'] }, { id: 'B', severity: 'major', expected: ['Accurate method'] },
 ] };
+const response = text => ({ responseText: text, responseSha256: createHash('sha256').update(text).digest('hex') });
 const reviewed = { cases: [
-  { id: 'A', passed: true, reviewer: 'medical writer', evidenceReference: 'review/1', reviewNotes: 'Verified against source', criteria: [{ expected: 'Correct denominator', passed: true, evidenceReference: 'review/1#denominator', reviewNotes: 'Source verified' }] },
-  { id: 'B', passed: true, reviewer: 'statistician', evidenceReference: 'review/2', reviewNotes: 'Verified denominator', criteria: [{ expected: 'Accurate method', passed: true, evidenceReference: 'review/2#method', reviewNotes: 'SAP verified' }] },
+  { id: 'A', ...response('AnA draft A'), passed: true, reviewer: 'medical writer', evidenceReference: 'review/1', reviewNotes: 'Verified against source', criteria: [{ expected: 'Correct denominator', passed: true, evidenceReference: 'review/1#denominator', reviewNotes: 'Source verified' }] },
+  { id: 'B', ...response('AnA draft B'), passed: true, reviewer: 'statistician', evidenceReference: 'review/2', reviewNotes: 'Verified denominator', criteria: [{ expected: 'Accurate method', passed: true, evidenceReference: 'review/2#method', reviewNotes: 'SAP verified' }] },
 ] };
 
 test('complete reviewed pass is explicit', () => {
@@ -57,3 +59,5 @@ test('correct critical threshold remains valid', () => {
   input.scoring = { criticalCasesMustPass: 1 };
   assert.equal(evaluateChallengeSet(input, reviewed).verdict, 'reviewed_pass');
 });
+
+test('tampered model response fails', () => { const input = structuredClone(reviewed); input.cases[0].responseText += ' altered'; assert.throws(() => evaluateChallengeSet(spec, input), /matching SHA-256/); });
