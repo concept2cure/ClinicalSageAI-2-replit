@@ -145,7 +145,7 @@ export async function enqueueCSRBuildJob(
       ? req.sectionsToGenerate
       : null;
 
-  const snapshot: CSRStudyInfoSnapshot = {
+  // A regulated report must never acquire a synthetic study identity.\n  // Resolve the protocol identifier from verified study metadata before enqueue.\n  if (typeof req.studyInfo?.protocolNumber !== 'string' || !req.studyInfo.protocolNumber.trim()) {\n    throw new Error('CSR_STUDY_IDENTIFIER_REQUIRED: Record the study protocol number before starting CSR drafting. No job was created.');\n  }\n\n  const snapshot: CSRStudyInfoSnapshot = {
     studyInfo: req.studyInfo,
     deepResearchJobId: req.deepResearchJobId,
   };
@@ -158,7 +158,7 @@ export async function enqueueCSRBuildJob(
       // studyId is non-null in the schema; protocolNumber is the natural key
       // we have in CSRBuildRequest. Fall back to a stable synthetic id if it
       // is missing so the insert never throws on the not-null constraint.
-      studyId: req.studyInfo?.protocolNumber || `study-${Date.now()}`,
+      studyId: req.studyInfo.protocolNumber,
       status: 'queued',
       progress: 0,
       sectionsToGenerate,
