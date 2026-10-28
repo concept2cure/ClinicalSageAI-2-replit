@@ -28,4 +28,19 @@ describe('CSR document evidence gate',()=>{
   const empty=entry('A');empty.snapshot.savedContent='';
   expect(verifyCsrDocumentEvidence(['A'],[empty],[fact]).status).toBe('blocked');
  });
+ it('rejects a reused claim identifier across different sections',()=>{
+  const first=entry('A');
+  const second=entry('B');
+  second.claims[0].claimId=first.claims[0].claimId;
+  second.binding.claimIds=[first.claims[0].claimId];
+  const result=verifyCsrDocumentEvidence(['A','B'],[first,second],[fact]);
+  expect(result.status).toBe('blocked');
+  expect(result.issues).toContainEqual({sectionId:'B',code:'DUPLICATE_DOCUMENT_CLAIM'});
+ });
+ it('rejects duplicate source fact identifiers in the document ledger',()=>{
+  const result=verifyCsrDocumentEvidence(['A'],[entry('A')],[fact,{...fact}]);
+  expect(result.status).toBe('blocked');
+  expect(result.issues).toContainEqual({sectionId:'',code:'DUPLICATE_EVIDENCE_FACT'});
+ });
+
 });
