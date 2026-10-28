@@ -28,6 +28,8 @@ describe('LMN-201-like 500-subject synthetic CSR table journey', () => {
       expect(efficacyText).toContain('140/250');
       expect(efficacyText).not.toMatch(/p\s*[=<]\s*0\.|credible interval|posterior probability/i);
       expect(tables.analysisPopulations.rows.length).toBeGreaterThan(0);
+      expect(parsed.data.studyData.adverseEvents).toHaveLength(44);
+      expect(parsed.data.studyData.adverseEvents.filter(event => event.serious)).toHaveLength(6);
       expect(tables.aeOverallSummary.rows.length).toBeGreaterThan(0);
       expect(tables.aeBySOC.rows.length).toBeGreaterThan(0);
       expect(tables.deathsSAEsDiscontinuations.rows.length).toBeGreaterThan(0);
