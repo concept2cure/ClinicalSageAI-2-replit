@@ -614,10 +614,14 @@ export async function getCSRBuildJobStatus(
 
   if (!row) return null;
 
-  // sectionsComplete is derived from the section_outputs table so it
-  // reflects what's actually persisted, not just the progress counter.
+  // Only count verifiable, non-placeholder sections. A persisted row alone
+  // does not mean its content is complete or safe to reuse.
   const sectionRows = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber })
+    .select({
+      sectionNumber: csrSectionOutputs.sectionNumber,
+      content: csrSectionOutputs.content,
+      contentHash: csrSectionOutputs.contentHash,
+    })
     .from(csrSectionOutputs)
     .where(
       and(
@@ -625,12 +629,25 @@ export async function getCSRBuildJobStatus(
         eq(csrSectionOutputs.organizationId, organizationId)
       )
     );
+  const targetCodes = [...new Set(sectionRows.map(section => section.sectionNumber))];
+  const integrity = targetCodes.length
+    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
+    : { covered: [], missing: [], mismatched: [] };
+  const verified = new Set(integrity.covered);
+  const sectionsComplete = sectionRows.filter(section =>
+    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
+  ).length;
+  const integrityFailure = row.status === 'complete' &&
+    (integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
+      sectionsComplete !== sectionRows.length);
 
   return {
-    status: row.status,
-    progress: row.progress,
-    sectionsComplete: sectionRows.length,
-    error: row.error ?? null,
+    status: integrityFailure ? 'failed' : row.status,
+    progress: integrityFailure ? 0 : row.progress,
+    sectionsComplete,
+    error: integrityFailure
+      ? { reason: 'saved_section_integrity_failed', message: 'Saved CSR outputs require integrity review.' }
+      : row.error ?? null,
   };
 }
 
