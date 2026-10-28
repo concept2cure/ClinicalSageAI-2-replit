@@ -196,16 +196,28 @@ describe('targeted ICH E3 subsection drafting', () => {
 
   it('does not call a nonexistent section complete', async () => {
     completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
-    const job = await launchCSRBuild(makeRequest({ sectionsToGenerate: ['99.99'] }));
-    expect(job.status).toBe('needs_data');
-    expect(job.progress).toBe(0);
+    await expect(launchCSRBuild(makeRequest({ sectionsToGenerate: ['99.99'] })))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate targets before billing', async () => {
+    await expect(launchCSRBuild(makeRequest({ sectionsToGenerate: ['5', '5'] })))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an explicit empty selection before billing', async () => {
+    await expect(launchCSRBuild(makeRequest({ sectionsToGenerate: [] })))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
   });
 
   it('does not mark a partly invalid section selection complete', async () => {
     completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
-    const job = await launchCSRBuild(makeRequest({ sectionsToGenerate: ['5', '99.99'] }));
-    expect(job.status).toBe('needs_data');
-    expect(job.progress).toBe(0);
+    await expect(launchCSRBuild(makeRequest({ sectionsToGenerate: ['5', '99.99'] })))
+      .rejects.toThrow('CSR_SECTION_SELECTION_INVALID');
+    expect(recordUsageMock).not.toHaveBeenCalled();
   });
 });
 
