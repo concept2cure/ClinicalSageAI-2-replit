@@ -91,6 +91,14 @@ describe('public reference catalog and explicit scope', () => {
     expect(JSON.stringify(result)).not.toMatch(/study design|safety observations|DO NOT RETURN/);
   });
 
+  it('fails closed when a catalog row has invalid or incomplete reference metadata', async () => {
+    await insert({ title: 'Valid report' });
+    await insert({ title: 'Broken manifest', reference: { schemaVersion: 1, evidenceRole: 'external_reference' } });
+    await expect(searchPublicReferenceSources(42, {}, executor)).rejects.toMatchObject({
+      code: 'SOURCE_MANIFEST_INVALID',
+    });
+  });
+
   it('escapes LIKE wildcards instead of treating a percent sign as an unbounded search', async () => {
     const selected = await insert({ title: '100% report' });
     await insert({ title: '1000 report' });
