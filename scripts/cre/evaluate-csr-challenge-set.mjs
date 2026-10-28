@@ -5,6 +5,7 @@
  * Responses and gold review must be externally supplied; never fabricate them.
  */
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 export function evaluateChallengeSet(spec, results) {
@@ -22,6 +23,8 @@ export function evaluateChallengeSet(spec, results) {
       (!Number.isInteger(declaredCritical) || declaredCritical !== actualCritical)) {
     throw new Error('Critical-case threshold must match the benchmark severity classification');
   }
+  // A review cannot establish AnA's quality without the exact retained model
+  // output. Bind every case to a SHA-256 of the response bytes under review.
   const expectedIds = new Set(spec.cases.map(c => c.id));
   if (expectedIds.size !== spec.cases.length) throw new Error('Duplicate benchmark case IDs');
   const providedIds = new Set(results.cases.map(c => c.id));
@@ -33,6 +36,12 @@ export function evaluateChallengeSet(spec, results) {
     if (!result || typeof result.passed !== 'boolean' || typeof result.reviewer !== 'string' ||
         !result.reviewer.trim() || typeof result.evidenceReference !== 'string' || !result.evidenceReference.trim()) {
       throw new Error('Case ' + c.id + ' lacks a reviewed pass/fail and traceable evidence');
+    }
+    if (typeof result.responseText !== 'string' || !result.responseText.trim() ||
+        typeof result.responseSha256 !== 'string' ||
+        !/^[a-f0-9]{64}$/.test(result.responseSha256) ||
+        createHash('sha256').update(result.responseText, 'utf8').digest('hex') !== result.responseSha256) {
+      throw new Error('Case ' + c.id + ' requires exact retained response text and matching SHA-256');
     }
     if (!Array.isArray(result.criteria) || result.criteria.length !== c.expected.length ||
         result.criteria.some((criterion, index) => criterion.expected !== c.expected[index] ||
@@ -50,7 +59,7 @@ export function evaluateChallengeSet(spec, results) {
     }
     return { id: c.id, severity: c.severity, passed: derivedPass, reviewer: result.reviewer,
       evidenceReference: result.evidenceReference, reviewNotes: result.reviewNotes ?? '',
-      criteria: result.criteria };
+      responseSha256: result.responseSha256, criteria: result.criteria };
   });
   const critical = cases.filter(c => c.severity === 'critical');
   const criticalPassed = critical.filter(c => c.passed).length;
