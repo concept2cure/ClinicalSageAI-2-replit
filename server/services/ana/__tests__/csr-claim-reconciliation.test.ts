@@ -54,4 +54,17 @@ describe('CSR evidence-bound claim reconciliation', () => {
   it('never equates no claims with a passed CSR', () => {
     expect(reconcileCsrClaims([], [fact]).accepted).toBe(false);
   });
+  it('rejects invalid source-side facts even when a claim matches their invalid value', () => {
+    const invalidFact = { ...fact, numerator: 300, denominator: 250 };
+    const invalidClaim = { ...claim, numerator: 300, denominator: 250 };
+    const result = reconcileCsrClaims([invalidClaim], [invalidFact]);
+    expect(result.accepted).toBe(false);
+    expect(result.findings.some(f => f.code === 'INVALID_CLAIM')).toBe(true);
+  });
+  it('rejects a non-finite qualified source estimate', () => {
+    const result = check(claim, { ...fact, estimate: Number.NaN });
+    expect(result.accepted).toBe(false);
+    expect(result.findings.some(f => f.code === 'INVALID_CLAIM')).toBe(true);
+  });
+
 });
