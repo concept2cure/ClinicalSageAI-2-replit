@@ -22,15 +22,8 @@
  * output is fully controlled by the test, not a live model. The quota /
  * usage-metering envelope is mocked so the test never touches a real DB.
  *
- * Note on `sectionsToGenerate`: the existing (unmodified) filter in
- * `generateCSRSections` skips a whole top-level entry — including its
- * children — when the *parent's* number is not itself in the filter list.
- * Tests below that use `sectionsToGenerate` therefore restrict to
- * top-level, childless section numbers (e.g. '1', '5', '7') so the filter
- * behaves simply; tests that need a nested section (e.g. '11.4', '12.3')
- * run a full, unfiltered build instead. This is a pre-existing quirk of the
- * filter, out of scope for this fix, and is worked around rather than
- * exercised here.
+ * Nested section selection is supported: selecting a child does not require
+ * selecting its parent, and an invalid section code cannot produce 100%.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -189,6 +182,32 @@ describe('generateCSRSections — section status', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 // launchCSRBuild — job-level status/progress must fail closed
 // ═══════════════════════════════════════════════════════════════════════════
+
+describe('targeted ICH E3 subsection drafting', () => {
+  it('drafts a selected nested section without drafting its parent', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const generated = await generateCSRSections(sections, makeRequest({ sectionsToGenerate: ['11.4'] }));
+    const flat = flattenICHE3Sections(generated);
+    expect(flat.find(s => s.number === '11.4')?.content).toBeTruthy();
+    expect(flat.find(s => s.number === '11')?.content).toBeFalsy();
+    expect(flat.find(s => s.number === '12.3')?.content).toBeFalsy();
+  });
+
+  it('does not call a nonexistent section complete', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const job = await launchCSRBuild(makeRequest({ sectionsToGenerate: ['99.99'] }));
+    expect(job.status).toBe('needs_data');
+    expect(job.progress).toBe(0);
+  });
+
+  it('does not mark a partly invalid section selection complete', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const job = await launchCSRBuild(makeRequest({ sectionsToGenerate: ['5', '99.99'] }));
+    expect(job.status).toBe('needs_data');
+    expect(job.progress).toBe(0);
+  });
+});
 
 describe('launchCSRBuild — job status/progress (fail closed)', () => {
   it('does NOT report complete/100 when generated sections still carry data placeholders', async () => {
