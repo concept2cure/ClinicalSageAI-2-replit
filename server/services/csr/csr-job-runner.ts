@@ -409,6 +409,16 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         throw new Error('CSR_DRAFT_SECTION_MISMATCH: Generated section identifier differs from the requested ICH E3 section.');
       }
 
+      // Model calls are long-running. A cancelled or superseded job cannot
+      // save a late model result into its previously governed section set.
+      const [stillDrafting] = await d.select({ id: csrBuildJobs.id })
+        .from(csrBuildJobs)
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')))
+        .limit(1);
+      if (!stillDrafting) return;
+
       // Missing output remains retryable work; never persist whitespace as a draft.
       if (typeof drafted.content !== 'string' || !drafted.content.trim()) {
         continue;
@@ -453,7 +463,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       await d
         .update(csrBuildJobs)
         .set({ progress, updatedAt: new Date() })
-        .where(eq(csrBuildJobs.id, jobId));
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
     }
 
     // 6. Re-read saved target coverage, including prior attempts. Missing rows
