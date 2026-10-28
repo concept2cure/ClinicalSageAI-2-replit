@@ -255,10 +255,11 @@ function computeBuildCompleteness(
       ? flat.filter(s => sectionsToGenerate.includes(s.number))
       : flat;
 
-  if (targets.length === 0) {
-    // Nothing was in scope to draft — vacuously complete (matches
-    // csr-job-runner's totalSections === 0 -> progress 100 convention).
-    return { status: 'complete', progress: 100 };
+  // Unknown requested sections, including a wholly invalid selection, must
+  // never be treated as a complete CSR. The job cannot claim 100% coverage.
+  if (targets.length === 0 ||
+      (sectionsToGenerate?.length && sectionsToGenerate.some(code => !flat.some(section => section.number === code)))) {
+    return { status: 'needs_data', progress: 0 };
   }
 
   const completeCount = targets.filter(isSectionDataComplete).length;
@@ -412,32 +413,20 @@ export async function generateCSRSections(
     userId: aiContext?.userId ?? request.userId,
   };
 
-  for (const section of sections) {
-    if (request.sectionsToGenerate?.length && !request.sectionsToGenerate.includes(section.number)) {
-      continue;
-    }
-
-    if (useAI) {
-      section.content = (await generateSectionWithAI(section, info, ctx)).content;
-    } else {
-      section.content = generateSectionTemplate(section, info);
-    }
-    applyContentStatus(section);
-
-    if (section.childSections) {
-      for (const child of section.childSections) {
-        if (request.sectionsToGenerate?.length && !request.sectionsToGenerate.includes(child.number)) {
-          continue;
-        }
-        if (useAI) {
-          child.content = (await generateSectionWithAI(child, info, ctx)).content;
-        } else {
-          child.content = generateSectionTemplate(child, info);
-        }
-        applyContentStatus(child);
+  const selected = request.sectionsToGenerate?.length ? new Set(request.sectionsToGenerate) : null;
+  const draftTree = async (section: CSRSection): Promise<void> => {
+    // Walk descendants even when their parent is not itself selected.
+    if (!selected || selected.has(section.number)) {
+      if (useAI) {
+        section.content = (await generateSectionWithAI(section, info, ctx)).content;
+      } else {
+        section.content = generateSectionTemplate(section, info);
       }
+      applyContentStatus(section);
     }
-  }
+    for (const child of section.childSections ?? []) await draftTree(child);
+  };
+  for (const section of sections) await draftTree(section);
 
   return sections;
 }
@@ -629,12 +618,11 @@ Never state a statistic that is not given above: no p-value, confidence interval
  */
 export function flattenICHE3Sections(sections: CSRSection[]): CSRSection[] {
   const out: CSRSection[] = [];
-  for (const s of sections) {
-    out.push(s);
-    if (s.childSections) {
-      for (const c of s.childSections) out.push(c);
-    }
-  }
+  const visit = (section: CSRSection): void => {
+    out.push(section);
+    for (const child of section.childSections ?? []) visit(child);
+  };
+  for (const section of sections) visit(section);
   return out;
 }
 
