@@ -90,6 +90,9 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
         // Never index a full, possibly participant-level CSR payload as a
         // retrieval snippet. Oversized source data stays in the governed source.
         if (text.length > 12000) continue;
+        // Do not index free-text records that resemble subject-level listings.
+        // These remain available only through the governed source workflow.
+        if (/(?:^|[\\n;])\\s*(?:subject|patient|participant)\\s*[-#:]?\\s*[a-z]*\\d{2,}/i.test(text)) continue;
         // Free-text values can still include subject identifiers. Only explicitly
         // screened aggregate text may be indexed; otherwise keep source in Vault.
         if (/(?:subject|patient|participant)[ _-]?(?:id|identifier|number)\s*[:=#]/i.test(text)) continue;
