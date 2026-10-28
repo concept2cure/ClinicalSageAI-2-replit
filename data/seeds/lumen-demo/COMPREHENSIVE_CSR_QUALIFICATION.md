@@ -28,3 +28,19 @@ This fixture is designed to exercise input and narrative reconciliation. It does
 
 ## Release criteria
 Require passing generator tests, source-contract validation, statistical/TLF reconciliation, 120 negative-case executions, full application CI, tenant-isolation checks, medical-writer and biostatistician review, governed DOCX fidelity, and a real deployed golden journey. No single recurrent-CDI fixture can establish all-modality CSR coverage.
+
+## October 28 — expanded executable verification
+
+The synthetic qualification now includes:
+- Eight **actual source-contract mutation tests** in `shared/__tests__/lmn201-comprehensive-source.test.ts`: duplicate subject, arm mismatch, randomized denominator mismatch, missing demographics, disposition mismatch, unknown AE subject, duplicate efficacy endpoint, and out-of-range p-value.
+- A cross-domain integrity verifier `scripts/verify_lmn201_comprehensive.mjs` (in this seed directory) that checks the 25 CSV files against the retained JSON source, all 500 participant IDs, ADaM-like subject coverage, efficacy totals, adverse-event representation, and original source SHA-256.
+- A Node test for the verifier's normal path, corrupted subject ID, and altered source checksum.
+
+**Scope of checks:** The remaining 112 challenge entries are still *not executed*. The out-of-range p-value mutation proves numeric schema validation, **not** that an invented but numerically valid p-value would be detected. The latter requires SAP/TLF provenance and biostatistical review. The CSV verifier is a deliberately limited parser for these deterministic generated files; it is not a general-purpose clinical CSV parser or CDISC validator.
+
+Run the two focused test families after generating the fixture:
+```sh
+node --test data/seeds/lumen-demo/scripts/generate_lmn201_comprehensive.test.mjs data/seeds/lumen-demo/scripts/verify_lmn201_comprehensive.test.mjs
+npx vitest run shared/__tests__/lmn201-comprehensive-source.test.ts
+```
+The above are **required verification commands, not recorded passing test receipts**. The new changes have not been qualified in the live application. No production client, Vault upload, AnA run, or filing claim is made.
