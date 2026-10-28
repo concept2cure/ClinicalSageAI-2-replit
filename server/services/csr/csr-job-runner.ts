@@ -494,7 +494,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
         error: { reason: 'missing_section_outputs', sections: missingSections,
           message: 'Requested CSR sections have no nonblank saved output; retained sections are preserved for resume.' },
-      }).where(eq(csrBuildJobs.id, jobId));
+      }).where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
       return;
     }
     const placeholderSections = savedTargets
@@ -523,7 +525,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
             at: new Date().toISOString(),
           },
         })
-        .where(eq(csrBuildJobs.id, jobId));
+        .where(and(eq(csrBuildJobs.id, jobId),
+          eq(csrBuildJobs.organizationId, job.organizationId),
+          eq(csrBuildJobs.status, 'drafting')));
       return;
     }
 
@@ -575,7 +579,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
           at: new Date().toISOString(),
         },
       })
-      .where(eq(csrBuildJobs.id, jobId));
+      .where(and(eq(csrBuildJobs.id, jobId),
+        eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')));
   }
 }
 
