@@ -30,6 +30,16 @@ const { draftMock, continueMock } = vi.hoisted(() => ({
   continueMock: vi.fn(),
 }));
 vi.mock('../../submission-orchestrator-continuation.js', () => ({ continueOrchestratorRunsForCsrJob: continueMock }));
+vi.mock('../project-scope', () => {
+  class TestCsrScopeError extends Error {
+    constructor(readonly code: string, readonly status: number, message: string) { super(message); }
+  }
+  return {
+    CsrScopeError: TestCsrScopeError,
+    resolveCsrScope: vi.fn(async () => ({ projectId: 11, organizationId: 1 })),
+    resolveCsrBuildContext: vi.fn(async () => ({ projectId: 11, organizationId: 1, requestedBy: 1 })),
+  };
+});
 vi.mock('../../csr-builder', async () => {
   const actual = await vi.importActual<typeof import('../../csr-builder')>('../../csr-builder');
   return { ...actual, draftCSRSectionWithProvenance: draftMock };
@@ -121,11 +131,11 @@ function makeJob(): Record<string, unknown> {
     id: 42,
     status: 'queued',
     organizationId: 1,
-    projectId: null,
+    projectId: 11,
     requestedBy: 1,
     studyId: 'STUDY-1',
     sectionsToGenerate: ['13'], // §13 Discussion & Overall Conclusions (single top-level node)
-    studyInfoSnapshot: { studyInfo: { investigationalProduct: 'Drug X', indication: 'Type 2 Diabetes' } },
+    studyInfoSnapshot: { studyInfo: { protocolNumber: 'STUDY-1', investigationalProduct: 'Drug X', indication: 'Type 2 Diabetes' } },
   };
 }
 
@@ -280,6 +290,32 @@ describe('runCSRBuildJob — retained target selections and progress', () => {
     await runCSRBuildJob(42);
     expect(progressAtDraft).toEqual([0]);
     expect(fake.job).toMatchObject({ status: 'failed', progress: 0, error: { reason: 'missing_section_outputs', sections: ['6'] } });
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('runCSRBuildJob — terminal integrity and cancellation', () => {
+  it('rejects an altered retained hash without overwriting the source section', async () => {
+    const original = { sectionNumber: '13', content: 'Final reported safety findings.', contentHash: '0'.repeat(64) };
+    fake = makeFakeDb({ ...makeJob(), status: 'failed' }, [original]);
+    await runCSRBuildJob(42);
+    expect(terminalStatus(fake.jobUpdates)).toMatchObject({
+      status: 'failed', error: { reason: 'saved_section_integrity_failed' },
+    });
+    expect(fake.persisted).toEqual([original]);
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('cannot complete or continue a job cancelled during an AI call', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockImplementation(async () => {
+      fake.job.status = 'cancelled';
+      return sectionDraft('13', 'Recorded discussion, not yet approved.');
+    });
+    await runCSRBuildJob(42);
+    expect(fake.job.status).toBe('cancelled');
+    expect(fake.jobUpdates.some(update => update.status === 'complete')).toBe(false);
     expect(continueMock).not.toHaveBeenCalled();
   });
 });
