@@ -91,7 +91,12 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
         set(vals: Capture) {
           return {
             where() {
-              const applied = !(table === csrBuildJobs && vals.status === 'complete' && job.status !== 'drafting');
+              const applied = !(table === csrBuildJobs &&
+                (vals.status === 'complete' || vals.status === 'failed') &&
+                job.status !== 'drafting' &&
+                // Pre-claim refusal paths can legitimately mark a queued/failed
+                // job failed; only late drafting failures must be suppressed.
+                (job.status === 'cancelled' || job.status === 'complete'));
               if (table === csrBuildJobs && applied) {
                 jobUpdates.push(vals);
                 Object.assign(job, vals);
@@ -308,6 +313,18 @@ describe('runCSRBuildJob — terminal integrity and cancellation', () => {
     });
     expect(fake.persisted).toEqual([original]);
     expect(draftMock).not.toHaveBeenCalled();
+    expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  it('does not turn a cancelled job into failed when a late AI call rejects', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockImplementation(async () => {
+      fake.job.status = 'cancelled';
+      throw new Error('Late model failure');
+    });
+    await runCSRBuildJob(42);
+    expect(fake.job.status).toBe('cancelled');
+    expect(fake.jobUpdates.some(update => update.status === 'failed')).toBe(false);
     expect(continueMock).not.toHaveBeenCalled();
   });
 
