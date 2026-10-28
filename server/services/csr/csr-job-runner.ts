@@ -148,8 +148,18 @@ export async function enqueueCSRBuildJob(
         'Choose unique ICH E3 section numbers from the CSR template. No job was created.');
     }
   }
+  // A CSR build must belong to an explicit project, rather than silently
+  // creating an organization-wide job with no study dossier anchor.
+  if (req.projectId === undefined && ctx.projectId === undefined && ctx.programId === undefined) {
+    throw new CsrScopeError('CSR_PROJECT_REQUIRED', 400,
+      'Select a project before starting CSR drafting. No job was created.');
+  }
   const d = requireDb();
   const scope = await resolveCsrBuildContext(d, req, ctx);
+  if (scope.projectId === undefined) {
+    throw new CsrScopeError('CSR_PROJECT_REQUIRED', 400,
+      'The selected CSR project could not be resolved. No job was created.');
+  }
 
   // Preserve the caller's intent: NULL == "full build", a non-empty array
   // == "draft only these sections". We deliberately do NOT expand to
