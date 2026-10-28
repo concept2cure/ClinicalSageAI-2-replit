@@ -21,6 +21,7 @@
  * old unconditional `status: 'complete'`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createHash } from 'node:crypto';
 import { csrBuildJobs, csrSectionOutputs } from '@shared/schema';
 
 // ── Stub the section drafter (keep the placeholder primitive + tree real) ────
@@ -36,7 +37,7 @@ vi.mock('../../csr-builder', async () => {
 
 // ── In-memory fake of the drizzle `db` the runner calls via requireDb() ──────
 type Capture = Record<string, unknown>;
-type SavedOutput = { sectionNumber: string; content: string };
+type SavedOutput = { sectionNumber: string; content: string; contentHash?: string };
 function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) {
   const inserted: Array<{ sectionNumber: string; content: string }> = [];
   const persisted = retained.map(row => ({ ...row }));
@@ -54,9 +55,14 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
           rows = [job];
         } else if (table === csrSectionOutputs) {
           // Preserve the requested projection for retained-output reads.
-          rows = cols && Object.prototype.hasOwnProperty.call(cols, 'content')
-            ? persisted.map(r => ({ sectionNumber: r.sectionNumber, content: r.content }))
-            : persisted.map(r => ({ sectionNumber: r.sectionNumber }));
+          rows = persisted.map(row => {
+            const projected: Record<string, unknown> = { sectionNumber: row.sectionNumber };
+            if (cols && Object.prototype.hasOwnProperty.call(cols, 'content')) projected.content = row.content;
+            if (cols && Object.prototype.hasOwnProperty.call(cols, 'contentHash')) {
+              projected.contentHash = row.contentHash ?? createHash('sha256').update(row.content).digest('hex');
+            }
+            return projected;
+          });
         }
         resolve(rows);
       },
@@ -71,11 +77,16 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
         set(vals: Capture) {
           return {
             where() {
-              if (table === csrBuildJobs) {
+              const applied = !(table === csrBuildJobs && vals.status === 'complete' && job.status !== 'drafting');
+              if (table === csrBuildJobs && applied) {
                 jobUpdates.push(vals);
                 Object.assign(job, vals);
               }
-              return Promise.resolve();
+              const completed = Promise.resolve();
+              return {
+                then: completed.then.bind(completed),
+                returning: async () => applied ? [{ id: job.id }] : [],
+              };
             },
           };
         },
@@ -83,7 +94,7 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
     },
     insert(_table: unknown) {
       return {
-        values(v: { sectionNumber: string; content: string }) {
+        values(v: { sectionNumber: string; content: string; contentHash: string }) {
           return {
             onConflictDoUpdate() {
               inserted.push({ sectionNumber: v.sectionNumber, content: v.content });
