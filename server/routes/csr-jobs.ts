@@ -149,6 +149,16 @@ router.post('/', async (req: Request, res: Response) => {
     userId: requestedBy,
   };
 
+  // Invalid study identity is a client input error, not an internal failure.
+  // Refuse before dispatching an asynchronous job or consuming model quota.
+  if (typeof buildRequest.studyInfo?.protocolNumber !== 'string' ||
+      !buildRequest.studyInfo.protocolNumber.trim()) {
+    return res.status(400).json({
+      code: 'CSR_STUDY_IDENTIFIER_REQUIRED',
+      error: 'Record the study protocol number before starting CSR drafting. No job was created.',
+    });
+  }
+
   try {
     const projectId = parseCsrScopeId(body.projectId, 'projectId');
     const clientWorkspaceId = parseCsrScopeId(body.clientWorkspaceId, 'clientWorkspaceId');
