@@ -90,6 +90,7 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
       for (const key of domain.keys) {
         if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
         const raw = obj[key];
+        if (raw !== null && typeof raw === 'object') continue;
         const text = safeText(raw);
         if (!text) continue;
         // Never index a full, possibly participant-level CSR payload as a
@@ -99,7 +100,7 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
         const fingerprint = createHash('sha256').update(text).digest('hex');
         drafts.push({
           atomType: domain.atomType,
-          sourceRef: `csr_content:${input.reportId}:${sourceLocation}:${fingerprint.slice(0,16)}`,
+          sourceRef: `csr_content:${input.reportId}:${sourceLocation}`,
           title: `CSR ${domain.label}: ${key}`,
           content: `CSR report: ${input.reportId}\nDomain: ${domain.label}\nSource: ${sourceLocation}\nRecorded source value: ${text}`,
           tags: ['csr', domain.label, key, 'source_unverified'],
@@ -115,7 +116,7 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
             statisticalValidation: 'not_performed',
             medicalReview: 'required',
           },
-          confidence: 1, // deterministic extraction fidelity, NOT clinical confidence
+          confidence: 0.6, // source extraction only; NOT clinical confidence
         });
       }
     }
