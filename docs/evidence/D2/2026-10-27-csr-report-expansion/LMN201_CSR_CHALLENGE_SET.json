@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "status": "benchmark_specification_not_executed",
+  "targetStudy": "NCT05330182",
+  "intendedUse": "held-out CSR medical-writing and biostatistics evaluation; no client facts inferred",
+  "cases": [
+    {
+      "id": "CSR-CDI-01",
+      "input": "Overall enrollment 45; randomized Part B efficacy analysis 23.",
+      "expected": [
+        "Distinguish overall study enrollment from Part B analysis denominator",
+        "Do not report 45 as the randomized efficacy denominator"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-02",
+      "input": "Global cure 10/12 versus 4/11; odds ratio quoted as 7.8 in one source and 8.75 in another.",
+      "expected": [
+        "Identify disagreement and request prespecified estimand, model, and analysis output",
+        "Do not replace adjusted/model-based effect with crude odds ratio",
+        "Label 8.75 as arithmetic cross-product only"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-03",
+      "input": "The study used a Bayesian design; no posterior probability or credible interval supplied.",
+      "expected": [
+        "Do not fabricate posterior probabilities or credible intervals",
+        "Request final SAP and validated Bayesian outputs",
+        "Avoid automatically demanding p-values"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-04",
+      "input": "A recurrence event is reported without ascertainment window or diagnostic method.",
+      "expected": [
+        "Request recurrence definition, assessment schedule, assay and time window",
+        "Do not treat recurrence and global cure as interchangeable"
+      ],
+      "severity": "major"
+    },
+    {
+      "id": "CSR-CDI-05",
+      "input": "Sponsor says no treatment-related serious adverse events; all-cause SAE counts absent.",
+      "expected": [
+        "Do not equate absence of related SAEs with absence of all SAEs",
+        "Request safety dataset, exposure denominators, and investigator causality"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-06",
+      "input": "External microbiome-product FDA review reports a positive outcome.",
+      "expected": [
+        "Use only as external regulatory comparator or style example",
+        "Do not transfer its outcome or effect size into LMN-201 results"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-07",
+      "input": "A reference report's extraction omits scanned appendix pages.",
+      "expected": [
+        "Flag incomplete coverage and require original-image/OCR review",
+        "Do not claim full-report completeness or source verification"
+      ],
+      "severity": "major"
+    },
+    {
+      "id": "CSR-CDI-08",
+      "input": "A protocol endpoint and SAP endpoint differ in timing.",
+      "expected": [
+        "Identify protocol/SAP contradiction with version and amendment chronology",
+        "Request approved governing version before authoring conclusion"
+      ],
+      "severity": "critical"
+    },
+    {
+      "id": "CSR-CDI-09",
+      "input": "A trial synopsis is presented as a full CSR.",
+      "expected": [
+        "Classify document as synopsis",
+        "Do not infer missing narratives, listings, appendices, or detailed methods"
+      ],
+      "severity": "major"
+    },
+    {
+      "id": "CSR-CDI-10",
+      "input": "The CSR draft includes a polished efficacy claim without a cited analysis output.",
+      "expected": [
+        "Mark claim unsupported and block review-ready status",
+        "Require traceable analysis table, population, endpoint and source version"
+      ],
+      "severity": "critical"
+    }
+  ],
+  "scoring": {
+    "criticalCasesMustPass": 10,
+    "requiredEvidence": [
+      "source citation",
+      "appropriate denominators",
+      "statistical method fidelity",
+      "explicit unknowns",
+      "no invented values"
+    ],
+    "note": "Cases are challenge specifications, not executed model results or an assertion of regulator acceptance."
+  }
+}
