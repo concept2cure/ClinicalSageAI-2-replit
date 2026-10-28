@@ -46,3 +46,14 @@ test('rejects benchmark specifications without expected outcomes', () => {
   const input = structuredClone(spec); delete input.cases[0].expected;
   assert.throws(() => evaluateChallengeSet(input, reviewed), /explicit expected criteria/);
 });
+
+test('declared critical threshold must match actual critical case count', () => {
+  const input = structuredClone(spec);
+  input.scoring = { criticalCasesMustPass: 2 };
+  assert.throws(() => evaluateChallengeSet(input, reviewed), /Critical-case threshold/);
+});
+test('correct critical threshold remains valid', () => {
+  const input = structuredClone(spec);
+  input.scoring = { criticalCasesMustPass: 1 };
+  assert.equal(evaluateChallengeSet(input, reviewed).verdict, 'reviewed_pass');
+});
