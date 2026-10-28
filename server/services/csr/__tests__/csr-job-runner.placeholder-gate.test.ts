@@ -62,7 +62,11 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
       then(resolve: (rows: unknown[]) => void) {
         let rows: unknown[] = [];
         if (table === csrBuildJobs) {
-          rows = [job];
+          // Active-drafting reads used after asynchronous model calls must
+          // observe cancellation instead of returning a stale job snapshot.
+          rows = cols && Object.prototype.hasOwnProperty.call(cols, 'id')
+            ? (job.status === 'drafting' ? [{ id: job.id }] : [])
+            : [job];
         } else if (table === csrSectionOutputs) {
           // Preserve the requested projection for retained-output reads.
           rows = persisted.map(row => {
@@ -315,6 +319,7 @@ describe('runCSRBuildJob — terminal integrity and cancellation', () => {
     });
     await runCSRBuildJob(42);
     expect(fake.job.status).toBe('cancelled');
+    expect(fake.inserted).toEqual([]);
     expect(fake.jobUpdates.some(update => update.status === 'complete')).toBe(false);
     expect(continueMock).not.toHaveBeenCalled();
   });
