@@ -71,3 +71,16 @@ describe('Cortex free-text screening', () => {
     expect(atoms[0].structuredData.verificationStatus).toBe('unverified');
   });
 });
+
+describe('Cortex explicit identifier regression', () => {
+  it('excludes participant identifier strings with whitespace', () => {
+    expect(projectCsrContentEvidence({
+      ...base, content: { efficacy_results: 'Participant ID: X123, response observed' },
+    })).toEqual([]);
+  });
+  it('excludes direct medical record identifiers', () => {
+    expect(projectCsrContentEvidence({
+      ...base, content: { safety_results: 'Medical record number: 12345' },
+    })).toEqual([]);
+  });
+});
