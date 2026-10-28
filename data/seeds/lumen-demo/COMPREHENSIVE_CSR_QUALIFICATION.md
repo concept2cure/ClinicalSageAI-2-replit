@@ -44,3 +44,9 @@ node --test data/seeds/lumen-demo/scripts/generate_lmn201_comprehensive.test.mjs
 npx vitest run shared/__tests__/lmn201-comprehensive-source.test.ts
 ```
 The above are **required verification commands, not recorded passing test receipts**. The new changes have not been qualified in the live application. No production client, Vault upload, AnA run, or filing claim is made.
+
+## October 28 — cross-domain scientific consistency gate
+
+The existing verifier now checks subject-by-subject agreement across synthetic source records, DM demographics, DS disposition, ADSL treatment and age, RS/FA/ADEFF binary efficacy, and LB/ADLB and VS/ADVS paired measurements. A valid subject identifier and a correct row count are insufficient if the actual result differs between clinical and analysis domains.
+
+Additional regression probes deliberately alter a retained subject identifier, duplicate a subject within DM, flip an RS response, flip an FA recurrence finding, and alter an ADLB measurement. The clean source is restored between probes. These checks are **not** proof of actual clinical or CDISC validity; they only assess consistency of this deterministic synthetic fixture. The code and tests are committed, but execution against the full repository has not yet been verified. Do not claim a complete CSR or a successful AnA run on this basis.
