@@ -49,6 +49,7 @@ import { assessGrounding } from './grounding-core';
 import type { ClassifiedReference, ReferenceContext, ReferenceStatus } from './in-text-references';
 import { assessReadability, buildAbbreviationList, type ReadabilityAudience } from './medical-writing-qc';
 import { reviewMedicalWriting } from './medical-writing-review';
+import { reconcileCsrClaims, type CsrClaimReceipt, type CsrEvidenceFact, type CsrClaimFinding } from './csr-claim-reconciliation';
 import { listMedicalWritingCatalog } from './medical-writing';
 import { checkTerminologyConsistency } from './terminology-consistency';
 import {
@@ -558,6 +559,12 @@ export interface DocumentCritique {
   register: ClaimRegister;
   /** Structure status of the whole document; a 'not-checked' finding is in crossSectionFindings. */
   structure: StructureCheck;
+  /** CSR-only structured scientific source check; never substitutes for approval. */
+  csrEvidence?: {
+    status: 'not_assessed' | 'blocked' | 'reconciled_pending_human_review';
+    checkedClaims: number;
+    findings: CsrClaimFinding[];
+  };
 }
 
 /**
@@ -574,6 +581,9 @@ export function critiqueDocument(
     register?: ClaimRegister;
     /** The document's complete caption list, when the caller holds one. */
     knownCaptions?: string[];
+    /** Only qualified, version-bound receipts from governed client analyses. */
+    csrClaims?: readonly CsrClaimReceipt[];
+    csrEvidence?: readonly CsrEvidenceFact[];
   } = {}
 ): DocumentCritique {
   // Each section's references resolve against the document class and every
@@ -634,13 +644,22 @@ export function critiqueDocument(
       ? 'revise'
       : 'pass';
 
+  const isCsr = opts.documentType?.trim().toLowerCase() === 'csr';
+  const checked = isCsr && opts.csrClaims?.length && opts.csrEvidence
+    ? reconcileCsrClaims(opts.csrClaims, opts.csrEvidence)
+    : null;
+  const csrEvidence = !isCsr ? undefined : checked
+    ? { status: checked.accepted ? 'reconciled_pending_human_review' as const : 'blocked' as const,
+        checkedClaims: checked.checkedClaims, findings: checked.findings }
+    : { status: 'not_assessed' as const, checkedClaims: 0, findings: [] as CsrClaimFinding[] };
   return {
     documentScore,
-    verdict,
+    verdict: isCsr && csrEvidence?.status !== 'reconciled_pending_human_review' ? 'revise' : verdict,
     sections: sectionCritiques,
     crossSectionFindings,
     register: whole.register,
     structure: whole.structure,
+    ...(csrEvidence ? { csrEvidence } : {}),
   };
 }
 
