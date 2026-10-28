@@ -241,6 +241,22 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   const { studyInfo, deepResearchJobId } = readStudyInfoSnapshot(
     job.studyInfoSnapshot
   );
+  // Resume must use the study identity recorded on the job, not an edited,
+  // missing, or legacy snapshot value. Refuse a mismatch rather than drafting
+  // sections for a different protocol under the original job identifier.
+  if (typeof studyInfo.protocolNumber !== 'string' ||
+      studyInfo.protocolNumber.trim() !== job.studyId) {
+    await d.update(csrBuildJobs).set({
+      status: 'failed',
+      updatedAt: new Date(),
+      error: {
+        reason: 'study_identity_mismatch',
+        message: 'The saved CSR study identity does not match this job. No additional sections were drafted.',
+      },
+    }).where(and(eq(csrBuildJobs.id, job.id), eq(csrBuildJobs.organizationId, job.organizationId)));
+    return;
+  }
+
   const persistedSubset = job.sectionsToGenerate ?? null;
   const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
   const canonicalSections = flattenICHE3Sections(fresh);
