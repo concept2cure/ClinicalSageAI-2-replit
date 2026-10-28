@@ -27,6 +27,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
+import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
 import {
   csrBuildJobs,
   csrSectionOutputs,
@@ -455,13 +456,22 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       .select({
         sectionNumber: csrSectionOutputs.sectionNumber,
         content: csrSectionOutputs.content,
+        contentHash: csrSectionOutputs.contentHash,
       })
       .from(csrSectionOutputs)
-      .where(eq(csrSectionOutputs.jobId, job.id));
-    const savedTargets = persistedOutputs.filter(row => targetNumbers.has(row.sectionNumber) && row.content.trim());
-    const savedNumbers = new Set(savedTargets.map(row => row.sectionNumber));
-    const missingSections = allTargets.filter(section => !savedNumbers.has(section.number)).map(section => section.number);
-    const finalProgress = Math.floor((savedNumbers.size / totalSections) * 100);
+      .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
+    const integrity = verifySavedCsrSectionIntegrity([...targetNumbers], persistedOutputs);
+    const savedTargets = persistedOutputs.filter(row => targetNumbers.has(row.sectionNumber) && typeof row.content === 'string' && row.content.trim());
+    const missingSections = integrity.missing;
+    const finalProgress = Math.floor((integrity.covered.length / totalSections) * 100);
+    if (integrity.mismatched.length) {
+      await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
+        error: { reason: 'saved_section_integrity_failed', sections: integrity.mismatched,
+          message: 'A saved CSR section changed or failed checksum verification. No completed report was issued.' },
+      }).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, job.organizationId),
+        eq(csrBuildJobs.status, 'drafting')));
+      return;
+    }
     if (missingSections.length) {
       await d.update(csrBuildJobs).set({ status: 'failed', progress: finalProgress, updatedAt: new Date(),
         error: { reason: 'missing_section_outputs', sections: missingSections,
