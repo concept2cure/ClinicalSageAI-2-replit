@@ -335,11 +335,17 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   const targetNumbers = new Set(allTargets.map(section => section.number));
 
   const alreadyPersisted = await d
-    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content })
+    .select({ sectionNumber: csrSectionOutputs.sectionNumber, content: csrSectionOutputs.content, contentHash: csrSectionOutputs.contentHash })
     .from(csrSectionOutputs)
-    .where(eq(csrSectionOutputs.jobId, job.id));
-  const persistedSet = new Set(alreadyPersisted.filter(row => targetNumbers.has(row.sectionNumber)
-    && row.content.trim()).map(row => row.sectionNumber));
+    .where(and(eq(csrSectionOutputs.jobId, job.id), eq(csrSectionOutputs.organizationId, job.organizationId)));
+  // Resume only verified, non-placeholder content. A damaged or incomplete
+  // output must not be treated as finished merely because its row exists.
+  const persistedSet = new Set(alreadyPersisted.filter(row =>
+    targetNumbers.has(row.sectionNumber) &&
+    Boolean(row.content?.trim()) &&
+    !hasUnresolvedPlaceholders(row.content) &&
+    row.contentHash === sha256Hex(row.content)
+  ).map(row => row.sectionNumber));
 
   const totalSections = allTargets.length;
   let sectionsCompleted = persistedSet.size;
