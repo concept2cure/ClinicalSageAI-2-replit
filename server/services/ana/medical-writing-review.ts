@@ -4,6 +4,7 @@
  */
 import { getDocumentTypeStandard, listMedicalWritingCatalog, type DocumentTypeStandard } from './medical-writing.js';
 import { reconcileCsrClaims, type CsrClaimReceipt, type CsrEvidenceFact, type CsrClaimFinding } from './csr-claim-reconciliation.js';
+import { verifyCsrSectionEvidenceBinding, type CsrSectionSnapshot, type CsrSectionEvidenceBinding, type CsrBindingIssue } from './csr-section-evidence-binding.js';
 import { extractHeadingOutline } from './document-search-core.js';
 import { getDocumentPreparationQuestion, type PreparationQuestion, type PreparationTopic } from '../market-specs/document-preparation.js';
 
@@ -201,6 +202,32 @@ export function reviewCsrWithEvidence(
       status: result.accepted ? 'reconciled_pending_human_review' : 'blocked',
       checkedClaims: result.checkedClaims,
       findings: result.findings,
+    },
+    readyForApproval: false,
+  };
+}
+
+/** Version-aware CSR section review for the existing governed editor's
+ * future approval preflight. This remains read-only and never signs a document.
+ */
+export function reviewCsrSectionWithEvidence(
+  snapshot: CsrSectionSnapshot,
+  binding: CsrSectionEvidenceBinding | null | undefined,
+  claims: readonly CsrClaimReceipt[],
+  evidence: readonly CsrEvidenceFact[],
+): {
+  writing: MedicalWritingReview;
+  evidence: { status: 'blocked' | 'reconciled_pending_human_review'; issues: CsrBindingIssue[]; checkedClaims: number };
+  readyForApproval: false;
+} {
+  const writing = reviewMedicalWriting('csr', snapshot.savedContent);
+  const checked = verifyCsrSectionEvidenceBinding(snapshot, binding, claims, evidence);
+  return {
+    writing,
+    evidence: {
+      status: checked.accepted ? 'reconciled_pending_human_review' : 'blocked',
+      issues: checked.issues,
+      checkedClaims: checked.checkedClaims,
     },
     readyForApproval: false,
   };
