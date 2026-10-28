@@ -113,6 +113,13 @@ function reviewItems(saved: SavedSection[], result: ReturnType<typeof critiqueDo
 function report(documentId: string, programId: string, saved: SavedSection[], input: Record<string, unknown>, context: { header: Record<string, unknown>; template: SavedTemplateReview }): string {
   const { header, template } = context;
   const opts = reviewOptions(input);
+  // A saved CSR cannot evade scientific evidence checks by asking the critique
+  // tool to treat it as a different document type. Saved identity wins.
+  const savedIdentity = [header.module, header.product_code, header.title]
+    .filter((value): value is string => typeof value === 'string');
+  const savedIsCsr = savedIdentity.some(value =>
+    /(?:^|[^a-z0-9])(?:csr|clinical study report)(?:$|[^a-z0-9])/i.test(value));
+  if (savedIsCsr) opts.documentType = 'csr';
   const snapshotSha256 = digest(stableStringify({ header, saved, opts, template: { source: template.source, references: template.references } }));
   if (input.expected_snapshot !== undefined && input.expected_snapshot !== snapshotSha256) return refuse('Saved document or review options changed. Restart critique_document at offset 0.');
   const result = critiqueDocument(saved.map(s => ({ title: [s.code, s.title].filter(Boolean).join(' '), text: s.text })), opts);
