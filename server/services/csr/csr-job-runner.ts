@@ -131,6 +131,11 @@ export async function enqueueCSRBuildJob(
   req: CSRBuildRequest,
   ctx: CSRBuildJobContext
 ): Promise<EnqueueResult> {
+  // Validate identity before opening a database transaction or creating a job.
+  const protocolNumber = req.studyInfo?.protocolNumber;
+  if (typeof protocolNumber !== 'string' || !protocolNumber.trim()) {
+    throw new Error('CSR_STUDY_IDENTIFIER_REQUIRED: Record the study protocol number before starting CSR drafting. No job was created.');
+  }
   const d = requireDb();
   const scope = await resolveCsrBuildContext(d, req, ctx);
 
@@ -145,11 +150,6 @@ export async function enqueueCSRBuildJob(
       ? req.sectionsToGenerate
       : null;
 
-  // A regulated CSR requires a recorded protocol identifier; never fabricate one.
-  if (typeof req.studyInfo?.protocolNumber !== 'string' || !req.studyInfo.protocolNumber.trim()) {
-    throw new Error('CSR_STUDY_IDENTIFIER_REQUIRED: Record the study protocol number before starting CSR drafting. No job was created.');
-  }
-
   const snapshot: CSRStudyInfoSnapshot = {
     studyInfo: req.studyInfo,
     deepResearchJobId: req.deepResearchJobId,
@@ -161,7 +161,7 @@ export async function enqueueCSRBuildJob(
       organizationId: ctx.organizationId,
       projectId: scope.projectId ?? null,
       // Preserve the recorded study protocol number without inventing an identifier.
-      studyId: req.studyInfo.protocolNumber,
+      studyId: protocolNumber.trim(),
       status: 'queued',
       progress: 0,
       sectionsToGenerate,
