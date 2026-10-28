@@ -149,6 +149,15 @@ router.post('/', async (req: Request, res: Response) => {
     userId: requestedBy,
   };
 
+  // Reject a missing dossier anchor before dispatch, with a usable client error.
+  // A program UUID may resolve to its canonical project in the existing scope service.
+  if (body.projectId === undefined && body.programId === undefined) {
+    return res.status(400).json({
+      code: 'CSR_PROJECT_REQUIRED',
+      error: 'Select a project before starting CSR drafting. No job was created.',
+    });
+  }
+
   // Invalid study identity is a client input error, not an internal failure.
   // Refuse before dispatching an asynchronous job or consuming model quota.
   if (typeof buildRequest.studyInfo?.protocolNumber !== 'string' ||
