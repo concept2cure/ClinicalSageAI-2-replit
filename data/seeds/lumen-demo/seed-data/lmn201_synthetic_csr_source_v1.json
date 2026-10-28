@@ -1,0 +1,556 @@
+{
+  "format": "concept2cure.csr-source.v1",
+  "dataCutDate": "2026-10-01",
+  "studyInfo": {
+    "title": "SYNTHETIC LMN-201-like recurrent CDI CSR demo — NOT ACTUAL DATA",
+    "protocolNumber": "DEMO-LMN201-PARTB-001",
+    "phase": "2",
+    "indication": "Prevention of recurrent Clostridioides difficile infection",
+    "sponsor": "Lumen Bioscience — FICTIONAL DEMO, NOT A CLIENT",
+    "investigationalProduct": "LMN-201 (illustrative)",
+    "comparator": "Synthetic control",
+    "studyDesign": "Synthetic randomized two-arm demonstration, not actual protocol",
+    "primaryEndpoint": "Synthetic global cure indicator",
+    "sampleSize": 23
+  },
+  "participants": [
+    {
+      "subjectId": "DEMO-LMN201-001",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-002",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-003",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-004",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-005",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-006",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-007",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-008",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-009",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-010",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-011",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-LMN201-012",
+      "armId": "LMN201",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-001",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-002",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-003",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-004",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-005",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-006",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-007",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-008",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-009",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-010",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    },
+    {
+      "subjectId": "DEMO-CONTROL-011",
+      "armId": "CONTROL",
+      "randomized": true,
+      "safety": true,
+      "itt": true,
+      "completed": true
+    }
+  ],
+  "completeDomains": {
+    "disposition": true,
+    "demographics": true,
+    "efficacy": true,
+    "adverseEvents": true
+  },
+  "studyData": {
+    "studyId": "DEMO-LMN201-PARTB-001",
+    "protocolNumber": "DEMO-LMN201-PARTB-001",
+    "treatmentArms": [
+      {
+        "armId": "LMN201",
+        "armName": "Synthetic LMN201 arm",
+        "randomized": 12,
+        "populations": {
+          "safety": 12,
+          "itt": 12,
+          "completed": 12
+        }
+      },
+      {
+        "armId": "CONTROL",
+        "armName": "Synthetic CONTROL arm",
+        "randomized": 11,
+        "populations": {
+          "safety": 11,
+          "itt": 11,
+          "completed": 11
+        }
+      }
+    ],
+    "disposition": [
+      {
+        "subjectId": "DEMO-LMN201-001",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-002",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-003",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-004",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-005",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-006",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-007",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-008",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-009",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-010",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-011",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-LMN201-012",
+        "armId": "LMN201",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-001",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-002",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-003",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-004",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-005",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-006",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-007",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-008",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-009",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-010",
+        "armId": "CONTROL",
+        "status": "completed"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-011",
+        "armId": "CONTROL",
+        "status": "completed"
+      }
+    ],
+    "demographics": [
+      {
+        "subjectId": "DEMO-LMN201-001",
+        "armId": "LMN201",
+        "age": 32,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-002",
+        "armId": "LMN201",
+        "age": 39,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-LMN201-003",
+        "armId": "LMN201",
+        "age": 46,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-004",
+        "armId": "LMN201",
+        "age": 53,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-LMN201-005",
+        "armId": "LMN201",
+        "age": 60,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-006",
+        "armId": "LMN201",
+        "age": 67,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-LMN201-007",
+        "armId": "LMN201",
+        "age": 74,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-008",
+        "armId": "LMN201",
+        "age": 31,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-LMN201-009",
+        "armId": "LMN201",
+        "age": 38,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-010",
+        "armId": "LMN201",
+        "age": 45,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-LMN201-011",
+        "armId": "LMN201",
+        "age": 52,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-LMN201-012",
+        "armId": "LMN201",
+        "age": 59,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-001",
+        "armId": "CONTROL",
+        "age": 32,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-002",
+        "armId": "CONTROL",
+        "age": 39,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-003",
+        "armId": "CONTROL",
+        "age": 46,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-004",
+        "armId": "CONTROL",
+        "age": 53,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-005",
+        "armId": "CONTROL",
+        "age": 60,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-006",
+        "armId": "CONTROL",
+        "age": 67,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-007",
+        "armId": "CONTROL",
+        "age": 74,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-008",
+        "armId": "CONTROL",
+        "age": 31,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-009",
+        "armId": "CONTROL",
+        "age": 38,
+        "sex": "F"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-010",
+        "armId": "CONTROL",
+        "age": 45,
+        "sex": "M"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-011",
+        "armId": "CONTROL",
+        "age": 52,
+        "sex": "F"
+      }
+    ],
+    "efficacy": [
+      {
+        "endpointName": "Synthetic global cure indicator",
+        "endpointType": "primary",
+        "armId": "LMN201",
+        "value": 0.8333333333333334,
+        "display": "10/12 simulated participants",
+        "comparatorArmId": "CONTROL"
+      },
+      {
+        "endpointName": "Synthetic global cure indicator",
+        "endpointType": "primary",
+        "armId": "CONTROL",
+        "value": 0.36363636363636365,
+        "display": "4/11 simulated participants",
+        "comparatorArmId": "LMN201"
+      }
+    ],
+    "adverseEvents": [
+      {
+        "subjectId": "DEMO-LMN201-002",
+        "armId": "LMN201",
+        "pt": "Nausea",
+        "soc": "Gastrointestinal disorders",
+        "severity": "mild",
+        "serious": false,
+        "related": "unknown"
+      },
+      {
+        "subjectId": "DEMO-LMN201-007",
+        "armId": "LMN201",
+        "pt": "Nausea",
+        "soc": "Gastrointestinal disorders",
+        "severity": "mild",
+        "serious": false,
+        "related": "unknown"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-001",
+        "armId": "CONTROL",
+        "pt": "Nausea",
+        "soc": "Gastrointestinal disorders",
+        "severity": "mild",
+        "serious": false,
+        "related": "unknown"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-003",
+        "armId": "CONTROL",
+        "pt": "Nausea",
+        "soc": "Gastrointestinal disorders",
+        "severity": "mild",
+        "serious": false,
+        "related": "unknown"
+      },
+      {
+        "subjectId": "DEMO-CONTROL-008",
+        "armId": "CONTROL",
+        "pt": "Nausea",
+        "soc": "Gastrointestinal disorders",
+        "severity": "mild",
+        "serious": false,
+        "related": "unknown"
+      }
+    ]
+  }
+}
