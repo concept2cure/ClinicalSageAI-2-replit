@@ -92,9 +92,9 @@ export function projectCsrContentEvidence(input: CsrContentProjectionInput): Ato
         if (text.length > 12000) continue;
         // Free-text values can still include subject identifiers. Only explicitly
         // screened aggregate text may be indexed; otherwise keep source in Vault.
-        if (/(?:subject|patient|participant)[ _-]?(?:id|identifier|number)\\s*[:=#]/i.test(text)) continue;
+        if (/(?:subject|patient|participant)[ _-]?(?:id|identifier|number)\s*[:=#]/i.test(text)) continue;
         // A summary atom must not become a surrogate for raw subject listings.
-        if (/\\b(?:date of birth|medical record number|social security number)\\s*[:=#]/i.test(text)) continue;
+        if (/\b(?:date of birth|medical record number|social security number)\s*[:=#]/i.test(text)) continue;
         const sourceLocation = location + '.' + key;
         const fingerprint = createHash('sha256').update(text).digest('hex');
         drafts.push({
