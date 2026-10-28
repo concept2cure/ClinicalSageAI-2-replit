@@ -89,6 +89,17 @@ export function reconcileCsrClaims(
         (fact.estimate !== undefined && !finite(fact.estimate))) {
       add(id, 'INVALID_CLAIM');
     }
+    // For a declared observed proportion, verify that the estimate is
+    // mathematically consistent with the source numerator and denominator.
+    // Never apply this to model-based/Bayesian estimates or other units.
+    if (fact.method === 'observed proportion' && fact.unit === 'proportion' &&
+        fact.numerator !== undefined && fact.denominator !== undefined &&
+        fact.estimate !== undefined && Number.isSafeInteger(fact.numerator) &&
+        Number.isSafeInteger(fact.denominator) && fact.denominator > 0 &&
+        finite(fact.estimate) &&
+        Math.abs(fact.estimate - fact.numerator / fact.denominator) > 1e-10) {
+      add(id, 'NUMERIC_MISMATCH');
+    }
     if (fact.status !== 'qualified') add(id, 'SOURCE_NOT_QUALIFIED');
     if (!sha.test(fact.sourceSha256) || claim.sourceSha256 !== fact.sourceSha256) add(id, 'SOURCE_VERSION_MISMATCH');
     if (!present(fact.sourceId) || !present(fact.sourceLocation)) add(id, 'MISSING_SOURCE_LOCATION');
