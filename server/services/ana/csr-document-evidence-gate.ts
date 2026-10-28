@@ -19,7 +19,8 @@ export interface CsrDocumentSectionEvidence {
 export interface CsrDocumentEvidenceIssue {
   sectionId: string;
   code: CsrBindingIssue | 'MISSING_SECTION' | 'DUPLICATE_SECTION' |
-    'UNEXPECTED_SECTION' | 'EMPTY_SECTION' | 'EMPTY_MANIFEST';
+    'UNEXPECTED_SECTION' | 'EMPTY_SECTION' | 'EMPTY_MANIFEST' |
+    'DUPLICATE_DOCUMENT_CLAIM' | 'DUPLICATE_EVIDENCE_FACT';
 }
 export interface CsrDocumentEvidenceResult {
   status: 'blocked' | 'reconciled_pending_human_review';
@@ -50,6 +51,26 @@ export function verifyCsrDocumentEvidence(
     if (!expected.has(id)) issues.push({ sectionId: id, code: 'UNEXPECTED_SECTION' });
     if (byId.has(id)) issues.push({ sectionId: id, code: 'DUPLICATE_SECTION' });
     byId.set(id, entry);
+  }
+  // A section-local check cannot detect a claim ID reused in a different
+  // section. Claim IDs are document-global audit identifiers.
+  const seenClaimIds = new Set<string>();
+  for (const entry of sections) {
+    for (const claim of entry.claims ?? []) {
+      if (seenClaimIds.has(claim.claimId)) {
+        issues.push({ sectionId: entry.snapshot?.sectionId ?? '', code: 'DUPLICATE_DOCUMENT_CLAIM' });
+      }
+      seenClaimIds.add(claim.claimId);
+    }
+  }
+  // Repeated fact identifiers make lookup ambiguous even when the duplicated
+  // fact was not used in the current section. Never call that ledger qualified.
+  const seenFactIds = new Set<string>();
+  for (const fact of facts) {
+    if (seenFactIds.has(fact.factId)) {
+      issues.push({ sectionId: '', code: 'DUPLICATE_EVIDENCE_FACT' });
+    }
+    seenFactIds.add(fact.factId);
   }
   let checkedClaims = 0;
   for (const id of expectedSectionIds) {
