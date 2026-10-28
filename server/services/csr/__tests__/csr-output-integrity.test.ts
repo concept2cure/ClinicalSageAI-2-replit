@@ -39,4 +39,20 @@ describe('CSR saved-output final integrity gate', () => {
     const row = { sectionNumber: '11.4', content: 'The analysis was performed.', contentHash: null };
     expect(verifySavedCsrSectionIntegrity(['11.4'], [row]).mismatched).toEqual(['11.4']);
   });
+  it('does not count an incomplete saved subset as complete coverage', () => {
+    const result = verifySavedCsrSectionIntegrity(['11.4', '12.3', '13'], [
+      stored('11.4', 'Supported efficacy narrative.'),
+      stored('13', 'Supported discussion.'),
+    ]);
+    expect(result.covered).toEqual(['11.4', '13']);
+    expect(result.missing).toEqual(['12.3']);
+  });
+  it('does not allow unrelated saved sections to satisfy requested coverage', () => {
+    const result = verifySavedCsrSectionIntegrity(['11.4'], [
+      stored('12.3', 'Safety narrative from another section.'),
+    ]);
+    expect(result.covered).toEqual([]);
+    expect(result.missing).toEqual(['11.4']);
+  });
+
 });
