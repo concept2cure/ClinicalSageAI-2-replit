@@ -165,6 +165,37 @@ export async function projectOrgCsrReports(
  * are indication-scoped (they span multiple CSRs) and are materialized separately
  * so their provenance is never collapsed onto a single source.
  */
+/**
+ * Batch-index an organization's existing CSR corpus through the canonical
+ * CRE adapter and retrieval writer. Each source is resolved under org scope;
+ * failures remain visible and are never counted as successfully indexed.
+ */
+export async function atomizeOrgCsrReports(
+  orgId: number,
+  opts: { limit?: number; embed?: EmbedFn | null } = {},
+): Promise<{ scanned: number; indexed: number; failed: number; atoms: number; embedded: number; failures: number[] }> {
+  if (!Number.isSafeInteger(orgId) || orgId <= 0) throw new Error('Valid organization required');
+  const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 100), 1), 500);
+  const { rows } = await pool.query(
+    'SELECT id FROM csr_reports WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY id LIMIT $2',
+    [orgId, limit],
+  );
+  const summary = { scanned: rows.length, indexed: 0, failed: 0, atoms: 0, embedded: 0, failures: [] as number[] };
+  for (const row of rows as Array<{ id: number }>) {
+    try {
+      const result = await atomizeCsrReport(orgId, row.id, { embed: opts.embed });
+      if (!result) throw new Error('CSR not available to tenant');
+      summary.indexed += 1;
+      summary.atoms += result.total;
+      summary.embedded += result.embedded;
+    } catch {
+      summary.failed += 1;
+      summary.failures.push(row.id);
+    }
+  }
+  return summary;
+}
+
 export async function atomizeCsrReport(orgId: number, csrReportId: number, opts: { embed?: EmbedFn | null } = {}): Promise<GenerateResult | null> {
   const adapted = await adaptCsrReport(orgId, csrReportId);
   if (!adapted) return null;

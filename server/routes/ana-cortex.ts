@@ -217,6 +217,24 @@ router.post('/harvest/10k', requireAuth, async (req, res) => {
   }
 });
 
+// Reuse the existing CRE evidence spine and retrieval writer; no second corpus.
+router.post('/csr/index', requireAuth, async (req, res) => {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return;
+  const rawLimit = req.body?.limit;
+  if (rawLimit !== undefined && (!Number.isInteger(rawLimit) || rawLimit < 1 || rawLimit > 500)) {
+    return res.status(400).json({ success: false, error: 'limit must be an integer from 1 to 500' });
+  }
+  try {
+    const { atomizeOrgCsrReports } = await import('../services/clinical-regulatory-evidence/csr-adapter.service');
+    const result = await atomizeOrgCsrReports(guard.orgId, { limit: rawLimit });
+    res.status(result.failed > 0 ? 207 : 200).json({ success: result.failed === 0, ...result });
+  } catch (error) {
+    console.error('Cortex CSR indexing failed:', error);
+    res.status(500).json({ success: false, error: 'CSR indexing could not be completed' });
+  }
+});
+
 router.post('/observation-terms/csr', requireAuth, async (req, res) => {
   try {
     const guard = requireAuthedOrgId(req, res);
