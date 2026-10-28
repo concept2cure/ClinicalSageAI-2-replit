@@ -16,6 +16,12 @@ export function evaluateChallengeSet(spec, results) {
       c.expected.every(e => typeof e === 'string' && e.trim()))) {
     throw new Error('Each benchmark case requires identity, severity and explicit expected criteria');
   }
+  const declaredCritical = spec.scoring?.criticalCasesMustPass;
+  const actualCritical = spec.cases.filter(c => c.severity === 'critical').length;
+  if (declaredCritical !== undefined &&
+      (!Number.isInteger(declaredCritical) || declaredCritical !== actualCritical)) {
+    throw new Error('Critical-case threshold must match the benchmark severity classification');
+  }
   const expectedIds = new Set(spec.cases.map(c => c.id));
   if (expectedIds.size !== spec.cases.length) throw new Error('Duplicate benchmark case IDs');
   const providedIds = new Set(results.cases.map(c => c.id));
