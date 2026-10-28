@@ -602,6 +602,7 @@ export async function getCSRBuildJobStatus(
       status: csrBuildJobs.status,
       progress: csrBuildJobs.progress,
       error: csrBuildJobs.error,
+      sectionsToGenerate: csrBuildJobs.sectionsToGenerate,
     })
     .from(csrBuildJobs)
     .where(
@@ -629,17 +630,23 @@ export async function getCSRBuildJobStatus(
         eq(csrSectionOutputs.organizationId, organizationId)
       )
     );
-  const targetCodes = [...new Set(sectionRows.map(section => section.sectionNumber))];
-  const integrity = targetCodes.length
+  const canonicalTargets = flattenICHE3Sections(ICH_E3_STRUCTURE).map(section => section.number);
+  const targetCodes = row.sectionsToGenerate?.length
+    ? row.sectionsToGenerate
+    : canonicalTargets;
+  const validTargets = targetCodes.length > 0 &&
+    new Set(targetCodes).size === targetCodes.length &&
+    targetCodes.every(code => canonicalTargets.includes(code));
+  const integrity = validTargets
     ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
-    : { covered: [], missing: [], mismatched: [] };
+    : { covered: [], missing: targetCodes, mismatched: [] };
   const verified = new Set(integrity.covered);
   const sectionsComplete = sectionRows.filter(section =>
     verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
   ).length;
   const integrityFailure = row.status === 'complete' &&
     (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
-      sectionsComplete !== sectionRows.length);
+      sectionsComplete !== targetCodes.length);
 
   return {
     status: integrityFailure ? 'failed' : row.status,
