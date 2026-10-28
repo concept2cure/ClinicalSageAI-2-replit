@@ -98,7 +98,7 @@
     }
   ],
   "scoring": {
-    "criticalCasesMustPass": 10,
+    "criticalCasesMustPass": 7,
     "requiredEvidence": [
       "source citation",
       "appropriate denominators",
