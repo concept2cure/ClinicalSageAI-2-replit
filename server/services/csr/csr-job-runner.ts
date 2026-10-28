@@ -638,7 +638,7 @@ export async function getCSRBuildJobStatus(
     verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
   ).length;
   const integrityFailure = row.status === 'complete' &&
-    (integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
+    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
       sectionsComplete !== sectionRows.length);
 
   return {
