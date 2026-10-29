@@ -1,0 +1,14 @@
+# Part B red at 55673579, with the new cases only (editorTarget, the workbench and the row unchanged).
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the editing copy of the filing it measures, never the newest document tagged with its module
+   → the row named no document: expected { docType: null, …(7) } to match object { docId: 'doc-copy', …(2) }
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an added market's rows open that market's editing copy
+   → expected { docType: null, …(7) } to match object { docId: 'doc-ema-copy', …(2) }
+ × client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > a target within a module lands on the document's first section in it (F3, a Project home module row) > opens the module's first section by order, not the document's first
+   → expected 'Cover letter.' to be 'Nonclinical overview.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx > a target within a module lands on the document's first section in it (F3, a Project home module row) > with nothing of the module started, opens the document and says so
+   → Unable to find an element with the text: /No section of Module 5 has been started in this document yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matche
+ × client/src/concept2cure/v2/__tests__/editorTarget.test.ts > a target within a module (F3) > carries the module only when one is sent, and only through the reader
+   → expected { docType: null, docId: 'D', …(6) } to match object { docId: 'D', sectionWithin: 'M2' }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  5 failed | 54 passed (59)

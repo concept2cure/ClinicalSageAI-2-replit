@@ -25,6 +25,8 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError, noContent,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { programInOrganization } from '../services/c2c/program-access';
+import { isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -92,13 +94,24 @@ router.get('/labeling', async (req: Request, res: Response) => {
   if (status)   { args.push(status);   filters.push(`status = $${args.length}`); }
   if (language) { args.push(language); filters.push(`language = $${args.length}`); }
   try {
+    /* The project's labeling screen reads by `program_id`. Rows were always
+       filtered by organization, but another organization's project, or a
+       missing one, answered 200 with no rows: "this project has no label".
+       Ownership is asked first, through the one ownership answer, as
+       mdx-engineering.ts does (D2, 2026-10-29). */
+    if (pid && !(await programInOrganization(pool, pid, orgId))) {
+      return notFoundInTenant(res, 'Project');
+    }
     const { rows } = await pool.query(
       `SELECT * FROM labeling_documents WHERE ${filters.join(' AND ')}
         ORDER BY device_name, doc_kind, language`,
       args,
     );
     return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list', err); }
+  } catch (err) {
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
+    return serverError(res, log, 'list', err);
+  }
 });
 
 router.post('/labeling', async (req: Request, res: Response) => {

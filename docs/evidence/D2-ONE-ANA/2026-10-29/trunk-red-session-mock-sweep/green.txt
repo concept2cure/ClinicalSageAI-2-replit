@@ -1,0 +1,30 @@
+GREEN: the 15 suites with the session mock (working tree)
+Run first at 86610174, then again at 8b01885a, after DT3's client changes landed
+(useAnaChat.ts, AnaWorkSections.tsx, anaWorkModel.ts, turnSummaryRows.ts). Both runs had the same result.
+One file per run: $ timeout 240 npx vitest run <file>
+(trimmed: per-file counts at 8b01885a)
+
+__tests__/conversationArtifactPanel.test.tsx: 8 passed (8), 4 act(...) warnings on stderr
+editor/__tests__/conversationAuthoringOrigin.test.tsx: 9 passed (9), 2 act(...) warnings on stderr
+editor/__tests__/authoringConversationScope.test.tsx: 8 passed (8)
+__tests__/anaContinueHosts.test.tsx: 5 passed (5)
+__tests__/anaRunControlStrip.test.tsx: 12 passed (12), 2 act(...) warnings on stderr
+__tests__/emptyStateBatchA.test.tsx: 8 passed (8), 4 act(...) warnings on stderr
+__tests__/anaAnswerCaveats.test.tsx: 7 passed (7)
+__tests__/composerAttachmentChip.test.tsx: 8 passed (8), 16 act(...) warnings on stderr
+__tests__/composerAttachWorks.test.tsx: 8 passed (8)
+__tests__/conversationRailTwins.test.tsx: 33 passed (33), 1 act(...) warnings on stderr
+__tests__/anaInterruptedHosts.test.tsx: 19 passed (19)
+__tests__/anaMessageWarnings.test.tsx: 2 passed (2)
+__tests__/conversationProjectMismatch.test.tsx: 5 passed (5), 10 act(...) warnings on stderr
+__tests__/anaRunControl.test.tsx: 12 passed (12)
+__tests__/anaSkillsInUse.test.tsx: 15 passed (15), 1 act(...) warnings on stderr
+
+Totals: 15 of 15 files pass, 159 of 159 cases. No unhandled errors.
+
+stderr, warnings rather than failures, left as they are:
+- act(...) warnings: ConversationThread 28, EctdCoauthor 12.
+  The ConversationThread ones appear now that the thread renders. Their source was not traced here;
+  316909f5 attributes the same warnings in its suites to the document-list read settling after render.
+  The EctdCoauthor ones are not new: composerAttachmentChip printed the same 12 before this change.
+- anaInterruptedHosts prints '[useAnaChat] stream failed: ...' for the stream failures its cases construct.

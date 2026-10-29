@@ -1,0 +1,38 @@
+Mutation 3: invent a name when the channel has none.
+Shell.tsx TopBar:
+    const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName || 'This project' : '';
+Restored from a byte copy afterwards; sha256 matched the fixed file.
+
+ ✓ a project feature is crumbed under the open project > design controls, with a project open: Projects › the project › the feature 62ms
+ ✓ a project feature is crumbed under the open project > risk, with a project open: the same trail, and no "Medical Device & IVD" parent 11ms
+ ✓ a project feature is crumbed under the open project > names the project as the project chip beside it does 10ms
+ ✓ a project feature is crumbed under the open project > names a project with no code by its title 7ms
+ ✓ a project feature is crumbed under the open project > every MDX project feature: parents are Projects and the open project, never the old tier 206ms
+ ✓ a project feature is crumbed under the open project > follows the channel when another project is opened 11ms
+ × the crumb never invents a project name > with no project open: Projects › the feature 19ms
+ × the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): Projects › the feature 8ms
+ ✓ other surfaces keep their crumbs > the project page is still named by the project, with no Projects crumb added 16ms
+ ✓ other surfaces keep their crumbs > a core place carries no project crumb, even with a project open 8ms
+ ✓ other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 0ms
+ ✓ the registry model names Projects as a project feature’s parent > for every MDX project feature 0ms
+ ✓ the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 0ms
+ ✓ ⌘K’s hint names Projects for a project feature > design controls 51ms
+ ✓ ⌘K’s hint names Projects for a project feature > risk management 21ms
+ ✓ ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 65ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): Projects › the feature
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(2) ] to deeply equal [ 'Concept2Cure.RI', 'Projects', …(1) ]
+- Expected
++ Received
+  [
+    "Concept2Cure.RI",
+    "Projects",
++   "This project",
+    "Design controls (DHF)",
+  ]
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:142:22
+    140|     publishShellProject({ id: PROJECT.id });
+    141|     bar('design-controls');

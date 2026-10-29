@@ -374,7 +374,7 @@ The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15
 | `ectd-coauthor` (locked) | Scrapped | The Builder points to Place into filing and the Vault (F16) |
 | `haq-manager`, `agency-meetings`, `global-ri`, `precedent-intelligence` | Coming later | Named on the Respond and Submit coming-later lines |
 | `registrations`, `market-access`, `safety-narrative`, `ind-checklist`, `ind-lifecycle` | Coming later | Named on the market row's coming-later line |
-| Device surfaces (`device-510k`, …) | Coming later | The device market row says so; the 510(k) button is gated on availability (F16) |
+| Device surfaces (`device-510k`, …) | In scope under Projects since the founder's request of 2026-10-23 (`shared/constants/launch-scope.ts`) | The 510(k) button opens the surface, still gated on availability (F16; `docs/evidence/D2-ONE-ANA/2026-10-29/f16-device-door/`) |
 
 ---
 

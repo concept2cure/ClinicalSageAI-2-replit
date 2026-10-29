@@ -1,0 +1,22 @@
+# The same, after
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result
+      Tests  15 passed (15)
+
+# The Bayesian columns made unconditional (restored after): byte-identity is what fails
+ × server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

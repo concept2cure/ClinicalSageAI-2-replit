@@ -1,0 +1,9 @@
+Mutation M5a-workstream-door-ungated
+File: client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx
+- const destination = planned.surface && !available(planned.surface) ? planned.fallback ?? EVIDENCE_DESTINATION : planned;
++ const destination = planned;
+Test: client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx
+
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > when the feature behind labeling is not available, that workstream keeps its Author door 18ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > when the feature behind registration-udi is not available, that workstream keeps its Author door 24ms
+Tests  2 failed | 51 passed (53)

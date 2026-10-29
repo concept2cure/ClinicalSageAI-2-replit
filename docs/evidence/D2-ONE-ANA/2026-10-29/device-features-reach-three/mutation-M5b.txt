@@ -1,0 +1,8 @@
+Mutation M5b-presub-door-ungated
+File: client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx
+- const further = packageFurtherDoors(item, plan).filter(door => available(door.surface));
++ const further = packageFurtherDoors(item, plan);
+Test: client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx
+
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > is not drawn when the Pre-Sub manager is not available to the organization 65ms
+Tests  1 failed | 52 passed (53)

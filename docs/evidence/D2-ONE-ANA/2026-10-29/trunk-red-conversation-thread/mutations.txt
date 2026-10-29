@@ -1,0 +1,48 @@
+MUTATIONS — each applied to all six fixed suites at once, run, then the six files restored from byte copies.
+Restore verified twice: sha256sum -c of the fixed files (6 x OK), and 'git diff' of the six files cmp-identical to the fix's diff.
+
+M1. Remove the auth mock (files return to HEAD's content; 'git diff --stat' of the six was empty while mutated).
+    Expected: RED with the original error. Result:
+
+    conversationThreadAdminFollow.test.tsx: 0 passed, 6 failed
+      first failure: 9. an admin following a colleague’s turn > has Stop (DT3 accepts an admin cancel), no Pause, and a composer that says only the asker can steer
+        → useAuth must be used within an AuthProvider
+    conversationThreadShellChat.test.tsx: 0 passed, 16 failed
+      first failure: arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen
+        → useAuth must be used within an AuthProvider
+    conversationThreadSignoff.test.tsx: 0 passed, 4 failed
+      first failure: ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off
+        → useAuth must be used within an AuthProvider
+    conversationThreadStarters.test.tsx: 0 passed, 4 failed
+      first failure: ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma)
+        → useAuth must be used within an AuthProvider
+    conversationThreadStopped.test.tsx: 1 passed, 3 failed
+      first failure: a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark
+        → useAuth must be used within an AuthProvider
+    conversationThreadUrl.test.tsx: 1 passed, 6 failed
+      first failure: a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation
+        → useAuth must be used within an AuthProvider
+    
+    Distinct error(s), first app frames:
+    Error: useAuth must be used within an AuthProvider
+     ❯ useAuth client/src/services/portal/authService.tsx:1379:11
+     ❯ useDocumentList client/src/concept2cure/v2/editor/CanvasDocumentList.tsx:124:20
+     ❯ ConversationThread client/src/concept2cure/v2/surfaces/ConversationThread.tsx:1386:21
+    
+     Test Files  6 failed (6)
+          Tests  39 failed | 2 passed (41)
+
+    RED, 39 of 39, same error as trunk. Restored: 6 x OK, git diff identical.
+
+M2. Probe, not a gate: keep the mock but make the user null (useAuth: () => ({ user: null })).
+    Question: does any assertion depend on whose session it is? Result:
+
+     Test Files  6 passed (6)
+          Tests  41 passed (41)
+
+    GREEN. No assertion in these six suites reads the user. Four (AdminFollow, ShellChat, Stopped, Url) stub
+    fetch to 503, so the conversation's document list is in its error state; Signoff and Starters open a new
+    conversation with no thread id and no project, so useDocumentList has no URL and reads nothing. The list
+    route names the conversation, not the person; the user only forms the read's session key (organizationId:id).
+    The signed-in user is kept for fidelity (the thread is reached only signed in), not because a test needs it.
+    Restored: 6 x OK, git diff identical.

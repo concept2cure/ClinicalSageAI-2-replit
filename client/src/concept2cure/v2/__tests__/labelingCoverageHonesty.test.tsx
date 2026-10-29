@@ -23,6 +23,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const DOC = { id: 4, device_name: 'Aurora CGM', doc_kind: 'ifu', version: '3', organization_id: 7, status: 'draft' };
 const PROGRAM_ID = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
@@ -40,11 +41,12 @@ function serve(translations: 'pending' | 'failed') {
   });
 }
 
-const mount = () => render(<Labeling {...({ onAsk: () => {}, programId: PROGRAM_ID } as unknown as React.ComponentProps<typeof Labeling>)} />);
+/* The screen reads the shell's open project (device-features-reach-three, 2026-10-29); it has no programId prop. */
+const mount = () => { publishShellProject({ id: PROGRAM_ID }); return render(<Labeling {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)} />); };
 const text = () => document.body.textContent ?? '';
 
 beforeEach(() => apiRequest.mockReset());
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
 describe('Labeling — coverage honesty', () => {
   it('claims no coverage and offers no "start tracking" CTA while translations are still being read', async () => {

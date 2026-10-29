@@ -1,0 +1,21 @@
+Green: the same test with the fix in Shell.tsx and registryModel.ts.
+Command: npx vitest run client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx
+
+ ✓ a project feature is crumbed under the open project > design controls, with a project open: Projects › the project › the feature 80ms
+ ✓ a project feature is crumbed under the open project > risk, with a project open: the same trail, and no "Medical Device & IVD" parent 9ms
+ ✓ a project feature is crumbed under the open project > names the project as the project chip beside it does 12ms
+ ✓ a project feature is crumbed under the open project > names a project with no code by its title 7ms
+ ✓ a project feature is crumbed under the open project > every MDX project feature: parents are Projects and the open project, never the old tier 247ms
+ ✓ a project feature is crumbed under the open project > follows the channel when another project is opened 22ms
+ ✓ the crumb never invents a project name > with no project open: Projects › the feature 16ms
+ ✓ the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): Projects › the feature 7ms
+ ✓ other surfaces keep their crumbs > the project page is still named by the project, with no Projects crumb added 22ms
+ ✓ other surfaces keep their crumbs > a core place carries no project crumb, even with a project open 11ms
+ ✓ other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 0ms
+ ✓ the registry model names Projects as a project feature’s parent > for every MDX project feature 0ms
+ ✓ the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 0ms
+ ✓ ⌘K’s hint names Projects for a project feature > design controls 41ms
+ ✓ ⌘K’s hint names Projects for a project feature > risk management 22ms
+ ✓ ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 38ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

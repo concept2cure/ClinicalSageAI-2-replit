@@ -29,6 +29,7 @@
  * particular organization's programmes — that comes from the API.
  */
 import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-surface-registry';
+import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
 // ANA_SURFACE_CTX is the large per-surface AnA context table; it lives in a
 // companion module (split to keep this file under the repo-health line gate)
 // and is re-exported below so consumers still import it from registryModel.
@@ -36,7 +37,11 @@ import { ANA_SURFACE_CTX } from './registryModel.surfaceCtx';
 import { AUTO_ACTIVE_MS, AUTO_MAX_ROUNDS, AUTO_WALL_MS, MAX_PAUSE_MS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { minutesWords } from '@shared/ana/run-policy';
 
-/** Client-type rail tiers (kit NAV_TIERS — distinct from the registry's structural navTier) */
+/** Client-type rail tiers (kit NAV_TIERS — distinct from the registry's structural navTier).
+ *  The breadcrumb and ⌘K no longer name the `mdx` tier: every surface grouped
+ *  under it is a feature of the client's project and is crumbed under Projects
+ *  (breadcrumbTierOf, below). The entry stays for its other reader,
+ *  KitSurfaceScaffold's eyebrow (surfaces/Surfaces.tsx). */
 export const NAV_TIERS_V2 = [
   { id: 'mdx', label: 'Medical Device & IVD' },
   { id: 'biopharma', label: 'Biotech & Pharma' },
@@ -1029,12 +1034,23 @@ export function navGroupOf(id: string): string {
 }
 
 /**
- * The breadcrumb's client-category crumb for a surface: its tier when it
+ * The parent the breadcrumb (and ⌘K's hint) names for a project feature: the
+ * Projects app. The device disciplines and pathways are features of the
+ * client's project, not a "Medical Device & IVD" app (founder request,
+ * 2026-10-23: shared/constants/launch-scope.ts, pinned to
+ * MDX_PROJECT_FEATURE_SURFACE_IDS). The shell adds the open project after it.
+ */
+export const PROJECTS_CRUMB = { id: 'projects', label: getSurface('projects')?.label ?? 'Projects' } as const;
+
+/**
+ * The breadcrumb's parent crumb for a surface, which ⌘K's hint also reads:
+ * Projects for a project feature; otherwise its client category when it
  * belongs to exactly one, "Admin" for an admin surface, and null when it
  * belongs to both — or when the tier would only repeat the surface's own
- * name ("Medical Device & IVD › Medical Device & IVD").
+ * name.
  */
 export function breadcrumbTierOf(surface: { id: string; label: string }): { id: string; label: string } | null {
+  if (isMdxProjectFeature(surface.id)) return PROJECTS_CRUMB;
   const group = getSurface(surface.id)?.navTier === 'admin' ? 'admin' : navGroupOf(surface.id);
   const tier = NAV_TIERS_V2.find((t) => t.id === group) ?? null;
   return tier && tier.label !== surface.label ? tier : null;

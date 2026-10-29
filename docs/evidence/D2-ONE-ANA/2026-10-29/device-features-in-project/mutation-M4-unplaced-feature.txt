@@ -1,0 +1,9 @@
+# Mutation M4-unplaced-feature: remove device-workstream from NO_PROJECT_DOOR (a project feature with no placement)
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 21 project features once: opened from Plan, or listed with why it has no door
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 21 project features once: opened from Plan, or listed with why it has no door
+AssertionError: expected [ 'design-controls', …(19) ] to deeply equal [ 'design-controls', …(20) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 passed (29)
+
+# Restored from the scratch copy; cmp against it reported no difference.

@@ -114,6 +114,12 @@ export interface EditorTarget {
   docId: string | null;
   sectionCode: string | null;
   sectionLabel: string | null;
+  /** A CTD code to land within, when the sender knows a module but not a
+   *  section (F3: Project home's module rows). With `docId` only, and a
+   *  `sectionCode` wins: the editor opens the document's first section, by
+   *  order, whose code lies under it, or the document with a notice when none
+   *  is started. Absent unless sent, so every other target keeps its shape. */
+  sectionWithin?: string;
   /** regulatory_programs UUID the section belongs to, when the sender had one.
    *  The editor refuses to resolve a target into a different program's
    *  documents — a near-miss open is worse than an honest miss. */
@@ -229,6 +235,8 @@ export function setEditorTarget(
     returnTo?: EditorReturnTo | null;
     assemblySources?: EditorAssemblySources;
     sourceDocumentStart?: EditorAssemblySources;
+    /** See EditorTarget.sectionWithin. */
+    within?: string | null;
   },
   sourceContextCurrent?: () => boolean,
 ): void {
@@ -247,6 +255,7 @@ export function setEditorTarget(
     docId: str(target.docId),
     sectionCode: str(target.code),
     sectionLabel: str(target.label),
+    ...(str(target.within) ? { sectionWithin: str(target.within)! } : {}),
     programId: str(target.programId),
     programTitle: str(target.programTitle),
     returnTo: normalizeReturnTo(target.returnTo),
@@ -331,6 +340,7 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
     docId: str(t.docId),
     sectionCode: str(t.sectionCode),
     sectionLabel: str(t.sectionLabel),
+    ...(str(t.sectionWithin) ? { sectionWithin: str(t.sectionWithin)! } : {}),
     programId: str(t.programId),
     programTitle: str(t.programTitle),
     returnTo: normalizeReturnTo(t.returnTo),

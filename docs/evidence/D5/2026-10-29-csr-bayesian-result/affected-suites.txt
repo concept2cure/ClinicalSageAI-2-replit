@@ -1,0 +1,22 @@
+# Every test file importing csr-tabulation-builders, csr-source-input/-contract, unsupplied-statistics, saved-clinical-tables, csrEvidenceMap or csr-scientific-review
+client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx
+client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts
+server/__tests__/services/submission-orchestrator.test.ts
+server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+server/services/__tests__/csr-builder-completeness.test.ts
+server/services/__tests__/csr-tabulation-source-correctness.test.ts
+server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+server/services/authoring/__tests__/saved-draft-source-export.test.ts
+server/services/csr/__tests__/csr-bayesian-result.test.ts
+server/services/csr/__tests__/lmn201-synthetic-tables.integration.test.ts
+server/services/csr/__tests__/saved-clinical-tables.test.ts
+server/services/csr/__tests__/unsupplied-statistics.test.ts
+shared/__tests__/csr-source-input.test.ts
+shared/__tests__/lmn201-comprehensive-source.test.ts
+shared/__tests__/lmn201-synthetic-csr-demo.test.ts
+shared/__tests__/lmn201-synthetic-csr-source.test.ts
+ Test Files  17 passed (17)
+      Tests  212 passed (212)
+
+# The gate suite (node scripts/ci/csr-scientific-review/run.mjs): 40/40. tests/cortex/*.test.mjs: 95/95.

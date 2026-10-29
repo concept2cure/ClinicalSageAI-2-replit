@@ -78,6 +78,13 @@ vi.mock('../../components/ana/useAnaChat', () => ({
   }),
 }));
 
+/* useDocumentList reads the signed-in session (editor/CanvasDocumentList.tsx);
+   with no AuthProvider mounted, the real useAuth throws before the thread renders. */
+vi.mock('@/services/portal/authService', async original => ({
+  ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' } }),
+}));
+
 import { ConversationThread } from '../surfaces/ConversationThread';
 import { Orchestration } from '../surfaces/Orchestration';
 
