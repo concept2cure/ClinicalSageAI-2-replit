@@ -335,21 +335,21 @@ router.get('/admin', async (req: Request, res: Response) => {
       ? {
           id: 'mfa-required', label: 'Second factor at sign-in', kind: 'policy',
           value: 'Skipped on this development server',
-          desc: 'Development sign-in is on here, so password sign-in does not ask for a second factor. A deployed server always asks for one.',
+          desc: 'Development sign-in is on here, so password sign-in does not ask for a second factor. A deployed server always asks for one: an authenticator app when one is enrolled, otherwise an emailed code. Each person sets up an authenticator app from Account in the account menu.',
         }
       : {
           id: 'mfa-required', label: 'Second factor at sign-in', kind: 'policy',
           value: 'Required for every member',
-          desc: 'Password sign-in asks for the authenticator app when one is enrolled, otherwise an emailed code. Supports 21 CFR 11.10(d), limiting system access to authorized individuals.',
+          desc: 'Password sign-in asks for the authenticator app when one is enrolled, otherwise an emailed code. Each person sets up an authenticator app from Account in the account menu. Supports 21 CFR 11.10(d), limiting system access to authorized individuals.',
         };
 
     // Settings tab — only rows with a real backing value (honesty over completeness).
+    // No session-timeout row: Setup folded into Admin and access (D2, 2026-10-29),
+    // and the tab mounts SessionPolicySetting, which reads the same clamped window
+    // (idleWindowSecondsOf) and sets it under a reason. A read-only copy of that
+    // value beside its own editor would be the same fact twice.
     const settings = [
       secondFactor,
-      orgRead && {
-        id: 'session-ttl', label: 'Session timeout', kind: 'duration',
-        value: `${sessionMins} ${sessionMins === 1 ? 'minute' : 'minutes'}`, desc: 'Idle interval applied at new sign-in; an idle session requires sign-in again',
-      },
       orgRead && {
         id: 'sso', label: 'Single sign-on', kind: 'toggle',
         value: ssoOn ? 'Enabled' : 'Disabled', desc: 'SAML / OIDC via your IdP',

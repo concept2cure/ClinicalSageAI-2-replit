@@ -1,0 +1,31 @@
+# Gates — Part 1, on 984913ea5 + this change
+
+=== ci:launch-scope-api
+ci:launch-scope-api: 547 API paths named by launch and shell screens; none refused. {"launch":497,"infrastructure":2,"never-gated":48}
+exit=0
+=== ci:ana-surface-context
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (75 surface file(s) hold a call).
+
+exit=0
+=== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+=== ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 115 renderable surface(s): 88 in the Apps catalog, 27 declared contextual.
+
+exit=0
+=== ci:launch-scope
+[ci:launch-scope] 7 apps · 50 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+=== check:microcopy
+[ci:microcopy] OK — scanned 730 customer-facing files, no exclamations or pictographs.
+exit=0
+=== ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+exit=0

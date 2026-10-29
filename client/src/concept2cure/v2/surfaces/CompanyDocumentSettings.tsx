@@ -220,7 +220,7 @@ function CompanySettingsHeading({ model }: { model: CompanyDocumentSettingsModel
       {currentView && saved && <span className="company-revision">Revision {saved.revision}</span>}</div>;
 }
 
-/** One organization profile, reused by Admin → Settings and organization Setup. */
+/** One organization profile, on Admin → Settings (organization Setup folded in there, D2 2026-10-29). */
 export function CompanyDocumentSettings({ onNav }: { onNav?: (id: string) => void }) {
   const model = useCompanyDocumentSettings();
   const { currentView, saved, draft, loading, readError, notice, conflict, busy, load, session, dirtyRef } = model;

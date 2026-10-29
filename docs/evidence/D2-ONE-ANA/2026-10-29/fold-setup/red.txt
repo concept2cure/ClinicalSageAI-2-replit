@@ -1,0 +1,40 @@
+# Red — fold setup into admin-console, Part 1 (run on 66efa6179 + the tests, before the product change)
+
+## client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx — 11/11 failed
+Each failed because admin-console's Settings tab did not mount the card, the SSO tab had no Identity console door, or admin-console's context carried no configuration.
+
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 5090ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does 5042ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 5046ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > offers the client type chips in words 5031ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it 5033ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed 140ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them 5029ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered 5033ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab 5034ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name 5027ms
+ × client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab 5034ms
+
+## server/routes/__tests__/mdx-admin-facets.test.ts — the 2 new cases failed (13 existing passed)
+The settings facet still served the read-only session-timeout row, and the second-factor row did not say where a person sets up an authenticator app.
+
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 19ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 3ms
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > serves no session-timeout row: the governed session-policy card replaces it 6ms
+ × server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > says where each person sets up an authenticator app 5ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 4ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeout":120} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":99999} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":0} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":"90"} 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > session policy follows the enforced sign-in policy > shows the idle interval sign-in actually enforces for {"sessionTimeoutMinutes":22.9} 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 13 passed (15)
+
+## The stale-publication assertion
+Added after the first green to 'publishes no configuration on another tab'. Its red is mutation M9 in mutations.txt: with the tab guard in withConfiguration removed, one context with tab 'members' and the configuration is published between the tab switch and the card's unmount.

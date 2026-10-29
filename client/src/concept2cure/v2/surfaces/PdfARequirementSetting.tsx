@@ -16,7 +16,7 @@ import '../styles/translation-v2.css';
  * The route audits the change with its reason and requires an organisation
  * administrator; a refusal is shown as refused. A read that fails is shown as
  * unread, never as "Off". `:id` is the organisationId claim on the caller's own
- * token, as Setup uses it.
+ * token, as the Profile card (OrganizationProfileCard.tsx) uses it.
  */
 
 type Read = { state: 'reading' } | { state: 'failed' } | { state: 'read'; on: boolean };

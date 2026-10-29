@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Net ESLint warnings of the fold's own files: HEAD version vs working tree (stdin lint, same path, same config).
+cd /home/user/ClinicalSageAI-2-replit
+total_old=0; total_new=0
+while read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in \#*) continue;; esac
+  if git cat-file -e "HEAD:$f" 2>/dev/null; then
+    old=$(git show "HEAD:$f" | npx eslint --no-ignore --stdin --stdin-filename "$f" -f json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).reduce((a,r)=>a+r.warningCount,0))}catch{console.log("ERR")}})')
+  else old=0; fi
+  if [ -f "$f" ]; then
+    new=$(npx eslint --no-ignore "$f" -f json 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).reduce((a,r)=>a+r.warningCount,0))}catch{console.log("ERR")}})')
+  else new=0; fi
+  echo "$f: HEAD $old -> now $new"
+  total_old=$((total_old+old)); total_new=$((total_new+new))
+done < "$1"
+echo "NET: HEAD $total_old -> now $total_new ($((total_new-total_old)))"
