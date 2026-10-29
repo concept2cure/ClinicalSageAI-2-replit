@@ -1,0 +1,13 @@
+# Byte-identity probe (SYNTHETIC fixtures, no subject-level withdrawal flag): SHA-256 over every selected subject's facts, factsDigest and composed narrative
+## before the D17 change (HEAD 7e4c7f479e)
+narrative-synthetic(120) 25 subjects 529000c4b13d821abd63c83908bb011602ddad7a5d97a58cbe980ffae8e0e0a0
+narrative-synthetic(1000) 200 subjects f65ef11fc1a931f55bc1d1e880d889a0cd9ab365d6ba8efdb3f77b38f6d7bf2a
+legacy event-basis 3 subjects 0b639f09be34c03522a8cdfc15cc6f672354b953d6bf3011c13a56ad783354ba
+## after
+narrative-synthetic(120) 25 subjects 529000c4b13d821abd63c83908bb011602ddad7a5d97a58cbe980ffae8e0e0a0
+narrative-synthetic(1000) 200 subjects f65ef11fc1a931f55bc1d1e880d889a0cd9ab365d6ba8efdb3f77b38f6d7bf2a
+legacy event-basis 3 subjects 0b639f09be34c03522a8cdfc15cc6f672354b953d6bf3011c13a56ad783354ba
+## after the adversarial review (gate, EOSDT and refusal-text changes)
+narrative-synthetic(120) 25 subjects 529000c4b13d821abd63c83908bb011602ddad7a5d97a58cbe980ffae8e0e0a0
+narrative-synthetic(1000) 200 subjects f65ef11fc1a931f55bc1d1e880d889a0cd9ab365d6ba8efdb3f77b38f6d7bf2a
+legacy event-basis 3 subjects 0b639f09be34c03522a8cdfc15cc6f672354b953d6bf3011c13a56ad783354ba

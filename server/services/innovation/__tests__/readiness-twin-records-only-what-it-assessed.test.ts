@@ -38,7 +38,7 @@ function harness(route: Route) {
   const client = { query, release: vi.fn() };
   const pool = { query, connect: vi.fn(async () => client) };
   const issued = (prefix: string) => calls.filter((c) => c.text.startsWith(prefix));
-  return { pool, issued };
+  return { pool, issued, calls, client };
 }
 
 async function loadService(pool: unknown) {
@@ -262,5 +262,36 @@ describe('getAssessmentHistory', () => {
     const service = await loadService(pool);
     const [assessment] = await service.getAssessmentHistory('prog-1');
     expect([assessment.completenessScore, assessment.predictedDeficiencyCount]).toEqual([0, 0]);
+  });
+});
+
+describe('P-70: no session setting widens the tenant scope', () => {
+  const SWITCH = /app\.(bypass_rls|is_admin)/;
+
+  it('runAssessment and createCriteria set neither app.bypass_rls nor app.is_admin', async () => {
+    const { pool, calls } = harness(assessmentRoute([CLINICAL_OVERVIEW]));
+    const service = await loadService(pool);
+    await service.runAssessment('prog-1', 'NDA', 'FDA', PRESENT);
+    await service
+      .createCriteria({ programId: 'prog-1', category: 'm1', name: 'Cover letter', description: 'x', weight: 1 })
+      .catch(() => undefined);
+    expect(calls.filter((c) => SWITCH.test(c.text)).map((c) => c.text)).toEqual([]);
+  });
+
+  it('returns the connection after an assessment, and destroys it when the rollback cannot be confirmed', async () => {
+    const ok = harness(assessmentRoute([CLINICAL_OVERVIEW]));
+    await (await loadService(ok.pool)).runAssessment('prog-1', 'NDA', 'FDA', PRESENT);
+    expect(ok.client.release).toHaveBeenLastCalledWith(false);
+
+    const broken = harness(assessmentRoute([]));
+    const query = broken.client.query.getMockImplementation()!;
+    broken.client.query.mockImplementation(async (text: string, params?: unknown[]) => {
+      if (flat(text) === 'ROLLBACK') throw new Error('connection terminated');
+      return query(text, params);
+    });
+    await expect((await loadService(broken.pool)).runAssessment('prog-1', 'NDA', 'FDA')).rejects.toThrow(
+      /No readiness criteria on file/,
+    );
+    expect(broken.client.release).toHaveBeenLastCalledWith(true);
   });
 });

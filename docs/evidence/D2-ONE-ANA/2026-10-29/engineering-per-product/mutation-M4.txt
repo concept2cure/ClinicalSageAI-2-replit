@@ -1,0 +1,15 @@
+# M4: DHF read keeps empty headings (not the readiness rule)
+# file: server/routes/mdx-engineering.ts
+# command: npx vitest run server/routes/__tests__/mdx-engineering-per-product.test.ts
+# exit: 1
+# original sha256 0cab5e0a44820cd6a78329cb41e472e5a5d2d8d44119526d10f3b72c6742bb7d; restored byte for byte: True
+
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 25ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > leaves out an empty heading, as the documents' readiness does, so it is not reported as a blocker 4ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 4ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > leaves out an empty heading, as the documents' readiness does, so it is not reported as a blocker
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only

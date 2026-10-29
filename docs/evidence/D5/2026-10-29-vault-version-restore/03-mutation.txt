@@ -1,0 +1,127 @@
+# MR-08 Stage 5 step 2, mutations: each applied alone, then tests/db/vault-version-restore.dbtest.ts
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on.
+#  no-waiver          the check-in never admits bytes the document holds, even for a restore
+#  no-current-bytes   a restore of bytes the current version already holds is admitted
+#  no-reason          no reason is required
+#  no-verify          the recorded hash is not checked (see the note at its entry)
+#  no-family          the version named need not be a version of the document named
+#  no-current-guard   the current version may be restored onto itself
+#  no-marker          the restored row does not record which version it restores
+#  db-trigger-ignores-bytes   the database guard does not compare the bytes
+#  db-index-not-narrowed      044c's unique rule applies to restores too
+
+=== mutation: no-waiver
+ × restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+   → {"success":false,"error":"CONTENT_ALREADY_A_VERSION","message":"These exact bytes are already version 1.0 of this document. Nothing was saved."}: expected 409 to be 201 // Object.is equality
+ × restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+   → expected [ [ '2.0', true ], [ '1.0', false ] ] to deeply equal [ [ '3.0', true ], …(2) ]
+ × restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+   → expected 400 to be 409 // Object.is equality
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → no reason: {}: expected 404 to be 422 // Object.is equality
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ × what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+   → expected [Function] to throw error matching /VAULT_RESTORE_INVALID|immutable|writ…/i but got 'invalid input syntax for type uuid: ""'
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → {"success":false,"error":"ALREADY_CURRENT","message":"Version 2.0 is already the current version. Nothing was saved."}: expected 409 to be 201 // Object.is equality
+      Tests  6 failed | 1 passed (7)
+=== mutation: no-current-bytes
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → bytes the current version holds: {"success":true,"data":{"document":{"id":"05ca396f-87a1-41be-886d-4854900b87c9","programId":"8f815425-7c24-4b6e-95b0-7b2e9e1bd2ec","documentCode":"DBTEST-VRESTORE-897f913d-39e-DOC","document
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → expected { …(10) } to match object { version: '4.0', …(2) }
+      Tests  2 failed | 5 passed (7)
+=== mutation: no-reason
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → no reason: {"success":true,"data":{"document":{"id":"02ffc420-aa81-4f5d-8baa-f50f42935bb6","programId":"8dfc45c1-3d9c-4486-b376-efeaa4723fb2","documentCode":"DBTEST-VRESTORE-36dda675-0ca-DOC","documentTitle":"Clinical overv
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → expected { …(10) } to match object { version: '4.0', …(2) }
+      Tests  2 failed | 5 passed (7)
+=== mutation: no-verify
+# First round: survived. The local storage provider checks a file against its own _meta.json, so a
+# file-only tamper never reached the recorded-hash check. The case "rewritten together with its storage
+# record" was added, and the mutation re-run against it:
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ ✓ what a restore refuses > refuses each restore it cannot make, and saves nothing
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ × what a restore refuses > refuses a stored file rewritten together with its storage record: only the recorded hash can tell
+   → {"success":false,"error":"INGEST_FAILED","message":"The document could not be recorded in the vault. Nothing was saved."}: expected 500 to be 409 // Object.is equality
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ ✓ what a restore refuses > restores an earlier version that is not the oldest
+      Tests  1 failed | 7 passed (8)
+# The 500 is the database trigger (VAULT_RESTORE_INVALID) refusing the forged bytes: nothing was saved.
+=== mutation: no-family
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → another document's version, named on this one: {"success":false,"error":"ALREADY_CURRENT","message":"Version 1.0 is already the current version. Nothing was saved."}: expected 409 to be 404 // Object.is equality
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ ✓ what a restore refuses > restores an earlier version that is not the oldest
+      Tests  1 failed | 6 passed (7)
+=== mutation: no-current-guard
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → the current version: expected 'CONTENT_ALREADY_CURRENT' to be 'ALREADY_CURRENT' // Object.is equality
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ ✓ what a restore refuses > restores an earlier version that is not the oldest
+      Tests  1 failed | 6 passed (7)
+=== mutation: no-marker
+ × restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+   → {"success":false,"error":"DUPLICATE_CONTENT","message":"These exact bytes are already recorded in this project under a different document code. Nothing was changed — file the existing document rather than admitting a seco
+ × restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+   → expected [ [ '2.0', true ], [ '1.0', false ] ] to deeply equal [ [ '3.0', true ], …(2) ]
+ × restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+   → expected 400 to be 409 // Object.is equality
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → no reason: {}: expected 404 to be 422 // Object.is equality
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ × what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+   → expected [Function] to throw error matching /VAULT_RESTORE_INVALID|immutable|writ…/i but got 'invalid input syntax for type uuid: ""'
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → {"success":false,"error":"ALREADY_CURRENT","message":"Version 2.0 is already the current version. Nothing was saved."}: expected 409 to be 201 // Object.is equality
+      Tests  6 failed | 1 passed (7)
+=== mutation: db-trigger-ignores-bytes (the guard does not compare content_hash)
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ ✓ what a restore refuses > refuses each restore it cannot make, and saves nothing
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ × what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → {"success":false,"error":"VERSION_NOT_CURRENT","message":"The current version of this document could not be identified. Nothing was saved."}: expected 409 to be 201 // Object.is equality
+      Tests  2 failed | 5 passed (7)
+psql:migrations/20261029_vault_documents_restored_from.sql:111: NOTICE:  column "restored_from_id" of relation "documents" already exists, skipping
+=== mutation: db-index-not-narrowed (044c's rule, restores included, for rows written from now on)
+ × restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+   → {"success":false,"error":"DUPLICATE_CONTENT","message":"These exact bytes are already recorded in this project under a different document code. Nothing was changed — file the existing document rather than admitting a seco
+ × restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+   → expected [ [ '2.0', true ], [ '1.0', false ] ] to deeply equal [ [ '3.0', true ], …(2) ]
+ × restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+   → expected 400 to be 409 // Object.is equality
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → no reason: {}: expected 404 to be 422 // Object.is equality
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ × what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+   → expected [Function] to throw error matching /VAULT_RESTORE_INVALID|immutable|writ…/i but got 'invalid input syntax for type uuid: ""'
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → {"success":false,"error":"ALREADY_CURRENT","message":"Version 2.0 is already the current version. Nothing was saved."}: expected 409 to be 201 // Object.is equality
+      Tests  6 failed | 1 passed (7)
+=== restored: CREATE UNIQUE INDEX idx_vault_documents_program_hash_unique ON vault.documents USING btree (program_id, content_hash) WHERE (restored_from_id IS NULL)

@@ -18,7 +18,6 @@ import {
   getSubmissionTypeContext,
   type SubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
-import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface ReadinessCriterion {
@@ -251,7 +250,7 @@ export class SubmissionReadinessTwinService {
         SubmissionReadinessTwinService.tablesInitialized = true;
         console.log('[ReadinessTwin] All tables initialized successfully');
       } finally {
-        await releaseWithoutBypass(client);
+        client.release();
       }
     } catch (err) {
       console.warn('[ReadinessTwin] Table initialization warning:', (err as Error).message);
@@ -274,10 +273,11 @@ export class SubmissionReadinessTwinService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
       .slice(0, 40);
+    // The connection carries the caller's tenant scope (poolInstrumentation).
+    // No session setting widens it (P-70, 2026-10-29): this used to set
+    // app.bypass_rls and app.is_admin, which no policy reads any more.
     const client = await this.pool.connect();
     try {
-      await client.query("SET app.bypass_rls = 'true'");
-      await client.query("SET app.is_admin = 'true'");
       // Resolve submission type through the canonical bridge
       const subTypeCtx = getSubmissionTypeContext('NDA');
       const resolvedSubType = subTypeCtx?.registryId ?? 'US_NDA';
@@ -310,7 +310,7 @@ export class SubmissionReadinessTwinService {
       if (!row) throw new Error(`Readiness criterion "${input.name}" was not recorded: the INSERT returned no row.`);
       return this.mapCriterion(row);
     } finally {
-      await releaseWithoutBypass(client);
+      client.release();
     }
   }
 
@@ -409,11 +409,12 @@ export class SubmissionReadinessTwinService {
       if (ctx) targetAgency = ctx.agency;
     }
 
+    // In the caller's tenant scope, which admits only its own programs' rows
+    // (P-70, 2026-10-29: no session setting widens it any more).
     const client = await this.pool.connect();
+    let discard = false;
 
     try {
-      await client.query("SET app.bypass_rls = 'true'");
-      await client.query("SET app.is_admin = 'true'");
       await client.query('BEGIN');
 
       // Get applicable criteria
@@ -566,11 +567,15 @@ export class SubmissionReadinessTwinService {
       console.log(`[ReadinessTwin] Assessment completed: score=${overallScore.toFixed(1)}`);
       return assessment;
     } catch (error) {
-      await client.query('ROLLBACK');
+      // A rollback that cannot be confirmed leaves the connection's state
+      // unknown, so it is destroyed rather than returned to the pool.
+      await client.query('ROLLBACK').catch(() => {
+        discard = true;
+      });
       console.error('[ReadinessTwin] Assessment failed:', error);
       throw error;
     } finally {
-      await releaseWithoutBypass(client);
+      client.release(discard);
     }
   }
 

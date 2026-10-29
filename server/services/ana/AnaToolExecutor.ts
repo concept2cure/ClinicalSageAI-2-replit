@@ -14804,12 +14804,16 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       targetImplementationDate: typeof input.target_implementation_date === 'string' ? input.target_implementation_date : null,
       qmsDocumentId: typeof input.qms_document_id === 'number' ? input.qms_document_id : null,
       proposedBy: ctx.userId ?? null,
+      /* The project it changes (P-60; 20261029l), which that project's
+         Engineering screen reads. The registry wrapper has already refused a
+         program_id that is not this organization's (foreignProgramRefusal). */
+      programId: typeof input.program_id === 'string' && UUID_RE.test(input.program_id) ? input.program_id : null,
     });
     const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
     const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
       action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id, reason,
-      details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
+      details: { changeNumber: row.change_number, classification: row.classification, programId: row.program_id ?? null, via: 'ana' },
     });
     return JSON.stringify({
       ok: true, ...row, auditTrail,

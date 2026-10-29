@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * v2 Risk surface — live risk_items → RiskRow adoption mapping.
+ * The ISO 14971 risk register (v2/surfaces/RiskRegister.tsx, mounted by
+ * Engineering) — live risk_items → RiskRow adoption mapping.
  *
  * GET /api/mdx/risk-items returns raw risk_items rows: DB columns, numeric
  * severity/probability on the ISO 14971 1..5 scale. The surface renders
@@ -16,7 +17,8 @@
  *     half-mapped safety data.
  */
 import { describe, it, expect } from 'vitest';
-import { mapRiskItems } from '../surfaces/Risk';
+// The register's mapping (RiskRegister.tsx); the Risk screen that re-exported it folded into Engineering (fold F1c).
+import { mapRiskItems } from '../surfaces/RiskRegister';
 import { SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 
 // A risk_items row as GET /api/mdx/risk-items (SELECT *) returns it.

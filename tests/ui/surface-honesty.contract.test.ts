@@ -5,7 +5,6 @@
  * a regulatory action occurred — when no bytes left the browser — is the most
  * dangerous artefact the codebase can ship. Three shipped:
  *
- *   mdx/components/AnaDrafter.tsx
  *     "Save draft" was bound to onClose and discarded every edit. A primary
  *     button read "Sent to FDA" after a click whose entire implementation was
  *     setDraft({...draft, status:'sent'}), tooltipped "Send to FDA via eSTAR
@@ -87,7 +86,6 @@ function sourceFiles(): string[] {
   return out;
 }
 
-const A_DRAFTER = 'client/src/concept2cure/mdx/components/AnaDrafter.tsx';
 const DOC_JOURNEY = 'client/src/concept2cure/v2/surfaces/DocJourney.tsx';
 const PROTOCOL_DEV = 'client/src/concept2cure/v2/surfaces/ProtocolDev.tsx';
 const REGISTER_FORMS = 'client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx';
@@ -127,34 +125,11 @@ describe('no surface mints its own audit identifier', () => {
   });
 });
 
-describe('AnaDrafter does not claim a regulatory transmission', () => {
-  /* Revisited, as this premise asked, when the drafter gained a backend
-     (2026-10-01). It used to render four invented letters from a fixture and
-     had no network call at all. It now READS the tenant's letter, through the
-     correspondence hook and nothing else — so the premise becomes: it reads,
-     and it can write or transmit nothing. The three assertions below stand
-     unchanged on that premise. */
-  it('reads the letter through the correspondence hook, and has no network call of its own', () => {
-    const src = code(A_DRAFTER);
-    expect(src).toMatch(/useCorrespondenceDetail\(/);
-    expect(src).not.toMatch(/(?<![A-Za-z])fetch\s*\(|['"`]\/api\//);
-    expect(src).not.toMatch(/apiRequest\s*\(|['"](POST|PUT|PATCH|DELETE)['"]/);
-  });
-
-  it('no control reports the response was sent to an agency', () => {
-    const src = code(A_DRAFTER);
-    expect(src).not.toMatch(/Sent to FDA/);
-    expect(src).not.toMatch(/eSTAR portal/);
-  });
-
-  it('never sets a draft to a transmitted state', () => {
-    expect(code(A_DRAFTER)).not.toMatch(/status:\s*['"]sent['"]/);
-  });
-
-  it('states that the draft is not persisted', () => {
-    expect(raw(A_DRAFTER)).toMatch(/not saved to the record/i);
-  });
-});
+/* The AnaDrafter (mdx/components/AnaDrafter.tsx) was deleted on 2026-10-29
+   (P-39 step 3, S2): a device letter is answered on its record in
+   Communication, whose responses are approved by signature. Its three claims
+   ("Sent to FDA", a 'sent' status, an unsaved draft) have no file to hold
+   them; the honesty of the response flow is AgencyResponses' own tests'. */
 
 describe('DocJourney does not claim to autosave', () => {
   it('the page is not editable — it has no save path', () => {

@@ -1,0 +1,6 @@
+Scoped type check of every changed and new file (typecheck-tsconfig.json; repo path written <repo>). The whole-tree check is not run under parallel load.
+
+NODE_OPTIONS=--max-old-space-size=9000 npx tsc -p tsconfig.p60.json
+0 errors; exit 0
+
+Without the one ambient line <scratch>/css-modules.d.ts (declare module '*.module.css'), the same run reports three TS2307 errors, all 'Cannot find module ./styles.module.css' in client/src/concept2cure/components/ana/{BriefingBookPanel,CrlPremortemPanel,GovernedActionSignoff}.tsx, reached transitively; no file this change touches. The repository declares no type for CSS modules, so a scoped program that reaches them reports them.

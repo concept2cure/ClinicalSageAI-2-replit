@@ -652,7 +652,7 @@ fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/`, `foldSetup.test.t
 - [x] Set the retention period: the same card; admin-console claims `/api/vault/legal-holds/retention`.
 - [x] List, place and lift legal holds: `LegalHoldsCard` mounted on Settings. Vault does not offer "Place legal hold"; reaching it needs the form to take a preset project and document. Handed on.
 - [x] Ask AnA to summarise the configuration: admin-console's `facts.configuration` and summary sentence, only while Settings shows it, and "Ask AnA to summarise this configuration" in the tab head (`adminConsoleSettings.test.tsx`).
-- [ ] GAMP 5 validation kit. From `AdminSurfaces.tsx` `AdminConsole`, unmounted since `af973c5e8` (2026-07-27). Goes to: a card in Settings, if the founder chooses. Not real today; not carried.
+- [x] GAMP 5 validation kit: `ValidationKitCard` mounted on Settings (decision P-67, 2026-10-29), over `GET /api/validation-kit`, which now offers the launch package only, each document with its own recorded status. `AdminConsole` (unmounted since `af973c5e8`, 2026-07-27) is deleted (`docs/evidence/D4/2026-10-29/validation-kit-settings/`).
 
 ### Into protocol development (`protocol-dev`)
 
@@ -761,22 +761,27 @@ Widening the ha_interactions CHECKs must be conditional on `pg_get_constraintdef
 ### Into device diagnostics (`device-diagnostics`)
 
 #### From `ivd-completeness`
-The workbench's store (`20260610_ivd_assessments.sql`) is on no deploy applier, so saving and listing work only where install-fresh ran.
 
-- [ ] IVDR technical-file completeness verdict. From `IvdCompleteness.tsx:101-120`. Goes to: the readiness panel of the IVDR workspace, scoped to the program, at the IVD Submit step. Real today.
-- [ ] Stat tiles. From `IvdCompleteness.tsx:229-234`. Goes to: with the panel. Drop the flags tile. Real today.
-- [ ] Classification and GSPR items. From `IvdCompleteness.tsx:236-276`. Goes to: status and % beside the existing panels. Real today.
-- [ ] Per-study analytical and clinical items. From `ivd-completeness-routes.ts:207,217`. Goes to: the uncalled per-study routes read into the performance panels. Real today.
-- [ ] Scientific validity, PER and PMPF. From `ivd-completeness-routes.ts:196`. Goes to: a PER panel. Real today.
-- [ ] Ask AnA to build a family's section. From `IvdCompleteness.tsx:268-270`. Goes to: beside the items. Real today.
-- [ ] Deterministic Annex VIII classification, saved. From `IvdAssessmentWorkbench.tsx:41-94`. Goes to: the classification panel, with its migration put on C2C_MIGRATION_FILES. Real today.
-- [ ] Draft a Field Safety Notice. From `IvdAssessmentWorkbench.tsx:26-39`. Goes to: device post-market at Respond. Real today.
-- [ ] List saved IVD records. From `IvdAssessmentWorkbench.tsx:116-123`. Goes to: the workspace. Real today.
-- [ ] Read a saved record. From `IvdAssessmentWorkbench.tsx:124-132`. Goes to: the workspace. Real today.
-- [ ] Create a verified working copy in Authoring. From `IvdAssessmentWorkbench.tsx:111-112`. Goes to: the workspace. Real today.
-- [ ] Refresh, with the double-submit guard. From `IvdAssessmentWorkbench.tsx:65-100`. Goes to: with the forms. Real today.
-- [ ] AnA sees the completeness facts. From `IvdCompleteness.tsx:130-176`. Goes to: device-diagnostics' context. Real today.
-- [ ] Catalogue entry and feature listing. From `20260810_reconcile_module_catalog.sql:304`. Goes to: grants mapped, and the id removed. Real today.
+Folded 2026-10-29 (D2, fold F2): `ivd-completeness` is an alias of `device-diagnostics`, and `IvdCompleteness.tsx`
+is deleted. The board is `IvdReadinessBoard.tsx` and the workbench `IvdAssessmentWorkbench.tsx`, both mounted by
+`IvdSurface.tsx` for the open project (product slice `1a6701ea6`). A subscription to `ivd-completeness` carries to
+`device-diagnostics` (P-61 item 4, `server/services/entitlements/folded-module-successors.ts`). Evidence and the
+fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/`, `foldIvdCompleteness.test.ts`.
+
+- [x] IVDR technical-file completeness verdict: the readiness panel of `IvdSurface.tsx`, for the open project.
+- [x] Stat tiles: with the board; the flags tile is dropped (nothing stores a flag), and the fourth tile counts families not read.
+- [x] Classification and GSPR items: the board's families, read for the project.
+- [ ] Per-study analytical and clinical items. From `ivd-completeness-routes.ts:207,217`. Goes to: the uncalled per-study routes read into the performance panels. Not carried.
+- [ ] Scientific validity, PER and PMPF as a panel of their own. The board shows them as families; a PER panel is not built. Not carried.
+- [x] Ask AnA to build a family's section: on each family of the board.
+- [x] Deterministic Annex VIII classification, saved: the workbench, its store on `C2C_MIGRATION_FILES` (`20260610_ivd_assessments.sql`).
+- [x] Draft a Field Safety Notice, list and read saved records, refresh with the double-submit guard: the workbench.
+- [x] Create a verified working copy in Authoring: the workbench, with the host passing shell navigation to `IvdSurface`.
+- [x] AnA sees the completeness facts: `IvdSurface` hands the board's context to the host, which merges it into device-diagnostics' one publish (`facts.ivdReadiness`).
+- [x] `assess_filing_readiness` on device-diagnostics (`SURFACE_ACTIONS`).
+- [x] Catalogue entry: 20260810's keep-list and upsert, 20260823's packaging and customer-copy rows, amended in place (Rule 1); grants carried, not re-written.
+- [x] Its API claims: `/api/ivd-completeness`, `/api/ivd-assessments`, `/api/ivd-lifecycle` and `/api/validate-completeness` are device-diagnostics'; no screen calls the last two.
+- [ ] The organization-wide board with no project open. Dropped by this map ("scoped to the program"); the route's no-project branch stays. Not carried.
 
 ### Into CSR workflow (`csr-workflow`, itself folding into document authoring)
 
@@ -799,31 +804,32 @@ Map grants and repoint `substantial_equiv.moduleId` (`app-registry.ts:91`).
 ### Into device engineering (`device-engineering`)
 
 #### From `design-controls`
-- [ ] The organisation's design inputs. From `DesignControls.tsx:155`. Goes to: rows rendered in device-engineering, after an additive program_id column is added. Real today.
-- [ ] Traceability matrix. From `DesignControls.tsx:479-509`. Goes to: the design-controls section. Real today.
-- [ ] Gap breakdown and the "close the first gap" action. From `DesignControls.tsx:448-476`. Goes to: the same section. Real today.
-- [ ] Nine-element ISO 13485 §7.3 checklist. From `DesignControls.tsx:108-137,512-534`. Goes to: the unreached engine `server/services/regulatory/design-controls.ts`. Real today.
-- [ ] Add a design input. From `DesignControls.tsx:261-302`. Goes to: a form that records the program id. Real today.
-- [ ] Per-row AnA asks. From `DesignControls.tsx:472-529`. Goes to: the same section. Real today.
-- [ ] "Store not provisioned" state. From `DesignControls.tsx:416-431`. Goes to: the trace panel reports 42P01. Real today.
-- [ ] AnA context for the DHF. From `DesignControls.tsx:324-389`. Goes to: device-engineering's context. Real today.
-- [ ] Record V&V results. From the catalogue row. Goes to: never built. A write route and UI in device-engineering. Not real today.
+
+Folded 2026-10-29 (D2, fold F1c): `design-controls` is an alias of `device-engineering`, and `DesignControls.tsx` is
+deleted. The trace is `DesignControlsTrace.tsx`, mounted by `EngineeringSurface.tsx` for the open project (fold F1
+slices A and B, `59b1482d2`, `79d00b348`). A subscription to `design-controls` carries to `device-engineering` (P-61
+item 4). Evidence and the fold guard: `docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/`,
+`foldRiskDesignControls.test.ts`.
+
+- [x] The project's design inputs, read by `?program_id=` and drawn only from an answer keyed to the project.
+- [x] Traceability matrix, gap breakdown and "Close the first gap", the ISO 13485 §7.3 checklist, add a design input (with the project), per-row AnA asks, the "store not provisioned" state: the trace on Engineering.
+- [x] AnA context for the DHF: Engineering hands it to the host, which merges it into device-engineering's publish (`facts.designControlsTrace`).
+- [x] Catalogue entry: 20260814j's insert and 20260823_module_catalog_mdx_registers' upsert and assertion, amended in place (Rule 1).
+- [ ] The organisation's unscoped design inputs (recorded with no project) show under no project. Not carried.
+- [ ] Record V&V results. Never built. Not carried.
 
 #### From `risk`
-- [ ] Organisation-wide hazard register. From `Risk.tsx:154`. Goes to: every row shown. The write sends programId, and the orphaned rows are assigned. Real today.
-- [ ] 5×5 matrix with initial and residual views, zones and legend. From `Risk.tsx:670-700`. Goes to: device-engineering's heatmap. Real today.
-- [ ] Hazard detail. From `Risk.tsx:719-736`. Goes to: a drawer, with the missing columns added to the query. Real today.
-- [ ] Risk-file metrics and lead. From `Risk.tsx:590-666`. Goes to: the existing `iso-14971-risk.ts` engine. Real today.
-- [ ] Add a hazard. From `Risk.tsx:430-458`. Goes to: a form that sends programId. Real today.
-- [ ] Add a risk control. From `Risk.tsx:464-493`. Goes to: hazard rows. Real today.
-- [ ] Accept residual risk. From `Risk.tsx:500-520`. Goes to: a governed human act. Real today.
-- [ ] A hazard's controls and verification. From `Risk.tsx:738-764`. Goes to: render text device-engineering already receives. Not real today.
-- [ ] Verification-of-effectiveness evidence. From the catalogue copy. Goes to: fields over PATCH /api/mdx/risk-controls/:id. Not real today.
-- [ ] Benefit-risk line and drafting asks. From `Risk.tsx:713-717`. Goes to: device-engineering. Real today.
-- [ ] AnA drives the matrix. From `surface-actions.ts:502-545`. Goes to: re-registered, with two demo tours retargeted. Real today.
-- [ ] AnA screen context. From `Risk.tsx:364-424`. Goes to: device-engineering. Real today.
-- [ ] AnA entity context for a selected hazard. From `Risk.tsx:177-183`. Goes to: set on hazard selection. Real today.
-- [ ] Residual scoring, control status, risk summary (API). From `mdx-risk-management.ts:201-386`. Goes to: reached from device-engineering. Real today.
+
+Folded 2026-10-29 (D2, fold F1c): `risk` is an alias of `device-engineering`, and `Risk.tsx` is deleted. The register
+is `RiskRegister.tsx`, mounted by `EngineeringSurface.tsx` for the open project. AnA's `risk` target stays and
+resolves there. A subscription to `risk` carries to `device-engineering` (P-61 item 4).
+
+- [x] The project's hazard register, the 5×5 matrix with initial and residual views, the hazard drawer, metrics and lead, add a hazard (with the project), add a risk control, the signed Accept residual: the register on Engineering.
+- [x] AnA drives the matrix: `device-engineering.set-matrix-view`, `.select-hazard` and `.focus-cell`; the `risk.*` copies are gone, and both device tours drive Engineering.
+- [x] AnA screen context and the hazard entity context: Engineering hands the register's context to the host (`facts.riskRegister`), and selecting a hazard sets the entity.
+- [x] Catalogue entry: 20260810's keep-list and upsert, 20260823's packaging and customer-copy rows, amended in place (Rule 1).
+- [ ] The organisation's unscoped hazards (recorded with no project) show under no project; assigning them is an act not built. Not carried.
+- [ ] A hazard's controls and verification-of-effectiveness evidence. Not real on either screen. Not carried.
 
 ### Into Tasks (`tasks`)
 
@@ -1169,7 +1175,7 @@ Present: loading, empty and error states (`CommunicationCenter.tsx:158-187`).
 ### device-diagnostics
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| ivd-completeness | 15 | 1 | 4 | 10 | 0 | 15 | No |
+| ivd-completeness | 15 | 1 | 4 | 10 | 0 | 15 | Yes (2026-10-29) |
 
 Present: honest states and the project guard (`IvdSurface.tsx:197-249`, `MdxSurfaceHost.tsx:449-460`).
 
@@ -1190,8 +1196,8 @@ Present: predicate analysis, SE comparison and eSTAR (`K510Surface.tsx:120-145,6
 ### device-engineering
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |
 |---|---|---|---|---|---|---|---|
-| design-controls | 9 | 0 | 5 | 4 | 0 | 8 | No |
-| risk | 14 | 0 | 5 | 9 | 0 | 12 | No |
+| design-controls | 9 | 0 | 5 | 4 | 0 | 8 | Yes (2026-10-29) |
+| risk | 14 | 0 | 5 | 9 | 0 | 12 | Yes (2026-10-29) |
 
 ### tasks
 | Item | Fns | Pres. | Part. | Miss. | N/a | Real | Fold |

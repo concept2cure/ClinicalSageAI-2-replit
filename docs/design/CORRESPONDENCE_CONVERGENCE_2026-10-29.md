@@ -63,10 +63,10 @@ and `c2c_secure_attachments`. Nothing writes the last one.
 
 | Slice | What | Ships |
 |---|---|---|
-| **S1** | The family's reads and its one governed write are scoped to a project the person may open or change. Not convergence, but an exposure that must not wait for it. | 2026-10-29 |
-| **S2** | The device Correspondence tab and the AnaDrafter read the project inbox (`GET /api/concept2cure/projects/:id/agency-communications` and `…/questions`), so a device project sees the letters Communication holds, and the questions with their responses. | next |
-| **S3** | AnA's `correspondence.ingest` records the letter through the inbox's governed create. Its letter class goes to a vocabulary field on the inbox (S4). | after S2 |
-| **S4** | The response clock becomes the inbox's. The inbox records the letter's class from `AGENCY_LETTER_CLASSES` (`shared/regulatory/agency-interaction.ts`), and the inbox and the overdue verdict use `correspondenceResponseClock`: the stated date wins, else the class window, else undated. | after S3 |
+| **S1** | The family's reads and its one governed write are scoped to a project the person may open or change. Not convergence, but an exposure that must not wait for it. | Done 2026-10-29 |
+| **S2** | The device Correspondence tab reads the project inbox, and each letter opens on its record in Communication (`openLetterInCommunication`, as CMC does). The AnaDrafter, a second response screen that could not send, is deleted. | Done 2026-10-29 |
+| **S3** | AnA's `correspondence.ingest` records the letter through the inbox's governed create. **Blocked**: see "S3 is blocked" below. | blocked |
+| **S4** | The response clock becomes the inbox's: a letter records its class (`AGENCY_LETTER_CLASSES`), the list returns `correspondenceResponseClock` (the stated date wins, else the class window from receipt, else undated), and the card shows it. The overdue verdict moves with S5. | Done 2026-10-29 |
 | **S5** | Submission-ops publish gate 4 and the command-center count read the inbox: a letter's questions not approved, by the server's own verdict. | after S4 |
 | **S6** | The family's routes are deleted and its tables made read-only, with their rows kept, as `20261019b` and `20261029i` did. The issue parser stays as the inbox's classifier: it suggests a proposed question's discipline and CTD section, and a person records them. The deletion record names S2–S5's paths. | last |
 
@@ -77,3 +77,28 @@ has no caller. S6 leaves `c2c_submissions` readable for it and says so.
 
 Mailbox connections (`c2c_mailbox_connections`) have no inbox equivalent and no caller. S6 retires their routes with
 the family. A mailbox integration for the inbox is a new capability, so it is the founder's to decide under RULE 2.
+
+## S3 is blocked: AnA's HTTP proxy carries no identity the server verifies (found 2026-10-29)
+
+`correspondence.ingest` (`server/services/ana-ri/mdx-command-handlers-phase3.ts`) does not call the intake in process.
+It sends an HTTP request to the platform's own address (`INTERNAL_BFF_URL`) with these headers:
+- `X-Service-Token` (`ANA_SERVICE_TOKEN`);
+- `X-Tenant-Id`;
+- `X-User-Id`.
+
+No server code verifies `X-Service-Token`:
+- a search of `server/` finds the header only in the three files that send it;
+- `tenantAuth.ts` reads `x-tenant-id` only to report a mismatch with the session.
+
+So a deployed system refuses the request without a session (401), or the command answers 503 when the token is unset.
+The same is true of `predicate.candidate.set_status`, `se_matrix.patch` (same file) and the proxied commands in
+`mdx-command-handlers.ts` and `mdx-document-preview-tool.ts`. The comment at `mdx-command-handlers.ts:599` already
+says: "for production this should be a dedicated AnA service principal".
+
+Pointing the proxy at the inbox would carry the defect over. So S3 waits on one of two things:
+- an AnA identity the routes verify, which is security's lane;
+- or the inbox create extracted into a service that AnA calls in process, as the acting user, with project write
+  admission reproduced outside a request.
+
+The second is the convergence S3 needs, and it is the one recommended. Until then the command is reported as not
+working, never as working. S4 does not depend on S3 and goes next.

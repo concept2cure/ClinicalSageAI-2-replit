@@ -2100,6 +2100,36 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* ── POST /:id/documents/:documentId/versions/:versionId/restore ─────────
+     Restore an earlier version as the next version (MR-08 Stage 5): its
+     verified bytes are checked in again through the one ingest, with the
+     person's reason in the chained audit row (vault-version-restore.ts). A
+     version is never rewritten; v1 restored after v2 is v3. Editors only;
+     refusals are the service's, verbatim. */
+  router.post('/:id/documents/:documentId/versions/:versionId/restore', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { restoreVaultVersion } = await import('../../services/vault/vault-version-restore.js');
+      const outcome = await restoreVaultVersion({
+        organizationId: orgId,
+        userId: governedActorId(req),
+        programId: String(req.params.id),
+        documentId: String(req.params.documentId),
+        versionId: String(req.params.versionId),
+        reason: (req.body ?? {}).reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      return res.status(201).json({ success: true, data: { document: outcome.document, filing: outcome.filing } });
+    } catch (err: unknown) {
+      logger.error('vault version restore failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'RESTORE_FAILED',
+        message: 'The version could not be restored. Check the document\'s versions before trying again.' });
+    }
+  });
+
   /* ── GET /:id/documents/:documentId/compare?against=<versionId> ──────────
      What changed between two versions of one document (plan critique 15):
      the changed lines of their extracted text, unchanged runs collapsed, and

@@ -37,6 +37,8 @@ export const ALLOWED_WRITERS = new Map([
     'compensation soft delete (deleted_at NULL → now) of a filing whose authoring half failed: chained authoring.document.file_to_vault.reverted row'],
   ['server/jobs/retentionCron.ts',
     'retention soft delete (deleted_at NULL → now) after archiving: chained retention audit row'],
+  ['server/jobs/vaultProcessingSweep.ts',
+    "a pending version's text read after upload (extracted_text, word_count, page_count NULL → value; MR-08 Stage 3): chained vault.document.extracted row in the same transaction"],
 ]);
 
 const SCAN_DIRS = ['server', 'scripts'];

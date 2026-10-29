@@ -2244,6 +2244,15 @@ export const C2C_MIGRATION_FILES = [
   // column, no FK, no DROP.
   'migrations/20260930_vault_documents_version_lineage.sql',
 
+  // MR-08 Stage 5 step 2 (2026-10-29): a restored version holds the bytes of
+  // the version it restores. Adds vault.documents.restored_from_id, a trigger
+  // that admits it only for a live version of the same document holding the
+  // same bytes, and narrows 044c's (program_id, content_hash) unique index to
+  // rows that are not restores, under the same name, only while that index
+  // has no predicate. After the lineage guard, the same table's version rules.
+  // No table; the one DROP is of an index no file in this set creates.
+  'migrations/20261029_vault_documents_restored_from.sql',
+
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS
      (byte-identical to 20260531_template_specs.sql modulo comments — verified)
@@ -3603,6 +3612,15 @@ export const C2C_MIGRATION_FILES = [
   // when absent). Public with organization_id INTEGER NOT NULL; creates no
   // table; guarded; no DROP.
   'migrations/20261029d_nonconforming_products_program_key.sql',
+  // A change-control record may name its project, by key, and only its own
+  // organization's (P-60, D2 / D6, 2026-10-29): qms_change_controls.program_id
+  // UUID, nullable (existing changes stay the organization's records), a NOT
+  // VALID composite key ON DELETE SET NULL (program_id) and an index for
+  // Engineering's project read. After db/migrations/20260724 (the table) and
+  // 20260926b (regulatory_programs_id_org_uq, created here too when absent).
+  // Public with organization_id INTEGER NOT NULL; creates no table; guarded;
+  // no DROP.
+  'migrations/20261029l_qms_change_controls_program_key.sql',
   // The IVD assessment workbench's store (D2, fold F2, 2026-10-29):
   // ivd_assessments and ivd_generated_documents, which only install-fresh
   // created, so saving and listing failed on every deployed database. Every
@@ -3667,6 +3685,7 @@ export const C2C_MIGRATION_FILES = [
   // Widens only. After 20260504_capa_mdr.sql (the constraint). No table.
   'migrations/20261029h_capa_source_deviation.sql',
   'migrations/20261029i_c2c_commitments_read_only.sql',
+  'migrations/20261029j_agency_letter_class.sql',
   // QMS job roles and training assignments (D2, P-49, 2026-10-29;
   // docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.1): qms_job_roles,
   // qms_job_role_members and qms_training_assignments, created only here. After
@@ -3675,6 +3694,20 @@ export const C2C_MIGRATION_FILES = [
   // three; every statement guarded; no DROP; no seed. Pinned by
   // tests/schema-contract/qms-training-assignments-replay.pglite.test.ts.
   'migrations/20261029g_qms_job_roles_and_training_assignments.sql',
+  // No session setting lifts row-level security (P-70, D6, 2026-10-29;
+  // docs/evidence/D6-NO-SESSION-RLS-BYPASS/2026-10-29/). On a database installed
+  // before today: re-creates identity.can_access_org / can_write_org /
+  // can_access_program / can_write_program from their stored definitions without
+  // the app.bypass_rls block (CREATE OR REPLACE keeps signature, owner, grants,
+  // SECURITY DEFINER and search_path), drops federated_admin and
+  // guidance_docs_admin and alters workspace_analytics_policy (app.is_admin),
+  // each only while its stored text reads the setting. Their creators (053, 069,
+  // 072, 077 gcc) run on install-fresh only and are amended in place; the DROP
+  // is replay-safe because nothing on any applier creates either policy now.
+  // Then fails the deploy if any policy or function still reads either setting,
+  // so it follows the four db/migrations files above that amend their own
+  // policies. Creates no table.
+  'migrations/20261029j_no_session_rls_bypass.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

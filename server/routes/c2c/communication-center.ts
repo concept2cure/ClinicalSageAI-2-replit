@@ -27,6 +27,9 @@ import { authMiddleware } from '../../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import type { CanonicalGovernedState } from '../../../shared/types/governed-document-fabric';
+import { AGENCY_LETTER_CLASSES } from '../../../shared/regulatory/agency-interaction';
+import type { InboxResponseClock } from '../../../shared/types/communication-center';
+import { correspondenceResponseClock } from '../../services/regulatory-correspondence/response-clock';
 import {
   COMMUNICATION_VISIBILITY_TIERS,
   PUBLISHOPS_SERVICE_STATES,
@@ -594,6 +597,29 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
   }
 });
 
+/**
+ * A letter's response clock, as the inbox shows it (P-39 step 3, S4). The one
+ * clock (response-clock.ts) reads the letter's class and its linked
+ * submission's application type: the date the agency stated wins, then the
+ * class's codified window from receipt, else "owed, undated". A letter with no
+ * class recorded is on no clock, never a guessed one.
+ */
+function inboxResponseClock(row: Record<string, any>, now: Date): InboxResponseClock {
+  const clock = correspondenceResponseClock({
+    direction: 'inbound',
+    communicationType: row.letter_class ?? null,
+    responseRequired: row.response_required ?? null,
+    status: row.closure_status === 'closed' ? 'closed' : null,
+    receivedAt: row.received_date ?? null,
+    dueDate: row.due_date ?? null,
+    submissionType: row.sub_application_type ?? null,
+  }, now);
+  if (clock.state === 'untracked') return { state: 'untracked', reason: clock.reason };
+  if (clock.state === 'undated') return { state: 'undated', daysSinceReceived: clock.daysSinceReceived, consequence: clock.window.consequence };
+  return { state: 'dated', dueDate: clock.dueDate, dueDateSource: clock.dueDateSource, daysUntilDue: clock.daysUntilDue,
+    bucket: clock.bucket, windowDays: clock.window.days, citation: clock.window.citation, consequence: clock.window.consequence };
+}
+
 router.get('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
   try {
     await ensureCommunicationCenterTables();
@@ -606,7 +632,7 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
       `SELECT c.event_id, c.source_type, c.communication_type, c.source_channel, c.linked_submission_id,
               c.linked_package_id, c.linked_section_codes, c.linked_artifact_ids, c.received_date, c.due_date,
               c.urgency, c.response_required, c.extracted_issues, c.human_review_status, c.closure_status, c.audit_metadata,
-              sub.id AS sub_id, sub.title AS sub_title, sub.application_type AS sub_application_type,
+              c.letter_class, sub.id AS sub_id, sub.title AS sub_title, sub.application_type AS sub_application_type,
               sub.primary_region AS sub_primary_region
          FROM concept2cure_agency_communications c
          LEFT JOIN projects p
@@ -641,6 +667,8 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
       extractedIssues: row.extracted_issues || [],
       humanReviewStatus: row.human_review_status,
       closureStatus: row.closure_status,
+      letterClass: row.letter_class ?? null,
+      responseClock: inboxResponseClock(row, new Date()),
       auditMetadata: row.audit_metadata,
     }));
     const visible = records.filter(event =>
@@ -788,6 +816,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     humanReviewStatus: z.enum(['pending_review', 'triaged', 'actioned']).default('pending_review'),
     closureStatus: z.enum(['open', 'in_progress', 'closed']).default('open'),
     visibilityTier: z.enum(COMMUNICATION_VISIBILITY_TIERS),
+    // The letter's class, which its response clock reads (P-39 step 3, S4).
+    letterClass: z.enum(AGENCY_LETTER_CLASSES).nullable().default(null),
   });
 
   try {
@@ -825,6 +855,7 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
       extractedIssues: input.extractedIssues,
       humanReviewStatus: input.humanReviewStatus,
       closureStatus: input.closureStatus,
+      letterClass: input.letterClass,
       auditMetadata: {
         capturedBy: req.userEmail || `user_${getUserId(req)}`,
         capturedAt: now,
@@ -836,8 +867,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
         event_id, organization_id, project_id, source_type, communication_type, source_channel,
         linked_submission_id, linked_package_id, linked_section_codes, linked_artifact_ids,
         received_date, due_date, urgency, response_required, extracted_issues,
-        human_review_status, closure_status, audit_metadata, created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11::timestamptz,$12::timestamptz,$13,$14,$15::jsonb,$16,$17,$18::jsonb,$19::timestamptz)`,
+        human_review_status, closure_status, audit_metadata, created_at, letter_class
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb,$11::timestamptz,$12::timestamptz,$13,$14,$15::jsonb,$16,$17,$18::jsonb,$19::timestamptz,$20)`,
       [
         event.id,
         organizationId,
@@ -858,6 +889,7 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
         event.closureStatus,
         JSON.stringify(event.auditMetadata),
         now,
+        event.letterClass,
       ]
     );
     const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {

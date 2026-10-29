@@ -1,0 +1,50 @@
+# M0: red §2: the route as at HEAD under the amended and new route tests (the amended beta-surfaces case among them)
+# file: server/routes/mdx-engineering.ts
+# command: npx vitest run tests/mdx-beta-surfaces-routes.test.ts server/routes/__tests__/mdx-engineering.contract.test.ts server/routes/__tests__/mdx-engineering-per-product.test.ts server/routes/__tests__/mdx-engineering-panels-by-project.test.ts server/routes/__tests__/mdx-engineering-trace-by-project.test.ts
+# exit: 1
+# original sha256 0cab5e0a44820cd6a78329cb41e472e5a5d2d8d44119526d10f3b72c6742bb7d; restored byte for byte: True
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST computes initial_risk = severity × probability 3ms
+ × tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over mandatory sections only 6ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 21ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit 5ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary 4ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 4ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project 2ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one 2ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 3ms
+ × server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections 9ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 12ms
+ × server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's 8ms
+ Test Files  5 failed (5)
+      Tests  15 failed | 58 passed (73)
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+  "level": "error",
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over mandatory sections only
+ FAIL  server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+ FAIL  server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's
+ FAIL  server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections

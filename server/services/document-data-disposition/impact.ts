@@ -44,12 +44,25 @@ async function observe(q: DispositionQueryable, name: string, sql: string, param
   return n;
 }
 
+/**
+ * Vault rows holding one file that are one document restored (MR-08 Stage 5):
+ * one code, one original, and every other row a restore of a row in the set.
+ * They are one identity, all linked, so a withdrawal covers every copy.
+ */
+function oneRestoredDocument(vaults: Array<{ id: string; document_code: string | null; restored_from_id: string | null }>): boolean {
+  const ids = new Set(vaults.map((r) => r.id));
+  const code = vaults[0]?.document_code;
+  return code != null && vaults.every((r) => r.document_code === code)
+    && vaults.filter((r) => r.restored_from_id == null).length === 1
+    && vaults.every((r) => r.restored_from_id == null || ids.has(r.restored_from_id));
+}
+
 async function readLinks(q: DispositionQueryable, input: DispositionPreviewInput, src: any) {
   const params = [input.organizationId,input.programId,src.hash];
   const captures = (await q.query(`SELECT id, title, checksum, extraction_status, ingestion_status, previous_version_id, provenance, metadata, is_current, updated_at FROM cre_evidence_sources WHERE organization_id = $1 AND client_program_id = $2 AND checksum = $3 AND source_type = 'client_document' AND deleted_at IS NULL ORDER BY id`, params)).rows;
-  const vaults = (await q.query(`SELECT d.id::text AS id,d.organization_id, content_hash, document_title, processing_status, extracted_text, retention_until, supersedes_id, d.updated_at FROM vault.documents d JOIN regulatory_programs rp ON rp.id=d.program_id WHERE rp.organization_id = $1 AND program_id = $2 AND content_hash = $3 AND d.deleted_at IS NULL ORDER BY d.id`,params)).rows;
+  const vaults = (await q.query(`SELECT d.id::text AS id,d.organization_id, d.document_code, d.restored_from_id::text AS restored_from_id, content_hash, document_title, processing_status, extracted_text, retention_until, supersedes_id, d.updated_at FROM vault.documents d JOIN regulatory_programs rp ON rp.id=d.program_id WHERE rp.organization_id = $1 AND program_id = $2 AND content_hash = $3 AND d.deleted_at IS NULL ORDER BY d.id`,params)).rows;
   if (vaults.some((r)=>r.organization_id!==null && Number(r.organization_id)!==input.organizationId)) throw new DispositionError(409,'UNVERIFIED_SCOPE','A linked Vault version’s tenant conflicts with its owning project.');
-  if (captures.length > 1 || vaults.length > 1) throw new DispositionError(409,'AMBIGUOUS_LINKS','Multiple project identities hold these original bytes. Resolve that ambiguity before removal.');
+  if (captures.length > 1 || (vaults.length > 1 && !oneRestoredDocument(vaults))) throw new DispositionError(409,'AMBIGUOUS_LINKS','Multiple project identities hold these original bytes. Resolve that ambiguity before removal.');
   const namedUploads = unique(captures.map((r) => String(r.provenance?.fileUploadId ?? '')).filter(Boolean));
   const uploads = (await q.query(`SELECT id, checksum_sha256, storage_path, status FROM file_uploads WHERE organization_id = $1 AND id = ANY($2::text[]) ORDER BY id`, [input.organizationId,namedUploads])).rows;
   if (uploads.length !== namedUploads.length || uploads.some((r) => r.checksum_sha256 !== src.hash || !String(r.storage_path).startsWith(`uploads/org-${input.organizationId}/`))) {

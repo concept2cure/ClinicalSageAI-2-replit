@@ -1,0 +1,92 @@
+# Gates on the finished working tree at 16791c326 (shared tree: other lanes' in-flight files are present)
+=== ci:session-scoped-rls-bypass: exit 0
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (780 migration file(s) and 4336 code file(s) read), and no script writes either (P-70).
+=== ci:session-scoped-rls-bypass:selftest: exit 0
+  ✓ RED — a script that lifts the bypass transaction-locally (the preflight before P-70): no policy reads it, and none may
+  ✓ RED — a deploy-set migration whose policy honours the bypass, named by file and line
+  ✓ RED — a SECURITY DEFINER helper that returns TRUE on app.is_admin, inside a dollar-quoted body, spaces before the quote
+  ✓ RED — a reader in a file on no applier (db/migrations/_legacy/) still fails: it is one list entry from a deploy
+  ✓ RED — server code whose SQL string reads the bypass
+  ✓ quiet — the reader quoted in SQL comments, and the LIKE / ~ / regex shapes that find a stored reader without being one
+  ✓ quiet — a test that reads the setting to prove nothing honours it (tests are not product code)
+
+[ci:session-scoped-rls-bypass:selftest] 4 known gap(s), NOT counted below: real defect shapes the gate still prints OK on (marked ! above; described, with the fix each needs, under KNOWN GAPS in this file’s header).
+[ci:session-scoped-rls-bypass:selftest] 32 passed — the gate fails on what it exists to catch.
+=== ci:tenant-isolation:no-regression: exit 1
+[ci:tenant-isolation] WARN — 1 candidate violation(s) (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/services/vault/vault-placement.service.ts  (1)
+    L485  tables=[documents]
+      `UPDATE vault.documents SET
+
+Total: 1 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 0:
+  server/services/vault/vault-placement.service.ts#faad7a0ef639:documents
+=== ci:migration-drop-safety: exit 0
+[ci:migration-drop-safety] OK — 450 migrations, 43 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 19 dynamic DROP(s) in 19 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+=== ci:migration-drop-safety:selftest: exit 0
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+=== ci:migration-set-order: exit 0
+[ci:migration-set-order] OK — 450 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+=== ci:migration-deploy-path: exit 0
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+=== ci:sql-interpolation: exit 1
+  • server/services/tenant-export/held-record-integrity.ts: 2 value(s) interpolated into SQL text — not in the baseline
+  • server/services/vault/retention-period.ts: 1 value(s) interpolated into SQL text — not in the baseline
+  • server/routes/vault-retention-period.ts: now 1 (baseline 2) — good news; lower the baseline to lock it in
+
+  A value in SQL TEXT is an injection waiting for an input. Pass it as a bind
+  parameter ($1, or drizzle sql`…${x}…`, which parameterizes). For a genuine
+  identifier (a table or column name), take it from a fixed allowlist in code,
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+  the same change, with the reason in the commit. RLS does not contain injected
+  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+=== ci:sql-interpolation:selftest: exit 0
+  ✓ RED — a type-only import cannot prove a runtime builder
+  ✓ RED — sql.raw still counts even when passed a canonical predicate
+  ✓ RED — conditional SQL strings are not approved canonical calls
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+  ! KNOWN GAP 2 — string concatenation
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+
+[ci:sql-interpolation:selftest] 2 known gap(s), NOT counted below.
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+=== ci:db-test-isolation: exit 0
+[ci:db-test-isolation] OK — 230 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+=== ci:check-test-imports: exit 0
+[ci:test-imports] 5989 test files · 15133 local imports checked · 14590 bare package specifiers skipped (out of scope).
+[ci:test-imports] OK — every local import in every test file resolves.
+=== ci:check-unrun-tests: exit 1
+  tests/cortex/csr-cortex.behavior.test.mjs
+  tests/cortex/csr-cortex.routes.test.mjs
+
+  These do not show up as skipped. They do not show up at all — the suite
+  reports green and the file looks like coverage forever.
+
+  Fix by making it run: match an include glob in vitest.config.ts (and
+  vitest.workspace.ts, which has its own copy), or rename the file to a
+  covered extension. If it genuinely must not run, add it to ALLOWLIST in
+  scripts/ci/check-unrun-tests.mjs with the reason.
+=== ci:unreferenced-modules: exit 0
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+=== ci:runtime-ddl: exit 0
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+=== ci:baseline-justifications: exit 0
+[ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 116 inline tenant-isolation-safe suppression(s), every one with a reason.

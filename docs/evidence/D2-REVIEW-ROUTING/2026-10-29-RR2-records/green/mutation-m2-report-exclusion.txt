@@ -1,0 +1,7 @@
+# MUTATION M2: controlled-documents.ts APPROVAL keeps the final type but no longer excludes an approval its route shows to be interim. Expected: the stored-row case fails on the report (the SOP in review named as approved), the rest pass.
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval 452ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval 751ms
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route 320ms
+   → expected { id: 52, …(31) } to match object { status: 'in_review', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed | 4 skipped (7)

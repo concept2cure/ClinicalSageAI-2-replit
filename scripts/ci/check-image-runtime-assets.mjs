@@ -151,7 +151,7 @@ export const RUNTIME_PATHS = {
     reason:
       'GAMP 5 validation kit — the IQ/OQ protocols for Projects, Vault, Authoring, Submission Center ' +
       'and Readiness that a regulated client validates the system with (routes/validation-kit.ts, ' +
-      'AdminSurfaces). docs/ is excluded by .dockerignore, so until 2026-10-01 production listed an ' +
+      'ValidationKitCard on Settings). docs/ is excluded by .dockerignore, so until 2026-10-01 production listed an ' +
       'empty catalog for documents that exist. .dockerignore re-includes it.',
   },
   'SECURITY.md': {

@@ -1,0 +1,45 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change 124ms
+   → expected { …(7) } to deeply equal { …(7) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change
+AssertionError: expected { …(7) } to deeply equal { …(7) }
+
+- Expected
++ Received
+
+  {
+    "legacyAdamEnvelope": "2726c4fa5b06e98c382b5a72e30d59fbf9f3a17cd7abe5c2e16a2f94da7d2f09",
+-   "legacyAdamTables": "b43091befc18d7ff272c1f902edda9af3a30ae628b982c903f9d5fb5b0ea09fc",
++   "legacyAdamTables": "372bdb7d5768857fb0bd0c9acd6d63d6f6e53767863a0ecd6cfdb450dfbdd46e",
+    "lmn201AdamEnvelope": "a7a68dc46daa67764f107c2ddddc1e1ebaf5b4e5a4067f64c3385a981d86b9c3",
+-   "lmn201AdamTables": "be373127215af341c668914a7cf557cd71b8b489a69db70b784daf9f2280666e",
+-   "lmn201SeedTables": "9e0ccd50ce1daf1d007b571010a40a083604ad86817612b9e1d5b279a3ad3b33",
+-   "scale300Tables": "f1d59353d4d91700c8dd3943ae0757b63986f8f41ac982fecaa0616b18fc5318",
+-   "sourceFixtureTables": "691c25af53642c88e2a7da1825ccf94dbf14a6c63c35d7054dea221df4d9e53a",
++   "lmn201AdamTables": "f4f8e72cacbcca8e23324b59ddeb3b2029474bec89e67ff7f43218e0369ae320",
++   "lmn201SeedTables": "18d1dc350a81940a9ae05e055a38931d648c9d199a689efcd833a9af33c14595",
++   "scale300Tables": "c5a50bc030a678e73f30cbe89e247bc80737bc8442d82b05bfd7bb03d4f1a012",
++   "sourceFixtureTables": "d99383b3d90e2be928267b1817b4facde3a0f1e5759922c2b3e6643cfddc1119",
+  }
+
+ ❯ server/services/csr/__tests__/csr-table-byte-identity.test.ts:61:30
+     59| describe('a source that uses none of D10–D12 tabulates byte-identicall…
+     60|   it('matches every digest pinned before the change', () => {
+     61|     expect(currentDigests()).toEqual(BEFORE);
+       |                              ^
+     62|   });
+     63| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  20:18:16
+   Duration  896ms (transform 386ms, setup 131ms, import 330ms, tests 128ms, environment 0ms)
+

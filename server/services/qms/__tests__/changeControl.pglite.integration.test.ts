@@ -69,7 +69,8 @@ CREATE TABLE qms_change_controls (
   implementation_plan text, proposed_by int, assessed_by int, approved_by int, approved_at timestamptz,
   target_implementation_date date, implemented_at timestamptz, verified_by int, verified_at timestamptz,
   effectiveness_review text, closed_at timestamptz, qms_document_id int, metadata jsonb DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz
+  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz,
+  program_id uuid -- the project key (migrations/20261029l_qms_change_controls_program_key.sql, P-60)
 );
 CREATE UNIQUE INDEX qms_change_org_number_uniq ON qms_change_controls (organization_id, change_number) WHERE deleted_at IS NULL;
 

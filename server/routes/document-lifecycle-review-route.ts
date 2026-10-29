@@ -58,6 +58,7 @@ import {
 import { routeStanding, type RouteMember, type RouteStanding } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
 import { readRouteCandidates } from '../services/review/review-route-candidates';
+import { isInterimShare, shareOfNextApproval, shareWords, type ApprovalShare } from '../services/review/approval-share';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -71,7 +72,7 @@ export interface RoutedSigningDeps {
     Promise<{ userId: number; role: string; authenticationMethod: string; secondFactorVerified: boolean } | null>;
   recordLifecycleSignature: (client: SignatureDbClient, params: {
     doc: ProjectionInput; meaning: 'reviewed' | 'approved'; signer: { userId: number; role: string; authenticationMethod: string; secondFactorVerified: boolean; ipAddress?: string | null };
-    binding: LifecycleBinding; reason: string; occurredAt: Date; routeId?: string;
+    binding: LifecycleBinding; reason: string; occurredAt: Date; routeId?: string; share?: ApprovalShare;
   }) => Promise<ApprovalSignature>;
   bindingsFactory: (deps: LifecycleBindingDeps) => LifecycleBindings;
 }
@@ -192,9 +193,11 @@ export async function routedSignOff(
   const signer = await deps.reverifiedSigner(req, res);
   if (!signer) return { responded: true };
 
+  // RR2 records: an approval states its share; one that is not the last is its own record.
+  const share = meaning === 'approved' ? shareOfNextApproval(standing) : undefined;
   const signature = await deps.recordLifecycleSignature(client, {
     doc, meaning, signer: { ...signer, ipAddress: req.ip ?? null }, binding: pre.binding, reason: p.reason,
-    occurredAt: new Date(), routeId: standing.route!.id,
+    occurredAt: new Date(), routeId: standing.route!.id, ...(share ? { share } : {}),
   });
   p.notices.push(...await closeRouteTaskOnSignature(asTx(tx), {
     organizationId: doc.organizationId, standing, member, signatureId: esigId(signature.signatureRef),
@@ -205,6 +208,10 @@ export async function routedSignOff(
   if (meaning === 'reviewed') {
     await afterReview(tx, { doc, after, signature, userId, notices: p.notices });
     return { status: 200, body: { ...base, reviewComplete: after.reviewComplete, stage: doc.stage } };
+  }
+  if (after.approvalComplete === isInterimShare(share!)) {
+    // The share the signature records must be what the route now says; otherwise roll it all back.
+    throw new Error(`The approval was recorded as ${shareWords(share!)} but the route ${after.approvalComplete ? 'completed' : 'did not complete'}`);
   }
   if (!after.approvalComplete) return { status: 200, body: { ...base, approvalComplete: false, stage: doc.stage } };
   const approved = await completeApproval(tx, deps, { doc, after, signature, userId, reason: p.reason });

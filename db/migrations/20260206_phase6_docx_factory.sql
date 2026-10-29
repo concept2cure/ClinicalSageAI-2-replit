@@ -11,6 +11,12 @@
 --   documents.artifacts          — produced files (metadata + sha256)
 --   documents.render_events      — append-only event log
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): the two program-isolation policies no longer admit a session
+-- that sets app.bypass_rls, a custom setting any role can set. This file is on
+-- no applier (not in C2C_MIGRATION_FILES, not install-fresh's); it is amended
+-- so it cannot bring the bypass back if it ever joins one.
+-- =============================================================================
 
 -- 1. Schema
 CREATE SCHEMA IF NOT EXISTS documents;
@@ -80,7 +86,7 @@ CREATE TABLE IF NOT EXISTS documents.render_events (
 -- 3. Row-Level Security (RLS)
 -- =============================================================================
 -- Same GUC pattern as Evidence Fabric: program_id filtered by
--- current_setting('app.current_program_id') with bypass escape hatch.
+-- current_setting('app.current_program_id'); no session setting lifts it (P-70).
 
 ALTER TABLE documents.templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents.renders ENABLE ROW LEVEL SECURITY;
@@ -90,7 +96,6 @@ DO $$ BEGIN
 CREATE POLICY documents_templates_program_isolation ON documents.templates
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -100,7 +105,6 @@ DO $$ BEGIN
 CREATE POLICY documents_renders_program_isolation ON documents.renders
     USING (
         program_id::TEXT = current_setting('app.current_program_id', TRUE)
-        OR current_setting('app.bypass_rls', TRUE) = 'true'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

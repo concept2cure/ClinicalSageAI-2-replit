@@ -12,7 +12,10 @@
  * performance, scientific validity, the PER, classification, PMPF) from
  * v2/surfaces/IvdReadinessBoard.tsx, read for this project; and the IVD
  * assessment workbench (v2/surfaces/IvdAssessmentWorkbench.tsx) is mounted for
- * the same project. Both were reachable only from the ivd-completeness screen.
+ * the same project. Both were reachable only from the ivd-completeness screen,
+ * which folded into this one (fold F2, 2026-10-29). What AnA may see of the
+ * board is handed to the host (onReadinessContext), which publishes it inside
+ * device-diagnostics' one context.
  */
 
 import * as React from 'react';
@@ -36,7 +39,15 @@ import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { IvdAssessmentWorkbench } from '../../v2/surfaces/IvdAssessmentWorkbench';
-import { IvdReadinessBoard, useIvdReadiness } from '../../v2/surfaces/IvdReadinessBoard';
+import { IvdReadinessBoard, ivdReadinessContext, ivdReadinessView, useIvdReadiness } from '../../v2/surfaces/IvdReadinessBoard';
+import type { SurfaceContext } from '../../v2/surfaceContext';
+import { useReportToHost } from './hostContextReport';
+
+/** What AnA may see of the IVDR readiness board, and the project it was read for. */
+export interface IvdReadinessReport {
+  programId: string;
+  readiness: Omit<SurfaceContext, 'surfaceId'>;
+}
 
 export interface IvdSurfaceProps {
   program: Program | null;
@@ -46,6 +57,10 @@ export interface IvdSurfaceProps {
   /** Shell navigation. The assessment workbench opens a saved record's working
    *  copy in Authoring through it; without it that control is disabled. */
   onNav?: (id: string) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
+  /** Receives the readiness board's AnA context when it changes, and null on unmount (./hostContextReport.ts). */
+  onReadinessContext?: (report: IvdReadinessReport | null) => void;
 }
 
 const PARAM_PILL: Record<IvdParamStatus, string> = {
@@ -78,11 +93,17 @@ export function IvdSurface(props: IvdSurfaceProps) {
   return <IvdProjectSurface {...props} program={props.program} />;
 }
 
-function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav }: IvdSurfaceProps & { program: Program }) {
+function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLetter, onReadinessContext }: IvdSurfaceProps & { program: Program }) {
   const programId = program?.id ?? null;
   /* The IVDR readiness board, read for this project only (`?program_id=`); it
-     draws a response only when the response says it covers this project. */
+     draws a response only when the response says it covers this project. What
+     AnA may see of it goes to the host, in every state: a failed or unconfirmed
+     read says so, never 0% (ivdReadinessContext). */
   const readiness = useIvdReadiness(String(program.id));
+  useReportToHost(onReadinessContext, {
+    programId: String(program.id),
+    readiness: ivdReadinessContext(ivdReadinessView(readiness), readiness.open),
+  });
   /* Slice 0, the same row: the project's recorded phase, read from its own row.
      The strip used to re-label the kit stageIdx useMdxPrograms derives (from
      progress bands when no phase is recorded) as an IVDR stage and tick every
@@ -623,6 +644,7 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav }: IvdSurfac
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={programId}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

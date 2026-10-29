@@ -90,6 +90,8 @@ export interface LetterRow {
   humanReviewStatus: string;
   responseRequired: boolean;
   visibilityTier: string | null;
+  /** The letter's class, which its response clock reads (P-39 step 3, S4). */
+  letterClass: string | null;
 }
 
 export interface WriteScope {
@@ -115,6 +117,7 @@ function toLetter(row: any): LetterRow {
     humanReviewStatus: String(row.human_review_status ?? 'pending_review'),
     responseRequired: row.response_required === true,
     visibilityTier: row.audit_metadata?.visibilityTier ?? null,
+    letterClass: row.letter_class ?? null,
   };
 }
 
@@ -129,12 +132,12 @@ export async function readLetter(client: Queryable, orgId: number, projectId: nu
   const r = await client.query(
     lock
       ? `SELECT event_id, communication_type, source_type, received_date, due_date, closure_status,
-                human_review_status, response_required, audit_metadata
+                human_review_status, response_required, audit_metadata, letter_class
            FROM concept2cure_agency_communications
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
           LIMIT 1 FOR UPDATE`
       : `SELECT event_id, communication_type, source_type, received_date, due_date, closure_status,
-                human_review_status, response_required, audit_metadata
+                human_review_status, response_required, audit_metadata, letter_class
            FROM concept2cure_agency_communications
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
           LIMIT 1`,
@@ -377,7 +380,7 @@ export interface ProjectLetterRow extends LetterRow {
 export async function readProjectLetters(client: Queryable, orgId: number, projectId: number): Promise<ProjectLetterRow[]> {
   const r = await client.query(
     `SELECT event_id, communication_type, source_type, received_date, due_date, closure_status,
-            human_review_status, response_required, audit_metadata, linked_section_codes
+            human_review_status, response_required, audit_metadata, letter_class, linked_section_codes
        FROM concept2cure_agency_communications
       WHERE organization_id = $1 AND project_id = $2
       ORDER BY created_at DESC, event_id`,

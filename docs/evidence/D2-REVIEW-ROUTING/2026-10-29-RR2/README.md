@@ -173,6 +173,9 @@ At 390×844, every checked surface had 0 px horizontal overflow and no control u
 
 ## Design issues for the coordinator
 
+> **Dated note, 2026-10-29.** Issues 1 and 2 are fixed by `../2026-10-29-RR2-records/`. Decision 2 above is superseded there: an earlier QMS approval is now its own signature type, `qms-document-interim-approval`, not `qms-document-approval`. Earlier approvals stored before that change are read as interim from their route.
+
+
 1. **The Vault's lifecycle sign-off line names one reviewer.** It reads `review_signature` ("Review signed by …"). With several reviewers, or a reviewer added after completion, it names only the one who completed the review first; acceptance run B shows "Review signed by Rae Reviewer" while Ria also reviewed. The round lists every reviewer. Whether that line should defer to the round is a §2.12 call.
 2. **A partial QMS approval in two readers.**
    - `audit-trail-ledger.routes.ts` labels every `qms-document-approval` signature "Controlled document approved (e-signature)", including an earlier approver's while the SOP is still in review.

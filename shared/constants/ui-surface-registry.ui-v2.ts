@@ -181,23 +181,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     notes: 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export.',
     engineering: 'Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage.',
   },
-  {
-    id: 'ivd-completeness',
-    label: 'IVD completeness',
-    navTier: 'project',
-    layoutMode: 'ivd-completeness',
-    group: 'workspace',
-    icon: 'microscope',
-    uiKit: 'mdx',
-    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness'],
-    anaToolFamilies: ['assess_filing_readiness', 'draft_section'],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist.',
-    engineering: 'Contract ref (not yet a @shared file): @shared/regulatory/ivdr.',
-  },
+  // No `ivd-completeness`: folded into device-diagnostics (D2, fold F2, 2026-10-29), whose readiness
+  // panel draws the IVDR board and the assessment workbench; its claims moved there too.
   {
     id: 'batch-draft',
     label: 'Parallel drafting',
@@ -455,17 +440,17 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // 79d00b348 this screen mounts the risk register (RiskRegister.tsx) and the
     // design-control trace (DesignControlsTrace.tsx). Only `risk` and
     // `design-controls` claimed their families, so under MODULE_ENFORCEMENT=enforce
-    // an organization entitled to device-engineering alone was refused both.
-    // risk and design-controls keep their claims until the fold (founder decision 4);
-    // the gate serves a holder of any claimant, so nobody loses access
+    // an organization entitled to device-engineering alone was refused both
     // (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/, item 3).
+    // 2026-10-29 (fold F1c): both folded in; this entry is the families' one claimant.
+    // A holder of either kept its access: its grant carries here (P-61 item 4, folded-module-successors.ts).
     apiPrefixes: ['/api/mdx/engineering', '/api/mdx/risk-items', '/api/design-controls'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.',
+    notes: 'Program-scoped engineering rollup, holding the project\'s ISO 14971 risk file and design-control trace (fold F1c). Distinct from human-factors, an org-scoped register.',
   },
   {
     id: 'device-udi',
@@ -1212,30 +1197,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.',
   },
-  {
-    id: 'design-controls',
-    label: 'Design controls (DHF)',
-    navTier: 'specialist',
-    layoutMode: 'design-controls',
-    group: 'device',
-    icon: 'gitBranch',
-    uiKit: null,
-    // /api/design-controls, not /api/design-risk. This entry named the latter,
-    // which was a 20-endpoint duplicate whose ten tables existed on no database:
-    // its only creator was classified-skipped on install-fresh for a shape
-    // collision and was on no deploy applier, so every one of those endpoints
-    // returned 500. The surface never called them — DesignControls.tsx reads and
-    // writes /api/design-controls (server/routes/design-controls.routes.ts, which
-    // fails closed to an empty list on 42P01) — so `routes-ready` was true of the
-    // surface and false of the prefix it advertised. The duplicate is deleted.
-    apiPrefixes: ['/api/design-controls'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: '21 CFR 820.30 DHF — design inputs/outputs/verification/validation traceability matrix + completeness assessment.',
-  },
+  // No `design-controls`: folded into Engineering evidence (D2, fold F1c, 2026-10-29), which claims
+  // /api/design-controls and mounts the trace (DesignControlsTrace.tsx).
   {
     id: 'human-factors',
     label: 'Human factors (IEC 62366-1)',
@@ -1394,10 +1357,10 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // card calls moved here: the retention period (RetentionPeriodCard.tsx), claimed by setup
     // alone, and the legal holds (LegalHoldsCard.tsx), shared with the Vault. The Profile
     // card's /api/organizations and /api/mdx/industry-profile, and /api/gateway-accounts, are
-    // LAUNCH_PLATFORM_API. '/api/validation-kit' is named only by AdminSurfaces.tsx
-    // AdminConsole, the GAMP 5 kit no surface has mounted since af973c5e8 (2026-07-27); it is
-    // claimed here, where the kit belongs if the founder chooses to reach it, rather than
-    // left unmapped (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/README.md, "Not carried").
+    // LAUNCH_PLATFORM_API. '/api/validation-kit' is the GAMP 5 validation package's, reached on
+    // Settings by ValidationKitCard.tsx (decision P-67, 2026-10-29), which replaced the
+    // AdminConsole no surface had mounted since af973c5e8 (2026-07-27)
+    // (docs/evidence/D4/2026-10-29/validation-kit-settings/).
     apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,

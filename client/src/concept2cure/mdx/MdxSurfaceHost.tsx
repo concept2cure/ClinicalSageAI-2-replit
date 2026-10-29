@@ -42,7 +42,7 @@ import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
-import { IvdSurface } from './surfaces/IvdSurface';
+import { IvdSurface, type IvdReadinessReport } from './surfaces/IvdSurface';
 import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
 import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
@@ -62,7 +62,6 @@ import type { MdxSurfaceId } from './surfaceIds';
 import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
-import './drafter.css';
 /* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
    `--text-300` on every element that establishes a tinted surface, so it has to
    load after the sheets that declare those surfaces — a custom property set
@@ -76,6 +75,7 @@ import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext, type SurfaceContext } from '../v2/surfaceContext';
 import { openNewProject } from '../v2/surfaceActions';
+import { openLetterInCommunication } from '../v2/surfaces/cmcAgencyQuestions';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -199,6 +199,24 @@ function withEngineeringPanels(base: ScreenContext, panels: EngineeringPanelsCon
   };
 }
 
+/**
+ * device-diagnostics' context with its IVDR readiness board's (fold F2,
+ * 2026-10-29: the board and the IVD assessment workbench were the
+ * ivd-completeness screen's, which published the readiness under its own id).
+ * The store holds one context, so the board's rides this host's one publish, as
+ * Engineering's panels do above. Merged only when it was read for the project in
+ * context.
+ */
+function withIvdReadiness(base: ScreenContext, report: IvdReadinessReport | null, program: Program | null): ScreenContext {
+  if (!report || !program || report.programId !== String(program.id)) return base;
+  const { readiness } = report;
+  return {
+    summary: `${base.summary} ${readiness.summary}`,
+    facts: { ...base.facts, ivdReadiness: readiness.facts ?? null },
+    availableActions: [...(base.availableActions ?? []), ...(readiness.availableActions ?? [])],
+  };
+}
+
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
   if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
   return ORGANIZATION_VIEWS.has(nav) ? 'Organization-wide view' : null;
@@ -273,6 +291,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * section this collapses to the plain navigation it always was — nothing is
    * claimed that cannot be honoured.
    */
+  /** A device letter is answered where every letter is: on its record in Communication (P-39 step 3, S2). */
+  const openLetter = React.useCallback((letterId: string) => openLetterInCommunication(onNav, letterId), [onNav]);
+
   const openEditor = React.useCallback(
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
@@ -354,6 +375,12 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     () => withEngineeringPanels(anaContext, engineeringPanels, programForContext),
     [anaContext, engineeringPanels, programForContext],
   );
+  /* What IVDR evidence's readiness board reports; null when the screen is not mounted. */
+  const [ivdReadiness, setIvdReadiness] = React.useState<IvdReadinessReport | null>(null);
+  const diagnosticsContext = React.useMemo(
+    () => withIvdReadiness(anaContext, ivdReadiness, programForContext),
+    [anaContext, ivdReadiness, programForContext],
+  );
 
   /*
    * One builder, fourteen literal publish calls. The AnA coverage gate counts
@@ -369,7 +396,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);
   usePublishSurfaceContext('device-pma', nav === 'device-pma' ? anaContext : null);
   usePublishSurfaceContext('device-cer', nav === 'device-cer' ? anaContext : null);
-  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
+  usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? diagnosticsContext : null);
   usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
   usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
   usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? engineeringContext : null);
@@ -383,13 +410,13 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   let surface: React.ReactNode;
   switch (nav) {
     case 'device-510k':
-      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <K510Surface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-pma':
-      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-cer':
-      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
+      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} onOpenLetter={openLetter} />;
       break;
     case 'device-diagnostics':
       surface = (
@@ -397,6 +424,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
           program={programForContext}
           onAskAna={onAsk}
           onOpenEditor={openEditor}
+          onOpenLetter={openLetter}
+          onNav={onNav}
+          onReadinessContext={setIvdReadiness}
         />
       );
       break;
@@ -493,9 +523,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   /*
    * The scope root. Not optional, and not decoration.
    *
-   * Every rule in app.css, pathway-tabs.css, files-tree.css and drafter.css is
-   * scoped under `.mdx-shell` — 1,067/1,067, 247/247, 73/73 and 188/188 as of
-   * the surfaces.css port, measured with a CSS parser rather than counted by
+   * Every rule in app.css, pathway-tabs.css and files-tree.css is scoped
+   * under `.mdx-shell` — 1,067/1,067, 247/247 and 73/73 as of the surfaces.css
+   * port (drafter.css, 188/188, went with the AnaDrafter on 2026-10-29), measured with a CSS parser rather than counted by
    * hand. The class is what makes any of the kit's styling apply, and it also
    * carries the custom-property block those rules read. Without an element
    * carrying it, the surfaces render as unstyled markup with no tokens.

@@ -114,6 +114,8 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
+    -- The version a restore holds the bytes of (migrations/20261029_vault_documents_restored_from.sql).
+    restored_from_id UUID,
     -- The retention clock the ingest starts at admission (P1-22; ADR-0014 §6):
     -- the organisation's period, else 25 years, never earlier than a named policy.
     retention_until DATE,

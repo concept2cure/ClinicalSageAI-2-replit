@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/fixity",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 69,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "checkedAt": "2026-10-29T20:23:11.296Z",
+        "checked": 8,
+        "counts": {
+          "verified": 8,
+          "altered": 0,
+          "missing": 0,
+          "unreadable": 0,
+          "unverifiable": 0
+        },
+        "findings": [],
+        "truncated": false
+      }
+    }
+  }
+}

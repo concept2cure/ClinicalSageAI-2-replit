@@ -1,0 +1,11 @@
+# M20: the file is off the applier
+# file: scripts/db/migration-set.mjs
+# command: npx vitest run tests/schema-contract/change-controls-program-key.pglite.test.ts
+# exit: 1
+# original sha256 3c6bac0a6057eaefbcd8c0dbec8ed8b80ae14aec171cb4741d0000b884989cf0; restored byte for byte: True
+
+ × tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps 4ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps

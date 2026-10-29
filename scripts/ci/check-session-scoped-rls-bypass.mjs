@@ -1,8 +1,20 @@
 #!/usr/bin/env node
 /**
- * check-session-scoped-rls-bypass.mjs — no NEW session-scoped RLS bypass.
+ * check-session-scoped-rls-bypass.mjs — no session setting lifts row-level
+ * security, and no NEW session-scoped RLS bypass.
  *
- * ── What this stops ─────────────────────────────────────────────────────────
+ * ── Since P-70 (2026-10-29) ─────────────────────────────────────────────────
+ * Nothing reads app.bypass_rls or app.is_admin any more: the four helpers and
+ * the nineteen policies that did are fixed in their creating files, and
+ * migrations/20261029j_no_session_rls_bypass.sql converges installed databases
+ * and fails the deploy on a reader left in the catalog
+ * (docs/evidence/D6-NO-SESSION-RLS-BYPASS/2026-10-29/). The last rules below
+ * keep it so in the tree: a READER of either setting in any migration (whatever
+ * its applier) or in server/scripts/shared code fails, and so does a WRITE of
+ * either in scripts or shared. The baseline below is empty and may only stay so.
+ * The history that follows is why the setting was dangerous to begin with.
+ *
+ * ── What this stopped ───────────────────────────────────────────────────────
  * `app.bypass_rls` and `app.is_admin` are escape hatches: 4 SECURITY DEFINER
  * helpers (identity.can_access_org / can_write_org / can_access_program /
  * can_write_program) return TRUE immediately when bypass_rls is 'true', and
@@ -54,9 +66,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const TAG = '[ci:session-scoped-rls-bypass]';
 
 /** Files permitted to still contain the session-scoped form, with a count. */
-const BASELINE = new Map([
-  ['server/services/innovation/submission-readiness-twin-service.ts', 4],
-]);
+const BASELINE = new Map([]);
 
 // `SET app.bypass_rls`, but not `SET LOCAL app.bypass_rls`.
 const OFFENDER = /\bSET\s+(?!LOCAL\b)(?:SESSION\s+)?app\.(bypass_rls|is_admin)\b/gi;
@@ -64,8 +74,8 @@ const OFFENDER = /\bSET\s+(?!LOCAL\b)(?:SESSION\s+)?app\.(bypass_rls|is_admin)\b
 const SEARCH_DIRS = ['server', 'scripts', 'shared'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage']);
 
-/** @returns {string[]} repo-relative paths of .ts/.js files under the search dirs */
-function walk(dir, acc = []) {
+/** @returns {string[]} repo-relative paths of files under `dir` whose name matches `ext` (default .ts/.tsx/.js/.mjs) */
+function walk(dir, acc = [], ext = /\.(ts|tsx|js|mjs)$/) {
   let entries;
   try {
     entries = fs.readdirSync(path.join(repoRoot, dir), { withFileTypes: true });
@@ -75,8 +85,8 @@ function walk(dir, acc = []) {
   for (const e of entries) {
     const rel = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (!SKIP_DIRS.has(e.name)) walk(rel, acc);
-    } else if (/\.(ts|tsx|js|mjs)$/.test(e.name)) {
+      if (!SKIP_DIRS.has(e.name)) walk(rel, acc, ext);
+    } else if (ext.test(e.name)) {
       acc.push(rel);
     }
   }
@@ -178,6 +188,58 @@ for (const rel of walk('server')) {
   }
 }
 
+// ── Readers and script writers of a bypass setting (P-70, 2026-10-29) ───────
+//
+// The rules above stop the switches being set in server code. These stop
+// anything honouring them. PostgreSQL lets every role set a custom setting, so a
+// policy, a function or a query that reads app.bypass_rls or app.is_admin lets
+// any session lift row-level security from inside its own connection. Nothing
+// reads either since P-70; the deploy refuses a reader in the catalog
+// (migrations/20261029j_no_session_rls_bypass.sql), and this refuses one in the
+// tree:
+//   - SQL: every .sql under migrations/ and db/, whatever its applier (a file on
+//     no applier today is one list entry from a deploy), comments stripped;
+//   - code: server, scripts and shared outside tests, comments stripped and
+//     strings kept (SQL lives in strings);
+//   - a write of either setting in scripts or shared (server writes are counted
+//     above; the one allowed writer, server/db/sessionScope.ts, pins them empty).
+// No baseline: there is nothing to freeze.
+const READER = /current_setting\(\s*E?['"]app\.(?:bypass_rls|is_admin)['"]/gi;
+const BYPASS_WRITE =
+  /\bSET\s+(?:LOCAL\s+|SESSION\s+)?app\.(?:bypass_rls|is_admin)\b|set_config\(\s*['"]app\.(?:bypass_rls|is_admin)['"]/gi;
+const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|mts|cts)$/;
+/** SQL comments out, strings and dollar-quoted bodies kept (the shape of lib/sql-columns.mjs stripSqlComments). */
+const stripSql = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+const lineOf = (text, index) => text.slice(0, index).split('\n').length;
+const SELFTEST = SELF.replace(/\.mjs$/, '.selftest.mjs');
+const readers = [];
+const sqlFiles = ['migrations', 'db'].flatMap((d) => walk(d, [], /\.sql$/));
+let codeFiles = 0;
+for (const rel of sqlFiles) {
+  const text = stripSql(fs.readFileSync(path.join(repoRoot, rel), 'utf8'));
+  for (const m of text.matchAll(READER)) readers.push(`${rel}:${lineOf(text, m.index)}`);
+}
+for (const rel of SEARCH_DIRS.flatMap((d) => walk(d, [], CODE_EXT))) {
+  if (rel === SELF || rel === SELFTEST || isTestPath(rel)) continue;
+  codeFiles++;
+  const text = stripComments(fs.readFileSync(path.join(repoRoot, rel), 'utf8'));
+  for (const m of text.matchAll(READER)) readers.push(`${rel}:${lineOf(text, m.index)}`);
+  if (rel.startsWith(`server${path.sep}`)) continue;
+  const writes = [...text.matchAll(BYPASS_WRITE)].length;
+  if (writes) {
+    violations.push(
+      `${rel}: ${writes} write(s) of app.bypass_rls / app.is_admin — no policy reads either since P-70; ` +
+        'a cross-tenant read goes through a reviewed SECURITY DEFINER door or a role granted only to that path',
+    );
+  }
+}
+for (const at of readers) {
+  violations.push(
+    `${at}: reads app.bypass_rls / app.is_admin — any session can set a custom setting, so this lets any ` +
+      'session lift row-level security (P-70). Remove the term in the creating file (CLAUDE.md Rule 1).',
+  );
+}
+
 // A baseline entry that no longer matches reality is itself a defect: it either
 // hides a fix that should have shrunk it, or points at a file that moved.
 for (const [file, allowed] of BASELINE) {
@@ -193,13 +255,14 @@ if (violations.length) {
   console.error(`${TAG} ❌ ${violations.length} problem(s):\n`);
   for (const v of violations) console.error(`  • ${v}`);
   console.error(
-    '\n  `SET app.bypass_rls` is SESSION-scoped: it survives COMMIT, ROLLBACK and\n' +
-      '  client.release(), so the next checkout — a different tenant — inherits a\n' +
-      '  full RLS bypass across 142 policies (vault.documents, signing.*,\n' +
-      '  identity.users among them). Nothing in this repo issues DISCARD ALL.\n\n' +
-      '  Use `SET LOCAL` inside an explicit transaction, as\n' +
-      '  server/routes/innovation-routes.ts guardQuery() does — Postgres then\n' +
-      '  discards it at COMMIT/ROLLBACK.\n',
+    '\n  Since P-70 (2026-10-29) no policy or function reads app.bypass_rls or\n' +
+      '  app.is_admin, and none may: any role can set a custom setting, so a reader\n' +
+      '  lets any session lift row-level security from inside its own connection.\n' +
+      '  Setting either is dead code. A path that must read across tenants does it\n' +
+      '  through a reviewed SECURITY DEFINER door, or a role granted only to that\n' +
+      '  path, with its reason on scripts/db/security-definer-allowlist.json.\n' +
+      '  (Before P-70 a plain `SET` was also SESSION-scoped: it outlived COMMIT,\n' +
+      '  ROLLBACK and client.release(), so the next checkout inherited it.)\n',
   );
   process.exit(1);
 }
@@ -209,4 +272,8 @@ console.log(
   `${TAG} OK — no new session-scoped RLS bypass. ${total} baselined occurrence(s) remain in ` +
     `${found.size} unmounted innovation service(s), every one of them releasing through ` +
     `${RELEASE_GUARD}(); the baseline may only shrink.`,
+);
+console.info(
+  `${TAG} OK — no policy, function or code reads app.bypass_rls / app.is_admin (${sqlFiles.length} migration ` +
+    `file(s) and ${codeFiles} code file(s) read), and no script writes either (P-70).`,
 );

@@ -302,7 +302,6 @@ const ComplianceReports = lazySurface(() => import('./surfaces/ComplianceReports
 const CodebaseCoverage = lazySurface(() => import('./surfaces/Coverage').then((m) => ({ default: m.CodebaseCoverage })));
 const DecisionLineage = lazySurface(() => import('./surfaces/DecisionLineage').then((m) => ({ default: m.DecisionLineage })));
 const DeepResearch = lazySurface(() => import('./surfaces/DeepResearch').then((m) => ({ default: m.DeepResearch })));
-const DesignControls = lazySurface(() => import('./surfaces/DesignControls').then((m) => ({ default: m.DesignControls })));
 const DispatchReadiness = lazySurface(() => import('./surfaces/DispatchReadiness').then((m) => ({ default: m.DispatchReadiness })));
 const DocJourney = lazySurface(() => import('./surfaces/DocJourney').then((m) => ({ default: m.DocJourney })));
 const DocumentAuthoring = lazyOwnedSurface(() => import('./surfaces/DocumentAuthoring').then((m) => ({ default: m.DocumentAuthoring })));
@@ -316,7 +315,6 @@ const Inconsistency = lazySurface(() => import('./surfaces/Inconsistency').then(
 const IndLifecycle = lazySurface(() => import('./surfaces/IndLifecycle').then((m) => ({ default: m.IndLifecycle })));
 const InvestigatorBrochure = lazySurface(() => import('./surfaces/InvestigatorBrochure').then((m) => ({ default: m.InvestigatorBrochure })));
 const InsightsCanvas = lazyOwnedSurface(() => import('./surfaces/Insights').then((m) => ({ default: m.InsightsCanvas })));
-const IvdCompleteness = lazySurface(() => import('./surfaces/IvdCompleteness').then((m) => ({ default: m.IvdCompleteness })));
 const Labeling = lazySurface(() => import('./surfaces/Labeling').then((m) => ({ default: m.Labeling })));
 const LabelingPI = lazySurface(() => import('./surfaces/LabelingPi').then((m) => ({ default: m.LabelingPI })));
 const SmpcLabeling = lazySurface(() => import('./surfaces/SmpcLabeling').then((m) => ({ default: m.SmpcLabeling })));
@@ -339,7 +337,6 @@ const Registrations = lazySurface(() => import('./surfaces/Registrations').then(
 const ReportEngine = lazySurface(() => import('./surfaces/ReportEngine').then((m) => ({ default: m.ReportEngine })));
 const ResearchAdmin = lazySurface(() => import('./surfaces/ResearchAdmin').then((m) => ({ default: m.ResearchAdmin })));
 const Review = lazySurface(() => import('./surfaces/Review').then((m) => ({ default: m.Review })));
-const Risk = lazySurface(() => import('./surfaces/Risk').then((m) => ({ default: m.Risk })));
 const SafetyNarrative = lazySurface(() => import('./surfaces/SafetyNarrative').then((m) => ({ default: m.SafetyNarrative })));
 const ShadowReview = lazySurface(() => import('./surfaces/ShadowReview').then((m) => ({ default: m.ShadowReview })));
 const SourceTracer = lazySurface(() => import('./surfaces/SourceTracer').then((m) => ({ default: m.SourceTracer })));
@@ -423,7 +420,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'csr-workflow': { component: CsrWorkflow, full: true },
   'decision-lineage': { component: DecisionLineage, full: true },
   'deep-research': { component: DeepResearch },
-  'design-controls': { component: DesignControls },
+  // 'design-controls' folded into device-engineering (D2, fold F1c, 2026-10-29): an alias now (registryModel.ts).
   // ── Device & diagnostics ──
   // One entry per surface, each rendering only its own canvas. These used to be
   // five aliases for the whole MDX application, which drew a second Rail,
@@ -480,7 +477,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // answers only the report-generation intents it can actually satisfy.
   insights: { component: InsightsCanvas, full: true, ownsConversation: true },
   'intelligence-catalog': { component: CapabilityIndex },
-  'ivd-completeness': { component: IvdCompleteness, full: true },
+  // 'ivd-completeness' folded into device-diagnostics (D2, fold F2, 2026-10-29): an alias now (registryModel.ts).
   labeling: { component: Labeling },
   'labeling-pi': { component: LabelingPI },
   'labeling-smpc': { component: SmpcLabeling },
@@ -549,7 +546,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'report-engine': { component: ReportEngine },
   'research-admin': { component: ResearchAdmin },
   review: { component: Review },
-  risk: { component: Risk },
+  // risk folded into device-engineering (D2, fold F1c, 2026-10-29): an alias now (registryModel.ts).
   'safety-narrative': { component: SafetyNarrative },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },

@@ -1,0 +1,219 @@
+# GREEN: the base commit 92bb29868b853c4be94f31c19efeee50d192f5a1 plus this change (the exact diff of the files listed in the README; nothing else)
+
+## §1 Built from blank: install-fresh then deploy-migrate
+### first build (found on the way): install-fresh's overlay applies migrations/ before the gcc tree, and a ::regclass cast inside a guarded EXISTS was evaluated anyway
+      20261029j_no_session_rls_bypass.sql — relation "cortex.federated_learning_state" does not exist
+### after the fix (to_regclass in both guards):
+  ✓ overlay: 373 applied, 1 already-present from push
+  ✓ governed content: 40/40 applied
+install-fresh exit 0
+  ✓ applied: db/migrations/20260129_phase5_intelligent_document_system.sql
+  ✓ applied: db/migrations/20260206_phase5_contradiction_scanner.sql
+  ✓ applied: db/migrations/20260206_phase5_evidence_fabric.sql
+  ✓ applied: db/migrations/20260207_phase6_6_predicate_intelligence.sql
+  ✓ applied: db/migrations/20260207_phase6_6a_fda_clearance_universe.sql
+  ✓ applied: migrations/20261029j_no_session_rls_bypass.sql
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0
+
+## §2 A database installed at 92bb29868b853c4be94f31c19efeee50d192f5a1 (install-fresh + deploy-migrate), deployed with the change three times
+## snapshot.sql: readers of either setting; every policy (oid, table, name, text); the four helpers (oid, text, config, definer, ACL, row version); the changed tables' policies (oid, row version)
+== before
+readers|23
+policies|1231|3a21b9625423ff7d1e9e9f3834f732e8
+helpers|9f468aeecfe5c6c07ff3f080f66b81cf
+changed-policy oids+row versions|4dd8e44897198a6ae31ad77c29908ad5
+deploy 1 (deploy-migrate with the change): exit 0
+  ✓ applied: migrations/20261029j_no_session_rls_bypass.sql
+✅ Schema migration complete — safe to roll services.
+== after deploy 1
+readers|0
+policies|1225|2bf5e0dbfb0b6464d64e57878a234dc5
+helpers|d09bd31aacb8784a8bdff48ef16db756
+changed-policy oids+row versions|bd51267f2bdea7afd9296dab0c2c2a30
+deploy 2 (deploy-migrate with the change): exit 0
+  ✓ applied: migrations/20261029j_no_session_rls_bypass.sql
+✅ Schema migration complete — safe to roll services.
+== after deploy 2
+readers|0
+policies|1225|37ec7f01ea6d1192ec6459c2ebf6538c
+helpers|a13dd7eafaa29050fd904c1f412b451c
+changed-policy oids+row versions|bd51267f2bdea7afd9296dab0c2c2a30
+deploy 3 (deploy-migrate with the change): exit 0
+  ✓ applied: migrations/20261029j_no_session_rls_bypass.sql
+✅ Schema migration complete — safe to roll services.
+== after deploy 3
+readers|0
+policies|1225|6a0a44048ede0f661685a9dd4d25279a
+helpers|5325f94048235b0d873b268782dc4c01
+changed-policy oids+row versions|bd51267f2bdea7afd9296dab0c2c2a30
+== helper owner, grants, definer, search_path after
+identity.can_access_org(uuid)|postgres|t|{search_path=identity}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|0
+identity.can_write_org(uuid)|postgres|t|{search_path=identity}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|0
+identity.can_access_program(uuid)|postgres|t|{"search_path=identity, core, public"}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|0
+identity.can_write_program(uuid)|postgres|t|{"search_path=identity, core, public"}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|0
+== the same columns on the head database before
+identity.can_access_org(uuid)|postgres|t|{search_path=identity}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|96
+identity.can_write_org(uuid)|postgres|t|{search_path=identity}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|96
+identity.can_access_program(uuid)|postgres|t|{"search_path=identity, core, public"}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|152
+identity.can_write_program(uuid)|postgres|t|{"search_path=identity, core, public"}|{=X/postgres,postgres=X/postgres,app_service=X/postgres}|152
+
+### what changes a helper's row version on every deploy (not this change): 
+== does 20261029j rewrite a helper it has already cleaned? (applied alone, twice)
+24572
+24572
+== does the runtime-role grant (deploy step 5) rewrite it? GRANT EXECUTE once
+24576
+== and a HEAD-only redeploy of a HEAD database (no change at all)
+9449
+HEAD redeploy exit 0
+25312
+
+## §3 tests/db/no-session-rls-bypass.dbtest.ts
+### on the database built from blank with the change
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > no policy, and no function outside pg_catalog, reads app.bypass_rls or app.is_admin
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with no switch, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with no switch, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.bypass_rls, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.bypass_rls, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.is_admin, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.is_admin, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app.rls_enforce off, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app.rls_enforce off, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with app_super_admin, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with app_super_admin, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role reads A's rows and none of B's
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, no helper admits B's program or organization
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > in tenant A's scope with all four, the runtime role writes none of B's rows
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > with all four, the two switch-only policies grant nothing: federated state unread, guidance unwritable
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: no session setting lifts row-level security > the convergence is conditional: applied twice more, with the creators, it rewrites no helper and no policy
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > A writes its own Vault version in its own scope
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same-organization preflight refuses vault.documents as a role row security holds, rather than under-count it
+ ✓ tests/db/no-session-rls-bypass.dbtest.ts > P-70: the paths that read across tenants without the bypass > the same preflight reads vault.documents as a role row security does not hold (a superuser here)
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+### on the base database deployed with the change (§2)
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+
+## §4 The probe of red.txt §1, on the database built with the change
+
+BEGIN
+-- tenant A scope, no switch:
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+-- tenant A scope + SET LOCAL app.bypass_rls = true:
+SET
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+ROLLBACK
+-- the same, session-level SET (no transaction):
+SET
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+-- and writes: tenant A updates tenant B's title under the bypass
+UPDATE 0
+RESET
+-- reset, A again:
+ document_code 
+---------------
+ p70-a-doc
+(1 row)
+
+
+## §5 Related real-database suites (74 files that read the helpers, the Vault, the nineteen tables, the preflight, the definer review or the session scope), red vs green, each on a fresh copy of its database
+### red (base, + the deleted rls-bypass dbtest)
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  23 failed | 52 passed (75)
+      Tests  20 failed | 639 passed | 218 skipped (877)
+### green
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  22 failed | 52 passed (74)
+      Tests  6 failed | 649 passed | 218 skipped (873)
+### failing only with the change:
+(none)
+### failing only at the base: the new dbtest's 14 (red.txt §3)
+14
+### failing on both sides:
+ FAIL  tests/db/cmc-source-evidence.dbtest.ts
+ FAIL  tests/db/data-room-processing.dbtest.ts
+ FAIL  tests/db/org-retention-period.dbtest.ts
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the ha
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > the export of the sealed record > exports the final run as its sealed document, signed and verified, and rec
+ FAIL  tests/db/report-pack-export.dbtest.ts > native retained complete report packets > holds the real report reservation through rendering before the canonica
+ FAIL  tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses an observed role withdrawal during actual PDF work before any b
+ FAIL  tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses an observed scope withdrawal during actual PDF work before any 
+ FAIL  tests/db/report-pack-export.dbtest.ts > native retained complete report packets > sends both retained bodies with exact-byte chained audit, saved order a
+ FAIL  tests/db/submission-required-deliverables.dbtest.ts
+ FAIL  tests/db/vault-chunking-off.dbtest.ts
+ FAIL  tests/db/vault-data-room-file.dbtest.ts
+ FAIL  tests/db/vault-data-room-seal.dbtest.ts
+ FAIL  tests/db/vault-define-stylesheet-intake.dbtest.ts
+ FAIL  tests/db/vault-filing-vocabulary.dbtest.ts
+ FAIL  tests/db/vault-fixity.dbtest.ts
+ FAIL  tests/db/vault-passage-search-keyless.dbtest.ts
+ FAIL  tests/db/vault-passage-search.dbtest.ts
+ FAIL  tests/db/vault-placement-batch.dbtest.ts
+ FAIL  tests/db/vault-placement.dbtest.ts
+ FAIL  tests/db/vault-processing-sweep.dbtest.ts
+ FAIL  tests/db/vault-reupload.dbtest.ts
+ FAIL  tests/db/vault-version-checkin.dbtest.ts
+ FAIL  tests/db/vault-version-compare.dbtest.ts
+ FAIL  tests/db/vault-versions.dbtest.ts
+### the file-level ones refuse this lane's database by name (a fixture guard). Re-run on the names their guards accept:
+##### red: Vault fixture suites on platform_ci_vault_fixture_p70_red
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts [ tests/db/project-vault-secondary-access.dbtest.ts ]
+ Test Files  1 failed | 18 passed (19)
+      Tests  162 passed | 18 skipped (180)
+##### red: submission-required-deliverables on its reviewed local name
+ Test Files  1 passed (1)
+      Tests  38 passed (38)
+##### green: Vault fixture suites on platform_ci_vault_fixture_p70_green
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts [ tests/db/project-vault-secondary-access.dbtest.ts ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head
+ Test Files  2 failed | 17 passed (19)
+      Tests  1 failed | 161 passed | 18 skipped (180)
+##### green: submission-required-deliverables on its reviewed local name
+ Test Files  1 passed (1)
+      Tests  38 passed (38)
+red:       Tests  18 passed (18)
+green:       Tests  18 passed (18)
+### vault-version-checkin's concurrency case failed once on green under 19 parallel suites; alone:
+green:       Tests  11 passed (11)
+red:       Tests  11 passed (11)
+green:       Tests  11 passed (11)
+red:       Tests  11 passed (11)
+green:       Tests  11 passed (11)
+### report-os-registry-seed and report-pack-export: REPORT_PDF_FONTS_UNAVAILABLE on both sides (this lane has no report fonts)
+
+## §6 Unit and PGlite suites touching the changed code (on the working tree)
+ Test Files  8 passed (8)
+      Tests  150 passed (150)
+# pass 3
+# fail 0
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+### the gate's selftest
+[ci:session-scoped-rls-bypass:selftest] 4 known gap(s), NOT counted below: real defect shapes the gate still prints OK on (marked ! above; described, with the fix each needs, under KNOWN GAPS in this file’s header).
+[ci:session-scoped-rls-bypass:selftest] 32 passed — the gate fails on what it exists to catch.

@@ -47,6 +47,8 @@ export interface NewQmsChange {
   changeType?: ChangeType;
   classification?: Classification;
   targetImplementationDate?: string;
+  /** The project the change belongs to (P-60); absent, an organisation-wide change. */
+  programId?: string;
 }
 
 export function createQmsChange(input: NewQmsChange): Promise<{ id: number; change_number: string }> {
