@@ -134,6 +134,7 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
+import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
 
@@ -986,7 +987,7 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
   try {
     const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
     if (agreementRefusal) return clientError(res, 422, agreementRefusal);
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_suppliers (
+    const { rows } = await qmsClient(req).query<SupplierTaskSource & Record<string, unknown>>(`INSERT INTO qms_suppliers (
          organization_id, supplier_name, supplier_code, scope, criticality,
          approval_status, approval_date, reapproval_date, quality_agreement_id,
          last_audit_date, next_audit_date, iso_certifications
@@ -1004,6 +1005,8 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
       resourceType: 'qms_supplier', resourceId: rows[0]?.id,
       details: { supplierName: p.supplierName, criticality: p.criticality },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0], [], actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
@@ -1034,7 +1037,7 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
   try {
     const agreementRefusal = await qualityAgreementRefusal(req, orgId, parsed.data.qualityAgreementId);
     if (agreementRefusal) return clientError(res, 422, agreementRefusal);
-    const { rows } = await qmsClient(req).query(`UPDATE qms_suppliers SET ${setFrags.join(', ')}
+    const { rows } = await qmsClient(req).query<SupplierTaskSource & Record<string, unknown>>(`UPDATE qms_suppliers SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
         RETURNING *`,
       args,
@@ -1051,6 +1054,8 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
       resourceType: 'qms_supplier', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0], Object.keys(parsed.data), actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-patch', err); }
 });
@@ -1093,7 +1098,7 @@ router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, re
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_internal_audits (
+    const { rows } = await qmsClient(req).query<InternalAuditTaskSource & Record<string, unknown>>(`INSERT INTO qms_internal_audits (
          organization_id, audit_number, scope, audit_standard,
          auditor_lead_id, auditor_team, planned_date, status
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'planned'))
@@ -1113,6 +1118,8 @@ router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, re
       resourceType: 'qms_internal_audit', resourceId: String(rows[0].id),
       details: { auditNumber: p.auditNumber, auditStandard: p.auditStandard ?? null, scope: p.scope },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0], actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-create', err); }
 });
@@ -1141,7 +1148,7 @@ router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Reques
   setFrags.push(`updated_at = NOW()`);
   args.push(id, orgId);
   try {
-    const { rows } = await qmsClient(req).query(`UPDATE qms_internal_audits SET ${setFrags.join(', ')}
+    const { rows } = await qmsClient(req).query<InternalAuditTaskSource & Record<string, unknown>>(`UPDATE qms_internal_audits SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length}
         RETURNING *`,
       args,
@@ -1157,6 +1164,8 @@ router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Reques
       resourceType: 'qms_internal_audit', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0], actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-patch', err); }
 });

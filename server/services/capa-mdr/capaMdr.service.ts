@@ -13,6 +13,7 @@ import { and, asc, desc, eq, inArray, like, sql } from 'drizzle-orm';
 
 import { writeChainedAuditRow } from '../auditService';
 import { capaContext, authorizeCapaProgram, visibleCapaPrograms, mutateCapa, readCapa, CapaPersistenceError, type CapaCaller } from './governed-context';
+import { scheduleCapaActionTask, scheduleCapaTask } from './capa-tasks';
 export { CapaAccessError, CapaPersistenceError } from './governed-context';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -878,7 +879,7 @@ export interface AddCapaActionInput {
 async function addCapaActionTx(
   organizationId: number,
   input: AddCapaActionInput
-): Promise<CapaAction> {
+): Promise<{ action: CapaAction; capaCode: string }> {
   // Verify the parent CAPA belongs to the org.
   const parent = await getCapaRecordTx(organizationId, input.capaId);
   if (!parent) throw new NotFoundError(`CAPA ${input.capaId} not found`);
@@ -911,7 +912,7 @@ async function addCapaActionTx(
     payload: { capaId: input.capaId, n: next, type: input.type },
   });
 
-  return row;
+  return { action: row, capaCode: parent.capaCode };
 }
 
 export interface UpdateCapaActionInput {
@@ -925,10 +926,10 @@ async function transitionCapaActionTx(
   organizationId: number,
   actionId: string,
   input: UpdateCapaActionInput
-): Promise<CapaAction> {
+): Promise<{ action: CapaAction; capaCode: string }> {
   // Tenant guard via a join.
   const rows = await capaContext().db
-    .select({ action: capaActions, programId: capaRecords.programId })
+    .select({ action: capaActions, programId: capaRecords.programId, capaCode: capaRecords.capaCode })
     .from(capaActions)
     .innerJoin(capaRecords, eq(capaRecords.id, capaActions.capaId))
     .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
@@ -973,7 +974,7 @@ async function transitionCapaActionTx(
     reason: input.reason ?? null,
   });
 
-  return row;
+  return { action: row, capaCode: ctx.capaCode };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1138,17 +1139,27 @@ export function createMdrEvent(org: number, input: CreateMdrEventInput, caller: 
 export function transitionMdrEvent(org: number, id: string, input: TransitionMdrInput, caller: CapaCaller) {
   return mutateCapa(org, caller, () => transitionMdrEventTx(org, id, { ...input, actor: String(caller.userId) }));
 }
-export function createCapaRecord(org: number, input: CreateCapaInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => createCapaRecordTx(org, { ...input, createdBy: String(caller.userId) }));
+// A CAPA's target close and an action's due date are owed as tasks once the act
+// commits (capa-tasks.ts). The task write is best effort and never fails the act.
+export async function createCapaRecord(org: number, input: CreateCapaInput, caller: CapaCaller) {
+  const row = await mutateCapa(org, caller, () => createCapaRecordTx(org, { ...input, createdBy: String(caller.userId) }));
+  await scheduleCapaTask(org, row, caller.userId);
+  return row;
 }
-export function transitionCapa(org: number, id: string, input: TransitionCapaInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => transitionCapaTx(org, id, { ...input, actor: String(caller.userId) }));
+export async function transitionCapa(org: number, id: string, input: TransitionCapaInput, caller: CapaCaller) {
+  const row = await mutateCapa(org, caller, () => transitionCapaTx(org, id, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaTask(org, row, caller.userId);
+  return row;
 }
-export function addCapaAction(org: number, input: AddCapaActionInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => addCapaActionTx(org, { ...input, actor: String(caller.userId) }));
+export async function addCapaAction(org: number, input: AddCapaActionInput, caller: CapaCaller) {
+  const { action, capaCode, auditTrail } = await mutateCapa(org, caller, () => addCapaActionTx(org, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaActionTask(org, action, capaCode, caller.userId);
+  return { ...action, auditTrail };
 }
-export function transitionCapaAction(org: number, id: string, input: UpdateCapaActionInput, caller: CapaCaller) {
-  return mutateCapa(org, caller, () => transitionCapaActionTx(org, id, { ...input, actor: String(caller.userId) }));
+export async function transitionCapaAction(org: number, id: string, input: UpdateCapaActionInput, caller: CapaCaller) {
+  const { action, capaCode, auditTrail } = await mutateCapa(org, caller, () => transitionCapaActionTx(org, id, { ...input, actor: String(caller.userId) }));
+  await scheduleCapaActionTask(org, action, capaCode, caller.userId);
+  return { ...action, auditTrail };
 }
 export function getComplaint(org: number, id: string, caller: CapaCaller) {
   return readCapa(org, caller, () => getComplaintTx(org, id));
