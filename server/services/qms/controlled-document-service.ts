@@ -141,6 +141,22 @@ function qmsRegisterUpdateArgs(body: { title?: string; docNumber?: string; docTy
     'category' in body, body.category ?? null, 'nextReviewDate' in body, body.nextReviewDate ?? null, body.status ?? null];
 }
 
+/* The register fields an edit may change, and their columns (MR-12 Stage 5 step 5). */
+const REGISTER_COLUMNS = { title: 'title', docNumber: 'doc_number', docType: 'doc_type', category: 'category',
+  nextReviewDate: 'next_review_date', status: 'status' } as const;
+const registerValue = (v: unknown): string | null =>
+  v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
+
+/** What the edit changed, field by field, as it stood before and after: the ledger row's record, not the names alone. */
+export function registerChanges(before: Record<string, unknown>, after: Record<string, unknown>): Record<string, { from: string | null; to: string | null }> {
+  const changes: Record<string, { from: string | null; to: string | null }> = {};
+  for (const [field, column] of Object.entries(REGISTER_COLUMNS)) {
+    const from = registerValue(before[column]); const to = registerValue(after[column]);
+    if (from !== to) changes[field] = { from, to };
+  }
+  return changes;
+}
+
 /** Where a send's route and its notices are handed back to the caller, which sends the notices after COMMIT (RR4). */
 export interface QmsSendSink { routeId?: string; notices: TaskEventNotice[] }
 
@@ -201,7 +217,8 @@ export async function updateControlledQmsDocument(ctx: CreateContext, id: number
       next_review_date = CASE WHEN $8 THEN $9::date ELSE next_review_date END, status = COALESCE($10,status), updated_at = NOW()
       WHERE id = $1 AND organization_id = $2 RETURNING *`, qmsRegisterUpdateArgs(body, id, ctx.tenantId));
     await recordGovernedAction(client, { orgId: ctx.tenantId, userId: Number(ctx.actor.id), command: 'transition', target: `qms-document:${id}`,
-      reason: body.reason, payload: { kind: body.status === 'in_review' ? 'send-for-review' : 'update-register', changedFields: Object.keys(body).filter((k) => k !== 'reason') }, domain: 'qms', surface: 'quality' });
+      reason: body.reason, payload: { kind: body.status === 'in_review' ? 'send-for-review' : 'update-register', changedFields: Object.keys(body).filter((k) => k !== 'reason'),
+        changes: registerChanges(row, result.rows[0]) }, domain: 'qms', surface: 'quality' });
     if (route) await sendQmsRouteInto(sink, client, { row: result.rows[0] as QmsDocumentRow, senderId: Number(ctx.actor.id), reason: body.reason, request: route });
     await client.query('COMMIT'); return result.rows[0];
   } catch (error) { await client.query('ROLLBACK').catch(() => undefined); throw error; }
