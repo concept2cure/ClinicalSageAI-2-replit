@@ -1,0 +1,40 @@
+== M1 no re-binding of an edited section (hash alone blocks)
+      Tests  5 failed | 14 passed (19)
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 79ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 91ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 78ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 79ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it 76ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+== M2 no FIGURE_CHANGED (changed figures read as removed)
+      Tests  3 failed | 16 passed (19)
+ FAIL  server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 12ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 69ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 71ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+== M3 removed figure blocks
+      Tests  1 failed | 18 passed (19)
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it 69ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+== M4 issues never block
+      Tests  5 failed | 14 passed (19)
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 80ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 71ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 59ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 72ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯

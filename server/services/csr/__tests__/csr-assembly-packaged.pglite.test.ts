@@ -56,7 +56,8 @@ import { enqueueCsrAssembly, readLatestCsrAssembly, runCsrAssembly } from '../cs
 import { placeCsrAssembly, type CsrPlacementDeps } from '../csr-assembly-placement';
 import { readPdfStructure } from '../csr-pdf-structure';
 import { storeRenderedLeafFile } from '../../ectd/rendered-leaf-files';
-import { getSequence, upsertLeaf } from '../../submission-service/submission-service';
+import { getSequence, removeLeaf, upsertLeaf } from '../../submission-service/submission-service';
+import { readPriorCsrStudyLeaves } from '../csr-placement-lifecycle';
 import { materializeLeafSources, leafSourceKey } from '../../ectd/leaf-source-resolver';
 import { coreLeafFromSubmissionLeaf, mapCoreLeafToEctdLeaf, type SubmissionLeafRow } from '../../ectd/core-to-packager';
 import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
@@ -110,6 +111,8 @@ function realPlacement(failOn?: { title: string }): CsrPlacementDeps {
       if (failOn && String(input.title).includes(failOn.title)) { failOn = undefined; throw new Error('SYNTHETIC: the writer refused this leaf.'); }
       return upsertLeaf(input as unknown as Parameters<typeof upsertLeaf>[0], ctx);
     },
+    removeLeaf: (leafId, sequenceId, ctx, reason) => removeLeaf(leafId, sequenceId, ctx, reason),
+    priorStudyLeaves: (args) => readPriorCsrStudyLeaves(q, args),
   };
 }
 

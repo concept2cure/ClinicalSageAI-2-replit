@@ -1,0 +1,210 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:29:27.540Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:29:27.543Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:29:27.543Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:29:30.211Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 179ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 60ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 54ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 66ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 95ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 71ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 53ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 69ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 58ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 59ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 70ms
+   → expected { status: 'blocked', …(7) } to match object { …(4) }
+(5 matching properties omitted from actual)
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 64ms
+   → expected [ { …(3) }, { …(5) }, { …(6) } ] to deeply equal ArrayContaining{…}
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 56ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it 74ms
+   → expected [ { …(3) }, { …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 66ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked
+AssertionError: expected { status: 'blocked', …(7) } to match object { …(4) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "blockingUnclaimedFigureCount": 0,
+-   "editedSectionCount": 1,
+-   "issueCount": 0,
+-   "status": "reconciled_pending_human_review",
++   "issueCount": 1,
++   "status": "blocked",
+  }
+
+ ❯ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts:195:27
+    193|     await editEfficacy('In the LMN-201 arm, 16/305 (5.2%) subjects ach…
+    194|     const v = await critique();
+    195|     expect(v.csrEvidence).toMatchObject({ status: 'reconciled_pending_…
+       |                           ^
+    196|     expect(issues(v)).toEqual([]);
+    197|     expect(edited(v)).toEqual([expect.objectContaining({ section: '11.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be
+AssertionError: expected [ { …(3) }, { …(5) }, { …(6) } ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   ObjectContaining {
++ [
++   {
++     "code": "SECTION_VERSION_CHANGED",
++     "kind": "csr-evidence-issue",
++     "section": "11.4",
++   },
++   {
+      "cell": {
+        "claimed": "16/305 (5.2%)",
+        "column": 2,
+        "current": "16/305 (5.2%)",
+        "row": 0,
+        "table": "primaryEfficacy",
+      },
+-     "code": "FIGURE_CHANGED",
++     "claimId": "11.4#0",
++     "code": "CLAIM_NOT_STATED",
++     "kind": "csr-evidence-issue",
+      "section": "11.4",
+-     "stated": "18/305 (5.2%)",
++   },
++   {
++     "cell": {
++       "claimed": "16/305 (5.2%)",
++       "column": 2,
++       "current": "16/305 (5.2%)",
++       "row": 0,
++       "table": "primaryEfficacy",
++     },
++     "code": "CROSS_SECTION_CONFLICT",
++     "kind": "csr-evidence-issue",
++     "section": "11.4",
++     "stated": "18/305",
++     "statedIn": [
++       "2",
++     ],
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts:205:23
+    203|     const v = await critique();
+    204|     expect(v.csrEvidence.status).toBe('blocked');
+    205|     expect(issues(v)).toEqual(expect.arrayContaining([
+       |                       ^
+    206|       expect.objectContaining({ section: '11.4', code: 'FIGURE_CHANGED…
+    207|         cell: { table: 'primaryEfficacy', row: 0, column: 2, claimed: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts:223:71
+    221|       expect.objectContaining({ kind: 'csr-unclaimed-figures', section…
+    222|     ]));
+    223|     expect(issues(v).some(i => i.code === 'SECTION_VERSION_CHANGED')).…
+       |                                                                       ^
+    224|     expect(edited(v)).toEqual([expect.objectContaining({ section: '11.…
+    225|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it
+AssertionError: expected [ { …(3) }, { …(5) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "blocking": false,
++     "code": "SECTION_VERSION_CHANGED",
++     "kind": "csr-evidence-issue",
++     "section": "11.4",
++   },
++   {
+      "cell": {
+        "claimed": "16/305 (5.2%)",
+        "column": 2,
+        "current": "16/305 (5.2%)",
+        "row": 0,
+        "table": "primaryEfficacy",
+      },
++     "claimId": "11.4#0",
+      "code": "CLAIM_NOT_STATED",
++     "kind": "csr-evidence-issue",
+      "section": "11.4",
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts:231:23
+    229|     await editEfficacy('Global cure was the primary endpoint (Table 14…
+    230|     const v = await critique();
+    231|     expect(issues(v)).toEqual([expect.objectContaining({ section: '11.…
+       |                       ^
+    232|       cell: { table: 'primaryEfficacy', row: 0, column: 2, claimed: CE…
+    233|     expect(v.csrEvidence.status).toBe('reconciled_pending_human_review…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  15:29:22
+   Duration  24.74s (transform 6.33s, setup 161ms, import 13.60s, tests 9.83s, environment 0ms)
+

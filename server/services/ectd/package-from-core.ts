@@ -223,8 +223,8 @@ function bindWithdrawalToFiledLeaf(
  */
 function bindVaultVersionsToFiledPredecessors<L extends EctdLeafLike>(args: {
   leaves: readonly L[];
-  vaultUuids: readonly string[];
-  predecessors: ReadonlyMap<string, string[]>;
+  /** Each document this sequence names with a recorded predecessor: a Vault version, or a leaf whose row names its parent leaf. */
+  sources: ReadonlyArray<{ key: string; predecessorKeys?: readonly string[] }>;
   prior: readonly PriorLeaf[];
   /** `section/fileName` of each filed leaf this sequence withdraws. */
   withdrawn: ReadonlySet<string>;
@@ -237,17 +237,16 @@ function bindVaultVersionsToFiledPredecessors<L extends EctdLeafLike>(args: {
     args.skipped.push({ sectionCode: leaf.ctdSection, reason: `declared ${leaf.operation}: ${why}` });
     dropped.add(leaf);
   };
-  const sources = args.vaultUuids.map((uuid) => ({ uuid, key: leafSourceKey('vault_documents', null, uuid) }));
   // Each filed leaf a version binds to, with every version binding to it.
   const binders = new Map<PriorLeaf, L[]>();
   for (const leaf of args.leaves) {
     if (leaf.operation === 'delete') continue;
-    const source = sources.find((s) => leafFileCarriesKey(leaf.fileName, s.key));
+    const source = args.sources.find((s) => leafFileCarriesKey(leaf.fileName, s.key));
     const inSection = prior.filter((pl) => pl.ctdSection === leaf.ctdSection);
     if (!source || inSection.some((pl) => pl.fileName === leaf.fileName)) continue;
     const binding = bindToFiledPredecessor(
       inSection.filter((pl) => !args.withdrawn.has(`${pl.ctdSection}/${pl.fileName}`)),
-      args.predecessors.get(source.uuid),
+      source.predecessorKeys,
       (pl, key) => leafFileCarriesKey(pl.fileName, key),
     );
     if (binding.kind === 'ambiguous') {
@@ -270,6 +269,49 @@ function bindVaultVersionsToFiledPredecessors<L extends EctdLeafLike>(args: {
     identity.set(versions[0], target.leafKey);
   }
   return { identity, dropped, prior };
+}
+
+/**
+ * A declared replace or append whose row names its parent leaf in an EARLIER
+ * sequence of this submission (2026-10-30, D2 CSR lifecycle): the parent's
+ * document is the predecessor. A server-rendered leaf (a revised CSR) is a new
+ * document with a new name, so neither its name nor Vault lineage ties it to
+ * the file it supersedes; the parent the author placed it against does. The
+ * parent must be live, in this organization, in an earlier sequence of the same
+ * submission, and not itself a withdrawal. A parent in THIS sequence is not a
+ * filed leaf and binds nothing here, as before.
+ */
+async function readEarlierParentKeys(args: {
+  organizationId: number; submissionId: number; sequenceNumber: string;
+  rows: ReadonlyArray<{ lifecycleOp: string | null; parentLeafId: number | null; documentTable: string | null; documentId: number | null; documentUuid: string | null }>;
+}): Promise<Array<{ key: string; predecessorKeys: string[] }>> {
+  const acts = args.rows.filter((r) => (r.lifecycleOp === 'replace' || r.lifecycleOp === 'append') && r.parentLeafId != null && r.documentTable);
+  if (acts.length === 0) return [];
+  const { rows } = await pool.query(
+    `SELECT l.id, l.document_table, l.document_id, l.document_uuid FROM submission_leaves l
+       JOIN ectd_sequences s ON s.id = l.sequence_id AND s.organization_id = l.organization_id
+      WHERE l.organization_id = $1 AND l.id = ANY($2::int[]) AND l.deleted_at IS NULL AND l.lifecycle_op <> 'delete'
+        AND s.submission_id = $3 AND s.sequence_number < $4 AND s.deleted_at IS NULL AND l.document_table IS NOT NULL`,
+    [args.organizationId, acts.map((r) => r.parentLeafId), args.submissionId, args.sequenceNumber],
+  );
+  const parents = new Map((rows as Array<Record<string, unknown>>).map((p) => [Number(p.id),
+    leafSourceKey(String(p.document_table), p.document_id == null ? null : Number(p.document_id), (p.document_uuid as string | null) ?? null)]));
+  return acts.flatMap((r) => {
+    const parent = parents.get(Number(r.parentLeafId));
+    return parent ? [{ key: leafSourceKey(r.documentTable, r.documentId, r.documentUuid), predecessorKeys: [parent] }] : [];
+  });
+}
+
+/** Every document of this sequence with a recorded predecessor: each Vault version, and each act naming an earlier sequence's leaf. */
+async function lineageSources(
+  vaultUuids: readonly string[],
+  predecessors: ReadonlyMap<string, string[]>,
+  parents: Parameters<typeof readEarlierParentKeys>[0],
+): Promise<Array<{ key: string; predecessorKeys?: readonly string[] }>> {
+  return [
+    ...vaultUuids.map((uuid) => ({ key: leafSourceKey('vault_documents', null, uuid), predecessorKeys: predecessors.get(uuid) })),
+    ...(await readEarlierParentKeys(parents)),
+  ];
 }
 
 /** The packager-input leaf fields the lineage binding reads. */
@@ -479,8 +521,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       }
       const lineage = bindVaultVersionsToFiledPredecessors({
         leaves: input.leaves,
-        vaultUuids,
-        predecessors,
+        sources: await lineageSources(vaultUuids, predecessors, { organizationId, submissionId: submission.id, sequenceNumber: sequence.sequenceNumber, rows: leafRows }),
         prior: prior.leaves,
         withdrawn: new Set(desired.filter((d) => d.withdraw).map((d) => `${d.ctdSection}/${d.fileName}`)),
         skipped,

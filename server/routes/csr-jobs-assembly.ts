@@ -8,7 +8,11 @@
  *   GET  /api/csr/jobs/:jobId/assembly        the newest assembly: status, progress, stage, result
  *   GET  /api/csr/jobs/:jobId/assembly/supply-candidates   the project's current Vault PDFs
  *   GET  /api/csr/jobs/:jobId/assembly/targets             the program's open sequences
- *   POST /api/csr/jobs/:jobId/assembly/:assemblyId/place   { sequenceId, reason } → leaves placed
+ *   POST /api/csr/jobs/:jobId/assembly/:assemblyId/place   { sequenceId, reason, keepOnFile?, withdraw? } → leaves placed
+ *   GET  /api/csr/jobs/:jobId/assembly/:assemblyId/lifecycle?sequenceId=  each file's operation (new, or
+ *        replace of the study's earlier file) and the earlier files left out, before placing; writes nothing
+ *   POST /api/csr/jobs/:jobId/assembly/:assemblyId/withdraw-placement  { reason } → the partly placed files
+ *        removed from their still-open sequence (csr-placement-withdraw.ts)
  *
  * Access is the job's project, checked now as the signed-in user (write for
  * the two POSTs). The assembly itself runs off the request thread
@@ -22,7 +26,9 @@ import { CsrScopeError, requireCsrJobAccess } from '../services/csr/project-scop
 import {
   CsrAssemblyRunError, enqueueCsrAssembly, readCsrJobBinding, readLatestCsrAssembly, startCsrAssembly,
 } from '../services/csr/csr-assembly-run.js';
-import { listCsrPlacementTargets, placeCsrAssembly, type CsrPlacementDeps } from '../services/csr/csr-assembly-placement.js';
+import { listCsrPlacementTargets, placeCsrAssembly, previewCsrPlacementLifecycle, type CsrPlacementDeps } from '../services/csr/csr-assembly-placement.js';
+import { readPriorCsrStudyLeaves } from '../services/csr/csr-placement-lifecycle.js';
+import { withdrawPartialCsrPlacement } from '../services/csr/csr-placement-withdraw.js';
 import { listSuppliedCandidates } from '../services/csr/csr-assembly-supply.js';
 
 const log = createScopedLogger('csr-jobs-assembly');
@@ -43,10 +49,12 @@ function requireDb(): NonNullable<typeof db> {
 const q = () => queryableFromDrizzle(requireDb());
 
 async function defaultPlacementDeps(): Promise<CsrPlacementDeps> {
-  const { getSequence, upsertLeaf } = await import('../services/submission-service/submission-service.js');
+  const { getSequence, upsertLeaf, removeLeaf } = await import('../services/submission-service/submission-service.js');
   return {
     getSequence: (id, ctx) => getSequence(id, ctx),
     upsertLeaf: (input, ctx) => upsertLeaf(input as unknown as Parameters<typeof upsertLeaf>[0], ctx),
+    removeLeaf: (leafId, sequenceId, ctx, reason) => removeLeaf(leafId, sequenceId, ctx, reason),
+    priorStudyLeaves: (args) => readPriorCsrStudyLeaves(q(), args),
     submissionProgram: async (submissionId, organizationId) => {
       const { rows } = await q().query(`SELECT program_id::text AS program_id, title FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [submissionId, organizationId]);
       return rows[0] ? { programId: rows[0].program_id ?? null, title: String(rows[0].title) } : null;
@@ -118,9 +126,33 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
       const sequenceId = h.parseJobIdParam((req.body ?? {}).sequenceId);
       if (assemblyId == null || sequenceId == null) return res.status(400).json({ error: 'Choose an assembly and a sequence.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
       const deps = await (h.placementDeps ?? defaultPlacementDeps)();
-      const placement = await placeCsrAssembly(q(), deps, { ...s, assemblyId, sequenceId, reason: (req.body ?? {}).reason });
+      const placement = await placeCsrAssembly(q(), deps, { ...s, assemblyId, sequenceId, reason: (req.body ?? {}).reason,
+        keepOnFile: (req.body ?? {}).keepOnFile, withdraw: (req.body ?? {}).withdraw });
       return res.json({ placement });
     } catch (err) { return sendError(res, err, 'place the CSR files', { jobId: req.params.jobId }); }
+  });
+
+  router.get('/:jobId/assembly/:assemblyId/lifecycle', async (req, res) => {
+    try {
+      const s = await scope(req, res, false);
+      if (!s) return;
+      const assemblyId = h.parseJobIdParam(req.params.assemblyId);
+      const sequenceId = h.parseJobIdParam(req.query.sequenceId);
+      if (assemblyId == null || sequenceId == null) return res.status(400).json({ error: 'Choose an assembly and a sequence.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
+      const deps = await (h.placementDeps ?? defaultPlacementDeps)();
+      return res.json({ lifecycle: await previewCsrPlacementLifecycle(q(), deps, { ...s, assemblyId, sequenceId }) });
+    } catch (err) { return sendError(res, err, 'read what the CSR files replace', { jobId: req.params.jobId }); }
+  });
+
+  router.post('/:jobId/assembly/:assemblyId/withdraw-placement', async (req, res) => {
+    try {
+      const s = await scope(req, res, true);
+      if (!s) return;
+      const assemblyId = h.parseJobIdParam(req.params.assemblyId);
+      if (assemblyId == null) return res.status(400).json({ error: 'Choose an assembly.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
+      const deps = await (h.placementDeps ?? defaultPlacementDeps)();
+      return res.json({ placement: await withdrawPartialCsrPlacement(q(), deps, { ...s, assemblyId, reason: (req.body ?? {}).reason }) });
+    } catch (err) { return sendError(res, err, 'withdraw the partly placed CSR files', { jobId: req.params.jobId }); }
   });
 
   return router;
