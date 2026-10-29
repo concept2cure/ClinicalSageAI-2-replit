@@ -109,8 +109,14 @@ export async function readQmsTrainingExpiring(
     }
   }
   if (out.length === 0) return [];
-  // Names only for the people listed; coverage reads no name.
-  const named = await client.query(`SELECT id, name FROM users WHERE id = ANY($1::int[])`, [[...new Set(out.map(r => r.userId))]]);
+  // Names only for the people listed, and only as this organization's members
+  // (every one is, from the roster above); coverage reads no name.
+  const named = await client.query(
+    `SELECT u.id, u.name FROM users u
+       JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $2
+      WHERE u.id = ANY($1::int[])`,
+    [[...new Set(out.map(r => r.userId))], organizationId],
+  );
   const names = new Map(named.rows.map(row => [Number(row.id), typeof row.name === 'string' ? row.name : null]));
   return out.map(r => ({ ...r, userName: names.get(r.userId) ?? null }))
     .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt) || a.docNumber.localeCompare(b.docNumber));
