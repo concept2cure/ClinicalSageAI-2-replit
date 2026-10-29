@@ -75,7 +75,7 @@ Writing, revising or quality-checking any regulatory or scientific document: pro
    - \`critique_draft\` runs grounding, in-document consistency, readability, abbreviation, claims-language and structure checks and returns a revision brief; revise against it, then confirm with \`verify_revision\` that the revision improved and introduced nothing new.
    - \`critique_document\` does the same across a whole saved multi-section document.
    - \`medical_writing_review\` checks headings against the document type's outline; heading coverage is not completeness.
-   - \`check_numerical_integrity\` finds one labelled quantity stated two ways in a document; \`check_dossier_consistency\` compares a draft with the project's other artifacts; \`check_consistency\` records figure-level comparisons for a submission in Submission Center.
+   - \`check_numerical_integrity\` finds one labelled quantity stated two ways in a document; \`check_dossier_consistency\` compares a draft with the project's other artifacts; \`check_consistency\` records figure-level comparisons between saved sections of a submission, named by section id, in Submission Center.
    - \`validate_cross_references\` checks that CTD section references resolve to a section that exists.
    - \`build_abbreviation_list\` returns the abbreviation table and the abbreviations left undefined.
    - \`assess_readability\` scores reading level against the audience.

@@ -400,7 +400,7 @@ export const TRACE_PROVENANCE: AnaTool = {
 export const CHECK_CONSISTENCY: AnaTool = {
   name: 'check_consistency',
   description:
-    'Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.',
+    'Compare the labelled figures in a saved section (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other saved sections of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. Name each part by its authoring section_id; the engine reads its saved text. Text in the call is never compared. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context, and every section must be in the submission\'s project; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
@@ -408,14 +408,14 @@ export const CHECK_CONSISTENCY: AnaTool = {
       dimension: { type: 'string', description: 'What is being checked, recorded with each finding, e.g. "subject-counts".' },
       left: {
         type: 'object',
-        description: 'The claim under review.',
-        properties: { ref: { type: 'string' }, text: { type: 'string' } },
-        required: ['ref', 'text'],
+        description: 'The saved section that makes the claim under review.',
+        properties: { section_id: { type: 'string', description: 'The authoring section id.' } },
+        required: ['section_id'],
       },
       right: {
         type: 'array',
-        description: 'The sources to check against.',
-        items: { type: 'object', properties: { ref: { type: 'string' }, text: { type: 'string' } }, required: ['ref', 'text'] },
+        description: 'The saved sections to check against.',
+        items: { type: 'object', properties: { section_id: { type: 'string', description: 'The authoring section id.' } }, required: ['section_id'] },
       },
     },
     required: ['submission_id', 'dimension', 'left', 'right'],

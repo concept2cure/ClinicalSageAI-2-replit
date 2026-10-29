@@ -8,7 +8,11 @@
  *    deterministic reconciliation engine (figure-consistency.ts), persisting
  *    verdicts into consistency_findings, audited. Until 2026-10-01 a model
  *    labelled each pair match/conflict and its JSON was persisted as the
- *    verdict (CLAUDE.md Rule 2).
+ *    verdict (CLAUDE.md Rule 2). Until 2026-10-29 it compared whatever text the
+ *    caller sent, so a finding recorded against a submission could describe
+ *    text that was not in it. It now takes saved authoring sections by id and
+ *    reads their text here, under the tenant and the submission's project
+ *    (slice G4, docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md).
  *  - listConsistencyFindings: tenant-scoped read of stored findings.
  *
  * All reads/writes are tenant-scoped from the caller's organizationId; the
@@ -17,7 +21,7 @@
  * @module server/services/truth-engine/truth-engine-service
  */
 
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions } from '../../../shared/schema';
 import { submissionEvidenceLinks, consistencyFindings } from '../../../shared/schema/evidence';
@@ -26,6 +30,7 @@ import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { compareLabelledFigures, type FigureNotCompared } from './figure-consistency';
+import { htmlToPlainText } from '../ectd/leaf-pdf-renderer';
 
 const logger = createScopedLogger('truth-engine-service');
 
@@ -44,13 +49,15 @@ export interface TruthCtx {
   userId: number;
 }
 
-async function assertOwnedSubmission(submissionId: number, organizationId: number): Promise<void> {
+/** The submission, in this organization; its project scopes what a check may read. */
+async function assertOwnedSubmission(submissionId: number, organizationId: number): Promise<{ programId: string | null }> {
   const [row] = await db
-    .select({ id: submissions.id })
+    .select({ id: submissions.id, programId: submissions.programId })
     .from(submissions)
     .where(and(eq(submissions.id, submissionId), eq(submissions.organizationId, organizationId), isNull(submissions.deletedAt)))
     .limit(1);
   if (!row) throw new TruthEngineError('NOT_FOUND', 'Submission not found for this organization.');
+  return { programId: (row as { programId?: string | null }).programId ?? null };
 }
 
 // ── Provenance (deterministic read) ─────────────────────────────────────────
@@ -84,12 +91,48 @@ export async function traceProvenance(
 
 // ── Consistency check (deterministic + persistence) ─────────────────────────
 
+/** A saved part of the dossier, named by its authoring section id. Its text is
+ *  read here, never taken from the caller. */
+export interface ConsistencyRef { sectionId: string }
+
 export interface RunConsistencyCheckParams {
   submissionId: number;
   /** What the caller is checking, recorded with each finding. */
   dimension: string;
-  left: { ref: string; text: string };
-  right: Array<{ ref: string; text: string }>;
+  left: ConsistencyRef;
+  right: ConsistencyRef[];
+}
+
+/**
+ * The saved text of each named section, with the reference a finding records.
+ * Tenant-scoped on both the section and its document. A section whose document
+ * belongs to another project than the submission's is refused, as is one that
+ * does not exist here: a finding must describe this submission's own text.
+ */
+async function readSavedSections(
+  ids: string[], organizationId: number, programId: string | null,
+): Promise<Map<string, { ref: string; text: string }>> {
+  const unique = [...new Set(ids)];
+  const res = await db.execute(sql`
+    SELECT s.id::text AS id, s.code, s.title, s.content, to_jsonb(d)->>'client_program_id' AS program_id
+      FROM authoring_sections s
+      JOIN authoring_documents d ON d.id = s.doc_id
+     WHERE s.id::text IN (${sql.join(unique.map((id) => sql`${id}`), sql`, `)})
+       AND s.tenant_id = ${organizationId} AND d.tenant_id = ${organizationId}`);
+  const rows = ((res as { rows?: unknown[] }).rows ?? (Array.isArray(res) ? res : [])) as Array<{
+    id: string; code: string | null; title: string | null; content: string | null; program_id: string | null;
+  }>;
+  const out = new Map<string, { ref: string; text: string }>();
+  for (const r of rows) {
+    if (programId && r.program_id && r.program_id !== programId) {
+      throw new TruthEngineError('NOT_FOUND', `Section ${r.id} is not in this submission's project.`);
+    }
+    const label = [r.code, r.title].filter(Boolean).join(' ') || 'Untitled section';
+    out.set(r.id, { ref: `${label} [${r.id}]`, text: htmlToPlainText(r.content ?? '').trim() });
+  }
+  const missing = unique.filter((id) => !out.has(id));
+  if (missing.length) throw new TruthEngineError('NOT_FOUND', `Section ${missing.join(', ')} was not found in this organization.`);
+  return out;
 }
 
 export interface ConsistencyCheckResult {
@@ -113,9 +156,15 @@ export async function runConsistencyCheck(
   params: RunConsistencyCheckParams,
   ctx: TruthCtx
 ): Promise<ConsistencyCheckResult> {
-  await assertOwnedSubmission(params.submissionId, ctx.organizationId);
+  const { programId } = await assertOwnedSubmission(params.submissionId, ctx.organizationId);
+  const saved = await readSavedSections(
+    [params.left.sectionId, ...params.right.map((r) => r.sectionId)], ctx.organizationId, programId,
+  );
+  const left = saved.get(params.left.sectionId)!;
+  if (!left.text) throw new TruthEngineError('NOT_FOUND', `The claim section ${params.left.sectionId} has no saved text to compare.`);
+  const right = params.right.map((r) => saved.get(r.sectionId)!);
 
-  const { findings, notCompared } = compareLabelledFigures(params.left, params.right);
+  const { findings, notCompared } = compareLabelledFigures(left, right);
   const inserted: ConsistencyFinding[] = [];
   for (const f of findings) {
     const [row] = await db
@@ -144,6 +193,8 @@ export async function runConsistencyCheck(
       task: 'consistency-check',
       engine: 'dossier-number-reconciliation',
       dimension: params.dimension,
+      claimSection: params.left.sectionId,
+      sourceSections: params.right.map((r) => r.sectionId),
       findingCount: inserted.length,
       conflicts: inserted.filter((f) => f.status === 'conflict').length,
       notCompared: notCompared.length,
