@@ -1,0 +1,7 @@
+# ind-information-amendment-identified.test.ts (new), against HEAD
+ × server/services/ind-lifecycle/__tests__/ind-information-amendment-identified.test.ts > the amendment plan names its 312.31(b) contents > a clinical study report is an information amendment: Clinical, filed in Module 5.3 with its placement to confirm
+ × server/services/ind-lifecycle/__tests__/ind-information-amendment-identified.test.ts > the amendment plan names its 312.31(b) contents > each content category gives its own title, once, and a protocol amendment gives none
+ × server/services/ind-lifecycle/__tests__/ind-information-amendment-identified.test.ts > the cover letter identifies an information amendment by its contents > says "Information Amendment: Clinical" when the plan says so
+ × server/services/ind-lifecycle/__tests__/ind-information-amendment-identified.test.ts > the cover letter identifies an information amendment by its contents > names the gap when no contents are stated, and accepts no title the regulation does not give
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)
