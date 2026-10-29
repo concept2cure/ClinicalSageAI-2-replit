@@ -1,0 +1,56 @@
+# What PostgreSQL itself does with the CMC routes' statements, on a real server.
+#
+# Server: the local dev database `clinicalsage` (PostgreSQL 16.15), provisioned by
+# the deploy set. Run 2026-10-29 as one transaction that was ROLLED BACK, so
+# nothing was left behind (last line). The statements are the head handlers' own
+# shape: SELECT/UPDATE projects by id alone, no organization predicate. The
+# set_config line is what server/db/poolInstrumentation.ts applies for org A's
+# request under RLS_ENFORCE=on; the "off" rows unpin enforcement as every
+# non-production environment runs (RLS_ENFORCE unset, server/db/rlsEnforcement.ts).
+
+## Catalog posture, read only (relname | RLS | FORCE | owner | owner superuser | owner bypassrls)
+project_tasks|t|t|c2c|f|f
+projects|t|t|c2c|f|f
+## Policies (both tables): tenant_isolation_policy, PERMISSIVE, ALL, the sweep's text:
+##   NULLIF(current_setting('app.rls_enforce', true), '') IS DISTINCT FROM 'on'
+##   OR organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::int
+##   OR organization_id = substring(current_setting('app.current_org_id', true) from '^[0-9]+$')::int
+##   OR current_setting('app.current_user_role', true) = 'app_super_admin'
+
+## Transcript (psql -h /tmp -U postgres -d clinicalsage -v ON_ERROR_STOP=1 -At)
+-- real PostgreSQL, the dev database provisioned by the deploy set; one transaction, rolled back
+server 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+BEGIN
+INSERT 0 1
+INSERT 0 1
+SET
+runtime role: c2c, superuser=false, bypassrls=false
+RLS_ENFORCE=on  org A scope: GET  select of org B project -> rows=0
+RLS_ENFORCE=on  org A scope: PUT  update of org B project -> rows=0
+RLS_ENFORCE=off org A scope: GET  select of org B project -> rows=1 substance=Org B confidential API
+RLS_ENFORCE=off org A scope: PUT  update of org B project -> rows=1
+ROLLBACK
+after ROLLBACK, demo rows left: 0
+
+## The script (inserts two organizations, a workspace and a project for org B,
+## then SET LOCAL ROLE c2c and the four statements above, then ROLLBACK)
+BEGIN;
+WITH a AS (INSERT INTO organizations (name, slug) VALUES ('d6-demo-org-a', 'd6-demo-org-a-' || txid_current()) RETURNING id),
+     b AS (INSERT INTO organizations (name, slug) VALUES ('d6-demo-org-b', 'd6-demo-org-b-' || txid_current()) RETURNING id)
+SELECT set_config('demo.org_a', (SELECT id FROM a)::text, true), set_config('demo.org_b', (SELECT id FROM b)::text, true) \gset
+INSERT INTO client_workspaces (organization_id, name, slug)
+  VALUES (current_setting('demo.org_b')::int, 'd6 demo ws b', 'd6-demo-ws-b-' || txid_current());
+INSERT INTO projects (organization_id, client_workspace_id, name, type, metadata)
+  SELECT current_setting('demo.org_b')::int, id, 'd6 demo org B project', 'regulatory',
+         '{"cmcDrugSubstance":{"substanceName":"Org B confidential API"}}'::json
+    FROM client_workspaces WHERE slug = 'd6-demo-ws-b-' || txid_current();
+SELECT set_config('demo.project_b', (SELECT max(id) FROM projects WHERE name = 'd6 demo org B project')::text, true) \gset
+SET LOCAL ROLE c2c;
+SELECT set_config('app.current_tenant_id', current_setting('demo.org_a'), true), set_config('app.current_org_id', '', true),
+       set_config('app.current_user_role', 'member', true), set_config('app.rls_enforce', 'on', true) \gset
+SELECT count(*) FROM projects WHERE id = current_setting('demo.project_b')::int;
+WITH u AS (UPDATE projects SET metadata = '{"cmcDrugSubstance":{"substanceName":"written by org A"}}'::json
+           WHERE id = current_setting('demo.project_b')::int RETURNING 1) SELECT count(*) FROM u;
+SELECT set_config('app.rls_enforce', '', true) \gset
+-- the same two statements again
+ROLLBACK;

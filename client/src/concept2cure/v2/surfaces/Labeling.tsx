@@ -4,7 +4,8 @@ import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect
 import { readRefusalOf } from '../../mdx/hooks/useFetchJson';
 import { ReadRefused, unreadContext, unreadSentence } from '../projectScopedRead';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
-import { TranslationApprovalDialog, TranslationStepControl, translationStepActions } from './LabelingTranslationApproval';
+import { TranslationApprovalDialog, translationStepActions } from './LabelingTranslationApproval';
+import { LabelingDocumentSignature, TranslationRow, useLabelingSignatures, withLabelingSignatures } from './LabelingSignatures';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -238,6 +239,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       setTrans(seedTrans);
     }
   }, [seedTrans]);
+  /* Whether each signature still binds the label it signed, and whether the
+     signed-in user may sign each translation's approval: GET
+     /api/mdx/labeling/:id, read again after a translation is added or an
+     approval signed here (LabelingSignatures.tsx; D5, 2026-10-29). */
+  const sigs = useLabelingSignatures(docId, reads);
 
   const [tForm, setTForm] = useState(false);
   /** The translation in review whose signed approval is open, if any. */
@@ -275,6 +281,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       const adopted = mapLabelTranslations([envRow(json)])?.[0];
       if (!adopted) { fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
       setTrans(ts => [...ts.filter(t => t.id !== adopted.id && t.language !== adopted.language), { ...adopted, _new: true }]);
+      sigs.refresh();
       setTForm(false);
       fire('Translation ' + language + ' saved · status Pending');
     } catch (e) {
@@ -324,8 +331,6 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
-
   /* What AnA can see of this screen.
      The three reads here are chained — no labeling document means no symbols and
      no translations — so "there is no document" has to be published as itself.
@@ -351,7 +356,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       acc[t.status] = (acc[t.status] ?? 0) + 1;
       return acc;
     }, {});
-    return {
+    return withLabelingSignatures({
       summary:
         `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
         (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
@@ -394,8 +399,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
       },
       availableActions: [...translationStepActions(canWrite), 'Read the symbol set and what each symbol is required by'],
-    };
-  }, [programId, openProject, docsLive.loading, docsLive.error, docsRefusal, docRow, kindLabel, trans, transState.loading, transState.error, transRefusal, symbolsLive.loading, symbolsLive.error, symbolsRefusal, symbolsLive.rows, canWrite]);
+    }, { sigs, docStatus: docRow.status, trans, canWrite });
+  }, [programId, openProject, docsLive.loading, docsLive.error, docsRefusal, docRow, kindLabel, trans, transState.loading, transState.error, transRefusal, symbolsLive.loading, symbolsLive.error, symbolsRefusal, symbolsLive.rows, canWrite, sigs]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
@@ -541,6 +546,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
         />
       ) : (
         <>
+          <LabelingDocumentSignature status={docRow.status} sigs={sigs} />
           <AnswerLead
             tone={cov.total > 0 && cov.approved === cov.total ? 'good' : 'calm'}
             eyebrow="Where the label package stands right now"
@@ -669,17 +675,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
                 />
               ) : (
                 trans.map(t => (
-                  <div key={t.id} className="ct-row" style={{ gridTemplateColumns: '1.4fr 1fr 0.9fr 120px', alignItems: 'center' }} data-fresh={t._new || undefined}>
-                    <div className="vn"><span className="ct-strong">{t.name}</span> <span className="mono" style={{ fontSize: 11, color: 'var(--text-400)' }}>{t.language}</span></div>
-                    <div style={{ fontSize: 12, color: 'var(--text-300)' }}>
-                      {(EN.method.find(m => m[0] === t.method) || [])[1] || t.method}
-                      {t.btv && <span className="rd-chip tone-ok" style={{ marginLeft: 6, fontSize: 9 }}>back-trans verified</span>}
-                    </div>
-                    <div><span className={`rd-chip tone-${tTone[t.status] || 'idle'}`}>{(EN.transStatus.find(s => s[0] === t.status) || [])[1] || t.status}</span></div>
-                    <div style={{ textAlign: 'right' }}>
-                      <TranslationStepControl status={t.status} canWrite={canWrite} onApprove={() => setApproving(t)} onAdvance={() => advTrans(t.id)} />
-                    </div>
-                  </div>
+                  <TranslationRow key={t.id} t={t} sigs={sigs} canWrite={canWrite} onApprove={() => setApproving(t)} onAdvance={() => advTrans(t.id)} />
                 ))
               )}
             </div>
@@ -694,6 +690,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
               onSigned={(row) => {
                 const adopted = mapLabelTranslations([row])?.[0];
                 setTrans(ts => ts.map(t => (t.id === approving.id ? (adopted ?? { ...t, status: 'approved' }) : t)));
+                sigs.refresh();
                 fire('Translation ' + approving.language + ' approved and signed');
               }}
             />

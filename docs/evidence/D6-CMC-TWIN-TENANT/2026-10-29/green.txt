@@ -1,0 +1,78 @@
+# GREEN after the fix: server/routes/c2c/program-twin.ts admitted + organization predicates
+# npx vitest run server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts server/routes/c2c/__tests__/c2c-router.parity.test.ts
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > projects and project_tasks are RLS-enabled, FORCEd and policied by the set, and the runtime role is not exempt 32ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > is the layer that decides at head: on, org A cannot see org B’s project; off, it can (the negative control) 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/cmc answers 404 and supplies none of its CMC data 52ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > PUT …/cmc answers 404 and leaves its record exactly as it was 41ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/context answers 404 and names none of its tasks 32ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/program-twin answers 404 34ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/change-impact answers 404 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/transform-context answers 404 29ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/artifacts/art_1/verification answers 404 32ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/cmc answers 404 and supplies none of its CMC data 32ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > PUT …/cmc answers 404 and leaves its record exactly as it was 35ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/context answers 404 and names none of its tasks 30ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/program-twin answers 404 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/change-impact answers 404 30ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/transform-context answers 404 33ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/artifacts/art_1/verification answers 404 30ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot read its CMC data or context 55ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot write its CMC data 40ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer can read the CMC data and cannot write it 45ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member without edit permission on the project cannot write it 41ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project takes no CMC write 39ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > the project’s owner reads, writes and reads back its CMC data and context 79ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the membership read fails, GET and PUT answer 503 and nothing is supplied or written 30ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the project read fails, GET and PUT answer 503 and nothing is supplied or written 44ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/cmc (projects) 34ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > PUT …/cmc (projects) 38ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks) 35ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/program-twin (concept2cure_signatures|concept2cure_review_comments) 43ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/verification (concept2cure_signatures|concept2cure_review_comments) 41ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > a task row keyed to this project id under another organization is not in its context 33ms
+{
+  "timestamp": "2026-10-29T12:12:26.895Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stdout | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-10-29T12:12:28.779Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T12:12:28.780Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+{
+  "timestamp": "2026-10-29T12:12:28.780Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 2416ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 1811ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 18ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 12ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 32ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 483ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 47ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > HAQ session persistence lives in one router > the haq-sessions router answers every HAQ path, and the main router none 12ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 4ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 115ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 16ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 10ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 43ms
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  12:12:20
+   Duration  10.72s (transform 3.92s, setup 77ms, import 2.10s, tests 8.23s, environment 0ms)

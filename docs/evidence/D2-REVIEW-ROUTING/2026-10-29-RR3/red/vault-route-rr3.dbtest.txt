@@ -1,0 +1,39 @@
+# Before RR3's server change (review-route*.ts, document-lifecycle-review-route.ts, my-work.ts stashed; at 792ebe834):
+# tests/db/review-route-vault-rr3.dbtest.ts as app_service with RLS_ENFORCE=on on a fresh deploy-shaped database
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names 9399ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot 253ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete 172ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered 324ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > without a reason (REASON_REQUIRED) 9ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > by someone who is neither the sender nor an administrator 7ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a member who has signed 8ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a task that is not on this route 6ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > the reassigning actor naming themselves 6ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > an author of the version 17ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > a reviewer of this content named as the approver 8ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > someone already named on this route 12ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > another organization's account 7ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > from another organization: the version is not found 7ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned 279ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs 170ms
+ × tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization 133ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 200 // Object.is equality
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+AssertionError: expected undefined to be 'MEMBER_ALREADY_NAMED' // Object.is equality
+AssertionError: {}: expected 404 to be 400 // Object.is equality
+AssertionError: {}: expected 404 to be 403 // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: expected undefined to be 'ROUTE_MEMBER_NOT_FOUND' // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: expected undefined to be 'not_found' // Object.is equality
+AssertionError: {}: expected 404 to be 409 // Object.is equality
+AssertionError: {}: expected 404 to be 400 // Object.is equality
+AssertionError: expected 404 to be 403 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  17 failed (17)

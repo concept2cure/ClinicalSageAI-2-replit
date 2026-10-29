@@ -1,0 +1,52 @@
+# Green: the new tests and the keep-green suites, working tree at 6b70fd0a4 + this change, 2026-10-29T11:35:20Z.
+# Client: timeout 580 npx vitest run client/src/concept2cure/v2/__tests__/signedContentState.test.tsx client/src/concept2cure/v2/__tests__/labeling client/src/concept2cure/v2/__tests__/risk client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface client/src/concept2cure/mdx/__tests__/engineering
+# Each line: the number of passing tests in that file (no line starts with ×: none failed).
+
+1       Tests  239 passed (239)
+1  Test Files  28 passed (28)
+3  ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+1  ✓ client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx
+13  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+18  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx
+5  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+18  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+3  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx
+10  ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx
+3  ✓ client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx
+2  ✓ client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx
+9  ✓ client/src/concept2cure/v2/__tests__/labelingMapping.test.ts
+12  ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx
+2  ✓ client/src/concept2cure/v2/__tests__/labelingPiSplShowsWhatWasNotStated.test.tsx
+6  ✓ client/src/concept2cure/v2/__tests__/labelingPiZeroState.test.tsx
+4  ✓ client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx
+6  ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx
+11  ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx
+28  ✓ client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx
+11  ✓ client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx
+4  ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+4  ✓ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx
+8  ✓ client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx
+5  ✓ client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+5  ✓ client/src/concept2cure/v2/__tests__/riskAndDialogA11y.test.tsx
+6  ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx
+12  ✓ client/src/concept2cure/v2/__tests__/riskMapping.test.ts
+10  ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx
+20  ✓ client/src/concept2cure/v2/__tests__/signedContentState.test.tsx
+
+# Server: timeout 580 npx vitest run server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts server/__tests__/routes/content-digest-binders.pglite.test.ts server/services/part11/__tests__/labeling-risk-content-binders.test.ts server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts server/routes/__tests__/labeling-translations-shape.test.ts server/services/governance/__tests__/separation-of-duties.test.ts tests/mdx-qms-labeling-search-analytics-routes.test.ts tests/mdx-beta-surfaces-routes.test.ts
+
+1       Tests  322 passed (322)
+1  Test Files  11 passed (11)
+16  ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts
+54  ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+7  ✓ server/__tests__/routes/mdx-labeling-approval-signer.pglite.test.ts
+24  ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+24  ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+33  ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+3  ✓ server/routes/__tests__/labeling-translations-shape.test.ts
+32  ✓ server/services/governance/__tests__/separation-of-duties.test.ts
+74  ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+27  ✓ tests/mdx-beta-surfaces-routes.test.ts
+28  ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts
+
+# Total: 39 files, 561 tests, all green (client 28 / 239, server 11 / 322).

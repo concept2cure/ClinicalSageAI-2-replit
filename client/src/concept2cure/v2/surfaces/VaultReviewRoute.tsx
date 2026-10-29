@@ -18,7 +18,13 @@
  *     (the end of each day in the sender's time zone, which it names) and the
  *     reason. Send stays disabled, and says why, until all of them are given.
  *     At a phone's width it is a sheet.
- *   - RouteActDialog: Withdraw and Return for revision, each with a reason.
+ *   - RouteActDialog: Withdraw, Return for revision and (RR3) Hand back, each
+ *     with a reason.
+ *   - RR3: the sender, or an administrator, reassigns a member who has not
+ *     signed (ReassignDialog: a sheet with the people the reassignment would
+ *     admit, …/route-candidates/:vaultId?for=reassign, and a reason); a
+ *     member hands their own assignment back; the round shows the naming
+ *     history by printed name (RouteHistory).
  *
  * Nothing here decides who may sign: the route and its verified signatures do,
  * on the server, which refuses anyone else before the credential.
@@ -27,10 +33,12 @@ import React, { useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
-import { useLiveData, type ShapeGuard } from '../dataConnect';
 import { DueDateField, PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } from '../editor/reviewFields';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { lifecyclePost } from './vaultLifecyclePost';
+import { useRouteCandidates, type RouteCandidateView } from './vaultRouteCandidates';
+import { list, nameOf, utc, utcClock } from './vaultRouteText';
+import { ReassignDialog, RouteHistory } from './VaultRouteReassign';
 
 // ── The round, as the server reads it (RouteRound, review-route-standing.ts) ──
 
@@ -60,11 +68,24 @@ export interface RouteHeaderView {
   approvalDueAt: string;
   createdAt: string;
 }
+export interface RouteHistoryEntryView {
+  action: 'send' | 'reassign' | 'hand-back' | 'withdraw' | 'return';
+  at: string;
+  actorId: number;
+  actorName: string | null;
+  reason: string | null;
+  role?: 'reviewer' | 'approver';
+  fromName?: string | null;
+  toName?: string | null;
+  members?: Array<{ userId: number; role: 'reviewer' | 'approver'; printedName: string | null }>;
+}
 export interface RouteRoundView {
   route: RouteHeaderView;
   members: RouteMemberView[];
   reviewComplete: boolean;
   approvalComplete: boolean;
+  /** The naming history (RR3): every send, reassignment, hand-back, withdrawal and return, oldest first. */
+  history?: RouteHistoryEntryView[];
 }
 
 /** What the version's route means for what it offers. */
@@ -91,17 +112,6 @@ export function routeView(lc: { stage?: string; round?: RouteRoundView | null; r
 
 // ── What the round says ──────────────────────────────────────────────────────
 
-const utc = (iso: string | null | undefined): string => {
-  const d = iso ? new Date(iso) : null;
-  return d && !Number.isNaN(d.getTime()) ? `${d.toISOString().slice(0, 19).replace('T', ' ')} UTC` : 'time not recorded';
-};
-const utcClock = (iso: string): string => {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : `${d.toISOString().slice(11, 16)} UTC`;
-};
-const nameOf = (m: RouteMemberView) => m.printedName ?? `Account #${m.userId}`;
-const list = (names: string[]) => (names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
-
 /** Who closed a route, by the names the route holds; an administrator otherwise. */
 function closedBy(round: RouteRoundView): string {
   const by = round.route.statusBy;
@@ -124,18 +134,35 @@ export function memberLine(m: RouteMemberView, round: RouteRoundView): string {
     return `${m.signature.printedName ?? nameOf(m)} · ${role} · ${what} · meaning: ${m.signature.meaning.toLowerCase()} · ${utc(m.signature.signedAt)}`;
   }
   if (m.outcome === 'returned') return `${nameOf(m)} · ${role} · Returned it for revision`;
+  if (m.outcome === 'handed back') return `${nameOf(m)} · ${role} · Handed it back to the sender, who reassigns it`;
   if (round.route.status !== 'open') return `${nameOf(m)} · ${role} · Did not sign`;
   const due = m.dueDate ? ` · due ${utc(m.dueDate)}` : '';
   if (!m.stepOpen) return `${nameOf(m)} · ${role} · Waits for the review${due}`;
   return `${nameOf(m)} · ${role} · Waiting for their ${m.role === 'reviewer' ? 'review' : 'approval'}${due}`;
 }
 
-/** The round in one sentence, for the person reading it. */
-export function routeHeadline(round: RouteRoundView, meId: number | null): string {
+/** A closed route in one sentence: who returned or withdrew it and why, or that it is approved. */
+function closedHeadline(round: RouteRoundView): string {
   const r = round.route;
   if (r.status === 'returned') return `Returned by ${closedBy(round)}: ${r.statusReason ?? 'no reason recorded'}`;
   if (r.status === 'withdrawn') return `Withdrawn by ${closedBy(round)} on ${utc(r.statusAt)}: ${r.statusReason ?? 'no reason recorded'}`;
-  if (r.status === 'complete') return 'Approved: every named reviewer and the approver signed.';
+  return 'Approved: every named reviewer and the approver signed.';
+}
+
+/** A hand-back, said to the member who handed back and to the sender who reassigns it (RR3); null for anyone else. */
+function handedBackHeadline(round: RouteRoundView, meId: number | null): string | null {
+  const handed = round.members.filter((m) => m.outcome === 'handed back');
+  if (handed.some((m) => m.userId === meId)) return `You handed this back; waiting for ${round.route.senderName} to reassign it.`;
+  if (handed.length === 0 || meId !== round.route.senderId) return null;
+  const one = handed.length === 1;
+  return `${list(handed.map(nameOf))} handed ${one ? 'their assignment' : 'their assignments'} back: reassign ${one ? 'it' : 'them'}.`;
+}
+
+/** The round in one sentence, for the person reading it. */
+export function routeHeadline(round: RouteRoundView, meId: number | null): string {
+  if (round.route.status !== 'open') return closedHeadline(round);
+  const handedBack = handedBackHeadline(round, meId);
+  if (handedBack) return handedBack;
   const waiting = holders(round);
   const mine = round.members.find((m) => m.userId === meId);
   if (mine && waiting.includes(mine)) return mine.role === 'reviewer' ? 'Your turn: sign the review.' : 'Your turn: approve.';
@@ -159,17 +186,33 @@ async function remind(m: RouteMemberView, title: string): Promise<string> {
   }
 }
 
-/** Every named member and what each has done; the sender reminds whoever's turn it is. */
-export function RouteRoundPanel({ view, meId, title, canRemind }: {
+/** What reassignment needs from the version it is on (the current one). */
+export interface RouteReassignContext {
+  vaultId: string;
+  canonicalId: string;
+  /** The reader is an organization administrator (the server decides; this only offers it). */
+  admin: boolean;
+  onChanged: () => void;
+}
+
+/** A member whose assignment may change hands: not signed, not returned, on an open route. */
+const reassignable = (m: RouteMemberView, round: RouteRoundView) =>
+  round.route.status === 'open' && (m.outcome === 'pending' || m.outcome === 'handed back');
+
+/** Every named member and what each has done; the sender reminds whoever's turn it is, and the sender or an administrator reassigns. */
+export function RouteRoundPanel({ view, meId, title, canRemind, reassign }: {
   view: RouteView;
   meId: number | null;
   /** The version, in words, for a reminder. */
   title: string;
   /** Reminders are offered on the current version, to its sender. */
   canRemind: boolean;
+  /** Reassignment is offered on the current version, to its sender or an administrator (RR3). */
+  reassign?: RouteReassignContext;
 }) {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [reassigning, setReassigning] = useState<RouteMemberView | null>(null);
   if (view.kind === 'unread') {
     return (
       <span className="vr-round" data-testid="vault-route-round">
@@ -180,6 +223,7 @@ export function RouteRoundPanel({ view, meId, title, canRemind }: {
   if (view.kind === 'none' || view.kind === 'legacy') return null;
   const { round } = view;
   const sender = meId !== null && round.route.senderId === meId;
+  const mayReassign = Boolean(reassign) && (sender || Boolean(reassign?.admin));
   const ask = async (m: RouteMemberView) => {
     setBusy(m.taskId);
     setNote(await remind(m, title));
@@ -200,26 +244,25 @@ export function RouteRoundPanel({ view, meId, title, canRemind }: {
                 {busy === m.taskId ? 'Reminding…' : 'Remind'}
               </button>
             ) : null}
+            {mayReassign && reassignable(m, round) ? (
+              <button type="button" className="sp-ask" onClick={() => setReassigning(m)} aria-label={`Reassign ${nameOf(m)}`}>
+                Reassign
+              </button>
+            ) : null}
           </li>
         ))}
       </ul>
       {note ? <span className="vr-round-m" role="status">{note}</span> : null}
+      <RouteHistory history={round.history} />
+      {reassigning && reassign ? (
+        <ReassignDialog member={reassigning} vaultId={reassign.vaultId} canonicalId={reassign.canonicalId} title={title}
+          onClose={() => setReassigning(null)} onDone={() => { setReassigning(null); reassign.onChanged(); }} />
+      ) : null}
     </span>
   );
 }
 
 // ── Who may be named: the server's answer (review-route-candidates.ts) ───────
-
-interface CandidateRefusal { code: string; message: string }
-export interface RouteCandidateView { id: number; name: string; reviewer: CandidateRefusal | null; approver: CandidateRefusal | null }
-export interface RouteCandidatesShape { timeZone: string; canonicalId: string | null; candidates: RouteCandidateView[] }
-
-const isRefusal = (v: unknown) => v === null || (!!v && typeof (v as CandidateRefusal).code === 'string' && typeof (v as CandidateRefusal).message === 'string');
-export const isRouteCandidates: ShapeGuard<RouteCandidatesShape> = (v): v is RouteCandidatesShape => {
-  const o = v as RouteCandidatesShape | null;
-  return !!o && typeof o.timeZone === 'string' && Array.isArray(o.candidates) && o.candidates.every((c) =>
-    !!c && Number.isSafeInteger(c.id) && typeof c.name === 'string' && isRefusal(c.reviewer) && isRefusal(c.approver));
-};
 
 /** Who the sender may name in a role, and who they may not, with the server's reason. */
 function optionsFor(candidates: RouteCandidateView[], role: 'reviewer' | 'approver', takenElsewhere: string[], elsewhere: string): PickerOption[] {
@@ -339,14 +382,6 @@ function RouteFields({ candidates, zone, f, set }: {
   );
 }
 
-/** Who may be named, read when the form opens; an unread list offers no one, and says so. */
-function useRouteCandidates(vaultId: string) {
-  const [epoch, setEpoch] = useState(0);
-  const read = useLiveData<RouteCandidatesShape>(
-    `/api/regulatory/documents/route-candidates/${encodeURIComponent(vaultId)}`, [vaultId, epoch], isRouteCandidates);
-  return { loading: read.loading, data: read.loading ? null : read.data, again: () => setEpoch((n) => n + 1) };
-}
-
 /** The route form: named reviewers, one approver, two due dates and a reason. A sheet at a phone's width. */
 export function RouteForm({ mode, vaultId, canonicalId, title, versionLabel, hashPrefix, onClose, onSent }: {
   mode: RouteFormMode;
@@ -416,12 +451,21 @@ export function RouteForm({ mode, vaultId, canonicalId, title, versionLabel, has
   );
 }
 
-// ── Withdraw and Return for revision ─────────────────────────────────────────
+// ── Withdraw, Return for revision, Hand back ─────────────────────────────────
 
-export type RouteAct = 'withdraw' | 'return';
+export type RouteAct = 'withdraw' | 'return' | 'hand-back';
+
+const ACT_TEXT: Record<RouteAct, { label: string; reasonLabel: string; failed: string }> = {
+  withdraw: { label: 'Withdraw the route', reasonLabel: 'Reason for withdrawing', failed: 'The route was not withdrawn.' },
+  return: { label: 'Return for revision', reasonLabel: 'Reason for returning it', failed: 'The version was not returned.' },
+  'hand-back': { label: 'Hand back', reasonLabel: 'Why you cannot do it', failed: 'Your assignment was not handed back.' },
+};
 
 /** What each act does, said before it is confirmed. */
 export function routeActMeaning(act: RouteAct, reviewComplete: boolean): string {
+  if (act === 'hand-back') {
+    return 'Your assignment goes back to the person who sent this route. The sender is told and reassigns it. You stay named, and sign nothing on it, until they do.';
+  }
   if (act === 'return') {
     return 'The version goes back to Not sent for review, the route closes, every member who has not signed is told, and so is its sender. Signatures already given stay on the record.';
   }
@@ -444,14 +488,13 @@ export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClos
   const [error, setError] = useState<string | null>(null);
   const ref = useDialog(() => { if (!busy) onClose(); });
   const problem = reviewReasonProblem(reason);
-  const label = act === 'withdraw' ? 'Withdraw the route' : 'Return for revision';
+  const { label, reasonLabel, failed } = ACT_TEXT[act];
   const run = async () => {
     if (problem || busy) return;
     setBusy(true);
     setError(null);
     try {
-      await lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(canonicalId)}/review-route/${act}`, { reason: reason.trim() },
-        act === 'withdraw' ? 'The route was not withdrawn.' : 'The version was not returned.');
+      await lifecyclePost(`/api/regulatory/documents/${encodeURIComponent(canonicalId)}/review-route/${act}`, { reason: reason.trim() }, failed);
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Nothing was changed.');
@@ -472,7 +515,7 @@ export function RouteActDialog({ act, canonicalId, title, reviewComplete, onClos
         </div>
         <div className="de-body">
           <div className="de-gov"><span className="ico">{I.lock}</span><span className="de-gov-t">{routeActMeaning(act, reviewComplete)}</span></div>
-          <ReasonField id="vr-act-reason" label={act === 'withdraw' ? 'Reason for withdrawing' : 'Reason for returning it'}
+          <ReasonField id="vr-act-reason" label={reasonLabel}
             note={`Recorded on this version’s audit trail and given to the people on the route. At least ${GOVERNED_REASON_MIN} characters.`}
             value={reason} onChange={setReason} testId="vr-act-reason" />
           {problem ? <div className="de-desc" id="vr-act-note">{problem}</div> : null}

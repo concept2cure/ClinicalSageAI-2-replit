@@ -1,0 +1,263 @@
+[
+ {
+  "id": "M1",
+  "what": "the leaf reads versions from the organization-only device-vault read instead of the project-bound one",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "return `/api/concept2cure/projects/${enc(projectId)}/artifacts/${enc(artifactId)}/versions`;",
+  "new": "return `/api/mdx/vault/${enc(artifactId)}/versions`;",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx",
+   "server/middleware/__tests__/vault-artifact-leaf-gate.test.ts"
+  ]
+ },
+ {
+  "id": "M2",
+  "what": "a failed versions read is rendered as an empty history",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "        ) : read.error || !read.data ? (\n          <ReadNotShown read={read} what=\"the version history\" onRetry={() => setEpoch((n) => n + 1)} />\n        ) : read.data.versions.length === 0 ? (",
+  "new": "        ) : read.error || !read.data || read.data.versions.length === 0 ? (",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M3",
+  "what": "every refusal is worded as a failed read (the classifier is skipped)",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "  const kind = readFailureFor(read.status, read.code);",
+  "new": "  const kind = 'failed' as const;",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M4",
+  "what": "the audit report is read on selection, writing a provenance record per click",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "  const [asked, setAsked] = useState(0);",
+  "new": "  const [asked, setAsked] = useState(1);",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M5",
+  "what": "a broken hash chain is shown as intact",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "                {r.integrityVerification.chainIntact",
+  "new": "                {true || r.integrityVerification.chainIntact",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M6",
+  "what": "a failed audit read is shown as an empty report",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "        ) : read.error || !r ? (\n          <ReadNotShown read={read} what=\"the audit report\" onRetry={() => setAsked((n) => n + 1)} />",
+  "new": "        ) : read.error || !r ? (\n          <div className=\"vd-d-idx\">No signatures recorded.</div>",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M7",
+  "what": "the review-gate refusal falls through to the classifier (\"your role\")",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "  if (failure.code === 'HUMAN_REVIEW_REQUIRED') {",
+  "new": "  if (failure.code === 'HUMAN_REVIEW_REQUIRED_X') {",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M8",
+  "what": "a module-gate refusal of the download is worded as an outage",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "  if (kind !== 'failed') {",
+  "new": "  if (kind === ('never' as string)) {",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M9",
+  "what": "an export that could not be recorded is worded as a generic failure",
+  "file": "client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx",
+  "old": "  if (failure.code === 'UNAUDITED_EXPORT_REFUSED') return",
+  "new": "  if (failure.code === 'UNAUDITED_EXPORT_REFUSED_X') return",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M10",
+  "what": "an artifact leaf keeps \"No file to download\" (the export is not reached)",
+  "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+  "old": "                  ) : sel.src === 'artifact' && sel.artifact ? (\n                    /* The governed export (slice B)",
+  "new": "                  ) : false ? (\n                    /* The governed export (slice B)",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M11",
+  "what": "the Artifacts center keeps its own manifest copy (not converged)",
+  "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+  "old": "    downloadArtifactManifest('artifacts-manifest.csv', rows.map(manifestRow));",
+  "new": "    downloadText('artifacts-manifest.csv', rows.map((r) => [r.name, r.kind, r.ver].join(',')).join('\\n'), 'text/csv;charset=utf-8');",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M12",
+  "what": "the manifest says a stale signature is a current one",
+  "file": "client/src/concept2cure/v2/artifactManifest.ts",
+  "old": "      return `earlier version only (v${r.signedVersion})`;",
+  "new": "      return 'yes';",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M13",
+  "what": "the manifest attributes an unrecorded origin to AnA",
+  "file": "client/src/concept2cure/v2/artifactManifest.ts",
+  "old": "    r.origin ? ARTIFACT_ORIGIN_LABELS[r.origin] : NOT_RECORDED,",
+  "new": "    ARTIFACT_ORIGIN_LABELS[r.origin ?? 'ana'],",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M14",
+  "what": "Open in editor navigates empty-handed (no authoring.open-document directive)",
+  "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+  "old": "    if (res.ok) applySurfaceAction(res.directive, (t) => onNav && onNav(t));\n    else onNav && onNav('document-authoring');",
+  "new": "    void res;\n    onNav && onNav('authoring');",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M15",
+  "what": "Ask AnA on an artifact sends the generic prompt",
+  "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+  "old": "                        sel.src === 'artifact' && sel.artifact\n                          ? artifactAskPrompt(sel)",
+  "new": "                        false\n                          ? artifactAskPrompt(sel)",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M16",
+  "what": "vault.focus-document guesses the first of several matches",
+  "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+  "old": "  if (distinct.length === 1) return { kind: 'one', ...distinct[0] };",
+  "new": "  if (distinct.length >= 1) return { kind: 'one', ...distinct[0] };",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M17",
+  "what": "vault.focus-document is not handled by the Vault",
+  "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+  "old": "    'vault.focus-document': (params) => {",
+  "new": "    'vault.focus-document-x': (params) => {",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ },
+ {
+  "id": "M18",
+  "what": "a failed author lookup is swallowed into an unnamed list",
+  "file": "server/routes/c2c/artifacts.ts",
+  "old": "      const authors = await resolveActorNames(versions.map(v => v.createdById));",
+  "new": "      const authors = await resolveActorNames(versions.map(v => v.createdById)).catch(() => new Map());",
+  "tests": [
+   "server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts"
+  ]
+ },
+ {
+  "id": "M19",
+  "what": "the versions read names no author",
+  "file": "server/routes/c2c/artifacts.ts",
+  "old": "          createdBy: actorLabel(authors, v.createdById),",
+  "new": "          createdBy: undefined as string | undefined,",
+  "tests": [
+   "server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts"
+  ]
+ },
+ {
+  "id": "M20",
+  "what": "the Artifacts center row passes the raw registry status (locked, not final)",
+  "file": "server/routes/artifacts-center-routes.ts",
+  "old": "          status: artifactRegistryStatus(r.status),",
+  "new": "          status: r.status ?? 'unknown',",
+  "tests": [
+   "server/routes/__tests__/artifacts-center-manifest-fields.test.ts"
+  ]
+ },
+ {
+  "id": "M21",
+  "what": "the Artifacts center row drops the recorded origin",
+  "file": "server/routes/artifacts-center-routes.ts",
+  "old": "          origin: g.origin,",
+  "new": "          origin: null,",
+  "tests": [
+   "server/routes/__tests__/artifacts-center-manifest-fields.test.ts"
+  ]
+ },
+ {
+  "id": "M22",
+  "what": "the Vault leaf carries no stored content size",
+  "file": "server/routes/c2c/project-vault.ts",
+  "old": "    sizeLabel: formatContentBytes(Number(row.content_bytes)),",
+  "new": "",
+  "tests": [
+   "server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts"
+  ]
+ },
+ {
+  "id": "M23",
+  "what": "the vault claim on /api/artifacts-center is removed (HEAD registry)",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "'/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center'],",
+  "new": "'/api/vault/legal-holds', '/api/regulatory/documents'],",
+  "tests": [
+   "server/middleware/__tests__/vault-artifact-leaf-gate.test.ts"
+  ]
+ },
+ {
+  "id": "M24",
+  "what": "the claim is moved off the Artifacts center instead of shared",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "    apiPrefixes: ['/api/atoms', '/api/artifacts-center'],",
+  "new": "    apiPrefixes: ['/api/atoms'],",
+  "tests": [
+   "server/middleware/__tests__/vault-artifact-leaf-gate.test.ts"
+  ]
+ },
+ {
+  "id": "M25",
+  "what": "the vault also claims /api/concept2cure/projects (the widening main declined)",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "'/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center'],",
+  "new": "'/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center', '/api/concept2cure/projects'],",
+  "tests": [
+   "server/middleware/__tests__/vault-artifact-leaf-gate.test.ts"
+  ]
+ },
+ {
+  "id": "M26",
+  "what": "the manifest writes a recorded status the Vault has no label for as \"Status unavailable\"",
+  "file": "client/src/concept2cure/v2/artifactManifest.ts",
+  "old": "  return known === UNKNOWN_VAULT_STATUS ? status : known.label;",
+  "new": "  return known.label;",
+  "tests": [
+   "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx"
+  ]
+ }
+]

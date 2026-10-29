@@ -573,6 +573,8 @@
 .c2c-v2 .vr-members{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
 .c2c-v2 .vr-member{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;overflow-wrap:anywhere;}
 .c2c-v2 .vr-member-name{font-weight:500;color:var(--text-200);}
+/* RR3: the naming history under the members. */
+.c2c-v2 .vr-history{margin-top:8px;font-weight:600;color:var(--text-200);}
 .c2c-v2 .vr-due{display:flex;flex-wrap:wrap;gap:12px;}
 .c2c-v2 .vr-due .de-field{flex:1 1 160px;margin-bottom:12px;}
 .c2c-v2 .vr-due .c2c-input{width:100%;min-height:44px;}

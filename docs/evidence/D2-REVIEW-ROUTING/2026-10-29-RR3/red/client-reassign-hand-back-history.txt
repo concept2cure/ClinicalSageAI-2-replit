@@ -1,0 +1,20 @@
+# Before RR3's client change: client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx (RLS_ENFORCE=off)
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > who is offered Reassign (RR3, §2.10) > the sender: on every member who has not signed, never on one who signed 594ms
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > who is offered Reassign (RR3, §2.10) > an administrator who did not send it is offered it; any other reader is not 245ms
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > offers only those admitted for the role, says why the others are not,
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > an approver is reassigned from the people admitted as approver; a ref
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Reassign: a sheet with the people the reassignment admits and a reason (RR3, §2.5, §2.10) > who may be named could not be read: no one is offered, and it says so
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > a named member is offered Hand back, which asks for a reason and posts it 5050ms
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > Hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > once handed back: no signature is offered to them, and the round says who waits 
+ × client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx > the naming history, by name (RR3, §2.12, M3) > says who sent it naming whom, who handed back, and who reassigned what from whom to whom, each with the time and re
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reassign Rae Reviewer"
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reassign Rae Reviewer"
+TestingLibraryElementError: Unable to find role="button" and name "Reassign Rae Reviewer"
+TestingLibraryElementError: Unable to find role="button" and name "Reassign Ann Approver"
+TestingLibraryElementError: Unable to find role="button" and name "Reassign Rae Reviewer"
+TestingLibraryElementError: Unable to find role="button" and name `/^Hand back:/`
+AssertionError: expected 'Waiting for the next step.' to be 'You handed this back; waiting for Uma…' // Object.is equality
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-route-history"]
+ Test Files  1 failed (1)
+      Tests  8 failed (8)

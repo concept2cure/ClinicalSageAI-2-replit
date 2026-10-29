@@ -1,0 +1,218 @@
+# Mutations: each applied to product code as an exact replacement (its old string occurs once), the named tests run
+# (npx vitest run <tests> --reporter=json), then the file restored from the bytes read before it, and its sha256 checked.
+# Working tree at 6b70fd0a4 + this change; 2026-10-29T11:38:53Z.
+# sha256 before:
+#   bfbaf7064e3d4159b0ee027107aa0726a50e653b44ee9d4134257ff703ebed0f  client/src/concept2cure/v2/SignedContentState.tsx
+#   0a8c9b9457aa79160b24800dbec27f8150cfddb4129cb759d1cfb280207984ee  client/src/concept2cure/v2/surfaces/Labeling.tsx
+#   221836eea51718fe7fec5558b51997c860af4b78434ad98ddb6171ad8fbb3c12  client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+#   906b4da7c831c0ba0dc90f8c85e2c83419c94dfc41b6050744b023d691bb3040  client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx
+#   4edd1adbe233f1d6fd1f0605ee0472e1dcc37a71194138ef4b2db14b405d8b26  client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+#   dac1fdc1dce2edb9d87e06048e4572d0968c7625ac7bbf4f54aef84c23677717  server/routes/mdx-labeling.ts
+
+M1  "Changed since it was signed" is said as "Signed content unchanged"
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 7 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words changed says "{ reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' }"
+       - labelingSignedContentOnScreen.test.tsx > the label document's signature an approved document shows its state above the lead
+       - labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states the document's and each translation's state, and the summary says a change
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a hazard edited after its acceptance says "Changed since it was signed", with the reason
+       - riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature the selected hazard carries its state, and the summary says it
+       - signedContentState.test.tsx > the words changed ({}) is "Changed since it was signed"
+       - signedContentState.test.tsx > when a line is drawn says the state in words beside its tone, then who signed and when
+
+M2  A facet this client cannot read is taken as unsigned, not unavailable
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 8 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" a facet this client cannot read is unavailable
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned null
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned undefined
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned 'matches'
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned []
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned {}
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned { state: 'signed' }
+       - signedContentState.test.tsx > a facet this client cannot read is unavailable, never unsigned { state: 42 }
+
+M3  A failed record read is shown as unsigned
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 4 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > the label document's signature an effective document whose read failed says it could not be read
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a read that failed says "Signature state could not be read", never "Not signed"
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an answer for another hazard is not this hazard's state
+       - riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature a state not read is told as not read, not as unsigned
+
+M4  Another record's answer is taken as this record's state (the id check dropped)
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 2 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" an answer for another document is not this document's state
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an answer for another hazard is not this hazard's state
+
+M5  Colour only: the chip carries its tone and icon but not the words
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 15 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words matches says "{}"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words changed says "{ reason: 'The record changed after it was signed: its content digest is not the one the signature bound.' }"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words unverified says "{ bindingBasis: 'governed-action-sha256-chain', reason: 'This signature was taken before its content was bound.' }"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words unverified says "{ reason: 'The record\'s content could not be read to compare with the signature.' }"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words withdrawn says "{ reason: 'Every signature on this record has been withdrawn.' }"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words an approved translation with no signature says "Not signed"
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words a translation in review whose approval was withdrawn says so
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" the document read failing says "Signature state could not be read"
+       - … and 7 more
+
+M6  Silent when expected: an approved or accepted record with no readable signature shows nothing
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 9 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words an approved translation with no signature says "Not signed"
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" the document read failing says "Signature state could not be read"
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" a facet this client cannot read is unavailable
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" a translation the document read did not carry is unavailable
+       - labelingSignedContentOnScreen.test.tsx > a state that could not be read is never "Not signed" an answer for another document is not this document's state
+       - labelingSignedContentOnScreen.test.tsx > the label document's signature an effective document whose read failed says it could not be read
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a read that failed says "Signature state could not be read", never "Not signed"
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an answer for another hazard is not this hazard's state
+       - … and 1 more
+
+M7  A changed signature does not give the server's reason
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 3 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words a changed signature gives the server's reason; a pre-binding one does not repeat it
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a hazard edited after its acceptance says "Changed since it was signed", with the reason
+       - signedContentState.test.tsx > when a line is drawn says the state in words beside its tone, then who signed and when
+
+M8  A pre-binding signature is said as the generic "could not be verified"
+     client/src/concept2cure/v2/SignedContentState.tsx
+     tests: signedContentState.test.tsx, labelingSignedContentOnScreen.test.tsx, riskSignedContentOnScreen.test.tsx
+     RED 3 of 58; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > an approved translation's signature, in words unverified says "{ bindingBasis: 'governed-action-sha256-chain', reason: 'This signature was taken before its content was bound.' }"
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an acceptance signed before content binding says it cannot be verified
+       - signedContentState.test.tsx > the words unverified ({ bindingBasis: 'governed-action-sha256-chain' }) is "Signed before content binding; not verifiable"
+
+M9  A translation's creator is offered Approve as if it would work
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 3 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > the read is read again after a translation is added here, so its creator is warned once it is in review
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving Approve is not offered as if it would work: it is disabled and described by the reason
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving AnA is told the same, and is not offered the approval the screen withholds
+
+M10  'unresolved' (no creator recorded) withholds Approve, though the approval signs it
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 1 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving unresolved offers Approve with no warning: the server decides
+
+M11  A signer state not read withholds Approve (unknown taken as "cannot")
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 2 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving not read offers Approve with no warning: the server decides
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving a read that failed offers Approve with no warning
+
+M12  The creator's Approve is enabled and opens the dialog
+     client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 2 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > the read is read again after a translation is added here, so its creator is warned once it is in review
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving Approve is not offered as if it would work: it is disabled and described by the reason
+
+M13  Not read again after an approval is signed here
+     client/src/concept2cure/v2/surfaces/Labeling.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 1 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > the read is the open project's document, read once, and again after an approval signed here
+
+M14  Not read again after a translation is added here (its creator is not warned)
+     client/src/concept2cure/v2/surfaces/Labeling.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 1 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > the read is read again after a translation is added here, so its creator is warned once it is in review
+
+M15  AnA's translation facts carry no signedContent
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 2 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states the document's and each translation's state, and the summary says a change
+       - labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states a state not read is told as not read, not as unsigned
+
+M16  AnA's summary does not say the signature states
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 2 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving AnA is told the same, and is not offered the approval the screen withholds
+       - labelingSignedContentOnScreen.test.tsx > AnA's context carries the signature states the document's and each translation's state, and the summary says a change
+
+M17  AnA is still offered the approval the screen withholds
+     client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+     tests: labelingSignedContentOnScreen.test.tsx
+     RED 1 of 28; restored and sha256 equal: True
+       - labelingSignedContentOnScreen.test.tsx > a translation's creator is told before approving AnA is told the same, and is not offered the approval the screen withholds
+
+M18  Every selected hazard is read, not only an accepted one
+     client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+     tests: riskSignedContentOnScreen.test.tsx, riskAndDesignControlsSharedMounts.test.tsx, EngineeringSurface.riskRegister.test.tsx
+     RED 6 of 33; restored and sha256 equal: True
+       - riskAndDesignControlsSharedMounts.test.tsx > Risk reads the open project reads that project's risk file, by its id, and names the project on a new hazard
+       - riskAndDesignControlsSharedMounts.test.tsx > Risk reads the open project with no project open, reads the organization's register, as before, and names no project
+       - riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it a hazard not accepted reads nothing more and shows no acceptance signature
+       - riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it a hazard accepted here is read once the signature is confirmed
+       - riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature a hazard not accepted carries no acceptance signature
+       - EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file reads it by the project, and only after its own route has admitted the project
+
+M19  The drawer does not show the acceptance signature
+     client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+     tests: riskSignedContentOnScreen.test.tsx
+     RED 6 of 10; restored and sha256 equal: True
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a hazard edited after its acceptance says "Changed since it was signed", with the reason
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a hazard unchanged since its acceptance says "Signed content unchanged"
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an acceptance signed before content binding says it cannot be verified
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words a read that failed says "Signature state could not be read", never "Not signed"
+       - riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words an answer for another hazard is not this hazard's state
+       - riskSignedContentOnScreen.test.tsx > only an accepted hazard is read for it a hazard accepted here is read once the signature is confirmed
+
+M20  AnA's selected hazard carries no acceptance signature
+     client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+     tests: riskSignedContentOnScreen.test.tsx
+     RED 2 of 10; restored and sha256 equal: True
+       - riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature the selected hazard carries its state, and the summary says it
+       - riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature a state not read is told as not read, not as unsigned
+
+M21  The server asks the check about the document, not the translation
+     server/routes/mdx-labeling.ts
+     tests: mdx-labeling-approval-signer.pglite.test.ts
+     RED 2 of 7; restored and sha256 equal: True
+       - mdx-labeling-approval-signer.pglite.test.ts > approvalSigner: the approval's own separation-of-duties check, asked in advance tells a colleague they are independent of it
+       - mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read an authorship lookup that fails reads 'unverified', never 'independent', and the document is still returned
+
+M22  A check that throws reads 'independent' (fail open)
+     server/routes/mdx-labeling.ts
+     tests: mdx-labeling-approval-signer.pglite.test.ts
+     RED 1 of 7; restored and sha256 equal: True
+       - mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read a check that throws reads 'unverified', and the read answers 200
+
+M23  A reader with no user id reads 'independent' (fail open)
+     server/routes/mdx-labeling.ts
+     tests: mdx-labeling-approval-signer.pglite.test.ts
+     RED 1 of 7; restored and sha256 equal: True
+       - mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read a reader with no user id reads 'unverified' for every translation
+
+M24  A check that throws fails the whole read
+     server/routes/mdx-labeling.ts
+     tests: mdx-labeling-approval-signer.pglite.test.ts
+     RED 1 of 7; restored and sha256 equal: True
+       - mdx-labeling-approval-signer.pglite.test.ts > a check that cannot run does not fail the read a check that throws reads 'unverified', and the read answers 200
+
+# 24 of 24 mutations turned a test red.
+# sha256 after (each equal to before):
+#   bfbaf7064e3d4159b0ee027107aa0726a50e653b44ee9d4134257ff703ebed0f  client/src/concept2cure/v2/SignedContentState.tsx  equal
+#   0a8c9b9457aa79160b24800dbec27f8150cfddb4129cb759d1cfb280207984ee  client/src/concept2cure/v2/surfaces/Labeling.tsx  equal
+#   221836eea51718fe7fec5558b51997c860af4b78434ad98ddb6171ad8fbb3c12  client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx  equal
+#   906b4da7c831c0ba0dc90f8c85e2c83419c94dfc41b6050744b023d691bb3040  client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx  equal
+#   4edd1adbe233f1d6fd1f0605ee0472e1dcc37a71194138ef4b2db14b405d8b26  client/src/concept2cure/v2/surfaces/RiskRegister.tsx  equal
+#   dac1fdc1dce2edb9d87e06048e4572d0968c7625ac7bbf4f54aef84c23677717  server/routes/mdx-labeling.ts  equal
