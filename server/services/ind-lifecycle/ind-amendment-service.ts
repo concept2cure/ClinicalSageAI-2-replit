@@ -66,6 +66,7 @@ export type ContentCategory =
   | 'cmc' // 312.31 — chemistry/manufacturing/controls
   | 'pharmacology_toxicology' // 312.31 — nonclinical
   | 'clinical_summary' // 312.31 — Module 2 summaries
+  | 'clinical_study_report' // 312.31 — a study's report (Module 5.3)
   | 'investigators_brochure'
   | 'other';
 
@@ -125,7 +126,27 @@ export interface IndAmendmentPlan {
    * sequence carries no protocol amendment.
    */
   protocolAmendmentTitles: ProtocolAmendmentTitle[];
+  /**
+   * The 21 CFR 312.31(b) identification of this sequence's information
+   * contents: "Information Amendment: Chemistry, Manufacturing, and Control",
+   * "…: Pharmacology-Toxicology", "…: Clinical". Empty when no information
+   * leaf carries one of those contents.
+   */
+  informationAmendmentTitles: InformationAmendmentTitle[];
 }
+
+export type InformationAmendmentTitle =
+  | 'Information Amendment: Chemistry, Manufacturing, and Control'
+  | 'Information Amendment: Pharmacology-Toxicology'
+  | 'Information Amendment: Clinical';
+
+/** 312.31(b)'s examples, by the document type a planned leaf carries. */
+const INFORMATION_TITLE_FOR_DOCUMENT: Record<string, InformationAmendmentTitle> = {
+  cmc: 'Information Amendment: Chemistry, Manufacturing, and Control',
+  pharmacology_toxicology: 'Information Amendment: Pharmacology-Toxicology',
+  clinical_summary: 'Information Amendment: Clinical',
+  clinical_study_report: 'Information Amendment: Clinical',
+};
 
 export type ProtocolAmendmentTitle =
   | 'Protocol Amendment: New Protocol'
@@ -202,6 +223,14 @@ const SECTION_FOR_CATEGORY: Record<ContentCategory, CategoryMapping> = {
     sectionCode: 'm2.5',
     amendmentClass: 'information',
     documentType: 'clinical_summary',
+    cfrRef: '312.31(a)(1)',
+  },
+  // A study's report files under the Module 5.3 heading for its study type;
+  // 5.3.5.1 is controlled efficacy and safety studies. The plan says so.
+  clinical_study_report: {
+    sectionCode: 'm5.3.5.1',
+    amendmentClass: 'information',
+    documentType: 'clinical_study_report',
     cfrRef: '312.31(a)(1)',
   },
   // m1.14.4.1 is the INVESTIGATOR BROCHURE; m1.14.4.2 is investigational drug
@@ -286,6 +315,11 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
 
   const leaves: PlannedLeaf[] = input.changedDocuments.map((doc) => {
     const mapping = SECTION_FOR_CATEGORY[doc.category] ?? SECTION_FOR_CATEGORY.other;
+    if (doc.category === 'clinical_study_report') {
+      warnings.push(
+        `Document "${doc.title}" is a clinical study report; it is planned at ${mapping.sectionCode} (controlled efficacy and safety studies). A report of another study type files under its own Module 5.3 heading. Confirm placement.`,
+      );
+    }
     if (!SECTION_FOR_CATEGORY[doc.category]) {
       warnings.push(
         `Document "${doc.title}" has unmapped category "${doc.category}"; routed to ${mapping.sectionCode} (Module 1 cover). Confirm placement.`,
@@ -349,6 +383,11 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
     warnings,
     protocolAmendmentTitles: [...new Set(
       leaves.map((l) => TITLE_FOR_CFR[l.cfrRef]).filter((t): t is ProtocolAmendmentTitle => Boolean(t)),
+    )].sort(),
+    informationAmendmentTitles: [...new Set(
+      leaves.filter((l) => l.amendmentClass === 'information')
+        .map((l) => INFORMATION_TITLE_FOR_DOCUMENT[l.documentType])
+        .filter((t): t is InformationAmendmentTitle => Boolean(t)),
     )].sort(),
   };
 }

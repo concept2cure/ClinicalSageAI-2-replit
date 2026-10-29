@@ -50,6 +50,12 @@ export interface CoverLetterInput {
    * returns them as `protocolAmendmentTitles`. Absent → a gap, not a guess.
    */
   protocolAmendmentTitles?: string[];
+  /**
+   * For an information amendment: the 21 CFR 312.31(b) identification of its
+   * contents ("Information Amendment: Clinical", …). `planIndAmendment`
+   * returns them as `informationAmendmentTitles`. Absent → a gap, not a guess.
+   */
+  informationAmendmentTitles?: string[];
   /** Submission serial number (e.g. "0000"). */
   serialNumber?: string;
   /** FDA review division (e.g. "Division of Oncology 1"). */
@@ -160,7 +166,26 @@ function statedCenterAndType(
   return { centerName, type };
 }
 
+/** 312.31(b)'s examples of an information amendment's identification. */
+const INFORMATION_AMENDMENT_TITLES = new Set([
+  'Information Amendment: Chemistry, Manufacturing, and Control',
+  'Information Amendment: Pharmacology-Toxicology',
+  'Information Amendment: Clinical',
+]);
+
+function informationAmendmentLabel(input: CoverLetterInput, gaps: string[]): string {
+  const titles = (input.informationAmendmentTitles ?? []).filter((t) => INFORMATION_AMENDMENT_TITLES.has(t));
+  if (titles.length === 0) {
+    gaps.push(
+      'Information amendment contents — 21 CFR 312.31(b) requires it to bear prominent identification of its contents, e.g. "Information Amendment: Chemistry, Manufacturing, and Control", "Information Amendment: Pharmacology-Toxicology" or "Information Amendment: Clinical"',
+    );
+    return SUBMISSION_LABEL.information_amendment;
+  }
+  return titles.join('; ');
+}
+
 function submissionLabel(input: CoverLetterInput, type: IndSubmissionType, gaps: string[]): string {
+  if (type === 'information_amendment') return informationAmendmentLabel(input, gaps);
   if (type !== 'protocol_amendment') return SUBMISSION_LABEL[type];
   const titles = (input.protocolAmendmentTitles ?? []).filter((t) => PROTOCOL_AMENDMENT_TITLES.has(t));
   if (titles.length === 0) {
