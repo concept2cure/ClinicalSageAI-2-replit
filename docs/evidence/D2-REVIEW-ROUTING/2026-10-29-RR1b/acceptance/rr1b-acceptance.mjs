@@ -42,7 +42,7 @@ const out = resolve(here, viewport);
 mkdirSync(out, { recursive: true });
 const tag = `${viewport === 'phone' ? 'P' : 'D'}${Date.now().toString(36).slice(-4).toUpperCase()}`;
 const log = [];
-const note = (line) => { log.push(line); console.log(line); };
+const note = (line) => { log.push(line); console.info(line); };
 
 const PEOPLE = {
   sender: 'rr1b-sender@example.test',
@@ -96,7 +96,7 @@ async function session(who) {
 const intoView = (el) => {
   const scroller = (n) => {
     for (let p = n.parentElement; p; p = p.parentElement) {
-      const y = getComputedStyle(p).overflowY;
+      const y = window.getComputedStyle(p).overflowY;
       if ((y === 'auto' || y === 'scroll') && p.scrollHeight > p.clientHeight) return p;
     }
     return null;
