@@ -1,0 +1,9 @@
+Mutation M1-presub-read-drops-project
+File: client/src/concept2cure/mdx/hooks/usePresub.ts
+- `/api/q-sub?program_id=${encodeURIComponent(programId)}`
++ '/api/q-sub'
+Test: client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx
+
+× client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > asks for the open project's Q-Subs only, and shows no other project's 47ms
+× client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx > device-presub reads the open project > never draws the previous project's Q-Subs under the next project 5027ms
+Tests  2 failed | 6 passed (8)

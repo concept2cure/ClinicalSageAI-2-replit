@@ -1,0 +1,7 @@
+# Green: the same test after the change, at fb562e76 with the change in the working tree
+ ✓ submitHoldsReadiness.test.tsx > no control on Submit opens the separate Submission Readiness canvas 358ms
+ ✓ submitHoldsReadiness.test.tsx > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s 102ms
+ ✓ submitHoldsReadiness.test.tsx > a cleared gate opens that sequence’s Dispatch tab from Submit 79ms
+ ✓ submitHoldsReadiness.test.tsx > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door 62ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)

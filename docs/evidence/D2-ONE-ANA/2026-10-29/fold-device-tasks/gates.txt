@@ -1,0 +1,47 @@
+# CI gates, final tree
+== ci:launch-scope
+[ci:launch-scope] 7 apps · 53 surfaces · 13 modules · 34 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit=0
+== ci:launch-scope-api
+ci:launch-scope-api: 538 API paths named by launch and shell screens; none refused. {"launch":488,"infrastructure":2,"never-gated":48}
+exit=0
+== ci:ana-surface-context
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (76 surface file(s) hold a call).
+exit=0
+== ci:surface-discoverability
+[ci:surface-discoverability] OK — 119 renderable surface(s): 90 in the Apps catalog, 29 declared contextual.
+exit=0
+== ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 430 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+== ci:migration-set-order
+[ci:migration-set-order] OK — 430 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+== check:catalog-copy
+[ci:catalog-copy] OK — 116 catalog description(s) across 3 migration(s) read as product copy.
+exit=0
+== ci:check-client-reachability
+capability. Either wire it into a surface / route, or do not land it.
+If a file is genuinely reached by a mechanism this tracer does not model, say which
+mechanism in the PR — do not add it to the baseline silently.
+exit=1
+== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit=0
+
+# Migration gates after the amendment
+== ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 430 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+== ci:migration-set-order
+[ci:migration-set-order] OK — 430 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+== check:catalog-copy
+[ci:catalog-copy] OK — 116 catalog description(s) across 3 migration(s) read as product copy.
+exit=0
+== ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 105 baselined file(s) on no deploy path, none new.
+exit=0

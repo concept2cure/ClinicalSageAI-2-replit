@@ -30,7 +30,7 @@ afterEach(() => {
 
 describe('PreSubManager — the Q-Sub button says it asks AnA', () => {
   it('is labelled as a request to AnA, not as a form', async () => {
-    render(<PreSubManager onAskAna={() => {}} />);
+    render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBeTruthy());
     expect(screen.queryByRole('button', { name: /^New Q-Sub$/ })).toBeNull();
     expect(screen.getByRole('button', { name: 'Ask AnA to start a Q-Sub' })).toBeTruthy();
@@ -38,7 +38,7 @@ describe('PreSubManager — the Q-Sub button says it asks AnA', () => {
 
   it('sends AnA a request to start a Q-Sub, not to file one', async () => {
     const onAskAna = vi.fn();
-    render(<PreSubManager onAskAna={onAskAna} />);
+    render(<PreSubManager programId="p-1" onAskAna={onAskAna} />);
     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to start a Q-Sub' }));
     expect(onAskAna).toHaveBeenCalledTimes(1);
@@ -55,7 +55,7 @@ describe('PreSubManager — the Q-Sub button says it asks AnA', () => {
      the project the host publishes to AnA as the one in context. */
   it('asks only for what create_q_sub records, for the project in context', async () => {
     const onAskAna = vi.fn();
-    render(<PreSubManager onAskAna={onAskAna} />);
+    render(<PreSubManager programId="p-1" onAskAna={onAskAna} />);
     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to start a Q-Sub' }));
     const prompt = onAskAna.mock.calls[0][0] as string;

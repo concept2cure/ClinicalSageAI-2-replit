@@ -1,0 +1,8 @@
+# The same, after
+      Tests  14 passed (14)
+
+# Every suite that signs an Authoring document (18 files), after
+ Test Files  2 failed | 16 passed (18)
+      Tests  9 failed | 229 passed (238)
+      1 tests/golden-journeys/ind-authoring.journey.test.ts   (fails identically at HEAD: handed on in docs/evidence/D5/2026-10-29-csr-release-gate-order/)
+      8 tests/lineage/founder-path-lineage.pglite.test.ts   (fails identically at HEAD: handed on in docs/evidence/D5/2026-10-29-csr-release-gate-order/)

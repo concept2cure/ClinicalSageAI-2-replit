@@ -1,0 +1,24 @@
+# ESLint, errors/warnings at HEAD and in the working tree, per touched file
+server/routes/taskBoard.routes.ts head=0e/1w now=0e/1w
+client/src/concept2cure/v2/surfaces/TaskBoard.tsx head=0e/9w now=0e/9w
+client/src/concept2cure/v2/registryModel.ts head=0e/1w now=0e/1w
+shared/constants/launch-scope.ts head=0e/0w now=0e/0w
+shared/constants/mdx-project-features.ts head=0e/0w now=0e/0w
+shared/navigation/demo-scripts.ts head=0e/0w now=0e/0w
+server/services/entitlements/__tests__/launch-scope.test.ts head=0e/0w now=0e/0w
+tests/schema-contract/catalog-module-claims.contract.test.ts head=0e/0w now=0e/0w
+scripts/ci/check-launch-scope-api.ts head=0e/1w now=0e/1w
+scripts/visual-qa/dump-v2-surfaces.spec.tsx head=0e/1w now=0e/1w
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx head=0e/0w now=0e/0w
+client/src/concept2cure/mdx/hooks/useWorkbench.ts head=0e/1w now=0e/1w
+client/src/concept2cure/mdx/data/workbench.ts head=0e/1w now=0e/1w
+shared/constants/mdx.ts head=0e/0w now=0e/0w
+scripts/ci/check-ana-surface-context.mjs head=0e/1w now=0e/1w
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx head=0e/0w now=0e/0w
+client/src/concept2cure/mdx/workbench/__tests__/workbenchNoFixtures.test.tsx head=0e/1w now=0e/1w
+client/src/concept2cure/mdx/workbench/Workbench.tsx head=0e/1w now=0e/1w
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx head=0e/1w now=0e/1w
+client/src/concept2cure/mdx/surfaceIds.ts head=0e/1w now=0e/1w
+client/src/concept2cure/v2/surfaceViews.ts head=0e/0w now=0e/0w
+shared/constants/ui-surface-registry.ui-v2.ts head=0e/1w now=0e/1w
+server/routes/__tests__/taskBoard-blocking.test.ts, client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx, client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts: new, 0 problems

@@ -29,6 +29,7 @@ import {
   CLIENT_CATEGORIES,
   RAIL_CORE,
   RAIL_WORK_AREAS_LABEL,
+  PROJECTS_CRUMB,
   breadcrumbTierOf,
   resolveSegmentId,
   type SurfaceApplies,
@@ -571,7 +572,14 @@ export function TopBar({
      project channel, as the project chip beside it does. With no project open,
      or one opened by id alone, it keeps the registry label. */
   const openProject = useShellProject();
-  const here = (surface.id === 'project-home' && shellProjectName(openProject)) || surface.label;
+  const projectName = shellProjectName(openProject);
+  const here = (surface.id === 'project-home' && projectName) || surface.label;
+  /* A project feature (a device discipline or pathway, under the Projects app
+     since 2026-10-23) reads as a feature of the open project: Projects › the
+     project › the feature, the project named as the chip and the project page
+     name it. With none open, or one opened by id alone, it reads Projects ›
+     the feature: the crumb never invents a name. */
+  const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName : '';
   return (
     <header className="topbar">
       <div className="crumbs">
@@ -583,6 +591,12 @@ export function TopBar({
         {tier && (
           <>
             <span className="crumb-tier">{tier.label}</span>
+            <span className="sep" aria-hidden="true">›</span>
+          </>
+        )}
+        {projectCrumb && (
+          <>
+            <span className="crumb-tier">{projectCrumb}</span>
             <span className="sep" aria-hidden="true">›</span>
           </>
         )}
@@ -750,7 +764,8 @@ export function CmdK({
         id: s.id,
         kind: 'nav',
         label: s.label,
-        /* The hint column normally carries the destination's domain group. For
+        /* The hint column normally carries the destination's domain group, the
+           breadcrumb's parent crumb: Projects for a project feature. For
            a locked one it carries the REASON instead: once the row cannot be
            opened, which domain it belongs to is the less useful of the two
            facts, and the reason has to be visible without hovering. It is the

@@ -218,35 +218,8 @@ export const FAMILY_TO_SUBMISSION_PATHWAY: Record<string, SubmissionPathway> = {
 export const SUBMISSION_KIT_STATUSES = ['active', 'blocked', 'complete'] as const;
 export type SubmissionKitStatus = typeof SUBMISSION_KIT_STATUSES[number];
 
-/* ─── Tasks (Workbench Kanban) ─────────────────────────────────────── */
-
-export const TASK_COLUMNS = ['todo', 'doing', 'review', 'blocked', 'done'] as const;
-export type TaskColumn = typeof TASK_COLUMNS[number];
-
-export const STATUS_TO_TASK_COL: Record<string, TaskColumn> = {
-  todo:              'todo',
-  pending:           'todo',
-  in_progress:       'doing',
-  doing:             'doing',
-  ready_for_review:  'review',
-  review:            'review',
-  blocked:           'blocked',
-  done:              'done',
-  completed:         'done',
-};
-
-export const TASK_KINDS = ['edit', 'review', 'sign'] as const;
-export type TaskKind = typeof TASK_KINDS[number];
-
-export const TYPE_TO_TASK_KIND: Record<string, TaskKind> = {
-  edit:      'edit',
-  draft:     'edit',
-  authoring: 'edit',
-  review:    'review',
-  approval:  'sign',
-  sign:      'sign',
-  signoff:   'sign',
-};
+/* No Workbench Kanban maps. Their one reader, the kit's task panel, folded into
+   Tasks (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). */
 
 /* ─── Audit / mutation actions ─────────────────────────────────────── */
 

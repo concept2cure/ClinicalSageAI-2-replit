@@ -24,6 +24,8 @@ import { registerRowMinWidth } from './registerGrid';
 import { listOf } from './changeHooks';
 import { formatDate } from './data';
 import { Kpi } from './Kpi';
+import { CapaActions } from './CapaActions';
+import { ReviewActions } from './ReviewActions';
 import { shellProgramId } from '../v2/shellProject';
 import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL,
@@ -31,6 +33,7 @@ import {
   AUDIT_STATUS_LABEL, CRITICALITY_LABEL, DISPOSITION_LABEL, NC_SOURCE_LABEL, SUPPLIER_STATUS_LABEL,
   createInternalAudit, createManagementReview, createNonconformance, createSupplier,
   dispositionNonconformance, isPast, isUndispositioned, reviewText, updateInternalAudit, updateSupplier,
+  addReviewAction, reviewActions,
   type InternalAuditRow, type ManagementReviewRow, type NonconformanceRow, type QmsRecordTab, type SupplierRow,
 } from './qmsRecordData';
 
@@ -65,6 +68,8 @@ interface RegisterConfig<R extends { id: number | string }> {
   rowActions?: RowAction<R>[];
   ask: string;
   askRow: (r: R) => string;
+  /** What a row opens to, under it; its first cell becomes the toggle. */
+  detail?: { label: string; render: (r: R, onChanged: () => void) => React.ReactNode };
 }
 
 const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
@@ -239,6 +244,7 @@ const CAPAS: RegisterConfig<CapaRow> = {
       },
     },
   ],
+  detail: { label: 'Show action items', render: (r, onChanged) => <CapaActions capa={r} onChanged={onChanged} /> },
   ask: 'Give me a read-out on CAPA: which are open past their target close, which are high risk, which effectiveness checks failed, and what each needs next.',
   askRow: (r) => `Summarise CAPA ${r.capaCode} ${r.title}: the problem, its root cause, the action plan, and what it needs next.`,
 };
@@ -246,7 +252,7 @@ const CAPAS: RegisterConfig<CapaRow> = {
 const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   title: 'Nonconformances',
   sub:
-    'Deviations and nonconforming material, from detection to disposition. Each record names the product or ' +
+    'Nonconforming product and material, from detection to disposition. Each record names the product or ' +
     'material, the lot, where it was found and what was found; the disposition and its rationale are recorded ' +
     'against it under your name. Link a nonconformance to the change or CAPA it raises from change control.',
   noun: ['nonconformance', 'nonconformances'],
@@ -413,7 +419,12 @@ const SUPPLIERS: RegisterConfig<SupplierRow> = {
       await updateSupplier(r.id, changed);
       return `${r.supplier_name} was updated.`;
     },
-  }],
+  }, raiseCapaFrom<SupplierRow>({
+    source: 'supplier',
+    ref: (r) => ({ kind: 'qms_supplier', id: String(r.id), label: r.supplier_code || r.supplier_name }),
+    title: (r) => `Supplier issue: ${r.supplier_name}`,
+    problem: (r) => [r.supplier_name, r.scope].filter(Boolean).join(': '),
+  })],
   ask: 'Give me a read-out on suppliers: which critical suppliers are not approved, whose audits or re-approvals are past due, and what falls due next quarter.',
   askRow: (r) => `Summarise supplier ${r.supplier_name}: what it supplies, its approval standing, and what its qualification needs next.`,
 };
@@ -511,15 +522,27 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     'was reviewed, and the decisions and actions that came out of it. Each review is recorded under your name.',
   noun: ['review', 'reviews'],
   listPath: '/api/mdx/qms/management-reviews',
-  grid: '120px 104px minmax(0, 1fr) minmax(0, 1fr)',
+  grid: '120px 104px minmax(0, 1fr) minmax(0, 1fr) 110px',
   columns: [
     { label: 'Period', cell: (r) => <span className="mono">{r.period}</span> },
     { label: 'Held', cell: (r) => formatDate(r.review_date) },
     { label: 'Reviewed', cell: (r) => <span title={reviewText(r.inputs, 'summary')}>{reviewText(r.inputs, 'summary') || '—'}</span> },
-    { label: 'Decisions and actions', cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
+    { label: 'Decisions', cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
+    {
+      label: 'Actions',
+      cell: (r) => {
+        const a = reviewActions(r);
+        const open = a.filter((x) => x.state === 'open').length;
+        return a.length ? `${open} open · ${a.length - open} closed` : 'None';
+      },
+    },
   ],
   kpis: (rows) => [
     { label: 'Reviews', val: String(rows.length), sub: 'On record' },
+    (() => {
+      const open = rows.flatMap(reviewActions).filter((a) => a.state === 'open').length;
+      return { label: 'Open actions', val: String(open), sub: open ? 'Decided, not yet closed' : 'None open', tone: open ? 'warn' as const : 'ok' as const };
+    })(),
     { label: 'Most recent', val: rows[0] ? formatDate(rows[0].review_date) : '—', sub: rows[0] ? rows[0].period : 'No review recorded', tone: rows[0] ? undefined : 'warn' },
   ],
   createLabel: 'Record review',
@@ -542,6 +565,31 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     });
     return `The ${row.period} management review was recorded.`;
   },
+  rowActions: [{
+    label: 'Add action',
+    title: 'Record an action this review decided, with its owner and due date',
+    form: (r) => ({
+      eyebrow: 'Quality',
+      title: `Add an action to the ${r.period} management review`,
+      governed: 'The action is written to the audit trail under your name.',
+      submitLabel: 'Add action',
+      fields: [
+        { key: 'description', label: 'Action', type: 'textarea', rows: 3, required: true },
+        { key: 'owner', label: 'Owner', type: 'text', half: true },
+        { key: 'dueDate', label: 'Due', type: 'date', half: true },
+      ],
+    }),
+    submit: async (r, v) => {
+      const row = await addReviewAction(r.id, { description: v.description.trim(), owner: v.owner.trim(), dueDate: v.dueDate });
+      return `Action ${reviewActions(row).at(-1)?.n ?? ''} was added to the ${r.period} review.`;
+    },
+  }, raiseCapaFrom<ManagementReviewRow>({
+    source: 'management_review',
+    ref: (r) => ({ kind: 'qms_management_review', id: String(r.id), label: `Management review ${r.period}` }),
+    title: (r) => `Action from the ${r.period} management review`,
+    problem: (r) => reviewText(r.outputs, 'decisions'),
+  })],
+  detail: { label: 'Show actions', render: (r, onChanged) => <ReviewActions review={r} onChanged={onChanged} /> },
   ask: 'Prepare the inputs for our next management review from the quality records: nonconformances and their dispositions, internal audit findings, supplier standing, and change control.',
   askRow: (r) => `Summarise the ${r.period} management review: what it reviewed, what it decided, and which actions are still open.`,
 };
@@ -553,6 +601,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
   const [refusal, setRefusal] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const writing = React.useRef(false);
+  const [openId, setOpenId] = React.useState<R['id'] | null>(null);
+  /* Bumped by every write, so an open detail re-reads what the write changed. */
+  const [version, setVersion] = React.useState(0);
   const today = new Date().toISOString().slice(0, 10);
   const grid = config.grid + ' 230px';
   const rowMin = registerRowMinWidth(grid);
@@ -566,6 +617,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
       const text = await write();
       setDrawer(null);
       setNotice(text);
+      setVersion((n) => n + 1);
       read.refresh();
     } catch (err) {
       setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
@@ -632,8 +684,14 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
             <div className="qms-empty">No {config.noun[1]} recorded yet.</div>
           )}
           {loaded && rows.map((r) => (
-            <div key={r.id} className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-              {config.columns.map((c) => <div key={c.label} className="qms-cell">{c.cell(r)}</div>)}
+            <React.Fragment key={r.id}>
+            <div className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
+              {config.columns.map((c, i) => (i === 0 && config.detail ? (
+                <button key={c.label} className="qms-cell qms-num" aria-expanded={openId === r.id} title={config.detail.label}
+                  onClick={() => setOpenId(openId === r.id ? null : r.id)}>
+                  {c.cell(r)}
+                </button>
+              ) : <div key={c.label} className="qms-cell">{c.cell(r)}</div>))}
               <div className="qms-cell qms-rowacts">
                 {config.rowActions?.filter((a) => a.show?.(r) ?? true).map((a) => (
                   <button key={a.label} className="qms-chip" title={a.title} onClick={() => open({ kind: 'row', row: r, action: a })}>
@@ -645,6 +703,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
                 </button>
               </div>
             </div>
+            {config.detail && openId === r.id && (
+              <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, read.refresh)}</div>
+            )}
+            </React.Fragment>
           ))}
         </div>
       </section>

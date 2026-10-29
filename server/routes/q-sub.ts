@@ -42,6 +42,8 @@ import {
   type QSubStage,
 } from '../services/q-sub/q-sub.service';
 import { Q_SUB_TYPES, Q_SUB_STAGES } from '../../shared/schema/q-sub';
+import { programInOrganization } from '../services/c2c/program-access';
+import { isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome';
 
 const router = Router();
 const log = createScopedLogger('q-sub-routes');
@@ -123,9 +125,18 @@ router.get('/', async (req: Request, res: Response) => {
   if (parsed.data.limit)      filters.limit     = parsed.data.limit;
 
   try {
+    /* The project's Pre-Sub manager reads by `program_id`. The service filters
+       every row by organization, so another tenant's rows never came back, but
+       another organization's project, or a missing one, answered 200 with no
+       rows: "this project has no Q-Subs". Ownership is asked first, through the
+       one ownership answer, as mdx-engineering.ts does (D2, 2026-10-29). */
+    if (filters.programId && !(await programInOrganization(pool, filters.programId, orgId))) {
+      return notFoundInTenant(res, 'Project');
+    }
     const rows = await listQSubsForOrg(orgId, filters);
     return ok(res, { rows, count: rows.length });
   } catch (err) {
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'list', err);
   }
 });
@@ -162,7 +173,12 @@ router.post('/', async (req: Request, res: Response) => {
     });
     return created(res, row);
   } catch (err: unknown) {
-    if (err instanceof TenantAccessError) return clientError(res, 403, err.message);
+    /* createQSubmission asks programInOrganization before it inserts, and its one
+       TenantAccessError is that refusal. It answered 403, and 500 when the check
+       could not run. It now answers as the project read above does: 404, or 503
+       (D3, 2026-10-29). No row is written either way. */
+    if (err instanceof TenantAccessError) return notFoundInTenant(res, 'Project');
+    if (isVerificationUnavailable(err)) return respondVerificationUnavailable(res, log, 'The project ownership check', err);
     return serverError(res, log, 'create', err);
   }
 });

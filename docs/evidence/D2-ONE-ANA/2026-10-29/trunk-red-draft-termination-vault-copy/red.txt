@@ -1,0 +1,60 @@
+# Red at 96ce3798 (shared tree, before this change). Product files are identical at 7d83530f.
+# npx vitest run client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+× client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 574ms
+→ Unable to find a label with the text of: Reason for creating a working copy
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 84ms
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 80ms
+✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 122ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > retains the nested 422 classification through the shared generation transport 4ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > a fresh refusal creates no review body or Accept control and reports the repair action 82ms
+✓ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > editor termination refusal uses the existing actual transport and review hooks > failed regeneration preserves the prior valid candidate and edited review until explicit acceptance 76ms
+× client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 7ms
+→ expected '1 candidate retained for individual r…' to match /1 candidate retained.*retry failed o…/i
+
+## Case 1 failure
+ FAIL  client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically
+AssertionError: expected '1 candidate retained for individual r…' to match /1 candidate retained.*retry failed o…/i
+- Expected:
+/1 candidate retained.*retry failed or not-started.*explicitly/i
++ Received:
+"1 candidate retained for individual review. 2 failed or not-started candidates remain. Continue explicitly to prepare up to 20; nothing is accepted automatically."
+ ❯ client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx:141:27
+
+## Case 2 failure
+TestingLibraryElementError: Unable to find a label with the text of: Reason for creating a working copy
+ ❯ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx:152:29
+    150|     }));
+    151|     fireEvent.click(await screen.findByRole('button', { name: 'Work on…
+    152|     fireEvent.change(screen.getByLabelText('Reason for creating a work…
+       |                             ^
+    153|     fireEvent.click(screen.getByRole('button', { name: 'Create working…
+    154|     await screen.findByText('Extracted text requires review.');
+Dialog body rendered instead of the reason field (full DOM dump, DEBUG_PRINT_LIMIT=200000):
+This source intake belongs to an earlier account, session or project visit. Close it and reopen the source in the intended project. A save already sent may have completed; inspect working documents in the original project before creating another copy.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Test Files  2 failed (2)
+Tests  2 failed | 6 passed (8)
+
+## Root-cause bisect (git archive of each revision into a scratch directory; no checkout, no worktree)
+### Case 1: authoringDraftTermination.test.tsx
+=== df1a3cc2 (13bafc62^)
+Tests  4 passed (4)
+=== 13bafc62
+× client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 7ms
+→ expected '1 candidate retained for individual r…' to match /1 candidate retained.*retry failed o…/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Tests  1 failed | 3 passed (4)
+### Case 2: vaultOpenInEditorCarriesDoc.test.tsx
+=== 62a8d5e7 (8c86a44a^)
+Tests  4 passed (4)
+=== 8c86a44a
+× client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 499ms
+→ Unable to find a label with the text of: Reason for creating a working copy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Tests  1 failed | 3 passed (4)
+### Both, at 142c133d (the parent of 55673579, before the F3 commits)
+× client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 650ms
+× client/src/concept2cure/v2/__tests__/authoringDraftTermination.test.tsx > actual assembly queue preserves completed work on a termination refusal > retains the first candidate, fails the second, and never starts the third or accepts/retries automatically 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Tests  2 failed | 6 passed (8)

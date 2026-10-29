@@ -1,0 +1,14 @@
+# Red at 96ce3798: client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+× client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it 17ms
+→ expected [ true, false, false ] to deeply equal [ false, false, false ]
+× client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface 155ms
+→ expected [ …(1) ] to have a length of +0 but got 1
+× client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface 44ms
+→ expected 'SubmissionSubmission CenterPlan, buil…' not to match /from the 510\(k\) surface's filing pa…/
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF 157ms
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects 280ms
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author 232ms
+× client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects 3ms
+→ expected <div></div> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+Tests  4 failed | 3 passed (7)

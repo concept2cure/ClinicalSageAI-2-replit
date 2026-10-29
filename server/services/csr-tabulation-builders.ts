@@ -90,6 +90,10 @@ export interface EfficacyResult {
   pValue?: number;
   /** Comparator arm */
   comparatorArmId?: string;
+  /** Bayesian credible interval, as the SAP reports it */
+  credibleInterval?: { lower: number; upper: number; level: string };
+  /** Posterior probability of the named hypothesis (for example "OR > 1") */
+  posteriorProbability?: { value: number; hypothesis: string };
 }
 
 export interface AdverseEvent {
@@ -289,6 +293,26 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
 
 // ── §11.4 Efficacy ──────────────────────────────────────────────────────────
 
+const interval = (i: { lower: number; upper: number; level: string }) => `${i.lower.toFixed(2)}–${i.upper.toFixed(2)} (${i.level})`;
+/** Three places, as p-values are; never rounded up to certainty or down to impossibility. */
+const probability = (p: number) => (p > 0.999 && p < 1 ? '>0.999' : p > 0 && p < 0.001 ? '<0.001' : p.toFixed(3));
+
+function efficacyRow(endpoint: string, r: EfficacyResult, armIdToName: Map<string, string>, bayesian: boolean): string[] {
+  return [
+    endpoint,
+    armIdToName.get(r.armId) || r.armId,
+    r.display,
+    r.ci ? interval(r.ci) : '—',
+    r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
+    ...(bayesian ? [
+      r.credibleInterval ? interval(r.credibleInterval) : '—',
+      r.posteriorProbability ? probability(r.posteriorProbability.value) : '—',
+      r.posteriorProbability ? r.posteriorProbability.hypothesis : '—',
+    ] : []),
+    r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
+  ];
+}
+
 export function buildEfficacyTable(
   study: StudyData,
   type: 'primary' | 'secondary'
@@ -303,28 +327,26 @@ export function buildEfficacyTable(
 
   const armIdToName = new Map(study.treatmentArms.map(a => [a.armId, a.armName]));
 
+  // The Bayesian columns appear only when a result carries them, so a table
+  // built from a source without them is byte-identical to before (its
+  // scientific-review receipts hash these cells).
+  const bayesian = results.some(r => r.credibleInterval || r.posteriorProbability);
   const rows: string[][] = [];
   for (const [endpoint, armResults] of byEndpoint) {
-    for (const r of armResults) {
-      rows.push([
-        endpoint,
-        armIdToName.get(r.armId) || r.armId,
-        r.display,
-        r.ci ? `${r.ci.lower.toFixed(2)}–${r.ci.upper.toFixed(2)} (${r.ci.level})` : '—',
-        r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
-        r.comparatorArmId ? armIdToName.get(r.comparatorArmId) || r.comparatorArmId : '—',
-      ]);
-    }
+    for (const r of armResults) rows.push(efficacyRow(endpoint, r, armIdToName, bayesian));
   }
 
+  const headers = ['Endpoint', 'Arm', 'Result', 'CI', 'p-value',
+    ...(bayesian ? ['Credible interval', 'Posterior probability', 'Posterior hypothesis'] : []), 'vs Comparator'];
   return {
     title: type === 'primary'
       ? '§11.4 — Primary Efficacy Endpoint Results'
       : '§11.4 — Secondary Efficacy Endpoint Results',
-    headers: ['Endpoint', 'Arm', 'Result', 'CI', 'p-value', 'vs Comparator'],
-    rows: rows.length > 0 ? rows : [['No data', '', '', '', '', '']],
+    headers,
+    rows: rows.length > 0 ? rows : [['No data', ...headers.slice(1).map(() => '')]],
   };
 }
+
 
 // ── §12.1 Extent of exposure ────────────────────────────────────────────────
 

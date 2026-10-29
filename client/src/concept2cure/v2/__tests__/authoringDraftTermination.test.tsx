@@ -138,7 +138,13 @@ describe('actual assembly queue preserves completed work on a termination refusa
     expect(state.slots[0].review).toMatchObject({ draft: { draftId: 'first-candidate', generated: 'Completed first candidate.' }, body: 'Completed first candidate.' });
     expect(state.slots[0].current?.()).toBe(true);
     expect(state.slots[1]).toMatchObject({ message: MESSAGE, review: { draft: null, body: '' } });
-    expect(state.message).toMatch(/1 candidate retained.*retry failed or not-started.*explicitly/i);
+    // 13bafc62 replaced "retry failed or not-started sections explicitly" with a
+    // counted, bounded continuation. Pin its meaning, not its old wording: one
+    // retained, the exact count still pending, an explicit continue, no auto-accept.
+    expect(state.message).toMatch(/^1 candidate retained for individual review\. /);
+    expect(state.message).toMatch(/\b2 failed or not-started candidates remain\b/);
+    expect(state.message).toMatch(/\bContinue explicitly to prepare up to 20\b/);
+    expect(state.message).toMatch(/\bnothing is accepted automatically\.$/);
     const posts = apiRequest.mock.calls.filter(([method]) => method === 'POST');
     expect(posts.map(([, url]) => url)).toEqual([
       '/api/authoring/sections/first/ai/draft', '/api/authoring/sections/second/ai/draft',

@@ -1,0 +1,14 @@
+Baseline at head (fb562e76), the three route files unmodified in the working tree.
+Each file run alone: timeout 240 npx vitest run --config vitest.config.ts <file>
+
+server/__tests__/routes/q-sub.test.ts                                   Tests  19 passed (19)
+server/__tests__/routes/device-project-reads-admit-program.test.ts      Tests  20 passed (20)
+server/__tests__/security/tenant-isolation-q-sub.contract.test.ts       Tests   5 passed (5)
+server/__tests__/security/audit-trail-contract.test.ts                  Tests   9 passed (9)
+server/routes/__tests__/labeling-translations-shape.test.ts             Tests   3 passed (3)
+tests/mdx-beta-surfaces-routes.test.ts                                  Tests  27 passed (27)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts                  Tests  28 passed (28)
+server/services/q-sub/__tests__/q-sub.service.test.ts                   Tests   5 passed (5)
+
+npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).

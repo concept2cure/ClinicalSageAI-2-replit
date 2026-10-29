@@ -28,14 +28,20 @@ vi.mock('../../ai-gateway', () => ({
   }),
 }));
 
-// The two statements the check issues: the ownership SELECT and one INSERT per finding.
+// The statements the check issues: the ownership SELECT, the read of the saved
+// sections it compares (slice G4), and one INSERT per finding.
 vi.mock('../../../db', () => {
   let n = 0;
-  const select = () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 11 }] }) }) });
+  const select = () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 11, programId: null }] }) }) });
+  const execute = async () => ({ rows: [
+    { id: 'L', code: '2.7.3', title: null, content: 'The study randomized 186 subjects.', program_id: null },
+    { id: 'A', code: 'CSR-001', title: null, content: 'The study randomized 120 subjects.', program_id: null },
+    { id: 'B', code: 'CSR-002', title: null, content: 'The study randomized 186 subjects.', program_id: null },
+  ] });
   const insert = () => ({
     values: (v: Record<string, unknown>) => ({ returning: async () => [{ id: ++n, ...v }] }),
   });
-  return { db: { select, insert }, pool: {}, getPool: () => ({}) };
+  return { db: { select, insert, execute }, pool: {}, getPool: () => ({}) };
 });
 
 // 2026-09-28: a confirm-class tool now runs only for a caller with an editor role
@@ -55,11 +61,8 @@ const CTX = { organizationId: 7, userId: 3 };
 const PARAMS = {
   submissionId: 11,
   dimension: 'enrollment',
-  left: { ref: '2.7.3', text: 'The study randomized 186 subjects.' },
-  right: [
-    { ref: 'CSR-001', text: 'The study randomized 120 subjects.' },
-    { ref: 'CSR-002', text: 'The study randomized 186 subjects.' },
-  ],
+  left: { sectionId: 'L' },
+  right: [{ sectionId: 'A' }, { sectionId: 'B' }],
 };
 
 beforeEach(() => {
@@ -88,7 +91,7 @@ describe("AnA's check_consistency passes the outcome on", () => {
     h.logAction.mockResolvedValueOnce(lost);
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
-        { submission_id: 11, dimension: 'enrollment', left: PARAMS.left, right: PARAMS.right },
+        { submission_id: 11, dimension: 'enrollment', left: { section_id: 'L' }, right: [{ section_id: 'A' }, { section_id: 'B' }] },
         { ...CTX, humanConfirmed: true } as never,
       ),
     );

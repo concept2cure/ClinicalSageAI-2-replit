@@ -19,9 +19,10 @@
  *   - a module row opens the editing copy of the filing it measures, by the
  *     copy's binding (F3, 2026-10-29); it named the newest document TAGGED with
  *     its module, so the home Module 1 row could open an added market's copy;
- *   - the grid is gone, and its two filing doors are on Submit: "Compile and
+ *   - the grid is gone, and its two filing doors went to Submit: "Compile and
  *     download" (ectd-compile) and "Check what stops sending" (dispatch-readiness;
- *     "Open readiness" until slice A.1 named each door for its job);
+ *     "Open readiness" until slice A.1 named each door for its job). F10
+ *     removed the second: each market row shows the readiness itself;
  *   - the data room is on Evidence, and "Write from these sources" hands the
  *     readable sources to AnA, as "Draft with N pinned" does.
  */
@@ -174,7 +175,7 @@ describe('Author — the project\'s documents', () => {
     await waitFor(() => expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('BUTTON'));
     // Module 2: at head, the newest M2-tagged document (doc-25), an unbound working document.
     fireEvent.click(moduleRow('Module 2 · Summaries')!);
-    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-copy', programId: PID });
+    expect(target(), 'the row named no document').toMatchObject({ docId: 'doc-copy', programId: PID, sectionWithin: 'M2' });
     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
     // Module 1: at head, the EMA market's copy, the newest M1-tagged document.
     fireEvent.click(moduleRow('Module 1 · Regional ·')!);
@@ -190,7 +191,7 @@ describe('Author — the project\'s documents', () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(moduleRow('Module 1 · Regional · EMA MAA')?.tagName).toBe('BUTTON'));
     fireEvent.click(moduleRow('Module 1 · Regional · EMA MAA')!);
-    expect(target()).toMatchObject({ docId: 'doc-ema-copy', programId: PID });
+    expect(target()).toMatchObject({ docId: 'doc-ema-copy', programId: PID, sectionWithin: 'M1' });
   });
 
   it('with no editing copy the row says so and has nothing to click; a market\'s says where one is made', async () => {
@@ -281,15 +282,16 @@ describe('Evidence — every way a source comes in', () => {
 });
 
 describe('Submit — the grid\'s filing doors', () => {
-  it('"Compile and download" opens eCTD compile, and "Check what stops sending" opens the readiness screen', async () => {
+  it('"Compile and download" opens eCTD compile; readiness has no door of its own', async () => {
     serve();
     const p = props();
     render(<ProjectHome {...p} />);
     await open('Submit');
     fireEvent.click(await screen.findByRole('button', { name: /Compile and download/ }));
     expect(p.onNav).toHaveBeenCalledWith('ectd-compile');
-    fireEvent.click(screen.getByRole('button', { name: 'Check what stops sending' }));
-    expect(p.onNav).toHaveBeenCalledWith('dispatch-readiness');
+    // F10 (P-33): "Check what stops sending" opened a second readiness screen; each market row shows it now
+    // (submitHoldsReadiness.test.tsx).
+    expect(screen.queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
   });
 });
 

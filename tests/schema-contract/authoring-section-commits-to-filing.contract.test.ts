@@ -65,6 +65,9 @@ const AUTHOR = {
   name: 'Avery Author',
 };
 const MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 42
+/** An approval comes from someone who did not write the document
+ * (separation of duties, 21 CFR 11.10; governance/separation-of-duties.ts). */
+const APPROVER = { id: '43', email: 'independent.approver@filing.example', name: 'Quinn Independent' };
 
 const PROJECT = '9a111111-2222-3333-4444-555555555555';
 const DOC = 'doc_filing_contract';
@@ -127,6 +130,8 @@ const PREREQ = `
   INSERT INTO organizations (id, name, uuid) VALUES (1, 'contract-org', '00000000-0000-4000-8000-000000000001');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${MEMBERSHIP_ID}, 'member');
+  INSERT INTO users (id, name, email) VALUES ('${APPROVER.id}', '${APPROVER.name}', '${APPROVER.email}');
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, ${APPROVER.id}, 'member');
   INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROJECT}', 1);
   INSERT INTO projects (id, organization_id, regulatory_program_id, client_workspace_id, owner_id, created_by_id, settings)
     VALUES (1, 1, '${PROJECT}', 1, ${MEMBERSHIP_ID}, ${MEMBERSHIP_ID}, '{}');
@@ -170,7 +175,9 @@ const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
 let token = '';
+let approverToken = '';
 const as = (r: request.Test) => r.set('Authorization', `Bearer ${token}`);
+const asApprover = (r: request.Test) => r.set('Authorization', `Bearer ${approverToken}`);
 
 /** doc_id of the authored document, and the ids of its sections by code. */
 let authoringDocId = '';
@@ -249,6 +256,13 @@ beforeAll(async () => {
 
   token = await new SignJWT({
     userId: AUTHOR.id, email: AUTHOR.email, name: AUTHOR.name,
+    organizationId: AUTHOR.organizationId, tenant_id: AUTHOR.organizationId,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt().setExpirationTime('1h')
+    .sign(new TextEncoder().encode(JWT_SECRET));
+  approverToken = await new SignJWT({
+    userId: APPROVER.id, email: APPROVER.email, name: APPROVER.name,
     organizationId: AUTHOR.organizationId, tenant_id: AUTHOR.organizationId,
   })
     .setProtectedHeader({ alg: 'HS256' })
@@ -1482,13 +1496,13 @@ describe('the signing seals refuse a document whose filed copy is not its text',
      have. */
 
   const esign = (docId: string, meaning: string) =>
-    as(request(app).post(`/api/authoring/docs/${docId}/e-sign`)).send({
+    asApprover(request(app).post(`/api/authoring/docs/${docId}/e-sign`)).send({
       password: SIGNER_PASSWORD, meaning, intent: `${meaning} this document`,
       reason: 'Approving for filing.',
     });
 
   const sign = (docId: string) =>
-    as(request(app).post(`/api/authoring/docs/${docId}/sign`)).send({
+    asApprover(request(app).post(`/api/authoring/docs/${docId}/sign`)).send({
       password: SIGNER_PASSWORD, meaning: 'APPROVER', intent: 'Approve this document',
       reason: 'Approving for filing.',
     });

@@ -23,6 +23,8 @@
  * @module server/services/cmc/program-stage
  */
 
+import { phaseNumber } from '../../../shared/clinical-phase';
+
 export interface ProgramStage {
   /** What the program files: a clinical-trial application (IND, CTA, IMPD) or a marketing one (NDA, BLA, MAA). */
   application: 'clinical_trial' | 'marketing';
@@ -41,17 +43,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const CLINICAL_TRIAL = new Set(['ind', 'cta', 'impd', 'ctn', 'clinical_trial', 'clinical trial']);
 const MARKETING = new Set(['nda', 'bla', 'anda', 'maa', 'snda', 'sbla', '505b2', '505(b)(2)', 'marketing', 'nds', 'j-nda']);
 
-/** "Phase 1", "I", "1/2", "Phase IIb", "phase_3" → its number; null when it names none of 1–3. */
-export function phaseNumber(text: unknown): 1 | 2 | 3 | null {
-  const t = String(text ?? '').toLowerCase().replace(/phase|_|-/g, ' ');
-  const found: number[] = [];
-  for (const m of t.matchAll(/\b(iii|ii|i|[123])(?:[ab])?\b/g)) {
-    const v = m[1];
-    found.push(v === 'iii' || v === '3' ? 3 : v === 'ii' || v === '2' ? 2 : 1);
-  }
-  if (found.length === 0) return null;
-  return Math.max(...found) as 1 | 2 | 3;
-}
+/** "Phase 1", "I", "1/2", "Phase IIb", "phase_3" → its number; null when it names none of 1–3 (shared/clinical-phase.ts). */
+export { phaseNumber };
 
 /** The program's stage; null when it is not a program of this organisation or names no known application. */
 export async function readProgramStage(q: Queryable, orgId: number, projectId: string): Promise<ProgramStage | null> {

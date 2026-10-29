@@ -1,0 +1,6 @@
+Type check of the changed files and everything they import.
+A scratch tsconfig extends ./tsconfig.json (strict). It lists the six changed files, the repo's declaration files, and the three
+modules that augment express's Request (server/auth.ts, server/middleware/auth.ts, server/middleware/tenantContext.ts).
+NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p <scratch>/tsconfig.json   (noEmit, not incremental)
+
+exit 0, 0 lines of output

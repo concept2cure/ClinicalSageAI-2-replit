@@ -1,6 +1,6 @@
 /**
- * The CAPA lifecycle (21 CFR 820.100): the moves the server accepts from each
- * state. The one copy: `server/services/capa-mdr/stateMachine.ts` enforces it,
+ * The CAPA lifecycle (21 CFR 820.100) and its action items' lifecycle (21 CFR
+ * 820.100(a)(2-3)): the moves the server accepts from each state. The one copy: `server/services/capa-mdr/stateMachine.ts` enforces it,
  * and the Quality CAPA register (client quality/QmsRecords.tsx) offers exactly
  * these moves. Pure, so the client imports it without the schema's drizzle.
  *
@@ -13,7 +13,7 @@
  * escalated → investigation
  * closed_effective is terminal.
  */
-import type { CapaState } from '../schema/capa-mdr';
+import type { ActionState, CapaState } from '../schema/capa-mdr';
 
 export const CAPA_TRANSITIONS: Record<CapaState, readonly CapaState[]> = {
   open: ['investigation', 'escalated'] as const,
@@ -24,4 +24,12 @@ export const CAPA_TRANSITIONS: Record<CapaState, readonly CapaState[]> = {
   closed_effective: [] as const,
   closed_not_effective: ['investigation'] as const,
   escalated: ['investigation', 'action_planned', 'action_implemented'] as const,
+};
+
+export const ACTION_TRANSITIONS: Record<ActionState, readonly ActionState[]> = {
+  planned: ['in_progress', 'cancelled'] as const,
+  in_progress: ['done', 'blocked', 'cancelled'] as const,
+  blocked: ['in_progress', 'cancelled'] as const,
+  done: [] as const,
+  cancelled: [] as const,
 };

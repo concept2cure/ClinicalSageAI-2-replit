@@ -1,3 +1,9 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts device-tasks; its replay deprecates the existing row.
+-- Remove its packaging reference too, so the unknown-module guard below still
+-- passes on a fresh database that never held the row. Replayed databases keep the
+-- deprecated row, its subscriptions and every other module's tier unchanged.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/README.md.
 -- AMENDED IN PLACE 2026-10-26 — D2 A2.10a filing-catalogue fold (Rule 1).
 -- The discovery functions now live in Projects. Remove the retired identity's
 -- packaging reference too: a fresh database need not hold its old row, while
@@ -212,7 +218,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('device-presub', 'standard'),
   ('device-software', 'standard'),
   ('device-submission', 'standard'),
-  ('device-tasks', 'standard'),
   ('device-udi', 'standard'),
   ('device-validation', 'standard'),
   ('device-vault', 'standard'),

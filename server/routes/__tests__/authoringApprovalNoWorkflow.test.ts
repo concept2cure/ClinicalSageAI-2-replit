@@ -191,7 +191,7 @@ describe('POST /docs/:docId/sign where an approval workflow DID exist', () => {
     await request(makeApp())
       .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'my turn', password: PASSWORD });
+      .send({ meaning: 'APPROVER', reason: 'my turn to approve', password: PASSWORD });
 
     const approvals = txStatements().filter(
       s => s.includes('UPDATE authoring_documents') && s.includes("'APPROVED'"),

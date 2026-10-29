@@ -1,0 +1,54 @@
+# Red: the three files at HEAD 5b541627 (working-tree copies identical to HEAD), each alone
+# Runner: timeout <T> npx vitest run <file>; worker RSS sampled every 10 s (vitest fork workers).
+# vitest.config.ts testTimeout is 10000 ms, so a pending promise would fail each test at 10 s.
+
+## authoringConversationContext.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=689.082
+t=80s worker_rss_mb=1095.45
+t=121s worker_rss_mb=1800.81
+t=161s worker_rss_mb=1656.71
+t=201s worker_rss_mb=1726.93
+t=241s worker_rss_mb=0
+done after 241s
+
+## authoringAnaMarkdown.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=688.227
+t=80s worker_rss_mb=1106.96
+t=120s worker_rss_mb=1327.94
+t=160s worker_rss_mb=1347.47
+t=200s worker_rss_mb=1671.32
+t=240s worker_rss_mb=0
+done after 240s
+
+## authoringAnaInsertGate.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=845.762
+t=80s worker_rss_mb=1079.38
+t=120s worker_rss_mb=1163.2
+t=160s worker_rss_mb=1349.73
+t=200s worker_rss_mb=1919.59
+t=240s worker_rss_mb=0
+done after 240s
+
+## A lone it also hangs, and a 20 s per-test timeout does not fire
+$ timeout 150 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx -t 'uses section B' --testTimeout=20000
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=30s worker_rss_mb=603.922
+t=60s worker_rss_mb=771.266
+t=90s worker_rss_mb=997.176
+t=120s worker_rss_mb=1139.4
+t=150s worker_rss_mb=41.0859
+done after 150s

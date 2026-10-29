@@ -1,0 +1,18 @@
+GREEN — trunk HEAD 7d83530f plus the auth mock in the six suites (working tree)
+$ npx vitest run client/src/concept2cure/v2/__tests__/conversationThread*.test.tsx
+(trimmed: per-file counts, summary)
+
+conversationThreadAdminFollow.test.tsx: 6 passed, 0 failed
+conversationThreadCanvas.test.tsx: 21 passed, 0 failed
+conversationThreadInsertRefusals.test.tsx: 8 passed, 0 failed
+conversationThreadShellChat.test.tsx: 16 passed, 0 failed
+conversationThreadSignoff.test.tsx: 4 passed, 0 failed
+conversationThreadStarters.test.tsx: 4 passed, 0 failed
+conversationThreadStopped.test.tsx: 4 passed, 0 failed
+conversationThreadUrl.test.tsx: 7 passed, 0 failed
+
+ Test Files  8 passed (8)
+      Tests  70 passed (70)
+
+No unhandled errors. The previously red suites print React act(...) warnings on stderr
+(Signoff 4, Starters 4, Url 1) from the document-list read settling after render; warnings, not failures.

@@ -1,0 +1,11 @@
+# mutation M5-client-calls-blocking-blocked: client/src/concept2cure/v2/surfaces/TaskBoard.tsx
+# replaced:       blocked: list.filter(t => t.blocked).length,
+# with:           blocked: list.filter(t => t.blocked || t.blocking).length,
+
+== client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx
+ × client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx > TaskBoard: another store's blocking work > counts the work holding the submission by the cross-store rule: blocked, or recorded as blocking 112ms
+   → blocking work counted as blocked: expected '3' to be '1' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: blocking work counted as blocked: expected '3' to be '1' // Object.is equality
+      Tests  1 failed | 3 passed (4)
+# restored byte-for-byte (cmp)

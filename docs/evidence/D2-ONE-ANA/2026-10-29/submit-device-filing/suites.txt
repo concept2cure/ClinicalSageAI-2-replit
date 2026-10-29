@@ -1,0 +1,27 @@
+# Existing suites over ProjectMarkets / Submit / the device doors, with this change and the lead's ProjectHome.tsx:1851 line in place
+# npx vitest run <the 22 files below>
+# passing tests per file:
+  ProjectHome.mdxWorkflow.test.tsx              2
+  ProjectMdxWorkflow.test.tsx                   30
+  clientNamesSlice1.test.tsx                    28
+  dispatchReadinessServerGate.test.tsx          3
+  documentClassSubmitTab.test.tsx               5
+  filingLifecyclePlan.test.tsx                  8
+  filingPathNoDeadEnds.test.tsx                 9
+  marketSupportLine.test.tsx                    12
+  projectBiotechPlan.test.tsx                   12
+  projectHomeDocuments.test.tsx                 21
+  projectHomeNextStep.test.tsx                  11
+  projectHomePlan.test.tsx                      19
+  projectHomeStageTracker.test.tsx              4
+  projectHomeStages.test.tsx                    8
+  projectHomeStepReturn.test.tsx                6
+  projectHomeSubmitStage.test.tsx               33
+  projectMarkets.test.tsx                       15
+  projectMarketsAddPermission.test.tsx          3
+  projectMarketsDeviceAssembly.test.tsx         13
+  projectPlanLifecycleReference.test.tsx        5
+  projectSubmitDeviceFiling.test.tsx            13
+  shellProjectStep.test.ts                      9
+ Test Files  22 passed (22)
+      Tests  269 passed (269)

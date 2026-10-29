@@ -1,0 +1,59 @@
+# Caller suites with the fix, one file at a time, each under timeout 240. Columns: file | vitest summary | exit | wall time and peak RSS (2 s sampler).
+# Most ran during the lead's freeze (tree at 2168fd56 plus other lanes' uncommitted edits); the last eleven ran at b6f1e21a.
+# The hook file was the fixed one throughout (sha256 eeb1c7f6...).
+authoringConversationContext.test.tsx | Tests  2 passed (2) | EXIT 0 | elapsed=8s peak_tree_rss_mb=641
+authoringAnaInsertGate.test.tsx | Tests  7 passed (7) | EXIT 0 | elapsed=10s peak_tree_rss_mb=787
+authoringAnaMarkdown.test.tsx | Tests  8 passed (8) | EXIT 0 | elapsed=10s peak_tree_rss_mb=712
+documentAuthoringDeepLink.test.tsx | Tests  17 passed (17) | EXIT 0 | elapsed=8s peak_tree_rss_mb=707
+sourceIntakeOwnership.test.tsx | Tests  58 passed (58) | EXIT 0 | elapsed=4s peak_tree_rss_mb=446
+conversationThreadAdminFollow.test.tsx | Tests  8 passed (8) | EXIT 0 | elapsed=7s peak_tree_rss_mb=609
+conversationThreadCanvas.test.tsx | Tests  21 passed (21) | EXIT 0 | elapsed=12s peak_tree_rss_mb=1250
+conversationThreadInsertRefusals.test.tsx | Tests  8 passed (8) | EXIT 0 | elapsed=10s peak_tree_rss_mb=1263
+conversationThreadShellChat.test.tsx | Tests  16 passed (16) | EXIT 0 | elapsed=6s peak_tree_rss_mb=594
+conversationThreadSignoff.test.tsx | Tests  4 passed (4) | EXIT 0 | elapsed=6s peak_tree_rss_mb=580
+conversationThreadStarters.test.tsx | Tests  4 passed (4) | EXIT 0 | elapsed=6s peak_tree_rss_mb=654
+conversationThreadStopped.test.tsx | Tests  4 passed (4) | EXIT 0 | elapsed=6s peak_tree_rss_mb=583
+conversationThreadUrl.test.tsx | Tests  7 passed (7) | EXIT 0 | elapsed=6s peak_tree_rss_mb=596
+useDossier.hydration.test.tsx | Tests  5 passed (5) | EXIT 0 | elapsed=2s peak_tree_rss_mb=9
+useDossier.scope.test.ts | Tests  3 passed (3) | EXIT 0 | elapsed=2s peak_tree_rss_mb=22
+agencyResponseEditor.test.tsx | Tests  9 passed (9) | EXIT 0 | elapsed=4s peak_tree_rss_mb=442
+agencyResponseEditorState.test.ts | Tests  14 passed (14) | EXIT 0 | elapsed=2s peak_tree_rss_mb=24
+agencyResponsesCurrentScope.test.tsx | Tests  3 passed (3) | EXIT 0 | elapsed=4s peak_tree_rss_mb=457
+agencyResponsesSignedApproval.test.tsx | Tests  30 passed (30) | EXIT 0 | elapsed=4s peak_tree_rss_mb=451
+authoringCreateExport.test.tsx | Tests  26 passed (26) | EXIT 0 | elapsed=4s peak_tree_rss_mb=451
+companyLegalSessionContinuity.test.tsx | Tests  14 passed (14) | EXIT 0 | elapsed=4s peak_tree_rss_mb=449
+companySessionBoundaries.test.tsx | Tests  14 passed (14) | EXIT 0 | elapsed=2s peak_tree_rss_mb=23
+companySettingsSessionContinuity.test.tsx | Tests  3 passed (3) | EXIT 0 | elapsed=4s peak_tree_rss_mb=450
+companySubmissionSessionContinuity.test.tsx | Tests  11 passed (11) | EXIT 0 | elapsed=4s peak_tree_rss_mb=459
+documentCanvas.test.tsx | Tests  11 passed (11) | EXIT 0 | elapsed=6s peak_tree_rss_mb=669
+documentCanvasFilingBinding.test.tsx | Tests  2 passed (2) | EXIT 0 | elapsed=6s peak_tree_rss_mb=670
+documentCanvasLive.test.tsx | Tests  11 passed (11) | EXIT 0 | elapsed=6s peak_tree_rss_mb=624
+documentCanvasPolish.test.tsx | Tests  14 passed (14) | EXIT 0 | elapsed=6s peak_tree_rss_mb=591
+insightsBundleExport.test.tsx | Tests  21 passed (21) | EXIT 0 | elapsed=6s peak_tree_rss_mb=529
+projectBiotechPlan.test.tsx | Tests  12 passed (12) | EXIT 0 | elapsed=6s peak_tree_rss_mb=585
+projectDossierDetails.test.tsx | Tests  8 passed (8) | EXIT 0 | elapsed=2s peak_tree_rss_mb=23
+projectDossierParity.test.tsx | Tests  7 passed (7) | EXIT 0 | elapsed=3s peak_tree_rss_mb=23
+registrationDossierExpands.test.tsx | Tests  8 passed (8) | EXIT 0 | elapsed=4s peak_tree_rss_mb=447
+reportingCurrentSessionOwnership.test.tsx | Tests  29 passed (29) | EXIT 0 | elapsed=6s peak_tree_rss_mb=509
+programSummaryContext.test.tsx | Tests  4 passed (4) | EXIT 0 | elapsed=2s peak_tree_rss_mb=23
+savedAssemblySourcesFlow.test.tsx | Tests  15 passed (15) | EXIT 0 | elapsed=14s peak_tree_rss_mb=765
+sourceAssemblyEntry.test.tsx | Tests  31 passed (31) | EXIT 0 | elapsed=6s peak_tree_rss_mb=565
+workbenchAssemblyBuild.test.tsx | Tests  31 passed (31) | EXIT 0 | elapsed=22s peak_tree_rss_mb=792
+workbenchDocumentAccess.test.tsx | Tests  25 passed (25) | EXIT 0 | elapsed=10s peak_tree_rss_mb=730
+authoringAssemblySources.test.tsx | Tests  12 passed (12) | EXIT 0 | elapsed=2s peak_tree_rss_mb=24
+projectFilesAssemblyFlow.test.tsx | Tests  7 failed | 2 passed (9) | EXIT 1 | elapsed=44s peak_tree_rss_mb=720
+projectFilesSourceAssembly.test.tsx | Tests  17 passed (17) | EXIT 0 | elapsed=4s peak_tree_rss_mb=448
+sourceDocumentStartChannel.test.tsx | Tests  25 passed (25) | EXIT 0 | elapsed=4s peak_tree_rss_mb=23
+sourceFirstAssemblyFlow.test.tsx | Tests  13 passed (13) | EXIT 0 | elapsed=19s peak_tree_rss_mb=1404
+submissionRequiredDeliverablesSession.test.tsx | Tests  7 passed (7) | EXIT 0 | elapsed=4s peak_tree_rss_mb=483
+submissionSelectorScope.test.tsx | Tests  11 passed (11) | EXIT 0 | elapsed=4s peak_tree_rss_mb=492
+projectHomeSubmitStage.test.tsx | Tests  33 passed (33) | EXIT 0 | elapsed=6s peak_tree_rss_mb=573
+projectMarkets.test.tsx | Tests  15 passed (15) | EXIT 0 | elapsed=6s peak_tree_rss_mb=589
+submitHoldsReadiness.test.tsx | Tests  4 passed (4) | EXIT 0 | elapsed=4s peak_tree_rss_mb=454
+projectSubmitDeviceFiling.test.tsx | Tests  13 passed (13) | EXIT 0 | elapsed=6s peak_tree_rss_mb=575
+
+# The one red, rerun with the head hook copied back (then the fix restored, sha256sum -c OK):
+projectFilesAssemblyFlow.test.tsx | Tests  7 failed | 2 passed (9) | EXIT 1 | elapsed=45s peak_tree_rss_mb=684
+# The same 7 tests fail at head with the same message, at projectFilesAssemblyFlow.test.tsx:106:
+#   await waitFor(() => expect((target as HTMLSelectElement).options.length).toBe(3));
+# The 'Working document' chooser has 1 option, not 3. It predates this change and is not caused by it.

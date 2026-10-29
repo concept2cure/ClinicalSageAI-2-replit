@@ -1,0 +1,14 @@
+# Green: client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row opens the 510(k) surface, which is in this release
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: where the 510(k) surface is not in the release, a device filing row does not offer it
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center, with no device filings > the empty state names the 510(k) surface's filing panel, which is in this release
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center, with no device filings > where the 510(k) surface is not in the release, the empty state says so and sends no one there
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author
+✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects
+Test Files  1 passed (1)
+Tests  9 passed (9)
+
+# ESLint, head -> now: filingPathNoDeadEnds.test.tsx 0 -> 0

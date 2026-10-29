@@ -1,0 +1,41 @@
+Mutation 2: drop the project's name from the crumb.
+Shell.tsx TopBar:
+    const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? projectName : '';
+became
+    const projectCrumb = tier?.id === PROJECTS_CRUMB.id ? '' : '';
+Restored from a byte copy afterwards; sha256 matched the fixed file.
+
+ × a project feature is crumbed under the open project > design controls, with a project open: Projects › the project › the feature 47ms
+ × a project feature is crumbed under the open project > risk, with a project open: the same trail, and no "Medical Device & IVD" parent 9ms
+ × a project feature is crumbed under the open project > names the project as the project chip beside it does 10ms
+ × a project feature is crumbed under the open project > names a project with no code by its title 7ms
+ × a project feature is crumbed under the open project > every MDX project feature: parents are Projects and the open project, never the old tier 8ms
+ × a project feature is crumbed under the open project > follows the channel when another project is opened 16ms
+ ✓ the crumb never invents a project name > with no project open: Projects › the feature 10ms
+ ✓ the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): Projects › the feature 10ms
+ ✓ other surfaces keep their crumbs > the project page is still named by the project, with no Projects crumb added 8ms
+ ✓ other surfaces keep their crumbs > a core place carries no project crumb, even with a project open 17ms
+ ✓ other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 1ms
+ ✓ the registry model names Projects as a project feature’s parent > for every MDX project feature 1ms
+ ✓ the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 1ms
+ ✓ ⌘K’s hint names Projects for a project feature > design controls 63ms
+ ✓ ⌘K’s hint names Projects for a project feature > risk management 25ms
+ ✓ ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 43ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 10 passed (16)
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project as the project chip beside it does
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects' ] to deeply equal [ 'Concept2Cure.RI', 'Projects', …(1) ]
+- Expected
++ Received
+  [
+    "Concept2Cure.RI",
+    "Projects",
+-   "NPX-510",
+  ]
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:103:23
+    101|     const chip = document.querySelector('.tb-proj .tb-proj-lbl')?.text…
+    102|     expect(chip).toBe('NPX-510');
+    103|     expect(parents()).toEqual(['Concept2Cure.RI', 'Projects', chip]);
+       |                       ^

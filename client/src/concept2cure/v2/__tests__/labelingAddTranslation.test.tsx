@@ -38,6 +38,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Labeling } from '../surfaces/Labeling';
+import { clearShellProject, publishShellProject } from '../shellProject';
 
 const DOC = {
   id: 4, device_name: 'Aurora CGM', doc_kind: 'ifu', version: '3',
@@ -61,7 +62,7 @@ beforeEach(() => {
     return { ok: r.ok, status: r.status, json: async () => r.json ?? {} };
   });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearShellProject(); });
 
 /** The drawer's own submit button — not the surface's "Add translation" opener. */
 function submitButton(): HTMLElement {
@@ -70,9 +71,11 @@ function submitButton(): HTMLElement {
 }
 
 async function openForm() {
+  /* The screen reads the shell's open project (device-features-reach-three, 2026-10-29); it has no programId prop. */
+  publishShellProject({ id: PROGRAM_ID });
   render(
     <Labeling
-      {...({ onAsk: () => {}, programId: PROGRAM_ID } as unknown as React.ComponentProps<typeof Labeling>)}
+      {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof Labeling>)}
     />,
   );
   const add = await screen.findAllByText(/Add translation/);
