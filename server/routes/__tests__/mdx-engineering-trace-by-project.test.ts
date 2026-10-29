@@ -125,8 +125,11 @@ describe('GET /api/mdx/engineering/:programId — the design-controls trace', ()
     expect(res.body.meta.unavailable).toContain('trace');
   });
 
-  it('the other three organization-wide panels are still reported as the organization\'s', async () => {
+  /* Non-conformances and documents were narrowed the same day
+     (mdx-engineering-panels-by-project.test.ts); DHF and change requests stay
+     the organization's, for the reasons in the route header. */
+  it('the two panels still read by organization are reported as the organization\'s', async () => {
     const res = await request(app()).get(`/api/mdx/engineering/${OWN}`);
-    expect(res.body.meta.scopes).toMatchObject({ risks: 'program', trace: 'program', dhf: 'organization', ecrs: 'organization', issues: 'organization', documents: 'organization' });
+    expect(res.body.meta.scopes).toMatchObject({ risks: 'program', trace: 'program', dhf: 'organization', ecrs: 'organization', issues: 'program', documents: 'program' });
   });
 });

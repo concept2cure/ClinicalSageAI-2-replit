@@ -1,0 +1,22 @@
+# M1: Engineering reads non-conformances by organization again
+# mutation: server/routes/mdx-engineering.ts: 144 chars replaced by 113 chars
+# test: server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+# exit=1  Tests  4 failed | 5 passed (9)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+
+## replaced
+        WHERE organization_id = $1 AND program_id = $2
+        ORDER BY detected_at DESC NULLS LAST
+        LIMIT 50`,
+      [orgId, programId],
+## with
+        WHERE organization_id = $1
+        ORDER BY detected_at DESC NULLS LAST
+        LIMIT 50`,
+      [orgId],
+
+## failing tests
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project 24ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > never shows another project's non-conformances, the organization's unscoped ones, or another organization's 4ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > the open-issues card counts the project's records only 3ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it 4ms

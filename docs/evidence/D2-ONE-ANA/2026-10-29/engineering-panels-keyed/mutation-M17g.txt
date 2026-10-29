@@ -1,0 +1,30 @@
+# M17g: the file is taken off the applier (deploy-path gate)
+# mutation: scripts/db/migration-set.mjs: 65 chars replaced by 0 chars
+# test: npm:ci:migration-deploy-path
+# exit=1  must be replayable: IF NOT EXISTS, and no DROP of anything another file creates.
+# restored byte for byte: True (sha256 7789b21fbb60cc901f0dfed491ddd277fec79fcff1a48613aadfe27ee28c9e5c)
+
+## replaced
+  'migrations/20261029d_nonconforming_products_program_key.sql',
+
+## with
+
+
+## failing tests
+
+
+## gate output
+
+[ci:migration-deploy-path] FAIL — 1 new migration(s) no deploy applies:
+
+  migrations/20261029d_nonconforming_products_program_key.sql
+
+  install-fresh would apply this to a NEW database, but deploy-migrate applies
+  only C2C_MIGRATION_FILES. Every database already provisioned would never get
+  it, and any code reading what it creates fails there.
+
+  Add it to C2C_MIGRATION_FILES in scripts/db/migration-set.mjs, above the
+  final tenant-sweep pair. It re-runs on every deploy (CLAUDE.md Rule 1), so it
+  must be replayable: IF NOT EXISTS, and no DROP of anything another file creates.
+
+

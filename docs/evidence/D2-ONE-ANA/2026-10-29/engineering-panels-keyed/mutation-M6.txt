@@ -1,0 +1,18 @@
+# M6: the NC POST stops admitting the named project
+# mutation: server/routes/mdx-qms.ts: 156 chars replaced by 89 chars
+# test: server/routes/__tests__/mdx-qms-nonconforming-project.test.ts
+# exit=1  Tests  5 failed | 1 passed (6)
+# restored byte for byte: True (sha256 e9bf37ca05bdbb66cd4a40741a43c050bfa56a49e844e6081c15d528c76f87e6)
+
+## replaced
+    if (!(await admitProject(res, log, programId, orgId))) return;
+    const { rows } = await qmsClient(req).query(`INSERT INTO qms_nonconforming_products (
+## with
+    const { rows } = await qmsClient(req).query(`INSERT INTO qms_nonconforming_products (
+
+## failing tests
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > records it against the caller organization's own project, after asking 22ms
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses another organization's project with 404 "Project not found", and writes nothing 6ms
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses a project that does not exist with 404 "Project not found", and writes nothing 14ms
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses an id that is not a project id with 404 "Project not found", and writes nothing 3ms
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > answers 503 when ownership cannot be checked, and writes nothing 3ms

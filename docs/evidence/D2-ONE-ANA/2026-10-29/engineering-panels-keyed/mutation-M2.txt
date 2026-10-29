@@ -1,0 +1,15 @@
+# M2: Engineering reports non-conformances as the organization's
+# mutation: server/routes/mdx-engineering.ts: 24 chars replaced by 29 chars
+# test: server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+# exit=1  Tests  3 failed | 6 passed (9)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+
+## replaced
+      issues: 'program',
+## with
+      issues: 'organization',
+
+## failing tests
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project 21ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it 4ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports the DHF and change requests as the organization's, and every other panel as the project's 6ms
