@@ -51,6 +51,7 @@ import type { CSRSection } from '../csr-builder';
 import { resolveCsrScope } from './project-scope';
 import { currentPivotalDeclarations } from './study-pivotal-declaration';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
+import { nctNumberOf } from '../../../shared/csr-source-input';
 
 /**
  * Shape of the `studyInfoSnapshot` JSONB column on `csr_build_jobs`. Mirrors
@@ -72,6 +73,7 @@ interface StudyInfoSnapshot {
     sampleSize?: number;
     treatmentDuration?: string;
     targetAgencies?: string[];
+    nctNumber?: string;
   };
   deepResearchJobId?: number;
 }
@@ -82,7 +84,7 @@ interface StudyInfoSnapshot {
  */
 function readStudyInfo(raw: unknown): Required<Pick<NonNullable<StudyInfoSnapshot['studyInfo']>,
   'protocolNumber' | 'phase' | 'studyDesign' | 'primaryEndpoint'
->> & { sampleSize?: number } {
+>> & { sampleSize?: number; nctNumber: string | null } {
   const snap = (raw && typeof raw === 'object' ? raw : {}) as StudyInfoSnapshot;
   const info = snap.studyInfo ?? {};
   return {
@@ -91,6 +93,7 @@ function readStudyInfo(raw: unknown): Required<Pick<NonNullable<StudyInfoSnapsho
     studyDesign: info.studyDesign ?? '',
     primaryEndpoint: info.primaryEndpoint ?? '',
     sampleSize: typeof info.sampleSize === 'number' ? info.sampleSize : undefined,
+    nctNumber: nctNumberOf(info),
   };
 }
 
@@ -217,6 +220,7 @@ export async function loadCsrInputsForProject(
       sampleSize: null,
       plannedSampleSize: info.sampleSize ?? null,
       pivotal: declared.get(job.studyId)?.pivotal ?? null,
+      nctNumber: info.nctNumber,
       csrSections: sections,
     });
   }
