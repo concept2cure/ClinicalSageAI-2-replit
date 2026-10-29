@@ -50,7 +50,7 @@ const DDL = `
   CREATE SCHEMA vault;
   CREATE TABLE vault.documents (
     id uuid PRIMARY KEY, organization_id integer, program_id uuid, document_title text, document_code text,
-    content_hash text, processing_status text, extracted_text text, supersedes_id uuid,
+    content_hash text, processing_status text, extracted_text text, supersedes_id uuid, restored_from_id uuid,
     retention_until date, deleted_at timestamptz, updated_at timestamptz DEFAULT now()
   );
   CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer NOT NULL, checksum_sha256 text, storage_path text, status text);

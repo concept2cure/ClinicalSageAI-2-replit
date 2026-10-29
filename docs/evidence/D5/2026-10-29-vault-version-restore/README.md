@@ -58,6 +58,24 @@ Deleted history (`git log --all --diff-filter=D` on `*estore*`): only unrelated 
 - **The restored version takes the document's current title**, as a data-room check-in does. The bytes are the earlier version's; the title belongs to the document.
 - **The verified reader stays in `project-vault.ts`.** The work order moves it to `server/services/vault/vault-bytes.ts`. Eleven callers and seven test mocks import it from the route today. Moving it is its own change, and restore imports it as they do.
 
+## Security review, the same day
+
+A security review of this change (read-only, by a separate reviewer) found two medium defects, two low ones, and two gates left red by this session's earlier slices. All are fixed. `04-review.txt` has the runs.
+
+| Finding | Fix |
+|---|---|
+| **A withdrawn file was read back.** A restore of a version whose original file a data disposition withdrew read those bytes from storage, scanned them and stored them again. Only then did the database's disposition write guard refuse the row (`DOCUMENT_DISPOSITION_WRITE_REFUSED`, `migrations/20261006_document_data_dispositions.sql`), so no version was recorded. The person got a bare 500. | `restoreVaultVersion` refuses it `SOURCE_WITHDRAWN` by the one availability predicate (`vaultBinaryAvailableSql`), before the read. At commit it refuses again, under the disposition program lock a withdrawal takes, as file upload's source admission does. |
+| **A restored document could not then be withdrawn.** The disposition engine refused `AMBIGUOUS_LINKS` whenever two live rows held one file. | `impact.ts` treats one restored document as one identity: one code, one original, and every other row a restore of a row in the set. All the rows are linked, so a withdrawal covers every copy. Two unrelated rows with one file are still ambiguous. |
+| **The reason was not where the history reads it.** It sat only in the row's details, while the panel said "Your reason is in its history". | The reason is on the audit row's `reason` column, and the row's `description` reads "Restored version 1.0 as version 3.0", as the metadata-edit writer does. |
+| The trigger let two rows with no document code match, because `IS DISTINCT FROM` treats two NULLs as equal | The trigger also refuses a row with no code. The function was amended in place; the dated note is in the migration's header. |
+| There was no two-organization case | Another organization's version named on this document is refused 404. |
+| `ci:tenant-isolation:no-regression` was red on the classifier's re-proposal UPDATE (step 5) | The UPDATE binds the program and organization in the statement. |
+| `ci:vault-document-writers` was red, because the processing sweep writes `vault.documents` and was not named (steps 4–6) | The sweep is named, with what it writes and the chained `vault.document.extracted` row that records it. |
+
+While the suites were run side by side, the processing sweep's own suite failed: it counted the OCR of scans that the other suites had left pending. A sweep run can now be limited to named organisations (`runVaultProcessingOnce({ organizationIds })`), which an operator uses to re-run one tenant. The two suites that run the sweep are limited to their own.
+
+The two availability checks back each other up. Each mutated alone is still refused by the other. With both mutated, the case is red: the database's write guard refuses the row, as it did before this fix, with a 500 and after reading the bytes. Each other new guard is caught alone.
+
 ## Not done here
 
 Stage 5 steps 3–6: activating withdrawal (needs the owner's staging acceptance), append-only legal holds, holds in the product, and check-out (a founder decision).

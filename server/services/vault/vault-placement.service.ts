@@ -485,8 +485,10 @@ export async function proposeFilingFromReadText(
     `UPDATE vault.documents SET
        folder_id = $2, evidence_kind = COALESCE(evidence_kind, $3), ctd_section = $4,
        placement_status = 'suggested', placement_confidence = $5, placement_rationale = $6, updated_at = NOW()
-     WHERE id = $1::uuid AND placement_status = 'unfiled' AND placed_by IS NULL`,
-    [documentId, classified.folderId, classified.evidenceKind, classified.ctdSection, classified.confidence, classified.rationale],
+     WHERE id = $1::uuid AND program_id = $7::uuid AND organization_id = $8
+       AND placement_status = 'unfiled' AND placed_by IS NULL`,
+    [documentId, classified.folderId, classified.evidenceKind, classified.ctdSection, classified.confidence, classified.rationale,
+      programId, organizationId],
   );
   await writeChainedAuditRow(client, {
     tenantId: organizationId,
