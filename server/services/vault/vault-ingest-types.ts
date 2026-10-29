@@ -23,6 +23,13 @@ export interface VaultIngestArgs {
    * Lineage is never taken from a caller any other way.
    */
   supersedesDocumentId?: string;
+  /**
+   * The caller lets the Vault number versions: a typed version is refused for
+   * a document code that already has one (vault-ingest.service.ts
+   * typedVersionRefusal). The upload route sets it; services with their own
+   * numbering do not.
+   */
+  numberedByVault?: boolean;
   folderId?: string;
   evidenceKind?: string;
   ctdSection?: string;

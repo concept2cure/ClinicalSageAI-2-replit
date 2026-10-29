@@ -33,8 +33,10 @@ const FILED = {
     { sequenceNumber: '0003', dispatchStatus: 'sent', filed: false },
   ],
   leaves: [
-    { ctdSection: '3.2.S.1', fileName: 'general-v2.pdf', title: 'General information', href: 'm3/32-body-data/general-v2.pdf', sequenceNumber: '0001', operation: 'replace', md5: 'c'.repeat(32) },
-    { ctdSection: '5.3.5.1', fileName: 'csr.pdf', title: null, href: 'm5/csr.pdf', sequenceNumber: '0000', operation: 'new', md5: 'b'.repeat(32) },
+    { ctdSection: '3.2.S.1', fileName: 'general-v2.pdf', title: 'General information', href: 'm3/32-body-data/general-v2.pdf', sequenceNumber: '0001', operation: 'replace', md5: 'c'.repeat(32),
+      history: [{ sequenceNumber: '0000', operation: 'new', fileName: 'general.pdf' }, { sequenceNumber: '0001', operation: 'replace', fileName: 'general-v2.pdf' }] },
+    { ctdSection: '5.3.5.1', fileName: 'csr.pdf', title: null, href: 'm5/csr.pdf', sequenceNumber: '0000', operation: 'new', md5: 'b'.repeat(32),
+      history: [{ sequenceNumber: '0000', operation: 'new', fileName: 'csr.pdf' }] },
   ],
 };
 const card = () => render(<EctdFiledState identPath="prog-1" seqQuery="?sequenceId=9" isScopeCurrent={() => true} />);
@@ -57,6 +59,14 @@ describe('On file at the agency', () => {
     const m5 = screen.getByRole('table', { name: 'Module 5: 1 document on file' });
     expect(within(m5).getAllByRole('row')[1].textContent).toContain('csr.pdf');
     expect(screen.getByTestId('ectd-filed-state').textContent).toContain('through sequence 0001');
+  });
+
+  it('says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2)', async () => {
+    apiRequest.mockResolvedValue(ok(FILED));
+    card();
+    const m3 = await screen.findByRole('table', { name: /Module 3/ });
+    expect(within(m3).getByTestId('ectd-filed-history').textContent).toBe('Filed 0000 new (general.pdf), 0001 replaced (general-v2.pdf)');
+    expect(within(screen.getByRole('table', { name: /Module 5/ })).queryByTestId('ectd-filed-history')).toBeNull();
   });
 
   it('names the sequences it folds and the ones it does not, with the reason', async () => {

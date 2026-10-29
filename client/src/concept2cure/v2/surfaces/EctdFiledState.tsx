@@ -6,7 +6,9 @@
  * sequence of the submission this surface compiles, folded by the same fold
  * compile and transmit use (server/services/ectd/prior-sequence-loader.ts).
  * Each document names the sequence that holds it and the act that put it
- * there. The sequences the view does not include are named with the reason.
+ * there, and its history: every filed act on it, oldest first, including the
+ * document a replacement under a new name took off file (gap 6.2). The
+ * sequences the view does not include are named with the reason.
  *
  * A failed read is said, never shown as an empty dossier, and "nothing is on
  * file" is said only when the read succeeded and no sequence was filed.
@@ -18,6 +20,8 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 
+/** One filed act on a document: the sequence, what it did, and the file it carried. */
+export interface FiledAct { sequenceNumber: string; operation: string; fileName: string }
 export interface FiledLeaf {
   ctdSection: string;
   fileName: string;
@@ -26,6 +30,8 @@ export interface FiledLeaf {
   sequenceNumber: string | null;
   operation: string | null;
   md5: string;
+  /** Oldest first; absent from a server that predates it. */
+  history?: FiledAct[];
 }
 export interface FiledSequenceState { sequenceNumber: string; dispatchStatus: string | null; filed: boolean }
 export interface FiledStateView {
@@ -61,7 +67,13 @@ export function sequencesLine(sequences: FiledSequenceState[]): string {
   return [folded.length ? `Folds ${folded.join(', ')}.` : '', left.length ? `Not included: ${left.join(', ')}.` : ''].filter(Boolean).join(' ');
 }
 
-const ACT_LABEL: Record<string, string> = { new: 'new', replace: 'replaced', append: 'appended' };
+const ACT_LABEL: Record<string, string> = { new: 'new', replace: 'replaced', append: 'appended', delete: 'withdrawn' };
+
+/** "Filed 0000 new (general.pdf), 0001 replaced (general-v2.pdf)": only when there is more than the one act shown. */
+export function historyLine(history: FiledAct[] | undefined): string | null {
+  if (!history || history.length < 2) return null;
+  return `Filed ${history.map((a) => `${a.sequenceNumber} ${ACT_LABEL[a.operation] ?? a.operation} (${a.fileName})`).join(', ')}`;
+}
 
 function ModuleTable({ module, leaves }: { module: string; leaves: FiledLeaf[] }) {
   const label = module === 'other' ? 'Other sections' : `Module ${module}`;
@@ -76,6 +88,9 @@ function ModuleTable({ module, leaves }: { module: string; leaves: FiledLeaf[] }
             <td>
               {l.title ?? l.fileName}
               <div className="mono" style={{ color: 'var(--text-400)', fontSize: 11.5 }}>{l.href ?? l.fileName}</div>
+              {historyLine(l.history) && (
+                <div style={{ color: 'var(--text-400)', fontSize: 11.5 }} data-testid="ectd-filed-history">{historyLine(l.history)}</div>
+              )}
             </td>
             <td className="mono">{l.sequenceNumber ?? '—'}</td>
             <td>{l.operation ? ACT_LABEL[l.operation] ?? l.operation : '—'}</td>

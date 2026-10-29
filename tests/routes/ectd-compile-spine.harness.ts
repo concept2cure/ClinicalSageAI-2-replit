@@ -31,6 +31,10 @@ export const PROGRAM = {
   // The number FDA assigned, as the project records it: what a package names as
   // its application (package-identity.ts). Never the code above.
   application_number: '000204',
+  // The agency the project records as its home market: NOT NULL on the real
+  // table. Since b0beb9392 a package whose project names no recognized agency
+  // is refused before assembly, so a program without one is not this fixture.
+  primary_agency: 'FDA',
 };
 
 /** The organisation's recorded name: the applicant a package names. */
