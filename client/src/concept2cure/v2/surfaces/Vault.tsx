@@ -37,6 +37,7 @@ import {
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultSeals } from './VaultSeals';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 import { VaultLibraryResults, facetCounts, isVaultSearchShape, searchHitToDoc, vaultFilterParams, type VaultFindFilters, type VaultSearchShape } from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
@@ -1670,6 +1671,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             }
             busy={filing}
           />
+          {/* The Vault's seals (VR-19): an e-signed record of every current
+              document as it stood, and its verification. */}
+          {projectId ? <VaultSeals projectId={projectId} /> : null}
           {/* The lane is a BROWSE aid — every upload in the programme. While a
               search is running it would sit above the results listing files the
               search excluded, contradicting the very list the person asked for,

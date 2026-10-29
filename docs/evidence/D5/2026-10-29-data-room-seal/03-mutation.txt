@@ -1,0 +1,25 @@
+# Mutations, 2026-10-29T09:56:20Z. Each is applied alone, run on real PostgreSQL 16 (RLS on, app_service), and reverted.
+
+## MUTATION 1: the signature does not bind the seal's manifest (the binder falls back to the ledger hash)
+ × tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > records every current document, hashes the record, and binds the signature and the audit row to that hash
+   → expected [ { signer_id: 947, …(3) } ] to deeply equal [ { signer_id: 947, …(3) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+## MUTATION 2: the seal writes no chained audit row
+ × tests/db/vault-data-room-seal.dbtest.ts > sealing a Vault (VR-19) > records every current document, hashes the record, and binds the signature and the audit row to that hash
+   → expected [] to have a length of 1 but got +0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+## MUTATION 3: an unreadable stored file does not stop an intact verdict
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal says when the Vault no longer matches it > could not verify, never intact, when a sealed file can no longer be read
+   → expected 'intact' to be 'could_not_verify' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+## MUTATION 4: the append-only guard is not attached (both triggers disabled by the owner for the run)
+ × tests/db/vault-data-room-seal.dbtest.ts > what a seal refuses, and what nobody can do to one > the runtime role can neither change nor remove a seal
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)

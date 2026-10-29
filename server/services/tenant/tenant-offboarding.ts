@@ -642,6 +642,11 @@ export interface ArtifactRecordErasure {
   snapshots: number;
 }
 
+/** What the Vault seal door erased (public.purge_tenant_vault_seals). */
+export interface VaultSealErasure {
+  seals: number;
+}
+
 /**
  * Tables that refuse a plain DELETE from every role, each group erased by one
  * SECURITY DEFINER door that restates this purge's preconditions at the
@@ -695,6 +700,17 @@ export const PURGE_DOORS = Object.freeze([
     columns: ['signatures', 'snapshots'],
     erasure: 'artifactRecordErasure',
     unavailable: 'ARTIFACT_RECORD_PURGE_UNAVAILABLE',
+  },
+  // A Vault seal is append-only and refuses a plain DELETE from every role
+  // (migrations/20261029d_vault_data_room_seals.sql); its door has the Vault
+  // purge's preconditions. It runs before `regulatory_programs`, which seals
+  // reference without an ON DELETE action.
+  {
+    tables: ['vault_data_room_seals'],
+    fn: 'purge_tenant_vault_seals',
+    columns: ['seals'],
+    erasure: 'vaultSealErasure',
+    unavailable: 'VAULT_SEAL_PURGE_UNAVAILABLE',
   },
 ] as const);
 type PurgeDoor = (typeof PURGE_DOORS)[number];
@@ -761,6 +777,7 @@ interface PurgeTally {
   runEventErasure: RunEventErasure;
   sourceReadReceiptErasure: SourceReadReceiptErasure;
   artifactRecordErasure: ArtifactRecordErasure;
+  vaultSealErasure: VaultSealErasure;
 }
 
 /** Run every listed table's delete on the transaction client, counting as it goes. */
@@ -777,6 +794,7 @@ async function deleteTenantRows(
     runEventErasure: { events: 0 },
     sourceReadReceiptErasure: { receipts: 0 },
     artifactRecordErasure: { signatures: 0, snapshots: 0 },
+    vaultSealErasure: { seals: 0 },
   };
   const opened = new Set<string>();
   for (const table of childTables) {
@@ -993,6 +1011,7 @@ export async function purgeTenant(
     runEventErasure: RunEventErasure;
     sourceReadReceiptErasure: SourceReadReceiptErasure;
     artifactRecordErasure: ArtifactRecordErasure;
+    vaultSealErasure: VaultSealErasure;
   }
 > {
   const { organizationId, purgedByUserId, preconditions } = params;
@@ -1035,6 +1054,7 @@ export async function purgeTenant(
     runEventErasure: tally.runEventErasure,
     sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
+    vaultSealErasure: tally.vaultSealErasure,
   });
 
   const after = await readOrganization(pool, organizationId);
@@ -1048,6 +1068,7 @@ export async function purgeTenant(
     runEventErasure: tally.runEventErasure,
     sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
+    vaultSealErasure: tally.vaultSealErasure,
   };
 }
 
@@ -1197,6 +1218,8 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'risk_controls',
   'risk_items',
   'qms_nonconforming_products',
+  // Vault seals (VR-19), through their door: they reference the project.
+  'vault_data_room_seals',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

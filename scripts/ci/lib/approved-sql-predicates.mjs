@@ -27,9 +27,18 @@ const VAULT_FILTER_FROM_ROUTES = new Map([
 const VAULT_FILTER_FROM_VAULT = new Map([
   ['vaultLifecycleStageSql', './vault-document-filter.js'],
 ]);
+// The Vault seal (VR-19, 2026-10-29): a seal records the documents the tree
+// shows, by the tree's own predicates (data eligibility, the current version,
+// the lifecycle stage), each with a literal alias. No value reaches them.
+const VAULT_SEAL_BUILDERS = new Map([
+  ['vaultDataEligibleSql', '../document-data-disposition/eligibility.js'],
+  ['supersededSql', './vault-version-family.js'],
+  ['vaultLifecycleStageSql', './vault-document-filter.js'],
+]);
 const CALLERS = new Map([
   ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
   ['server/services/vault/vault-search.ts', { alias: 'd', builders: VAULT_FILTER_FROM_VAULT }],
+  ['server/services/vault/vault-seal.service.ts', { alias: 'd', builders: VAULT_SEAL_BUILDERS }],
   ['server/services/csr/vault-source-input.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/csr/source-receipt-eligibility.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   // A commitment's fulfilment evidence (P-41, 2026-10-19): the Vault version's

@@ -81,8 +81,10 @@ function searchHit(over: Record<string, unknown>) {
     data: {
       query: 'q', total: 1, limit: 100, offset: 0,
       results: [{
+        // `current`: the search read refuses a hit that does not say whether it
+        // is the current version (isVaultSearchShape, 8c87144fd).
         id: DOC_ID, fileName: 'doc.pdf', size: '1.0 MB', folderId: 'module-3',
-        placementStatus: 'confirmed', snippet: null, ...over,
+        placementStatus: 'confirmed', snippet: null, current: true, ...over,
       }],
     },
   });
