@@ -77,6 +77,41 @@ describe('Quality records', () => {
     expect(screen.queryByText(/No suppliers recorded yet/)).toBeNull();
   });
 
+  it("names a supplier's quality agreement by its controlled document, and records a new one by id", async () => {
+    const SUPPLIER = {
+      id: 9, supplier_name: 'Acme Biologics', supplier_code: 'ACM', scope: 'Drug substance', criticality: 'critical',
+      approval_status: 'approved', approval_date: '2026-01-10', reapproval_date: null, last_audit_date: null,
+      next_audit_date: null, iso_certifications: null, quality_agreement_id: 31,
+    };
+    const doc = (id: number, num: string, status: string) => ({
+      id, doc_number: num, title: `Quality agreement ${num}`, doc_type: 'agreement', category: null, version: '1.0',
+      status, effective_date: null, next_review_date: null, updated_at: null,
+    });
+    H.reads['/api/mdx/qms/suppliers'] = { data: { data: [SUPPLIER] }, loading: false, error: null };
+    H.reads['/api/mdx/qms/documents'] = { data: { data: [doc(31, 'QA-0007', 'effective'), doc(32, 'QA-0008', 'effective')] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ data: { ...SUPPLIER, quality_agreement_id: 32 } }) });
+    render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
+
+    expect(screen.getByText('QA-0007')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Update/ }));
+    const drawer = screen.getByRole('dialog');
+    fireEvent.change(within(drawer).getByLabelText(/^Quality agreement/), { target: { value: '32' } });
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Record update' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledTimes(1));
+    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/suppliers/9', { qualityAgreementId: 32 });
+  });
+
+  it("says a supplier's quality agreement is unread when the controlled documents could not be read", () => {
+    H.reads['/api/mdx/qms/suppliers'] = { data: { data: [{
+      id: 9, supplier_name: 'Acme Biologics', supplier_code: null, scope: null, criticality: 'major',
+      approval_status: 'pending', approval_date: null, reapproval_date: null, last_audit_date: null,
+      next_audit_date: null, iso_certifications: null, quality_agreement_id: 31,
+    }] }, loading: false, error: null };
+    H.reads['/api/mdx/qms/documents'] = { data: null, loading: false, error: 'HTTP 500' };
+    render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
+    expect(screen.getByText('document #31 (register not read)')).toBeTruthy();
+  });
+
   it('moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result', async () => {
     H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ ...CAPA, state: 'closed_effective', meta: {} }) });

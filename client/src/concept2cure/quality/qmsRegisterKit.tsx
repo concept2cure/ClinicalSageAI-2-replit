@@ -6,6 +6,7 @@
  */
 import * as React from 'react';
 import { type C2CFormConfig } from '../v2/C2CForm';
+import type { RegisterContext } from './registerContext';
 
 export type Tone = 'ok' | 'warn' | 'err';
 export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
@@ -27,14 +28,15 @@ export interface RecordRegisterContext {
   truncated: boolean;
 }
 
-export interface Column<R> { label: string; cell: (r: R) => React.ReactNode }
+/** A cell, form or fact may read what the register read beside its rows (registerContext.ts). */
+export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode }
 export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
 
 export type RowAction<R> = {
   label: string;
   title: string;
   show?: (r: R) => boolean;
-  form: (r: R) => Omit<C2CFormConfig, 'notice'>;
+  form: (r: R, ctx: RegisterContext) => Omit<C2CFormConfig, 'notice'>;
   /** Returns the confirmation, or throws a refusal the drawer shows. */
   submit: (r: R, v: Record<string, string>) => Promise<string>;
 };
@@ -49,14 +51,16 @@ export interface RegisterConfig<R extends { id: number | string }> {
   columns: Column<R>[];
   kpis: (rows: R[], today: string) => KpiSpec[];
   createLabel: string;
-  createForm: Omit<C2CFormConfig, 'notice'>;
+  createForm: Omit<C2CFormConfig, 'notice'> | ((ctx: RegisterContext) => Omit<C2CFormConfig, 'notice'>);
   create: (v: Record<string, string>) => Promise<string>;
   /** The updates a row takes, where the server has them. */
   rowActions?: RowAction<R>[];
   ask: string;
   askRow: (r: R) => string;
   /** What AnA is told about a row: the register's own recorded values, nothing derived by a model. */
-  facts: (r: R) => RecordFacts;
+  facts: (r: R, ctx: RegisterContext) => RecordFacts;
+  /** What else the register reads for its cells and forms. */
+  needs?: { documents?: boolean };
   /** The CAPA sourceRefs kind this record is raised as: the register shows the
    *  CAPAs raised from each row, derived from the CAPA register. */
   capaSourceKind?: string;
