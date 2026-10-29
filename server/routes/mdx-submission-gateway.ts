@@ -30,7 +30,7 @@ import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/expor
 import {
   getGateway, listGateways, gatewayConfigurationStatus,
   CredentialError, GatewayError, TransportError, ValidationError,
-  PreTransmitBlockedError, UnverifiedTransportError,
+  PreTransmitBlockedError, SentPackageNotArchivedError, UnverifiedTransportError,
   acknowledgementFilename,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
@@ -458,6 +458,11 @@ function transmitFailure(res: Response, err: unknown): Response {
   }
   if (err instanceof CredentialError) {
     return clientError(res, 412, err.message);
+  }
+  // The package's bytes could not be kept, so nothing was sent (2026-10-29,
+  // W5/D7). clientError's statuses stop at 4xx and 502; this is a 503.
+  if (err instanceof SentPackageNotArchivedError) {
+    return res.status(503).json({ error: err.message, details: { code: err.code, transmitted: false } });
   }
   if (err instanceof ValidationError) {
     // The guard's own refusal names itself, so a surface does not read it as

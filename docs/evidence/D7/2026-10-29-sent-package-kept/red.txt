@@ -1,0 +1,46 @@
+# Red runs (2026-10-29). Each check, with the piece it pins taken out, then restored.
+
+## 1. sent-package-kept.test.ts, with the archive call removed from getGateway().transmit (index.ts)
+# 4 of 6 fail. The two that pass are the 'nothing stored' guards, which hold either way.
+ × server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > stores the exact package before the wire, and the gateway records where 23ms
+ × server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > a caller cannot say where the bytes are kept 5ms
+ × server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > sends nothing when the copy cannot be stored, and the refusal releases the claim 3ms
+ × server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > sends nothing when the stored copy is not the signed package 5ms
+ ✓ server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > stores nothing for a transmit the guard refuses first 3ms
+ ✓ server/services/submission-gateways/__tests__/sent-package-kept.test.ts > the guarded transmit keeps the bytes it sends > stores nothing when the package on disk is not the signed one 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'wire' ] to deeply equal [ 'store', 'wire' ]
+- Expected
++ Received
+      Tests  4 failed | 2 passed (6)
+
+## 2. governed-transmit-pretransmit-record.test.ts, with governed-transmit.ts recording no sentPackage
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records a failed, non-blocking check and the guard warnings on the ledger payload, the signature manifest and the outcome 6ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records an empty list — not null — when the guard ran and every check passed 2ms
+ × server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records where the sent bytes are kept on the ledger payload and the signature manifest; null when the guard kept none 7ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-pretransmit-record.test.ts > executeGovernedTransmit — failed pre-transmit checks are on the sign record > records null — never "all passed" — when the guard reported nothing 1ms
+AssertionError: expected undefined to deeply equal { storageVersionId: 'v-1', …(4) }
+      Tests  1 failed | 3 passed (4)
+
+## 3. transmit-recorded-identity.test.ts, with submission-service.ts writing no sentPackage on ECTD_TRANSMITTED
+ × server/services/submission-service/__tests__/transmit-recorded-identity.test.ts > the transmit record names where the sent bytes are kept > ECTD_TRANSMITTED carries the guard's sentPackage; null when the guard kept none 8ms
+AssertionError: expected undefined to deeply equal { storageVersionId: 'v-1', …(4) }
+      Tests  1 failed | 20 passed (21)
+
+## 4. gateway-route-response-shapes.test.ts, with the 503 branch removed from mdx-submission-gateway.ts transmitFailure
+ × server/services/submission-gateways/__tests__/gateway-route-response-shapes.test.ts > transmit refusals name their source and say what was sent > a package that could not be kept is 503 with its own sentence: nothing was sent 13ms
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while transmit. The problem has been logged."}: expected 500 to be 503 // Object.is equality
+      Tests  1 failed | 7 passed (8)
+
+## 5. mdx-esg-transmit-sent-package.test.ts (real AnA handler, governed transmit, guard and archive), with the archive call removed
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-sent-package.test.ts > the bytes AnA sends are kept before they are sent > stores exactly what the gateway sends, and the transmittal request and sign ledger say where 1656ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-sent-package.test.ts > the bytes AnA sends are kept before they are sent > sends nothing, and says so, when the copy cannot be kept 9ms
+AssertionError: handler refused: Action failed: expected undefined to be defined: expected false to be true // Object.is equality
+AssertionError: expected 'EXECUTION_FAILED' to be 'SENT_PACKAGE_NOT_ARCHIVED' // Object.is equality
+      Tests  2 failed (2)
+
+## 6. the same suite, with AnA's SENT_PACKAGE_NOT_ARCHIVED mapping removed (mdx-command-handlers.ts)
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-sent-package.test.ts > the bytes AnA sends are kept before they are sent > stores exactly what the gateway sends, and the transmittal request and sign ledger say where 1657ms
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-sent-package.test.ts > the bytes AnA sends are kept before they are sent > sends nothing, and says so, when the copy cannot be kept 14ms
+AssertionError: expected 'EXECUTION_FAILED' to be 'SENT_PACKAGE_NOT_ARCHIVED' // Object.is equality
+      Tests  1 failed | 1 passed (2)
