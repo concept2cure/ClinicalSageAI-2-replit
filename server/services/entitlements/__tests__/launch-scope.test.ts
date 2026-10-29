@@ -142,9 +142,9 @@ describe('the scope list itself', () => {
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
   });
-  it('keeps the two Part 11 surfaces the catalog may never gate', () => {
+  it('keeps the Part 11 surface the catalog may never gate', () => {
+    // part11-console folded into audit-trail on 2026-10-29 (see 'the folded Part 11 console').
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
-    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);
   });
   // docs/SURFACE_DECISIONS_2026-10-08.md: each was assessed and checked by a
   // skeptic, and none does what its place promises for a real organisation.
@@ -211,6 +211,20 @@ describe('the folded Artifacts center and device vault', () => {
       expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain(id);
     }
     expect(LAUNCH_MODULE_IDS).toContain('vault');
+  });
+});
+
+describe('the folded Part 11 console', () => {
+  it('is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/. It was a shell
+       surface, never a catalogue module (21 CFR §11.10(e)); its two functions,
+       the audit_events chain's live verdict and AnA reading it, are Audit
+       trail's now. Audit trail stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(false);
+    expect(isLaunchSurface('part11-console')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('part11-console');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('audit-trail');
+    expect(isLaunchSurface('audit-trail')).toBe(true);
   });
 });
 

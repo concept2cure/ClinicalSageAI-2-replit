@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Mutation runner for the part11-console fold, Part 2 (the retirement).
+
+Each mutation is one exact, single-occurrence replacement (the replacement must not
+already occur, so the reversal is unambiguous). It runs the named checks, then
+reverses by replacement, never by copying a backup over a shared file.
+A check is a vitest file list (counted from the JSON report) or a gate command
+(its exit code).
+"""
+import json, os, subprocess, sys
+
+REPO = '/home/user/ClinicalSageAI-2-replit'
+OUT = os.path.dirname(os.path.abspath(__file__))
+FOLD = 'client/src/concept2cure/v2/__tests__/foldPart11Console.test.ts'
+SCOPE = 'server/services/entitlements/__tests__/launch-scope.test.ts'
+QUAL = 'tests/ci/launch-qualification-catalog.test.ts'
+CATALOG = 'tests/schema-contract/catalog-module-claims.contract.test.ts'
+
+MUTATIONS = [
+    ('P1', 'the alias is removed: old links and AnA land nowhere',
+     'client/src/concept2cure/v2/registryModel.ts',
+     "  'part11-console': 'audit-trail',\n", "",
+     [('vitest', [FOLD])]),
+    ('P2', 'the id is left on a rail',
+     'client/src/concept2cure/v2/registryModel.ts',
+     "{ label: 'Review & govern', items: ['review', 'audit-trail'] }",
+     "{ label: 'Review & govern', items: ['review', 'audit-trail', 'part11-console'] }",
+     [('vitest', [FOLD])]),
+    ('P3', 'the id is left in LAUNCH_SHELL_SURFACES',
+     'shared/constants/launch-scope.ts',
+     "  // part11-console folded into audit-trail (D2, 2026-10-29): both chain verdicts are stated there.\n",
+     "  'part11-console': 'how Part 11 compliance is evidenced; never switchable',\n",
+     [('vitest', [FOLD, SCOPE])]),
+    ('P4', 'the id is left on 20260810\'s keep-list (a stray row stays live and fails 20260823\'s tier guard)',
+     'db/migrations/20260810_reconcile_module_catalog.sql',
+     "   'orphan',\n   'pdev',\n", "   'orphan',\n   'part11-console',\n   'pdev',\n",
+     [('vitest', [CATALOG])]),
+    ('P5', 'a tour stop on the retired id is left in',
+     'shared/navigation/demo-scripts.ts',
+     "      {\n        /* One stop since 2026-10-29",
+     "      {\n        say: 'The Part 11 console.',\n        navigate: { target: 'part11-console' },\n      },\n      {\n        /* One stop since 2026-10-29",
+     [('vitest', [FOLD])]),
+    ('P6', 'Audit trail loses its claim on /api/part11 (the route its second verdict reads)',
+     'shared/constants/ui-surface-registry.ts',
+     "apiPrefixes: ['/api/admin/audit', '/api/part11', '/api/audit-trail/ledger'],",
+     "apiPrefixes: ['/api/admin/audit', '/api/audit-trail/ledger'],",
+     [('vitest', [FOLD]), ('gate', ['npx', 'tsx', 'scripts/ci/check-launch-scope-api.ts'])]),
+    ('P7', 'ID_BASELINE is left at 110',
+     'scripts/ci/check-ana-surface-context.mjs',
+     "const ID_BASELINE = 109;", "const ID_BASELINE = 110;",
+     [('gate', ['node', 'scripts/ci/check-ana-surface-context.mjs'])]),
+    ('P8', 'the access-qualification list keeps the retired id',
+     'tests/e2e/launch-catalog.ts',
+     "  for (const id of ['compliance-reports','audit-trail']) {",
+     "  for (const id of ['compliance-reports','audit-trail','part11-console']) {",
+     [('vitest', [QUAL])]),
+]
+
+
+def p(rel):
+    return os.path.join(REPO, rel)
+
+
+def read(rel):
+    return open(p(rel), encoding='utf-8').read()
+
+
+def write(rel, s):
+    open(p(rel), 'w', encoding='utf-8').write(s)
+
+
+CTX = {}
+
+
+def apply(tag, rel, old, new):
+    s = read(rel)
+    if s.count(old) != 1:
+        raise SystemExit(f'{tag}: expected one occurrence of the original in {rel}, found {s.count(old)}')
+    if new and s.count(new):
+        raise SystemExit(f'{tag}: the replacement already occurs in {rel}')
+    if not new:
+        i = s.index(old)
+        CTX[tag] = (s[max(0, i - 160):i], s[i + len(old):i + len(old) + 160])
+    write(rel, s.replace(old, new, 1))
+
+
+def reverse(tag, rel, old, new):
+    s = read(rel)
+    if new:
+        if s.count(new) != 1:
+            raise SystemExit(f'RESTORE FAILED {tag} {rel}: replacement occurs {s.count(new)} times')
+        write(rel, s.replace(new, old, 1))
+    else:
+        before, after = CTX[tag]
+        if s.count(before + after) != 1:
+            raise SystemExit(f'RESTORE FAILED {tag} {rel}: deletion anchor not unique')
+        write(rel, s.replace(before + after, before + old + after, 1))
+
+
+def run_check(tag, i, kind, arg):
+    if kind == 'vitest':
+        rep = os.path.join(OUT, f'mut2-{tag}-{i}.json')
+        subprocess.run(['npx', 'vitest', 'run', *arg, '--reporter=json', f'--outputFile={rep}'],
+                       cwd=REPO, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=900)
+        data = json.load(open(rep))
+        failed = [t['title'] for f in data['testResults'] for t in f['assertionResults'] if t['status'] != 'passed']
+        return data['numFailedTests'] > 0, f"{data['numFailedTests']}/{data['numTotalTests']} failed in {', '.join(a.split('/')[-1] for a in arg)}", failed
+    proc = subprocess.run(arg, cwd=REPO, capture_output=True, text=True, timeout=900)
+    lines = [l for l in (proc.stdout + proc.stderr).splitlines() if l.strip()]
+    hit = [l for l in lines if 'FAIL' in l or 'FELL' in l or 'refused' in l.lower() or 'violation' in l.lower()]
+    return proc.returncode != 0, f"{' '.join(arg[-1:])} exit {proc.returncode}", (hit or lines[-2:])[:3]
+
+
+def main():
+    only = set(sys.argv[1:])
+    out = []
+    for tag, what, rel, old, new, checks in MUTATIONS:
+        if only and tag not in only:
+            continue
+        apply(tag, rel, old, new)
+        results = []
+        try:
+            for i, (kind, arg) in enumerate(checks):
+                results.append(run_check(tag, i, kind, arg))
+        finally:
+            reverse(tag, rel, old, new)
+        killed = any(r[0] for r in results)
+        head = f"{tag} {'KILLED' if killed else 'SURVIVED'} — {what} ({rel.split('/')[-1]})"
+        out.append(head)
+        for red, summary, detail in results:
+            out.append(f"    {'red ' if red else 'pass'} {summary}")
+            out.extend(f'      × {d}' for d in detail)
+        print(head, flush=True)
+    open(os.path.join(OUT, 'mutations2-run.txt'), 'w').write('\n'.join(out) + '\n')
+
+
+if __name__ == '__main__':
+    main()

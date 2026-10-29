@@ -112,7 +112,7 @@ function AccessReadState() {
 describe('nonlicensable records keep their existing command-palette replacement', () => {
   it.each([
     { id: 'audit-trail', query: 'Audit trail', label: /^Audit trail/ },
-    { id: 'part11-console', query: '21 CFR Part 11 console', label: /^21 CFR Part 11 console/ },
+    // part11-console folded into audit-trail on 2026-10-29 (foldPart11Console.test.ts): no ⌘K entry of its own.
   ])('$id stays reachable without a subscribable catalog row', async ({ id, query, label }) => {
     apiRequest.mockImplementation(async (_method: string, url: string) => {
       if (url === '/api/module-subscriptions/navigation') return ok({
@@ -140,5 +140,22 @@ describe('nonlicensable records keep their existing command-palette replacement'
     expect(onAct).not.toHaveBeenCalled();
     expect(NAVIGATION_TARGETS.find((target) => target.id === id)?.scope).toBe('global');
     expect(window.C2C_PROJECT).toBeUndefined();
+  });
+
+  it('the folded Part 11 console has no command-palette entry of its own', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === '/api/module-subscriptions/navigation') return ok({
+        organizationId: 7, tier: 'standard', industryMode: 'biotech', masterAdmin: false,
+        resolved: true, launchScope: { enforced: true }, surfaces: [],
+      });
+      throw new Error(`Unexpected read: ${url}`);
+    });
+    render(<NavEntitlementsProvider>
+      <AccessReadState />
+      <CmdK open onClose={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()} onAct={vi.fn()} />
+    </NavEntitlementsProvider>);
+    await screen.findByText('Access resolved');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '21 CFR Part 11 console' } });
+    expect(screen.queryByRole('button', { name: /^21 CFR Part 11 console/ })).toBeNull();
   });
 });

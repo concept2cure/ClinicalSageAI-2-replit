@@ -672,7 +672,7 @@ export const SEGMENT_MODULES = {
       ],
     },
     { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: the device segment had no biostatistics surface either,
@@ -705,7 +705,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: this segment had no biostatistics surface at all, and the
@@ -988,6 +988,12 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      person can open. Old links, ⌘K hits and AnA's targets land there. */
   'artifacts-center': 'vault',
   'device-vault': 'vault',
+  /* The Part 11 console folded into Audit trail (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). Audit trail's
+     chain banner states both audit chains' verdicts, the ledger's (audit_logs)
+     and the audit_events chain's from the console's own route, and AnA reads
+     both in its facts. Old links, ⌘K hits and AnA's target land there. */
+  'part11-console': 'audit-trail',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

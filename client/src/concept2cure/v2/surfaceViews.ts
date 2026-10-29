@@ -349,7 +349,6 @@ const SourceTracer = lazySurface(() => import('./surfaces/SourceTracer').then((m
 const SubmissionCenter = lazySurface(() => import('./surfaces/SubmissionCenter').then((m) => ({ default: m.SubmissionCenter })));
 const QmpWorkspace = lazySurface(() => import('./surfaces/QmpWorkspace').then((m) => ({ default: m.QmpWorkspace })));
 const QualityModule = lazySurface(() => import('./surfaces/QualityModule').then((m) => ({ default: m.QualityModule })));
-const Part11Console = lazySurface(() => import('./surfaces/Part11Console').then((m) => ({ default: m.Part11Console })));
 const IdentityConsole = lazySurface(() => import('./surfaces/IdentityConsole').then((m) => ({ default: m.IdentityConsole })));
 const ReportGovernance = lazySurface(() => import('./surfaces/ReportGovernance').then((m) => ({ default: m.ReportGovernance })));
 const SubmissionTwin = lazySurface(() => import('./surfaces/SubmissionTwin').then((m) => ({ default: m.SubmissionTwin })));
@@ -560,7 +559,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },
   quality: { component: QualityModule, full: true },
-  'part11-console': { component: Part11Console },
+  // part11-console folded into audit-trail (D2, 2026-10-29): DEEP_LINK_ALIASES takes it there.
   'identity-console': { component: IdentityConsole },
   'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },

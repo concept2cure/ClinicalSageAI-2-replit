@@ -226,7 +226,7 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   apps: 'the Apps catalog — where a locked destination explains itself',
   'conversation-thread': 'AnA conversation; the product is chat-first',
   'audit-trail': '21 CFR §11.10(e): the audit trail is never switchable',
-  'part11-console': 'how Part 11 compliance is evidenced; never switchable',
+  // part11-console folded into audit-trail (D2, 2026-10-29): both chain verdicts are stated there.
   'admin-console': 'organisation administration',
   setup: 'first-run configuration',
   onboarding: 'first-run flow',

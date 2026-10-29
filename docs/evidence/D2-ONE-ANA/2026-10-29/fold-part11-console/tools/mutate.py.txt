@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Mutation runner for the part11-console fold, Part 1.
+
+Each mutation replaces one exact, single-occurrence string, runs the suite, and
+reverses by replacement (never by copying a backup over the file: AdminSurfaces.tsx
+is shared with another agent, and a copy-back would clobber their edits).
+"""
+import json, os, re, subprocess, sys
+
+REPO = '/home/user/ClinicalSageAI-2-replit'
+OUT = os.path.dirname(os.path.abspath(__file__))
+CHAIN = 'client/src/concept2cure/v2/surfaces/AuditEventChain.tsx'
+ADMIN = 'client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx'
+TEST = 'client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx'
+
+MUTATIONS = [
+    ('M1', 'intact without the integrity verdict', CHAIN,
+     "if (s === 'intact' && c.integrityValid === true) return 'intact';",
+     "if (s === 'intact') return 'intact';"),
+    ('M2', 'an empty chain is not "no entries" (finding 111 regresses)', CHAIN,
+     "if (s === 'empty' || c.totalEntries === 0) return 'no entries';",
+     "if (false) return 'no entries';"),
+    ('M3', 'a refusal reads as a failed verification', CHAIN,
+     "if (r.status === 401 || r.status === 403) return { state: 'forbidden' };",
+     ""),
+    ('M4', 'a 200 with no payload reads as an empty chain', CHAIN,
+     "if (r.error || !r.data) return { state: 'error' };",
+     "if (r.error) return { state: 'error' };\n  if (!r.data) return { state: 'ready', chain: { chainStatus: 'empty', totalEntries: 0, integrityValid: null }, verdict: 'no entries' };"),
+    ('M5', 'an error is rendered as an empty chain', CHAIN,
+     "if (r.error || !r.data) return { state: 'error' };",
+     "if (r.error || !r.data) return { state: 'ready', chain: { chainStatus: 'empty', totalEntries: 0, integrityValid: null }, verdict: 'no entries' };"),
+    ('M6', 'the shape guard takes any totalEntries', CHAIN,
+     "return typeof c.chainStatus === 'string' && finite(c.totalEntries);",
+     "return typeof c.chainStatus === 'string' && 'totalEntries' in c;"),
+    ('M7', 'a failed verification offers no way to try again', CHAIN,
+     "          retry={onRetry}\n",
+     ""),
+    ('M8', 'the ledger loading branch tells AnA nothing of the second chain', ADMIN,
+     "return { summary: `The audit trail is still loading; nothing on screen is final yet. ${second.sentence}`, facts: second.facts };",
+     "return { summary: 'The audit trail is still loading; nothing on screen is final yet.' };"),
+    ('M9', 'no second verdict when the ledger shows no rows', ADMIN,
+     "      {(loading || error || entries.length === 0) && (\n        <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />\n      )}\n",
+     ""),
+    ('M10', 'the ready summary omits the second chain', ADMIN,
+     "`. ${chainSummary(chainStatus)}. ${second.sentence}` +",
+     "`. ${chainSummary(chainStatus)}` +"),
+    ('M11', "the two chains merged under one fact (Part11Console's key collision)", ADMIN,
+     "        hashChain: chainStatus,\n",
+     "        hashChain: second.facts.auditEventChain ?? chainStatus,\n"),
+    ('M12', 'the ready banner drops the second verdict', ADMIN,
+     "      {/* The second verdict: the audit_events chain, which the one above does not cover. */}\n      <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />\n",
+     ""),
+]
+
+
+def path(rel):
+    return os.path.join(REPO, rel)
+
+
+def swap(rel, old, new):
+    p = path(rel)
+    s = open(p, encoding='utf-8').read()
+    n = s.count(old)
+    if n != 1:
+        raise SystemExit(f'{rel}: expected exactly one occurrence, found {n}: {old[:80]!r}')
+    open(p, 'w', encoding='utf-8').write(s.replace(old, new, 1))
+
+
+def run_suite(tag):
+    rep = os.path.join(OUT, f'mut-{tag}.json')
+    subprocess.run(
+        ['npx', 'vitest', 'run', TEST, '--reporter=json', f'--outputFile={rep}'],
+        cwd=REPO, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=600,
+    )
+    data = json.load(open(rep))
+    failed = [t['title'] for f in data['testResults'] for t in f['assertionResults'] if t['status'] != 'passed']
+    return data['numTotalTests'], data['numFailedTests'], failed
+
+
+def main():
+    only = set(sys.argv[1:])
+    lines = []
+    for tag, what, rel, old, new in MUTATIONS:
+        if only and tag not in only:
+            continue
+        if new and open(path(rel), encoding='utf-8').read().count(new):
+            raise SystemExit(f'{tag}: replacement text already present in {rel}; reversal would be ambiguous')
+        swap(rel, old, new)
+        try:
+            total, nfail, failed = run_suite(tag)
+        finally:
+            restore(rel, old, new)
+        verdict = 'KILLED' if nfail > 0 else 'SURVIVED'
+        head = f'{tag} {verdict} — {what} ({rel.split("/")[-1]}): {nfail}/{total} failed'
+        lines.append(head)
+        lines.extend(f'    × {t}' for t in failed)
+        print(head, flush=True)
+    open(os.path.join(OUT, 'mutations-run.txt'), 'w').write('\n'.join(lines) + '\n')
+
+
+_context = {}
+
+
+def restore(rel, old, new):
+    p = path(rel)
+    s = open(p, encoding='utf-8').read()
+    key = (rel, old)
+    if new:
+        n = s.count(new)
+        if n != 1:
+            raise SystemExit(f'RESTORE FAILED {rel}: replacement occurs {n} times')
+        open(p, 'w', encoding='utf-8').write(s.replace(new, old, 1))
+    else:
+        before, after = _context[key]
+        anchor = before + after
+        n = s.count(anchor)
+        if n != 1:
+            raise SystemExit(f'RESTORE FAILED {rel}: deletion anchor occurs {n} times')
+        open(p, 'w', encoding='utf-8').write(s.replace(anchor, before + old + after, 1))
+
+
+_swap = swap
+
+
+def swap(rel, old, new):  # noqa: F811 — record the deletion's surroundings first
+    if not new:
+        s = open(path(rel), encoding='utf-8').read()
+        i = s.index(old)
+        _context[(rel, old)] = (s[max(0, i - 120):i], s[i + len(old):i + len(old) + 120])
+    _swap(rel, old, new)
+
+
+if __name__ == '__main__':
+    main()

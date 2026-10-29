@@ -820,8 +820,9 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
   }
   /* Connected. This is the one route of the five whose predicate was already
      mandatory and unconditional, and the only one with a live client caller
-     (Part11Console) — which has therefore been reading a 500 for as long as the
-     pool has been undefined. */
+     (Part11Console then; Audit trail's chain banner since the console folded
+     into it on 2026-10-29, surfaces/AuditEventChain.tsx) — which had therefore
+     been reading a 500 for as long as the pool was undefined. */
   const pool: SqlClient = requestSql(req);
 
   try {
@@ -1083,7 +1084,8 @@ router.get('/validation', (_req: Request, res: Response) => {
 // finding 1). Every §11.10 section and every SOC 2 category in it was a
 // hardcoded `not_assessed`; nothing was ever assessed. The verdicts this router
 // actually computes — GET /audit-trail/chain-integrity and
-// GET /audit-trail/seal-integrity — are what the Part 11 console shows.
+// GET /audit-trail/seal-integrity — are what the Part 11 console showed; the
+// chain verdict is Audit trail's since the console folded into it (2026-10-29).
 // Pinned by __tests__/part11-static-tables-removed.test.ts.
 
 /**

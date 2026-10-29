@@ -42,6 +42,7 @@ import { CompanyDocumentSettings } from './CompanyDocumentSettings';
 import { LegalHoldsCard } from './LegalHoldsCard';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { PdfARequirementSetting } from './PdfARequirementSetting';
+import { AuditEventChainBanner, auditEventChainForAna, useAuditEventChain } from './AuditEventChain';
 import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
@@ -701,6 +702,9 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
   const { rows: entries, loading, error, status: readStatus, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  // The second chain (audit_events), read on its own: its verdict is stated
+  // whatever the ledger read does (AuditEventChain.tsx, folded from part11-console).
+  const eventChain = useAuditEventChain();
 
   const log = entries.filter(
     (e) =>
@@ -761,17 +765,21 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
      what AnA is told.
 
      The hash-chain verdict travels with it, because "intact" is the claim an
-     inspector acts on and it is computed here from the rows on screen. */
+     inspector acts on and it is computed here from the rows on screen. So
+     does the second chain's (audit_events), in every state of the ledger read,
+     because its read does not depend on that one. */
   const anaContext = useMemo(() => {
+    const second = auditEventChainForAna(eventChain.read);
     if (loading) {
-      return { summary: 'The audit trail is still loading; nothing on screen is final yet.' };
+      return { summary: `The audit trail is still loading; nothing on screen is final yet. ${second.sentence}`, facts: second.facts };
     }
     if (error) {
       return {
         summary:
           'The append-only, hash-chained Part 11 ledger could not be read, so this screen is showing no ' +
           'audit events because of a failure. That is NOT the same as the trail being empty and must not ' +
-          'be reported as one.',
+          `be reported as one. ${second.sentence}`,
+        facts: second.facts,
         availableActions: ['Retry the audit-trail read'],
       };
     }
@@ -780,9 +788,10 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
       summary:
         `Audit trail: ${entries.length} hash-chained ${entries.length === 1 ? 'entry' : 'entries'}` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
-        `. ${chainSummary(chainStatus)}` +
+        `. ${chainSummary(chainStatus)}. ${second.sentence}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
       facts: {
+        ...second.facts,
         totalEntries: entries.length,
         shownInList: log.length,
         kindFilter: kind,
@@ -820,7 +829,7 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
         'Export the signed, inspection-ready audit bundle (data + manifest + HMAC signature)',
       ],
     };
-  }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr]);
+  }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr, eventChain.read]);
   /* AnA's hands on this screen (wave 7). The audit trail is where the training
      demonstration ends and where an inspector starts, and she had no action
      here at all: she could walk in and then do nothing. Every handler drives
@@ -1026,6 +1035,8 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
           HEAD {entries[0]?.hash}
         </span>
       </div>
+      {/* The second verdict: the audit_events chain, which the one above does not cover. */}
+      <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />
 
       {/* Filters */}
       <div
@@ -1350,6 +1361,11 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
         the data, a verification manifest and an HMAC-SHA256 signature over both.
       </div>
         </React.Fragment>
+      )}
+      {/* With no ledger rows on screen (loading, refused, failed or empty) the
+          second chain's verdict still stands on its own read. */}
+      {(loading || error || entries.length === 0) && (
+        <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />
       )}
     </div>
   );

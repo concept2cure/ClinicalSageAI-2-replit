@@ -357,3 +357,47 @@ describe('Retired Artifacts center and device vault', () => {
     expect((await subs()).rows).toEqual(before.rows);
   });
 });
+
+/* The Part 11 console folded into Audit trail (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). It never had a
+   catalogue row (21 CFR §11.10(e): it is not licensable), but 20260810 kept it on
+   step 1's keep-list, so a row added by any other path stayed live for a screen
+   that no longer exists. Amended in place (CLAUDE.md Rule 1): off the keep-list,
+   so such a row is deprecated on replay with its subscriptions kept. Audit trail
+   stays off the catalogue and on the keep-list. */
+describe('Retired Part 11 console', () => {
+  const reconcile = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql'), 'utf8');
+  const packaging = () => fs.readFileSync(path.join(REPO_ROOT, 'db/migrations/20260823_module_catalog_commercial_packaging.sql'), 'utf8');
+
+  it('fresh replay creates no part11-console row, and Audit trail stays uncatalogued', async () => {
+    for (let replay = 0; replay < 2; replay += 1) {
+      await pg.exec(reconcile());
+      await pg.exec(packaging());
+      for (const id of ['part11-console', 'audit-trail']) {
+        expect((await pg.query('SELECT module_id FROM available_modules WHERE module_id = $1', [id])).rows, id).toEqual([]);
+      }
+    }
+  });
+
+  it('deprecates a part11-console row added by another path, and keeps its subscription, across replay', async () => {
+    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291032, 'Historical subscriber part11-console', 'historical-part11-console');`);
+    await pg.query(
+      `INSERT INTO available_modules (module_id, name, description, category, metadata)
+       VALUES ('part11-console', '21 CFR Part 11 console', '', 'Review & govern', '{"legacyMarker":"kept","tiers":[]}'::json)
+       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+    );
+    await pg.query(
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291032, 'part11-console', true, '{"historicalSubscription":"kept"}')`,
+    );
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT part11_console_fold_subscription_retirement_fk
+      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291032');
+    const before = await subs();
+    expect(before.rows).toHaveLength(1);
+    for (let replay = 0; replay < 2; replay += 1) { await pg.exec(reconcile()); await pg.exec(packaging()); }
+    const catalog = await pg.query<{ metadata: Record<string, unknown> }>("SELECT metadata FROM available_modules WHERE module_id = 'part11-console'");
+    expect(catalog.rows).toHaveLength(1);
+    expect(catalog.rows[0].metadata).toEqual({ deprecated: true, legacyMarker: 'kept', tiers: [] });
+    expect((await subs()).rows).toEqual(before.rows);
+  });
+});

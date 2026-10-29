@@ -1059,23 +1059,8 @@ export const UI_SURFACES: UiSurface[] = [
     notes: deferredSurfaceDescription('qmp'),
     engineering: 'Routes: /api/quality.',
   },
-  {
-    id: 'part11-console',
-    label: '21 CFR Part 11 console',
-    navTier: 'admin',
-    layoutMode: 'audit',
-    icon: 'lock',
-    group: 'admin',
-    uiKit: null,
-    apiPrefixes: ['/api/part11'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid.',
-    engineering: 'Routes: /api/part11.',
-  },
+  // part11-console folded into audit-trail (D2, 2026-10-29): Audit trail states both
+  // audit chains' verdicts, and its entry above already claims /api/part11.
   {
     id: 'identity-console',
     label: 'Enterprise identity (SSO / SCIM)',
