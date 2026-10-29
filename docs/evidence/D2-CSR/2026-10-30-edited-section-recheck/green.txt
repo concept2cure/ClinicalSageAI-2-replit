@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:44:53.199Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T15:44:53.201Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:44:53.201Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-10-29T15:44:53.833Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 180ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 70ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 79ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 55ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 60ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 53ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 59ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 56ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 82ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 44ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 48ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 53ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 53ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reports a claimed figure the edit removed as CLAIM_NOT_STATED, without blocking on it 52ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 47ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat 4ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check 1ms
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  15:44:50
+   Duration  11.48s (transform 3.54s, setup 139ms, import 6.11s, tests 4.61s, environment 0ms)
+

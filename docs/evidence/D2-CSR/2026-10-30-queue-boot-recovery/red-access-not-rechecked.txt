@@ -1,0 +1,45 @@
++     "queue": "narrative",
++     "requestedBy": 8,
++   },
++ ]
+ ❯ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts:136:24
+    134|     const [a, b] = await Promise.all([runCsrQueueRecovery(sweepDeps(di…
+    135|
+    136|     expect(dispatched).toEqual([]);
+       |                        ^
+    137|     expect(a.refused + b.refused).toBe(3);
+    138|     expect(h.tables).not.toHaveBeenCalled();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+ FAIL  server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > a requester who no longer exists, or an archived project, is a typed failure too
+AssertionError: expected [ …(2) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "id": 6,
++     "jobId": 6,
++     "organizationId": 7,
++     "queue": "build",
++     "requestedBy": null,
++   },
++   {
++     "id": 1,
++     "jobId": 1,
++     "organizationId": 7,
++     "queue": "assembly",
++     "requestedBy": null,
++   },
++ ]
+ ❯ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts:152:24
+    150|     const dispatched: StalledItem[] = [];
+    151|     await runCsrQueueRecovery(sweepDeps(dispatched));
+    152|     expect(dispatched).toEqual([]);
+       |                        ^
+    153|     expect(await row('csr_assembly_runs', assembly)).toMatchObject({ s…
+    154|     expect(await row('csr_build_jobs', 6)).toMatchObject({ status: 'fa…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  15:52:58
+   Duration  9.43s (transform 3.07s, setup 122ms, import 5.41s, tests 3.53s, environment 0ms)

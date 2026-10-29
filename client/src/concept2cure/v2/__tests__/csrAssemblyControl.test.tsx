@@ -40,6 +40,10 @@ const assembled: CsrAssemblyRun = {
   },
 };
 
+/** A sequence with no earlier CSR file of the study: every file is new. */
+const NO_PRIOR = { studyId: 'SYN-LMN201-B', undecided: [], keptOnFile: [], withdrawnHere: [], ambiguous: [],
+  leaves: [{ appendix: 'body', fileName: 'csr-body.pdf', title: 'Body', operation: 'new', parent: null }] };
+
 it('queues the assembly and shows its progress while it runs', async () => {
   let posted: unknown = null;
   apiRequest.mockImplementation(async (method: string, path: string, body: unknown) => {
@@ -80,6 +84,7 @@ it('lists each leaf with pages and SHA-256 and each missing appendix with whethe
     }
     if (path === BASE) return ok({ assembly: assembled });
     if (path === `${BASE}/targets`) return ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] });
+    if (path === `${BASE}/3/lifecycle?sequenceId=90`) return ok({ lifecycle: NO_PRIOR });
     if (path === `${BASE}/supply-candidates`) return ok({ documents: [{ documentId: '11111111-2222-4333-8444-0000000000aa', title: 'Protocol v3', version: '3', sha256: 'c'.repeat(64) }] });
     return ok({});
   });
@@ -140,6 +145,7 @@ it('shows a placement a stopped worker left as interrupted, not as being placed,
     if (method === 'POST' && path === `${BASE}/3/place`) { placed = body; return ok({ placement: { state: 'placed' } }); }
     if (path === BASE) return ok({ assembly: interrupted });
     if (path === `${BASE}/targets`) return ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] });
+    if (path === `${BASE}/3/lifecycle?sequenceId=90`) return ok({ lifecycle: NO_PRIOR });
     return ok({});
   });
   render(<CsrAssemblyControl jobId={41} />);
@@ -156,4 +162,94 @@ it('marks a drafted section that keeps a data placeholder as blocking placement'
     : path === `${BASE}/targets` ? ok({ sequences: [] }) : ok({ documents: [] })));
   render(<CsrAssemblyControl jobId={41} />);
   expect((await screen.findByText(/Section 11\.4\.1 still holds a data placeholder/)).closest('[role="alert"]')).toBeTruthy();
+});
+
+it('shows what each file replaces in the chosen sequence, and places only once an earlier file left out is confirmed on file (2026-10-30)', async () => {
+  const ready = { ...assembled, result: { ...assembled.result!, missing: [], placeholderSections: [] } };
+  const plan = { studyId: 'SYN-LMN201-B', keptOnFile: [], withdrawnHere: [], ambiguous: [],
+    leaves: [{ appendix: 'body', fileName: 'csr-body.pdf', title: 'Body', operation: 'replace', parent: { leafId: 700, sequenceNumber: '0003', title: 'Earlier body' } },
+      { appendix: '16.2.7', fileName: 'csr-16-2-7-adverse-events.pdf', title: 'Listing 16.2.7', operation: 'new', parent: null }],
+    undecided: [{ leafId: 702, sequenceNumber: '0003', title: 'Publications', part: '16.1.11' }] };
+  let placed: unknown = null;
+  apiRequest.mockImplementation(async (method: string, path: string, body: unknown) => {
+    if (method === 'POST' && path === `${BASE}/3/place`) { placed = body; return ok({ placement: { state: 'placed' } }); }
+    if (path === BASE) return ok({ assembly: ready });
+    if (path === `${BASE}/targets`) return ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] });
+    if (path === `${BASE}/3/lifecycle?sequenceId=90`) return ok({ lifecycle: plan });
+    return ok({});
+  });
+  render(<CsrAssemblyControl jobId={41} />);
+  fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '90' } });
+  const ops = await screen.findByLabelText('Lifecycle of each file');
+  expect(within(ops).getByText('csr-body.pdf').closest('li')!.textContent).toMatch(/replaces leaf 700 \(Earlier body\) in sequence 0003/);
+  expect(within(ops).getByText('csr-16-2-7-adverse-events.pdf').closest('li')!.textContent).toMatch(/new \(study SYN-LMN201-B has no earlier file/);
+  fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Revised CSR for the Part B data cut' } });
+  const button = screen.getByRole('button', { name: /Place CSR files/ }) as HTMLButtonElement;
+  expect(button.disabled).toBe(true);
+  fireEvent.click(screen.getByLabelText(/Stays on file: Appendix 16\.1\.11 \(Publications\), sequence 0003, leaf 702/));
+  expect(button.disabled).toBe(false);
+  fireEvent.click(button);
+  await vi.waitFor(() => expect(placed).toEqual({ sequenceId: 90, reason: 'Revised CSR for the Part B data cut', keepOnFile: [702] }));
+});
+
+it('offers to withdraw the partly placed CSR files with a reason, and shows a refusal as stated (2026-10-30)', async () => {
+  const partial = { ...assembled, result: { ...assembled.result!, missing: [], placeholderSections: [] },
+    placement: { state: 'partial' as const, sequenceId: 90, sequenceNumber: '0004', leaves: [{ fileName: 'csr-body.pdf' }], error: 'a refusal' } };
+  const posts: unknown[] = [];
+  apiRequest.mockImplementation(async (method: string, path: string, body: unknown) => {
+    if (method === 'POST' && path === `${BASE}/3/withdraw-placement`) {
+      posts.push(body);
+      throw refusal(409, { code: 'CSR_PLACEMENT_SEQUENCE_LOCKED', error: 'Sequence 0004 is frozen; its leaves cannot change, so the partly placed CSR files stay. Nothing was withdrawn.' });
+    }
+    if (path === BASE) return ok({ assembly: partial });
+    if (path === `${BASE}/targets`) return ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] });
+    if (path === `${BASE}/3/lifecycle?sequenceId=90`) return ok({ lifecycle: NO_PRIOR });
+    return ok({});
+  });
+  render(<CsrAssemblyControl jobId={41} />);
+  const withdraw = await screen.findByRole('button', { name: /Withdraw the partly placed CSR files/ }) as HTMLButtonElement;
+  expect(withdraw.disabled).toBe(true);
+  fireEvent.change(screen.getByLabelText('Reason for withdrawal'), { target: { value: 'The build was edited after this placement.' } });
+  fireEvent.click(withdraw);
+  expect((await screen.findByText(/so the partly placed CSR files stay/)).closest('[role="alert"]')).toBeTruthy();
+  expect(posts).toEqual([{ reason: 'The build was edited after this placement.' }]);
+});
+
+it('states a withdrawal and offers a fresh placement (2026-10-30)', async () => {
+  const withdrawn = { ...assembled, result: { ...assembled.result!, missing: [], placeholderSections: [] },
+    placement: { state: 'withdrawn' as const, sequenceId: 90, sequenceNumber: '0004', leaves: [],
+      withdrawal: { withdrawnBy: 5, withdrawnAt: '2026-10-30T10:00:00Z', reason: 'The build was edited', sequenceNumber: '0004', removed: [{ fileName: 'csr-body.pdf' }], notRemoved: [] } } };
+  apiRequest.mockImplementation(async (_m: string, path: string) => (path === BASE ? ok({ assembly: withdrawn })
+    : path === `${BASE}/targets` ? ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] }) : ok({})));
+  render(<CsrAssemblyControl jobId={41} />);
+  expect((await screen.findByText(/were withdrawn \(1 file\(s\)\) by user 5/)).textContent).toMatch(/sequence 0004.*The build was edited/);
+  expect(await screen.findByRole('button', { name: /Place CSR files/ })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Withdraw the partly placed CSR files/ })).toBeNull();
+});
+
+it('lets the user withdraw an earlier file left out, or one of two current files for a part, in this sequence (review, 2026-10-30)', async () => {
+  const ready = { ...assembled, result: { ...assembled.result!, missing: [], placeholderSections: [] } };
+  const plan = { studyId: 'SYN-LMN201-B', keptOnFile: [], withdrawnHere: [],
+    leaves: [{ appendix: 'body', fileName: 'csr-body.pdf', title: 'Body', operation: 'new', parent: null }],
+    ambiguous: [{ part: 'body', leaves: [{ leafId: 700, sequenceNumber: '0001', title: 'Body A', part: 'body' }, { leafId: 701, sequenceNumber: '0002', title: 'Body B', part: 'body' }] }],
+    undecided: [{ leafId: 702, sequenceNumber: '0003', title: 'Publications', part: '16.1.11' }] };
+  let placed: unknown = null;
+  apiRequest.mockImplementation(async (method: string, path: string, body: unknown) => {
+    if (method === 'POST' && path === `${BASE}/3/place`) { placed = body; return ok({ placement: { state: 'placed' } }); }
+    if (path === BASE) return ok({ assembly: ready });
+    if (path === `${BASE}/targets`) return ok({ sequences: [{ sequenceId: 90, sequenceNumber: '0004', status: 'draft', submissionTitle: 'LMN-201 IND' }] });
+    if (path === `${BASE}/3/lifecycle?sequenceId=90`) return ok({ lifecycle: plan });
+    return ok({});
+  });
+  render(<CsrAssemblyControl jobId={41} />);
+  fireEvent.change(await screen.findByLabelText('Sequence'), { target: { value: '90' } });
+  fireEvent.change(await screen.findByLabelText('Reason'), { target: { value: 'Revised CSR for the Part B data cut' } });
+  const button = await screen.findByRole('button', { name: /Place CSR files/ }) as HTMLButtonElement;
+  fireEvent.click(await screen.findByLabelText(/Withdraw in this sequence: Appendix 16\.1\.11 \(Publications\), sequence 0003, leaf 702/));
+  // Two current bodies: still undecided until the one no longer current is withdrawn.
+  expect(button.disabled).toBe(true);
+  fireEvent.click(screen.getByLabelText(/Withdraw in this sequence: Body A, sequence 0001, leaf 700/));
+  expect(button.disabled).toBe(false);
+  fireEvent.click(button);
+  await vi.waitFor(() => expect(placed).toEqual({ sequenceId: 90, reason: 'Revised CSR for the Part B data cut', withdraw: [702, 700] }));
 });

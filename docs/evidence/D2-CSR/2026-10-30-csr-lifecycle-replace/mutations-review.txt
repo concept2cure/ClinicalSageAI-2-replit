@@ -1,0 +1,20 @@
+M1: any leaf id the user names is withdrawn (eligibility removed) -> expect red
+ ✓ server/services/csr/__tests__/csr-placement-lifecycle.test.ts > resolves two current bodies only when the user withdraws the one no longer current (SYNTHETIC) 4ms
+ × server/services/csr/__tests__/csr-placement-lifecycle.test.ts > refuses to withdraw a file the assembly still replaces, or one that is not the study's (SYNTHETIC) 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
+restored sha equal: yes
+M2: a delete in the target sequence naming the same document is not read as the withdrawal (parent only, as before review) -> expect red
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > places a revised CSR as a replace of each earlier file of the same study and part, naming its parent; a new part stays new (SYNTHETIC) 2306ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > lists an earlier file the revised assembly no longer has, refuses to drop it silently, and places once the user keeps it on file (SYNTHETIC) 730ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > withdraws only the files a part-way placement wrote, in its still-open sequence, after the build changed (SYNTHETIC) 587ms
+ ✓ server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > refuses to withdraw a completed placement, or a part-way one whose sequence has since been frozen (SYNTHETIC) 1155ms
+ × server/services/csr/__tests__/csr-assembly-lifecycle.pglite.test.ts > honours a withdrawal placed elsewhere by document, and withdraws an earlier file left out only when the user chooses it on the board (SYNTHETIC) 637ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+restored sha equal: yes
+M3: board treats an ambiguous part as unresolvable from the board (the builder's behaviour) -> expect red
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lets the user withdraw an earlier file left out, or one of two current files for a part, in this sequence (review, 2026-10-30) 89ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 passed (12)
+restored sha equal: yes
