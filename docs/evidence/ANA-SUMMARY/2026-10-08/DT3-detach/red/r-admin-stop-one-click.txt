@@ -1,9 +1,9 @@
 # r-admin-stop-one-click: exit 1 (non-zero = red)
 # tests: client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx  -t asks why first
- × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel 298ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel 390ms
    → expected "vi.fn()" to not be called at all, but actually been called 1 times
  Test Files  1 failed (1)
-      Tests  1 failed | 5 skipped (6)
+      Tests  1 failed | 7 skipped (8)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > Stop asks why first, in a dialog that names the person and says what stopping does; the reason goes with the cancel
 AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times

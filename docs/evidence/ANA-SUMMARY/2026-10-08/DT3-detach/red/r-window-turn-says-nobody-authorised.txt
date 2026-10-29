@@ -1,0 +1,14 @@
+# r-window-turn-says-nobody-authorised: exit 1 (non-zero = red)
+# tests: server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t window closes
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > the turn waits for the person's decision and takes its result; it never says nobody authorised it 209ms
+   → expected 'error' to be 'success' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > a claim whose decision never comes is said as approved and unconfirmed, never "nobody authorised", and the turn goes on 66ms
+   → expected 'Saving an AnA draft in the editor did…' to match /was ended because a person approved i…/
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > an approval nobody claimed is still denied when the window closes 19ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 16 skipped (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > the turn waits for the person's decision and takes its result; it never says nobody authorised it
+AssertionError: expected 'error' to be 'success' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > a claim whose decision never comes is said as approved and unconfirmed, never "nobody authorised", and the turn goes on
+AssertionError: expected 'Saving an AnA draft in the editor did…' to match /was ended because a person approved i…/

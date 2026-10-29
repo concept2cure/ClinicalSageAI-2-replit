@@ -1,0 +1,13 @@
+# r-follow-line-hidden-on-a-settled-turn: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx  -t something to say
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a hand-over whose answer could not be read says so, beside its record, never an empty answer 111ms
+   → Unable to find an element with the text: The answer couldn't be loaded. Reopen the conversation.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a poll answered 401 says the sign-in ended, in the server’s words 49ms
+   → Unable to find an element with the text: Signed out after a period of inactivity. Sign in again.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a hand-over whose answer could not be read says so, beside its record, never an empty answer
+TestingLibraryElementError: Unable to find an element with the text: The answer couldn't be loaded. Reopen the conversation.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > a followed turn that ended with something to say, and no step rows > a poll answered 401 says the sign-in ended, in the server’s words
+TestingLibraryElementError: Unable to find an element with the text: Signed out after a period of inactivity. Sign in again.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
