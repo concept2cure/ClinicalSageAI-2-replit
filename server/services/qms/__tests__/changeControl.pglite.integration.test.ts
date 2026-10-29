@@ -78,8 +78,16 @@ CREATE TABLE qms_change_links (
   change_id int NOT NULL REFERENCES qms_change_controls(id) ON DELETE CASCADE,
   link_type text NOT NULL, linked_ref text NOT NULL, linked_label text, linked_id int,
   relationship text NOT NULL DEFAULT 'references', note text, created_by int,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  removed_at timestamptz, removed_by int, removal_reason text
 );
+
+-- The registers a link names a record in (MR-12 Stage 8), reduced to the columns the check reads.
+CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL);
+CREATE TABLE capa_records (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), program_id text NOT NULL, capa_code text NOT NULL);
+CREATE TABLE qc_deviations (id serial PRIMARY KEY, organization_id int NOT NULL, deviation_number text NOT NULL);
+CREATE TABLE qms_suppliers (id serial PRIMARY KEY, organization_id int NOT NULL, supplier_name text NOT NULL,
+  supplier_code text, deleted_at timestamptz);
 `;
 
 const ORG = 1;
@@ -233,12 +241,37 @@ describe('controlled lifecycle against real SQL', () => {
     expect(r.rows[0]).toMatchObject({ status: 'under_assessment', approved_by: null });
   });
 
-  it('adds and removes a cross-reference link', async () => {
+  /* MR-12 Stage 8 (CAT2-25): a link to a deviation, CAPA or supplier names one
+     of this organisation's records; a removed link is kept, stamped with who
+     removed it and why, and no reader lists it again. */
+  it('links only a record of this organisation, and keeps a removed link with who removed it and why', async () => {
+    await pglite.exec(`
+      INSERT INTO regulatory_programs VALUES ('11111111-1111-4111-8111-111111111111', 1), ('22222222-2222-4222-8222-222222222222', 2);
+      INSERT INTO capa_records (program_id, capa_code) VALUES ('11111111-1111-4111-8111-111111111111', 'CAPA-2026-0001'),
+                                                              ('22222222-2222-4222-8222-222222222222', 'CAPA-2026-0777');
+      INSERT INTO qc_deviations (organization_id, deviation_number) VALUES (1, 'DEV-2026-900');
+      INSERT INTO qms_suppliers (organization_id, supplier_name, supplier_code) VALUES (1, 'Acme Resins', 'SUP-7');`);
     const c = await svc.createChange(ORG, { changeNumber: 'CC-TEST-103', title: 'z', proposedBy: 10 });
-    const link = await svc.addLink(ORG, c.id, { linkType: 'capa', linkedRef: 'CAPA-999', relationship: 'addresses', createdBy: 10 });
-    expect((await svc.listLinks(ORG, c.id))).toHaveLength(1);
-    expect(await svc.removeLink(ORG, c.id, link.id)).toBe(true);
+    const refused = (p: Promise<unknown>) => p.then(() => 'linked', (e: { code?: string }) => e.code ?? String(e));
+    expect(await refused(svc.addLink(ORG, c.id, { linkType: 'capa', linkedRef: 'CAPA-999', createdBy: 10 }))).toBe('CHANGE_LINK_TARGET_NOT_FOUND');
+    expect(await refused(svc.addLink(ORG, c.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0777', createdBy: 10 }))).toBe('CHANGE_LINK_TARGET_NOT_FOUND');
+    expect(await refused(svc.addLink(ORG, c.id, { linkType: 'deviation', linkedRef: 'DEV-NOT-RECORDED', createdBy: 10 }))).toBe('CHANGE_LINK_TARGET_NOT_FOUND');
+    expect(await refused(svc.addLink(ORG, c.id, { linkType: 'document', linkedRef: 'SOP-X', linkedId: 99999, createdBy: 10 }))).toBe('CHANGE_LINK_TARGET_NOT_FOUND');
     expect((await svc.listLinks(ORG, c.id))).toHaveLength(0);
+
+    const link = await svc.addLink(ORG, c.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0001', relationship: 'addresses', createdBy: 10 });
+    await svc.addLink(ORG, c.id, { linkType: 'deviation', linkedRef: 'DEV-2026-900', createdBy: 10 });
+    await svc.addLink(ORG, c.id, { linkType: 'supplier', linkedRef: 'SUP-7', createdBy: 10 });
+    await svc.addLink(ORG, c.id, { linkType: 'validation', linkedRef: 'VP-12', createdBy: 10 });
+    expect((await svc.listLinks(ORG, c.id))).toHaveLength(4);
+
+    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' })).toBe(true);
+    expect((await svc.listLinks(ORG, c.id)).map((l) => l.linked_ref)).toEqual(['DEV-2026-900', 'SUP-7', 'VP-12']);
+    expect((await svc.listLinksForChanges(ORG, [c.id])).get(c.id)).toHaveLength(3);
+    const kept = (await pglite.query<Record<string, unknown>>(`SELECT removed_at, removed_by, removal_reason FROM qms_change_links WHERE id = $1`, [link.id])).rows[0];
+    expect(kept).toMatchObject({ removed_by: 11, removal_reason: 'Linked to the wrong CAPA in error' });
+    expect(kept.removed_at).toBeTruthy();
+    expect(await svc.removeLink(ORG, c.id, link.id, { removedBy: 11, reason: 'Linked to the wrong CAPA in error' })).toBe(false);
   });
 
   it('removes only the owned active change through an executor that supplies rows alone', async () => {

@@ -96,7 +96,7 @@ import {
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
-  listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary,
+  listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
@@ -1448,7 +1448,11 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   try {
     const change = await getChange(orgId, id, requestPgClient(req));
     if (!change) return notFoundInTenant(res, 'Change');
-    const row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req));
+    let row;
+    try { row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req)); } catch (err) {
+      if (err instanceof ChangeLinkRefusedError) return clientError(res, 422, err.message, { code: err.code });
+      throw err;
+    }
     /* WO-16C #133. Was `void auditService.logAction({…})`. `addLink` has
        inserted the cross-reference and returned it, so the link stands;
        `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
@@ -1462,27 +1466,30 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   } catch (err) { return serverError(res, log, 'change-link-add', err); }
 });
 
-// Cross-references: remove a link.
+// Cross-references: remove a link. It is kept, stamped and filtered, never deleted (MR-12 Stage 8).
 router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   const linkId = Number(req.params.linkId);
   if (!Number.isFinite(id) || !Number.isFinite(linkId)) return clientError(res, 422, 'id must be numeric');
+  const reason = governedReason.safeParse(req.body?.reason);
+  if (!reason.success) return clientError(res, 422, 'State why the link is removed (a reason of at least 8 characters). Nothing was changed.');
   try {
-    const removed = await removeLink(orgId, id, linkId, requestPgClient(req));
+    const removed = await removeLink(orgId, id, linkId, { removedBy: userId, reason: reason.data }, requestPgClient(req));
     if (!removed) return notFoundInTenant(res, 'Link');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The link row is
-       already deleted by `removeLink`, which reported that it matched one, so
-       the removal stands and the §11.10(e) record beside it is the only thing
-       left to report — `meta.auditTrail`. */
+    /* WO-16C #133. The link stands removed (stamped by removeLink), so the
+       §11.10(e) record beside it is the only thing left to report —
+       `meta.auditTrail`. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      tenantId: orgId, userId,
       action: 'mdx.qms.change.unlink',
       resourceType: 'qms_change_control', resourceId: id,
-      details: { linkId },
+      details: { linkId, reason: reason.data },
     }, requestConnectable(req));
-    return ok(res, { id: linkId, deleted: true }, { auditTrail });
+    return ok(res, { id: linkId, removed: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }
 });
 
