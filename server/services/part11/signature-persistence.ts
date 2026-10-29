@@ -263,6 +263,17 @@ export const BINDING_BASIS = {
    */
   RISK_RESIDUAL_ACCEPTANCE_CONTENT: 'risk-residual-acceptance-content-sha256',
   /**
+   * sha256 (recipe filed-sequence-baseline/v1,
+   * submission-service/filed-sequence-baseline-content.ts filedBaselineDigest)
+   * over a declaration that a submission's US sequences 0000–N were filed
+   * outside the platform: the submission, the region, N, the sequence that
+   * opened the Original Application, and the evidence (the Vault document and
+   * the sha256 of its bytes). The database refuses a declaration at COMMIT
+   * unless its signature carries this basis
+   * (migrations/20261029g_submission_filed_baselines.sql). Added 2026-10-29.
+   */
+  FILED_SEQUENCE_BASELINE_CONTENT: 'filed-sequence-baseline-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

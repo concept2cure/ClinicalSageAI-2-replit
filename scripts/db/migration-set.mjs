@@ -3641,6 +3641,15 @@ export const C2C_MIGRATION_FILES = [
   // nullable. After the base schema (organizations). Public with
   // organization_id INTEGER NOT NULL; CREATE ... IF NOT EXISTS only; no DROP.
   'migrations/20261029g_qc_deviations.sql',
+  // Sequences a US submission filed outside the platform, declared (D7,
+  // 2026-10-29; docs/design/FILED_ELSEWHERE_BASELINE_2026-10-29.md):
+  // public.submission_filed_baselines, append-only (UPDATE and TRUNCATE
+  // refused; DELETE is the tenant purge's, PURGE_CHILD_TABLES), and refused at
+  // COMMIT without its own signature (a deferred constraint trigger reading
+  // electronic_signatures, which the base schema creates). No foreign key.
+  // Public with organization_id INTEGER NOT NULL, so the sweep below gives it
+  // its policy. Every statement is guarded; no DROP.
+  'migrations/20261029g_submission_filed_baselines.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

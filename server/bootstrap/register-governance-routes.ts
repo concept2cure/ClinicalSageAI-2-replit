@@ -9,6 +9,7 @@ import escalateRoutes from '../routes/escalate';
 import validateCompletenessRoutes from '../routes/validate-completeness';
 import submissionCenterRoutes from '../routes/submissionCenter.routes';
 import submissionCoreRoutes from '../routes/submissions';
+import submissionFiledBaselineRoutes from '../routes/submission-filed-baseline';
 import regionProfileRoutes from '../routes/region-profiles';
 import regulatoryPrecedentIntelligenceRoutes from '../routes/regulatory-precedent-intelligence';
 import { authenticateToken } from '../middleware/auth.js';
@@ -66,6 +67,8 @@ export async function registerGovernanceRoutes(app: Express) {
      four handlers and enabling RLS — or deciding the family is superseded by
      `/api/submissions`, which the evidence favours. Either is a product call. */
   void submissionCenterRoutes;
+  // The sequences a US submission filed outside the platform, declared (D7, 2026-10-29).
+  app.use('/api/submissions', authenticateToken, submissionFiledBaselineRoutes);
   app.use('/api/submissions', authenticateToken, submissionCoreRoutes);
   app.use('/api/region-profiles', authenticateToken, regionProfileRoutes);
   app.use(

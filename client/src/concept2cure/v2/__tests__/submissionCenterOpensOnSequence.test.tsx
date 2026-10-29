@@ -58,6 +58,9 @@ const ROUTES: Record<string, () => Response> = {
   'GET /api/submissions': () => json(SUBS),
   'GET /api/submissions/3/sequences': () => json(SEQS_3),
   'GET /api/submissions/5/sequences': () => json(SEQS_5),
+  // Nothing declared filed outside the platform (D7, 2026-10-29).
+  'GET /api/submissions/3/filed-baseline': () => json({ baseline: null }),
+  'GET /api/submissions/5/filed-baseline': () => json({ baseline: null }),
   'GET /api/submissions/sequences/7/leaves': () => json(LEAVES_7),
   'GET /api/authoring/docs/D1/sections': () =>
     json({ success: true, sections: [{ code: '2.7.3', title: 'Summary of Clinical Efficacy', content: 'ORR 38.6% in the pivotal cohort.' }] }),
