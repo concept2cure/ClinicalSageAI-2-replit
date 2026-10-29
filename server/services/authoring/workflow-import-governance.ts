@@ -258,6 +258,11 @@ async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernan
     const { assertCsrScientificRelease } = await import('./csr-scientific-review.js');
     await assertCsrScientificRelease(q, input);
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'CSR_EVIDENCE_IDENTITY_UNAVAILABLE') {
+      // Not "no receipt": what the document is could not be read at all.
+      throw new WorkflowImportGovernanceError(503, error.code,
+        'Whether this document is a clinical study report could not be checked, so nothing was signed or released. Try again; if it persists, contact an administrator.');
+    }
     if (error && typeof error === 'object' && 'code' in error &&
         typeof error.code === 'string' && error.code.startsWith('CSR_')) {
       throw new WorkflowImportGovernanceError(sourceVerificationStatus(error), error.code,

@@ -1,0 +1,24 @@
+# Follow-up: six more release-path suites the CSR gate or the independence check reached
+
+## Red at HEAD 499a17b82 (from affected-suites.txt; these failed identically there)
+  authoring-section-commits-to-filing: 4 failing
+  authoring-governed-delete-signed-freeze: 3 failing
+  authoring-export-xml-figures: 3 failing
+  correspondence-rendering: 5 failing
+  saved-draft-source-export: 4 failing
+  authoringSavedSourcesExport: 3 failing
+
+## csr-scientific-release-order.test.ts, the new boundary case, with workflow-import-governance.ts at HEAD (stashed)
+ × server/services/authoring/__tests__/csr-scientific-release-order.test.ts > the release boundary says which refusal it is > an unreadable identity is "could not be checked" (503), never "no receipt covers the saved CSR" 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+
+## The filing contract, with the author made to approve (restored after)
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > an agreeing document still e-signs as APPROVER 95ms
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the signing seals refuse a document whose filed copy is not its text > is cleared by re-saving the section the refusal names 132ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed | 90 skipped (93)
+
+## After: the six, the ordering test and the workflow-import suite
+ Test Files  8 passed (8)
+      Tests  190 passed (190)

@@ -4,6 +4,7 @@ vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: m.l
 import { renderAuthoringExport, type RenderExportArgs } from '../authoring-export';
 import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
 import { verifyDraftSourceReferences } from '../draft-source-references';
+import { releaseGovernanceRead } from './release-governance-reads';
 
 const program = '20000000-0000-4000-8000-000000000001';
 const sourceId = '10000000-0000-4000-8000-000000000001';
@@ -11,8 +12,10 @@ const source = () => ({ id: sourceId, programId: program, contentHash: 'a'.repea
   fileName: 'validated-tlf.pdf', documentTitle: 'Study TLFs', extractedText: 'Exact study evidence',
   catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text' } });
 function args(): RenderExportArgs {
-  return { executor: { query: vi.fn(async () => ({ rows: [] })) }, tenantId: 7,
-    doc: { id: '30000000-0000-4000-8000-000000000001', title: 'CSR', module: 'M5', status: 'APPROVED',
+  return { executor: { query: vi.fn(async (sql: string) => releaseGovernanceRead(sql) ?? { rows: [] }) }, tenantId: 7,
+    // Not a CSR: a CSR's release also needs its scientific-review receipt
+    // (csr-scientific-review.ts), held by csr-scientific-release-order.test.ts.
+    doc: { id: '30000000-0000-4000-8000-000000000001', title: 'Clinical overview', module: 'M2', status: 'APPROVED',
       client_program_id: program, provenance: { source: 'ana', projectSourceReferences: [{ sectionCode: '12',
         qualification: 'unassessed', verification: 'current_at_save', sources: [{ documentId: sourceId,
           programId: program, contentHash: 'a'.repeat(64), span: { start: 0, end: 20, totalChars: 20 } }] }] } },

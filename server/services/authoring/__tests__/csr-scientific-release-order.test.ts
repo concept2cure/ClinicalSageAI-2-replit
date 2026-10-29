@@ -11,6 +11,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { assertCsrScientificRelease } from '../csr-scientific-review';
+import { assertWorkflowImportRelease } from '../workflow-import-governance';
 
 const ORG = 7;
 const DOC = '3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
@@ -60,5 +61,16 @@ describe('assertCsrScientificRelease', () => {
     await expect(assertCsrScientificRelease(q, { organizationId: ORG,
       doc: { id: DOC, title: 'Final report', module: 'M5', client_program_id: PROGRAM }, sections: framed,
       actor: { id: '41' } })).rejects.toMatchObject({ code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED' });
+  });
+});
+
+describe('the release boundary says which refusal it is', () => {
+  it('an unreadable identity is "could not be checked" (503), never "no receipt covers the saved CSR"', async () => {
+    const q = reader({});
+    const refused = assertWorkflowImportRelease(q, { organizationId: ORG,
+      doc: { id: DOC, title: 'Nonclinical overview', module: 'M2', client_program_id: PROGRAM }, sections: framed,
+      actor: { id: '41', email: 'signer@example.test' } });
+    await expect(refused).rejects.toMatchObject({ status: 503, code: 'CSR_EVIDENCE_IDENTITY_UNAVAILABLE' });
+    await expect(refused).rejects.toThrow(/could not be checked/);
   });
 });
