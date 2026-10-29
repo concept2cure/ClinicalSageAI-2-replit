@@ -24,3 +24,296 @@ AssertionError: purge_tenant_vault_seals is not on scripts/db/security-definer-a
 error: permission denied for function purge_tenant_vault_seals
  Test Files  1 failed (1)
       Tests  1 failed | 2 passed (3)
+
+## §2 ci:purge-coverage, as extended, against the HEAD list (71a10fe2b) on the same database
+(The gate run from a scratch tree holding HEAD's tenant-offboarding.ts and baseline, so it reads the list a deploy at HEAD runs.)
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+   keys from a table the purge does not erase (a tenant holding such a row is not purged): 1
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+❌ purge-coverage: 104 foreign key(s) stop a tenant purge part-way:
+  ✗ public.account_canon_resolution_log (project_id) → public.projects, NO ACTION [account_canon_resolution_log_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.account_events (project_id) → public.projects, NO ACTION [account_events_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.account_events (skill_bundle_id) → public.account_skill_bundles, NO ACTION [account_events_skill_bundle_id_account_skill_bundles_id_fk]: the purge never deletes it
+  ✗ public.account_template_registry (bundle_id) → public.account_skill_bundles, NO ACTION [account_template_registry_bundle_id_account_skill_bundles_id_fk]: the purge never deletes it
+  ✗ public.account_term_dictionary (bundle_id) → public.account_skill_bundles, NO ACTION [account_term_dictionary_bundle_id_account_skill_bundles_id_fk]: the purge never deletes it
+  ✗ public.ana_client_objectives (project_id) → public.projects, NO ACTION [ana_client_objectives_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.ana_outcome_log (project_id) → public.projects, NO ACTION [ana_outcome_log_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.ana_project_capabilities (project_id) → public.projects, NO ACTION [ana_project_capabilities_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.ana_relational_profiles (project_id) → public.projects, NO ACTION [ana_relational_profiles_project_id_fkey]: the purge never deletes it
+  ✗ public.bundle_execution_receipts (project_id) → public.projects, NO ACTION [bundle_execution_receipts_project_id_fkey]: the purge never deletes it
+  ✗ public.c2c_communication_timeline_events (project_id) → public.projects, NO ACTION [c2c_communication_timeline_events_project_id_fkey]: the purge never deletes it
+  ✗ public.c2c_correspondence (project_id) → public.projects, NO ACTION [c2c_correspondence_project_id_fkey]: the purge never deletes it
+  ✗ public.c2c_documents (project_id) → public.regulatory_programs, NO ACTION [c2c_documents_project_id_fkey]: the purge never deletes it
+  ✗ public.c2c_documents (project_id, org_id) → public.regulatory_programs, NO ACTION [c2c_documents_project_same_org_fk]: the purge never deletes it
+  ✗ public.c2c_response_packages (project_id) → public.projects, NO ACTION [c2c_response_packages_project_id_fkey]: the purge never deletes it
+  ✗ public.c2c_submissions (project_id) → public.projects, NO ACTION [c2c_submissions_project_id_fkey]: the purge never deletes it
+  ✗ public.cer_projects (client_workspace_id) → public.client_workspaces, NO ACTION [cer_projects_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.client_access (client_workspace_id) → public.client_workspaces, NO ACTION [client_access_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.client_intelligence_profiles (client_workspace_id) → public.client_workspaces, NO ACTION [client_intelligence_profiles_client_workspace_id_client_workspa]: the purge never deletes it
+  ✗ public.client_security_settings (client_workspace_id) → public.client_workspaces, NO ACTION [client_security_settings_client_workspace_id_client_workspaces_]: the purge never deletes it
+  ✗ public.client_workspace_settings (client_workspace_id) → public.client_workspaces, NO ACTION [client_workspace_settings_client_workspace_id_client_workspaces]: the purge never deletes it
+  ✗ public.communication_channels (project_id) → public.projects, NO ACTION [communication_channels_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.communication_messages (project_id) → public.projects, NO ACTION [communication_messages_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.csr_reports (client_workspace_id) → public.client_workspaces, NO ACTION [csr_reports_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.csr_studies (client_workspace_id) → public.client_workspaces, NO ACTION [csr_studies_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.ctd_onboarding_projects (project_id) → public.projects, NO ACTION [ctd_onboarding_projects_project_id_fkey]: the purge never deletes it
+  ✗ public.ctd_programs (client_workspace_id) → public.client_workspaces, NO ACTION [ctd_programs_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.data_lineage_records (project_id) → public.projects, NO ACTION [data_lineage_records_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.document_audit_trail (document_id) → public.documents, NO ACTION [document_audit_trail_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.document_comments (document_id) → public.documents, NO ACTION [document_comments_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.document_locks (document_id) → public.documents, NO ACTION [document_locks_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.document_sections (client_workspace_id) → public.client_workspaces, NO ACTION [document_sections_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.document_sections (document_id) → public.documents, NO ACTION [document_sections_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.document_sessions (document_id) → public.documents, NO ACTION [document_sessions_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.document_versions (document_id) → public.documents, NO ACTION [document_versions_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.documents (client_workspace_id) → public.client_workspaces, NO ACTION [documents_client_workspace_id_client_workspaces_id_fk]: the purge deletes it later ('documents', after 'client_workspaces')
+  ✗ public.documents (project_id) → public.projects, NO ACTION [documents_project_id_projects_id_fk]: the purge deletes it later ('documents', after 'projects')
+  ✗ public.electronic_signatures (document_id) → public.documents, NO ACTION [electronic_signatures_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.evidence_chain_records (project_id) → public.projects, NO ACTION [evidence_chain_records_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.fda_510k_projects (project_id) → public.projects, NO ACTION [fda_510k_projects_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.fda_communications (project_id) → public.projects, NO ACTION [fda_communications_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.governance_boundary_transitions (artifact_id) → public.concept2cure_artifacts, NO ACTION [governance_boundary_transitions_artifact_id_fkey]: the purge never deletes it
+  ✗ public.governance_boundary_transitions (project_id) → public.projects, NO ACTION [governance_boundary_transitions_project_id_fkey]: the purge never deletes it
+  ✗ public.grant_awards (project_id) → public.projects, NO ACTION [grant_awards_project_id_fkey]: the purge never deletes it
+  ✗ public.grant_proposals (project_id) → public.projects, NO ACTION [grant_proposals_project_id_fkey]: the purge never deletes it
+  ✗ public.immutable_report_records (client_workspace_id) → public.client_workspaces, NO ACTION [immutable_report_records_client_workspace_id_client_workspaces_]: the purge never deletes it
+  ✗ public.immutable_report_records (project_id) → public.projects, NO ACTION [immutable_report_records_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.ind_package_plan_documents (document_id) → public.documents, NO ACTION [ind_package_plan_documents_document_id_documents_id_fk]: the purge never deletes it
+  ✗ public.ind_package_plans (client_workspace_id) → public.client_workspaces, NO ACTION [ind_package_plans_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.ind_projects (client_workspace_id) → public.client_workspaces, NO ACTION [ind_projects_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.ind_submissions (client_workspace_id) → public.client_workspaces, NO ACTION [ind_submissions_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.labeling_documents (program_id, organization_id) → public.regulatory_programs, NO ACTION [labeling_documents_program_same_org_fk]: the purge never deletes it
+  ✗ public.link_edges (client_workspace_id) → public.client_workspaces, NO ACTION [link_edges_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.patches (client_workspace_id) → public.client_workspaces, NO ACTION [patches_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.project_ingested_documents (project_id) → public.projects, NO ACTION [project_ingested_documents_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_intelligence_profiles (project_id) → public.projects, NO ACTION [project_intelligence_profiles_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_memory_entries (project_id) → public.projects, NO ACTION [project_memory_entries_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_modules (client_workspace_id) → public.client_workspaces, NO ACTION [project_modules_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.project_modules (project_id) → public.projects, NO ACTION [project_modules_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_predictions (project_id) → public.projects, NO ACTION [project_predictions_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_rules (scope_project_id) → public.projects, NO ACTION [project_rules_scope_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_schedule_goals (project_id) → public.projects, NO ACTION [project_schedule_goals_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_schedule_of_events (project_id, organization_id) → public.projects, NO ACTION [fk_schedule_project_same_org]: the purge never deletes it
+  ✗ public.project_schedule_of_events (project_id) → public.projects, NO ACTION [project_schedule_of_events_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_schedule_revisions (project_id) → public.projects, NO ACTION [project_schedule_revisions_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_tasks (project_id) → public.projects, NO ACTION [project_tasks_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.project_workflow_stages (project_id) → public.projects, NO ACTION [project_workflow_stages_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.protocols (client_workspace_id) → public.client_workspaces, NO ACTION [protocols_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.quality_management_plans (client_workspace_id) → public.client_workspaces, NO ACTION [quality_management_plans_client_workspace_id_client_workspaces_]: the purge never deletes it
+  ✗ public.regulatory_obligations (client_workspace_id) → public.client_workspaces, NO ACTION [regulatory_obligations_client_workspace_id_client_workspaces_id]: the purge never deletes it
+  ✗ public.regulatory_submissions (client_workspace_id) → public.client_workspaces, NO ACTION [regulatory_submissions_client_workspace_id_client_workspaces_id]: the purge never deletes it
+  ✗ public.reports (client_workspace_id) → public.client_workspaces, NO ACTION [reports_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.risk_detections (project_id) → public.projects, NO ACTION [risk_detections_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.rule_execution_log (project_id) → public.projects, NO ACTION [rule_execution_log_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.section_graph_nodes (client_workspace_id) → public.client_workspaces, NO ACTION [section_graph_nodes_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.section_leaves (client_workspace_id) → public.client_workspaces, NO ACTION [section_leaves_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.section_links (project_id) → public.projects, NO ACTION [section_links_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.sections (project_id) → public.projects, NO ACTION [sections_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.sentinel_findings (project_id) → public.projects, NO ACTION [sentinel_findings_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.staff_assignments (client_workspace_id) → public.client_workspaces, NO ACTION [staff_assignments_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.strategic_reports (client_workspace_id) → public.client_workspaces, NO ACTION [strategic_reports_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.submission_twin_assessments (package_id) → public.c2c_submission_packages, NO ACTION [submission_twin_assessments_package_id_c2c_submission_packages_]: the purge never deletes it
+  ✗ public.submission_twin_challenges (package_id) → public.c2c_submission_packages, NO ACTION [submission_twin_challenges_package_id_c2c_submission_packages_i]: the purge never deletes it
+  ✗ public.submission_twin_change_impacts (changed_artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_change_impacts_changed_artifact_id_concept2cure]: the purge never deletes it
+  ✗ public.submission_twin_change_impacts (impacted_artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_change_impacts_impacted_artifact_id_concept2cur]: the purge never deletes it
+  ✗ public.submission_twin_change_impacts (package_id) → public.c2c_submission_packages, NO ACTION [submission_twin_change_impacts_package_id_c2c_submission_packag]: the purge never deletes it
+  ✗ public.submission_twin_claims (artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_claims_artifact_id_concept2cure_artifacts_id_fk]: the purge never deletes it
+  ✗ public.submission_twin_claims (package_id) → public.c2c_submission_packages, NO ACTION [submission_twin_claims_package_id_c2c_submission_packages_id_fk]: the purge never deletes it
+  ✗ public.submission_twin_claims (section_id) → public.c2c_package_sections, NO ACTION [submission_twin_claims_section_id_c2c_package_sections_id_fk]: the purge never deletes it
+  ✗ public.submission_twin_drift_alerts (package_id) → public.c2c_submission_packages, NO ACTION [submission_twin_drift_alerts_package_id_c2c_submission_packages]: the purge never deletes it
+  ✗ public.submission_twin_drift_alerts (source_artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_drift_alerts_source_artifact_id_concept2cure_ar]: the purge never deletes it
+  ✗ public.submission_twin_drift_alerts (target_artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_drift_alerts_target_artifact_id_concept2cure_ar]: the purge never deletes it
+  ✗ public.submission_twin_evidence_links (evidence_artifact_id) → public.concept2cure_artifacts, NO ACTION [submission_twin_evidence_links_evidence_artifact_id_concept2cur]: the purge never deletes it
+  ✗ public.supply_chain_batches (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_batches_client_workspace_id_client_workspaces_id_f]: the purge never deletes it
+  ✗ public.supply_chain_coas (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_coas_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.supply_chain_materials (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_materials_client_workspace_id_client_workspaces_id]: the purge never deletes it
+  ✗ public.supply_chain_shipments (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_shipments_client_workspace_id_client_workspaces_id]: the purge never deletes it
+  ✗ public.supply_chain_suppliers (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_suppliers_client_workspace_id_client_workspaces_id]: the purge never deletes it
+  ✗ public.supply_chain_temperature_readings (client_workspace_id) → public.client_workspaces, NO ACTION [supply_chain_temperature_readings_client_workspace_id_client_wo]: the purge never deletes it
+  ✗ public.sync_status (client_workspace_id) → public.client_workspaces, NO ACTION [sync_status_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.template_usage (project_id) → public.projects, NO ACTION [template_usage_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.unified_tasks (client_workspace_id) → public.client_workspaces, NO ACTION [unified_tasks_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+  ✗ public.unified_tasks (project_id) → public.projects, NO ACTION [unified_tasks_project_id_projects_id_fk]: the purge never deletes it
+  ✗ public.workflow_progress (client_workspace_id) → public.client_workspaces, NO ACTION [workflow_progress_client_workspace_id_client_workspaces_id_fk]: the purge never deletes it
+
+The purge deletes the list in order in one transaction. For a tenant holding one such row, the
+referenced DELETE fails (23503, or 23502 for SET NULL on a NOT NULL column) and the WHOLE erasure
+rolls back. List the referencing table in PURGE_CHILD_TABLES before the table it names (with a
+PURGE_PARENT_SCOPED predicate when it has no organization_id), or, when its rows must not be erased,
+name it with its reason in PURGE_REFERRERS_NOT_ERASED.
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - review_routes
+
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+live database, and a table some migration drops can linger on a local one
+that has not replayed it — in which case the fix is to migrate, not to list
+a table that a correctly-migrated database does not have. Listing a phantom
+here makes the purge look more complete than it is, which is the opposite of
+what this gate is for.
+
+If it is real: add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON
+DELETE CASCADE path from a table already there. A tenant that asks to be
+erased must not keep rows in a table nobody remembered to list.
+
+## §3 One fresh tenant per table, holding one row of it (and the parents it needs), purged the way the route runs it (runtime pool, platform scope), list at HEAD
+(per-table-purge-probe.mts.txt in this directory, run with tsx; it uses the seeder of tests/db/tenant-purge-row-seeder.ts. Columns: table, outcome.)
+account_canon_resolution_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "account_canon_resolution_log_project_id_projects_id_fk" on table "account_canon_resolution_log"
+account_events	ERR 23503 update or delete on table "projects" violates foreign key constraint "account_events_project_id_projects_id_fk" on table "account_events"
+account_template_registry	ERR 23503 update or delete on table "account_skill_bundles" violates foreign key constraint "account_template_registry_bundle_id_account_skill_bundles_id_fk" on table "account_template_registry"
+account_term_dictionary	ERR 23503 update or delete on table "account_skill_bundles" violates foreign key constraint "account_term_dictionary_bundle_id_account_skill_bundles_id_fk" on table "account_term_dictionary"
+agency_communication_questions	OK  purged
+ana_client_objectives	ERR 23503 update or delete on table "projects" violates foreign key constraint "ana_client_objectives_project_id_projects_id_fk" on table "ana_client_objectives"
+ana_outcome_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "ana_outcome_log_project_id_projects_id_fk" on table "ana_outcome_log"
+ana_project_capabilities	ERR 23503 update or delete on table "projects" violates foreign key constraint "ana_project_capabilities_project_id_projects_id_fk" on table "ana_project_capabilities"
+ana_relational_profiles	ERR 23503 update or delete on table "projects" violates foreign key constraint "ana_relational_profiles_project_id_fkey" on table "ana_relational_profiles"
+ana_run_events	OK  purged
+bundle_execution_receipts	ERR 23503 update or delete on table "projects" violates foreign key constraint "bundle_execution_receipts_project_id_fkey" on table "bundle_execution_receipts"
+c2c_communication_timeline_events	ERR 23503 update or delete on table "projects" violates foreign key constraint "c2c_communication_timeline_events_project_id_fkey" on table "c2c_communication_timeline_events"
+c2c_correspondence	ERR 23503 update or delete on table "projects" violates foreign key constraint "c2c_submissions_project_id_fkey" on table "c2c_submissions"
+c2c_documents	ERR 23503 update or delete on table "regulatory_programs" violates foreign key constraint "c2c_documents_project_id_fkey" on table "c2c_documents"
+c2c_response_packages	ERR 23503 update or delete on table "projects" violates foreign key constraint "c2c_submissions_project_id_fkey" on table "c2c_submissions"
+c2c_submissions	ERR 23503 update or delete on table "projects" violates foreign key constraint "c2c_submissions_project_id_fkey" on table "c2c_submissions"
+cer_projects	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "cer_projects_client_workspace_id_client_workspaces_id_fk" on table "cer_projects"
+client_access	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "client_access_client_workspace_id_client_workspaces_id_fk" on table "client_access"
+client_intelligence_profiles	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "client_intelligence_profiles_client_workspace_id_client_workspa" on table "client_intelligence_profiles"
+client_security_settings	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "client_security_settings_client_workspace_id_client_workspaces_" on table "client_security_settings"
+client_workspace_settings	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "client_workspace_settings_client_workspace_id_client_workspaces" on table "client_workspace_settings"
+commitment_milestones	OK  purged
+communication_channels	ERR 23503 update or delete on table "projects" violates foreign key constraint "communication_channels_project_id_projects_id_fk" on table "communication_channels"
+communication_messages	ERR 23503 update or delete on table "projects" violates foreign key constraint "communication_channels_project_id_projects_id_fk" on table "communication_channels"
+concept2cure_artifacts	OK  purged
+concept2cure_provenance_events	OK  purged
+csr_reports	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "csr_reports_client_workspace_id_client_workspaces_id_fk" on table "csr_reports"
+csr_studies	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "csr_studies_client_workspace_id_client_workspaces_id_fk" on table "csr_studies"
+ctd_onboarding_projects	ERR 23503 update or delete on table "projects" violates foreign key constraint "ctd_onboarding_projects_project_id_fkey" on table "ctd_onboarding_projects"
+ctd_programs	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "ctd_programs_client_workspace_id_client_workspaces_id_fk" on table "ctd_programs"
+data_lineage_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "data_lineage_records_project_id_projects_id_fk" on table "data_lineage_records"
+document_audit_trail	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+document_comments	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+document_locks	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+document_sections	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+document_sessions	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+document_versions	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+documents	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+electronic_signatures	SEED-FAIL new row for relation "electronic_signatures" violates check constraint "electronic_signatures_anchor_check"
+evidence_chain_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "evidence_chain_records_project_id_projects_id_fk" on table "evidence_chain_records"
+fda_510k_projects	ERR 23503 update or delete on table "projects" violates foreign key constraint "fda_510k_projects_project_id_projects_id_fk" on table "fda_510k_projects"
+fda_communications	ERR 23503 update or delete on table "projects" violates foreign key constraint "fda_communications_project_id_projects_id_fk" on table "fda_communications"
+governance_boundary_transitions	ERR 23503 update or delete on table "projects" violates foreign key constraint "governance_boundary_transitions_project_id_fkey" on table "governance_boundary_transitions"
+grant_awards	ERR 23503 update or delete on table "projects" violates foreign key constraint "grant_awards_project_id_fkey" on table "grant_awards"
+grant_proposals	ERR 23503 update or delete on table "projects" violates foreign key constraint "grant_proposals_project_id_fkey" on table "grant_proposals"
+immutable_report_records	ERR 23503 update or delete on table "projects" violates foreign key constraint "immutable_report_records_project_id_projects_id_fk" on table "immutable_report_records"
+ind_package_plan_documents	ERR 23503 update or delete on table "projects" violates foreign key constraint "documents_project_id_projects_id_fk" on table "documents"
+ind_package_plans	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "ind_package_plans_client_workspace_id_client_workspaces_id_fk" on table "ind_package_plans"
+ind_projects	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "ind_projects_client_workspace_id_client_workspaces_id_fk" on table "ind_projects"
+ind_submissions	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "ind_submissions_client_workspace_id_client_workspaces_id_fk" on table "ind_submissions"
+labeling_documents	ERR 23503 update or delete on table "regulatory_programs" violates foreign key constraint "labeling_documents_program_same_org_fk" on table "labeling_documents"
+link_edges	ERR 23503 update or delete on table "projects" violates foreign key constraint "sections_project_id_projects_id_fk" on table "sections"
+mdx_notification_receipts	OK  purged
+patches	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "patches_client_workspace_id_client_workspaces_id_fk" on table "patches"
+project_ingested_documents	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_ingested_documents_project_id_projects_id_fk" on table "project_ingested_documents"
+project_intelligence_profiles	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_intelligence_profiles_project_id_projects_id_fk" on table "project_intelligence_profiles"
+project_memory_entries	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_intelligence_profiles_project_id_projects_id_fk" on table "project_intelligence_profiles"
+project_modules	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_modules_project_id_projects_id_fk" on table "project_modules"
+project_predictions	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_predictions_project_id_projects_id_fk" on table "project_predictions"
+project_rules	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_rules_scope_project_id_projects_id_fk" on table "project_rules"
+project_schedule_goals	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_schedule_goals_project_id_projects_id_fk" on table "project_schedule_goals"
+project_schedule_of_events	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_schedule_of_events_project_id_projects_id_fk" on table "project_schedule_of_events"
+project_schedule_revisions	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_schedule_of_events_project_id_projects_id_fk" on table "project_schedule_of_events"
+project_tasks	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_tasks_project_id_projects_id_fk" on table "project_tasks"
+project_workflow_stages	ERR 23503 update or delete on table "projects" violates foreign key constraint "project_workflow_stages_project_id_projects_id_fk" on table "project_workflow_stages"
+projects	OK  purged
+protocols	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "protocols_client_workspace_id_client_workspaces_id_fk" on table "protocols"
+quality_management_plans	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "quality_management_plans_client_workspace_id_client_workspaces_" on table "quality_management_plans"
+regulatory_commitments	OK  purged
+regulatory_obligations	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "regulatory_obligations_client_workspace_id_client_workspaces_id" on table "regulatory_obligations"
+regulatory_submissions	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "regulatory_submissions_client_workspace_id_client_workspaces_id" on table "regulatory_submissions"
+reports	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "reports_client_workspace_id_client_workspaces_id_fk" on table "reports"
+risk_detections	ERR 23503 update or delete on table "projects" violates foreign key constraint "risk_detections_project_id_projects_id_fk" on table "risk_detections"
+rule_execution_log	ERR 23503 update or delete on table "projects" violates foreign key constraint "rule_execution_log_project_id_projects_id_fk" on table "rule_execution_log"
+section_graph_nodes	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "section_graph_nodes_client_workspace_id_client_workspaces_id_fk" on table "section_graph_nodes"
+section_leaves	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "section_leaves_client_workspace_id_client_workspaces_id_fk" on table "section_leaves"
+section_links	ERR 23503 update or delete on table "projects" violates foreign key constraint "section_links_project_id_projects_id_fk" on table "section_links"
+sections	ERR 23503 update or delete on table "projects" violates foreign key constraint "sections_project_id_projects_id_fk" on table "sections"
+sentinel_findings	ERR 23503 update or delete on table "projects" violates foreign key constraint "sentinel_findings_project_id_projects_id_fk" on table "sentinel_findings"
+staff_assignments	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "staff_assignments_client_workspace_id_client_workspaces_id_fk" on table "staff_assignments"
+strategic_reports	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "strategic_reports_client_workspace_id_client_workspaces_id_fk" on table "strategic_reports"
+submission_orchestrator_inputs	ERR REGULATED_CONTENT_RETENTION_REVIEW_REQUIRED Controlled QMS versions or frozen submission inputs require governed retention review before physical erasure. This organization remains pending deletion and exportable. Nothing was purged.
+submission_twin_assessments	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_assessments_package_id_c2c_submission_packages_" on table "submission_twin_assessments"
+submission_twin_challenges	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_challenges_package_id_c2c_submission_packages_i" on table "submission_twin_challenges"
+submission_twin_change_impacts	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_change_impacts_package_id_c2c_submission_packag" on table "submission_twin_change_impacts"
+submission_twin_claims	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_claims_package_id_c2c_submission_packages_id_fk" on table "submission_twin_claims"
+submission_twin_drift_alerts	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_drift_alerts_package_id_c2c_submission_packages" on table "submission_twin_drift_alerts"
+submission_twin_evidence_links	ERR 23503 update or delete on table "c2c_submission_packages" violates foreign key constraint "submission_twin_claims_package_id_c2c_submission_packages_id_fk" on table "submission_twin_claims"
+supply_chain_batches	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_batches_client_workspace_id_client_workspaces_id_f" on table "supply_chain_batches"
+supply_chain_coas	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_batches_client_workspace_id_client_workspaces_id_f" on table "supply_chain_batches"
+supply_chain_materials	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_materials_client_workspace_id_client_workspaces_id" on table "supply_chain_materials"
+supply_chain_shipments	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_shipments_client_workspace_id_client_workspaces_id" on table "supply_chain_shipments"
+supply_chain_suppliers	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_suppliers_client_workspace_id_client_workspaces_id" on table "supply_chain_suppliers"
+supply_chain_temperature_readings	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "supply_chain_shipments_client_workspace_id_client_workspaces_id" on table "supply_chain_shipments"
+sync_status	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "sync_status_client_workspace_id_client_workspaces_id_fk" on table "sync_status"
+template_usage	ERR 23503 update or delete on table "projects" violates foreign key constraint "template_usage_project_id_projects_id_fk" on table "template_usage"
+unified_tasks	ERR 23503 update or delete on table "projects" violates foreign key constraint "unified_tasks_project_id_projects_id_fk" on table "unified_tasks"
+vault_data_room_seals	OK  purged
+workflow_progress	ERR 23503 update or delete on table "client_workspaces" violates foreign key constraint "workflow_progress_client_workspace_id_client_workspaces_id_fk" on table "workflow_progress"
+
+## §4 The final new tests, with tenant-offboarding.ts and tenant-full-export.service.ts at HEAD eeaf0ac39. 2026-10-29T12:13:11Z
+### tests/db/tenant-purge-blocking-keys.dbtest.ts
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] 99 tables seeded for each of A and B (214 rows with their parents); 1 held tables for C
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+   → expected [ …(2) ] to deeply equal []
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+   → update or delete on table "projects" violates foreign key constraint "account_canon_resolution_log_project_id_projects_id_fk" on table "account_canon_resolution_log"
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+   → A's rows the purge left: expected [ 'client_workspaces', …(20) ] to deeply equal []
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+   → update or delete on table "projects" violates foreign key constraint "unified_tasks_project_id_projects_id_fk" on table "unified_tasks"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)
+
+### server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts
+ ✓ server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > the creating files give those records that key
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > is purged: every one of them goes, and the other tenant keeps all of its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "udi_records_program_id_fkey" on table "udi_records"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > the list names each before the project, and the IVDR module tables before their classification
+   → udi_records: expected -1 to be greater than -1
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a udi_records row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "udi_records_program_id_fkey" on table "udi_records"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a software_lifecycle_items row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "software_lifecycle_items_program_id_fkey" on table "software_lifecycle_items"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivd_analytical_performance row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivd_analytical_performance_program_id_fkey" on table "ivd_analytical_performance"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivd_clinical_performance row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivd_clinical_performance_program_id_fkey" on table "ivd_clinical_performance"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivd_clia_categorization row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivd_clia_categorization_program_id_fkey" on table "ivd_clia_categorization"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivdr_per_documents row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivdr_per_documents_program_id_fkey" on table "ivdr_per_documents"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a cdx_pairings row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "cdx_pairings_device_program_id_fkey" on table "cdx_pairings"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a cdx_concordance_studies row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "cdx_pairings_device_program_id_fkey" on table "cdx_pairings"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivdr_classifications row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivdr_classifications_program_id_fkey" on table "ivdr_classifications"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivdr_analytical_validations row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivdr_classifications_program_id_fkey" on table "ivdr_classifications"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivdr_clinical_evidence row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivdr_classifications_program_id_fkey" on table "ivdr_classifications"
+ × server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding only a ivdr_cdx_workflows row, is purged, and the other tenant keeps its own
+   → update or delete on table "regulatory_programs" violates foreign key constraint "ivdr_classifications_program_id_fkey" on table "ivdr_classifications"
+ ✓ server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts > a tenant whose device and IVD records name its project with no delete action > holding a Part 11 change history of a validation, is not purged: 23503, rolled back, nothing erased
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  14 failed | 2 passed (16)
+
+### server/services/tenant/__tests__/tenant-purge-referrers.test.ts
+TypeError: Cannot convert undefined or null to object
+ Test Files  1 failed (1)
+      Tests  no tests
+
+### tests/schema-contract/tenant-export-covers-purge.contract.test.ts
+      Tests  11 passed (11)

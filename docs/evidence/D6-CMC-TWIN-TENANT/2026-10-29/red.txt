@@ -1,0 +1,362 @@
+# RED at head (eeaf0ac39): server/routes/c2c/program-twin.ts as committed (git show HEAD:...), the new test file in place
+# npx vitest run server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > projects and project_tasks are RLS-enabled, FORCEd and policied by the set, and the runtime role is not exempt 33ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > the database layer this route sits on, as deployed > is the layer that decides at head: on, org A cannot see org B’s project; off, it can (the negative control) 31ms
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/cmc answers 404 and supplies none of its CMC data 57ms
+   → HTTP 200: expected '{"success":true,"data":{"drugSubstanc…' not to contain 'Org B confidential'
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > PUT …/cmc answers 404 and leaves its record exactly as it was 44ms
+   → HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal { cmcDrugSubstance: { …(1) }, …(1) }
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/context answers 404 and names none of its tasks 36ms
+   → HTTP 200: expected '{"success":true,"data":{"project":{"i…' not to contain 'Org B confidential'
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/program-twin answers 404 33ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/change-impact answers 404 33ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/transform-context answers 404 29ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/artifacts/art_1/verification answers 404 29ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/cmc answers 404 and supplies none of its CMC data 33ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > PUT …/cmc answers 404 and leaves its record exactly as it was 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/context answers 404 and names none of its tasks 29ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/program-twin answers 404 30ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/change-impact answers 404 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/transform-context answers 404 31ms
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=on > GET …/artifacts/art_1/verification answers 404 32ms
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot read its CMC data or context 30ms
+   → HTTP 200: expected '{"success":true,"data":{"drugSubstanc…' not to contain 'A private API'
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot write its CMC data 34ms
+   → HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal { cmcDrugSubstance: { …(1) } }
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer can read the CMC data and cannot write it 38ms
+   → HTTP 200: expected { cmcDrugProduct: { …(1) }, …(5) } to deeply equal { Object (cmcDrugProduct) }
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member without edit permission on the project cannot write it 34ms
+   → HTTP 200: expected { cmcDrugProduct: { …(1) }, …(5) } to deeply equal { Object (cmcDrugProduct) }
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project takes no CMC write 31ms
+   → HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal {}
+ ✓ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > the project’s owner reads, writes and reads back its CMC data and context 50ms
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the membership read fails, GET and PUT answer 503 and nothing is supplied or written 29ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the project read fails, GET and PUT answer 503 and nothing is supplied or written 30ms
+   → expected 500 to be 503 // Object.is equality
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/cmc (projects) 27ms
+   → select "id", "organization_id", "client_workspace_id", "parent_project_id", "depth", "path", "name", "code", "description", "status", "priority", "type", "start_date", "target_end_date", "actual_end_date", "progress", "budget", "budget_currency", "budget_status", "created_by_id", "owner_id", "sponsors", "tags", "therapeutic_area", "critical_to_quality_factors", "risk_level", "risk_assessment", "quality_targets", "module_references", "settings", "metadata", "retrieval_mode", "knowledge_token_estimate", "regulatory_program_id", "created_at", "updated_at" from "projects" where "projects"."id" = $1 limit $2: expected 'select "id", "organization_id", "clie…' to match /"?organization_id"?\s*=/
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > PUT …/cmc (projects) 31ms
+   → select "id", "organization_id", "client_workspace_id", "parent_project_id", "depth", "path", "name", "code", "description", "status", "priority", "type", "start_date", "target_end_date", "actual_end_date", "progress", "budget", "budget_currency", "budget_status", "created_by_id", "owner_id", "sponsors", "tags", "therapeutic_area", "critical_to_quality_factors", "risk_level", "risk_assessment", "quality_targets", "module_references", "settings", "metadata", "retrieval_mode", "knowledge_token_estimate", "regulatory_program_id", "created_at", "updated_at" from "projects" where "projects"."id" = $1 limit $2: expected 'select "id", "organization_id", "clie…' to match /"?organization_id"?\s*=/
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks) 30ms
+   → select "id", "organization_id", "client_workspace_id", "parent_project_id", "depth", "path", "name", "code", "description", "status", "priority", "type", "start_date", "target_end_date", "actual_end_date", "progress", "budget", "budget_currency", "budget_status", "created_by_id", "owner_id", "sponsors", "tags", "therapeutic_area", "critical_to_quality_factors", "risk_level", "risk_assessment", "quality_targets", "module_references", "settings", "metadata", "retrieval_mode", "knowledge_token_estimate", "regulatory_program_id", "created_at", "updated_at" from "projects" where "projects"."id" = $1 limit $2: expected 'select "id", "organization_id", "clie…' to match /"?organization_id"?\s*=/
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/program-twin (concept2cure_signatures|concept2cure_review_comments) 45ms
+   → select "id", "signature_id", "artifact_id", "artifact_version_id", "organization_id", "signature_type", "signature_purpose", "signature_meaning", "signer_id", "signer_name", "signer_email", "signer_role", "authentication_method", "authentication_timestamp", "second_factor_verified", "signature_hash", "signature_manifest", "ip_address", "device_info", "status", "signed_at", "created_at", "updated_at" from "concept2cure_signatures" where "concept2cure_signatures"."artifact_id" in ($1): expected 'select "id", "signature_id", "artifac…' to match /"?organization_id"?\s*=/
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/verification (concept2cure_signatures|concept2cure_review_comments) 38ms
+   → select "id", "signature_id", "artifact_id", "artifact_version_id", "organization_id", "signature_type", "signature_purpose", "signature_meaning", "signer_id", "signer_name", "signer_email", "signer_role", "authentication_method", "authentication_timestamp", "second_factor_verified", "signature_hash", "signature_manifest", "ip_address", "device_info", "status", "signed_at", "created_at", "updated_at" from "concept2cure_signatures" where "concept2cure_signatures"."artifact_id" = $1: expected 'select "id", "signature_id", "artifac…' to match /"?organization_id"?\s*=/
+ × server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > a task row keyed to this project id under another organization is not in its context 32ms
+   → expected '{"success":true,"data":{"project":{"i…' not to contain 'Org B confidential'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/cmc answers 404 and supplies none of its CMC data
+AssertionError: HTTP 200: expected '{"success":true,"data":{"drugSubstanc…' not to contain 'Org B confidential'
+
+Expected: "Org B confidential"
+Received: "{"success":true,"data":{"drugSubstance":{"substanceName":"Org B confidential API"},"drugProduct":null,"specifications":[],"stabilityStudies":[],"impurities":[],"lastUpdated":"2026-10-01T00:00:00.000Z"}}"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:272:64
+    270|     const res = await getAs(A_OWNER, B_PROJECT, 'cmc');
+    271|     // The body first, so a failure shows what was supplied.
+    272|     expect(JSON.stringify(res.body), `HTTP ${res.status}`).not.toConta…
+       |                                                                ^
+    273|     expect(res.status).toBe(404);
+    274|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > PUT …/cmc answers 404 and leaves its record exactly as it was
+AssertionError: HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal { cmcDrugSubstance: { …(1) }, …(1) }
+
+- Expected
++ Received
+
+  {
+    "cmcDrugSubstance": {
+-     "substanceName": "Org B confidential API",
++     "substanceName": "written by org A",
+    },
+-   "cmcLastUpdated": "2026-10-01T00:00:00.000Z",
++   "cmcImpurities": [],
++   "cmcLastUpdated": "2026-10-29T12:12:09.757Z",
++   "cmcSpecifications": [],
++   "cmcStabilityStudies": [],
+  }
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:279:63
+    277|     const res = await putCmcAs(A_OWNER, B_PROJECT);
+    278|     // The record first, so a failure shows what was written.
+    279|     expect(await metadataOf(B_PROJECT), `HTTP ${res.status}`).toEqual(…
+       |                                                               ^
+    280|     expect(res.status).toBe(404);
+    281|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > another organization’s project, RLS_ENFORCE=off > GET …/context answers 404 and names none of its tasks
+AssertionError: HTTP 200: expected '{"success":true,"data":{"project":{"i…' not to contain 'Org B confidential'
+
+Expected: "Org B confidential"
+Received: "{"success":true,"data":{"project":{"id":501,"name":"Org B confidential program","description":null,"type":"regulatory","status":"active","priority":"medium","progress":0,"startDate":null,"targetEndDate":null,"riskLevel":"medium","tags":null},"tasks":{"summary":{"total":1,"completed":0,"inProgress":0,"blocked":0,"overdue":0},"recent":[{"id":1,"name":"Org B confidential task","status":"todo","priority":"medium","dueDate":null}]},"cmc":{"drugSubstance":{"substanceName":"Org B confidential API"},"drugProduct":null,"hasSpecifications":false,"hasStabilityStudies":false,"hasImpurities":false},"knowledge":{"customInstructions":null,"documentCount":0}}}"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:285:64
+    283|   it('GET …/context answers 404 and names none of its tasks', async ()…
+    284|     const res = await getAs(A_OWNER, B_PROJECT, 'context');
+    285|     expect(JSON.stringify(res.body), `HTTP ${res.status}`).not.toConta…
+       |                                                                ^
+    286|     expect(res.status).toBe(404);
+    287|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot read its CMC data or context
+AssertionError: HTTP 200: expected '{"success":true,"data":{"drugSubstanc…' not to contain 'A private API'
+
+Expected: "A private API"
+Received: "{"success":true,"data":{"drugSubstance":{"substanceName":"A private API"},"drugProduct":null,"specifications":[],"stabilityStudies":[],"impurities":[],"lastUpdated":null}}"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:300:64
+    298|   it('a member who is not on a private project cannot read its CMC dat…
+    299|     const cmc = await getAs(A_COLLEAGUE, A_PRIVATE, 'cmc');
+    300|     expect(JSON.stringify(cmc.body), `HTTP ${cmc.status}`).not.toConta…
+       |                                                                ^
+    301|     expect(cmc.status).toBe(404);
+    302|     expect(cmc.body.error?.code).toBe('PROJECT_NOT_FOUND');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member who is not on a private project cannot write its CMC data
+AssertionError: HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal { cmcDrugSubstance: { …(1) } }
+
+- Expected
++ Received
+
+  {
+    "cmcDrugSubstance": {
+-     "substanceName": "A private API",
++     "substanceName": "written by org A",
+    },
++   "cmcImpurities": [],
++   "cmcLastUpdated": "2026-10-29T12:12:10.201Z",
++   "cmcSpecifications": [],
++   "cmcStabilityStudies": [],
+  }
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:311:63
+    309|     const before = await metadataOf(A_PRIVATE);
+    310|     const res = await putCmcAs(A_COLLEAGUE, A_PRIVATE);
+    311|     expect(await metadataOf(A_PRIVATE), `HTTP ${res.status}`).toEqual(…
+       |                                                               ^
+    312|     expect(res.status).toBe(404);
+    313|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a viewer can read the CMC data and cannot write it
+AssertionError: HTTP 200: expected { cmcDrugProduct: { …(1) }, …(5) } to deeply equal { Object (cmcDrugProduct) }
+
+- Expected
++ Received
+
+  {
+    "cmcDrugProduct": {
+      "productName": "A tablet",
+    },
++   "cmcDrugSubstance": {
++     "substanceName": "written by org A",
++   },
++   "cmcImpurities": [],
++   "cmcLastUpdated": "2026-10-29T12:12:10.241Z",
++   "cmcSpecifications": [],
++   "cmcStabilityStudies": [],
+  }
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:321:65
+    319|     const before = await metadataOf(A_PROJECT);
+    320|     const write = await putCmcAs(A_VIEWER, A_PROJECT);
+    321|     expect(await metadataOf(A_PROJECT), `HTTP ${write.status}`).toEqua…
+       |                                                                 ^
+    322|     expect(write.status).toBe(403);
+    323|     expect(write.body.error?.code).toBe('PROJECT_WRITE_PERMISSION_DENI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > a member without edit permission on the project cannot write it
+AssertionError: HTTP 200: expected { cmcDrugProduct: { …(1) }, …(5) } to deeply equal { Object (cmcDrugProduct) }
+
+- Expected
++ Received
+
+  {
+    "cmcDrugProduct": {
+      "productName": "A tablet",
+    },
++   "cmcDrugSubstance": {
++     "substanceName": "written by org A",
++   },
++   "cmcImpurities": [],
++   "cmcLastUpdated": "2026-10-29T12:12:10.275Z",
++   "cmcSpecifications": [],
++   "cmcStabilityStudies": [],
+  }
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:329:63
+    327|     const before = await metadataOf(A_PROJECT);
+    328|     const res = await putCmcAs(A_COLLEAGUE, A_PROJECT);
+    329|     expect(await metadataOf(A_PROJECT), `HTTP ${res.status}`).toEqual(…
+       |                                                               ^
+    330|     expect(res.status).toBe(403);
+    331|     expect(res.body.error?.code).toBe('PROJECT_WRITE_PERMISSION_DENIED…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > inside the organization, where RLS cannot decide (RLS_ENFORCE=on) > an archived project takes no CMC write
+AssertionError: HTTP 200: expected { cmcDrugSubstance: { …(1) }, …(4) } to deeply equal {}
+
+- Expected
++ Received
+
+- {}
++ {
++   "cmcDrugSubstance": {
++     "substanceName": "written by org A",
++   },
++   "cmcImpurities": [],
++   "cmcLastUpdated": "2026-10-29T12:12:10.307Z",
++   "cmcSpecifications": [],
++   "cmcStabilityStudies": [],
++ }
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:336:64
+    334|   it('an archived project takes no CMC write', async () => {
+    335|     const res = await putCmcAs(A_OWNER, A_ARCHIVED);
+    336|     expect(await metadataOf(A_ARCHIVED), `HTTP ${res.status}`).toEqual…
+       |                                                                ^
+    337|     expect(res.status).toBe(409);
+    338|     expect(res.body.error?.code).toBe('PROJECT_ARCHIVED');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the membership read fails, GET and PUT answer 503 and nothing is supplied or written
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:363:25
+    361|     h.state.failOn = { pattern, code };
+    362|     const read = await getAs(A_OWNER, A_PROJECT, 'cmc');
+    363|     expect(read.status).toBe(503);
+       |                         ^
+    364|     expect(read.body.error?.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
+    365|     expect(read.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > a check that could not run is not an answer > when the project read fails, GET and PUT answer 503 and nothing is supplied or written
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:363:25
+    361|     h.state.failOn = { pattern, code };
+    362|     const read = await getAs(A_OWNER, A_PROJECT, 'cmc');
+    363|     expect(read.status).toBe(503);
+       |                         ^
+    364|     expect(read.body.error?.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
+    365|     expect(read.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/cmc (projects)
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > PUT …/cmc (projects)
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/context (projects|project_tasks)
+AssertionError: select "id", "organization_id", "client_workspace_id", "parent_project_id", "depth", "path", "name", "code", "description", "status", "priority", "type", "start_date", "target_end_date", "actual_end_date", "progress", "budget", "budget_currency", "budget_status", "created_by_id", "owner_id", "sponsors", "tags", "therapeutic_area", "critical_to_quality_factors", "risk_level", "risk_assessment", "quality_targets", "module_references", "settings", "metadata", "retrieval_mode", "knowledge_token_estimate", "regulatory_program_id", "created_at", "updated_at" from "projects" where "projects"."id" = $1 limit $2: expected 'select "id", "organization_id", "clie…' to match /"?organization_id"?\s*=/
+
+- Expected:
+/"?organization_id"?\s*=/
+
++ Received:
+"select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where \"projects\".\"id\" = $1 limit $2"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:393:70
+    391|     // Every named table is read, so an empty list cannot pass for a s…
+    392|     for (const table of tables.split('|')) expect(on(table).length, ta…
+    393|     for (const statement of statements) expect(statement, statement).t…
+       |                                                                      ^
+    394|   });
+    395|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/program-twin (concept2cure_signatures|concept2cure_review_comments)
+AssertionError: select "id", "signature_id", "artifact_id", "artifact_version_id", "organization_id", "signature_type", "signature_purpose", "signature_meaning", "signer_id", "signer_name", "signer_email", "signer_role", "authentication_method", "authentication_timestamp", "second_factor_verified", "signature_hash", "signature_manifest", "ip_address", "device_info", "status", "signed_at", "created_at", "updated_at" from "concept2cure_signatures" where "concept2cure_signatures"."artifact_id" in ($1): expected 'select "id", "signature_id", "artifac…' to match /"?organization_id"?\s*=/
+
+- Expected:
+/"?organization_id"?\s*=/
+
++ Received:
+"select \"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\" from \"concept2cure_signatures\" where \"concept2cure_signatures\".\"artifact_id\" in ($1)"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:393:70
+    391|     // Every named table is read, so an empty list cannot pass for a s…
+    392|     for (const table of tables.split('|')) expect(on(table).length, ta…
+    393|     for (const statement of statements) expect(statement, statement).t…
+       |                                                                      ^
+    394|   });
+    395|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > GET …/verification (concept2cure_signatures|concept2cure_review_comments)
+AssertionError: select "id", "signature_id", "artifact_id", "artifact_version_id", "organization_id", "signature_type", "signature_purpose", "signature_meaning", "signer_id", "signer_name", "signer_email", "signer_role", "authentication_method", "authentication_timestamp", "second_factor_verified", "signature_hash", "signature_manifest", "ip_address", "device_info", "status", "signed_at", "created_at", "updated_at" from "concept2cure_signatures" where "concept2cure_signatures"."artifact_id" = $1: expected 'select "id", "signature_id", "artifac…' to match /"?organization_id"?\s*=/
+
+- Expected:
+/"?organization_id"?\s*=/
+
++ Received:
+"select \"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\" from \"concept2cure_signatures\" where \"concept2cure_signatures\".\"artifact_id\" = $1"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:393:70
+    391|     // Every named table is read, so an empty list cannot pass for a s…
+    392|     for (const table of tables.split('|')) expect(on(table).length, ta…
+    393|     for (const statement of statements) expect(statement, statement).t…
+       |                                                                      ^
+    394|   });
+    395|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts > every statement on a tenant table these routes read carries the organization predicate > a task row keyed to this project id under another organization is not in its context
+AssertionError: expected '{"success":true,"data":{"project":{"i…' not to contain 'Org B confidential'
+
+Expected: "Org B confidential"
+Received: "{"success":true,"data":{"project":{"id":401,"name":"A program","description":null,"type":"regulatory","status":"active","priority":"medium","progress":0,"startDate":null,"targetEndDate":null,"riskLevel":"medium","tags":null},"tasks":{"summary":{"total":2,"completed":0,"inProgress":0,"blocked":0,"overdue":0},"recent":[{"id":4,"name":"Org B confidential mis-keyed task","status":"todo","priority":"medium","dueDate":null},{"id":2,"name":"A task","status":"todo","priority":"medium","dueDate":null}]},"cmc":{"drugSubstance":null,"drugProduct":{"productName":"A tablet"},"hasSpecifications":false,"hasStabilityStudies":false,"hasImpurities":false},"knowledge":{"customInstructions":null,"documentCount":0}}}"
+
+ ❯ server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts:402:42
+    400|     const res = await getAs(A_OWNER, A_PROJECT, 'context');
+    401|     expect(res.status).toBe(200);
+    402|     expect(JSON.stringify(res.body)).not.toContain(B_SECRET);
+       |                                          ^
+    403|   });
+    404| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 14 passed (30)
+   Start at  12:12:05
+   Duration  5.63s (transform 921ms, setup 71ms, import 2.19s, tests 3.16s, environment 0ms)
+

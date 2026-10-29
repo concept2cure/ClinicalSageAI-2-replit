@@ -1,0 +1,57 @@
+// Per-table purge outcome: for each table that names a purged row with no delete
+// action, a fresh tenant holding one row of it (and its parents), then the real
+// purge as the route runs it. Prints one line per table: OK, or the error.
+import pgmod from '<repo>/node_modules/pg/lib/index.js';
+const { Pool } = pgmod;
+const R = '<repo>';
+const { TenantRowSeeder, qualified, removeSeeded } = await import(`${R}/tests/db/tenant-purge-row-seeder.ts`);
+const offboarding = await import(`${R}/server/services/tenant/tenant-offboarding.ts`);
+const { pool: runtime } = await import(`${R}/server/db.ts`);
+const { runWithSystemTenantScope } = await import(`${R}/server/db/tenantStore.ts`);
+
+const owner = new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
+const TAG = `pbr_${Date.now().toString(36)}`;
+const listed = [...new Set([...offboarding.PURGE_CHILD_TABLES, ...Object.keys(offboarding.PURGE_PARENT_SCOPED)])].map(qualified);
+const PURGED_SQL = `WITH RECURSIVE purged(oid) AS (
+  SELECT to_regclass(t)::oid FROM unnest($1::text[]) t WHERE to_regclass(t) IS NOT NULL
+  UNION SELECT con.conrelid FROM purged JOIN pg_constraint con ON con.confrelid = purged.oid AND con.contype = 'f' AND con.confdeltype = 'c')
+SELECT n.nspname || '.' || c.relname AS t FROM purged JOIN pg_class c ON c.oid = purged.oid JOIN pg_namespace n ON n.oid = c.relnamespace`;
+const REFERRERS_SQL = `SELECT DISTINCT cn.nspname || '.' || c.relname AS t FROM pg_constraint con
+  JOIN pg_class c ON c.oid = con.conrelid JOIN pg_namespace cn ON cn.oid = c.relnamespace
+  JOIN pg_class p ON p.oid = con.confrelid JOIN pg_namespace pn ON pn.oid = p.relnamespace
+ WHERE con.contype = 'f' AND con.conrelid <> con.confrelid AND pn.nspname || '.' || p.relname = ANY ($1::text[])
+   AND (con.confdeltype IN ('a','r') OR (con.confdeltype IN ('n','d') AND EXISTS (SELECT 1 FROM unnest(COALESCE(con.confdelsetcols, con.conkey)) k(n)
+        JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.n WHERE a.attnotnull))) ORDER BY 1`;
+const purged = new Set((await owner.query(PURGED_SQL, [listed])).rows.map((r: { t: string }) => r.t));
+const only = (process.env.ONLY ?? '').split(',').filter(Boolean).map(qualified);
+const tables: string[] = only.length ? only : (await owner.query(REFERRERS_SQL, [[...purged]])).rows.map((r: { t: string }) => r.t);
+let org = 91000;
+const reference = new Map();
+for (const t of tables) {
+  org++;
+  await owner.query(`INSERT INTO organizations (id, name, slug, status) VALUES ($1, $2, $2, 'active')`, [org, `${TAG}-${org}`]);
+  const user = Number((await owner.query(`INSERT INTO users (email, name, password_hash, default_organization_id) VALUES ($1,'x','x',$2) RETURNING id`, [`${TAG}-${org}@example.invalid`, org])).rows[0].id);
+  const seeder = new TenantRowSeeder({ db: owner, organizationId: org, userId: user, exercised: purged, reference, tag: TAG });
+  let line: string;
+  try {
+    await seeder.seed(t);
+    await owner.query(`UPDATE organizations SET status='pending_deletion', deletion_requested_at=now()-interval '40 days', purge_eligible_at=now()-interval '1 day' WHERE id=$1`, [org]);
+    await owner.query(`INSERT INTO tenant_export_receipts (organization_id, digest, table_count, row_count, created_by) VALUES ($1,$2,1,1,NULL)`, [org, `${TAG}-${org}`]);
+    const r = await runWithSystemTenantScope('per-blocker', () => offboarding.purgeTenant(runtime, { organizationId: org, purgedByUserId: user, preconditions: { finalExportDigest: `${TAG}-${org}` } }))
+      .then(() => 'OK  purged', (e: { code?: string; message?: string }) => `ERR ${e.code ?? '-'} ${String(e.message).slice(0, 200)}`);
+    line = r;
+  } catch (e) {
+    line = `SEED-FAIL ${(e as Error).message.slice(0, 160)}`;
+  }
+  console.log(`${t.replace(/^public\./, '')}\t${line}`);
+  await removeSeeded(owner, seeder.rows);
+  const c = await owner.connect();
+  await c.query("SET session_replication_role='replica'");
+  for (const q of ['DELETE FROM audit_logs WHERE tenant_id=$1', 'DELETE FROM tenant_export_receipts WHERE organization_id=$1', 'DELETE FROM organization_users WHERE organization_id=$1', 'DELETE FROM organizations WHERE id=$1']) await c.query(q, [org]).catch(() => undefined);
+  await c.query('DELETE FROM users WHERE id=$1', [user]).catch(() => undefined);
+  await c.query("SET session_replication_role='origin'");
+  c.release();
+}
+await owner.end();
+await runtime.end?.();
+process.exit(0);

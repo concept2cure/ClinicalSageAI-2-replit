@@ -1,0 +1,16 @@
+ESLint (npx eslint --no-ignore <file>), warnings per changed file at HEAD and now (the pre-push gate measures net warnings over the changed files).
+
+scripts/ci/check-purge-coverage.mjs head=10 now: 11 warnings, 0 errors
+scripts/ci/check-purge-coverage.selftest.mjs head=6 now: 6 warnings, 0 errors
+server/services/tenant/tenant-offboarding.ts head=1 now: 1 warnings, 0 errors
+server/services/tenant-export/tenant-full-export.service.ts head=0 now: 0 warnings, 0 errors
+tests/schema-contract/tenant-export-covers-purge.contract.test.ts head=0 now: 0 warnings, 0 errors
+scripts/ci/lib/purge-order.mjs head=new now: 0 warnings, 0 errors
+server/services/tenant/purge-referrers.ts head=new now: 0 warnings, 0 errors
+server/services/tenant/purge-parent-scope.ts head=new now: 0 warnings, 0 errors
+tests/db/tenant-purge-row-seeder.ts head=new now: 0 warnings, 0 errors
+tests/db/tenant-purge-blocking-keys.dbtest.ts head=new now: 0 warnings, 0 errors
+server/services/tenant/__tests__/tenant-purge-raw-program-keys.pglite.test.ts head=new now: 0 warnings, 0 errors
+(check-purge-coverage.mjs: 11 → 10 after its new success line used console.info; re-counted below.)
+scripts/ci/check-purge-coverage.mjs now: 10 warnings, 0 errors
+server/services/tenant/__tests__/tenant-purge-referrers.test.ts (new): 0 warnings, 0 errors
