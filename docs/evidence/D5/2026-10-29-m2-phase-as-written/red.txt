@@ -1,0 +1,10 @@
+# m2-phase-as-written.test.ts with m2-summary-builders.ts at HEAD (stashed)
+ ✓ server/services/__tests__/m2-phase-as-written.test.ts > shared/clinical-phase > names each phase in the order written
+ ✓ server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a study recorded as "3" is a pivotal study
+ × server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a study recorded as "Phase 3" is a pivotal study
+ × server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a study recorded as "III" is a pivotal study
+ × server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a study recorded as "Phase IIIb" is a pivotal study
+ ✓ server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a Phase 2/3 study is read as it always was here: controlled, not pivotal
+ × server/services/__tests__/m2-phase-as-written.test.ts > Module 2 reads the phase as written > a study recorded as "Phase 1" is clinical pharmacology, and no label reads "Phase Phase"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 3 passed (7)

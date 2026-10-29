@@ -1,0 +1,4 @@
+# With the two Module 2 suites beside it, after
+ Test Files  3 passed (3)
+      Tests  47 passed (47)
+# The CMC program-stage suites, on the shared parser: 28/28
