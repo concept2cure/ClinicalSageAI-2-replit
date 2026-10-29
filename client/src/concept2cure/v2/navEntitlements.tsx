@@ -20,7 +20,8 @@
  *      route gating, which is unaffected either way.
  *   2. AN UNKNOWN ID IS NOT LICENSABLE. The payload carries one verdict per
  *      catalog module. Destinations with no catalog row — AnA Command, the Apps
- *      catalog, and deliberately `audit-trail` / `part11-console`, which under
+ *      catalog, and deliberately `audit-trail` (which the Part 11 console folded
+ *      into on 2026-10-29), which under
  *      21 CFR §11.10(e) may not be something an org can be sold or an admin can
  *      switch off — are absent, and absent means unconditionally available.
  *      That is load-bearing in the other direction too: Subscription & features and

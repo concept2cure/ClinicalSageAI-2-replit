@@ -205,11 +205,13 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'dispatch-readiness' },
       },
       {
-        say: 'The Part 11 console shows how compliance is evidenced: the signer mode in force, the signature manifestations, and the audit-chain verifier — the record a reviewer will ask for.',
-        navigate: { target: 'part11-console' },
-      },
-      {
-        say: 'And the audit trail itself: the freeze and the dispatch will appear here under the person’s signature — the two acts that stay theirs. Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
+        /* One stop since 2026-10-29: the Part 11 console folded into the audit
+           trail, whose banner states both audit chains' verdicts (D2,
+           docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). The
+           console's line also named signer modes and signature manifestations,
+           which it had stopped showing on 2026-10-17; the stop says only what
+           the screen shows. */
+        say: 'And the audit trail itself, the record a reviewer will ask for: both audit hash chains verified on the server, and the freeze and the dispatch will appear here under the person’s signature — the two acts that stay theirs. Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
         navigate: { target: 'audit-trail' },
       },
     ],

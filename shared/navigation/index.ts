@@ -97,7 +97,10 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // demonstration can end where a regulator would start: at the record of
   // every governed act. Read-only screens; nothing here signs or changes.
   { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
-  { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
+  /* The Part 11 console folded into the audit trail (D2, 2026-10-29): this
+     handle is kept so an old conversation's move still lands, and
+     DEEP_LINK_ALIASES takes it to audit-trail. */
+  { id: 'part11-console', label: 'Part 11 console', description: 'The audit trail, whose banner states both audit hash chains\' verdicts as the server re-computes them (the Part 11 console folded into it).', scope: 'global', group: 'global' },
   // Reporting & analytics, a launch app since 2026-09-30 (founder decision of 2026-09-26).
   { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the project records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
   { id: 'compliance-reports', label: 'Audit & compliance reports', description: 'Reports an auditor or inspector asks for — user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, controlled documents — each sealed and recorded on the audit trail when run.', scope: 'global', group: 'global' },
