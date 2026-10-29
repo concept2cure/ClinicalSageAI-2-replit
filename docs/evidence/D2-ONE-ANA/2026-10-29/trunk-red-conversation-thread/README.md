@@ -156,3 +156,7 @@ vi.mock('@/services/portal/authService', async original => ({
   `conversationRailTwins`, `anaInterruptedHosts`, `anaMessageWarnings`, `conversationProjectMismatch`, `anaRunControl`,
   `anaSkillsInUse`.
 - **The `act(...)` warnings** above.
+
+## After the merge with trunk
+
+`7d6f376e` (DT3, another lane, pushed first) mocked the session in `conversationThreadAdminFollow.test.tsx` itself. The merge kept both mocks of `@/services/portal/authService`, so the mock this change added there is removed. AdminFollow passes 8/8 on DT3's mock. The other five suites keep this change's mock.
