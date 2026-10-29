@@ -1,5 +1,7 @@
 # D2 · Decisions owed to the founder — 2026-10-26
 
+**Decided 2026-10-29 under the founder's delegation: every row as recommended (P-55, `docs/LAUNCH_DEFINITION_OF_DONE.md`).**
+
 These are the decisions three read-only plans named as the founder's and not a session's. Each was written separately,
 and each is listed once here:
 - the CTD duplicates inventory (`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/inventory-plan.md`, FD-n);
