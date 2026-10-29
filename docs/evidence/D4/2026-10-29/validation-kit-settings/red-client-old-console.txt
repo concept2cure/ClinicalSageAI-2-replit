@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx > old AdminConsole, validation section > shows each document's own status verbatim, and says when a document records none 83ms
+   → expected 'AdminAdmin consoleDesignate personnel…' to contain 'DRAFT — UNSIGNED'
+ × client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx > old AdminConsole, validation section > shows a failed read as unread, never as an empty package 31ms
+   → expected 'AdminAdmin consoleDesignate personnel…' to contain 'could not be read'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx > old AdminConsole, validation section > shows each document's own status verbatim, and says when a document records none
+AssertionError: expected 'AdminAdmin consoleDesignate personnel…' to contain 'DRAFT — UNSIGNED'
+
+Expected: "DRAFT — UNSIGNED"
+Received: "AdminAdmin consoleDesignate personnel, manage SSO/SCIM, security policy, module entitlements and API keys — every governed action carries a reason and a 21 CFR Part 11 audit entry.Access & personnelOrganization profileSubscription & billingSSO & SCIMSecurity & IP allowlistModule subscriptionsAPI keysAudit trailCompliance & validationCompliance & validationwhat auditors and IT-QA ask forPart 11 audit trail — SIEM exportCursor-paginated NDJSON pull of this org's append-only audit trail for SOC/SIEM ingestion. LiveAudit chain integrityAppend-only entries with chain verification and signed exports. Live — audit-trail routesE-signatures (21 CFR §11.50 / §11.70)Password + TOTP verification; signature meaning recorded on every signing. LiveGAMP 5 validation package (IQ/OQ/PQ)Release-by-release validation documentation for your computer-system-validation file.VMPVMP-001DraftTMTM-001Available Self-serve — 2 documentsData residencySingle-region deployment today; committed regions are stated in your order form. Multi-region residency is on the roadmap — it will appear here when it ships, not before.Single region Every governed mutation carries a reason-for-change and lands in the audit trail. Any row marked "provided at contract" is not yet self-serve — tracked openly, never claimed early. Validation protocols download as drafts; executed and approved records are provided through QA at contract."
+
+ ❯ client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx:32:18
+     30|     await waitFor(() => expect(document.body.textContent).toContain('V…
+     31|     const text = document.body.textContent ?? '';
+     32|     expect(text).toContain('DRAFT — UNSIGNED');
+       |                  ^
+     33|     expect(text).toContain('No status recorded in the document');
+     34|     expect(text).not.toContain('Available');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx > old AdminConsole, validation section > shows a failed read as unread, never as an empty package
+AssertionError: expected 'AdminAdmin consoleDesignate personnel…' to contain 'could not be read'
+
+Expected: "could not be read"
+Received: "AdminAdmin consoleDesignate personnel, manage SSO/SCIM, security policy, module entitlements and API keys — every governed action carries a reason and a 21 CFR Part 11 audit entry.Access & personnelOrganization profileSubscription & billingSSO & SCIMSecurity & IP allowlistModule subscriptionsAPI keysAudit trailCompliance & validationCompliance & validationwhat auditors and IT-QA ask forPart 11 audit trail — SIEM exportCursor-paginated NDJSON pull of this org's append-only audit trail for SOC/SIEM ingestion. LiveAudit chain integrityAppend-only entries with chain verification and signed exports. Live — audit-trail routesE-signatures (21 CFR §11.50 / §11.70)Password + TOTP verification; signature meaning recorded on every signing. LiveGAMP 5 validation package (IQ/OQ/PQ)Release-by-release validation documentation for your computer-system-validation file.Provided at contract — not yet self-serveData residencySingle-region deployment today; committed regions are stated in your order form. Multi-region residency is on the roadmap — it will appear here when it ships, not before.Single region Every governed mutation carries a reason-for-change and lands in the audit trail. Any row marked "provided at contract" is not yet self-serve — tracked openly, never claimed early. Validation protocols download as drafts; executed and approved records are provided through QA at contract."
+
+ ❯ client/src/concept2cure/v2/__tests__/zz-p67-red-old-console.test.tsx:40:39
+     38|     open();
+     39|     await waitFor(() => expect(document.body.textContent).toMatch(/cou…
+     40|     expect(document.body.textContent).toContain('could not be read');
+       |                                       ^
+     41|     expect(document.body.textContent).not.toMatch(/provided at contrac…
+     42|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  20:13:07
+   Duration  1.78s (transform 732ms, setup 183ms, import 875ms, tests 119ms, environment 466ms)
+

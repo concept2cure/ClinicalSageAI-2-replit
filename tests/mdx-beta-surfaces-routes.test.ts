@@ -324,22 +324,24 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.meta.scopes.risks).toBe('program');
   });
 
-  it('derives DHF completion over required sections only', async () => {
+  /* P-60 (2026-10-29): the DHF panel reads the project's own document sections
+     (c2c_document_sections), so the figure is over their mandatory sections. */
+  it('derives DHF completion over mandatory sections only', async () => {
+    const section = (id: number, key: string, status: string, mandatory: boolean) => ({
+      id, section_key: key, label: `Section ${key}`, status, mandatory, version: 1, updated_at: null,
+      document_id: 'doc_1', document_title: 'Device 510(k)',
+    });
     queryFn
       .mockResolvedValueOnce({ rows: [{ id: PROGRAM_ID }] }) // tenancy
       .mockResolvedValueOnce({ rows: [] })                   // risks
       .mockResolvedValueOnce({ rows: [] })                   // trace
       .mockResolvedValueOnce({
-        rows: [
-          { id: 1, section_number: '01', section_title: 'Plan',   status: 'approved', is_required: true,  completion_percentage: 100, updated_at: null },
-          { id: 2, section_number: '02', section_title: 'Inputs', status: 'draft',    is_required: true,  completion_percentage: 40,  updated_at: null },
-          { id: 3, section_number: '03', section_title: 'Extra',  status: 'draft',    is_required: false, completion_percentage: 0,   updated_at: null },
-        ],
+        rows: [section(1, '01', 'approved', true), section(2, '02', 'drafted', true), section(3, '03', 'drafted', false)],
       })
       .mockResolvedValue({ rows: [] });
 
     const res = await request(makeApp()).get(`/api/mdx/engineering/${PROGRAM_ID}`);
-    /* 1 of 2 required approved; the optional row is excluded from both
+    /* 1 of 2 mandatory approved; the optional row is excluded from both
        numerator and denominator. */
     expect(res.body.data.summary.dhfCompletion).toBe(50);
   });

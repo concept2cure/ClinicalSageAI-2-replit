@@ -15,9 +15,8 @@
  *     reads through it; no column is added. The IEC 62304 rows it splices in
  *     were already read by project.
  *
- * DHF (cerv2_510k_sections) and change requests (change_requests) stay
- * reported as the organization's: see the route header for why each cannot be
- * narrowed honestly.
+ * DHF and change requests were narrowed under P-60 the same day: the project's
+ * document sections and its change controls (mdx-engineering-per-product.test.ts).
  *
  * The ownership answer and the route are real. The database double answers
  * each statement by its own filters, so a read that loses its project filter
@@ -212,11 +211,14 @@ describe('GET /api/mdx/engineering/:programId — refusal and scope report', () 
     expect(readsOf('concept2cure_artifacts')).toEqual([]);
   });
 
-  it('reports the DHF and change requests as the organization\'s, and every other panel as the project\'s', async () => {
+  /* P-60 (2026-10-29): the DHF and change requests are read for the project
+     too (mdx-engineering-per-product.test.ts), so every panel is the
+     project's. */
+  it("reports every panel as the project's", async () => {
     const res = await request(app()).get(`/api/mdx/engineering/${OWN}`);
     expect(res.body.meta.scopes).toEqual({
       risks: 'program', trace: 'program', issues: 'program', documents: 'program',
-      dhf: 'organization', ecrs: 'organization',
+      dhf: 'program', ecrs: 'program',
     });
   });
 });

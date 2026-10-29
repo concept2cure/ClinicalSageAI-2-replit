@@ -51,7 +51,7 @@ export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: Ass
   const cut = new Date(`${retained.source.dataCutDate}T00:00:00Z`);
   const stamp = source.lastGeneratedAt && source.lastGeneratedAt > cut ? source.lastGeneratedAt : cut;
   const result = await assembleCsr({
-    studyId: source.studyId, title: source.title, ctdSection: input.ctdSection, sections: source.sections, gaps: source.gaps.filter(g => !ASSEMBLED_HERE.test(g)),
+    studyId: source.studyId, title: source.title, nctNumber: source.nctNumber, ctdSection: input.ctdSection, sections: source.sections, gaps: source.gaps.filter(g => !ASSEMBLED_HERE.test(g)),
     tables: retained.tables, outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
     listingSource: { study: subjectLevel(retained.study), participants: input.participants, protocolDeviations: input.protocolDeviations, laboratory: input.laboratory },
   });

@@ -11,7 +11,7 @@
 import { createHash } from 'node:crypto';
 import type { AdamDataset, AdamRow } from './adam-dataset-reader.js';
 import { has, numeric, text, where, type AdamDatasets } from './adam-rows.js';
-import type { NarrativeCategory, SelectedEvent, SelectedSubject } from './narrative-subject-selection.js';
+import { ADSL_REASON_VARIABLES, type NarrativeCategory, type SelectedEvent, type SelectedSubject } from './narrative-subject-selection.js';
 
 export interface NarrativeFact { field: string; value: string | number; source: string }
 export interface EventFacts {
@@ -179,7 +179,8 @@ function subjectLevel(d: NarrativeDatasets, s: SelectedSubject, out: SubjectFact
     if (!has(d.ADSL, 'DTHDT') && !has(d.ADSL, 'DTHADY')) out.missing.push('deathDate (ADSL has no DTHDT or DTHADY)');
     if (!has(d.ADSL, 'DTHCAUS')) out.missing.push('deathCause (ADSL has no DTHCAUS)');
   }
-  if (s.discontinuedForAePerAdsl) out.discontinuationReason = r.text('discontinuationReason', 'DCSREAS', 'DCTREAS');
+  // DCDECOD, the CDISC standardized disposition term, is read when DCSREAS and DCTREAS are blank (CDISC pilot defect D8, 2026-10-30).
+  if (s.discontinuedForAePerAdsl) out.discontinuationReason = r.text('discontinuationReason', ...ADSL_REASON_VARIABLES);
   out.facts.push({ field: 'treatment', value: out.treatment, source: where(d.ADSL, s.adslIndex, has(d.ADSL, 'TRT01A') && text(s.adsl, 'TRT01A') ? 'TRT01A' : 'TRT01P') });
   out.facts.push(...r.facts); out.missing.push(...r.missing.filter(m => !['race', 'lastDoseDate'].includes(m)));
 }

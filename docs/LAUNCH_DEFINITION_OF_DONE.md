@@ -628,6 +628,11 @@ deletion record the working agreement requires:
    (`docs/evidence/D2-CMC-QUESTIONS-ONTO-INBOX/2026-10-19/`).
 2. **`c2c_commitments`** (`/api/c2c/commitments`), onto `regulatory_commitments`: an AI extraction with an
    ungoverned create.
+   *2026-10-29:* converged. The routes and the service had no client, no AnA tool and no MCP tool, and launch scope
+   refused them in production; they are deleted. The table is read-only, and its rows stay as history
+   (`migrations/20261029i_c2c_commitments_read_only.sql`). Recording a commitment and moving its status were already
+   governed on `regulatory_commitments`. The model extraction is not carried over (RULE 2; G3's no-model rule)
+   (`docs/evidence/D2-COMMITMENTS-CONVERGED/2026-10-29/`).
 3. **The `c2c_correspondence` family** (`/api/regulatory-correspondence`), onto the project inbox, keeping its issue
    parser and response clock as the inbox's.
 4. **`haq_session`**, **`lifecycle_obligations`** and the **`c2c_agency_meetings`** minutes, onto the inbox,
@@ -1158,6 +1163,15 @@ there (zero duplication). Why: a regulated customer must validate the system the
 Annex 11 §4), and a vendor validation package is what they ask for first. It must describe the deployed system
 truthfully, or it is worse than none.
 
+*Amended 2026-10-29, same day, on implementation:* "its contents" is the launch package and nothing else:
+VMP-001, the documents that name it as their parent (URS, RA, IQ, OQ, VSR) and TM-001, each with the version and
+status its own header records. The route listed every file in `docs/validation/`, so a customer was also handed
+the CORTEX series (a second validation master plan, for the AI engines VMP-001 §3 puts out of scope), an internal
+CI work order and a generated evidence pack. Those stay in the repository and are not offered as the customer's
+package. The route's note no longer promises "executed and approved records … through QA at contract", which
+nothing provides. One gap is the plan's own, and is its owner's to change: VMP-001 §5 lists URS-001…006 and
+OQ-001…006, while URS-007 and OQ-008 (CMC / Module 3) name VMP-001 as their parent and are offered.
+
 ### P-68 — One subscription entry, one rate-limit source
 
 A billing administrator's account menu has one entry, "Subscription & billing", opening Licensing
@@ -1176,6 +1190,26 @@ be a new enforcement capability (Rule 2), not a label.
 (38 of 283 on 2026-10-29, among them `/api/chat`, `/api/setup`, `/api/onboarding` and `/api/tenant-users`). A gate
 that fails on such a prefix comes first; enforcement follows when it is green. Why: turning enforcement on today
 would lock every customer out of AnA's own conversations.
+
+### P-70 — No session setting lifts row-level security
+
+`app.bypass_rls` is a custom setting any session can set, and it lifts every Vault policy (found 2026-10-29,
+`docs/evidence/D6-ISOLATION-HARDENING/2026-10-29/`). The runtime role must not be able to switch tenant isolation off
+from inside its own connection. Every policy that reads it converges on the platform scope the reviewed purge doors
+already require (a role the runtime role cannot assume), and the settings readers that remain are deleted. A
+code path that genuinely needs to read across tenants does it through a reviewed SECURITY DEFINER door or a role
+granted only to that path, with its reason on the definer allowlist. Why: P-59's reasoning, at the scale of the whole
+Vault: a control any session can switch off is not a control, and a regulated customer's isolation cannot rest on
+every line of server code never issuing one `SET`.
+
+### P-71 — The product ships no customer's analysis
+
+`server/data/public-csr-reference/` carries `lmn-target-profile.json` and `comparator-fit-matrix.json`: one
+customer's target study (NCT05330182) and a comparator fit made for it. Nothing reads them. They leave the shipped
+product; the evidence of the 2026-10-27 work keeps its copies as history. Public registry records stay in the
+reference set when they are genuinely public and in scope for it, chosen by the therapeutic area, not by one
+customer's programme. A customer's own targets and fits are that customer's project data, in their tenant. Why: a
+sponsor's competitors use the same product, and what the product ships is visible to all of them.
 
 ## How sessions run under this file
 

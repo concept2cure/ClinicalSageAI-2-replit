@@ -26,7 +26,6 @@ import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import type { DataState } from '../../lib/dataState';
 import { FilesTreePane } from './FilesTreePane';
-import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useElectronicSignature } from '../../hooks/useElectronicSignature';
@@ -354,14 +353,12 @@ function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenS
 }
 
 /* ── CorrespondencePane ──────────────────────────────────────── */
-function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftResponse }: {
+function CorrespondencePane({ pathway, items, onOpenSection, onOpenLetter }: {
   pathway: PathwayKey;
   items: Correspondence[];
   onOpenSection: OpenSection;
-  onAskAna: (text: string) => void;
-  /** Returns true when the drafter took ownership of this letter. False means
-      the caller must fall back to asking AnA — never a silent no-op. */
-  onDraftResponse?: (c: Correspondence) => boolean;
+  /** Open the letter in Communication, where its questions, responses and signed approvals are worked (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }) {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState<string | undefined>(items[0]?.id);
@@ -440,20 +437,17 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
         </div>
 
         <div className="corr-detail">
-          {selected && <CorrDetail c={selected} onOpenSection={onOpenSection} onAskAna={onAskAna} onDraftResponse={onDraftResponse} />}
+          {selected && <CorrDetail c={selected} onOpenSection={onOpenSection} onOpenLetter={onOpenLetter} />}
         </div>
       </div>
     </div>
   );
 }
 
-function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
+function CorrDetail({ c, onOpenSection, onOpenLetter }: {
   c: Correspondence;
   onOpenSection: OpenSection;
-  onAskAna: (text: string) => void;
-  /** Returns true when the drafter took ownership of this letter. False means
-      the caller must fall back to asking AnA — never a silent no-op. */
-  onDraftResponse?: (c: Correspondence) => boolean;
+  onOpenLetter?: (letterId: string) => void;
 }) {
   const days = daysUntil(c.due);
   const overdue = days !== null && days < 0;
@@ -509,19 +503,18 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
         </div>
       )}
 
-      <div className="audit-det-actions">
-        <button
-          className="audit-act primary"
-          onClick={() => {
-            if (onDraftResponse?.(c)) return;
-            onAskAna(`Draft response to ${c.kind}: ${c.subject}`);
-          }}
-        >
-          {I.sparkles} Draft response with AnA
-        </button>
-        <button className="audit-act">{I.userPlus} Assign</button>
-        <button className="audit-act">{I.check} Mark closed</button>
-      </div>
+      {/* One place answers a letter: Communication records its questions, each
+          response and its signed approval, and closes it (P-39 step 3, S2). The
+          drafter that stood here could not send, and Assign and Mark closed did
+          nothing. */}
+      {onOpenLetter && (
+        <div className="audit-det-actions">
+          <button className="audit-act primary" onClick={() => onOpenLetter(c.id)}
+            title="Open this letter in Communication to record its questions, draft and sign each response, and close it">
+            {I.arrowRight} Respond in Communication
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1099,12 +1092,13 @@ export interface PathwayPanesProps {
   /** Canonical project id — anchors live audit + scopes correspondence. When
    *  absent, live panes render an explicit empty state. */
   programId?: string | null;
+  /** Open a letter in Communication on its record (the host's navigation; P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
-export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, programId }: PathwayPanesProps) {
+export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, programId, onOpenLetter }: PathwayPanesProps) {
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
-  const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
   // Live backend data (audit / correspondence / approvals), honest empty
   // states otherwise.
   const data = usePathwayTabsData(pathway, programId);
@@ -1121,19 +1115,6 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   };
 
   const openSection: OpenSection = (t) => setDrawerTarget(t);
-
-  /* The drafter takes over the surface area while active. */
-  if (drafterCorr) {
-    return (
-      <AnaDrafter
-        correspondence={drafterCorr}
-        pathway={pathway}
-        onClose={() => setDrafterCorr(null)}
-        onOpenSection={(t) => { setDrafterCorr(null); setDrawerTarget(t); }}
-        onAskAna={onAskAna}
-      />
-    );
-  }
 
   return (
     <>
@@ -1159,22 +1140,12 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             emptyHint="Agency and notified-body letters appear here once received for this project."
           >
             {(items) => {
-              /* Every live letter opens the drafter now. It used to open only
-                 for the ids of four invented letters (CORRESP_DETAIL), which a
-                 live letter never matched — so live letters fell through to a
-                 bare AnA prompt, and the drafter only ever showed fiction. It
-                 reads the letter's own record and parsed issues, and hands
-                 drafting to AnA with that real content. */
               return (
               <CorrespondencePane
                 pathway={pathway}
                 items={items}
                 onOpenSection={openSection}
-                onAskAna={onAskAna}
-                onDraftResponse={c => {
-                  setDrafterCorr(c);
-                  return true;
-                }}
+                onOpenLetter={onOpenLetter}
               />
               );
             }}

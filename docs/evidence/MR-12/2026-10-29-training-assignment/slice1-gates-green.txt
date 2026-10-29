@@ -1,0 +1,105 @@
+# Gates on the slice-1 working tree over cbcd32f58b (2026-10-29T19:00:35Z). One line per gate: exit code, then its verdict line(s).
+
+## ci:migration-set-order — exit 0
+[ci:migration-set-order] OK — 443 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+## ci:migration-drop-safety — exit 0
+[ci:migration-drop-safety] OK — 443 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+## ci:migration-drop-safety:selftest — exit 0
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+## ci:migration-deploy-path — exit 0
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+## ci:migration-guard-order — exit 0
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+## ci:migration-guard-order:selftest — exit 0
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+## ci:install-fresh-overlay-deps — exit 0
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+## ci:install-fresh-overlay-deps:selftest — exit 0
+[ci:install-fresh-overlay-deps] selftest passed: it fails on the unguarded case and only on that case.
+## ci:column-reachability — exit 0
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+## ci:sql-interpolation — exit 0
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+## ci:server-error-leaks — exit 0
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+## ci:fabricated-identity — exit 0
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+## ci:undefined-css-classes — exit 0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+## ci:unauthenticated-fetch — exit 0
+✅ ci:unauthenticated-fetch — 74 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+## ci:purge-coverage:selftest — exit 0
+  ✓ FAILS closed on a list that parses to zero entries
+[ci:purge-coverage:selftest] 53 passed — the gate fails on what it exists to catch.
+## audit:repo-health:ceiling — exit 0
+✅ repo health strict gate passed.
+## node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (cbcd32f58) -- 4 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since origin/concept2cure-v2.
+exit 0
+## npx eslint on the four new files (the ratchet reads only files tracked at origin/concept2cure-v2, so new files are linted directly)
+  server/routes/mdx-qms-training.ts errors 0 warnings 0
+  server/services/qms/training-assignment.ts errors 0 warnings 0
+  tests/db/qms-job-roles.dbtest.ts errors 0 warnings 0
+  tests/schema-contract/qms-training-assignments-replay.pglite.test.ts errors 0 warnings 0
+## ci:purge-coverage (against the evidence database, install-fresh + deploy-migrate with 20261029g applied) — exit 1, PRE-EXISTING
+  Not this slice's: the two tables it names come from b265d6fc0f (CSR assembly/narrative queue), already on trunk. The three new tables are listed as retained, each with its reason, and are not residue:
+       qms_job_role_members: Training requirement record (who was required to train on which controlled document, set by w
+       qms_job_roles: Training requirement record (who was required to train on which controlled document, set by whom and
+       qms_training_assignments: Training requirement record (who was required to train on which controlled document, set 
+  ❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+    - csr_assembly_runs
+    - csr_narrative_runs
+  First: confirm the table still exists on a CURRENT schema. This gate reads the
+## audit:orphaned-endpoints:strict — exit 0
+  Orphans: 984 (threshold 1184). The six new routes have no client caller in this slice (the JobRoles panel is not built here); the audit's generated reports under docs/reports/ were restored, not kept.
+
+# ── Review fixes: gates re-run on the fixed slice-1 tree (2026-10-29T19:31:19Z). Each gate's exit code, then its last lines. ──
+# Correction to the audit:orphaned-endpoints:strict line above: that audit attributes a route only through an app.use mount (scripts/audits/detect-orphaned-endpoints.mjs:205-220) and skips a router file with none; mdx-qms-training.ts is mounted with router.use (mdx-qms.ts:944), so none of the six routes is in its report and its count is no evidence about them (README, deviation 1).
+## ci:migration-set-order -> exit 0
+[ci:migration-set-order] OK — 443 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+## ci:migration-drop-safety -> exit 0
+[ci:migration-drop-safety] OK — 443 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+## ci:migration-drop-safety:selftest -> exit 0
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+## ci:migration-deploy-path -> exit 0
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+## ci:migration-guard-order -> exit 0
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+## ci:install-fresh-overlay-deps -> exit 0
+[ci:install-fresh-overlay-deps] 370 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+## ci:column-reachability -> exit 0
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+## ci:sql-interpolation -> exit 0
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1058 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+## ci:server-error-leaks -> exit 0
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+## ci:fabricated-identity -> exit 0
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+## ci:undefined-css-classes -> exit 0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+## ci:unauthenticated-fetch -> exit 0
+✅ ci:unauthenticated-fetch — 74 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+## ci:tenant-resolvers -> exit 0
+  - server/routes/mdx-qms.ts
+  - server/routes/regulatory-precedent-intelligence.ts
+
+OK: no new local tenant resolvers.
+## ci:tenant-entry-points -> exit 1
+    server/routes/mdx-admin.ts  (alternative-auth-router)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+## node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2 -> exit 0
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (cbcd32f58) -- 6 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since origin/concept2cure-v2.
+## npx eslint (the files the ratchet cannot compare, and the two changed QMS route files) -> exit 0, no output
+  server/routes/mdx-qms-training.ts server/services/qms/training-assignment.ts tests/db/qms-job-roles.dbtest.ts tests/schema-contract/qms-training-assignments-replay.pglite.test.ts server/routes/mdx-qms-context.ts server/routes/mdx-qms-review-route.ts
+# ci:tenant-entry-points exits 1 on server/routes/mdx-admin.ts only, a file this slice does not change (git status shows it unmodified; last changed by 9764baaa98, a trunk merge). It runs in CI (ci.yml:746), so it is named beside ci:purge-coverage as red at trunk, not this work's.

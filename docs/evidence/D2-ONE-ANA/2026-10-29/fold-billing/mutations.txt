@@ -47,3 +47,28 @@ B10 onboarding sends checkout without the permission: KILLED (Tests  1 failed | 
 B11 onboarding reports a 403 as a missing link: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
 B12 onboarding points to the retired Usage & Billing: KILLED (Tests  1 failed | 7 passed (8)) [client/src/concept2cure/v2/surfaces/Onboarding.tsx restored, md5 0c3dee4b821fa4f6dabfa0fb3588fa79]
 12/12 killed
+
+# ═══ Part 2 — MUTATIONS: 18/18 killed (first run 17/18, P13 surviving; test tightened; P13 re-run killed). tools/mutate-2.py.txt ═══
+P1 the billing alias is removed: KILLED (Tests  1 failed | 4 passed (5)) [client/src/concept2cure/v2/registryModel.ts restored, md5 53cd66b09cbd0203e7f332c53e3c3430]
+P2 billing gets its own view again: KILLED (Tests  1 failed | 4 passed (5)) [client/src/concept2cure/v2/surfaceViews.ts restored, md5 c2dbcd80cc4a1f806479128baf0caab0]
+P3 the usage tab action offers billing again: KILLED (Tests  1 failed | 4 passed (5)) [shared/navigation/surface-actions.ts restored, md5 bf2287d347029d6841c083ecfffccd92]
+P4 billing is a launch shell surface again: KILLED (Tests  1 failed | 41 passed (42)) [shared/constants/launch-scope.ts restored, md5 3de5a24ab3f35f1a05af643c673807c1]
+P5 the discoverability gate declares billing again: KILLED (Tests  1 failed | 4 passed (5)) [scripts/ci/check-surface-discoverability.mjs restored, md5 f712174db9e04cb674c4371203a911ae]
+P6 Stripe returns the customer to the retired id: KILLED (Tests  1 failed | 4 passed (5)) [server/routes/billing.ts restored, md5 4b1963d04df73d52f9ae1baef6f1785a]
+P7 a billing admin keeps two doors to Licensing: KILLED (Tests  1 failed | 2 passed (3)) [client/src/concept2cure/v2/Shell.tsx restored, md5 a2ecb7057db95285a88be8ed9c036cdc]
+P8 every member gets Subscription & billing: KILLED (Tests  2 failed | 1 passed (3)) [client/src/concept2cure/v2/Shell.tsx restored, md5 a2ecb7057db95285a88be8ed9c036cdc]
+P9 the route falls back to standard again: KILLED (Tests  2 failed | 8 passed (10)) [server/routes/billing-dashboard.ts restored, md5 f9336e5e70a289c1d69048cf8ab3b4f8]
+P10 the route states the other limiter as the platform's: KILLED (Tests  1 failed | 9 passed (10)) [server/routes/billing-dashboard.ts restored, md5 f9336e5e70a289c1d69048cf8ab3b4f8]
+P11 a router that mounts the second limiter goes unnamed: KILLED (Tests  1 failed | 9 passed (10)) [server/routes/billing-dashboard.ts restored, md5 f9336e5e70a289c1d69048cf8ab3b4f8]
+P12 per-user ceiling ignores maxRequestsAuthenticated: KILLED (Tests  2 failed | 8 passed (10)) [server/routes/billing-dashboard.ts restored, md5 f9336e5e70a289c1d69048cf8ab3b4f8]
+P13 the screen accepts a row without numbers: SURVIVED (Tests  7 passed (7)) [client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx restored, md5 e25df60ffed53df95f9e215c2600d0e3]
+P14 an unrecorded tier is shown as standard: KILLED (Tests  1 failed | 6 passed (7)) [client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx restored, md5 e25df60ffed53df95f9e215c2600d0e3]
+P15 Try again does not read again: KILLED (Tests  1 failed | 6 passed (7)) [client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx restored, md5 e25df60ffed53df95f9e215c2600d0e3]
+P16 AnA is not told the limits: KILLED (Tests  1 failed | 6 passed (7)) [client/src/concept2cure/v2/surfaces/UsageBilling.tsx restored, md5 e905791aeb08adb4036ca2e9dc958e20]
+P17 usage publishes under billing again: KILLED (Tests  1 failed | 4 passed (5)) [client/src/concept2cure/v2/surfaces/UsageBilling.tsx restored, md5 e905791aeb08adb4036ca2e9dc958e20]
+P18 ID_BASELINE left at the old count: KILLED (exit 1: declare its ID in NO_CONTEXT_NEEDED with a reason.) [scripts/ci/check-ana-surface-context.mjs restored, md5 ac5bb426b37960ec14dc7792ac970b17]
+17/18 killed
+
+## Re-run after tightening
+P13 the screen accepts a row without numbers: KILLED (Tests  2 failed | 7 passed (9)) [client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx restored, md5 e25df60ffed53df95f9e215c2600d0e3]
+1/1 killed

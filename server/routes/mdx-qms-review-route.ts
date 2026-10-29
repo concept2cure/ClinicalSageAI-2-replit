@@ -3,7 +3,7 @@
  * docs/design/REVIEW_ROUTING_2026-10-23.md, §2.7–§2.10). Mounted on the QMS
  * router (mdx-qms.ts), under /api/mdx/qms:
  *
- *   GET  /qms/documents/:id/route-candidates[?for=reassign]  who may be named, with the validator's answer per role
+ *   GET  /qms/documents/:id/route-candidates[?for=reassign|add]  who may be named, with the validator's answer per role
  *   GET  /qms/documents/:id/review-route                     the document's round: every member, the naming history
  *   POST /qms/documents/:id/review                           a named reviewer's signature (signGovernedAct,
  *                                                            precheck before the credential, afterSign on its transaction)
@@ -12,6 +12,8 @@
  *   POST /qms/documents/:id/review-route/withdraw            the sender or an administrator
  *   POST /qms/documents/:id/review-route/reassign            the sender or an administrator, RR3's reassignMember
  *   POST /qms/documents/:id/review-route/hand-back           a named member, RR3's handBackMember
+ *   POST /qms/documents/:id/review-route/members             the sender or an administrator adds a reviewer
+ *                                                            (RR2, addRouteReviewer; the approvers wait again)
  *
  * Sending (PATCH /qms/documents/:id {status:'in_review', route}) and the
  * approval (POST /qms/documents/:id/approve) stay where they were, in
@@ -31,7 +33,7 @@ import { resolveOrgId, resolveUserId } from '../types/auth-request';
 import { createScopedLogger } from '../utils/logger';
 import { requireGovernedReason } from './governed-reason';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
-import { parseRouteRequest, reassignMember, handBackMember, ReviewRouteRefusal, senderTimeZone } from '../services/review/review-route';
+import { addRouteReviewer, parseRouteRequest, reassignMember, handBackMember, ReviewRouteRefusal, senderTimeZone } from '../services/review/review-route';
 import { readRouteRounds } from '../services/review/review-route-standing';
 import { listRouteCandidates, namingOf } from '../services/review/review-route-candidates';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
@@ -42,6 +44,7 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { QmsContentRefusedError } from '../services/qms/controlled-document-content';
 import { TASK_SIGNATURE_MEANINGS } from '../services/part11/signature-meanings';
+import { positiveId } from './mdx-qms-context';
 
 const log = createScopedLogger('mdx-qms-review-route');
 
@@ -100,11 +103,6 @@ function reasonOf(req: Request, res: Response, nothing = 'Nothing was changed.')
   return reason.reason;
 }
 
-const positiveId = (v: unknown): number | null => {
-  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN;
-  return Number.isSafeInteger(n) && n > 0 && n <= 2_147_483_647 ? n : null;
-};
-
 async function readCandidates(req: Request, res: Response): Promise<Response> {
   const orgId = resolveOrgId(req);
   const readerId = resolveUserId(req);
@@ -117,7 +115,8 @@ async function readCandidates(req: Request, res: Response): Promise<Response> {
     const { rows } = await q.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [documentId, orgId]);
     const row = rows[0] as QmsDocumentRow | undefined;
     if (!row) return clientError(res, 404, 'Document not found in this organization.');
-    const forReassign = req.query.for === 'reassign';
+    // Adding a reviewer (RR2) asks the validator as a reassignment does: the route's sender, the reader as actor, everyone named.
+    const forReassign = req.query.for === 'reassign' || req.query.for === 'add';
     const standing = await qmsStanding(q, row);
     const subject = await qmsRouteSubject(q, row);
     const candidates = await listRouteCandidates(q, {
@@ -218,6 +217,23 @@ export function mountQmsReviewRoute(router: Router): void {
       await grantRouteAccess(client, { row, actorId: ids.userId, reason, members: [{ userId: done.to.userId, role: done.member.role }] });
       notices.push(...done.notices);
       return { routeId: standing.route!.id, taskId, role: done.member.role, from: done.member.userId, to: done.to.userId, actId: done.actId };
+    });
+  });
+
+  router.post('/qms/documents/:id/review-route/members', async (req, res) => {
+    const reason = reasonOf(req, res); if (reason === null) return;
+    const assigneeId = positiveId(req.body?.assigneeId);
+    if (assigneeId === null) return clientError(res, 400, 'Name the reviewer to add (assigneeId). Nothing was changed.', { code: 'ROUTE_INVALID' });
+    return onDocument(req, res, 'qms-route-add', async (client, ids, notices) => {
+      const row = await lockQmsDocument(client, ids.orgId, ids.documentId);
+      const standing = await qmsStanding(client, row, true);
+      if (standing.state !== 'live') throw new ReviewRouteRefusal(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+      const done = await addRouteReviewer(routeTxOf(client), {
+        organizationId: ids.orgId, actorUserId: ids.userId, reason, subject: qmsActSubject(row), standing, assigneeId, dueDate: req.body?.dueDate,
+      });
+      await grantRouteAccess(client, { row, actorId: ids.userId, reason, members: [{ userId: done.to.userId, role: 'reviewer' }] });
+      notices.push(...done.notices);
+      return { routeId: standing.route!.id, taskId: done.taskId, role: 'reviewer', step: done.step, to: done.to.userId, actId: done.actId };
     });
   });
 

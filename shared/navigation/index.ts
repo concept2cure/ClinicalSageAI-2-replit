@@ -244,7 +244,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },
   { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
-  { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
+  // Kept for AnA after the fold (D2, 2026-10-29): `billing` is an alias of `licensing`, where the invoices are.
+  { id: 'billing', label: 'Billing', description: 'The organization\'s invoices, checkout and Stripe billing portal, on Licensing under the plan status — for billing administrators (admins and owners).', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 

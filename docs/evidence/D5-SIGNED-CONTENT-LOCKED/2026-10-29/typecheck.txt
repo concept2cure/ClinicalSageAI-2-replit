@@ -1,0 +1,38 @@
+# Scoped tsc, 2026-10-29T19:14:35Z, working tree at d140aefa5 + this change.
+# Two scratch tsconfigs extend ./tsconfig.json (strict) with noEmit and incremental off, listing the files below and the repo's declaration files;
+# the server one adds the three modules that augment Express.Request. tsc follows imports, so AnaToolExecutor.ts (imported by the PGlite suites) is checked too.
+# NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p <scratch>/tsconfig.<side>.json
+
+## server: files
+#   server/services/part11/signature-persistence.ts
+#   server/services/part11/governed-target-binders.ts
+#   server/services/part11/signed-content-state.ts
+#   server/services/part11/signed-content-lock.ts
+#   server/routes/mdx-labeling.ts
+#   server/routes/mdx-labeling-approvals.ts
+#   server/routes/mdx-risk-management.ts
+#   server/routes/mdx-risk-acceptance-lock.ts
+#   server/__tests__/routes/signed-content-locked.pglite.test.ts
+#   server/services/part11/__tests__/signed-content-lock.test.ts
+#   server/__tests__/routes/content-digest-binders.pglite.test.ts
+#   server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+#   server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+#   server/auth.ts
+#   server/middleware/auth.ts
+#   server/middleware/tenantContext.ts
+#   server/__tests__/routes/risk-acceptance-locked.pglite.test.ts
+#   server/__tests__/routes/signed-records.fixture.ts
+#   + server/types/**/*.d.ts, shared/**/*.d.ts
+server: exit 0, 0 lines of output
+
+
+## client: files
+#   client/src/concept2cure/v2/SignedContentState.tsx
+#   client/src/concept2cure/v2/__tests__/signedContentSourceChanged.test.tsx
+#   client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx
+#   client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx
+#   client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+#   client/src/concept2cure/auth/ZenLogin.tsx
+#   + client/src/**/*.d.ts, shared/**/*.d.ts
+client: exit 0, 0 lines of output
+

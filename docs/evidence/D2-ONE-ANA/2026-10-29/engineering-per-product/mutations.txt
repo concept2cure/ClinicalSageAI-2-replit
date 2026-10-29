@@ -1,0 +1,40 @@
+Mutations. Each was applied alone to one product file, its test run, and the file restored only if it still held
+exactly the mutated bytes; the restored file's sha256 was checked against the original (mutate.py, in the scratch
+folder; each run's output is mutation-<id>.txt here). M18g mutates the deploy-shaped database instead (below).
+
+| id | file | mutation | command | result |
+|---|---|---|---|---|
+| M1 | `server/routes/mdx-engineering.ts` | DHF read loses the project: the organization's documents of every project | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M2 | `server/routes/mdx-engineering.ts` | DHF read loses the organization: a foreign document naming the program | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M3 | `server/routes/mdx-engineering.ts` | DHF read includes archived documents | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M4 | `server/routes/mdx-engineering.ts` | DHF read keeps empty headings (not the readiness rule) | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M5 | `server/routes/mdx-engineering.ts` | a mandatory unwritten section is not a blocker | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M6 | `server/routes/mdx-engineering.ts` | the summary figure counts optional sections | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M7 | `server/routes/mdx-engineering.ts` | change read loses the project: the organization's whole register | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M8 | `server/routes/mdx-engineering.ts` | change read includes deleted changes | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M9 | `server/routes/mdx-engineering.ts` | change panel reads change_requests again | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M10 | `server/routes/mdx-engineering.ts` | under assessment shown as open, not in review | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M11 | `server/routes/mdx-engineering.ts` | DHF reported organization-wide (the screen hides it) | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M12 | `server/routes/mdx-engineering.ts` | change requests reported organization-wide (the screen hides them) | `vitest server/routes/__tests__/mdx-engineering-per-product.test.ts` | RED, restored |
+| M13 | `server/services/qms/changeControl.service.ts` | the one writer never stamps the project | `vitest server/routes/__tests__/qms-change-project.test.ts server/services/ana/__tests__/change-tool-admits-program.test.ts` | RED, restored |
+| M14 | `server/routes/mdx-qms.ts` | the create route no longer runs the project admission | `vitest server/routes/__tests__/qms-change-project.test.ts` | RED, restored |
+| M15 | `server/routes/mdx-qms-context.ts` | the admission stamps a project it never asked about | `vitest server/routes/__tests__/qms-change-project.test.ts` | RED, restored |
+| M15b | `server/routes/mdx-qms.ts` | the handler drops the admitted project | `vitest server/routes/__tests__/qms-change-project.test.ts` | RED, restored |
+| M16 | `server/services/ana/AnaToolExecutor.ts` | AnA never stamps the project | `vitest server/services/ana/__tests__/change-tool-admits-program.test.ts` | RED, restored |
+| M17 | `server/services/ana/qms-labeling-analytics-tool-defs.ts` | the tool no longer offers program_id | `vitest server/services/ana/__tests__/change-tool-admits-program.test.ts` | RED, restored |
+| M18 | `migrations/20261029l_qms_change_controls_program_key.sql` | bare SET NULL: a program delete would null organization_id | `vitest tests/schema-contract/change-controls-program-key.pglite.test.ts` | RED, restored |
+| M19 | `migrations/20261029l_qms_change_controls_program_key.sql` | the key validates existing rows (not NOT VALID) | `vitest tests/schema-contract/change-controls-program-key.pglite.test.ts` | RED, restored |
+| M20 | `scripts/db/migration-set.mjs` | the file is off the applier | `vitest tests/schema-contract/change-controls-program-key.pglite.test.ts` | RED, restored |
+| M20g | `scripts/db/migration-set.mjs` | the file is off the applier (the deploy-path gate) | `npm run --silent ci:migration-deploy-path` | RED, restored |
+| M21 | `client/src/concept2cure/mdx/surfaces/EngineeringDesignHistory.tsx` | the panel no longer says what it is not | `vitest client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx` | RED, restored |
+| M22 | `client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx` | the card claims DHF completion again | `vitest client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx` | RED, restored |
+| M23 | `client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx` | a section blocker is labelled a DHF entry again | `vitest client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx` | RED, restored |
+| M24 | `client/src/concept2cure/quality/ChangeControl.tsx` | the form never sends the chosen project | `vitest client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx` | RED, restored |
+| M25 | `client/src/concept2cure/quality/ChangeControl.tsx` | the form starts on the open project | `vitest client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx` | RED, restored |
+| M26 | `client/src/concept2cure/quality/ChangeControl.tsx` | the form offers the project only when none is open | `vitest client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx` | RED, restored |
+
+| M18g | the deploy-shaped database | `20261029l` with a bare `ON DELETE SET NULL`, applied to a copy of it (`c2c_p60_m18`) | `ci:purge-coverage` | RED: `✗ public.qms_change_controls (program_id, organization_id) → public.regulatory_programs, SET NULL on a NOT NULL column` |
+
+28 mutations of product code and the applier (27 under tests, M20g under ci:migration-deploy-path), and M18g under ci:purge-coverage: every one red, every file restored byte for byte.
+
+M0 (red §2 in red.txt) is the route as at HEAD, swapped in the same way, under the new and amended route tests.

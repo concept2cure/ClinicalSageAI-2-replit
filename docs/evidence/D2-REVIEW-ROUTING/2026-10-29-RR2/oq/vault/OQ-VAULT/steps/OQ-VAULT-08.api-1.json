@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5201/api/c2c/actions/verify-chain",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "scope": "organization",
+      "ok": true,
+      "rowsChecked": 109,
+      "legacyRows": 0,
+      "sequencedRows": 109,
+      "head": {
+        "verified": false,
+        "status": "not_configured",
+        "anchorKey": null,
+        "anchoredAt": null,
+        "breaks": [],
+        "reason": "head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only"
+      }
+    }
+  }
+}

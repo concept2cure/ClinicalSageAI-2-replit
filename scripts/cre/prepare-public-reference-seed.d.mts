@@ -7,6 +7,8 @@
  */
 export declare const COLLECTION_DIRECTORY: string;
 export declare const SEED_MIGRATION: string;
+/** Earlier seed versions, each frozen at the sha256 the deploy set applied (Rule 1). */
+export declare const SUPERSEDED_SEED_MIGRATIONS: Readonly<Record<string, string>>;
 
 /** One seed row as the script builds it; its metadata is the manifest's, as read. */
 export type ReferenceSeedRow = Record<string, any>;

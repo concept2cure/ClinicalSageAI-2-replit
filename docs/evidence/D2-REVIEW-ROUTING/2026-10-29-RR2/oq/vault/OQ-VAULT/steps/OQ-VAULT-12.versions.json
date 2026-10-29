@@ -1,0 +1,38 @@
+[
+  {
+    "id": "32177516-3ced-4f81-9202-eb7a3d5e7ae0",
+    "version": "2.0",
+    "contentHash": "0a329b5d8c0d86a8a0c47ebd4fc5202e129631e14f2b05d2f6aa2b773be2e758",
+    "fileSize": 622,
+    "fileName": "next-version.pdf",
+    "uploader": "OQ Runner",
+    "uploaderId": 6,
+    "createdAt": "2026-10-29T18:26:48.952Z",
+    "current": true,
+    "link": "verified",
+    "lifecycle": null,
+    "placements": [],
+    "estarUses": [],
+    "cmcEvidence": [],
+    "sectionCitations": [],
+    "transmitRefusal": "not reviewed"
+  },
+  {
+    "id": "5d0e2c82-f197-430a-b420-d5369e6eedcf",
+    "version": "1.0",
+    "contentHash": "77701a929ee70b88dd2c86d630d86caa002ab27ba888e788535a5def4b7c64a7",
+    "fileSize": 611,
+    "fileName": "OQ-002-Protocol-20261029182624.pdf",
+    "uploader": "OQ Runner",
+    "uploaderId": 6,
+    "createdAt": "2026-10-29T18:26:29.022Z",
+    "current": false,
+    "link": "none",
+    "lifecycle": null,
+    "placements": [],
+    "estarUses": [],
+    "cmcEvidence": [],
+    "sectionCitations": [],
+    "transmitRefusal": "superseded by a later version"
+  }
+]

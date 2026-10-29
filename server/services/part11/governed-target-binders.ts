@@ -27,12 +27,35 @@ import {
   readFiledBaselineById,
 } from '../submission-service/filed-sequence-baseline-content.js';
 
+/**
+ * A record a recipe binds besides its own (P-64: the document a translation
+ * translates), as the signature's manifest records it (`boundSource`).
+ */
+export interface BoundSource {
+  target: string;
+  version: string;
+  contentDigest: string;
+}
+
+/**
+ * A re-derivation that is not the current recipe's (signed-content-state.ts):
+ * the recipe a signature recorded, so a signature taken by an earlier recipe is
+ * checked by that recipe; and, for a recipe that binds a source, the source as
+ * the signature recorded it, to tell a source that moved on from a record that
+ * was edited. A binder that does not derive the recipe asked for falls back.
+ */
+export interface BinderOptions {
+  recipe?: string;
+  asOfSource?: BoundSource;
+}
+
 /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
 export type ContentBinder = (
   client: SignatureDbClient,
   rest: string,
   orgId: number,
   ledgerFallback: (why: string) => GovernedBinding,
+  options?: BinderOptions,
 ) => Promise<GovernedBinding>;
 
 /** The protocol-document / protocol-review-assignment binder. */
@@ -310,12 +333,104 @@ const filedSequenceBaselineBinding: ContentBinder = async (client, rest, orgId, 
    digest of the record as the signer reviewed it, and a signature still
    re-derives after a later workflow step that changed nothing it attested.
    Each act declares its basis (SignedAct.contentBasis), so a fallback below
-   refuses the act rather than signing over the chain hash. */
+   refuses the act rather than signing over the chain hash.
+
+   Since P-63 and P-64 (2026-10-29; docs/evidence/D5-SIGNED-CONTENT-LOCKED/
+   2026-10-29/README.md): each recipe's attested fields are a list
+   (RecipeAttestation) that its binder builds its content from and that the
+   one refusal of an edit to signed content reads (signed-content-lock.ts); the
+   translation recipe is v2, which also binds the source document's version
+   and content digest; and a binder derives the recipe a signature recorded
+   (BinderOptions.recipe), so a v1 approval is still checked by v1. Each binding
+   records its recipe on the manifest (`bindingRecipe`). The v1 and
+   risk-residual-acceptance/v1 bytes are unchanged: the content is keyed and
+   valued as before, only built from the list. */
 
 /** Recipe tags inside the digested bytes, so a later recipe cannot collide with these. */
 export const LABELING_DOCUMENT_DIGEST_RECIPE = 'labeling-document/v1' as const;
-export const LABELING_TRANSLATION_DIGEST_RECIPE = 'labeling-translation/v1' as const;
+/** The translation recipe since P-64 (2026-10-29): v1, and the source document's version and content digest. */
+export const LABELING_TRANSLATION_DIGEST_RECIPE = 'labeling-translation/v2' as const;
+/** The translation recipe from 84aada8f7 to P-64. Still derived, for the signatures taken by it. */
+export const LABELING_TRANSLATION_V1_DIGEST_RECIPE = 'labeling-translation/v1' as const;
 export const RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE = 'risk-residual-acceptance/v1' as const;
+
+/**
+ * One field a recipe attests: the key it is digested under, which is also the
+ * field's name in the record's API (PATCH body), and the column it is read from.
+ */
+export interface AttestedField {
+  readonly field: string;
+  readonly column: string;
+  /** Digested as a number (an integer column node-pg may hand back as text). */
+  readonly int?: true;
+}
+
+/**
+ * What a recipe attests (P-63, 2026-10-29). The binder below builds its
+ * content from these lists, and the one refusal of an edit to signed content
+ * (services/part11/signed-content-lock.ts) refuses exactly these fields, so
+ * the digest and the refusal read one list and cannot drift.
+ */
+export interface RecipeAttestation {
+  readonly recipe: string;
+  /** The record's own attested fields. */
+  readonly fields: readonly AttestedField[];
+  /** The API field naming the text artifact the recipe digests by its content's sha256, or null. */
+  readonly textField: 'artifactId' | null;
+  /** Child rows digested with the record, by table: adding, editing or removing one changes signed content. */
+  readonly children: Readonly<Record<string, readonly AttestedField[]>>;
+  /** The record whose version and content digest the recipe also binds (P-64), or null. */
+  readonly source: 'labeling-document' | null;
+}
+
+const text = (field: string, column = field): AttestedField => ({ field, column });
+const int = (field: string, column = field): AttestedField => ({ field, column, int: true });
+
+export const LABELING_DOCUMENT_ATTESTATION: RecipeAttestation = {
+  recipe: LABELING_DOCUMENT_DIGEST_RECIPE,
+  fields: [
+    text('deviceName', 'device_name'), text('docKind', 'doc_kind'), text('version'), text('language'),
+    text('region'), text('udiDi', 'udi_di'), text('expiresAt', 'expires_at'),
+  ],
+  textField: 'artifactId',
+  children: {
+    labeling_symbols: [text('symbolCode', 'symbol_code'), text('symbolName', 'symbol_name'), text('description'), text('requiredBy', 'required_by')],
+  },
+  source: null,
+};
+
+const TRANSLATION_FIELDS: readonly AttestedField[] = [
+  text('language'), text('translator'), text('translationMethod', 'translation_method'),
+  text('backTranslationVerified', 'back_translation_verified'),
+];
+
+export const LABELING_TRANSLATION_ATTESTATION: RecipeAttestation = {
+  recipe: LABELING_TRANSLATION_DIGEST_RECIPE, fields: TRANSLATION_FIELDS, textField: 'artifactId', children: {}, source: 'labeling-document',
+};
+
+export const LABELING_TRANSLATION_V1_ATTESTATION: RecipeAttestation = {
+  ...LABELING_TRANSLATION_ATTESTATION, recipe: LABELING_TRANSLATION_V1_DIGEST_RECIPE, source: null,
+};
+
+export const RISK_RESIDUAL_ACCEPTANCE_ATTESTATION: RecipeAttestation = {
+  recipe: RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE,
+  fields: [
+    text('refCode', 'ref_code'), text('hazard'), text('hazardousSituation', 'hazardous_situation'), text('harm'),
+    text('sequenceOfEvents', 'sequence_of_events'), int('severity'), int('probability'), int('detectability'),
+    int('initialRisk', 'initial_risk'), text('controlStrategy', 'control_strategy'), text('source'),
+    int('residualSeverity', 'residual_severity'), int('residualProbability', 'residual_probability'),
+    int('residualRisk', 'residual_risk'), text('benefitRiskRationale', 'benefit_risk_rationale'),
+  ],
+  textField: null,
+  children: {
+    risk_controls: [
+      text('description'), text('controlType', 'control_type'), text('implementationEvidence', 'implementation_evidence'),
+      text('verificationEvidence', 'verification_evidence'), text('effectivenessEvidence', 'effectiveness_evidence'),
+      text('introducesNewRisk', 'introduces_new_risk'), int('newRiskItemId', 'new_risk_item_id'), text('status'),
+    ],
+  },
+  source: null,
+};
 
 /**
  * The text a labeling row names (`artifact_id`, a concept2cure_artifacts id):
@@ -339,13 +454,23 @@ async function namedText(client: SignatureDbClient, artifactId: unknown, orgId: 
 const orNull = (v: unknown): unknown => (v === undefined ? null : v);
 const intOrNull = (v: unknown): number | null => (v == null ? null : Number(v));
 
-/**
- * labeling-document:<id>: a device label as its approver attests it, for its
- * approval, its move to effective and its supersession alike. Its translations
- * are signed on their own targets, so none is digested here.
- */
-const labelingDocumentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
-  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed labeling document pointer');
+/** `row`'s attested fields, keyed as the recipe digests them. Every SELECT below reads each listed column. */
+function attestedValues(fields: readonly AttestedField[], row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) out[f.field] = f.int ? intOrNull(row[f.column]) : orNull(row[f.column]);
+  return out;
+}
+
+/** Why `options` asks for a recipe this binder does not derive, or null when it asks for none or for `current`. */
+function otherRecipe(options: BinderOptions | undefined, ...derivable: string[]): string | null {
+  const asked = options?.recipe;
+  return asked && !derivable.includes(asked) ? `recipe '${asked}' is not one this binder derives` : null;
+}
+
+type LabelingDocumentContent = { content: Record<string, unknown>; symbols: number; text: { id: number } | null };
+
+/** labeling-document/v1's content, or why it cannot be read now. Shared by the label's binder and the translation's source. */
+async function labelingDocumentContent(client: SignatureDbClient, rest: string, orgId: number): Promise<LabelingDocumentContent | string> {
   const { rows } = await client.query(
     `SELECT device_name, doc_kind, version, language, region, udi_di,
             to_char(expires_at, 'YYYY-MM-DD') AS expires_at, artifact_id
@@ -355,9 +480,9 @@ const labelingDocumentBinding: ContentBinder = async (client, rest, orgId, ledge
     [rest, orgId],
   );
   const d = rows[0];
-  if (!d) return ledgerFallback('labeling document not readable at signing time');
-  const text = await namedText(client, d.artifact_id, orgId);
-  if (text === undefined) return ledgerFallback(`the label text it names (artifact ${String(d.artifact_id)}) is not readable at signing time`);
+  if (!d) return 'labeling document not readable at signing time';
+  const named = await namedText(client, d.artifact_id, orgId);
+  if (named === undefined) return `the label text it names (artifact ${String(d.artifact_id)}) is not readable at signing time`;
   const symbols = (await client.query(
     `SELECT symbol_code, symbol_name, description, required_by
        FROM labeling_symbols
@@ -368,27 +493,55 @@ const labelingDocumentBinding: ContentBinder = async (client, rest, orgId, ledge
   const content = {
     recipe: LABELING_DOCUMENT_DIGEST_RECIPE,
     labelingDocumentId: Number(rest),
-    deviceName: d.device_name,
-    docKind: d.doc_kind,
-    version: d.version,
-    language: d.language,
-    region: orNull(d.region),
-    udiDi: orNull(d.udi_di),
-    // Its own yyyy-mm-dd text: node-pg reads a DATE as a local midnight.
-    expiresAt: orNull(d.expires_at),
-    artifact: text,
-    symbols: symbols.map((s) => ({ symbolCode: s.symbol_code, symbolName: s.symbol_name, description: orNull(s.description), requiredBy: orNull(s.required_by) })),
+    // expires_at is its own yyyy-mm-dd text: node-pg reads a DATE as a local midnight.
+    ...attestedValues(LABELING_DOCUMENT_ATTESTATION.fields, d),
+    artifact: named,
+    symbols: symbols.map((s) => attestedValues(LABELING_DOCUMENT_ATTESTATION.children.labeling_symbols, s)),
   };
+  return { content, symbols: symbols.length, text: named };
+}
+
+/**
+ * labeling-document:<id>: a device label as its approver attests it, for its
+ * approval, its move to effective and its supersession alike. Its translations
+ * are signed on their own targets, so none is digested here.
+ */
+const labelingDocumentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback, options) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed labeling document pointer');
+  const unknown = otherRecipe(options, LABELING_DOCUMENT_DIGEST_RECIPE);
+  if (unknown) return ledgerFallback(unknown);
+  const read = await labelingDocumentContent(client, rest, orgId);
+  if (typeof read === 'string') return ledgerFallback(read);
   return {
-    digest: sha256CanonicalJson(content),
+    digest: sha256CanonicalJson(read.content),
     basis: BINDING_BASIS.LABELING_DOCUMENT_CONTENT,
-    note: `sha256 (recipe ${LABELING_DOCUMENT_DIGEST_RECIPE}) over labeling document ${rest}: device, kind, version ${String(d.version)}, language, region, UDI-DI and expiry, ${symbols.length} ISO 15223-1 symbol(s), and ${text ? `the sha256 of the label text in artifact ${text.id}` : 'no label text artifact'}. No status, approval stamp, effective date or timestamp is bound.`,
+    note: `sha256 (recipe ${LABELING_DOCUMENT_DIGEST_RECIPE}) over labeling document ${rest}: device, kind, version ${String(read.content.version)}, language, region, UDI-DI and expiry, ${read.symbols} ISO 15223-1 symbol(s), and ${read.text ? `the sha256 of the label text in artifact ${read.text.id}` : 'no label text artifact'}. No status, approval stamp, effective date or timestamp is bound.`,
+    manifest: { bindingRecipe: LABELING_DOCUMENT_DIGEST_RECIPE },
   };
 };
 
-/** labeling-translation:<id>: one translation as its approver attests it, on a live document of the organisation. */
-const labelingTranslationBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+/** The source a v2 translation binds: its document's version and labeling-document/v1 digest, as recorded or as it stands now. */
+async function translationSource(client: SignatureDbClient, docId: number, orgId: number, options: BinderOptions | undefined): Promise<BoundSource | string> {
+  const target = `labeling-document:${docId}`;
+  if (options?.asOfSource) return options.asOfSource.target === target ? options.asOfSource : `the recorded source is ${options.asOfSource.target}, not ${target}`;
+  const read = await labelingDocumentContent(client, String(docId), orgId);
+  if (typeof read === 'string') return `the source document it translates cannot be bound: ${read}`;
+  return { target, version: String(read.content.version), contentDigest: sha256CanonicalJson(read.content) };
+}
+
+/**
+ * labeling-translation:<id>: one translation as its approver attests it, on a
+ * live document of the organisation. Since P-64 (v2) the approval also binds
+ * the source it translates: the document's version and its content digest by
+ * the label's own recipe, recorded on the manifest as `boundSource` so a read
+ * can tell a moved source from an edited translation. v1 is still derived, by
+ * the recipe a signature records, for the approvals taken by it.
+ */
+const labelingTranslationBinding: ContentBinder = async (client, rest, orgId, ledgerFallback, options) => {
   if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed labeling translation pointer');
+  const unknown = otherRecipe(options, LABELING_TRANSLATION_DIGEST_RECIPE, LABELING_TRANSLATION_V1_DIGEST_RECIPE);
+  if (unknown) return ledgerFallback(unknown);
+  const recipe = options?.recipe ?? LABELING_TRANSLATION_DIGEST_RECIPE;
   const { rows } = await client.query(
     `SELECT t.labeling_document_id, t.language, t.translator, t.translation_method,
             t.back_translation_verified, t.artifact_id
@@ -401,22 +554,31 @@ const labelingTranslationBinding: ContentBinder = async (client, rest, orgId, le
   );
   const t = rows[0];
   if (!t) return ledgerFallback('labeling translation not readable at signing time');
-  const text = await namedText(client, t.artifact_id, orgId);
-  if (text === undefined) return ledgerFallback(`the translated text it names (artifact ${String(t.artifact_id)}) is not readable at signing time`);
-  const content = {
-    recipe: LABELING_TRANSLATION_DIGEST_RECIPE,
+  const named = await namedText(client, t.artifact_id, orgId);
+  if (named === undefined) return ledgerFallback(`the translated text it names (artifact ${String(t.artifact_id)}) is not readable at signing time`);
+  const own = {
+    recipe,
     translationId: Number(rest),
     labelingDocumentId: Number(t.labeling_document_id),
-    language: t.language,
-    translator: orNull(t.translator),
-    translationMethod: orNull(t.translation_method),
-    backTranslationVerified: orNull(t.back_translation_verified),
-    artifact: text,
+    ...attestedValues(TRANSLATION_FIELDS, t),
+    artifact: named,
   };
+  const head = `sha256 (recipe ${recipe}) over translation ${rest} (${String(t.language)}) of labeling document ${String(t.labeling_document_id)}: translator, method, back-translation check, and ${named ? `the sha256 of the translated text in artifact ${named.id}` : 'no translated text artifact'}`;
+  if (recipe === LABELING_TRANSLATION_V1_DIGEST_RECIPE) {
+    return {
+      digest: sha256CanonicalJson(own),
+      basis: BINDING_BASIS.LABELING_TRANSLATION_CONTENT,
+      note: `${head}. No status, approval stamp or timestamp is bound.`,
+      manifest: { bindingRecipe: recipe },
+    };
+  }
+  const source = await translationSource(client, Number(t.labeling_document_id), orgId, options);
+  if (typeof source === 'string') return ledgerFallback(source);
   return {
-    digest: sha256CanonicalJson(content),
+    digest: sha256CanonicalJson({ ...own, source: { version: source.version, contentDigest: source.contentDigest } }),
     basis: BINDING_BASIS.LABELING_TRANSLATION_CONTENT,
-    note: `sha256 (recipe ${LABELING_TRANSLATION_DIGEST_RECIPE}) over translation ${rest} (${String(t.language)}) of labeling document ${String(t.labeling_document_id)}: translator, method, back-translation check, and ${text ? `the sha256 of the translated text in artifact ${text.id}` : 'no translated text artifact'}. No status, approval stamp or timestamp is bound.`,
+    note: `${head}, and the source it translates: labeling document ${String(t.labeling_document_id)} at version ${source.version}, content sha256 ${source.contentDigest} (recipe ${LABELING_DOCUMENT_DIGEST_RECIPE}). No status, approval stamp or timestamp is bound.`,
+    manifest: { bindingRecipe: recipe, boundSource: source },
   };
 };
 
@@ -424,8 +586,10 @@ const labelingTranslationBinding: ContentBinder = async (client, rest, orgId, le
  * risk-item:<id>: an ISO 14971 hazard as its residual risk is accepted, with
  * every risk control the residual estimate rests on, in id order.
  */
-const riskResidualAcceptanceBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+const riskResidualAcceptanceBinding: ContentBinder = async (client, rest, orgId, ledgerFallback, options) => {
   if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed risk item pointer');
+  const unknown = otherRecipe(options, RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE);
+  if (unknown) return ledgerFallback(unknown);
   const { rows } = await client.query(
     `SELECT ref_code, hazard, hazardous_situation, harm, sequence_of_events, severity, probability,
             detectability, initial_risk, control_strategy, source, residual_severity,
@@ -448,36 +612,14 @@ const riskResidualAcceptanceBinding: ContentBinder = async (client, rest, orgId,
   const content = {
     recipe: RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE,
     riskItemId: Number(rest),
-    refCode: orNull(r.ref_code),
-    hazard: r.hazard,
-    hazardousSituation: orNull(r.hazardous_situation),
-    harm: r.harm,
-    sequenceOfEvents: orNull(r.sequence_of_events),
-    severity: intOrNull(r.severity),
-    probability: intOrNull(r.probability),
-    detectability: intOrNull(r.detectability),
-    initialRisk: intOrNull(r.initial_risk),
-    controlStrategy: orNull(r.control_strategy),
-    source: orNull(r.source),
-    residualSeverity: intOrNull(r.residual_severity),
-    residualProbability: intOrNull(r.residual_probability),
-    residualRisk: intOrNull(r.residual_risk),
-    benefitRiskRationale: orNull(r.benefit_risk_rationale),
-    controls: controls.map((c) => ({
-      description: c.description,
-      controlType: c.control_type,
-      implementationEvidence: orNull(c.implementation_evidence),
-      verificationEvidence: orNull(c.verification_evidence),
-      effectivenessEvidence: orNull(c.effectiveness_evidence),
-      introducesNewRisk: orNull(c.introduces_new_risk),
-      newRiskItemId: intOrNull(c.new_risk_item_id),
-      status: c.status,
-    })),
+    ...attestedValues(RISK_RESIDUAL_ACCEPTANCE_ATTESTATION.fields, r),
+    controls: controls.map((c) => attestedValues(RISK_RESIDUAL_ACCEPTANCE_ATTESTATION.children.risk_controls, c)),
   };
   return {
     digest: sha256CanonicalJson(content),
     basis: BINDING_BASIS.RISK_RESIDUAL_ACCEPTANCE_CONTENT,
     note: `sha256 (recipe ${RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE}) over risk item ${rest}: hazard, hazardous situation, harm, sequence of events, initial estimate (${String(r.severity)} x ${String(r.probability)}), residual estimate (${String(r.residual_severity)} x ${String(r.residual_probability)}), control strategy, source, benefit-risk rationale, and ${controls.length} risk control(s) with their evidence and status. No status, acceptability flag, project, assignee or timestamp is bound.`,
+    manifest: { bindingRecipe: RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE },
   };
 };
 

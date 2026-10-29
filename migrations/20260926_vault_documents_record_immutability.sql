@@ -77,6 +77,29 @@
 --   - purge_tenant_vault_records also deletes the organisation's archives.
 --   - Nothing is dropped. Replays: CREATE OR REPLACE, triggers and policies
 --     only when absent.
+--
+-- AMENDED 2026-10-29 (P-66, row D6, docs/evidence/D6-ISOLATION-HARDENING/
+-- 2026-10-29/), in place per CLAUDE.md Rule 1:
+--   - vault.document_archives FORCEs row security, as every Vault child table
+--     now does, so the table owner is held to its policies (P-66). FORCE is set
+--     only where it is not yet set.
+--   - The notes above, "the table does not FORCE row security" and "Not
+--     FORCEd, like vault.documents", stopped being true when vault.documents
+--     was FORCEd on 2026-10-14 (20260905_vault_documents_organization_id.sql).
+--     Wherever the owner is not a superuser (a managed Postgres's migration
+--     role), the door then deleted no version, no chunk and nothing that
+--     cascades from a version, and returned no storage address, while the
+--     purge went on. Measured on a real PostgreSQL with a NOSUPERUSER
+--     NOBYPASSRLS owner: 0 versions returned, every Vault row of the purged
+--     tenant left but its archive. CI could not see it: its owner is a
+--     superuser, which no FORCE binds.
+--   - So the door now deletes inside the purged organization's own scope: it
+--     sets app.current_org_id to that organization's uuid, locally, for its
+--     three DELETEs and puts the caller's value back before it returns. The
+--     Vault policies (core.can_write_program) then admit that organization's
+--     rows and no other's, and the predicate names them, so a wrong predicate
+--     can no longer reach another tenant either. The preconditions, the
+--     predicate and what it returns are unchanged.
 -- =============================================================================
 
 DO $vr06$
@@ -201,6 +224,8 @@ BEGIN
   DECLARE
     v_status text;
     v_holds integer := 0;
+    v_org_uuid text;
+    v_caller_org text;
   BEGIN
     IF NULLIF(current_setting('app.rls_enforce', true), '') = 'on'
        AND current_setting('app.current_user_role', true) IS DISTINCT FROM 'app_super_admin' THEN
@@ -219,6 +244,16 @@ BEGIN
       RAISE EXCEPTION 'VAULT_PURGE_REFUSED: organization % has % active legal hold(s); records under hold cannot be destroyed.', p_org, v_holds
         USING ERRCODE = 'raise_exception';
     END IF;
+    -- Row security is FORCEd on the Vault (P-66), so the owner this runs as is
+    -- held to its policies: delete inside the purged organization's own scope
+    -- (amended 2026-10-29, see header), and give the caller its value back.
+    -- to_jsonb, so a schema whose organizations carry no uuid (PGlite fixtures)
+    -- is left in the caller's scope rather than failing.
+    SELECT to_jsonb(o) ->> 'uuid' INTO v_org_uuid FROM public.organizations o WHERE o.id = p_org;
+    v_caller_org := current_setting('app.current_org_id', true);
+    IF v_org_uuid IS NOT NULL THEN
+      PERFORM set_config('app.current_org_id', v_org_uuid, true);
+    END IF;
     -- The deletion archive's snapshots of this organisation's documents
     -- (critique 13, 2026-10-01).
     IF to_regclass('vault.document_archives') IS NOT NULL THEN
@@ -235,6 +270,7 @@ BEGIN
       DELETE FROM vault.documents d
        WHERE (d.organization_id = p_org OR d.program_id IN (SELECT id FROM public.regulatory_programs WHERE organization_id = p_org))
       RETURNING d.storage_version_id::text, d.storage_provider::text;
+    PERFORM set_config('app.current_org_id', COALESCE(v_caller_org, ''), true);
   END;
   $fn$;
 
@@ -293,6 +329,10 @@ BEGIN
     IF to_regprocedure('core.can_access_program(uuid)') IS NOT NULL
        AND to_regprocedure('core.can_write_program(uuid)') IS NOT NULL THEN
       ALTER TABLE vault.document_archives ENABLE ROW LEVEL SECURITY;
+      -- FORCE (amended 2026-10-29, P-66): the owner is no exception.
+      IF NOT (SELECT relforcerowsecurity FROM pg_class WHERE oid = 'vault.document_archives'::regclass) THEN
+        ALTER TABLE vault.document_archives FORCE ROW LEVEL SECURITY;
+      END IF;
       IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'vault.document_archives'::regclass AND polname = 'vault_document_archives_select_policy') THEN
         CREATE POLICY vault_document_archives_select_policy ON vault.document_archives
           FOR SELECT USING (core.can_access_program(program_id));

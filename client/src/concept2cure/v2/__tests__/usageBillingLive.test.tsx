@@ -72,6 +72,14 @@ const CREDITS_RES = {
   },
 };
 
+/* GET /rate-limits (billing-dashboard.ts): the limits the platform enforces,
+   the same for every subscription (P-68; usageRateLimits.test.tsx). */
+const RATE_LIMITS_RES = {
+  tier: 'enterprise', tierRecorded: true, sameForEverySubscription: true,
+  limits: [{ category: 'api', label: 'General requests', windowSeconds: 60, perSignedInUser: 600, perAddress: 100, exemptRoles: [] }],
+  sharedRouteLimits: { appliesTo: [], limits: [] },
+};
+
 function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
 }
@@ -85,13 +93,14 @@ function mockLive(overrides: Record<string, unknown> = {}) {
     if (url === '/api/billing/usage/limits') return ok(overrides[url] ?? LIMITS);
     if (url.startsWith('/api/billing/invoices')) return ok({ billingSetUp: true, invoices: [], hasMore: false, nextCursor: null });
     if (url === '/api/billing/credits') return ok(overrides[url] ?? CREDITS_RES);
+    if (url === '/api/billing/rate-limits') return ok(RATE_LIMITS_RES);
     throw new Error(`unexpected GET ${url}`);
   });
 }
 const invoiceReads = () => apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/billing/invoices'));
 
 const noop = () => {};
-const mount = (id: 'usage' | 'billing') =>
+const mount = (id: 'usage') =>
   render(<UsageBilling surface={surfaceOf(id)} onAsk={noop} onNav={noop} segment="biotech" />);
 
 afterEach(() => {
@@ -145,9 +154,9 @@ describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
 });
 
 describe('UsageBilling — the invoice list moved to Licensing', () => {
-  it.each(['usage', 'billing'] as const)('mounted as %s, reads no invoices and offers no Billing tab', async (id) => {
+  it('reads no invoices and offers no Billing tab', async () => {
     mockLive();
-    const { container } = mount(id);
+    const { container } = mount('usage');
     expect(await screen.findByText('Enterprise plan')).toBeTruthy();
     expect(invoiceReads()).toHaveLength(0);
     const tabs = screen.getAllByRole('button').map((b) => (b.textContent ?? '').trim());
@@ -203,7 +212,7 @@ describe('UsageBilling — service unreachable', () => {
   });
 });
 
-describe("AnA's tab action after the move", () => {
+describe("AnA's tab action after the fold", () => {
   function openTab(tab: string) {
     const resolved = resolveSurfaceAction('usage.open-tab', { tab });
     if (!resolved.ok) throw new Error(resolved.error);
@@ -214,15 +223,15 @@ describe("AnA's tab action after the move", () => {
     return outcome;
   }
 
-  it('opens the tabs the screen has, and says where the invoices went instead of opening one it does not', async () => {
+  it('opens the two tabs the screen has; a billing tab is not offered at all', async () => {
     mockLive();
     mount('usage');
     await screen.findByText('Enterprise plan');
     expect(openTab('limits').status).toBe('applied');
-    expect(await screen.findByText('Rate limits by tier')).toBeTruthy();
-    const billing = openTab('billing');
-    expect(billing.status).not.toBe('applied');
-    expect(billing.reason).toMatch(/Compare subscriptions/);
+    expect(await screen.findByRole('table', { name: 'Rate limits' })).toBeTruthy();
+    // The declaration offers usage and limits only (surface-actions.ts), so a
+    // billing tab is refused before any handler runs.
+    expect(resolveSurfaceAction('usage.open-tab', { tab: 'billing' }).ok).toBe(false);
     expect(invoiceReads()).toHaveLength(0);
   });
 });

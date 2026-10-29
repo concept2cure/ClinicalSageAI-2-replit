@@ -55,6 +55,7 @@ import { downloadBlob } from '../download';
 import { I } from '../icons';
 import type { CommRow } from './AgencyInbox';
 import { RESPONSE_STATE_LABEL as STATE_LABEL, RESPONSE_STATE_TONE as STATE_TONE, type ResponseState } from './agencyQuestionState';
+import { LetterQuestionProposals } from './LetterQuestionProposals';
 
 interface SignatureView {
   signatureId: number;
@@ -391,7 +392,8 @@ function ScopedAgencyResponses({
     (value: unknown): value is QuestionsPayload => isQuestionsPayload(value) && value.letter.id === letter.id, readOwner);
   const authUser = useAuthUser();
   const [busy, setBusy] = React.useState(false);
-  const [adding, setAdding] = React.useState(false);
+  /** The Record-a-question form, open; filled with a question the letter's text numbers (G3), or empty. */
+  const [adding, setAdding] = React.useState<null | { questionRef: string; questionText: string }>(null);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<AgencyQuestionView | null>(null);
   const [classifying, setClassifying] = React.useState<AgencyQuestionView | null>(null);
@@ -427,7 +429,7 @@ function ScopedAgencyResponses({
       });
       if (!res.ok) await assertApiResponseOk(res);
       if (!readOwner.current()) return;
-      setAdding(false);
+      setAdding(null);
       fire(`Question ${v.questionRef} recorded, with an audit entry.`);
       reload();
     } catch (e) {
@@ -633,7 +635,7 @@ function ScopedAgencyResponses({
           </span>
         </div>
         {!closed && viewer.canWrite && (
-          <button className="cc-btn sm" disabled={busy} onClick={() => setAdding(true)}>
+          <button className="cc-btn sm" disabled={busy} onClick={() => setAdding({ questionRef: '', questionText: '' })}>
             {I.plus} Record question
           </button>
         )}
@@ -643,6 +645,11 @@ function ScopedAgencyResponses({
         <p className="cc-q-note" role="note">
           You can read the questions and responses on this letter. {viewer.writeRefusal}
         </p>
+      )}
+
+      {!closed && viewer.canWrite && (
+        <LetterQuestionProposals base={base} version={version} readOwner={readOwner} disabled={busy}
+          onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text })} />
       )}
 
       {questions.length === 0 ? (
@@ -714,6 +721,7 @@ function ScopedAgencyResponses({
 
       {adding && (
         <C2CForm
+          key={`${adding.questionRef}:${adding.questionText.length}`}
           config={{
             eyebrow: 'Agency letter · questions',
             title: 'Record a question',
@@ -721,15 +729,15 @@ function ScopedAgencyResponses({
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record question',
             fields: [
-              { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true },
+              { key: 'questionRef', label: 'Question number', type: 'text', placeholder: 'As the agency numbered it, e.g. Q3', required: true, half: true, default: adding.questionRef },
               { key: 'discipline', label: 'Discipline', type: 'select', options: ['Clinical', 'Nonclinical', 'CMC', 'Biostatistics', 'Labeling', 'Safety', 'Regulatory'], half: true },
               { key: 'severity', label: 'Severity', type: 'seg', options: ['major', 'minor', 'critical'] },
               { key: 'ctdSection', label: 'CTD section (optional)', type: 'text', placeholder: 'e.g. 3.2.P.5.1', half: true },
-              { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true },
+              { key: 'questionText', label: 'Question text', type: 'textarea', placeholder: 'Paste the question verbatim', required: true, default: adding.questionText },
               { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the IR received 2026-10-12', required: true },
             ],
           }}
-          onCancel={() => setAdding(false)}
+          onCancel={() => setAdding(null)}
           onSubmit={(v) => void addQuestion(v)}
         />
       )}

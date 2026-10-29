@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > reads the server tree 3ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > defines no local signing-authority wrapper by a retired name 300ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > detects function, const and let declarations for every retired wrapper 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > does not confuse calls or longer identifiers with retired declarations 1ms
+ ✓ server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 26ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  16:44:39
+   Duration  1.80s (transform 147ms, setup 164ms, import 812ms, tests 340ms, environment 0ms)
+

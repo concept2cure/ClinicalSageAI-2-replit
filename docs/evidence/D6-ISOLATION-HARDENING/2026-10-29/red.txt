@@ -1,0 +1,137 @@
+# Red: the five gaps, measured before the fix
+Real PostgreSQL 16.15 + pgvector, 127.0.0.1:55436 (scratch lane). The HEAD database is built from blank by install-fresh + deploy-migrate at d56be445f, APP_SERVICE_DB_PASSWORD set (the CI real-database lane's pair).
+
+## §1 The HEAD database: Vault row security, the citation policies, the CDI references
+            table             | rls | forced | policies 
+------------------------------+-----+--------+----------
+ vault.document_archives      | t   | f      |        4
+ vault.document_catalog       | t   | f      |        4
+ vault.document_chunks        | t   | f      |        4
+ vault.document_read_receipts | t   | f      |        4
+ vault.documents              | t   | t      |        8
+ vault.evidence_citations     | t   | f      |        4
+ vault.legal_holds            | t   | t      |        1
+ vault.retention_policies     | f   | f      |        0
+
+          polname           | polcmd | policy_oid | checks_both_ends 
+----------------------------+--------+------------+------------------
+ rls_vault_citations_delete | d      |      86526 | 
+ rls_vault_citations_insert | a      |      86524 | f
+ rls_vault_citations_select | r      |      86523 | 
+ rls_vault_citations_update | w      |      86525 | 
+
+           collection            | sources | current | with_fit | with_predecessor 
+---------------------------------+---------+---------+----------+------------------
+ cdi-csr-reference-2026-10-27-v1 |      78 |      78 |       78 |                0
+
+ current_public_with_fit 
+-------------------------
+                      78
+
+(checks_both_ends: the INSERT/UPDATE WITH CHECK names core.get_program_org_id. 78 current public references carry metadata.publicReference.fit, targetStudyId NCT05330182.)
+
+## §2 psql probes on the HEAD database (seed: two tenants, one row in every Vault table that holds tenant data)
+### citation probe (runtime role, tenant B scope)
+    role     | a_doc_visible_to_b 
+-------------+--------------------
+ app_service |                  0
+
+ outcome  |          source_document_id          |         evidence_document_id         
+----------+--------------------------------------+--------------------------------------
+ inserted | 99102000-0000-4000-8000-00000000d0b1 | 99101000-0000-4000-8000-00000000d0a1
+
+### owner probe (NOSUPERUSER NOBYPASSRLS owner of every vault table, tenant A scope)
+      role       | superuser | bypassrls 
+-----------------+-----------+-----------
+ iso_owner_probe | off       | f
+
+            table             | forced | caller_is_owner 
+------------------------------+--------+-----------------
+ vault.document_archives      | f      | t
+ vault.document_catalog       | f      | t
+ vault.document_chunks        | f      | t
+ vault.document_read_receipts | f      | t
+ vault.documents              | t      | t
+ vault.evidence_citations     | f      | t
+ vault.legal_holds            | t      | t
+
+         probe          | documents | document_chunks | document_catalog | document_read_receipts | evidence_citations | document_archives 
+------------------------+-----------+-----------------+------------------+------------------------+--------------------+-------------------
+ own row (A)            |         1 |               1 |                1 |                      1 |                  1 |                 1
+ other tenant's row (B) |         0 |               1 |                1 |                      1 |                  1 |                 1
+
+### purge door probe (door owned by that role; runtime role, platform scope, purging A)
+ versions_returned_by_door 
+---------------------------
+                         0
+
+   tenant   | documents | chunks_of_live_docs | chunks | catalog | receipts | citations | archives 
+------------+-----------+---------------------+--------+---------+----------+-----------+----------
+ A (purged) |         2 |                   1 |      1 |       1 |        1 |         1 |        0
+ B          |         1 |                   1 |      1 |       1 |        1 |         1 |        1
+
+
+## §3 This change's finished tests against HEAD's product files (the 4 migrations, part11-compliance.ts, mdx-client-review.ts, public-reference-sources.ts swapped to HEAD d140aefa5; restored byte for byte after)
+## HEAD d140aefa5 product files in place: migrations/20260905_document_catalog.sql migrations/20260905b_vault_document_chunks.sql migrations/20260911_vault_evidence_citations.sql migrations/20260926_vault_documents_record_immutability.sql server/routes/part11-compliance.ts server/routes/mdx-client-review.ts server/services/clinical-regulatory-evidence/public-reference-sources.ts
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot cite A's document as evidence for its own claim
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cites its own documents (the policy is not a blanket deny)
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot re-point its own citation at A's document
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a delegate that may read A's program still cannot cite A's document
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > the application writer refuses a foreign document before the database is asked
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a replay replaces no citation policy (the replacement is conditional on the policy text)
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > every Vault table with row-level security FORCEs it
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the table owner, not a superuser, reads only its own tenant's rows
+ × tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > filters the actual query, preserves synopsis scope, and never returns source text or raw metadata
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > fails closed when a catalog row has invalid or incomplete reference metadata
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > escapes LIKE wildcards instead of treating a percent sign as an unbounded search
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > treats SQL-shaped search inputs as literal values across every optional filter
+ × server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > never returns or searches a stored fit: a public reference names no tenant study (P-66)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > paginates stable source ids and applies indication/phase filters
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > rejects private, ambiguously scoped, retired, deleted and client-document records in SQL
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > works under the real explicit-public SELECT policy with RLS enforced
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > public reference catalog and explicit scope > allows catalog-only discovery while refusing unretained text
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > returns exact page locations, source hashes and unreviewed external-evidence status
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > preserves a page-specific OCR method and unreviewed status
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > names the exact FDA ZIP member and PDF page instead of appending a PDF fragment to an archive
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > lists review_required metadata but refuses text before reading the file
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > lists restricted metadata but refuses text before reading the file
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > refuses altered text, page hashes, unmapped text and wrong retention identity
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > requires the allowed status and current source again after original-file verification
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > caps returned characters and identifies truncation without splitting Unicode
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > admitted page reads > rejects invalid page windows, out-of-range pages and unbounded search inputs
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > deployed original verification > checks actual PDF bytes and refuses a changed or missing file
+ ✓ server/services/clinical-regulatory-evidence/__tests__/public-reference-sources.pglite.integration.test.ts > deployed original verification > refuses traversal and a checksum-named symlink outside the permitted directory
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project with 404, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project that does not exist with 404, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's own deleted project with 404, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > answers 503 when ownership cannot be checked, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > shares the admitted project's client-visible tasks only, and says the scope is that project
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project id with 404, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project id that does not exist with 404, and reads no task
+ × server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's project of another program with 404, and reads no task
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a program and its own project id: the room is that project's
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a project id of the organization narrows the room to that project
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > with neither, it is the organization's room, says so, and holds no other organization's task
+ × server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > member is refused with the ledger's 403, and nothing is read
+ × server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > user is refused with the ledger's 403, and nothing is read
+ × server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > viewer is refused with the ledger's 403, and nothing is read
+ × server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > editor is refused with the ledger's 403, and nothing is read
+ × server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > reviewer is refused with the ledger's 403, and nothing is read
+ ✓ server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > owner reads the verdict over its own organisation
+ ✓ server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > admin reads the verdict over its own organisation
+ ✓ server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > manager reads the verdict over its own organisation
+ ✓ server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > approver reads the verdict over its own organisation
+ ✓ server/routes/__tests__/part11-chain-integrity-reader-gate.test.ts > GET /audit-trail/chain-integrity takes the audit reader gate (P-65) > the reader roles are the ledger's: owners, admins and managers
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  14 failed | 27 passed (41)
+restored: every file of this change byte for byte
+
+## §4 Pre-existing, found on the way: the reader test 'fails closed when a catalog row has invalid or incomplete reference metadata' fails at HEAD
+HEAD's public-reference-sources.ts and its HEAD test, run from a scratch copy: 1 failed | 19 passed (20) — 'promise resolved { sources: [ {…(23)} ] } instead of rejecting'. The broken fixture lacked the two flags the SQL filters on, so the row never reached the manifest check. Fixed in the fixture (see README).
+
+## §5 The seed's red is §1: at HEAD every tenant's reader is served 78 current references naming NCT05330182. The seed tests import SUPERSEDED_SEED_MIGRATIONS, which HEAD's generator does not export, so they cannot run against HEAD.

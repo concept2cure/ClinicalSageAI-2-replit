@@ -1,0 +1,17 @@
+# M3: DHF read includes archived documents
+# file: server/routes/mdx-engineering.ts
+# command: npx vitest run server/routes/__tests__/mdx-engineering-per-product.test.ts
+# exit: 1
+# original sha256 0cab5e0a44820cd6a78329cb41e472e5a5d2d8d44119526d10f3b72c6742bb7d; restored byte for byte: True
+
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 31ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit 7ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary 10ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 6ms
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only

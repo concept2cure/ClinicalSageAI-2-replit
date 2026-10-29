@@ -1,0 +1,22 @@
+# M15: the admission stamps a project it never asked about
+# file: server/routes/mdx-qms-context.ts
+# command: npx vitest run server/routes/__tests__/qms-change-project.test.ts
+# exit: 1
+# original sha256 d4d052e057d85e491a052ab86835524a79b2196d789ca10ebfcc2f553ea219d9; restored byte for byte: True
+
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking 29ms
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses another organization's project with 404 "Project not found", and writes nothing 7ms
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses a project that does not exist with 404 "Project not found", and writes nothing 3ms
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses an id that is not a project id with 404 "Project not found", and writes nothing 3ms
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > answers 503 when ownership cannot be checked, and writes nothing 3ms
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+  "level": "error",
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses another organization's project with 404 "Project not found", and writes nothing
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses a project that does not exist with 404 "Project not found", and writes nothing
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses an id that is not a project id with 404 "Project not found", and writes nothing
+    103|     expect(res.body.error).toBe('Project not found');
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > answers 503 when ownership cannot be checked, and writes nothing
+    111|     expect(res.body.error).toBe('VERIFICATION_UNAVAILABLE');

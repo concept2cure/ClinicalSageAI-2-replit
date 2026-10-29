@@ -364,7 +364,8 @@ describe('3. an approval never outlives what it signed', () => {
     const res = await patchTrans(id, edit);
     expect(await trans(id)).toMatchObject({ status: 'approved', approved_by: COLLEAGUE, language: 'de' });
     expect(res.status).toBe(409);
-    expect(res.body.details.code).toBe('TRANSLATION_APPROVED_LOCKED');
+    // The one refusal of signed content since P-63 (services/part11/signed-content-lock.ts).
+    expect(res.body.details.code).toBe('SIGNED_CONTENT_LOCKED');
   });
 
   it('moving an approved translation back with no reason: 400, it stays approved, and no ledger row is written', async () => {
@@ -403,7 +404,8 @@ describe('3. an approval never outlives what it signed', () => {
     const res = await patchDoc(id, { version: '2.0' });
     expect(await doc(id)).toMatchObject({ status, version: '1.0', approved_by: COLLEAGUE });
     expect(res.status).toBe(409);
-    expect(res.body.details.code).toBe('LABELING_DOCUMENT_CONTROLLED');
+    // The one refusal of signed content since P-63 (services/part11/signed-content-lock.ts).
+    expect(res.body.details.code).toBe('SIGNED_CONTENT_LOCKED');
   });
 
   it.each(['approved', 'effective', 'superseded'])('moving a %s document back to draft with no reason: 400, and it stays as signed', async (status) => {

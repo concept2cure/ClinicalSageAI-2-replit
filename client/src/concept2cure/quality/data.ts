@@ -1,4 +1,4 @@
-import type { RouteRoundView } from '../v2/surfaces/VaultReviewRoute';
+import type { RouteRoundView } from '../v2/reviewRoute/routeRound';
 /**
  * Quality / SOP register — typed model, the Quality system template family, and
  * fixtures.
@@ -64,6 +64,25 @@ export interface QmsDoc {
   reviewRoute?: RouteRoundView | null;
   /** The route could not be read: never "no route". */
   reviewRouteUnread?: boolean;
+  /** §11.50: the approval of the version in force; null when nothing is in force (server register-signatures.ts). */
+  approvalSignature?: RegisterSignature | null;
+  /** §11.50: who retired a retired document; null for any other. */
+  retirementSignature?: RegisterSignature | null;
+}
+
+/**
+ * A signature as the register shows it. `state` is the server's verdict:
+ * an approval is valid, withdrawn, changed (the content no longer matches),
+ * unverified or unavailable; a retirement is signed, withdrawn, unsigned
+ * (recorded before retirement was signed) or unavailable.
+ */
+export interface RegisterSignature {
+  state: string;
+  version?: string;
+  signerName: string | null;
+  signedAt: string | null;
+  meaning: string | null;
+  reason?: string | null;
 }
 
 /** A signed periodic review, as the register shows it. */

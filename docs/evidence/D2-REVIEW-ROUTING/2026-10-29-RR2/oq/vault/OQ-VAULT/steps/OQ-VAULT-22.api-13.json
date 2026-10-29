@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5201/api/c2c/project-vault/b80112f2-5d11-4284-bbe5-a909d26e77e2/documents/d38654f7-128d-40da-a03a-8c518550e1ad/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 78,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "annotations": [
+          {
+            "id": "b7423a68-c664-42c1-afe5-9413c52d6973",
+            "parentId": null,
+            "versionId": "d38654f7-128d-40da-a03a-8c518550e1ad",
+            "versionLabel": "1.0",
+            "programId": "b80112f2-5d11-4284-bbe5-a909d26e77e2",
+            "kind": "request_changes",
+            "anchor": {
+              "kind": "text",
+              "quote": "The dosing table",
+              "charStart": 11,
+              "charEnd": 27,
+              "textSha256": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595"
+            },
+            "anchorCurrent": true,
+            "status": "resolved",
+            "body": "Give the dose per kilogram.",
+            "bodySha256": "b5d58b65cc744024ee9249745cbfcb01517934bc141e1b8fd6f093e835bed146",
+            "authorId": 6,
+            "authorName": "OQ Runner",
+            "createdAt": "2026-10-29T18:29:18.794Z",
+            "lifecycleStage": null,
+            "resolution": {
+              "byId": 6,
+              "byName": "OQ Runner",
+              "at": "2026-10-29T18:29:19.705Z",
+              "note": "Dose per kilogram added in the next version.",
+              "addressedIn": null
+            },
+            "retraction": null,
+            "replies": [
+              {
+                "id": "865e5ff0-b25c-4c9c-aa08-7a70f0b892ea",
+                "parentId": "b7423a68-c664-42c1-afe5-9413c52d6973",
+                "versionId": "d38654f7-128d-40da-a03a-8c518550e1ad",
+                "versionLabel": "1.0",
+                "programId": "b80112f2-5d11-4284-bbe5-a909d26e77e2",
+                "kind": "comment",
+                "anchor": null,
+                "anchorCurrent": null,
+                "status": "open",
+                "body": "Agreed.",
+                "bodySha256": "49721faa8421febb20dcbfb1501817c14af322c3323990fead880c2c9b360363",
+                "authorId": 6,
+                "authorName": "OQ Runner",
+                "createdAt": "2026-10-29T18:29:19.105Z",
+                "lifecycleStage": null,
+                "resolution": null,
+                "retraction": null,
+                "replies": []
+              }
+            ]
+          },
+          {
+            "id": "e9d98e5a-b3e5-44db-9383-90f76159481a",
+            "parentId": null,
+            "versionId": "d38654f7-128d-40da-a03a-8c518550e1ad",
+            "versionLabel": "1.0",
+            "programId": "b80112f2-5d11-4284-bbe5-a909d26e77e2",
+            "kind": "comment",
+            "anchor": {
+              "kind": "document"
+            },
+            "anchorCurrent": null,
+            "status": "retracted",
+            "body": "Posted on the wrong document.",
+            "bodySha256": "3bd61b1fe282041f6a4f9e8d8dc6fe474d2a19cb3d29e89fcfe47260f7a14c3a",
+            "authorId": 6,
+            "authorName": "OQ Runner",
+            "createdAt": "2026-10-29T18:29:19.997Z",
+            "lifecycleStage": null,
+            "resolution": null,
+            "retraction": {
+              "byId": 6,
+              "byName": "OQ Runner",
+              "at": "2026-10-29T18:29:20.587Z",
+              "reason": "Posted on the wrong document by mistake."
+            },
+            "replies": []
+          }
+        ],
+        "openByVersion": [
+          {
+            "versionId": "d38654f7-128d-40da-a03a-8c518550e1ad",
+            "versionLabel": "1.0",
+            "current": true,
+            "open": 0,
+            "openChangeRequests": 0
+          }
+        ]
+      }
+    }
+  }
+}

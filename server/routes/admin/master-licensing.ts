@@ -52,7 +52,7 @@
 
 import { Router, Request, Response } from 'express';
 import { query } from '../../db';
-import { isGrantExpired } from '../../services/license-manager';
+import { isGrantExpired, readLicenseInfo } from '../../services/license-manager';
 import { createScopedLogger } from '../../utils/logger';
 /*
  * WO-16C #133. All five governed mutations on this router recorded their
@@ -307,6 +307,10 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
         ORDER BY am.sort_order NULLS LAST, am.module_id`,
       [id],
     );
+    /* A fold's target is held through its folded module's live grant (decision
+       P-61 item 4). The rail reads that from the licence resolver, so the
+       console reads the same answer rather than a second copy of the mapping. */
+    const heldThroughFolds = (await readLicenseInfo(id))?.heldThroughFolds ?? {};
 
     return res.json({
       organization: {
@@ -323,13 +327,16 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
         // through the same isGrantExpired, so the console does too. It used to
         // read 'subscribed' here after the customer had lost the module.
         const lapsed = m.enabled === true && isGrantExpired(m.expires_at);
-        const subscriptionState: 'enabled' | 'disabled' | 'none' = lapsed
+        const ownState: 'enabled' | 'disabled' | 'none' = lapsed
           ? 'none'
           : m.enabled === true
             ? 'enabled'
             : m.enabled === false
               ? 'disabled'
               : 'none';
+        // The module's own row decides first, as in getModuleCatalog.
+        const heldThrough = ownState === 'none' ? heldThroughFolds[m.module_id] : undefined;
+        const subscriptionState = heldThrough !== undefined ? 'enabled' : ownState;
         const minTier = lowestTier(meta.tiers);
         const industries = Array.isArray(meta.industries) ? meta.industries : [];
         const verdict = effectiveVerdict({
@@ -345,6 +352,7 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
           category: m.category ?? null,
           minTier,
           subscriptionState,
+          ...(heldThrough !== undefined ? { heldThrough } : {}),
           ...verdict,
         };
       }),

@@ -50,8 +50,8 @@ export const MDX_NAV_V2: NavItem[] = [
 
   // System — deliberately empty. Admin is a PRODUCT-level surface, not a
   // per-workstream one: the device/diagnostics workstream embeds this module
-  // inside the ui-v2 product shell, whose single AdminConsole serves every
-  // client type. Keeping a separate "Admin and Access" here produced two
+  // inside the ui-v2 product shell, whose single administration surface
+  // (admin-console) serves every client type. Keeping a separate "Admin and Access" here produced two
   // admins (one per client type); it was removed so there is one product admin.
 ];
 

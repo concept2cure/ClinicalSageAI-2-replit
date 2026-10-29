@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
+import { nctNumberOf } from '../../../shared/csr-source-input';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
 import { agencyResponseImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
@@ -314,20 +315,23 @@ export interface CsrAssemblySource {
   sections: MaterializedWorkflowSource['sections']; gaps: string[];
   /** When the newest saved section was generated: the assembled PDFs are stamped from content, never the clock. */
   lastGeneratedAt: Date | null;
+  /** The study's ClinicalTrials.gov registration, as the job's approved source stated it; null when it stated none. */
+  nctNumber: string | null;
 }
 export async function materializeCsrAssemblySource(input: WorkflowMaterializationInput, q: Queryable): Promise<CsrAssemblySource> {
   if (input.source.kind !== 'csr') return fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact CSR job.');
   const jobId = input.source.jobId;
   const materialized = await materializeWorkflowSource(input, q);
   try {
-    const { rows } = await q.query(`SELECT j.study_id, j.source_run_id, (SELECT max(o.generated_at) FROM csr_section_outputs o
+    const { rows } = await q.query(`SELECT j.study_id, j.source_run_id, j.study_info_snapshot, (SELECT max(o.generated_at) FROM csr_section_outputs o
       WHERE o.job_id = j.id AND o.organization_id = j.organization_id) AS last_generated_at
       FROM csr_build_jobs j WHERE j.id = $1 AND j.organization_id = $2`, [jobId, input.organizationId]);
     const row = rows[0] as Record<string, unknown> | undefined;
     if (!row || typeof row.study_id !== 'string' || (row.source_run_id != null && typeof row.source_run_id !== 'string')) return fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved CSR job identification is invalid.');
     const last = row.last_generated_at == null ? null : new Date(row.last_generated_at as string);
     return { jobId, studyId: row.study_id, sourceRunId: (row.source_run_id as string | null) ?? null, title: materialized.origin.title,
-      fingerprint: materialized.fingerprint, sections: materialized.sections, gaps: materialized.gaps, lastGeneratedAt: last && !Number.isNaN(last.getTime()) ? last : null };
+      fingerprint: materialized.fingerprint, sections: materialized.sections, gaps: materialized.gaps, lastGeneratedAt: last && !Number.isNaN(last.getTime()) ? last : null,
+      nctNumber: nctNumberOf(csrStudyInfo({ study_info_snapshot: row.study_info_snapshot } as CsrJob)) };
   } catch (error) {
     if (error instanceof WorkflowSourceImportError) throw error;
     sourceLogger.error('Saved CSR assembly source read failed', { message: error instanceof Error ? error.message : 'Unknown read failure' });

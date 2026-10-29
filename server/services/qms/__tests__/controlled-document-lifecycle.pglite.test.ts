@@ -9,7 +9,13 @@ vi.mock('../qms-review-route', async (original) => ({
 }));
 const QMS_ROUTE = { reviewers: [], approvers: [8], approvalDueDate: '2099-01-01' };
 
-vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction: async () => ({ actionId: 'action', auditId: 'audit', sha256Chain: 'chain' }) }));
+// The ledger write, recorded so a case can read what it was given, and failed on request (MR-12 Stage 5 step 5).
+const LEDGER = vi.hoisted(() => ({ payloads: [] as Array<Record<string, unknown>>, failNext: false }));
+vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction: async (_client: unknown, action: { payload: Record<string, unknown> }) => {
+  if (LEDGER.failNext) { LEDGER.failNext = false; throw new Error('ledger write failed'); }
+  LEDGER.payloads.push(action.payload);
+  return { actionId: 'action', auditId: 'audit', sha256Chain: 'chain' };
+} }));
 vi.mock('../../c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }), canonicalIdFor: async () => null, DocumentAliasConflictError: class extends Error {} }));
 vi.mock('../../authoring/authoring-permissions', async (original) => ({
   ...await original<typeof import('../../authoring/authoring-permissions')>(), grantAuthoringPermission: async () => undefined,
@@ -109,10 +115,21 @@ describe('real canonical QMS content and immutable signed revisions', () => {
     expect((await db.query('SELECT id FROM authoring_documents WHERE id=$1',[unrelated])).rows).toHaveLength(0);
   });
 
+  it('records an edit with what it changed from and to, and a failed ledger write leaves the document unchanged', async () => {
+    const row = (await db.query<any>('SELECT * FROM qms_documents ORDER BY id LIMIT 1')).rows[0];
+    LEDGER.failNext = true;
+    await expect(updateControlledQmsDocument(ctx, row.id, { nextReviewDate: '2027-10-29', reason: 'Set the first review date' })).rejects.toThrow(/ledger write failed/);
+    expect((await db.query<any>('SELECT next_review_date FROM qms_documents WHERE id=$1', [row.id])).rows[0].next_review_date).toBeNull();
+    await updateControlledQmsDocument(ctx, row.id, { nextReviewDate: '2027-10-29', reason: 'Set the first review date' });
+    expect(LEDGER.payloads.at(-1)).toMatchObject({ kind: 'update-register', changes: { nextReviewDate: { from: null, to: '2027-10-29' } } });
+    expect(Object.keys(LEDGER.payloads.at(-1)!.changes as object)).toEqual(['nextReviewDate']);
+  });
+
   it('review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy', async () => {
     const row = (await db.query<any>('SELECT * FROM qms_documents ORDER BY id LIMIT 1')).rows[0];
     await db.query(`UPDATE authoring_sections SET content = '<p>Use verified document numbers.</p>' WHERE doc_id=$1 AND code='qms-purpose'`,[row.authoring_document_id]);
     await updateControlledQmsDocument(ctx,row.id,{status:'in_review',reason:'Saved text ready for review',route:QMS_ROUTE});
+    expect(LEDGER.payloads.at(-1)).toMatchObject({ kind: 'send-for-review', changes: { status: { from: 'draft', to: 'in_review' } } });
     await expect(db.query(`UPDATE authoring_sections SET content = 'tampered' WHERE doc_id=$1`,[row.authoring_document_id])).rejects.toThrow(/QMS_DOCUMENT_CONTROLLED/);
     await db.exec('BEGIN');
     await expect(approveQmsDocumentSigned({query:(sql,args)=>db.query(sql,args)},

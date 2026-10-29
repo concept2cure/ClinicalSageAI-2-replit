@@ -15,16 +15,16 @@
  *
  * ## Scope honesty
  *
- * The panels do not all have the same tenancy granularity, because the
- * underlying tables do not:
+ * Each panel's store, and how it is read for the project:
  *
  *   risks      risk_items                 org + program   → program-scoped
  *   trace      c2c_design_controls        org + program   → program-scoped
  *   issues     qms_nonconforming_products org + program   → program-scoped
  *   documents  concept2cure_artifacts     org + project bridge, plus
  *              software_lifecycle_items   org + program   → program-scoped
- *   dhf        cerv2_510k_sections        org only        → organization-scoped
- *   ecrs       change_requests            org only        → organization-scoped
+ *   dhf        c2c_document_sections      the project's c2c_documents
+ *                                         (org_id + project_id) → program-scoped
+ *   ecrs       qms_change_controls        org + program   → program-scoped
  *
  * Rather than quietly presenting org-wide rows as though they belonged
  * to the selected program, every panel reports its own `scope` in
@@ -43,21 +43,21 @@
  *     the device Vault reads (server/routes/mdx-vault.ts).
  *   Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/engineering-panels-keyed/.
  *
- * Still the organization's, and why neither is narrowed by a key:
- *   - dhf: cerv2_510k_sections holds ONE device kit per organization. Its
- *     unique key is (organization_id, section_key)
- *     (migrations/20260506_kit_section_draft_provenance.sql), and every writer
- *     (the cerv2-sections routes, write_kit_section, the AnA-RI
- *     section.update command) addresses a section by organization and key or
- *     id. A program column would let one project hold each section and no
- *     other project ever hold its own. Per-project sections are a change to
- *     the kit store and its writers, not to this read.
- *   - ecrs: nothing writes change_requests. No route, service, AnA tool, seed
- *     or migration inserts a row; shared/schema.ts declares it and
- *     migrations/0000_sweet_joseph.sql creates it. A key no writer stamps
- *     would make an always-empty panel read as "this project has no change
- *     requests" while change controls are recorded in qms_change_controls
- *     (server/services/qms/changeControl.service.ts).
+ * Narrowed under founder decision P-60 (2026-10-29): a device or diagnostics
+ * company runs several products, and their design history and design changes
+ * are per product (21 CFR 820.30(j), ISO 13485 §7.3.10). Evidence:
+ * docs/evidence/D2-ONE-ANA/2026-10-29/engineering-per-product/.
+ *   - dhf: the project's own document sections (c2c_document_sections under
+ *     the c2c_documents whose project_id is the program). It no longer reads
+ *     cerv2_510k_sections, which holds ONE device kit per organization (unique
+ *     on organization and section key, 20260506), so it is not shown under a
+ *     project. The panel is the project's authored sections and their status,
+ *     not an inspected design history file index.
+ *   - ecrs: the project's change controls from the one change register,
+ *     qms_change_controls (server/services/qms/changeControl.service.ts), by
+ *     the program key migrations/20261029l_qms_change_controls_program_key.sql
+ *     adds, which POST /api/mdx/qms/changes and AnA qms_change_create stamp.
+ *     It no longer reads change_requests, which nothing writes.
  *
  * Every panel degrades independently: a missing table (42P01, pre-
  * migration tenants) yields an empty array for that panel, never a 500
@@ -147,12 +147,19 @@ function riskState(status: string | null): 'verified' | 'in-progress' | 'open' {
   return 'open';
 }
 
-/** change_requests.status → the surface's ECR state vocabulary. */
+/**
+ * qms_change_controls.status (CHANGE_STATES, changeControl.service.ts) → the
+ * surface's ECR vocabulary. 'open' (proposed) and 'review' (under assessment)
+ * are the changes still awaiting a decision, which the screen counts as open
+ * change requests. An approved change being implemented or verified is decided
+ * and under way ('approved'); closed, rejected and cancelled are over. An
+ * unknown state reads as open, so it is looked at rather than hidden.
+ */
 function ecrState(status: string | null): 'open' | 'review' | 'approved' | 'closed' {
   const s = (status ?? '').toLowerCase();
-  if (s === 'completed' || s === 'rejected' || s === 'failed') return 'closed';
-  if (s === 'approved') return 'approved';
-  if (s === 'pending') return 'review';
+  if (s === 'closed' || s === 'rejected' || s === 'cancelled') return 'closed';
+  if (s === 'approved' || s === 'in_implementation' || s === 'verification') return 'approved';
+  if (s === 'under_assessment') return 'review';
   return 'open';
 }
 
@@ -320,80 +327,106 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       };
     });
 
-    /* ── DHF sections — organization-scoped (see the header: the kit store
-          holds one kit per organization) ──────────────────────────────── */
+    /* ── Design history — program-scoped (P-60, 2026-10-29) ──────────────
+       The sections of the project's own documents. c2c_documents.project_id
+       IS the regulatory_programs key (migrations/20260528_phase9_document_schema.sql),
+       held to the document's organization by c2c_documents_project_same_org_fk
+       (20260926b, NOT VALID), so no bridge through projects is needed; the
+       organization is still repeated, so a legacy row naming this program from
+       another organization's document pulls nothing in. An archived document
+       is not read. An empty heading (todo, with sections filed under it) is
+       left out by the rule the documents' own readiness counts by
+       (c2c_document_counted_readiness, 20260528), so it is never called a
+       blocker. This is what was authored here as document sections, not an
+       inspected design history file index. On a failed read the panel is named
+       in meta.unavailable, never shown as empty. */
     const dhfRows = await panel<{
       id: number;
-      section_number: string;
-      section_title: string;
+      section_key: string;
+      label: string;
       status: string | null;
-      is_required: boolean | null;
-      completion_percentage: number | null;
+      mandatory: boolean | null;
+      version: number | null;
       updated_at: Date | null;
+      document_id: string;
+      document_title: string;
     }>(
       'dhf',
-      `SELECT id, section_number, section_title, status, is_required,
-              completion_percentage, updated_at
-         FROM cerv2_510k_sections
-        WHERE organization_id = $1 AND category = 'device'
-        ORDER BY display_order NULLS LAST, section_number`,
-      [orgId],
+      `SELECT s.id, s.section_key, s.label, s.status, s.mandatory, s.version, s.updated_at,
+              d.id AS document_id, d.title AS document_title
+         FROM c2c_document_sections s
+         JOIN c2c_documents d ON d.id = s.document_id
+        WHERE d.org_id = $1 AND d.project_id = $2::uuid AND d.status <> 'archived'
+          AND (s.status <> 'todo' OR NOT EXISTS (
+                SELECT 1 FROM c2c_document_sections held
+                 WHERE held.document_id = s.document_id AND held.parent_key = s.section_key))
+        ORDER BY d.created_at, d.id, s.path_order, s.id`,
+      [orgId, programId],
       unavailable,
     );
 
     const dhf = dhfRows.map((d) => {
-      const raw = (d.status ?? 'draft').toLowerCase();
+      const raw = (d.status ?? 'todo').toLowerCase();
+      /* Ready is approved or locked, the readiness rule's numerator. A
+         mandatory section with nothing written blocks its document. */
       const status =
-        raw === 'validated' || raw === 'approved'
+        raw === 'approved' || raw === 'locked'
           ? 'ready'
-          : raw === 'review' || raw === 'in_review'
+          : raw === 'review'
             ? 'review'
-            : d.is_required && raw === 'empty'
+            : d.mandatory && raw === 'todo'
               ? 'blocked'
               : 'draft';
       return {
         id: String(d.id),
-        num: d.section_number,
-        label: d.section_title,
-        ver: '—',
+        num: d.section_key,
+        label: d.label,
+        ver: d.version === null ? '—' : `v${d.version}`,
         owner: '—',
         updated: ago(d.updated_at),
         status,
-        meta: `${d.completion_percentage ?? 0}% complete${d.is_required ? ' · required' : ''}`,
+        meta: `${d.document_title}${d.mandatory ? ' · mandatory' : ''}`,
+        documentId: d.document_id,
+        document: d.document_title,
       };
     });
 
-    /* ── Engineering change requests — organization-scoped (see the
-          header: nothing writes change_requests) ──────────────────────── */
+    /* ── Design changes — program-scoped (P-60, 2026-10-29) ─────────────
+       The project's own change controls from the one change register, by the
+       program key 20261029l adds. A change with no project is the
+       organization's, which the Quality register lists; another project's is
+       that project's. Neither is read here. Every live change of the project
+       is read, not the newest 50, so the open count counts all of them. On a
+       database without the column the read fails and the panel is named in
+       meta.unavailable, never shown as empty. */
     const ecrRows = await panel<{
-      id: string;
-      entity_type: string;
-      reason: string | null;
-      priority: string | null;
+      id: number;
+      change_number: string;
+      title: string;
+      change_type: string | null;
+      classification: string | null;
+      risk_level: string | null;
       status: string | null;
-      initiated_by: string;
       created_at: Date | null;
-      new_value: string;
     }>(
       'ecrs',
-      `SELECT id, entity_type, reason, priority, status, initiated_by, created_at, new_value
-         FROM change_requests
-        WHERE organization_id = $1
-        ORDER BY created_at DESC NULLS LAST
-        LIMIT 50`,
-      [orgId],
+      `SELECT id, change_number, title, change_type, classification, risk_level, status, created_at
+         FROM qms_change_controls
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        ORDER BY created_at DESC, id DESC`,
+      [orgId, programId],
       unavailable,
     );
 
     const ecrs = ecrRows.map((e) => ({
-      id: `ECR-${e.id.slice(0, 8)}`,
-      title: e.reason || `${e.entity_type} change`,
-      impact: e.entity_type,
+      id: e.change_number,
+      title: e.title,
+      impact: (e.change_type ?? 'other').replace(/_/g, ' '),
       opened: ago(e.created_at),
       state: ecrState(e.status),
-      owner: e.initiated_by,
-      riskChange: e.priority ? `${e.priority} priority` : '—',
-      linked: e.entity_type,
+      owner: '—',
+      riskChange: [e.classification, e.risk_level ? `${e.risk_level} risk` : null].filter(Boolean).join(' · ') || '—',
+      linked: '—',
     }));
 
     /* ── Non-conformances — program-scoped ───────────────────────────────
@@ -535,9 +568,11 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
 
     /* ── Summary metrics, derived from the same rows the panels show,
           so a card can never disagree with the table beneath it. ────── */
-    const requiredDhf = dhfRows.filter((d) => d.is_required);
+    /* The project's mandatory document sections approved or locked, over its
+       mandatory sections; the screen calls it that, not DHF completion. */
+    const requiredDhf = dhfRows.filter((d) => d.mandatory);
     const readyDhf = requiredDhf.filter((d) =>
-      ['validated', 'approved'].includes((d.status ?? '').toLowerCase()),
+      ['approved', 'locked'].includes((d.status ?? '').toLowerCase()),
     );
     const summary = {
       dhfCompletion: requiredDhf.length
@@ -577,13 +612,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
     if (unavailable.some((n) => SUMMARY_INPUTS.includes(n))) unavailable.push('summary');
     if (unavailable.includes('software')) unavailable.push('documents');
 
-    /* dhf and ecrs stay the organization's, for the reasons in the header;
-       the surface keeps hiding both. */
+    /* Every panel is read for the project since P-60 (the header). The
+       report stays, so the surface keeps drawing only what it says is keyed. */
     const scopes: Record<string, Scope> = {
       risks: 'program',
       trace: 'program',
-      dhf: 'organization',
-      ecrs: 'organization',
+      dhf: 'program',
+      ecrs: 'program',
       issues: 'program',
       documents: 'program',
     };

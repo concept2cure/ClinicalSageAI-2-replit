@@ -18,6 +18,12 @@
  * which the server has not converged onto readSignedContentStates. It stays
  * where it is, as the server read does.
  *
+ * `source-changed` (P-64, 2026-10-29; docs/evidence/D5-SIGNED-CONTENT-LOCKED/
+ * 2026-10-29/): a translation's approval binds the source it translates, and
+ * the server answers this when the translation is as it was approved but the
+ * document it translates has moved on. It is neither "unchanged" nor an edit
+ * of the translation, so it has its own words.
+ *
  * Which state a record is in is the server's. Here it is only said:
  *   - a facet this client cannot read is `unavailable`, never `unsigned`;
  *   - every state is words first, with a tone and an icon beside them, so
@@ -31,7 +37,7 @@ import { signatureMeaningLabel } from '../_shared/signatureMeaning';
 import { useLiveData } from './dataConnect';
 import { I } from './icons';
 
-export type SignedContentStateName = 'matches' | 'changed' | 'unverified' | 'withdrawn' | 'unsigned' | 'unavailable';
+export type SignedContentStateName = 'matches' | 'changed' | 'source-changed' | 'unverified' | 'withdrawn' | 'unsigned' | 'unavailable';
 
 /** The server's SignedContentFacet, as far as the screen reads it. */
 export interface SignedContentFacet {
@@ -46,7 +52,7 @@ export interface SignedContentFacet {
   reason: string | null;
 }
 
-const STATES: ReadonlySet<string> = new Set(['matches', 'changed', 'unverified', 'withdrawn', 'unsigned', 'unavailable']);
+const STATES: ReadonlySet<string> = new Set(['matches', 'changed', 'source-changed', 'unverified', 'withdrawn', 'unsigned', 'unavailable']);
 
 /** The basis of a signature taken before its content was bound: the ledger chain hash (BINDING_BASIS.GOVERNED_ACTION_LEDGER). */
 export const PRE_BINDING_BASIS = 'governed-action-sha256-chain';
@@ -74,7 +80,7 @@ export function signedContentFacetOf(v: unknown): SignedContentFacet {
 
 /** A signature is on record, in force or not. */
 export function carriesSignature(f: SignedContentFacet): boolean {
-  return f.state === 'matches' || f.state === 'changed' || f.state === 'unverified' || f.state === 'withdrawn';
+  return f.state === 'matches' || f.state === 'changed' || f.state === 'source-changed' || f.state === 'unverified' || f.state === 'withdrawn';
 }
 
 /** The state in words. */
@@ -82,6 +88,7 @@ export function signedContentWords(f: SignedContentFacet): string {
   switch (f.state) {
     case 'matches': return 'Signed content unchanged';
     case 'changed': return 'Changed since it was signed';
+    case 'source-changed': return 'Source changed since it was signed';
     case 'unverified':
       return f.bindingBasis === PRE_BINDING_BASIS
         ? 'Signed before content binding; not verifiable'
@@ -93,15 +100,15 @@ export function signedContentWords(f: SignedContentFacet): string {
 }
 
 const TONE: Readonly<Record<SignedContentStateName, string>> = {
-  matches: 'ok', changed: 'err', unverified: 'warn', withdrawn: 'idle', unsigned: 'idle', unavailable: 'warn',
+  matches: 'ok', changed: 'err', 'source-changed': 'err', unverified: 'warn', withdrawn: 'idle', unsigned: 'idle', unavailable: 'warn',
 };
 const ICON: Readonly<Record<SignedContentStateName, React.ReactNode>> = {
-  matches: I.checkCircle, changed: I.alertTriangle, unverified: I.info, withdrawn: I.history, unsigned: null, unavailable: I.info,
+  matches: I.checkCircle, changed: I.alertTriangle, 'source-changed': I.alertTriangle, unverified: I.info, withdrawn: I.history, unsigned: null, unavailable: I.info,
 };
 
 /** The server's sentence, where the words alone do not say why. */
 function detailOf(f: SignedContentFacet): string | null {
-  if (f.state === 'changed') return f.reason;
+  if (f.state === 'changed' || f.state === 'source-changed') return f.reason;
   if (f.state === 'unverified' && f.bindingBasis !== PRE_BINDING_BASIS) return f.reason;
   return null;
 }

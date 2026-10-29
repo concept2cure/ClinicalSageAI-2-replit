@@ -25,7 +25,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
-import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
@@ -52,6 +51,7 @@ const askAna = vi.fn();
 const openEditor = vi.fn();
 const onClose = vi.fn();
 const onOpenSection = vi.fn();
+const openLetter = vi.fn();
 
 const errorLog: unknown[] = [];
 let origError: typeof console.error;
@@ -365,44 +365,6 @@ describe('pathway panes — operational flows', () => {
     assertNoReactErrors();
   });
 
-  /* These two cases drove the drafter with fixture letters: rta-2 (no draft —
-     Generate refused) and rta-3 (a "persisted AnA draft" — adopted). The
-     persisted draft existed only in the fixture; no store holds per-issue
-     response prose for a letter, so there is nothing to adopt. The drafter
-     now reads the tenant's letter and hands drafting to AnA with that
-     letter's real text and issues. */
-  function serveLetter() {
-    const body = {
-      data: { id: 'live-1', sender: 'FDA CDRH', source_channel: 'CDRH Portal', received_at: '2026-09-01T10:00:00Z',
-        subject: 'AI request', parsed_text: 'Please provide the bench data.' },
-      issues: [{ id: 'i-1', category: 'performance', severity: 'high', source_excerpt: 'Provide the bench data.', mapped_ctd_sections: [] }],
-      responsePackages: [],
-    };
-    globalThis.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response),
-    ) as unknown as typeof fetch;
-  }
-  const LIVE_LETTER = {
-    id: 'live-1', kind: 'Additional Information', channel: 'CDRH Portal', from: 'FDA CDRH',
-    received: '2026-09-01T10:00:00Z', due: '2026-10-15', status: 'open' as const,
-    subject: 'AI request', summary: 'Please provide the bench data.', refs: [],
-  };
-
-  it('AnaDrafter mounts on a live letter and hands drafting to AnA — it authors nothing itself', async () => {
-    serveLetter();
-    const onAskAna = vi.fn();
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={LIVE_LETTER} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} onAskAna={onAskAna} />,
-    );
-    await waitFor(() => expect(container.querySelector('.drafter-unstarted')).toBeTruthy());
-    expect(container.textContent).toContain('Please provide the bench data.');
-    fireEvent.click(container.querySelector('.du-cta') as HTMLElement);
-    expect(onAskAna).toHaveBeenCalledTimes(1);
-    expect(String(onAskAna.mock.calls[0][0])).toContain('Provide the bench data.');
-    // Nothing was authored: no drafted body, no reviewer roster.
-    expect(container.querySelector('.dr-body')).toBeNull();
-    assertNoReactErrors();
-  });
 });
 
 // The operator decision: kit UI, real backend data. Prove the live path renders
@@ -417,8 +379,10 @@ describe('live backend wiring', () => {
       if (u.includes('/api/mdx/audit')) {
         return ok({ data: { events: [{ id: 'live-a1', when: '2026-05-02T10:00:00Z', actor: 'u1', actorName: 'Live Reviewer', role: 'QA', action: 'sign', resource: 'Section', target: 'LIVE-AUDIT-ROW', resourceId: '11', reason: '', sha: 'deadbeef', prev: 'cafef00d', chain: 'ok' }], actions: [], resources: [], kpis: [] } });
       }
-      if (u.includes('/api/regulatory-correspondence/correspondence')) {
-        return ok({ data: [{ id: 'live-c1', subject: 'LIVE-LETTER-ROW', sender: 'CDRH', source_channel: 'eSTAR', communication_type: 'AI-Hold', received_at: '2026-05-02T09:00:00Z', status: 'open' }] });
+      // The project inbox, the one letter record (P-39 step 3, S2).
+      if (u.includes('/agency-communications')) {
+        return ok({ success: true, data: [{ id: 'ace_live1', communicationType: 'LIVE-LETTER-ROW', sourceChannel: 'eSTAR', receivedDate: '2026-05-02T09:00:00Z',
+          dueDate: null, closureStatus: 'open', humanReviewStatus: 'pending_review', extractedIssues: ['Bench data'], responseRequired: true }] });
       }
       if (u.includes('/api/approval-workflows/pending')) {
         return ok({ approvals: [{ id: 42, target: 'LIVE-APPROVAL-ROW', signer: 'You', stage: 'regulatory', requested_by: 'u2', requested_at: '2026-05-02T08:00:00Z' }] });
@@ -427,12 +391,16 @@ describe('live backend wiring', () => {
     }) as unknown as typeof fetch;
 
     const { getAllByRole, findAllByText } = renderWithClient(
-      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} programId="proj-1" />,
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} programId="proj-1" onOpenLetter={openLetter} />,
     );
     fireEvent.click(getAllByRole('tab')[1]); // Audit
     expect((await findAllByText('LIVE-AUDIT-ROW')).length).toBeGreaterThan(0); // list + detail
     fireEvent.click(getAllByRole('tab')[2]); // Correspondence
     expect((await findAllByText('LIVE-LETTER-ROW')).length).toBeGreaterThan(0);
+    // A letter is answered on its record in Communication; the pane drafts and sends nothing itself.
+    fireEvent.click(getAllByRole('button', { name: /Respond in Communication/ })[0]);
+    expect(openLetter).toHaveBeenCalledWith('ace_live1');
+    expect(globalThis.fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/regulatory-correspondence'), expect.anything());
     fireEvent.click(getAllByRole('tab')[3]); // Approvals
     expect((await findAllByText('LIVE-APPROVAL-ROW')).length).toBeGreaterThan(0);
   });
@@ -450,8 +418,8 @@ describe('honest empty states — sample mode off, no live data', () => {
       if (u.includes('/api/mdx/audit')) {
         return ok({ data: { events: [], actions: [], resources: [], kpis: [] } });
       }
-      if (u.includes('/api/regulatory-correspondence/correspondence')) {
-        return ok({ data: [] });
+      if (u.includes('/agency-communications')) {
+        return ok({ success: true, data: [] });
       }
       if (u.includes('/api/approval-workflows/pending')) {
         return ok({ approvals: [] });

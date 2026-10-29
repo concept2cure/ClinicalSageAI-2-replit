@@ -11,9 +11,8 @@
  *   POST   /api/mdx/qms/documents/:id/revise            open a controlled revision (reason required) → draft, next major version
  *   POST   /api/mdx/qms/documents/:id/retire            retire = Part 11 e-signature (same ceremony as approve) → retired
  *   POST   /api/mdx/qms/documents/:id/training-ack      user acknowledges training
- *   GET    /api/mdx/qms/training                        list training records
- *   GET    /api/mdx/qms/training/expiring               periodic refresh due
  *
+ *   Training records, expiry, compliance, and job roles (P-49): mdx-qms-training.ts.
  *   Suppliers, internal audits and nonconforming products: mdx-qms-records.ts.
  *   Deviations: mdx-qms-deviations.ts.
  *
@@ -87,6 +86,7 @@ import { signerReverificationDeps } from '../services/part11/reverify-signer-dep
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   approveQmsDocumentSigned,
+  type ApproveQmsDocumentSignedResult,
   retireQmsDocumentSigned,
   QmsApprovalRefusedError,
   QMS_DOCUMENT_APPROVAL_MEANING,
@@ -95,7 +95,7 @@ import {
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
-  listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary,
+  listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
@@ -112,13 +112,14 @@ import type { CreateContext } from '../services/authoring/authoring-documents';
 import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
-  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance, readQmsTrainingExpiring,
+  acknowledgeQmsTraining, readQmsTrainingContext,
   QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
 } from '../services/qms/training';
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { saveQmsControlledText } from '../services/qms/training-controlled-text';
 import { describeQmsTrainingDocument } from '../services/qms/training-content';
-import { inForceSummary } from '../services/qms/in-force-release';
+import { inForceSummary, readInForceReleases } from '../services/qms/in-force-release';
+import { readRegisterSignatures } from '../services/qms/register-signatures';
 import {
   QMS_PERIODIC_REVIEW_CODE_STATUS, qmsPeriodicReviewBody, readQmsReviewSchedule, recordQmsPeriodicReview,
   type QmsReviewSchedule,
@@ -130,9 +131,10 @@ import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
 import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
-import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
+import qmsTrainingRouter from './mdx-qms-training';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -364,7 +366,10 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
     // draft; each names its last counted periodic review and when it is next due.
     const schedule = await readQmsReviewSchedule(client, orgId, rows as QmsDocumentRow[]);
     const rounds = await registerRounds(client, orgId, rows);
-    return ok(res, rows.map((row) => withRound(scheduledRegisterRow(row, schedule), rounds)), { count: rows.length });
+    // §11.50: who approved each version in force, when and as what; who retired a retired one.
+    const signatures = await readRegisterSignatures(client, orgId, rows as QmsDocumentRow[], schedule.inForce);
+    return ok(res, rows.map((row) => ({ ...withRound(scheduledRegisterRow(row, schedule), rounds), ...signatures(row as QmsDocumentRow) })),
+      { count: rows.length });
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
@@ -560,8 +565,10 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
       [id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Document');
-    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document: rows[0] as QmsDocumentRow });
-    return ok(res, qmsRegisterRow(rows[0]), { training });
+    const document = rows[0] as QmsDocumentRow;
+    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document });
+    const signatures = await readRegisterSignatures(client, orgId, [document], await readInForceReleases(client, orgId, [document]));
+    return ok(res, { ...qmsRegisterRow(rows[0]), ...signatures(document) }, { training });
   } catch (err) {
     if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     const contentRefusal = qmsContentRefusal(res, err); if (contentRefusal) return contentRefusal;
@@ -737,6 +744,17 @@ async function verifyRoutedApprovalSigner(
   } catch (err) { serverError(res, log, 'doc-approve-verify', err); return null; }
 }
 
+/**
+ * The version now in force is due on the date its approval signed; the
+ * previous version's task, if any, ends with it. Best effort, after commit. An
+ * approval that leaves other named approvers to sign (RR2) puts nothing in force.
+ */
+async function scheduleInForceReview(orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
+  if (!result.approvalComplete) return;
+  await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
+    kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+}
+
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
@@ -772,13 +790,11 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     commitAttempted = true;
     await client.query('COMMIT');
     for (const n of notices) notifyTaskEvent(n);
-    // The version now in force is due on the date its approval signed; the
-    // previous version's task, if any, ends with it. Best effort, after commit.
-    await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
-      kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+    await scheduleInForceReview(orgId, userId, result);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
+      approvalComplete: result.approvalComplete,
     });
   } catch (err) {
     if (commitAttempted) {
@@ -906,45 +922,8 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
   }
 });
 
-router.get('/qms/training', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1
-        ORDER BY acknowledged_at DESC LIMIT 500`,
-      [orgId],
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'training-list', err); }
-});
-
-router.get('/qms/training/expiring', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
-  /* G10 (2026-10-29). Each active member whose current training on a release in
-     force lapses within the window, read as coverage reads it. This listed every
-     record with an expiry inside the window: a superseded version, a receipt
-     its member had renewed, a departed member's. No client called it. */
-  try {
-    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
-    return ok(res, rows, { count: rows.length, withinDays });
-  } catch (err) { return serverError(res, log, 'training-expiring', err); }
-});
-
-/* Read-and-understood compliance per controlled procedure. The denominator is
-   the org roster (organization_users); the numerator is the distinct users with
-   a current (non-expired) acknowledgment. Only effective, trainable doc types
-   are counted — forms and specifications don't carry read-and-understood. */
-router.get('/qms/training/compliance', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId);
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'training-compliance', err); }
-});
-
+/* The training reads, and job roles and who holds them (mdx-qms-training.ts, P-49). */
+router.use(qmsTrainingRouter);
 /* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
 router.use(qmsRecordsRouter);
 /* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
@@ -1209,13 +1188,13 @@ router.get('/qms/changes/summary', async (req: Request, res: Response) => {
    document, supplier, audit and nonconformance writes carry (P1-31). A viewer
    could open, edit, transition and delete a change record and its links; only
    the approve step (a signature with its own authority check) refused it. */
-router.post('/qms/changes', requireEditorAccess, async (req: Request, res: Response) => {
+router.post('/qms/changes', requireEditorAccess, admitBodyProject, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = changeCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
-    const row = await createChange(orgId, { ...parsed.data, proposedBy: getUserId(req) }, requestPgClient(req));
+    const row = await createChange(orgId, { ...parsed.data, programId: admittedProject(res), proposedBy: getUserId(req) }, requestPgClient(req));
     /* WO-16C #133. Was `void auditService.logAction({…})`. `createChange` has
        already inserted the change request and returned it, so the register entry
        stands; `meta.auditTrail` now says whether the §11.10(e) record of who
@@ -1224,7 +1203,7 @@ router.post('/qms/changes', requireEditorAccess, async (req: Request, res: Respo
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.create',
       resourceType: 'qms_change_control', resourceId: row.id,
-      details: { changeNumber: row.change_number, classification: row.classification },
+      details: { changeNumber: row.change_number, classification: row.classification, programId: row.program_id ?? null },
     }, requestConnectable(req));
     return created(res, row, { auditTrail });
   } catch (err: unknown) {
@@ -1432,7 +1411,11 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   try {
     const change = await getChange(orgId, id, requestPgClient(req));
     if (!change) return notFoundInTenant(res, 'Change');
-    const row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req));
+    let row;
+    try { row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req)); } catch (err) {
+      if (err instanceof ChangeLinkRefusedError) return clientError(res, 422, err.message, { code: err.code });
+      throw err;
+    }
     /* WO-16C #133. Was `void auditService.logAction({…})`. `addLink` has
        inserted the cross-reference and returned it, so the link stands;
        `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
@@ -1446,27 +1429,30 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   } catch (err) { return serverError(res, log, 'change-link-add', err); }
 });
 
-// Cross-references: remove a link.
+// Cross-references: remove a link. It is kept, stamped and filtered, never deleted (MR-12 Stage 8).
 router.delete('/qms/changes/:id/links/:linkId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   const linkId = Number(req.params.linkId);
   if (!Number.isFinite(id) || !Number.isFinite(linkId)) return clientError(res, 422, 'id must be numeric');
+  const reason = governedReason.safeParse(req.body?.reason);
+  if (!reason.success) return clientError(res, 422, 'State why the link is removed (a reason of at least 8 characters). Nothing was changed.');
   try {
-    const removed = await removeLink(orgId, id, linkId, requestPgClient(req));
+    const removed = await removeLink(orgId, id, linkId, { removedBy: userId, reason: reason.data }, requestPgClient(req));
     if (!removed) return notFoundInTenant(res, 'Link');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The link row is
-       already deleted by `removeLink`, which reported that it matched one, so
-       the removal stands and the §11.10(e) record beside it is the only thing
-       left to report — `meta.auditTrail`. */
+    /* WO-16C #133. The link stands removed (stamped by removeLink), so the
+       §11.10(e) record beside it is the only thing left to report —
+       `meta.auditTrail`. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      tenantId: orgId, userId,
       action: 'mdx.qms.change.unlink',
       resourceType: 'qms_change_control', resourceId: id,
-      details: { linkId },
+      details: { linkId, reason: reason.data },
     }, requestConnectable(req));
-    return ok(res, { id: linkId, deleted: true }, { auditTrail });
+    return ok(res, { id: linkId, removed: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }
 });
 

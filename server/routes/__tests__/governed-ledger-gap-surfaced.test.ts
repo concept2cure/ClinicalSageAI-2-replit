@@ -8,12 +8,15 @@
  * was real and committed on another connection; only the record of who did it
  * and why was missing, and nobody was told.
  *
- * The transmit route was fixed first; this suite covers the other two:
+ * The transmit route was fixed first; this suite covered the other two. The
+ * commitment-status route was retired on 2026-10-29 with its store (P-39 step
+ * 2; a commitment's status moves through commitment-fulfil-route.ts, on the
+ * write's own transaction), so the bundle route is the one left here:
  *
  *   POST /api/submission-ops/packages/:id/assemble   the bundle is assembled,
  *     the ledger write fails, and the response used to be a plain success.
  *
- *   PATCH /api/c2c/commitments/:id/status            swallowed TWICE — the
+ *   PATCH /api/c2c/commitments/:id/status (retired)  swallowed TWICE — the
  *     writer caught internally with no rethrow, and the call site added
  *     `.catch(() => undefined)`. That route REQUIRES an eight-character reason
  *     and is documented as writing a Part 11 audit, so the reason a regulator
@@ -51,26 +54,12 @@ describe('the ledger gap is carried out to the caller', () => {
     );
   });
 
-  it('commitment status surfaces auditWriteFailed, and the double swallow is gone', () => {
-    const src = read('server/routes/c2c/commitments.ts');
-
-    // The writer reports rather than returning void.
-    expect(src).toContain('): Promise<boolean> {');
-    expect(src).toContain('return true;');
-    // The second half of the swallow is gone.
-    expect(src).not.toMatch(/writeCommitmentAudit\([^)]*\)\.catch\(\(\) => undefined\)/);
-    // And the outcome reaches the body.
-    expect(src).toContain('auditWriteFailed: true');
-  });
-
-  it('neither route fails the action over an audit outage', () => {
+  it('the bundle route does not fail the action over an audit outage', () => {
     const ops = read('server/routes/submission-ops.ts');
-    const com = read('server/routes/c2c/commitments.ts');
 
-    // Both still answer success — the artefact committed and must not be
-    // retracted. If either of these ever becomes a 500 on an audit failure,
-    // that is a deliberate policy change and should break this test.
+    // It still answers success — the artefact committed and must not be
+    // retracted. If this ever becomes a 500 on an audit failure, that is a
+    // deliberate policy change and should break this test.
     expect(ops).toMatch(/return res\.json\(\{\s*\n\s*success: true,/);
-    expect(com).toMatch(/return res\.json\(\{\s*\n\s*success: true,/);
   });
 });

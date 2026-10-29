@@ -21,7 +21,8 @@
 import React from 'react';
 
 import { I } from '../icons';
-import { RouteRoundPanel, type RouteRoundView } from './VaultReviewRoute';
+import { RouteRoundPanel } from './VaultReviewRoute';
+import type { RouteRoundView } from '../reviewRoute/routeRound';
 
 export interface VaultReviewItem {
   canonicalId: string;

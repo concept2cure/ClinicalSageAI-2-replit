@@ -1,4 +1,4 @@
-# Fold `billing` into Licensing (D2, 2026-10-29), Parts 1 and 1b
+# Fold `billing` into Licensing (D2, 2026-10-29), Parts 1, 1b and 2
 
 **Launch row:** D2 ("one AnA"; `docs/LAUNCH_DEFINITION_OF_DONE.md`).
 
@@ -15,7 +15,7 @@
 - **reach** the platform's existing role-to-screen rule (`shared/constants/permissions.ts`) for billing, so the screen offers the list to exactly the roles the route admits;
 - **point** the account menu's Billing entry at Licensing, for billing administrators only.
 
-Part 2 (after "checklist go") retires the `billing` id. See "Part 2" at the end.
+Part 1 is `9c2fdec74`. Part 1b, which gated checkout and the portal, is `fc629866a`. Part 2, below, retires the `billing` id under the common checklist and carries decision P-68: one subscription entry for a billing administrator, and one true source for the rate limits.
 
 ## What already exists
 
@@ -153,23 +153,87 @@ Part 1 is on trunk as `9c2fdec74`. The lead decided Part 1's first "not carried"
 - **Gates**, on `70c9e75ad` + this change, all green: undefined-css-classes, unreferenced-modules, launch-scope, launch-scope-api, surface-discoverability, ana-surface-context and audit:ui-authority. `ci:internals-in-copy` passes through the scoped copy; the stock gate still crashes on the ectd-publishing fold's deleted `PublishingCenter.tsx`.
 - **Type-check and lint:** scoped `tsc` over the 9 files, 0 errors in them. ESLint 0 errors; no file gained a warning, net −1.
 
-## Not carried, and found (for the founder)
+## Part 2: retire `billing`, and decision P-68
 
-- **Two menu doors to one screen for administrators.** A billing administrator's menu has "Billing" and "Compare subscriptions", both opening `licensing`. This follows the placement map. Each names a job, but the design document's eventual "Subscription & billing" is one entry. Renaming is a naming decision (INFORMATION_ARCHITECTURE.md section 9), not this fold's.
-- **`/api/billing/rate-limits` has no caller.** The usage screen mirrors its grid as `USAGE_RATE_LIMITS`. Unchanged.
-- (Part 1's first item, checkout and the portal accepting any member, is done in Part 1b above.)
+**Decision P-68** (`docs/LAUNCH_DEFINITION_OF_DONE.md`, decided under the founder's delegation; first numbered P-61, then renumbered, then amended by `271ea4579`) answers Part 1's two founder items:
+- a billing administrator's account menu has one entry, "Subscription & billing", opening Licensing (INFORMATION_ARCHITECTURE.md section 9), and every member keeps "Usage & limits";
+- the usage screen's rate limits come from `GET /api/billing/rate-limits`, and that route returns the limits the platform actually enforces, the same for every subscription, not an unenforced per-tier grid.
 
-## Part 2 (after "checklist go")
+### What already exists (Part 2)
 
-Inventory, read at the time of Part 1:
-- `client/src/concept2cure/v2/surfaceViews.ts:568` `billing: { component: UsageBilling }` → removed; the alias resolves it;
-- `client/src/concept2cure/v2/registryModel.ts:93` `NAV_GROUP_OF.billing` → removed; `DEEP_LINK_ALIASES.billing = 'licensing'`;
-- `shared/constants/ui-surface-registry.ts:1077` the `billing` entry → removed (`licensing` already claims `/api/billing`);
-- `shared/constants/launch-scope.ts:234` → removed, with a guard in `launch-scope.test.ts`;
-- `scripts/ci/check-surface-discoverability.mjs:62` → removed;
-- `shared/navigation/surface-actions.ts` `billing.open-tab` removed; `usage.open-tab`'s enum and description lose `billing`;
-- `UsageBilling.tsx`: the `billing` publish and handler go; `ID_BASELINE` in `check-ana-surface-context.mjs` minus one;
-- `shared/navigation/index.ts:247` the AnA target stays, its description corrected;
-- the catalogue: no row, so no amendment;
-- the tours (`demo-scripts.ts`): no billing stop;
-- a fold guard modelled on `foldDeviceTasks.test.ts`.
+Searched by name: `billing` (as a surface id, an object key and a path segment), `billing.open-tab`, `usage.open-tab`, `RATE_LIMITS`, `LEGACY_RATE_LIMITS`, `USAGE_RATE_LIMITS`, `rate-limits`, `requestsPerMinute`, `createRateLimiter`, `createRedisRateLimiter`, `concept2cure/billing`. Searched in `client/src`, `shared`, `server`, `scripts`, `tests`, `config`, `migrations`, `db/migrations` and `.design`.
+
+| Piece | Path | What it does today | What it does not do |
+|---|---|---|---|
+| The `billing` id | `surfaceViews.ts:568`; `registryModel.ts` `NAV_GROUP_OF`; `ui-surface-registry.ts:1077`; `launch-scope.ts:234` (shell surface); `check-surface-discoverability.mjs:62`; `surface-actions.ts` `billing.open-tab`; `UsageBilling.tsx`'s second publisher and handler; `shared/navigation/index.ts:247` (AnA target) | The usage screen under a second id. Since Part 1 it opened on the usage tab. | Nothing of its own since Part 1. |
+| Catalogue and tours | `migrations/20260814j…`, `db/migrations/20260810…`, `20260823…`; `shared/navigation/demo-scripts.ts` | | **No `billing` row, keep-list entry or tour stop**, so there is no Rule 1 amendment and no tour change. |
+| Stripe's return addresses | `server/routes/billing.ts` `/checkout`, `/dtc-checkout` defaults | Sent a customer back to `/concept2cure/billing?checkout=…`. | They now name `/concept2cure/licensing`; the alias keeps sessions created earlier landing there. |
+| The rate-limit route | `server/routes/billing-dashboard.ts` `GET /rate-limits` and its `RATE_LIMITS` grid | Returned one tier's row of a hand-written grid: free 10 req/min … enterprise 500, with per-module keys. A missing tier answered **'standard'**. | **Enforced nowhere.** No limiter reads it; FUNCTION_PARITY.md already called its module keys "Not real today". |
+| The client copy | `UsageBilling.tsx` `USAGE_RATE_LIMITS` | The "Rate limits by tier" table, with the organisation's tier highlighted. | A copy of the unenforced grid. |
+| What is enforced | `server/config/platform-limits.ts` | `RATE_LIMITS`: the Redis limiter on every `/api` request (`server/startup/middleware.ts`), by category (`redisRateLimiter.ts getCategory`). A verified identity gets `maxRequestsAuthenticated` where the rule sets one, otherwise `maxRequests` (`resolveSubject`). Admins are exempt from `ai`. `LEGACY_RATE_LIMITS`: the in-memory limiter that 16 route files mount with `createRateLimiter()`, sharing one store across them. `ana-features.ts` adds its own lower per-action rules. `compute.ts` and `c2c/shared.ts` run their own Redis limiter instances. | **Neither varies by subscription.** |
+| The menu | `Shell.tsx`; `config/ui-surface-registry.json` (read by `audit:ui-authority`); `shellNav.test.tsx`, `clientNamesSlice1.test.tsx`, `accountMenuMasterLicensing.test.tsx` | After Part 1 a billing administrator had "Billing" and "Compare subscriptions", both opening `licensing`. | |
+
+### The change
+
+- **Retire `billing` (the common checklist):**
+  - steps 1 and 3: the view and the registry entry are removed. No component is deleted, because UsageBilling stays as `usage`. No `apiPrefixes` had to move, because `licensing` claims `/api/billing`.
+  - step 4: `DEEP_LINK_ALIASES.billing = 'licensing'`, and the id is off `NAV_GROUP_OF`. It was in no `NAV_HIDDEN`, `SEGMENTS.focus` or `SEGMENT_MODULES` entry.
+  - step 5: off `LAUNCH_SHELL_SURFACES`, with the guard "the folded billing screen" in `launch-scope.test.ts`. It was not in `mdx-project-features.ts`.
+  - step 6: no catalogue row, so there is nothing to amend.
+  - step 7: the AnA target stays, with its description corrected, and resolves through the alias. `billing.open-tab` is removed; `usage.open-tab` offers `usage` and `limits` only.
+  - step 8: no tour stop.
+  - step 9: `ID_BASELINE` 107 → 106; `check-surface-discoverability.mjs` drops the entry. `REAL.components`, `dump-v2-surfaces.spec.tsx` and `NO_PROJECT_DOOR` had no `billing` entry.
+  - step 10: the fold guard `client/src/concept2cure/v2/__tests__/foldBilling.test.ts`.
+  - Also: Stripe's default return addresses; the visual-QA fixtures (the invoice page shape, and a rate-limits answer); two comments that named UsageBilling's two ids as a precedent; the `usage` and `licensing` registry copy.
+- **P-68, the menu:** `Shell.tsx`. A billing administrator (`canAdministerBilling`) sees "Subscription & billing", opening `licensing`, in place of both "Billing" and "Compare subscriptions". Everyone else sees "Compare subscriptions". "Usage & limits" stays for every member. `config/ui-surface-registry.json` names the new label.
+- **P-68, the rate limits:**
+  - `GET /api/billing/rate-limits` returns `{ tier, tierRecorded, sameForEverySubscription: true, limits, sharedRouteLimits }`.
+  - `limits` is `RATE_LIMITS` row by row: label, window, per signed-in user, per address, exempt roles.
+  - `sharedRouteLimits` names the routers in `SHARED_LIMITER_ROUTES` and states `LEGACY_RATE_LIMITS`. The list is pinned both ways: each file mounts the limiter, and every file that mounts it is listed.
+  - A missing or blank tier is `tier: null, tierRecorded: false`, never 'standard'. A failed tier read is a 500.
+  - The grid is deleted.
+  - The usage screen's tab is "Rate limits" (`client/src/concept2cure/v2/surfaces/UsageRateLimits.tsx`): the table, "the same for every subscription, including your organization's (…)" or "Your organization's subscription tier is not recorded", the admin exemption, and the second limiter's routes and table. A failed or malformed read is "Couldn't load rate limits" with Try again. AnA's facts carry `rateLimits` or `rateLimitsUnavailable`.
+  - `USAGE_RATE_LIMITS` is deleted.
+
+### The deletion rule (Part 2)
+
+- **What was removed:**
+  - the `billing` view, registry entry, scope entry, nav group, surface action and publisher;
+  - the unenforced grid in `billing-dashboard.ts`;
+  - `USAGE_RATE_LIMITS` and the "Rate limits by tier" table in `UsageBilling.tsx`.
+- **The reachable replacements, by path:**
+  - Licensing (`LicensingSurface.tsx` + `LicensingInvoices.tsx`) through `DEEP_LINK_ALIASES.billing`, proved by `foldBilling.test.ts` (a link, an in-app move, AnA's target, with and without a project);
+  - the "Rate limits" card (`UsageRateLimits.tsx`) on `usage`, proved by `usageRateLimits.test.tsx`, over the route proved by `server/routes/__tests__/billing-rate-limits-enforced.test.ts`.
+- **History:**
+  - `git log --all --diff-filter=D` finds no deleted path for `rate.?limit|ratelimit|usage|billing|licens|invoice` (`history.txt`, Part 2).
+  - The grid came in with `billing-dashboard.ts` in `1ae2b44d3` (2026-03-19). It was never enforced, and nothing reads it but the route.
+
+### Red, green, mutations (Part 2)
+
+- **Red**, against trunk `d56be445f` before the change: **23 failed across 7 files** (`red.txt`, Part 2). 103 pins passed before and after.
+  - the fold guard 4/5: the alias, the retired view, registry entry, action and tab, the scope, rail and CI lists, and the Stripe return addresses;
+  - the rate-limit route 8/10: the grid in place of the enforced limits, no second limiter, a tier for every subscription, 'standard' for a missing tier, the grid still in the file;
+  - the usage screen's rate limits 7/7;
+  - the menu, P-68, 3 cases: `accountMenuBilling`, `clientNamesSlice1`, `shellNav`;
+  - the launch-scope guard 1.
+- **Green**, on `d56be445f` + this change:
+  - every fold-billing suite from Parts 1, 1b and 2: **16 files, 284/284**;
+  - the regression set: **310 suites**, everything that reads the registry, aliases, launch scope, surface actions, navigation, the shell, the usage and Licensing screens, the billing routes or platform-limits. **4,290 passed, 18 failed, none of them this change's:**
+    - 12 fail identically on a `git archive` of HEAD `d56be445f`: `engineChoices` 1, `oneBoxDuringRun` 4 and `runPolicySwitch` 5 (the conversation's import path reads an `authService` export their mock lacks), `composition-boundary-callers` 1, `template-library-truth` 1;
+    - 6 in `mdx-risk-accept-residual-signature.test.ts` come from another session's uncommitted `server/routes/mdx-risk-management.ts` in the shared tree.
+- **Mutations, 18/18 killed** (`mutations.txt`, Part 2; `tools/mutate-2.py.txt`). The first run was 17/18: P13 (the screen accepting a row with no numbers) survived, because the test row also lacked `exemptRoles`. The case was tightened, two were added, and P13 is killed.
+  - the retirement, 6: the alias removed; the view restored; the tab action offering billing; billing back in launch scope; the discoverability entry back; Stripe returning to `/concept2cure/billing`;
+  - the menu, 2: two doors for a billing administrator; "Subscription & billing" for every member;
+  - the route, 4: the 'standard' fallback; the second limiter stated as the platform's; a mounting router left unnamed; the per-user ceiling ignoring `maxRequestsAuthenticated`;
+  - the screen, 5: a row without numbers accepted; an unrecorded tier shown as a tier; Try again not reading again; AnA not told the limits; usage publishing under `billing` again;
+  - CI, 1: `ID_BASELINE` left at 107, which `ci:ana-surface-context` refuses.
+- **Gates** (`gates.txt`, Part 2):
+  - green: ci:launch-scope, ci:launch-scope-api and its selftest, ci:ana-surface-context (106 exact), ci:surface-discoverability, ci:undefined-css-classes, audit:ui-authority, ci:migration-drop-safety, ci:migration-set-order, ci:migration-deploy-path, check:catalog-copy, ci:program-ownership-single-source, ci:sql-interpolation, ci:internals-in-copy;
+  - red, not this change's: ci:unreferenced-modules fails on one new module, another session's untracked `server/services/part11/signed-content-lock.ts`.
+- **Type-check and lint:** scoped `tsc` over the 23 Part 2 files, 0 errors in them. ESLint 0 errors; no file gained a warning, net −1.
+
+## Not carried, and found
+
+- **`ci:unreferenced-modules`** reports one new unreferenced module, `server/services/part11/signed-content-lock.ts`. It is another session's untracked work in the shared tree, not this fold's.
+- **The second limiter's shared store.** `ana-features.ts`'s per-action rules count against the same `api` tracker as the other routers (one store, keyed by subject and category), so a person's ordinary traffic on those routers counts toward an AnA action's lower ceiling. The route says the second limiter is shared; whether per-action limits should keep their own counters is a server decision, not this fold's.
+- Design documents that mention the billing screen are left as history: `INFORMATION_ARCHITECTURE.md` and `docs/design/*`.

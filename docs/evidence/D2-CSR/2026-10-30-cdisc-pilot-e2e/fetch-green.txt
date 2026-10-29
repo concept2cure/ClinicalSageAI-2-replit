@@ -1,0 +1,18 @@
+Data: CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01 (updated pilot submission package 900172),
+Clinical Data Interchange Standards Consortium (CDISC), https://github.com/cdisc-org/sdtm-adam-pilot-project.
+Terms of use (CDISC): the data may not be modified or altered; it may not be distributed without attribution
+to CDISC, or for a fee; it may not be used to compete with CDISC. CDISC provides it "as is", without warranty.
+Do not copy this data, or rows or extracts of it, into the repository.
+
+ok  adsl.xpt  114640 bytes  sha256 c5139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d
+ok  adae.xpt  713600 bytes  sha256 b8678e70946473a753bb01d002917f478bf51b59bdd0dc19587b97128059b6a0
+ok  adlbc.xpt  34242960 bytes  sha256 b9f6b5106965b5e2e3b33062a18710b58ceecc0c8cf1e54271849653037998ea
+ok  adlbh.xpt  23025920 bytes  sha256 de568850f5585266844abe6eb7ef0290ea130d90c3f023efcb9f13c2a586455b
+ok  advs.xpt  13632480 bytes  sha256 28233c8ed038d0f315a9538d910beb43cf1bb4b69f8f1c39b32463c7b018dff1
+ok  adtte.xpt  91840 bytes  sha256 68513fc4126744b6b2c7328eb70eb7b9683865d12c58b36539325f3c0c0ab93d
+ok  adqsadas.xpt  5178480 bytes  sha256 ac3fa1217651810b0f15fe489fdda7d99eff10553ded025156ad7c1b89f84608
+ok  adqscibc.xpt  290480 bytes  sha256 16e7118f606d907e817f0a5885d662c2e7177c430d2b3ec6c0ba9096cb3d7bc1
+ok  adqsnpix.xpt  13147600 bytes  sha256 90cf438913cfb976a34e9cf6c44291eab7a65c5c0146f8df092cd9ce2bd8c44a
+ok  define.xml  587336 bytes  sha256 7e6d580e0839564f6f119c4ba7e15963d3cf7cd0c88e9f3d7da5ad396221b1cd
+exit 0
+wall_s 6.777140048

@@ -70,15 +70,20 @@ CREATE TABLE qms_change_controls (
   implementation_plan text, proposed_by int, assessed_by int, approved_by int, approved_at timestamptz,
   target_implementation_date date, implemented_at timestamptz, verified_by int, verified_at timestamptz,
   effectiveness_review text, closed_at timestamptz, qms_document_id int, metadata jsonb DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz
+  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz,
+  program_id uuid -- the project key (migrations/20261029l_qms_change_controls_program_key.sql, P-60)
 );
 CREATE UNIQUE INDEX qms_change_org_number_uniq ON qms_change_controls (organization_id, change_number) WHERE deleted_at IS NULL;
 CREATE TABLE qms_change_links (
   id serial PRIMARY KEY, organization_id int NOT NULL,
   change_id int NOT NULL REFERENCES qms_change_controls(id) ON DELETE CASCADE,
   link_type text NOT NULL, linked_ref text NOT NULL, linked_label text, linked_id int,
-  relationship text NOT NULL DEFAULT 'references', note text, created_by int, created_at timestamptz NOT NULL DEFAULT now()
+  relationship text NOT NULL DEFAULT 'references', note text, created_by int, created_at timestamptz NOT NULL DEFAULT now(),
+  removed_at timestamptz, removed_by int, removal_reason text
 );
+-- The deviation register a deviation link names a record in (MR-12 Stage 8).
+CREATE TABLE qc_deviations (id serial PRIMARY KEY, organization_id int NOT NULL, deviation_number text NOT NULL);
+INSERT INTO qc_deviations (organization_id, deviation_number) VALUES (1, 'DEV-2026-099'), (1, 'DEV-2026-100');
 `;
 
 const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
@@ -189,6 +194,13 @@ describe('qms_change_link', () => {
     expect(res.ok).toBe(true);
     const db = await pglite.query(`SELECT link_type, linked_ref FROM qms_change_links WHERE change_id = $1`, [created.id]);
     expect((db.rows[0] as { linked_ref: string }).linked_ref).toBe('DEV-2026-099');
+  });
+
+  it('refuses a deviation this organisation has not recorded, and links nothing (MR-12 Stage 8)', async () => {
+    const created = await call('qms_change_create', { change_number: 'CC-2026-056', title: 'y', reason: 'Raised at the weekly change board.' });
+    const res = await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-NOT-RECORDED' });
+    expect(res.error).toMatch(/No deviation DEV-NOT-RECORDED is recorded in this organisation/);
+    expect((await pglite.query(`SELECT 1 FROM qms_change_links WHERE change_id = $1`, [created.id])).rows).toHaveLength(0);
   });
 });
 

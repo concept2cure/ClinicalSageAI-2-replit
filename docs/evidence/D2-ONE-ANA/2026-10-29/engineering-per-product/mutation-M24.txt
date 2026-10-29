@@ -1,0 +1,11 @@
+# M24: the form never sends the chosen project
+# file: client/src/concept2cure/quality/ChangeControl.tsx
+# command: npx vitest run client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx
+# exit: 1
+# original sha256 ee2c1351d66cdf8c1c9a718959fd6b5d3f5cdfceba13cbf336eeea03426c093b; restored byte for byte: True
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it 5160ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it

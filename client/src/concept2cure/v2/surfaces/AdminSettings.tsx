@@ -18,6 +18,8 @@
  *   LegalHoldsCard            list, place and lift legal holds
  *   ClaudeConnectorSetting    the connector for Claude (already here)
  *   CompanyDocumentSettings   company identity, letterhead and legal documents (already here)
+ *   ValidationKitCard         the GAMP 5 validation package, each document as it records
+ *                             itself, every download recorded (decision P-67)
  *
  * Above them, the rows GET /api/mdx/admin derives from the organisation's
  * record (the second factor at sign-in, single sign-on, branding) are shown as
@@ -34,6 +36,7 @@ import { OrganizationProfileCard, saveFailure, type OrganizationProfileContext }
 import { PdfARequirementSetting } from './PdfARequirementSetting';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
 import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
+import { ValidationKitCard } from './ValidationKitCard';
 import '../styles/translation-v2.css';
 
 /** A row of GET /api/mdx/admin's settings facet. `kind: 'policy'` is a fact about the deployment. */
@@ -71,6 +74,9 @@ export function OrganizationSettingsCards({ onNav, onProfileContext }: CardsProp
       {/* Its own read and its own door, for the owner or an administrator (P1-47). */}
       <ClaudeConnectorSetting />
       <CompanyDocumentSettings onNav={onNav} />
+      {/* The vendor's validation package, which a regulated customer files in their
+          computer-system-validation record (decision P-67). */}
+      <ValidationKitCard />
     </div>
   );
 }
