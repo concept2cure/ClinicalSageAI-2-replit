@@ -1,0 +1,20 @@
+# M14: the migration adds no same-organization key
+# mutation: migrations/20261029d_nonconforming_products_program_key.sql: 286 chars replaced by 9 chars
+# test: tests/schema-contract/nonconforming-products-program-key.pglite.test.ts
+# exit=1  Tests  3 failed | 4 passed (7)
+# restored byte for byte: True (sha256 86f2912027649f69e1de668a93163ab320963ef94561ce4895eb1b48300e6ebc)
+
+## replaced
+    ALTER TABLE public.qms_nonconforming_products
+      ADD CONSTRAINT qms_nonconforming_products_program_same_org_fk
+      FOREIGN KEY (program_id, organization_id)
+      REFERENCES public.regulatory_programs (id, organization_id)
+      ON DELETE SET NULL (program_id)
+      NOT VALID;
+## with
+    NULL;
+
+## failing tests
+× tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > 20261029d on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index 17ms
+× tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > from here on the database holds the key > a record naming another organization's project, or a missing one, is refused 2ms
+× tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > from here on the database holds the key > deleting a project unbinds its records and keeps their organization 6ms

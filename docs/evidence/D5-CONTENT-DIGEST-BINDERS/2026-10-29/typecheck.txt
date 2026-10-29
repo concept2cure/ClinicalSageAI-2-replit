@@ -1,0 +1,11 @@
+# Scoped tsc over the changed files and their imports: root tsconfig unchanged, a files list, plus the repo's ambient declarations (server/types/**/*.d.ts, shared/types/**/*.d.ts) and the three modules that augment Express.Request (server/middleware/auth.ts, server/middleware/tenantContext.ts, server/auth.ts), as the whole-repo program has them. ca574ff80 + this change.
+#   server/services/part11/signature-persistence.ts
+#   server/services/part11/governed-target-binders.ts
+#   server/services/part11/signed-content-state.ts
+#   server/routes/governed-signed-act.ts
+#   server/routes/mdx-labeling.ts
+#   server/routes/mdx-labeling-approvals.ts
+#   server/routes/mdx-risk-management.ts
+#   server/__tests__/routes/content-digest-binders.pglite.test.ts
+#   server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+# tsc exit: 0

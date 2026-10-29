@@ -1,0 +1,43 @@
+# Gates on the finished tree (npm run -s <gate>), 2026-10-29T10:24Z
+
+## ci:migration-drop-safety  exit=0
+[ci:migration-drop-safety] OK — 438 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+## ci:migration-drop-safety:selftest  exit=0
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+
+## ci:migration-set-order  exit=0
+[ci:migration-set-order] OK — 438 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+## ci:migration-deploy-path  exit=0
+[ci:migration-deploy-path] OK — 103 baselined file(s) on no deploy path, none new.
+
+## ci:migration-deploy-path:selftest  exit=0
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+
+## ci:sql-interpolation  exit=0
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1065 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+# A run at 10:24Z failed with 1 problem: another worker's concurrent edit to server/routes/artifacts-center-routes.ts
+# (not in this change) had removed an interpolation before its baseline entry was lowered. Re-run once that
+# worker's baseline edit landed: OK. This change adds no interpolation (mdx-engineering.ts, mdx-qms.ts,
+# AnaToolExecutor.ts and tenant-offboarding.ts pass static SQL text with bind parameters only).
+
+## ci:sql-interpolation:selftest  exit=0
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+
+## ci:program-ownership-single-source  exit=0
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+## ci:program-ownership-single-source:selftest  exit=0
+[self-test] OK — 10 copies found, 6 reads passed.
+
+## ci:tenant-isolation:no-regression  exit=0
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (44 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+
+## ci:tenant-column-types  exit=0
+[ci:tenant-column-types] OK — all tenant columns are integer-typed
+
+## ci:tenant-entry-points  exit=0
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.

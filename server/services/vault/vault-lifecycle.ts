@@ -26,6 +26,9 @@ import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type 
 import { companyLegalRegistryDocuments, readCompanyLegalRegistryForVault } from '../company-documents/legal-registry';
 import { companyLegalCopySourceRefusal } from '../company-documents/company-copy-lineage';
 import { readRouteRounds, type RouteRound } from '../review/review-route-standing';
+import { createScopedLogger } from '../../utils/logger';
+
+const log = createScopedLogger('vault-lifecycle');
 
 export interface LifecycleQueryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -242,9 +245,16 @@ export interface VaultVersionLifecycle {
    * member with the printed name at naming, and each verified signature's
    * printed name, meaning and UTC time, read from this organization's
    * electronic_signatures rows only. Null when the version has none (a legacy
-   * or carried round). A failed read throws: never "not assigned".
+   * or carried round), and when the read failed: then `roundUnread` says so.
    */
   round: RouteRound | null;
+  /**
+   * True when the route could not be read (RR1b, §2.13). The version's stage
+   * and sign-offs still show; its reviewers render as "could not be read",
+   * never as "no reviewers". Until RR1b a failed route read failed the whole
+   * version list.
+   */
+  roundUnread: boolean;
 }
 
 interface StoredSignOff {
@@ -333,8 +343,13 @@ export async function readVaultLifecycles(
       ...(carried ? { carriedFrom: 'authoring' as const } : {}),
     };
   };
+  // The route is read on its own: a failure leaves each version's stage and
+  // sign-offs standing, and marks its reviewers unread (never "none").
   const rounds = await readRouteRounds(q, {
     organizationId, subjectType: 'canonical_document', subjectIds: rows.map((r) => String(r.canonical_id)),
+  }).catch((err: unknown) => {
+    log.warn('review route read failed; the versions show their reviewers as unread', { err: err instanceof Error ? err.message : String(err) });
+    return null;
   });
   for (const r of rows) {
     out.set(r.vault_id, {
@@ -343,7 +358,8 @@ export async function readVaultLifecycles(
       creatorId: r.created_by == null ? null : Number(r.created_by),
       review: manifest(r.review_signature),
       approval: manifest(r.approval_signature),
-      round: rounds.get(String(r.canonical_id)) ?? null,
+      round: rounds?.get(String(r.canonical_id)) ?? null,
+      roundUnread: rounds === null,
     });
   }
   return out;

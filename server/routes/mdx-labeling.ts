@@ -4,7 +4,8 @@
  *
  *   GET    /api/mdx/labeling                                   list docs
  *   POST   /api/mdx/labeling                                   create doc
- *   GET    /api/mdx/labeling/:id                               single + nested
+ *   GET    /api/mdx/labeling/:id                               single + nested; each signature's
+ *                                                              content state (signedContent)
  *   PATCH  /api/mdx/labeling/:id                               partial update;
  *                                                              to `approved` or `effective`, an e-signature
  *
@@ -50,6 +51,9 @@ import {
   signDocumentStatus, moveDocumentStatus, refuseControlledDocumentEdit,
   approveTranslationSigned, moveTranslationStatus, refuseApprovedTranslationEdit,
 } from './mdx-labeling-approvals';
+/* Whether each approval still binds the label it signed (21 CFR 11.70): the
+   read side of the labeling content binders (D5, 2026-10-29). */
+import { readSignedContentStates } from '../services/part11/signed-content-state';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -202,7 +206,21 @@ router.get('/labeling/:id', async (req: Request, res: Response) => {
       pool.query(`SELECT * FROM labeling_translations WHERE labeling_document_id = $1 ORDER BY language`, [id]),
       pool.query(`SELECT * FROM labeling_symbols WHERE labeling_document_id = $1 ORDER BY symbol_code`, [id]),
     ]);
-    return ok(res, { ...rows[0], translations: translations.rows, symbols: symbols.rows });
+    /* The document's and each translation's newest signature in force,
+       re-derived against the record now: matches, changed, unverified,
+       withdrawn, unsigned or unavailable (services/part11/signed-content-state.ts). */
+    const transTarget = (t: { id: unknown }) => `labeling-translation:${String(t.id)}`;
+    const signed = await readSignedContentStates(
+      { query: (sql, params) => pool.query(sql, params) },
+      orgId,
+      [`labeling-document:${id}`, ...translations.rows.map(transTarget)],
+    );
+    return ok(res, {
+      ...rows[0],
+      signedContent: signed.get(`labeling-document:${id}`),
+      translations: translations.rows.map((t) => ({ ...t, signedContent: signed.get(transTarget(t)) })),
+      symbols: symbols.rows,
+    });
   } catch (err) { return serverError(res, log, 'get', err); }
 });
 

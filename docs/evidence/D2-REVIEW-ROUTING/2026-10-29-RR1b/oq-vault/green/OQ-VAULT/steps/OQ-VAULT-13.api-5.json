@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/regulatory/documents/bd2c9875-a741-4536-a8b4-4ba370f0c54e/advance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "to": "in_review",
+      "reason": "OQ-002 step 13: sent for review for validation",
+      "route": {
+        "reviewers": [
+          2
+        ],
+        "approvers": [
+          2
+        ],
+        "reviewDueDate": "2026-11-05",
+        "approvalDueDate": "2026-11-12"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 67,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": false,
+      "error": "MEMBER_ALREADY_NAMED",
+      "message": "OQ Signer is already named on this route. Nothing was sent."
+    }
+  }
+}

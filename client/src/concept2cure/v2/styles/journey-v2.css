@@ -468,6 +468,16 @@
 .c2c-v2 .de-x:hover{background:var(--bg-100);color:var(--text-200);}.c2c-v2 .de-x svg{width:16px;height:16px;}
 .c2c-v2 .de-body{flex:1;overflow-y:auto;padding:18px 20px;}
 .c2c-v2 .de-field{margin-bottom:15px;}
+/* The shared review-request fields (editor/reviewFields.tsx; RR1b): a
+   searchable list of people, each row a 44 px touch target. */
+.c2c-v2 .rf-picker{display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .rf-search{width:100%;min-height:44px;}
+.c2c-v2 .rf-opts{display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.c2c-v2 .rf-opt{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;padding:0 4px;border-radius:var(--radius-md);cursor:pointer;}
+.c2c-v2 .rf-opt:hover{background:var(--bg-100);}
+.c2c-v2 .rf-opt input{width:18px;height:18px;flex-shrink:0;}
+.c2c-v2 .rf-opt.is-disabled{color:var(--text-400);cursor:not-allowed;}
+.c2c-v2 .rf-note{margin:0 0 4px 32px;}
 /* 2026-10-15 (filing-spine design review, item 4): the gap went on
    :nth-of-type(odd), which counts every div in the body, so a pair after an
    odd number of fields lost its gap; and baseline alignment dropped a field
@@ -546,4 +556,32 @@
   .c2c-v2 .de-toast,
   .c2c-v2 .de-toast[data-pos="top"],
   .c2c-v2 .de-row-new { animation: none; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   The Vault review route (surfaces/VaultReviewRoute.tsx; RR1b of
+   docs/design/REVIEW_ROUTING_2026-10-23.md). At a phone's width the route
+   form is a sheet from the bottom, one column, every target 44 px; the
+   members list one person per line.
+   ════════════════════════════════════════════════════════════════════ */
+/* A version row wraps, so its route takes a line of its own under the version. */
+.c2c-v2 .vd-ver{flex-wrap:wrap;}
+.c2c-v2 .vd-ver > .vr-round{flex:1 0 100%;}
+.c2c-v2 .vr-round{display:block;margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-300);}
+.c2c-v2 .vr-round-h{display:block;font-weight:600;color:var(--text-200);margin-bottom:4px;}
+.c2c-v2 .vr-round-m{display:block;margin-bottom:4px;}
+.c2c-v2 .vr-members{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .vr-member{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;overflow-wrap:anywhere;}
+.c2c-v2 .vr-member-name{font-weight:500;color:var(--text-200);}
+.c2c-v2 .vr-due{display:flex;flex-wrap:wrap;gap:12px;}
+.c2c-v2 .vr-due .de-field{flex:1 1 160px;margin-bottom:12px;}
+.c2c-v2 .vr-due .c2c-input{width:100%;min-height:44px;}
+@media (max-width: 600px){
+  .c2c-v2 .de-bd.de-sheet{align-items:flex-end;justify-content:stretch;}
+  .c2c-v2 .de-bd.de-sheet .de{width:100%;height:auto;max-height:92vh;border-left:0;border-top:1px solid var(--border);border-radius:16px 16px 0 0;}
+  .c2c-v2 .de-sheet .de-body{padding:16px;}
+  .c2c-v2 .de-sheet .de-h{padding:16px;}
+  .c2c-v2 .de-sheet .de-f{padding:12px 16px;flex-wrap:wrap;}
+  .c2c-v2 .de-sheet .de-btn,.c2c-v2 .de-sheet .de-x{min-height:44px;min-width:44px;}
+  .c2c-v2 .vd-ver-acts .sp-ask,.c2c-v2 .vr-round .sp-ask{min-height:44px;}
 }

@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task 1394ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage 25ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > says which items are route members, so the tray opens them where the route is acted on (RR1b) 15ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > two tasks with the same title are told apart by their projects 23ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > no name for a task with no project, and never another organisation’s 9ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > selects only the caller’s open, undeleted tasks in their organisation: due first, then newest assigned 9ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  07:04:04
+   Duration  10.92s (transform 1.18s, setup 167ms, import 1.60s, tests 8.57s, environment 0ms)
+

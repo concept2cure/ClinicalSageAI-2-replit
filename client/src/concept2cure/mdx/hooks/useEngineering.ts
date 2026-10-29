@@ -24,7 +24,7 @@ import { useFetchJson } from './useFetchJson';
 import { toDataState, type DataState } from '../lib/dataState';
 import type { DhfRow, EcrRow, IssueRow, RiskRow, TraceRow } from '../data/engineering';
 import type { EngineeringDocument } from '../data/engineering-docs';
-import type { ProjectRefusal } from '../../v2/projectScopedRead';
+import { projectRefusalOfRead, type ProjectRefusal } from '../../v2/projectScopedRead';
 
 /* Row types are declared in ../data/engineering. They used to be inferred
    from the kit's example rows (`typeof ENG_DHF`), which were deleted with
@@ -107,14 +107,15 @@ const HTTP_STATUS = /^\s*HTTP\s+(\d{3})\b/;
  *  cuts the body at 200 characters, so it is rarely a whole object. */
 const errorValue = (line: string) => /"error"\s*:\s*"([^"]*)"/.exec(line)?.[1] ?? null;
 
-/** Which refusal useFetchJson's error line is, or null. Read by the body as
- *  well as the status: a 404 or 503 from anywhere else is not this answer. */
+/** Which refusal useFetchJson's error line is, or null. The line's status and
+ *  its `"error"` value (admit-project's sentence, or the 503's code) go to
+ *  projectRefusalOfRead, which classifies through the one read classifier: a
+ *  404 or 503 from anywhere else is not this answer. */
 export function projectRefusalOf(error: string | null | undefined): ProjectRefusal | null {
   if (!error) return null;
-  const status = HTTP_STATUS.exec(error)?.[1];
-  if (status === '404' && errorValue(error) === 'Project not found') return 'not-visible';
-  if (status === '503' && errorValue(error) === 'VERIFICATION_UNAVAILABLE') return 'unchecked';
-  return null;
+  const status = Number(HTTP_STATUS.exec(error)?.[1] ?? 0);
+  const value = errorValue(error) ?? undefined;
+  return projectRefusalOfRead({ status, code: value, error: value });
 }
 
 const IDLE = 'The engineering record is held per project.';

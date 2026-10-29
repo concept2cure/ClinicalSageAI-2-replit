@@ -1,0 +1,123 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T07:01:54.302Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T07:01:54.533Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T07:01:54.534Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T07:01:54.534Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH status: 409, the task and the ledger unchanged 92ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged 46ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned 46ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > DELETE (archive): 409, not archived 38ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the predecessor: 409, no edge, nothing blocked 35ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the successor: 409, no edge, nothing blocked 32ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the completion cascade skips a route member as a dependent 81ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the remind route, which writes nothing on the row, still serves a route member 37ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > the sender reminds a member whose step is open 39ms
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member who neither sent the route nor administers the organization is refused, and nobody is told 48ms
+   → {"success":true,"taskId":"ROUTE-R","recipientUserId":6}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member whose step is not open yet is not reminded (ROUTE_TASK_NOT_OPEN) 34ms
+   → {"success":true,"taskId":"ROUTE-B","recipientUserId":7}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > nobody is reminded on a withdrawn route (ROUTE_NOT_OPEN) 36ms
+   → {"success":true,"taskId":"ROUTE-R","recipientUserId":6}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks with reviewRouteId: 400, no row 33ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/bulk-create with a task naming review_route_id: 400, nothing created 24ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created 28ms
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member who neither sent the route nor administers the organization is refused, and nobody is told
+AssertionError: {"success":true,"taskId":"ROUTE-R","recipientUserId":6}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:188:46
+    186|   it('a member who neither sent the route nor administers the organiza…
+    187|     const r = await remind('ROUTE-R', 7);
+    188|     expect(r.status, JSON.stringify(r.body)).toBe(403);
+       |                                              ^
+    189|     expect(r.body.code).toBe('ROUTE_REMIND_NOT_PERMITTED');
+    190|     expect(h.created).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > a member whose step is not open yet is not reminded (ROUTE_TASK_NOT_OPEN)
+AssertionError: {"success":true,"taskId":"ROUTE-B","recipientUserId":7}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:196:46
+    194|   it('a member whose step is not open yet is not reminded (ROUTE_TASK_…
+    195|     const r = await remind('ROUTE-B', 8);
+    196|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    197|     expect(r.body.code).toBe('ROUTE_TASK_NOT_OPEN');
+    198|     expect(h.created).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > Remind on a review route member (RR1b) > nobody is reminded on a withdrawn route (ROUTE_NOT_OPEN)
+AssertionError: {"success":true,"taskId":"ROUTE-R","recipientUserId":6}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:204:46
+    202|     await pg.query(`UPDATE review_routes SET status = 'withdrawn'`);
+    203|     const r = await remind('ROUTE-R', 8);
+    204|     expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                              ^
+    205|     expect(r.body.code).toBe('ROUTE_NOT_OPEN');
+    206|     expect(h.created).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  07:01:50
+   Duration  8.80s (transform 2.22s, setup 110ms, import 3.92s, tests 4.34s, environment 0ms)
+

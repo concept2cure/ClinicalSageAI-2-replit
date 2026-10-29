@@ -9,6 +9,14 @@ import { VaultCatalogRecord } from './VaultCatalogRecord';
 import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
+import {
+  ARTIFACTS_BRANCH,
+  ArtifactGovernanceDetail,
+  GovernedArtifactsLane,
+  artifactSelectionFacts,
+  governedArtifactsFacts,
+  type GovernedArtifactsBlock,
+} from './VaultGovernedArtifacts';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -53,7 +61,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../vaultTarget';
+import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -148,12 +156,15 @@ interface VaultDisplayShape {
   spine: string;
   standard: string;
   /** Documents, counted by the server: authored documents (one each, however
-   *  many sections), CMC artifacts, and the programme's uploads — not the
-   *  leaves of the tree, and not the capped uploads page. */
+   *  many sections), the project's governed artifacts, and the programme's
+   *  uploads — not the leaves of the tree, and not the capped uploads page. */
   documentCount: number;
   /** What documentCount is made of; a branch that could not be read is null. */
-  documentCounts?: { authored: number; cmcArtifacts: number | null; uploads: number | null };
+  documentCounts?: { authored: number; artifacts: number | null; uploads: number | null };
   tree: VaultFolder[];
+  /** The "Governed artifacts" branch's counts (fold F3 slice A). Absent when
+   *  the branch could not be read, which `unavailable` says, or from an older server. */
+  artifacts?: GovernedArtifactsBlock;
   pendingStore?: boolean;
   /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
@@ -222,7 +233,7 @@ function currentProjectId(): string | null {
  * The read-model nests every authored leaf inside `vaultdoc-<c2c_documents.id>`
  * whose `code` is that row's `doc_type` uppercased
  * (server/routes/c2c/project-vault.ts documentFolder). Branches with no
- * governed document above them — the Module 3 artifact branch, the filing
+ * governed document above them — the governed-artifacts branch, the filing
  * cabinet — inherit null, and null is reported as null: a family this cannot
  * see must never be guessed, because naming the wrong one turns a resolvable
  * section into a refusal in the editor.
@@ -292,7 +303,7 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
  * build the wizard scaffolds — an authored document, every section not started
  * — and a bare "1 document" reads as a file someone put here. The read names
  * its parts (`documentCounts`), so the header states them: authored documents,
- * Module 3 artifacts when there are any, and uploads when that branch was read.
+ * governed artifacts when there are any, and uploads when that branch was read.
  * A branch that could not be read (null) is left out rather than shown as 0;
  * the read's `unavailable` list says why. Without the parts (the pending-store
  * answer), the total stands as it was.
@@ -302,7 +313,7 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
   if (!parts) return plural(v.documentCount, 'document', 'documents');
   return [
     plural(parts.authored, 'authored document', 'authored documents'),
-    parts.cmcArtifacts ? plural(parts.cmcArtifacts, 'Module 3 artifact', 'Module 3 artifacts') : null,
+    parts.artifacts ? plural(parts.artifacts, 'governed artifact', 'governed artifacts') : null,
     parts.uploads == null ? null : plural(parts.uploads, 'uploaded file', 'uploaded files'),
   ]
     .filter(Boolean)
@@ -1040,6 +1051,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
   };
+  /* From the governed-artifacts lane: browse the branch in the tree. */
+  const openArtifacts = () => {
+    leaveFind();
+    setActiveFolder('artifacts');
+    setExpanded((e) => ({ ...e, artifacts: true }));
+  };
   /* "Open in Vault" after File to Vault names the document it filed
      (vaultTarget.ts): open on that row, where "Place into filing…" is,
      instead of the first node. A document this tree does not hold, or one
@@ -1050,6 +1067,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const [pendingTarget, setPendingTarget] = useState<
     TakenVaultTarget | { kind: 'uploaded'; documentId: string; after: VaultDisplayShape | null } | null
   >(() => takeVaultTarget(projectId));
+  // A target published while this Vault is already on screen (a notice opened from the tray).
+  React.useEffect(() => {
+    const take = () => {
+      if (!vaultTargetIsFor(projectId ?? null)) return;
+      const taken = takeVaultTarget(projectId);
+      if (taken?.kind === 'here') setPendingTarget(taken);
+    };
+    window.addEventListener(VAULT_TARGET_EVENT, take);
+    return () => window.removeEventListener(VAULT_TARGET_EVENT, take);
+  }, [projectId]);
   const [missingTarget, setMissingTarget] = useState<{ documentId: string; act: 'filed' | 'uploaded' } | null>(null);
   const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
   React.useEffect(() => {
@@ -1306,6 +1333,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           : vault?.unavailable?.some((u) => u.branch === 'Data room')
             ? 'unavailable — counts unknown, not zero'
             : null,
+        // The project's governed artifacts (fold F3 slice A), or that they could not be read.
+        governedArtifacts: governedArtifactsFacts(vault?.artifacts, vault?.unavailable),
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
         searchQuery: trimmedQ || null,
@@ -1321,6 +1350,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               percentComplete: sel.src === 'upload' ? null : sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
               filing: sel.filing ?? null,
+              // A governed artifact's state, as the registry records it.
+              artifact: artifactSelectionFacts(sel),
             }
           : null,
       },
@@ -1331,6 +1362,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Browse a folder in the document tree',
         'Upload files into the vault, each with its own type, classification and folder (virus-scanned; a file given no folder is classified to a suggested one)',
         'Confirm or move an upload’s suggested filing (governed, audited)',
+        'Read a governed artifact’s kind, origin, signature on the current version and human review',
       ],
     };
   }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault]);
@@ -1684,6 +1716,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               window={vault?.uploadsWindow}
               status={st}
               onOpen={openUpload}
+            />
+          )}
+          {/* The project's governed artifacts (fold F3 slice A): a breakdown of
+              the tree's branch, not a second list. Steps aside while a search
+              runs, like the uploads lane. */}
+          {!searching && (
+            <GovernedArtifactsLane
+              block={vault?.artifacts}
+              unavailableReason={vault?.unavailable?.find((u) => u.branch === ARTIFACTS_BRANCH)?.reason ?? null}
+              onOpen={openArtifacts}
             />
           )}
           {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
@@ -2189,6 +2231,11 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
+                ) : sel.src === 'artifact' && sel.artifact ? (
+                  /* A governed artifact: its governance as the registry records
+                     it. Its versions and audit trail are handed on to the next
+                     slice; nothing here stands in for them. */
+                  <ArtifactGovernanceDetail doc={sel} />
                 ) : (
                   <>
                     {/* Corpus indexing / chunk counts are NOT part of the

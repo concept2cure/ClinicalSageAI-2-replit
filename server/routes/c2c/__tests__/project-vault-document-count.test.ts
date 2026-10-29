@@ -107,7 +107,7 @@ describe('GET /api/c2c/project-vault/:id — documentCount counts documents', ()
     expect(res.status).toBe(200);
     expect(res.body.data.uploadsWindow).toMatchObject({ shown: 2, total: 2500 });
     expect(res.body.data.documentCounts).toMatchObject({ authored: 1, uploads: 2500 });
-    expect(res.body.data.documentCount).toBe(1 + 2500 + (res.body.data.documentCounts.cmcArtifacts ?? 0));
+    expect(res.body.data.documentCount).toBe(1 + 2500 + (res.body.data.documentCounts.artifacts ?? 0));
   });
 
   it('a branch that could not be read is unknown in the breakdown, not zero', async () => {

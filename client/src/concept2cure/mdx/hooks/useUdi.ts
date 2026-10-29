@@ -15,7 +15,7 @@
  * which of loading / idle / error / empty / ready it is showing.
  */
 
-import { useFetchJson } from './useFetchJson';
+import { useFetchJson, type ReadFailure } from './useFetchJson';
 import { type DataState } from '../lib/dataState';
 import { isRecord, shapeMismatch, toRowsState } from '../lib/payloadShape';
 import type {
@@ -53,6 +53,9 @@ export interface UseUdiResult {
   scope: 'program' | 'organization';
   loading: boolean;
   error: string | null;
+  /** What the failed read was (readFailureFor). Null for a body it could not
+   *  read, which is a failed read with no status to classify. */
+  failure: ReadFailure | null;
   refresh: () => void;
 }
 
@@ -69,7 +72,7 @@ export function useUdi(programId: string | null): UseUdiResult {
   const url = programId
     ? `/api/mdx/udi/summary?program_id=${encodeURIComponent(programId)}`
     : null;
-  const { data, loading, error, refresh } = useFetchJson<UdiPayload>(url);
+  const { data, loading, error, failure, refresh } = useFetchJson<UdiPayload>(url);
 
   /*
    * `data?.data.devices` — the `?.` covered the envelope and nothing inside it.
@@ -98,6 +101,7 @@ export function useUdi(programId: string | null): UseUdiResult {
     scope: data?.meta?.scope ?? 'organization',
     loading,
     error: failed,
+    failure: error ? failure : null,
     refresh,
   };
 }

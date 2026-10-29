@@ -1,0 +1,1575 @@
+# GREEN at ca574ff80 + this change (working tree), 2026-10-29T10:40:36Z
+# $ npx vitest run server/__tests__/routes/content-digest-binders.pglite.test.ts server/services/part11/__tests__/labeling-risk-content-binders.test.ts server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts server/routes/__tests__/domain-sign-ceremony.routes.test.ts server/routes/__tests__/governed-signed-act.request-context.test.ts server/services/__tests__/signature-content-verification.test.ts server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts server/routes/__tests__/labeling-translations-shape.test.ts server/routes/__tests__/mdx-risk-assignee-membership.test.ts server/routes/__tests__/mdx-risk-program-scope.test.ts server/routes/__tests__/mdx-risk-recompute.test.ts server/services/vault/__tests__/vault-seal.service.test.ts server/routes/__tests__/protocol-signatures.routes.test.ts server/routes/__tests__/commitment-fulfil-route.test.ts server/services/part11/__tests__/commitment-fulfilment-binder.test.ts server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts server/__tests__/routes/device-project-reads-admit-program.test.ts server/__tests__/routes/device-project-writes-admit-program.test.ts tests/mdx-qms-labeling-search-analytics-routes.test.ts tests/mdx-beta-surfaces-routes.test.ts server/routes/__tests__/mdx-engineering.contract.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+{
+  "timestamp": "2026-10-29T10:40:39.568Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the migration > is in the set after the tables it alters and before the tenant sweep 4ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the migration > adds the approval stamp and the creators, nullable, keyed to users 17ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to approved with no signature: 400, and the document is unchanged 27ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to effective with no signature: 400, and the document is unchanged 8ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to superseded with no signature: 400, and the document is unchanged 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a create as approved: 428, and nothing is inserted 5ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a create as effective: 428, and nothing is inserted 5ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a create as superseded: 428, and nothing is inserted 4ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a signed approval of a document in review records the signer as approver, with the ledger pair and the signature row 15ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect 11ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a document approved before its approver was recorded, made effective today: the signer is recorded 11ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move that also edits the document: 400, the signature covers the document as it stands 5ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed approved from draft: 409, in words, and nothing is signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed approved from approved: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed approved from effective: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed approved from superseded: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed effective from draft: 409, in words, and nothing is signed 9ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed effective from review: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed effective from effective: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a translation pending cannot be approved: 409, in words, and nothing is signed 10ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a translation in_progress cannot be approved: 409, in words, and nothing is signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > the order of the steps, as QMS orders them > a translation rejected cannot be approved: 409, in words, and nothing is signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a create records who added the document and the translation 11ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the translation's creator signing its approval: 403, and it stays in review 11ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a colleague of the creator approves it, and the two-person rule is recorded as enforced 9ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a translation that records no creator is approved, and the ledger and signature say the rule did not apply 8ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it approved: 403, and nothing is signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it effective: 403, and nothing is signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed approved, recorded as not applicable 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed effective, recorded as not applicable 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule 9ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes 5ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes 4ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning review: 400 before the password, and nothing changes 4ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing an approved translation (language): 409, and it stays as signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing an approved translation (translator): 409, and it stays as signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing an approved translation (method): 409, and it stays as signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving an approved translation back with no reason: 400, it stays approved, and no ledger row is written 8ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving it back with a reason withdraws the approval: no stamp is left, and a transition ledger row records why 8ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > a translation not yet approved can still be edited and moved, with no reason and no ledger row 10ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing a approved document: 409, and it stays as signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing a effective document: 409, and it stays as signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > editing a superseded document: 409, and it stays as signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a approved document back to draft with no reason: 400, and it stays as signed 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a effective document back to draft with no reason: 400, and it stays as signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a superseded document back to draft with no reason: 400, and it stays as signed 6ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a approved document back to draft with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row 14ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a approved document back to review with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a effective document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row 9ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a effective document back to review with a reason withdraws its approval (effective date kept: null), with a ledger row 8ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row 7ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > a draft can still be edited and sent for review, with no reason and no ledger row 9ms
+ ✓ server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts > 3. an approval never outlives what it signed > an edit or a move of a document the organization does not hold is still a 404 8ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-29T10:40:43.192Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-10-29T10:40:44.530Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 27ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > checks independence after reservation when authorship changed while the signer waited 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: No current protocol target.) 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: Protocol changed while reservation waited.) 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 2ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified
+[signing-authority] signer role lookup failed: membership verification interrupted
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified 2ms
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+{
+  "timestamp": "2026-10-29T10:40:45.413Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest 58ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the read says the signature matches the label as it stands 32ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected 42ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a field edited after the approval is withdrawn is detected against the signature 36ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed 30ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected 47ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the signature row carries the translation content digest 20ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the document read says each translation matches, and an edit after a withdrawal is detected 32ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls 19ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance 31ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance 21ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged 20ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted 13ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a signature from before content binding is unverified, never "matches" or "changed" 11ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a revoked signature reads as withdrawn 9ms
+ ✓ server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a record never signed reads as unsigned 8ms
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:40:48.634Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:40:48.807Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:40:48.808Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T10:40:48.808Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the ledger pair AND the Part 11 signature row, committed together 2260ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-derivable target: binds the audit chain hash under the EXPLICIT ledger basis (no fabricated content hash) 1627ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > derivable target (ectd-sequence): binds a REAL content digest of the leaf manifest 1703ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > §11.200 attribution hash re-derives from the persisted manifest bytes 1831ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the actual 'ema' market identity and retains the signed record when its number changes 1621ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > persists the actual 'pmda' market identity and retains the signed record when its number changes 1427ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > ATOMIC / FAIL CLOSED: when the signature row cannot be written, the ledger writes roll back too 1384ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: an unresolvable signer aborts the sign (no anonymous signatures) 1406ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a sign that declares no meaning is refused before anything is written 1424ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning 1495ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared 1419ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > non-sign governed commands do not write electronic_signatures (regression) 1603ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > caller-owned transaction: sign writes ride the external client and roll back with it 1369ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the migration's anchor CHECK refuses an anchorless signature row 1447ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > recordGovernedAction alone stays ledger-only (domain callers unaffected) 1408ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-29T10:41:13.308Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.762Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.786Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.805Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 24ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.833Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.851Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.868Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-29T10:41:13.888Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 9ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'update', with no password asked 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an upper-case spelling signs under the lower-case target 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA assessment sign-off: one spelling of the assessment > an id that is not a uuid is not an assessment: 404 before the ceremony, nothing written 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'modifications_required', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA signature saved program and snapshot > binds its signature payload to the actual retained input/result, kind and program 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA signature saved program and snapshot > refuses an unfiled historical assessment and leaves its status unchanged 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA signature saved program and snapshot > refuses other lead under current persisted program authority 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > BLA signature saved program and snapshot > refuses inactive actor under current persisted program authority 2ms
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:14.689Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:15.092Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:15.093Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:15.093Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T10:41:15.166Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.175Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.178Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T10:41:15.194Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.201Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.203Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T10:41:15.215Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.220Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.223Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row 25ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row 4ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row 4ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records 11ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 4ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row 4ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records 8ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records 8ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row 2ms
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T10:41:15.234Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.240Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.242Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+{
+  "timestamp": "2026-10-29T10:41:15.257Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.263Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+{
+  "timestamp": "2026-10-29T10:41:15.265Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records 8ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row 6ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records 9ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/q-sub': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi with no programId' behaves as before > writes the record without asking about a project 6ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/udi with programId null' behaves as before > writes the record without asking about a project 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id that leaves th…' behaves as before > writes the record without asking about a project 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/udi/:id with programId…' behaves as before > writes the record without asking about a project 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling with no progra…' behaves as before > writes the record without asking about a project 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'POST /api/mdx/labeling with programId…' behaves as before > writes the record without asking about a project 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id that leav…' behaves as before > writes the record without asking about a project 3ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > 'PATCH /api/mdx/labeling/:id with prog…' behaves as before > writes the record without asking about a project 2ms
+ ✓ server/__tests__/routes/device-project-writes-admit-program.test.ts > POST /api/q-sub with no programId behaves as before > is refused as invalid (the project is required), with no lookup and no row 3ms
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T10:41:16.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T10:41:16.226Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:16.227Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts
+{
+  "timestamp": "2026-10-29T10:41:16.227Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > answers 503 when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:16.316Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > answers 503 when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:16.340Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > answers 503 when the ownership check cannot run, and inserts nothing
+{
+  "timestamp": "2026-10-29T10:41:16.361Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > answers 503 when the ownership check cannot run, and updates nothing
+{
+  "timestamp": "2026-10-29T10:41:16.374Z",
+  "level": "error",
+  "message": "[mdx-risk] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > reads that project's register after the ownership check, and says so 21ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses another organization's project with 404 and reads nothing 5ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses a missing project with 404 and reads nothing 4ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > refuses a deleted project with 404 and reads nothing 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > answers 503 when the ownership check cannot run, and reads nothing 4ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > without a project, reads the organization's register as before and says so 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-items?program_id= > a viewer may still read 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > summarizes the project after the ownership check 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > refuses another organization's project with 404 and reads nothing 4ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > refuses a missing project with 404 and reads nothing 4ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > refuses a deleted project with 404 and reads nothing 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > GET /api/mdx/risk-summary/:programId > answers 503 when the ownership check cannot run, and reads nothing 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > stores the project only after the ownership check 11ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses another organization's project with 404 and inserts nothing 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses a missing project with 404 and inserts nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > refuses a deleted project with 404 and inserts nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > answers 503 when the ownership check cannot run, and inserts nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > POST /api/mdx/risk-items > without a project, inserts an organization hazard with no project, as before 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > moves a hazard to a project only after the ownership check 3ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to another organization's project with 404 and updates nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to a missing project with 404 and updates nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > refuses a move to a deleted project with 404 and updates nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > answers 503 when the ownership check cannot run, and updates nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > a change that names no project asks no ownership question 7ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > PATCH /api/mdx/risk-items/:id > clearing the project asks no ownership question 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'post' '/api/mdx/risk-items' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'post' '/api/mdx/risk-items' takes an editing role > lets an editor through 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > lets an editor through 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-items/1' takes an editing role > lets an editor through 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'post' '/api/mdx/risk-items/1/controls' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'post' '/api/mdx/risk-items/1/controls' takes an editing role > lets an editor through 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-controls/1' takes an editing role > refuses a viewer with the UDI write's 403 and sends nothing 2ms
+ ✓ server/routes/__tests__/mdx-risk-program-scope.test.ts > 'patch' '/api/mdx/risk-controls/1' takes an editing role > lets an editor through 2ms
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts
+{
+  "timestamp": "2026-10-29T10:41:17.246Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective
+{
+  "timestamp": "2026-10-29T10:41:19.411Z",
+  "level": "warn",
+  "message": "[qms-periodic-review-task] The periodic review task could not be written; the governed act stands",
+  "context": {
+    "organizationId": 99,
+    "documentId": 1,
+    "err": "__vite_ssr_import_1__.db.select is not a function"
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant
+{
+  "timestamp": "2026-10-29T10:41:19.418Z",
+  "level": "warn",
+  "message": "[tenant-lifecycle] Unrecognized payment_status — allowing access, review the Stripe status mapping",
+  "context": {
+    "organizationId": 99,
+    "paymentStatus": "paid"
+  }
+}
+
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200
+{
+  "timestamp": "2026-10-29T10:41:19.430Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Request-scoped post-commit audit unavailable",
+  "context": {
+    "action": "mdx.qms.nonconforming.disposition",
+    "resourceType": "qms_nonconforming_product",
+    "resourceId": 1,
+    "code": null
+  }
+}
+
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/documents returns 403 without org context 15ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/qms/documents returns 403 without org context 9ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/qms/suppliers returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/labeling returns 403 without org context 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > POST /api/mdx/labeling returns 403 without org context 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/search?q=foo returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > auth gate > GET /api/mdx/analytics/portfolio returns 403 without org context 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document rejects unknown doc_type 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 201 on valid 8ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 409 on duplicate docNumber 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective 6ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve 409 when not in_review 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > training-ack requires document in tenant 4ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > supplier criticality required 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > NC disposition 200 8ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST rejects unknown doc_kind 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST 201 with default language en 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 404 when document not in tenant 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > POST translation 409 on duplicate language 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > coverage returns counts 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Labeling routes > add symbol requires symbol_code 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > rejects q shorter than 2 chars 2ms
+stderr | tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity
+{
+  "timestamp": "2026-10-29T10:41:19.458Z",
+  "level": "error",
+  "message": "[mdx-analytics] Analytics data could not be run",
+  "context": {
+    "reason": "Analytics data could not be run: 42P01",
+    "correlationId": null
+  }
+}
+
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > returns grouped envelope 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Global search > survives missing optional tables (42P01) 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > portfolio returns programs + byPathway + submissions 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > submissions cycle-times converts seconds to hours 2ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > clinical roll-up reports unavailable schema rather than no clinical activity 3ms
+ ✓ tests/mdx-qms-labeling-search-analytics-routes.test.ts > Analytics routes > blockers returns 3 sub-aggregates 2ms
+stderr | server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > signing authority that cannot be read: 503, and the password is not asked
+[signing-authority] signer role lookup failed: connection reset
+
+stderr | server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > the signature row cannot be written: the acceptance rolls back with it
+{
+  "timestamp": "2026-10-29T10:41:20.261Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > is refused: no password, meaning or reason means 400 and nothing written 23ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing password, and writes nothing 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing meaning, and writes nothing 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > names a missing reason, and writes nothing 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a wrong password: 401, said as the ceremony says it, and no transaction opened 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (review): 400 before the password is asked 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (authorship): 400 before the password is asked 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (release): 400 before the password is asked 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > an editor whose role carries no signing authority: 403 before the password is asked 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > signing authority that cannot be read: 503, and the password is not asked 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a viewer is refused by the editor gate first, signature or not 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a hazard already accepted: 409, rolled back, no second signature 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > a hazard the organization does not hold, or one deleted: 404, rolled back 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > the signature row cannot be written: the acceptance rolls back with it 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > an acceptance that also edits a residual estimate: 400, the signature covers the hazard as it stands 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > an acceptance that also edits the acceptability to false: 400, the signature covers the hazard as it stands 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the ceremony refuses, and nothing is accepted > an acceptance that also edits the rationale: 400, the signature covers the hazard as it stands 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > re-verifies the signer, then sets the status, records the sign ledger pair and the signature row, then commits 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > sets the status on the organization's live row only 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > records what was accepted, under the declared meaning, on the ledger and the signature row 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > answers with the accepted row and the signature 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > goes through the per-signer signing-attempt limit; a plain status change does not 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > a plain PATCH setting acceptable true answers 428, and nothing is written or limited 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > with a rationale beside it, the same 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > a signed acceptance that says acceptable true is the one act, and is signed 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > acceptable false records no acceptance and asks for nothing, as before 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > acceptable null records no acceptance and asks for nothing, as before 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to open updates the row on the pool and signs nothing 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to mitigating updates the row on the pool and signs nothing 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to verified updates the row on the pool and signs nothing 4ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a status change to closed updates the row on the pool and signs nothing 2ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a new hazard is added open 3ms
+ ✓ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > what is not an acceptance asks for no signature, as before > a new hazard cannot be created already accepted: 428, and nothing is inserted 2ms
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T10:41:21.073Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T10:41:21.267Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:21.267Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-29T10:41:21.267Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T10:41:21.412Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.issue udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "99"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T10:41:21.412Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T10:41:21.413Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-29T10:41:21.414Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.issue",
+    "resourceType": "udi_record",
+    "resourceId": "99",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T10:41:21.419Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.submit_gudid udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T10:41:21.419Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T10:41:21.419Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-29T10:41:21.420Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "mdx.udi.submit_gudid",
+    "resourceType": "udi_record",
+    "resourceId": "1",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > AnA review queue returns 403 without org context 14ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > UDI list returns 403 without org context 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Risk items list returns 403 without org context 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Software list returns 403 without org context 6ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > returns the canonical envelope with the card list 5ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an invalid pathway value 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an out-of-range limit 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > surfaces a 409 when the draft_source column is missing 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/vault > lists artifacts and groups by family 5ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/vault > rejects an invalid program_id UUID 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > GET /api/mdx/udi returns the canonical list envelope 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi rejects missing required fields 7ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row 5ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi surfaces a 409 on duplicate UDI-DI 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST validates severity in [1..5] 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST computes initial_risk = severity × probability 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > GET /risk-summary/:programId requires UUID 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST /risk-items/:id/controls 404s on cross-tenant id 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown item_kind 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown doc_level 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary requires UUID 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary returns matrix + completion % 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > rejects non-UUID program 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > 404s when program not in tenant 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > returns the panel shape the useEngineering hook destructures 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over required sections only 2ms
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+{
+  "timestamp": "2026-10-29T10:41:22.170Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > signing authority that cannot be read: 503, and the password is not asked
+[signing-authority] signer role lookup failed: connection reset
+
+stderr | server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > the signature row cannot be written: the approval rolls back with it
+{
+  "timestamp": "2026-10-29T10:41:22.251Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "electronic_signatures insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > approving a translation without a signature > is refused: no password, meaning or reason means 400 and nothing written 23ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > approving a translation without a signature > names a missing password, and writes nothing 4ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > approving a translation without a signature > names a missing meaning, and writes nothing 4ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > approving a translation without a signature > names a missing reason, and writes nothing 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a wrong password: 401, said as the ceremony says it, and no transaction opened 5ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (review): 400 before the password is asked 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (authorship): 400 before the password is asked 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (release): 400 before the password is asked 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > an editor whose role carries no signing authority: 403 before the password is asked 5ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > signing authority that cannot be read: 503, and the password is not asked 4ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a viewer is refused by the editor gate first, signature or not 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a translation already approved: 409, rolled back, no second signature 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > the person who added the translation: 403 separation of duties, read on the signing transaction, before any stamp 4ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > a translation the organization does not hold, or whose document is deleted: 404, rolled back 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > the signature row cannot be written: the approval rolls back with it 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the ceremony refuses, and nothing is approved > an approval that also edits the translation: 400, the signature covers the translation as it stands 6ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the signed approval > re-verifies the signer, then stamps, records the sign ledger pair and the signature row, then commits 4ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the signed approval > stamps the signer as the approver, on the organization's row only 2ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the signed approval > records what was approved, under the declared meaning, on the ledger and the signature row 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the signed approval > answers with the approved row and the signature 3ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > the signed approval > goes through the per-signer signing-attempt limit; a plain status change does not 5ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > what is not an approval asks for no signature, as before > a status change short of approved updates the row and stamps nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > what is not an approval asks for no signature, as before > a new translation is added as pending 2ms
+ ✓ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > what is not an approval asks for no signature, as before > a new translation cannot be created already approved: 428, and nothing is inserted 3ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-document has a content binder, so its signature never falls back silently 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-translation has a content binder, so its signature never falls back silently 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > risk-item has a content binder, so its signature never falls back silently 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > names the three bases in the platform vocabulary 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of device_name moves the digest 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of doc_kind moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of version moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of language moves the digest 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of region moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of udi_di moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of expires_at moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_code moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_name moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's description moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's required_by moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > a symbol added or removed moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > status, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_by, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_at, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > effective_date, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > updated_at, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_at, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_by, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > program_id, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > metadata, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > falls back, with its reason, when the label or the text it names cannot be read 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > digests the translation by its recipe 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of labeling_document_id moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of language moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translator moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translation_method moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of back_translation_verified moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > status does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_by does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_at does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > updated_at does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > created_by does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > metadata does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > binds the translated text it names 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of ref_code moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazard moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazardous_situation moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of harm moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of sequence_of_events moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of severity moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of probability moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of detectability moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of initial_risk moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of control_strategy moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of source moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_severity moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_probability moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_risk moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of benefit_risk_rationale moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's description moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's control_type moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's implementation_evidence moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's verification_evidence moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's effectiveness_evidence moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's introduces_new_risk moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's new_risk_item_id moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's status moves the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > status, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > acceptable, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > assigned_to, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > program_id, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > updated_at, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > metadata, written by the act or placing the record, does not move the digest 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > falls back when the hazard cannot be read 0ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > a binder that falls back refuses the signature: SIGNATURE_CONTENT_UNBOUND, and nothing is inserted 1ms
+ ✓ server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > the refusal names why the content could not be bound 1ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a future date, before the commitment is even read 24ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR that names neither a sequence nor a document 9ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a PMR with no date: the signer is shown the date the signature binds, so the server never picks it 6ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > evidence the server refuses, answered with its own code and no credential check 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > access that could not be verified is a 503, not a 500 or a 404 3ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > what is refused before a password is asked for > a password sent for a meeting commitment, which takes none 3ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > a PMR with evidence and no password is refused by the ceremony as a missing component 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > signs, re-checks the evidence under lock, and answers with the signature 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signed act > counts nothing as fulfilled when the ceremony refuses the password 5ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the unsigned fulfilment > a meeting commitment with no evidence is a governed resolve with the same body shape 4ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > fulfilments refused before the password spend none of it: twelve refusals, then the signature still goes through 44ms
+ ✓ server/routes/__tests__/commitment-fulfil-route.test.ts > the signer's signing budget (signedActAttempts, 10 per 5 minutes across every signed act) > a request that reaches the password still spends it: the eleventh within the window is refused before any credential check 21ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > REGRESSION: a document rewritten since signing is not valid 3ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > an unchanged document verifies, and says the content was checked 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > a signature with no bound digest says it attests to nothing 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > reports unverifiable when the signed version content is gone 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > still fails a row whose identifier hash was altered 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > a revoked signature is not valid even with intact content 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > reports not found rather than guessing 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > does not report a governed-action signature as tampered 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > does not compare a release-package digest against document-version content 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > still re-derives, and still detects tampering, for a document-version basis 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > constrains the read to the organization 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > refuses without organization context rather than reading across tenants 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > refuses a non-numeric signature id rather than querying on NaN 0ms
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T10:41:24.960Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T10:41:25.068Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:25.069Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+{
+  "timestamp": "2026-10-29T10:41:25.069Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the reference: the UDI write refuses a viewer > answers 403 and sends nothing 21ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 6ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling' takes an editing role > refuses a member with no role, and sends nothing 3ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling' takes an editing role > lets an editor write, as before 4ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 4ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a member with no role, and sends nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/1' takes an editing role > lets an editor write, as before 4ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/translations' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 4ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/translations' takes an editing role > refuses a member with no role, and sends nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/translations' takes an editing role > lets an editor write, as before 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/translations/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 3ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/translations/1' takes an editing role > refuses a member with no role, and sends nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'patch' '/api/mdx/labeling/translations/1' takes an editing role > lets an editor write, as before 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/symbols' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 3ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/symbols' takes an editing role > refuses a member with no role, and sends nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'post' '/api/mdx/labeling/1/symbols' takes an editing role > lets an editor write, as before 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'delete' '/api/mdx/labeling/symbols/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing 3ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'delete' '/api/mdx/labeling/symbols/1' takes an editing role > refuses a member with no role, and sends nothing 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > 'delete' '/api/mdx/labeling/symbols/1' takes an editing role > lets an editor write, as before 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the labeling reads stay open to every member > a viewer reads /api/mdx/labeling 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the labeling reads stay open to every member > a viewer reads /api/mdx/labeling/1 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the labeling reads stay open to every member > a viewer reads /api/mdx/labeling/1/translations 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the labeling reads stay open to every member > a viewer reads /api/mdx/labeling/1/symbols 2ms
+ ✓ server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts > the labeling reads stay open to every member > a viewer reads /api/mdx/labeling/1/coverage 2ms
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:25.945Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:26.311Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:26.312Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts
+{
+  "timestamp": "2026-10-29T10:41:26.312Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:26.375Z",
+  "level": "error",
+  "message": "[q-sub-routes] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:26.389Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:26.401Z",
+  "level": "error",
+  "message": "[mdx-udi] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+stderr | server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:26.411Z",
+  "level": "error",
+  "message": "[mdx-labeling] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 18ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'Pre-Sub list': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 3ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 4ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI summary': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'UDI records': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > reads the caller's own project, by organization and project 2ms
+ ✓ server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > leaves the organization-wide read, with no project, as it was 2ms
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+{
+  "timestamp": "2026-10-29T10:41:26.698Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied for table risk_items"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed
+{
+  "timestamp": "2026-10-29T10:41:26.701Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel risks failed",
+  "context": {
+    "err": "permission denied"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed
+{
+  "timestamp": "2026-10-29T10:41:26.704Z",
+  "level": "warn",
+  "message": "[mdx-engineering] engineering panel software failed",
+  "context": {
+    "err": "deadlock detected"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing
+{
+  "timestamp": "2026-10-29T10:41:26.711Z",
+  "level": "error",
+  "message": "[mdx-engineering] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 403 without org context 14ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 422 when programId is not a UUID 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 404 for a program outside the caller tenant 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns every key the useEngineering hook destructures 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns empty arrays, never fabricated rows, for an empty tenant 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > maps ISO 14971 integer scales onto the surface heatmap keys 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > falls back to initial severity when no control has moved residual risk 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > clamps out-of-range scale values rather than dropping the hazard 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > survives a missing optional table instead of blanking the surface 4ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not call a design input verified while its validation is pending 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > renders the design outputs, not [object Object] 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > passes the store id through instead of re-prefixing a TEXT key 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not list a merely unmigrated table as unavailable 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over required sections 2ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing 2ms
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T10:41:27.471Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T10:41:27.574Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:27.575Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-recompute.test.ts
+{
+  "timestamp": "2026-10-29T10:41:27.575Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > recomputes initial_risk when only severity changes 21ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > recomputes initial_risk when only probability changes 4ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > recomputes initial_risk when both components change together 3ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > recomputes residual_risk when only one residual component changes 3ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > recomputes residual_risk when both residual components change 3ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > leaves both products alone when no component is touched 3ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > updates initial without disturbing residual, and vice versa 5ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > still enforces tenancy on the recomputing update 4ms
+ ✓ server/routes/__tests__/mdx-risk-recompute.test.ts > risk score recomputation > 403s without org context 3ms
+stdout | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-10-29T10:41:28.360Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:28.361Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-10-29T10:41:28.362Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-seal.service.test.ts
+[database] Database connection successful
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-seal.service.test.ts
+{
+  "timestamp": "2026-10-29T10:41:28.381Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > is the same record, and the same hash, whatever order the rows are read in 2ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > records the hash in lower case and the index number the tree gives 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal manifest > a seal needs a reason, and nothing is written without one 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > intact when every sealed document is recorded with its sealed hash 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed, naming the document, when its recorded hash differs 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > changed when a sealed document is no longer recorded 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify, never intact, when the stored manifest no longer hashes to its record 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > could not verify when a stored file cannot be read, whatever else matches 1ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the verdict > a seal of another project is not found 1ms
+stderr | server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > refuses absent request context before authority, credentials or transaction writes
+{
+  "timestamp": "2026-10-29T10:41:29.149Z",
+  "level": "error",
+  "message": "[governed-signed-act] opening the signing transaction failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps authority, signer verification and governed writes on the same pinned client 23ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > refuses absent request context before authority, credentials or transaction writes 5ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > still validates missing signature components before requesting any database context 4ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps an authority refusal ahead of credential verification and the domain transaction 3ms
+ ✓ server/routes/__tests__/governed-signed-act.request-context.test.ts > signed acts use the request context before any authority or credential read > keeps failed credential accounting outside the domain transaction and leaves the act unsigned 3ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > is registered, so a fulfilment signature never falls back to the ledger basis 2ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > digests the commitment, its date and what met it, with the shared recipe 2ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > binds the Vault version’s sha256: a different pin is a different digest 0ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > falls back when the commitment is not readable, or carries no recorded fulfilment 1ms
+ ✓ server/services/part11/__tests__/commitment-fulfilment-binder.test.ts > the regulatory-commitment binder > refuses a malformed pointer rather than querying for it 0ms
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T10:41:30.414Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T10:41:30.528Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:30.529Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts
+{
+  "timestamp": "2026-10-29T10:41:30.529Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > fails closed when membership cannot be verified
+{
+  "timestamp": "2026-10-29T10:41:30.613Z",
+  "level": "error",
+  "message": "[mdx-risk] create-item failed",
+  "context": {
+    "err": "assignee organization membership could not be verified",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > creates the risk when the assignee is a member 23ms
+ ✓ server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > refuses a user of another organization with 422 and writes nothing 4ms
+ ✓ server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > fails closed when membership cannot be verified 4ms
+ ✓ server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > applies the same rule to PATCH 4ms
+ ✓ server/routes/__tests__/mdx-risk-assignee-membership.test.ts > risk assignee must be a member of the organization > does not consult membership when no assignee is sent or it is cleared 10ms
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T10:41:31.466Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T10:41:31.576Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T10:41:31.576Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/labeling-translations-shape.test.ts
+{
+  "timestamp": "2026-10-29T10:41:31.576Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/labeling-translations-shape.test.ts > GET /api/mdx/labeling/:id/translations > returns rows carrying the v2 display keys (method, btv, name) 16ms
+ ✓ server/routes/__tests__/labeling-translations-shape.test.ts > GET /api/mdx/labeling/:id/translations > 403 without org context 11ms
+ ✓ server/routes/__tests__/labeling-translations-shape.test.ts > GET /api/mdx/labeling/:id/translations > 404 when the document is not in the org 3ms
+
+ Test Files  23 passed (23)
+      Tests  565 passed (565)
+   Start at  10:40:37
+   Duration  54.06s (transform 4.60s, setup 332ms, import 20.80s, tests 30.06s, environment 2ms)
+

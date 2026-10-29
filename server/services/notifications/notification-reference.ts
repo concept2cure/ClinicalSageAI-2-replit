@@ -5,7 +5,7 @@ export interface NotificationResourceReference {
   resource_type: string | null; resource_id: string | null; action_url: string | null;
 }
 export interface RecordReference {
-  kind: 'report_run' | 'unified_task' | 'authoring_document' | 'project' | 'regulatory_program' | 'submission' | 'ectd_sequence' | 'gateway_transmittal' | 'protocol_document' | 'qms_document' | 'chat_thread';
+  kind: 'report_run' | 'unified_task' | 'authoring_document' | 'project' | 'regulatory_program' | 'submission' | 'ectd_sequence' | 'gateway_transmittal' | 'protocol_document' | 'qms_document' | 'chat_thread' | 'canonical_document';
   id: string; sectionId?: string; submissionId?: string; workspace?: string;
 }
 function nativeReference(kind: string, id: string): RecordReference | null {
@@ -18,6 +18,8 @@ function nativeReference(kind: string, id: string): RecordReference | null {
       ? { kind,id:parts[0],...(parts[1] ? {sectionId:parts[1]} : {}) } : null;
   }
   if (kind === 'regulatory_program') return NOTICE_UUID.test(id) ? { kind,id } : null;
+  // A lifecycle record (a Vault version's review and approval, RR1b).
+  if (kind === 'canonical_document') return NOTICE_UUID.test(id) ? { kind,id } : null;
   if (!noticePositiveId(id)) return null;
   const kinds = ['report_run','project','submission','ectd_sequence','gateway_transmittal','protocol_document','qms_document'];
   return kinds.includes(kind) ? { kind: kind as RecordReference['kind'],id } : null;

@@ -52,6 +52,7 @@ import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { getSurfaceMeta } from '../registryModel';
+import { artifactSignatureState } from '@shared/artifact-governance';
 
 /* `window.TXW_ADMIN` used to be published from the Setup panel below and was
    read by nothing in the repository. Its successor, the Translation workspace
@@ -1399,13 +1400,9 @@ interface ArtifactRow {
 
 /** What one artifact's signature says about its CURRENT version. The gallery
     showed the e-signed shield whenever any active signature existed, so a
-    version edited after signing read as signed. */
-function signatureState(a: Pick<ArtifactRow, 'sig' | 'sigStale' | 'sigVersion'>): 'none' | 'current' | 'stale' | 'unknown' {
-  if (!a.sig) return 'none';
-  if (a.sigStale === true) return 'stale';
-  if (a.sigStale === false) return 'current';
-  return 'unknown';
-}
+    version edited after signing read as signed. The rule is shared with the
+    project Vault's governed artifacts (shared/artifact-governance.ts). */
+const signatureState = (a: Pick<ArtifactRow, 'sig' | 'sigStale'>) => artifactSignatureState(a);
 
 /* CSV cell: quote always, double any embedded quote. Artifact names carry
    commas and parentheses ("… — 510(k) Summary, rev 2"), which is exactly the

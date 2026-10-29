@@ -105,13 +105,18 @@ export function parseRouteRequest(raw: unknown): RouteRequest {
   return { reviewers, approvers, order, reviewDueDate: r.reviewDueDate, approvalDueDate: r.approvalDueDate };
 }
 
-/** End of each day in the sender's notification time zone (UTC when unset or unknown), as instants. */
-async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<{ review: Date; approval: Date; timeZone: string }> {
+/** The sender's notification time zone, the one every due date is the end of a day in (UTC when unset or unknown). */
+export async function senderTimeZone(q: RouteQueryable, senderId: number): Promise<string> {
   // tenant-isolation-safe: notification_preferences is keyed by user only (no tenant column); the sender is the session user.
   const pref = await q.query(`SELECT timezone FROM notification_preferences WHERE user_id = $1 ORDER BY id LIMIT 1`, [senderId]);
   const wanted = String(pref.rows[0]?.timezone ?? 'UTC') || 'UTC';
   const known = await q.query(`SELECT 1 FROM pg_timezone_names WHERE name = $1`, [wanted]);
-  const timeZone = known.rows.length ? wanted : 'UTC';
+  return known.rows.length ? wanted : 'UTC';
+}
+
+/** End of each day in the sender's notification time zone (UTC when unset or unknown), as instants. */
+async function dueInstants(q: RouteQueryable, senderId: number, req: RouteRequest): Promise<{ review: Date; approval: Date; timeZone: string }> {
+  const timeZone = await senderTimeZone(q, senderId);
   const { rows } = await q.query(
     `SELECT ((($1::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') AS review,
             ((($2::date + 1)::timestamp AT TIME ZONE $3) - interval '1 millisecond') AS approval,
@@ -129,7 +134,8 @@ async function dueInstants(q: RouteQueryable, senderId: number, req: RouteReques
   return { review, approval, timeZone };
 }
 
-async function printedNameOf(q: RouteQueryable, organizationId: number, userId: number): Promise<string> {
+/** A member's printed name, as a route records it at naming (users.name, else the e-mail's local part). */
+export async function printedNameOf(q: RouteQueryable, organizationId: number, userId: number): Promise<string> {
   const { rows } = await q.query(
     `SELECT u.name, u.email FROM organization_users ou JOIN users u ON u.id = ou.user_id WHERE ou.organization_id = $1 AND ou.user_id = $2`,
     [organizationId, userId],
@@ -402,4 +408,29 @@ export async function closeReviewRoute(
 export async function isOrgAdmin(q: RouteQueryable, organizationId: number, userId: number): Promise<boolean> {
   const { rows } = await q.query(`SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2`, [organizationId, userId]);
   return String(rows[0]?.role ?? '').trim().toLowerCase() === 'admin';
+}
+
+/**
+ * Remind (RR1b, §2.3, §2.11): POST /api/tasks/tasks/:taskId/notify on a route
+ * member writes nothing on the row, and is the route sender's or an
+ * administrator's, for a member whose step is open on an open route. The
+ * refusal to answer, or null when the reminder may go.
+ */
+export async function routeRemindRefusal(
+  q: RouteQueryable,
+  p: { organizationId: number; actorUserId: number; reviewRouteId: string; taskStatus: string },
+): Promise<{ status: 403 | 409; code: string; message: string } | null> {
+  const { rows } = await q.query(
+    `SELECT sender_id, status FROM review_routes WHERE organization_id = $1 AND id = $2::uuid`,
+    [p.organizationId, p.reviewRouteId],
+  );
+  const route = rows[0];
+  if (!route || route.status !== 'open') {
+    return { status: 409, code: 'ROUTE_NOT_OPEN', message: 'This review route is no longer open, so nobody on it is reminded. Nothing was sent.' };
+  }
+  if (p.taskStatus !== 'pending' && p.taskStatus !== 'in-progress') {
+    return { status: 409, code: 'ROUTE_TASK_NOT_OPEN', message: 'It is not this person’s turn on the route, or they have finished, so they are not reminded. Nothing was sent.' };
+  }
+  if (Number(route.sender_id) === p.actorUserId || (await isOrgAdmin(q, p.organizationId, p.actorUserId))) return null;
+  return { status: 403, code: 'ROUTE_REMIND_NOT_PERMITTED', message: 'Only the person who sent this review route, or an administrator, reminds its members. Nothing was sent.' };
 }

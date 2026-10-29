@@ -11,7 +11,9 @@
  *     returns the same record; another tenant's version is not found;
  *   - the uploader may neither review nor approve; the reviewer does not also
  *     approve; a viewer may not act; approving without a review sign-off is
- *     refused; only the current version is approved;
+ *     refused; only the current version is approved — on a version that
+ *     entered review before named routes (RR1b's cutover; a version sent since
+ *     is routed, tests/db/review-route-vault*.dbtest.ts);
  *   - approving v2 moves v1 to superseded in the same transaction, each with
  *     its chained audit row, and the approval is bound to v2's bytes; a failure
  *     while superseding leaves both as they were;
@@ -107,11 +109,39 @@ const review = (who: Who, id: string) =>
 const vault = async (who: Who, path: string) =>
   request(await appFor(mine, who)).get(`/api/c2c/project-vault/${mine.programId}${path}`);
 
-/** Start, send for review, and sign the review: a version ready to approve. */
+/**
+ * A version that entered review before its organization's cutover to named
+ * review routes (REVIEW_ROUTING §2.13; RR1b ships REVIEW_ROUTE_REQUIRED, so the
+ * route handler no longer sends a Vault version without one). The record steps
+ * authoring → in_review through the one orchestrator, as the handler did before
+ * the cutover and as the FD5(c) carry-over still does
+ * (authoring-approval-carryover.ts), so the legacy path these tests pin — any
+ * eligible signer but the uploader and the sender — is the one such a record
+ * keeps.
+ */
+async function enteredReviewBeforeRoutes(canonicalId: string, by: Who = 'uploader'): Promise<void> {
+  const { drizzle } = await import('drizzle-orm/node-postgres');
+  const { loadProjectionInput, persistState } = await import('../../server/services/regulatory/canonicalDocumentStore');
+  const { advanceDocument, projectCanonicalDocument } = await import('../../server/services/regulatory/documentLifecycleOrchestrator');
+  const { buildLifecycleBindings } = await import('../../server/services/regulatory/lifecycleBindings');
+  const { drizzleSignatureClient } = await import('../../server/services/part11/signature-persistence');
+  await drizzle(owner).transaction(async (tx) => {
+    const current = (await loadProjectionInput(tx as never, canonicalId, mine.orgId, { forUpdate: true }))!;
+    const projected = projectCanonicalDocument(current);
+    const actor = String(users[by]);
+    const bindings = buildLifecycleBindings({ organizationId: mine.orgId, actor, client: drizzleSignatureClient(tx as never) });
+    const result = await advanceDocument(projected.state, 'in_review',
+      { actor, at: new Date().toISOString(), reason: 'Sent for review before named routes', contentHash: current.contentHash }, bindings, projected.document);
+    expect(result.ok, JSON.stringify(result.blockedBy)).toBe(true);
+    await persistState(tx as never, canonicalId, mine.orgId, result.state, result.auditEvent!);
+  });
+}
+
+/** Start, send for review (before named routes), and sign the review: a version ready to approve. */
 async function reviewed(vaultId: string): Promise<string> {
   const s = await start('uploader', vaultId);
   expect(s.status, JSON.stringify(s.body)).toBe(201);
-  expect((await advance('uploader', s.body.canonicalId, 'in_review')).status).toBe(200);
+  await enteredReviewBeforeRoutes(s.body.canonicalId);
   const r = await review('reviewer', s.body.canonicalId);
   expect(r.status, JSON.stringify(r.body)).toBe(200);
   return s.body.canonicalId;
@@ -213,7 +243,9 @@ describe('review and approval of a Vault version (VR-13)', () => {
   it('the uploader may not review, a viewer may not act, and approval needs a review', async () => {
     const v = await ingest(mine, 'POLICY', pdf('policy'));
     const s = await start('uploader', v);
-    expect((await advance('uploader', s.body.canonicalId, 'in_review')).status).toBe(200);
+    // Since RR1b the route handler sends a Vault version only with named people.
+    expect((await advance('uploader', s.body.canonicalId, 'in_review')).body.error).toBe('REVIEW_ROUTE_REQUIRED');
+    await enteredReviewBeforeRoutes(s.body.canonicalId);
     expect((await review('uploader', s.body.canonicalId)).body.error).toBe('SELF_APPROVAL');
     expect((await review('viewer', s.body.canonicalId)).status).toBe(403);
     const early = await advance('approver', s.body.canonicalId, 'approved');

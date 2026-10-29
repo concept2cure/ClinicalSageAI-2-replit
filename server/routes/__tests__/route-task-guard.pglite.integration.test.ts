@@ -75,7 +75,8 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_artifacts(id integer,organization_id integer,project_id integer);
     CREATE TABLE concept2cure_review_assignments(artifact_id integer,reviewer_id integer,organization_id integer,status text);
     CREATE TABLE unified_tasks(id serial PRIMARY KEY);
-    CREATE TABLE task_dependencies(id serial PRIMARY KEY);`);
+    CREATE TABLE task_dependencies(id serial PRIMARY KEY);
+    CREATE TABLE review_routes(id uuid PRIMARY KEY,organization_id integer NOT NULL,sender_id integer NOT NULL,status text NOT NULL);`);
   for (const [table, name] of [[unifiedTasks, 'unified_tasks'], [taskDependencies, 'task_dependencies']] as const) {
     for (const column of getTableConfig(table).columns) if (column.name !== 'id') {
       const defaults = column.name === 'created_at' || column.name === 'updated_at' ? ' DEFAULT now()' : column.name === 'status' && name === 'unified_tasks' ? " DEFAULT 'pending'" : '';
@@ -92,10 +93,11 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   h.notifications.mockClear(); h.created.mockClear(); h.created.mockResolvedValue(1);
-  await pg.exec(`TRUNCATE unified_tasks,task_dependencies,project_members,project_visibility_settings,projects,organization_users,users,organizations,client_workspaces,audit_logs,c2c_ana_actions RESTART IDENTITY;
+  await pg.exec(`TRUNCATE unified_tasks,task_dependencies,project_members,project_visibility_settings,projects,organization_users,users,organizations,client_workspaces,audit_logs,c2c_ana_actions,review_routes RESTART IDENTITY;
     INSERT INTO organizations VALUES(7,'active');
-    INSERT INTO users VALUES(5,'Owner','owner@example.test','active'),(6,'Rita Reviewer','rita@example.test','active'),(7,'Sam Specialist','sam@example.test','active');
-    INSERT INTO organization_users(organization_id,user_id,role) VALUES(7,5,'admin'),(7,6,'member'),(7,7,'member');
+    INSERT INTO users VALUES(5,'Owner','owner@example.test','active'),(6,'Rita Reviewer','rita@example.test','active'),(7,'Sam Specialist','sam@example.test','active'),(8,'Sid Sender','sid@example.test','active');
+    INSERT INTO organization_users(organization_id,user_id,role) VALUES(7,5,'admin'),(7,6,'member'),(7,7,'member'),(7,8,'member');
+    INSERT INTO review_routes VALUES('${ROUTE}',7,8,'open');
     INSERT INTO unified_tasks(task_id,organization_id,module_type,title,status,priority,assignee_id,assignee_name,created_by_id,
         review_route_id,review_role,review_step,source_entity_type,source_entity_id,due_date,metadata,blocked_by)
       VALUES
@@ -164,6 +166,44 @@ describe('the generic task writers refuse a review route member (B1)', () => {
     const r = await request(app()).post('/api/tasks/tasks/ROUTE-R/notify').send({ message: 'Your review is due Friday.' });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(h.created).toHaveBeenCalledOnce();
+  });
+});
+
+/* RR1b (REVIEW_ROUTING §2.3, §2.11, M5): Remind on a route member is the
+   route sender's, or an administrator's, and only while that member's step is
+   open on an open route. */
+describe('Remind on a review route member (RR1b)', () => {
+  const remind = (taskId: string, userId: number, role = 'member') =>
+    request(app(userId, role)).post(`/api/tasks/tasks/${taskId}/notify`).send({ message: 'A reminder: your review is due Friday.' });
+
+  it('the sender reminds a member whose step is open', async () => {
+    const r = await remind('ROUTE-R', 8);
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(h.created).toHaveBeenCalledOnce();
+    expect(h.created.mock.calls[0][0]).toMatchObject({ recipientUserId: 6, resourceType: 'unified_task', resourceId: 'ROUTE-R' });
+  });
+
+  it('a member who neither sent the route nor administers the organization is refused, and nobody is told', async () => {
+    const r = await remind('ROUTE-R', 7);
+    expect(r.status, JSON.stringify(r.body)).toBe(403);
+    expect(r.body.code).toBe('ROUTE_REMIND_NOT_PERMITTED');
+    expect(h.created).not.toHaveBeenCalled();
+    expect(await ledgerCount()).toBe(0);
+  });
+
+  it('a member whose step is not open yet is not reminded (ROUTE_TASK_NOT_OPEN)', async () => {
+    const r = await remind('ROUTE-B', 8);
+    expect(r.status, JSON.stringify(r.body)).toBe(409);
+    expect(r.body.code).toBe('ROUTE_TASK_NOT_OPEN');
+    expect(h.created).not.toHaveBeenCalled();
+  });
+
+  it('nobody is reminded on a withdrawn route (ROUTE_NOT_OPEN)', async () => {
+    await pg.query(`UPDATE review_routes SET status = 'withdrawn'`);
+    const r = await remind('ROUTE-R', 8);
+    expect(r.status, JSON.stringify(r.body)).toBe(409);
+    expect(r.body.code).toBe('ROUTE_NOT_OPEN');
+    expect(h.created).not.toHaveBeenCalled();
   });
 });
 

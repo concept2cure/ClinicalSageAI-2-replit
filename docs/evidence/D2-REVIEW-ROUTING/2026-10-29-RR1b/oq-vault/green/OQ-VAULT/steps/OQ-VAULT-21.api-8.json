@@ -1,0 +1,57 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/83566bf4-5450-4663-af8a-3c2212063669/documents/f28e56c2-bb59-4c58-8acd-756e1a837953/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 206,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "f28e56c2-bb59-4c58-8acd-756e1a837953",
+            "version": "1.0",
+            "contentHash": "835045d8a0bc70ef111e4013e55cd16fc8b08600a1a67da622a52b0201376718",
+            "fileSize": 620,
+            "fileName": "OQ-002-unplaced-overview-20261029102303.pdf",
+            "uploader": "OQ Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T10:26:21.353Z",
+            "current": true,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "not reviewed"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "OQ Approver"
+            },
+            {
+              "id": 1,
+              "name": "OQ Runner"
+            },
+            {
+              "id": 2,
+              "name": "OQ Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/3bdbdfc1-d8ee-4b10-bced-9c4dea945250/documents/505dbd59-e9b5-4449-92ed-7575330e7111/relationships",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 82,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "relationships": []
+      }
+    }
+  }
+}

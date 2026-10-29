@@ -431,6 +431,9 @@ export interface ListState<T> {
   /** The HTTP status the read returned. See {@link DataState.status}: a list
    *  surface cannot tell a refusal (403) from an outage without it. */
   status?: number;
+  /** The server's machine-readable code. See {@link DataState.code}: two 403s
+   *  (the module gate's MODULE_NOT_LICENSED, a role refusal) differ only by it. */
+  code?: string;
   /** The route's envelope `meta`. See {@link DataState.meta} — `empty` alone
    *  cannot distinguish an empty store from an absent one. */
   meta?: Record<string, unknown>;
@@ -482,6 +485,7 @@ export function useLiveRows<T>(
     loading: st.loading,
     error: st.error,
     status: st.status,
+    ...(st.code ? { code: st.code } : {}),
     meta: st.meta,
     empty: !st.loading && !st.error && rows.length === 0,
   };

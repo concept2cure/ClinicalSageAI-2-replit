@@ -1,0 +1,55 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/search?q=oqlibrary20261029102303",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 85,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "oqlibrary20261029102303",
+        "mode": "search",
+        "filters": {},
+        "total": 1,
+        "limit": 25,
+        "offset": 0,
+        "includeSuperseded": false,
+        "scope": "verified-accessible-programs",
+        "results": [
+          {
+            "originalFileAvailable": true,
+            "disposition": null,
+            "id": "b57fa996-10c8-42a9-9e36-96cd33fae723",
+            "contentHash": "a85657317032a9e6e85254ae7d4056ce7f9d4451b101f3eade8f06047bb51d71",
+            "title": "OQ-002 oqlibrary20261029102303 report",
+            "fileName": "OQ-002-oqlibrary20261029102303-report.pdf",
+            "documentType": "PROTOCOL",
+            "sizeBytes": 618,
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "suggested",
+            "evidenceKind": "protocol",
+            "classification": "INTERNAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-10-29T10:26:13.199Z",
+            "version": "1.0",
+            "current": true,
+            "snippet": "<b>oqlibrary20261029102303</b> report",
+            "program": {
+              "id": "1ced1287-80e9-41bb-92f4-e465c5f0e953",
+              "name": "OQ-002 Library program 20261029102303"
+            },
+            "size": "618 B"
+          }
+        ]
+      }
+    }
+  }
+}

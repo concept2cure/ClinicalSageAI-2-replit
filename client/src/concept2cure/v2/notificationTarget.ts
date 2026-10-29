@@ -1,6 +1,6 @@
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { surfaceIdFromLocation } from './routing';
-import { noticeThreadId } from '@shared/types/notification-navigation';
+import { noticeTaskId, noticeThreadId } from '@shared/types/notification-navigation';
 
 export interface NoticeResource {
   resource_type?: string | null;
@@ -11,13 +11,14 @@ export interface NoticeResource {
 export interface NoticeTarget { surface: string; label: string; params?: Record<string, string>; }
 const registered = new Set(UI_SURFACES.map(surface => surface.id));
 const positiveId = (id: string) => /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id));
-const taskId = (id: string) => /^TASK-[A-Za-z0-9_-]{1,120}$/.test(id);
+const taskId = (id: string) => noticeTaskId(id);
 
 /** A label hint only. Actual navigation must use the authenticated notification-ID resolver. */
 /** The label hint for a notice that names its record by type and id; undefined for a type with none here. */
 const RESOURCE_TARGETS: Readonly<Record<string, (id: string) => NoticeTarget | null>> = {
   report_run: id => (positiveId(id) ? { surface: `insights?reportRunId=${id}`, label: 'Open saved report' } : null),
-  unified_task: id => (taskId(id) ? { surface: 'tasks', label: 'Open task', params: { taskId: id } } : null),
+  // A review route member's task opens its version (the server resolves it, RR1b).
+  unified_task: id => (taskId(id) ? (id.startsWith('ROUTE-') ? { surface: 'vault', label: 'Open the version in the Vault' } : { surface: 'tasks', label: 'Open task', params: { taskId: id } }) : null),
   // A detached AnA turn's notice names its conversation (AnA detach §5.5).
   chat_thread: id => (noticeThreadId(id) ? { surface: 'conversation-thread', label: 'Open conversation', params: { threadId: id } } : null),
 };

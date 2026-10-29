@@ -19,6 +19,8 @@ import {
   type DossierLink,
 } from '../data/presub';
 import { usePresubList, usePresubDetail } from '../hooks/usePresub';
+import { readRefusalOf } from '../hooks/useFetchJson';
+import { ReadRefused } from '../../v2/projectScopedRead';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import { downloadCsv } from '../../v2/download';
 
@@ -175,7 +177,10 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
   /* Live detail: questions + timeline + commitments come from
      /api/q-sub/:id. Until the fetch resolves, only the row's header (already
      hydrated from the list response) is drawn, over a loading state. */
-  const { detail, error, refresh } = usePresubDetail(row.id);
+  const { detail, error, failure, refresh } = usePresubDetail(row.id);
+  /* A refused read is said as what it is (ReadRefused); it was "Couldn't load",
+     the words for an outage (D2, 2026-10-29, refusal-not-failed-read). */
+  const refusal = readRefusalOf(failure);
   const [tab, setTab] = React.useState<DetailTab>('questions');
 
   if (!detail) {
@@ -204,7 +209,9 @@ function PreSubDetail({ row, onJumpToDossier, onAskAna }: PreSubDetailProps) {
             unparsed response body). A reviewer could not tell "we could not
             reach the server" from "this Q-Sub has not been filed yet", which
             are opposite facts about a regulatory package. */}
-        {error ? (
+        {refusal ? (
+          <ReadRefused refusal={refusal} what="the Q-Sub's detail" subject="this Q-Sub" retry={refresh} testId="presub-detail-refused" />
+        ) : error ? (
           <ErrorState
             variant="panel"
             title="Couldn't load this Q-Sub's detail"
@@ -403,6 +410,10 @@ export function PreSubManager({ programId, onAskAna, onJumpToDossier }: PreSubMa
      The list is the open project's (D2, 2026-10-29). It was every project's,
      under the project's title. */
   const live = usePresubList(programId);
+  /* The project the route refuses, said as a refusal (ReadRefused), not as
+     "Could not load" (D2, 2026-10-29, refusal-not-failed-read). Null for a
+     genuine failure: a 5xx, no response, or a body that could not be read. */
+  const listRefusal = readRefusalOf(live.failure);
   const sourceList: PresubListRow[] = live.list ?? NO_PRESUBS;
   const sourceKpis = live.kpis ?? NO_PRESUB_KPIS;
 
@@ -556,7 +567,10 @@ export function PreSubManager({ programId, onAskAna, onJumpToDossier }: PreSubMa
                 for exactly one of them. While a fixture guaranteed rows the
                 other two were unreachable; without one, a failed read and an
                 empty portfolio both landed on advice that cannot help. */}
-            {filtered.length === 0 && live.error !== null && (
+            {filtered.length === 0 && listRefusal && (
+              <ReadRefused refusal={listRefusal} what="the Q-Submission list" retry={live.refresh} testId="presub-list-refused" />
+            )}
+            {filtered.length === 0 && live.error !== null && !listRefusal && (
               <ErrorState
                 title="Could not load your Q-Submissions"
                 message={live.error}

@@ -25,6 +25,27 @@ export interface VaultDocFiling {
   placedAt?: string | null;
 }
 
+/** A governed artifact's facts on its Vault leaf — projected by
+ *  server/routes/c2c/project-vault.ts (artifactLeaf) from the registry's one
+ *  read, server/services/artifact-registry-read.ts. */
+export interface VaultArtifactFacts {
+  artifactId: string;
+  kind: string;
+  format: string | null;
+  /** The model the writer recorded; null when none was. */
+  model: string | null;
+  /** The origin the row records; null when it records none. */
+  origin: import('@shared/artifact-governance').ArtifactOrigin | null;
+  author: string | null;
+  /** The hash the writer recorded (not the SHA-256 of stored bytes an upload carries). */
+  contentHash: string | null;
+  ctdSection: string | null;
+  signature: import('@shared/artifact-governance').ArtifactSignatureState;
+  signedVersion: number | null;
+  reviewed: boolean;
+  sourceCount: number;
+}
+
 export interface VaultDoc {
   id: string;
   num: string;
@@ -39,8 +60,11 @@ export interface VaultDoc {
   preview: string;
   blocker?: boolean;
   flag?: string;
-  /** 'authored' (rule-pack section) vs 'upload' (vault.documents row). */
-  src?: 'authored' | 'upload';
+  /** 'authored' (rule-pack section), 'upload' (vault.documents row) or
+   *  'artifact' (a governed concept2cure_artifacts row). */
+  src?: 'authored' | 'upload' | 'artifact';
+  /** Artifact-only: what the registry records of its governance. */
+  artifact?: VaultArtifactFacts;
   /** Upload-only extras, all projected from real columns. */
   docId?: string;
   sizeLabel?: string;
