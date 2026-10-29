@@ -1,0 +1,143 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/documents/ff975b65-708e-42c5-91f5-7e24edfd6c19/history",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 66,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "entries": [
+          {
+            "id": "AUD-cfb001e0-a88f-4374-ba12-1462590ae921",
+            "when": "2026-10-29 10:11",
+            "at": "2026-10-29T10:11:48.570Z",
+            "actor": "OQ Runner",
+            "actorRef": "user:1",
+            "event": "Vault Document Download",
+            "target": "vault_document:8e954c30-636b-4b94-9718-6706464831b4",
+            "kind": "vault",
+            "sig": false,
+            "hash": "77e8af5c5e544df5a773279f3823b7c749d1bc24b2010bd34c2fbc5e914a2907",
+            "prevHash": "6cc82f56ad3a8c86840410fca1e3d8d15f2649a99c6ce2c804b1342be187d545",
+            "ip": "127.0.0.1",
+            "reason": null,
+            "meaning": null,
+            "source": "audit_logs",
+            "seq": 71,
+            "signatureRef": null,
+            "targetRef": null,
+            "version": "1.0"
+          },
+          {
+            "id": "AUD-52907d6c-d71c-48a5-a160-466c92007915",
+            "when": "2026-10-29 10:11",
+            "at": "2026-10-29T10:11:46.970Z",
+            "actor": "OQ Runner",
+            "actorRef": "user:1",
+            "event": "Vault Document Ingest",
+            "target": "vault_document:ff975b65-708e-42c5-91f5-7e24edfd6c19",
+            "kind": "vault",
+            "sig": false,
+            "hash": "6cc82f56ad3a8c86840410fca1e3d8d15f2649a99c6ce2c804b1342be187d545",
+            "prevHash": "3639596d839a0ae97ad7b88571b7553a1cbf21139f264a709e1131416428d907",
+            "ip": "127.0.0.1",
+            "reason": null,
+            "meaning": null,
+            "source": "audit_logs",
+            "seq": 70,
+            "signatureRef": null,
+            "targetRef": null,
+            "version": "2.0"
+          },
+          {
+            "id": "AUD-885a483b-4cf6-48c2-bef4-ab9290ab21c4",
+            "when": "2026-10-29 10:11",
+            "at": "2026-10-29T10:11:28.992Z",
+            "actor": "OQ Runner",
+            "actorRef": "user:1",
+            "event": "Vault Document File",
+            "target": "vault_document:8e954c30-636b-4b94-9718-6706464831b4",
+            "kind": "vault",
+            "sig": false,
+            "hash": "3639596d839a0ae97ad7b88571b7553a1cbf21139f264a709e1131416428d907",
+            "prevHash": "fa41908e84b2ffa3f9d9b89993614c1d22862cc7c7f59404c9a9531b6fe6624e",
+            "ip": "127.0.0.1",
+            "reason": null,
+            "meaning": null,
+            "source": "audit_logs",
+            "seq": 69,
+            "signatureRef": null,
+            "targetRef": null,
+            "version": "1.0"
+          },
+          {
+            "id": "AUD-2b74297b-b4ca-4a6b-8ca9-4ad42c973ed4",
+            "when": "2026-10-29 10:11",
+            "at": "2026-10-29T10:11:28.670Z",
+            "actor": "OQ Runner",
+            "actorRef": "user:1",
+            "event": "Vault Document Download",
+            "target": "vault_document:8e954c30-636b-4b94-9718-6706464831b4",
+            "kind": "vault",
+            "sig": false,
+            "hash": "fa41908e84b2ffa3f9d9b89993614c1d22862cc7c7f59404c9a9531b6fe6624e",
+            "prevHash": "983dccb796a6ef34977fab81103ce1e68df775b095567e53f29662d11f7dfa1f",
+            "ip": "127.0.0.1",
+            "reason": null,
+            "meaning": null,
+            "source": "audit_logs",
+            "seq": 68,
+            "signatureRef": null,
+            "targetRef": null,
+            "version": "1.0"
+          },
+          {
+            "id": "AUD-1d476e38-9aba-475a-bebf-ffa248dc4c3b",
+            "when": "2026-10-29 10:11",
+            "at": "2026-10-29T10:11:27.787Z",
+            "actor": "OQ Runner",
+            "actorRef": "user:1",
+            "event": "Vault Document Ingest",
+            "target": "vault_document:8e954c30-636b-4b94-9718-6706464831b4",
+            "kind": "vault",
+            "sig": false,
+            "hash": "983dccb796a6ef34977fab81103ce1e68df775b095567e53f29662d11f7dfa1f",
+            "prevHash": "6a09d3aebb77574647fb4e69ef17bc293d2067c774ffd3f95b6630f03769dd30",
+            "ip": "127.0.0.1",
+            "reason": null,
+            "meaning": null,
+            "source": "audit_logs",
+            "seq": 67,
+            "signatureRef": null,
+            "targetRef": null,
+            "version": "1.0"
+          }
+        ],
+        "chain": {
+          "store": "audit_logs",
+          "legacyRows": 0,
+          "sequencedRows": 70,
+          "ok": true,
+          "rowsChecked": 70,
+          "head": {
+            "verified": false,
+            "status": "not_configured",
+            "anchorKey": null,
+            "anchoredAt": null,
+            "breaks": [],
+            "reason": "head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only"
+          }
+        },
+        "truncated": false
+      }
+    }
+  }
+}

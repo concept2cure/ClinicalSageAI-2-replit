@@ -61,6 +61,13 @@ export async function validateRouteMember(
     actorId: number;
     /** People already named on this route, in any role. */
     named: ReadonlySet<number>;
+    /**
+     * The subject's authorship when the caller has it and the subject's own
+     * record does not exist yet: the picker's read of a Vault version nobody
+     * has started (review-route-candidates.ts), whose authors are its uploader
+     * and the sender who will start it. Absent, it is read from the subject.
+     */
+    authorship?: { authors: readonly number[]; sources: readonly string[] };
   },
 ): Promise<ValidatedMember> {
   const { rows } = await q.query(
@@ -82,7 +89,7 @@ export async function validateRouteMember(
       throw new ReviewRouteRefusal(409, 'MEMBER_NO_PROJECT_ACCESS', `${printedName} cannot open this document's project. ${NOTHING}`);
     }
   }
-  const authorship = await resolveTargetAuthors(p.subjectTarget, p.organizationId, q);
+  const authorship = p.authorship ?? await resolveTargetAuthors(p.subjectTarget, p.organizationId, q);
   if (authorship.authors.includes(p.candidateId)) {
     throw new ReviewRouteRefusal(409, 'MEMBER_IS_AUTHOR', `${printedName} is an author of this document (${authorship.sources.join(', ')}), so cannot review or approve it. ${NOTHING}`);
   }

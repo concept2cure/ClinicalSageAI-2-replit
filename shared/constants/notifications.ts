@@ -23,11 +23,21 @@ export type NotificationCategory = typeof NOTIFICATION_CATEGORIES[number];
  * colleague's inbox. A person may still mute them (their preferences list
  * every category).
  */
-export const SERVER_ONLY_NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = ['ana_turn'];
+/*
+ * The task_* categories joined on 2026-10-29 (RR1b of
+ * docs/design/REVIEW_ROUTING_2026-10-23.md, §2.11, finding M4): a review
+ * route's members are told in them that a document waits on their signature,
+ * so a forged "Review requested: <document>" would send a colleague to sign
+ * what someone else chose. Their producers are the task routes and services
+ * (notifyTaskEvent, task-side-effects.ts) and the review route
+ * (server/services/review/review-route.ts); no person or model creates one.
+ */
+const SERVER_ONLY = ['ana_turn', 'task_assigned', 'task_blocked', 'task_completed', 'task_update'] as const;
+export const SERVER_ONLY_NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = SERVER_ONLY;
 
 /** What a person (POST /api/mdx/notifications) or AnA's fire_notification may create. */
 export const CREATABLE_NOTIFICATION_CATEGORIES = NOTIFICATION_CATEGORIES.filter(
-  (c): c is Exclude<NotificationCategory, 'ana_turn'> => !SERVER_ONLY_NOTIFICATION_CATEGORIES.includes(c),
+  (c): c is Exclude<NotificationCategory, (typeof SERVER_ONLY)[number]> => !SERVER_ONLY_NOTIFICATION_CATEGORIES.includes(c),
 );
 export const NOTIFICATION_CATEGORY_LABELS: Record<typeof NOTIFICATION_CATEGORIES[number], string> = {
   submission_status: 'Submission status', validation_finding: 'Validation findings',

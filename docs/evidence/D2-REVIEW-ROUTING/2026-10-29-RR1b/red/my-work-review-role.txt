@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task 1389ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage 20ms
+ × server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > says which items are route members, so the tray opens them where the route is acted on (RR1b) 14ms
+   → expected { 'R-APPROVER': undefined, …(1) } to deeply equal { 'R-APPROVER': 'approver', …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > says which items are route members, so the tray opens them where the route is acted on (RR1b)
+AssertionError: expected { 'R-APPROVER': undefined, …(1) } to deeply equal { 'R-APPROVER': 'approver', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "R-APPROVER": "approver",
+-   "T-BLOCKED": null,
++   "R-APPROVER": undefined,
++   "T-BLOCKED": undefined,
+  }
+
+ ❯ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts:88:28
+     86|     const roles = async (user: number) => Object.fromEntries(
+     87|       (await readMyWork(drizzle(pg) as unknown as RequestDb, 1, user))…
+     88|     expect(await roles(3)).toEqual({ 'R-APPROVER': 'approver', 'T-BLOC…
+       |                            ^
+     89|     expect(await roles(4)).toEqual({ 'R-REVIEWER': 'reviewer' });
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:03:57
+   Duration  5.99s (transform 1.16s, setup 158ms, import 653ms, tests 4.75s, environment 0ms)
+

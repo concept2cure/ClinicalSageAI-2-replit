@@ -29,6 +29,7 @@ import {
   LifecycleSummary,
   stageLabel,
   VersionLifecycleActions,
+  VersionRoute,
   type VaultSigningPosture,
   type VaultVersionLifecycle,
 } from './VaultLifecycle';
@@ -367,6 +368,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
             <span data-testid={`vault-version-sections-${v.id}`}>{sectionCitationText(v.sectionCitations)}</span>
             <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
+          <VersionRoute lifecycle={v.lifecycle} title={v.version ? `${title} v${v.version}` : title} current={v.current} />
           <VersionViewButton version={v} title={title} onView={onView} viewingId={viewingId} />
           <button
             className="sp-ask"

@@ -5,6 +5,15 @@ import { clearShellProject, publishShellProject } from './shellProject';
 import { stashNavParamsForTarget, surfaceLeaveRefusal } from './navParams';
 import { clearEditorTarget, setEditorTarget } from './editorTarget';
 import { taskActorScope, taskTargetLocation } from './taskTarget';
+import { setVaultTarget } from './vaultTarget';
+
+/** The record channel a destination reads: the editor's target, or the Vault's (a review route's notice opens its version, RR1b). */
+function publishRecordTarget(target: NotificationRecordTarget): void {
+  if (target.surface === 'vault' && target.programId) setVaultTarget({documentId:target.params.documentId,programId:target.programId});
+  if (target.surface === 'document-authoring') {
+    setEditorTarget({docType:null,docId:target.params.documentId,code:target.params.sectionCode,programId:target.programId});
+  } else clearEditorTarget();
+}
 
 /** Only a confirmed response enters the existing program/record channels. */
 export function openNotificationRecord(target: NotificationRecordTarget, navigate: (target: string)=>void, beforeOpen?: () => void): void {
@@ -22,9 +31,7 @@ export function openNotificationRecord(target: NotificationRecordTarget, navigat
   if (target.programId) search.set('program',target.programId);
   if (target.programId) publishShellProject({id:target.programId});
   else clearShellProject();
-  if (target.surface === 'document-authoring') {
-    setEditorTarget({docType:null,docId:target.params.documentId,code:target.params.sectionCode,programId:target.programId});
-  } else clearEditorTarget();
+  publishRecordTarget(target);
   // A conversation (a detached AnA turn's notice) opens through the shell's
   // one conversation hand-off, as a resumed conversation does (ProjectHome).
   if (target.surface === 'conversation-thread') {

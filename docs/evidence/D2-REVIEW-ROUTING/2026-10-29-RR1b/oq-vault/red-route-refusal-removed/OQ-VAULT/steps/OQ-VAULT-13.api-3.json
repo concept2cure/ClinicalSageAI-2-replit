@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/regulatory/documents/3b7a2045-9deb-470d-951f-3fa64453f20b/advance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "to": "in_review"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 61,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "from": "authoring",
+      "to": "in_review",
+      "stage": "in_review",
+      "auditEvent": {
+        "documentId": "3b7a2045-9deb-470d-951f-3fa64453f20b",
+        "version": 1,
+        "from": "authoring",
+        "to": "in_review",
+        "actor": "1",
+        "at": "2026-10-29T10:28:15.245Z",
+        "contentHash": "aae5a1eab836350782469271fdbaa0a4bc146ba72ebbe7f4347063d774cbfafc",
+        "prevEventHash": "",
+        "eventHash": "56af1e33efe16f8ef326fa03deedb5dda5d6d2c243053bb50d9b09db1bb53e66"
+      },
+      "superseded": []
+    }
+  }
+}

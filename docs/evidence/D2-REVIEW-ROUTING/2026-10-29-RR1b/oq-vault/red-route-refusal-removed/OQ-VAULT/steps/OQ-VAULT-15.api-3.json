@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/7c08efdd-9c7c-467b-b725-d6118db4116a/data-room/file",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sourceIds": [
+        84
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 63,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "complete": true,
+      "items": [
+        {
+          "sourceId": 84,
+          "outcome": "already_filed",
+          "documentId": "e18ac1a7-e491-4f4e-a3ce-c30c3e63d0bc",
+          "version": "1.0",
+          "supersededBy": null
+        }
+      ]
+    }
+  }
+}

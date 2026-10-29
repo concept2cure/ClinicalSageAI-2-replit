@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/a374e482-cd64-42d2-ad36-0f49896bb4b8/documents/959b6500-b5e8-448d-a449-a036f9fa2716/text",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 40,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "text": "Section 4. The dosing table states 5 mg once daily.",
+        "from": 0,
+        "length": 51,
+        "totalLength": 51,
+        "textSha256": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595",
+        "pageCount": null
+      }
+    }
+  }
+}

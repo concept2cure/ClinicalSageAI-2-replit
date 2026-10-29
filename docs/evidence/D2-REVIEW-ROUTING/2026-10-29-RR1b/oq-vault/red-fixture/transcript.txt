@@ -1,0 +1,28 @@
+
+=== vault ===
+  OQ-VAULT-00  FAIL  (program create expected 201, got 400)
+  OQ-VAULT-01  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-02  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-03  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-04  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-05  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-06  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-07  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-08  not-executed  (prerequisite step OQ-VAULT-07 did not pass)
+  OQ-VAULT-08b  not-executed  (prerequisite step OQ-VAULT-07 did not pass)
+  OQ-VAULT-09  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-10  pass
+  OQ-VAULT-11  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-12  not-executed  (prerequisite step OQ-VAULT-11 did not pass)
+  OQ-VAULT-13  not-executed  (prerequisite step OQ-VAULT-11 did not pass)
+  OQ-VAULT-14  not-executed  (prerequisite step OQ-VAULT-13 did not pass)
+  OQ-VAULT-15  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-16  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-17  not-executed  (prerequisite step OQ-VAULT-11 did not pass)
+  OQ-VAULT-18  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-19  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-20  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-21  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+  OQ-VAULT-22  not-executed  (prerequisite step OQ-VAULT-00 did not pass)
+
+OQ-002 Vault: 1 pass, 1 fail, 0 deviation, 22 not-executed → docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR1b/oq-vault/red/OQ-VAULT

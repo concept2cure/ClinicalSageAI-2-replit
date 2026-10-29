@@ -1,0 +1,38 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/3bdbdfc1-d8ee-4b10-bced-9c4dea945250/file-batch",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "folderId": "module-5",
+      "documentIds": [
+        "fde15212-3415-4481-90e5-d1f04e3cab34",
+        "d22d3eec-1e74-4b6a-ae8a-f9f3513dcaf2"
+      ],
+      "note": "OQ-002 step 16: confirmed for validation"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 96,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "complete": true,
+      "items": [
+        {
+          "documentId": "fde15212-3415-4481-90e5-d1f04e3cab34",
+          "outcome": "confirmed",
+          "folderLabel": "Module 5 · Clinical"
+        },
+        {
+          "documentId": "d22d3eec-1e74-4b6a-ae8a-f9f3513dcaf2",
+          "outcome": "confirmed",
+          "folderLabel": "Module 5 · Clinical"
+        }
+      ]
+    }
+  }
+}

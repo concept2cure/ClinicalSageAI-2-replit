@@ -61,7 +61,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { locateVaultDocument, takeVaultTarget, type TakenVaultTarget } from '../vaultTarget';
+import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -1067,6 +1067,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const [pendingTarget, setPendingTarget] = useState<
     TakenVaultTarget | { kind: 'uploaded'; documentId: string; after: VaultDisplayShape | null } | null
   >(() => takeVaultTarget(projectId));
+  // A target published while this Vault is already on screen (a notice opened from the tray).
+  React.useEffect(() => {
+    const take = () => {
+      if (!vaultTargetIsFor(projectId ?? null)) return;
+      const taken = takeVaultTarget(projectId);
+      if (taken?.kind === 'here') setPendingTarget(taken);
+    };
+    window.addEventListener(VAULT_TARGET_EVENT, take);
+    return () => window.removeEventListener(VAULT_TARGET_EVENT, take);
+  }, [projectId]);
   const [missingTarget, setMissingTarget] = useState<{ documentId: string; act: 'filed' | 'uploaded' } | null>(null);
   const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
   React.useEffect(() => {
