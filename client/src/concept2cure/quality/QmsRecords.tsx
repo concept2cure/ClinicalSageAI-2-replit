@@ -21,7 +21,7 @@ import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { registerRowMinWidth } from './registerGrid';
-import { listOf } from './changeHooks';
+import { listOf } from './qmsList';
 import { formatDate } from './data';
 import { Kpi } from './Kpi';
 import { CapaActions } from './CapaActions';
