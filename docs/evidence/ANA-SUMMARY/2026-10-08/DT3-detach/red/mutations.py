@@ -100,6 +100,8 @@ T_CAP = 'server/services/ana/__tests__/tool-trace-detached-cap.test.ts'
 T_CAPNOTE = 'client/src/concept2cure/v2/__tests__/anaDetachedCapNote.test.ts'
 T_NOTIFCAT = 'server/routes/__tests__/notification-server-only-category.test.ts'
 T_SLOTS = 'server/services/ana/__tests__/detach-slots.test.ts'
+T_SCREENGONE = 'client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx'
+ACTIVITY = 'client/src/concept2cure/v2/AnaActivity.tsx'
 
 
 def git(*args):
@@ -382,6 +384,24 @@ MUTATIONS = {
     'r-shutdown-run-writes-unbounded': ({SHUTDOWN_TS: [("        deadline = setTimeout(() => resolve(false), SHUTDOWN_RUN_SETTLE_MS);",
                                                         "        void resolve; void SHUTDOWN_RUN_SETTLE_MS;")]},
                                         [T_SHUTDOWN], 'deadline'),
+    # ── Closing the open review items, 2026-10-29 ───────────────────────────────
+    # 2.4/2.5 on screen: a settled followed turn with no rows hid its line.
+    'r-follow-line-hidden-on-a-settled-turn': ({ACTIVITY: [("      replacedNoteText(a.replacedSteps) ||\n", "      replacedNoteText(a.replacedSteps) || false &&\n")]},
+                                               [T_ADMINFOLLOW], 'something to say'),
+    # 4.3, continued: the approval window's deny took an approval its person had claimed.
+    'r-window-deny-overrides-a-claimed-approval': ({RC: [("       AND ($5::integer IS NOT NULL OR pending_approval ->> 'claimedAt' IS NULL)\n", "")]},
+                                                   [T_RCD], 'approval window'),
+    'r-window-turn-says-nobody-authorised': ({STREAM: [("windowClosedOnClaim = !denied && (await approvalClaimed(", "windowClosedOnClaim = false && (await approvalClaimed(")]},
+                                             [T_DETACH_REVIEW], 'window closes'),
+    # D-7 on the client: a step the server never dispatched read as failed.
+    'r-d7-trace-not-run-read-as-failed': ({HOOK: [("    } else if (t.status === 'not_run') {", "    } else if (false) {")]},
+                                          [T_SCREENGONE], 'reopened'),
+    'r-d7-frame-not-run-read-as-failed': ({HOOK: [("status: event.status === 'not_run' ? 'not_run' : failed ? 'error' : 'success',", "status: failed ? 'error' : 'success',")]},
+                                          [T_HOOK], 'did not run'),
+    'r-d7-folded-line-silent-on-not-run': ({WORK: [("const notRunSummary = (count: number) => count > 0 ? `${count} did not run` : '';", "const notRunSummary = (count: number) => (count > 0 ? '' : '');")]},
+                                           [T_SCREENGONE], 'folded line'),
+    'r-d7-summary-not-run-read-as-failed': ({ROWS: [("  if (f.status === 'not_run' && !f.heldBack) return 'not_run';\n", "")]},
+                                            [T_SCREENGONE], 'Summary'),
 }
 
 

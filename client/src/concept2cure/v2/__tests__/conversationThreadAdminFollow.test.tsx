@@ -24,6 +24,20 @@ vi.mock('../dataConnect', () => ({
   connected: () => false,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
 }));
+/* The thread's canvas document list reads the signed-in person (useAuth, since
+   cc1607c3a); the sibling thread tests stand it in the same way. */
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return {
+    ...actual,
+    authService: {
+      getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService),
+    },
+    useAuth: () => ({ user: { displayName: 'Test Admin', email: 'admin@test.co' } }),
+  };
+});
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: [], isStreaming: false, isLoadingThread: false, threadId: null, runStatus: null, pendingSteers: [],
@@ -157,5 +171,41 @@ describe('a conversation whose live runs could not be read', () => {
     expect(note.textContent).toContain("Couldn't check whether AnA is still working here.");
     await act(async () => { screen.getByRole('button', { name: 'Check again' }).click(); });
     expect(c.recheckLiveRuns).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* DT3 review (2.4, 2.5), on screen: a followed turn that ended with something
+   to say and no step rows — a hand-over whose answer could not be read, a poll
+   answered 401 — said it only in the hook's state. The thread mounted the
+   turn's record only for "reportable work", which counted none of the
+   follower's lines, so the person saw an empty answer (and, at a hand-over, a
+   recorded turn with nothing in it). */
+describe('a followed turn that ended with something to say, and no step rows', () => {
+  const settled = (follow: Record<string, unknown>, extra: Partial<AnaChatMessage> = {}): UseAnaChatReturn => ({
+    ...chat('all'),
+    isStreaming: false,
+    runStatus: null,
+    messages: [
+      { id: 'm-501', serverId: 501, role: 'user', text: 'Find every stability report' } as AnaChatMessage,
+      {
+        id: 'f-run_live',
+        role: 'assistant',
+        text: '',
+        streaming: false,
+        follow: { runId: 'run_live', scope: 'all', status: 'running', startedAt: Date.now() - 60_000, skewMs: 0, lastBeatAt: Date.now(), highWater: 0, ...follow },
+        ...extra,
+      } as AnaChatMessage,
+    ],
+  });
+
+  it('a hand-over whose answer could not be read says so, beside its record, never an empty answer', async () => {
+    await mount(settled({ status: 'finished', answerUnreadable: true }, { turnRecord: { status: 'recorded', id: 'rec_d' } } as Partial<AnaChatMessage>));
+    expect(screen.getByText("The answer couldn't be loaded. Reopen the conversation.")).toBeTruthy();
+  });
+
+  it('a poll answered 401 says the sign-in ended, in the server’s words', async () => {
+    await mount(settled({ signedOut: 'Signed out after a period of inactivity. Sign in again.' }));
+    expect(screen.getByText('Signed out after a period of inactivity. Sign in again.')).toBeTruthy();
+    expect(screen.queryByText("Can't reach the server. Retrying.")).toBeNull();
   });
 });

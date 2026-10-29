@@ -11,7 +11,7 @@
  */
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AnaContextUsed, AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
+import type { AnaContextUsed, AnaPlanChange, AnaPlanStep, AnaProgressPhase, AnaRunHold, AnaStoppedReason } from '../components/ana/useAnaChat.types';
 import { AUTO_TIME_WORDS, MANUAL_UNAVAILABLE_TEXT, PAUSE_WORDS, stepLabels } from '@shared/ana/run-policy';
 import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import { STOP_LINE_TEXT, stopLineText as sharedStopLineText } from '@shared/ana/stop-lines';
@@ -685,4 +685,62 @@ export function liveAlertLine(m: Pick<AnaChatMessage, 'follow' | 'stopUnconfirme
   if (f.unreachable) return FOLLOW_LINES.unreachable;
   if (!['running', 'paused', 'awaiting_approval'].includes(f.status)) return null;
   return staleOwnerLine(f.lastBeatAt, now + f.skewMs);
+}
+
+/* ── A settled turn's step lines (moved from AnaActivity) ─────────────────── */
+
+/** The sentence a step that did not succeed keeps visible; none for one that did or is running. */
+export function stepNote(c: AnaToolCall): string | undefined {
+  if (c.status === 'unconfirmed') return c.message || 'Completion not confirmed.';
+  if (c.status === 'error') return c.message || 'did not complete';
+  // Never dispatched (D-7's refused screen action): the server's line says why.
+  if (c.status === 'not_run') return c.message || 'Did not run.';
+  return undefined;
+}
+
+const unconfirmedSummary = (count: number) => count > 0 ? `${count} unconfirmed` : '';
+/* A step the server never dispatched is neither completed nor failed (D-7). */
+const notRunSummary = (count: number) => count > 0 ? `${count} did not run` : '';
+
+/**
+ * The folded line. Failures and deliverables are OUTCOMES and appear here
+ * rather than only inside the disclosure — an outcome you have to open a
+ * twisty to discover is one the product is hiding. So is a fallback answer.
+ */
+export function foldedLine(o: {
+  changes: AnaPlanChange[];
+  finalPlan: AnaPlanStep[];
+  ran: number;
+  failed: number;
+  unconfirmed: number;
+  notRun: number;
+  draftTitle?: string;
+  thinking?: string;
+  fallback?: boolean;
+  /** Set only for a turn with a recorded END; never read off the clock. */
+  duration: string;
+}): string {
+  // "Planned" only when the declaration was seen; a reopened thread knows the
+  // final list and not how it was built, so it says "Plan".
+  const persisted = o.changes.length === 0 && o.finalPlan.length > 0;
+  const planned = persisted ? o.finalPlan.length : o.changes.filter((c) => c.initial && c.kind === 'added').length;
+  const steps = (n: number) => `${n} ${n === 1 ? 'step' : 'steps'}`;
+  const parts = [
+    // With a plan, her plan's items are the steps and the tool calls are
+    // tools, so "3 steps" on the rail and "4 steps completed" here never read
+    // as a contradiction.
+    o.ran > 0 ? (planned > 0 ? `${o.ran} ${o.ran === 1 ? 'tool' : 'tools'} run` : `${steps(o.ran)} completed`) : '',
+    o.failed > 0 ? `${o.failed} failed` : '',
+    unconfirmedSummary(o.unconfirmed),
+    notRunSummary(o.notRun),
+    o.draftTitle ? `Drafted ${o.draftTitle}` : '',
+    o.thinking ? 'reasoning' : '',
+    o.fallback ? 'answered by a fallback provider' : '',
+  ].filter(Boolean);
+  // The plan is the record's first row, in the same words; leading with it
+  // here too made the opened record say it twice, three words apart. It leads
+  // only when it is all there is to say.
+  if (parts.length === 0 && planned > 0) parts.push(`${persisted ? 'Plan ·' : 'Planned'} ${steps(planned)}`);
+  if (o.duration) parts.push(`in ${o.duration}`);
+  return parts.length > 0 ? parts.join(' · ') : 'How this was read';
 }
