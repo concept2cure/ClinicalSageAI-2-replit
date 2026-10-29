@@ -1177,6 +1177,26 @@ be a new enforcement capability (Rule 2), not a label.
 that fails on such a prefix comes first; enforcement follows when it is green. Why: turning enforcement on today
 would lock every customer out of AnA's own conversations.
 
+### P-70 — No session setting lifts row-level security
+
+`app.bypass_rls` is a custom setting any session can set, and it lifts every Vault policy (found 2026-10-29,
+`docs/evidence/D6-ISOLATION-HARDENING/2026-10-29/`). The runtime role must not be able to switch tenant isolation off
+from inside its own connection. Every policy that reads it converges on the platform scope the reviewed purge doors
+already require (a role the runtime role cannot assume), and the settings readers that remain are deleted. A
+code path that genuinely needs to read across tenants does it through a reviewed SECURITY DEFINER door or a role
+granted only to that path, with its reason on the definer allowlist. Why: P-59's reasoning, at the scale of the whole
+Vault: a control any session can switch off is not a control, and a regulated customer's isolation cannot rest on
+every line of server code never issuing one `SET`.
+
+### P-71 — The product ships no customer's analysis
+
+`server/data/public-csr-reference/` carries `lmn-target-profile.json` and `comparator-fit-matrix.json`: one
+customer's target study (NCT05330182) and a comparator fit made for it. Nothing reads them. They leave the shipped
+product; the evidence of the 2026-10-27 work keeps its copies as history. Public registry records stay in the
+reference set when they are genuinely public and in scope for it, chosen by the therapeutic area, not by one
+customer's programme. A customer's own targets and fits are that customer's project data, in their tenant. Why: a
+sponsor's competitors use the same product, and what the product ships is visible to all of them.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
