@@ -126,13 +126,15 @@ describe('SubmissionCenter — the next sequence', () => {
   const seq = (id: number, sequenceNumber: string, region = 'fda', type = 'original') =>
     ({ id, submissionId: 55, sequenceNumber, region, type, status: 'dispatched' });
 
-  function serve(initial: unknown[]) {
+  function serve(initial: unknown[], baseline: unknown = null) {
     const seqPosts: unknown[] = [];
     let rowsNow = initial;
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
       if (method === 'GET' && url === '/api/submissions') return res({ data: [SUB] });
       if (method === 'GET' && url === '/api/submissions/55/sequences') return res({ data: rowsNow });
+      // Nothing declared filed outside the platform (D7, 2026-10-29).
+      if (method === 'GET' && url === '/api/submissions/55/filed-baseline') return res({ baseline });
       if (method === 'POST' && url === '/api/submissions/55/sequences') {
         seqPosts.push(body);
         const created = { id: 99, submissionId: 55, sequenceNumber: body.sequenceNumber, region: body.region, type: body.type, status: 'draft' };
@@ -166,5 +168,27 @@ describe('SubmissionCenter — the next sequence', () => {
     const types = Array.from((screen.getByLabelText('Type of sequence 0002') as HTMLSelectElement).options).map((o) => o.value);
     expect(types).not.toContain('original');
     expect(types).toContain('amendment');
+  });
+
+  it('after sequences declared filed outside the platform, the first one here is numbered after them, and is a follow-up', async () => {
+    const seqPosts = serve([], {
+      lastFiledSequence: '0041', originalSequence: '0000', nextSequence: '0042', declaredAt: '2026-10-29T10:00:00Z',
+      declaredByName: 'Lee Lead', meaning: 'responsibility', reason: 'Filed with our previous publisher',
+    });
+    render(<SubmissionCenter {...props()} />);
+    // No sequences yet: the overview offers the Planner, so the workspace is opened by its tab.
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
+    expect((await screen.findByTestId('filed-baseline-note')).textContent).toMatch(/Sequences 0000–0041 were filed outside the platform/);
+    expect(screen.queryByRole('button', { name: 'Start sequence 0000' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Start sequence 0042' }));
+    await waitFor(() => expect(seqPosts).toEqual([{ region: 'fda', sequenceNumber: '0042', type: 'amendment' }]));
+  });
+
+  it('an empty submission with nothing declared offers 0000, or a declaration', async () => {
+    serve([]);
+    render(<SubmissionCenter {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
+    expect(await screen.findByRole('button', { name: 'Start sequence 0000' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Declare sequences filed before this platform' })).toBeTruthy();
   });
 });

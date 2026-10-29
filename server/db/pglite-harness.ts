@@ -42,6 +42,9 @@ const ONE_ANCHOR_PER_PROGRAM = new URL('../../migrations/20261001b_projects_one_
    record's route standing, so a harness with canonical_documents carries the
    real file. It adds the member columns only where unified_tasks exists. */
 const REVIEW_ROUTES = new URL('../../migrations/20261023_review_routes.sql', import.meta.url);
+// The real declaration of sequences filed outside the platform: createSequence
+// and the FDA identity read it for every sequence of the submission core.
+const SUBMISSION_FILED_BASELINES = new URL('../../migrations/20261029g_submission_filed_baselines.sql', import.meta.url);
 const PROGRAM_APPLICANT_SPONSOR = new URL('../../migrations/20261021_regulatory_programs_applicant_sponsor.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
@@ -768,7 +771,10 @@ export async function createIndPgliteDb(
   const pglite = new PGlite();
   const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(IND_PGLITE_DDL);
-  if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
+  if (opts.submissionCore) {
+    await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
+    await pglite.exec(readFileSync(SUBMISSION_FILED_BASELINES, 'utf8'));
+  }
   if (opts.leafSources) {
     await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
     await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
