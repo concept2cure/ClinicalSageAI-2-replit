@@ -46,16 +46,38 @@ let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
+  riskFile = riskFileKeyed([]);
 });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
 
+/* Since fold F1 slice B the ISO 14971 matrix is the risk register's, which
+   reads the project's risk file itself (GET /api/mdx/risk-items?program_id=,
+   v2/surfaces/RiskRegister.tsx). `riskFile` is that read's answer; every other
+   request is Engineering's own route. */
+const RISK_PATH = `/api/mdx/risk-items?program_id=${PROGRAM.id}`;
+const HAZARD = {
+  id: 1, ref_code: 'HZ-01', hazard: 'Sensor drift', hazardous_situation: null, harm: 'Missed hypoglycaemia',
+  sequence_of_events: null, severity: 4, probability: 3, detectability: 3, residual_probability: 2,
+  control_strategy: 'design_reduce', source: 'fmea', status: 'open', acceptable: null,
+};
+const riskFileKeyed = (rows: unknown[]) => ({
+  ok: true, status: 200, headers: new Headers({ 'Content-Type': 'application/json' }),
+  json: async () => ({ data: rows, meta: { count: rows.length, scope: 'program', programId: PROGRAM.id } }),
+  text: async () => '',
+});
+const RISK_FILE_FAILED = {
+  ok: false, status: 500, headers: new Headers({ 'Content-Type': 'application/json' }),
+  json: async () => ({ error: { code: 'INTERNAL', message: 'The risk file could not be read.' } }), text: async () => '',
+};
+let riskFile: unknown = riskFileKeyed([]);
+
 function respond(unavailable: string[], scopes?: Record<string, string>) {
-  fetchMock.mockResolvedValue({
+  fetchMock.mockImplementation(async (url: string) => (String(url) === RISK_PATH ? riskFile : {
     ok: true,
     status: 200,
     json: async () => ({ data: EMPTY_DATA, meta: scopes ? { unavailable, scopes } : { unavailable } }),
     text: async () => '',
-  });
+  }));
 }
 
 /** Every blocker source keyed to the project — the shape slice 19 brings. */
@@ -120,31 +142,40 @@ describe('EngineeringSurface — an unreadable panel is not an all-clear', () =>
     expect(state?.innerHTML ?? '').not.toContain(CHECK_CIRCLE_PATH);
   });
 
+  /* Fold F1 slice B: the matrix moved from the accordion's residual heatmap
+     (`.eng-heat`) to the risk register (`.riskmx`), which reads the risk file
+     itself. The two properties are the same: no matrix over a failed read,
+     and the matrix once the read is clean. */
   it('does not draw an all-zero ISO 14971 matrix over a failed risk read', async () => {
     respond(['risks', 'summary']);
+    riskFile = RISK_FILE_FAILED;
     const { container } = mount();
-    await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/Couldn't load the risk file/));
     expandAwareness(container);
 
+    expect(container.querySelector('.riskmx')).toBeNull();
     expect(container.querySelector('.eng-heat')).toBeNull();
   });
 
-  it('draws the heatmap when the risk file read cleanly', async () => {
+  it('draws the matrix when the risk file read cleanly', async () => {
     respond([]);
+    riskFile = riskFileKeyed([HAZARD]);
     const { container } = mount();
-    await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
-    expandAwareness(container);
-
-    expect(container.querySelector('.eng-heat')).not.toBeNull();
+    await waitFor(() => expect(container.querySelector('.riskmx')).not.toBeNull());
+    expect(container.querySelectorAll('.riskmx .riskmx-cell')).toHaveLength(25);
   });
 
-  it('does not report "0 of 0 shown" over a risk file it could not read', async () => {
+  it('does not report a hazard count over a risk file it could not read', async () => {
+    // Was: no "0 of 0 shown" under the four-row list. The register's count is
+    // its "Hazards identified" metric and the "N of M" benefit-risk line.
     respond(['risks', 'summary']);
+    riskFile = RISK_FILE_FAILED;
     const { container } = mount();
-    await waitFor(() => expect(container.textContent ?? '').not.toMatch(/Loading/i));
+    await waitFor(() => expect(container.textContent ?? '').toMatch(/Couldn't load the risk file/));
     expandAwareness(container);
 
     expect(/0 of 0 shown/.test(container.textContent ?? '')).toBe(false);
+    expect(/Hazards identified|Residual acceptable|of 0 residual risk/.test(container.textContent ?? '')).toBe(false);
   });
 
   it('does not print "Documents in flight 0" when the documents read failed', async () => {

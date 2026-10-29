@@ -112,6 +112,75 @@ export function assertUngovernedActionId(id: string): void {
 // a fabricated ability.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * AnA's three actions on the ISO 14971 risk matrix, defined once. Two screens
+ * mount the one register that performs them (client/src/concept2cure/v2/
+ * surfaces/RiskRegister.tsx): the Risk screen, and Engineering, for its
+ * project (D2, fold F1 slice B, 2026-10-29). Each registers its handlers under
+ * its own id, so each id is listed here. `risk.*` goes when Risk folds into
+ * Engineering.
+ */
+function riskMatrixActions(surfaceId: 'risk' | 'device-engineering', where: string): SurfaceActionTarget[] {
+  return [
+    {
+      id: `${surfaceId}.set-matrix-view`,
+      surfaceId,
+      label: 'Switch the risk matrix view',
+      description:
+        `${where}, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.`,
+      params: [
+        {
+          name: 'view',
+          required: true,
+          description: 'Which assessment to show.',
+          enum: ['initial', 'residual'],
+        },
+      ],
+    },
+    {
+      id: `${surfaceId}.select-hazard`,
+      surfaceId,
+      label: 'Open a hazard',
+      description:
+        `${where}, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.`,
+      params: [
+        {
+          name: 'hazard',
+          required: true,
+          description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
+        },
+      ],
+    },
+    {
+      id: `${surfaceId}.focus-cell`,
+      surfaceId,
+      label: 'Focus a matrix cell',
+      description:
+        `${where}, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.`,
+      params: [
+        {
+          name: 'severity',
+          required: true,
+          description: 'The severity band, exactly as labelled on the matrix axis.',
+          enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
+        },
+        {
+          name: 'probability',
+          required: true,
+          description: 'The probability band, exactly as labelled on the matrix axis.',
+          enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
+        },
+        {
+          name: 'view',
+          required: false,
+          description: 'Which assessment to read the cell from (defaults to the one on screen).',
+          enum: ['initial', 'residual'],
+        },
+      ],
+    },
+  ];
+}
+
 export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
   {
     id: 'projects.new-project',
@@ -516,63 +585,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Risk management (ISO 14971 file) ──
-  {
-    id: 'risk.set-matrix-view',
-    surfaceId: 'risk',
-    label: 'Switch the risk matrix view',
-    description:
-      'On the risk file, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.',
-    params: [
-      {
-        name: 'view',
-        required: true,
-        description: 'Which assessment to show.',
-        enum: ['initial', 'residual'],
-      },
-    ],
-  },
-  {
-    id: 'risk.select-hazard',
-    surfaceId: 'risk',
-    label: 'Open a hazard',
-    description:
-      'On the risk file, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.',
-    params: [
-      {
-        name: 'hazard',
-        required: true,
-        description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
-      },
-    ],
-  },
-  {
-    id: 'risk.focus-cell',
-    surfaceId: 'risk',
-    label: 'Focus a matrix cell',
-    description:
-      'On the risk file, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.',
-    params: [
-      {
-        name: 'severity',
-        required: true,
-        description: 'The severity band, exactly as labelled on the matrix axis.',
-        enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
-      },
-      {
-        name: 'probability',
-        required: true,
-        description: 'The probability band, exactly as labelled on the matrix axis.',
-        enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
-      },
-      {
-        name: 'view',
-        required: false,
-        description: 'Which assessment to read the cell from (defaults to the one on screen).',
-        enum: ['initial', 'residual'],
-      },
-    ],
-  },
+  // ── Risk management (ISO 14971 file): the Risk screen, and Engineering ──
+  ...riskMatrixActions('risk', 'On the risk file'),
+  ...riskMatrixActions('device-engineering', "On Engineering's risk file"),
 
   // ── Template library ──
   {

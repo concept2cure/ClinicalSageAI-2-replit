@@ -24,6 +24,7 @@ import { useFetchJson } from './useFetchJson';
 import { toDataState, type DataState } from '../lib/dataState';
 import type { DhfRow, EcrRow, IssueRow, RiskRow, TraceRow } from '../data/engineering';
 import type { EngineeringDocument } from '../data/engineering-docs';
+import type { ProjectRefusal } from '../../v2/projectScopedRead';
 
 /* Row types are declared in ../data/engineering. They used to be inferred
    from the kit's example rows (`typeof ENG_DHF`), which were deleted with
@@ -76,6 +77,11 @@ export interface UseEngineeringResult {
   scopes: Record<string, PanelScope>;
   /** The route refused the project, so it read nothing. Null otherwise. */
   refusal: ProjectRefusal | null;
+  /** The route has answered for this project at least once, with a payload or
+   *  a failure. The screen's other per-project reads (the risk register and the
+   *  design-controls trace, fold F1 slice B) wait for it, so nothing is read for
+   *  a project the route refuses. */
+  answered: boolean;
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -89,9 +95,11 @@ export interface UseEngineeringResult {
  *   unchecked    503 VERIFICATION_UNAVAILABLE: the ownership check could not
  *                run. That is not an answer about the project, and a retry may
  *                get one.
- * Every other failure is null, and stays a failed read on each panel.
+ * Every other failure is null, and stays a failed read on each panel. The type
+ * and its words live in ../../v2/projectScopedRead.tsx, shared with the panels
+ * Engineering mounts from the Risk and Design controls screens.
  */
-export type ProjectRefusal = 'not-visible' | 'unchecked';
+export type { ProjectRefusal };
 
 /** The status useFetchJson's error line starts with: `HTTP <status>[: <body>]`. */
 const HTTP_STATUS = /^\s*HTTP\s+(\d{3})\b/;
@@ -152,6 +160,7 @@ export function useEngineering(programId: string | null): UseEngineeringResult {
     documents: state('documents', data?.data.documents),
     scopes: data?.meta?.scopes ?? {},
     refusal: projectRefusalOf(error),
+    answered: data !== null || error !== null,
     loading,
     error,
     refresh,

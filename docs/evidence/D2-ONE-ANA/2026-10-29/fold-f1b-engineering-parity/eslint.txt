@@ -1,0 +1,39 @@
+plain npx eslint --no-ignore, per file: head (git show HEAD:<file> | eslint --stdin) and now.
+file | head | now
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx | 6 | 5
+client/src/concept2cure/mdx/hooks/useEngineering.ts | 1 | 1
+client/src/concept2cure/v2/surfaces/Risk.tsx | 7 | 0
+client/src/concept2cure/v2/surfaces/DesignControls.tsx | 2 | 0
+shared/navigation/surface-actions.ts | 1 | 1
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx | 1 | 1
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx | 0 | 0
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx | 0 | 0
+client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx | 0 | 0
+server/middleware/__tests__/launch-scope-device-features.test.ts | 0 | 0
+client/src/concept2cure/v2/surfaces/RiskRegister.tsx (new) | - | 3
+client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx (new) | - | 0
+client/src/concept2cure/v2/projectScopedRead.tsx (new) | - | 0
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx (new) | - | 0
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx (new) | - | 0
+client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx (new) | - | 0
+total | 18 | 11
+errors now: 0
+
+Warnings now:
+client/src/concept2cure/mdx/hooks/useEngineering.ts
+  130:8  warning  Function 'useEngineering' has a complexity of 17. Maximum allowed is 15  complexity
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+  113:8  warning  Function 'EngineeringSurface' has too many lines (443). Maximum allowed is 100                                                                                                         max-lines-per-function
+  113:8  warning  Function 'EngineeringSurface' has a complexity of 35. Maximum allowed is 15                                                                                                            complexity
+  143:9  warning  The 'dhf' conditional could make the dependencies of useMemo Hook (at line 205) change on every render. To fix this, wrap the initialization of 'dhf' in its own useMemo() Hook        react-hooks/exhaustive-deps
+  145:9  warning  The 'ecrs' conditional could make the dependencies of useMemo Hook (at line 205) change on every render. To fix this, wrap the initialization of 'ecrs' in its own useMemo() Hook      react-hooks/exhaustive-deps
+  146:9  warning  The 'issues' conditional could make the dependencies of useMemo Hook (at line 205) change on every render. To fix this, wrap the initialization of 'issues' in its own useMemo() Hook  react-hooks/exhaustive-deps
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx
+  143:94  warning  Arrow function has too many lines (202). Maximum allowed is 100  max-lines-per-function
+client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+   99:8  warning  Function 'mapRiskItems' has a complexity of 22. Maximum allowed is 15  complexity
+  747:1  warning  File has too many lines (749). Maximum allowed is 500                  max-lines
+  772:1  warning  Function 'RiskLead' has a complexity of 28. Maximum allowed is 15      complexity
+shared/navigation/surface-actions.ts
+  608:1  warning  File has too many lines (1493). Maximum allowed is 500  max-lines
+✖ 11 problems (0 errors, 11 warnings)

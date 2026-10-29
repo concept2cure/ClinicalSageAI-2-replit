@@ -152,12 +152,15 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     expect(text(container)).not.toMatch(/NC-OTHER-4|Other project weld defect/);
   });
 
-  it('says why each of the four panels is not shown', async () => {
+  it('says why each of the three panels is not shown', async () => {
     respond({ scopes: ROUTE_SCOPES });
     const { container } = mount();
     await loadedAndExpanded(container);
 
-    for (const id of ['dhf', 'trace', 'ecrs', 'issues']) {
+    // Fold F1 slice B: the trace is no longer an accordion panel keyed by this
+    // route. It is the design-controls trace, keyed by its own read
+    // (EngineeringSurface.designControls.test.tsx).
+    for (const id of ['dhf', 'ecrs', 'issues']) {
       const note = container.querySelector(`[data-testid="eng-not-keyed-${id}"]`);
       expect(note, `panel ${id} must say why it is not shown`).not.toBeNull();
       expect(note?.textContent ?? '').toMatch(NOT_KEYED);
@@ -171,7 +174,9 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await loadedAndExpanded(container);
 
     expect(container.querySelector('.eng-blockers-feed')?.textContent ?? '').toMatch(/R-OWN-1/);
-    expect(container.querySelector('.eng-risks')?.textContent ?? '').toMatch(/Own project sensor drift/);
+    // Fold F1 slice B: the four-row risk list (`.eng-risks`) is now the risk
+    // register, which reads the project's risk file itself; that it draws this
+    // project's hazards is pinned in EngineeringSurface.riskRegister.test.tsx.
     // The review-pending count is of what was read; the hard-blocker count is
     // not printed while the only sources that can raise one are left out.
     expect(blockerSub(container)).toMatch(/1 review-pending/);
@@ -238,7 +243,8 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await loadedAndExpanded(container);
 
     expect(text(container)).toMatch(/Other project biocompatibility/);
-    expect(text(container)).toMatch(/2 traceability rows tracked/);
+    // The trace line is gone (fold F1 slice B): the design-controls trace
+    // reads the project's inputs itself.
     expect(text(container)).toMatch(/1 change requests/);
     expect(text(container)).toMatch(/1 non-conformances/);
     expect(container.querySelector('.eng-blockers-feed')?.textContent ?? '').toMatch(/ECR-OTHER-9/);
@@ -344,8 +350,9 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await loadedAndExpanded(container);
 
     const gates = emptyGates(container);
-    // documents, DHF, trace, change requests, non-conformances
-    expect(gates.length).toBe(5);
+    // documents, DHF, change requests, non-conformances (the trace line went
+    // with fold F1 slice B)
+    expect(gates.length).toBe(4);
     for (const g of gates) {
       const t = g.textContent ?? '';
       expect(t).not.toMatch(/appear here|once artifacts exist|once design controls are recorded/);
@@ -360,7 +367,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await loadedAndExpanded(container);
 
     const gates = emptyGates(container);
-    expect(gates.length).toBe(5);
+    expect(gates.length).toBe(4);
     for (const g of gates) {
       expect(g.textContent ?? '').not.toMatch(/appear here|for the organization/);
       expect(g.textContent ?? '').toMatch(/Records are shown here once this screen reads this project's records\./);

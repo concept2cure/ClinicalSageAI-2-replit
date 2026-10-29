@@ -1,0 +1,13 @@
+M18: an answer not keyed to the project is drawn
+file: client/src/concept2cure/v2/projectScopedRead.tsx
+replaced: "  return keyed ? 'ready' : 'unkeyed';"
+with: "  return keyed || true ? 'ready' : 'unkeyed';"
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  3 failed | 15 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with the organization's scope 5019ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with another project's scope 5014ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with no scope at all 5021ms
+sha256 before eb7565ab578cdbeb1107a3add84eb6fae24065deb22a8ff8d8f8bfe46d61483e
+sha256 after  eb7565ab578cdbeb1107a3add84eb6fae24065deb22a8ff8d8f8bfe46d61483e
+restored byte for byte: yes
