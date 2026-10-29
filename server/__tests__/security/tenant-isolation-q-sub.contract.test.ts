@@ -148,11 +148,15 @@ describe('Tenant isolation — Q-Sub detail', () => {
 });
 
 describe('Tenant isolation — Q-Sub create', () => {
-  it('org-A POSTing under an org-B program returns 403, no row created', async () => {
+  /* 404 since D3, 2026-10-29: the create refuses a project the organization
+     does not own in the same words as the project read, "Project not found"
+     (device-project-writes-admit-program.test.ts). It was 403. */
+  it('org-A POSTing under an org-B program returns 404, no row created', async () => {
     const res = await request(app)
       .post('/api/q-sub')
       .send({ programId: PROGRAM_ORG_B, qSubType: 'presub', title: 'cross-tenant attempt' });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Project not found' });
   });
 });
 

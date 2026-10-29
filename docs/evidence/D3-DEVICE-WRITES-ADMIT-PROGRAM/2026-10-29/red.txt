@@ -1,0 +1,135 @@
+Red: the final test against the committed routes (fb562e76; HEAD c3e5ec86 has the same three files).
+
+How: the working tree already holds the fix, so the test's imports of server/routes/{q-sub,mdx-udi,mdx-labeling} were
+resolved to the committed text, copied to scratch with absolute imports, through a scratch vitest config's resolve.alias.
+Nothing in the working tree was touched.
+  The harness is checked against an in-tree run: the first 34-case version of this test, run in the tree before any route
+  changed, gave 24 failed | 10 passed. The harness gave 24 failed | 10 passed on the same version.
+  The final version adds the deleted-project case to each of the five writes: 39 cases.
+
+timeout 240 npx vitest run --config <scratch>/vitest.head.config.ts server/__tests__/routes/device-project-writes-admit-program.test.ts
+
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ × 'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+ ✓ 'POST /api/q-sub': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ ✓ 'POST /api/mdx/udi with no programId' behaves as before > writes the record without asking about a project
+ ✓ 'POST /api/mdx/udi with programId null' behaves as before > writes the record without asking about a project
+ ✓ 'PATCH /api/mdx/udi/:id that leaves th…' behaves as before > writes the record without asking about a project
+ ✓ 'PATCH /api/mdx/udi/:id with programId…' behaves as before > writes the record without asking about a project
+ ✓ 'POST /api/mdx/labeling with no progra…' behaves as before > writes the record without asking about a project
+ ✓ 'POST /api/mdx/labeling with programId…' behaves as before > writes the record without asking about a project
+ ✓ 'PATCH /api/mdx/labeling/:id that leav…' behaves as before > writes the record without asking about a project
+ ✓ 'PATCH /api/mdx/labeling/:id with prog…' behaves as before > writes the record without asking about a project
+ ✓ POST /api/q-sub with no programId behaves as before > is refused as invalid (the project is required), with no lookup and no row
+⎯⎯⎯⎯⎯⎯ Failed Tests 29 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  29 failed | 10 passed (39)
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++     "table": "udi_records",
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 201, body: { …(2) } } to deeply equal { status: 404, …(1) }
+-     "error": "Project not found",
++   "status": 201,
+ FAIL  'POST /api/mdx/udi': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after asking
+AssertionError: expected -1 to be greater than or equal to 0
+ FAIL  'PATCH /api/mdx/udi/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 200, body: { …(2) } } to deeply equal { status: 404, …(1) }
+-     "error": "Project not found",
++   "status": 200,
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
++     "table": "labeling_documents",
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
++     "table": "labeling_documents",
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
++     "table": "labeling_documents",
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected [ { kind: 'write', …(2) } ] to deeply equal []
++     "programId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++     "table": "labeling_documents",
+ FAIL  'POST /api/mdx/labeling': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 201, …(1) } to deeply equal { status: 404, …(1) }
+-     "error": "Project not found",
++   "status": 201,
+ FAIL  'PATCH /api/mdx/labeling/:id': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 200, …(1) } to deeply equal { status: 404, …(1) }
+-     "error": "Project not found",
++   "status": 200,
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+- 404
++ 403
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+- 404
++ 403
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+- 404
++ 403
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > answers 503 when ownership cannot be checked, and writes no row
+AssertionError: expected 500 to be 503 // Object.is equality
+- 503
++ 500
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 403, …(1) } to deeply equal { status: 404, …(1) }
+-     "error": "Project not found",
++     "error": "Project does not belong to this organization",
++   "status": 403,
