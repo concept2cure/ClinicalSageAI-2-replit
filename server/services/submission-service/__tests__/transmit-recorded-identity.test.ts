@@ -196,3 +196,24 @@ describe('transmit binds approved recorded FDA identity to the assembled package
     expect(h.dispatchStatus).toBe('pending');
   });
 });
+
+// 2026-10-29 (W5/D7): the guard keeps the exact bytes before the wire
+// (submission-gateways/sent-package-archive.ts) and the staged package is still
+// deleted here, so the §11.10(e) row of the send names where the copy is.
+describe('the transmit record names where the sent bytes are kept', () => {
+  it('ECTD_TRANSMITTED carries the guard\'s sentPackage; null when the guard kept none', async () => {
+    const { writeChainedAuditRow } = await import('../../auditService');
+    const rowOf = () => (vi.mocked(writeChainedAuditRow).mock.calls as unknown as Array<[unknown, { action: string; details: Record<string, unknown> }]>)
+      .map(c => c[1]).filter(r => r.action === 'ECTD_TRANSMITTED').at(-1);
+    const sent = { transmittalId: 9, transmissionId: 'T-9', status: 'received', transport: 'as2', httpStatus: 200, ackReceivedAt: null, message: 'ok' };
+    const kept = { storageVersionId: 'v-1', provider: 's3', sha256: 'a'.repeat(64), sizeBytes: 1, filename: `fda-esg-${'a'.repeat(64)}.zip` };
+    h.gateway.mockResolvedValueOnce({ ...sent, sentPackage: kept });
+    expect(await transmit()).toMatchObject({ transmitted: true });
+    expect(rowOf()?.details.sentPackage).toEqual(kept);
+    expect(h.cleaned).toHaveBeenCalledOnce();
+    h.dispatchStatus = 'pending';
+    h.gateway.mockResolvedValueOnce(sent);
+    expect(await transmit()).toMatchObject({ transmitted: true });
+    expect(rowOf()?.details).toHaveProperty('sentPackage', null);
+  });
+});

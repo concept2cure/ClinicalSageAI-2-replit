@@ -128,7 +128,7 @@ Fixed during this review, each shown failing first (evidence under
 |---|---|---|
 | Dispatch readiness, release signature, pre-transmit checks | the submission gateways | Work, offline, against local mTLS fixtures. 567 tests pass. |
 | FDA ESG | ESG REST, SFTP and AS2 clients | **Gap:** never run against FDA. ACK2 and ACK3 are not ingested. |
-| Archive | the transmit path | **Defect:** the package is deleted after transmit, so no copy of what was sent is kept. |
+| Archive | the guarded transmit, `submission-gateways/sent-package-archive.ts` | **Fixed** (D7, `docs/evidence/D7/2026-10-29-sent-package-kept/`): the guard stores the package's exact bytes before the wire and refuses to send when it cannot. Every transmittal row, the `ECTD_TRANSMITTED` row and the sign record name the copy. **Gap:** no download route for it yet. |
 | The amendment itself | the amendment planner, the cover letter, Form 1571 | **Fixed** (`b9dbaeff4`): a CSR is an information amendment; the plan and the letter say "Information Amendment: Clinical" (21 CFR 312.31(b)), or name the gap. **Open:** the 1571's contents box (item 11) is not in its unverified field registry, and filling it needs the official form, which is not readable from here. |
 | ClinicalTrials.gov results | — | **Gap:** no path to post results for NCT05330182 under 42 CFR Part 11. |
 
@@ -169,6 +169,7 @@ and are not used.
    at all; both need the official specification, not recall.
 5. ~~Signing: the whitespace reason and the protected export history~~: done
    (`56504daea`, `239bf4214`).
-6. Transmission: archive the package sent, and ingest the acknowledgments.
+6. Transmission: ~~archive the package sent~~: done (D7). Open: a download
+   for the kept copy, and ingesting the acknowledgments.
 7. Then the larger items: TLF ingest, the named signer set and the 16.1.5
    capture, PDF/A, and the 16.x appendices.

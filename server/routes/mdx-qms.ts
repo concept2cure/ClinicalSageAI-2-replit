@@ -134,6 +134,7 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
+import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
 
@@ -1004,6 +1005,8 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
       resourceType: 'qms_supplier', resourceId: rows[0]?.id,
       details: { supplierName: p.supplierName, criticality: p.criticality },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, [], actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
@@ -1051,6 +1054,8 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
       resourceType: 'qms_supplier', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, Object.keys(parsed.data), actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-patch', err); }
 });
@@ -1113,6 +1118,8 @@ router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, re
       resourceType: 'qms_internal_audit', resourceId: String(rows[0].id),
       details: { auditNumber: p.auditNumber, auditStandard: p.auditStandard ?? null, scope: p.scope },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0] as InternalAuditTaskSource, actor);
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-create', err); }
 });
@@ -1157,6 +1164,8 @@ router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Reques
       resourceType: 'qms_internal_audit', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data) },
     }, requestConnectable(req));
+    const actor = getUserId(req);
+    if (actor) await scheduleInternalAuditTask(orgId, rows[0] as InternalAuditTaskSource, actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-patch', err); }
 });

@@ -1,0 +1,15 @@
+# Without this change (git stash): the four files that fail in 02-green fail the same 24 tests
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed (4)
+      Tests  24 failed | 24 passed | 10 skipped (58)
+      1  FAIL  server/__tests__/routes/smoke.test.ts
+     15  FAIL  server/services/report-os/pdf/__tests__/run-pdf.test.ts
+      1  FAIL  server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts [ server/services/submission-gateways/__tests__/ectd-package-integrity.test.ts ]
+      8  FAIL  tests/lineage/founder-path-lineage.pglite.test.ts
+
+# Without this change: authoring-stability-table.dbtest
+ × tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory 49ms
+   → expected 404 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

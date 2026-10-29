@@ -86,12 +86,13 @@ const GUARD_REPORT = {
   leafSecurity: { pdfEntries: 3, agencyFormsAsIssued: ['m1/us/11-form/form-fda-1571.pdf'] },
 };
 
-async function run(preTransmit: unknown) {
+async function run(preTransmit: unknown, sentPackage?: unknown) {
   connectMock.mockResolvedValue(fakeClient());
   transmitMock.mockResolvedValue({
     transmittalId: 900, transmissionId: 'core-1', status: 'received', transport: 'as2',
     httpStatus: 200, ackReceivedAt: null, message: 'ok',
     ...(preTransmit === undefined ? {} : { preTransmit }),
+    ...(sentPackage === undefined ? {} : { sentPackage }),
   });
   const recorder = vi.fn().mockResolvedValue({ actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'a'.repeat(64) });
   const out = await executeGovernedTransmit(input(recorder));
@@ -131,6 +132,19 @@ describe('executeGovernedTransmit — failed pre-transmit checks are on the sign
     expect(manifest.preTransmitFailedChecks).toEqual([]);
     expect(out.preTransmitFailedChecks).toEqual([]);
     expect(out.preTransmitWarnings).toEqual([]);
+  });
+
+  // 2026-10-29 (W5/D7): the guard keeps the exact bytes before the wire
+  // (sent-package-archive.ts); the sign record names where, not only the digest.
+  it('records where the sent bytes are kept on the ledger payload and the signature manifest; null when the guard kept none', async () => {
+    const kept = { storageVersionId: 'v-1', provider: 's3', sha256: 'c'.repeat(64), sizeBytes: 1234, filename: `fda-esg-${'c'.repeat(64)}.zip` };
+    const { ledger, manifest } = await run(GUARD_REPORT, kept);
+    expect(ledger.sentPackage).toEqual(kept);
+    expect(manifest.sentPackage).toEqual(kept);
+    queries.length = 0;
+    const none = await run(GUARD_REPORT);
+    expect(none.ledger).toHaveProperty('sentPackage', null);
+    expect(none.manifest).toHaveProperty('sentPackage', null);
   });
 
   it('records null — never "all passed" — when the guard reported nothing', async () => {

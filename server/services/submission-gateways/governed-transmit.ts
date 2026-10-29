@@ -705,6 +705,10 @@ export async function executeGovernedTransmit(
   // records them. 2026-09-23 (W5/D7, round-2 review) — a package that failed
   // dtd-self-contained went out on this path with no transmit-time trace.
   const pre = preTransmitFindings(result);
+  // Where the exact bytes sent are kept, so the sign record names them and not
+  // only their digest (sent-package-archive.ts, 2026-10-29 W5/D7). null when
+  // the guard reported none.
+  const sentFacts = { sentPackage: result.sentPackage ?? null };
   const preTransmitFacts = {
     preTransmitFailedChecks: pre.failedChecks,
     preTransmitWarnings: pre.warnings,
@@ -766,6 +770,7 @@ export async function executeGovernedTransmit(
           transmissionId: result.transmissionId ?? null,
           ...filedSequenceFacts,
           ...preTransmitFacts,
+          ...sentFacts,
       };
       const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
@@ -790,6 +795,7 @@ export async function executeGovernedTransmit(
             : null,
           ...filedSequenceFacts,
           ...preTransmitFacts,
+          ...sentFacts,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
@@ -822,7 +828,7 @@ export async function executeGovernedTransmit(
         // did this signature file" is not answerable from a hash. Nor is
         // "which package checks had failed when it was signed" (2026-09-23,
         // W5/D7, round-2 review).
-        extraManifest: { ...filedSequenceFacts, ...preTransmitFacts },
+        extraManifest: { ...filedSequenceFacts, ...preTransmitFacts, ...sentFacts },
         manifestKind: 'governed-transmit',
       });
       // 2026-09-28 (Q-0928-3): the declared §11.50 meaning lived only on the

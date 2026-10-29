@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5197/api/submissions",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "programId": "4a9fbd71-0d26-4316-a981-33a6e1730f7e",
+      "title": "OQ-002 IND 20261029121031",
+      "productName": "OQ-002 IND 20261029121031",
+      "applicationType": "IND",
+      "clientType": "biotech",
+      "primaryRegion": "fda"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 66,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 5,
+      "title": "OQ-002 IND 20261029121031",
+      "productName": "OQ-002 IND 20261029121031",
+      "applicationType": "IND",
+      "clientType": "biotech",
+      "primaryRegion": "fda",
+      "status": "planning",
+      "lifecycleStage": "planning",
+      "organizationId": 6,
+      "createdBy": 6,
+      "createdAt": "2026-10-29T12:13:52.520Z",
+      "updatedAt": "2026-10-29T12:13:52.520Z",
+      "deletedAt": null,
+      "programId": "4a9fbd71-0d26-4316-a981-33a6e1730f7e",
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    }
+  }
+}

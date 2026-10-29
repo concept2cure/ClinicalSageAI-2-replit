@@ -102,6 +102,8 @@ function ctxOf(req: Request): Ctx | null {
 const CODE_STATUS: Record<string, number> = {
   ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
+  // The guard could not keep the package's bytes, so it sent nothing.
+  SENT_PACKAGE_NOT_ARCHIVED: 503,
   // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
   // tenant placement refusal, 403) and answered it as a 500 (D6).
   ...GATEWAY_ERROR_HTTP_STATUS,

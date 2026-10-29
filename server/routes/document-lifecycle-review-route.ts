@@ -15,6 +15,10 @@
  *   - withdraw and return: governed acts with a reason, each closing the route
  *     on its own transaction.
  *   - closeRouteOnExit: an /advance out of review closes the open route.
+ *   - reassign and hand back (RR3, §2.10): the sender or an administrator
+ *     gives an unsigned member's assignment to another person; a member
+ *     returns their own assignment to the sender. Each a governed act with a
+ *     reason, on its own transaction under the record's lock.
  *
  * @module server/routes/document-lifecycle-review-route
  */
@@ -33,11 +37,14 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import {
   closeReviewRoute,
   closeRouteTaskOnSignature,
+  handBackMember,
   isOrgAdmin,
   openApproverStep,
   parseRouteRequest,
+  reassignMember,
   ReviewRouteRefusal,
   sendReviewRoute,
+  type RouteActSubject,
   type RouteRequest,
   type RouteTx,
 } from '../services/review/review-route';
@@ -93,6 +100,9 @@ function memberRefusal(standing: RouteStanding, userId: number, role: 'reviewer'
   const member = standing.members.find((m) => m.userId === userId && m.role === role);
   if (!member) return refuse(403, 'ROUTE_NOT_NAMED', `You are not named as ${role} on this document's review route. Nothing was signed.`);
   if (member.outcome === 'signed') return refuse(409, 'SIGNATURE_ALREADY_RECORDED', 'You have already signed on this route. Nothing was signed.');
+  if (member.outcome !== 'pending') {
+    return refuse(409, 'ROUTE_HANDED_BACK', 'You handed this back to the sender, who reassigns it. Nothing was signed.');
+  }
   if (member.stepOpen) return member;
   return role === 'approver'
     ? refuse(409, 'REVIEW_INCOMPLETE', 'Every named reviewer signs before the approval. Nothing was signed.')
@@ -253,6 +263,68 @@ export async function closeRouteOnExit(
   p.notices.push(...closed.notices);
 }
 
+// ── Reassign and hand back (RR3, §2.10) ─────────────────────────────────────
+
+const actSubject = (doc: ProjectionInput): RouteActSubject => ({
+  type: 'canonical_document', id: doc.canonicalId, title: doc.title, programId: doc.projectId ?? null,
+});
+
+/**
+ * The route as it stands, read under the record's row lock. Every route
+ * writer takes that lock first, so the read is current without locking the
+ * member rows here: reassignment then locks the project and the member row in
+ * assignTaskInTx's own order (project, then task), the order every generic
+ * assignment takes, so the two never wait on each other in opposite orders.
+ */
+function standingUnderRecordLock(tx: CanonicalStoreHandle, doc: ProjectionInput): Promise<RouteStanding> {
+  return routeStanding(queryableFromDrizzle(tx as never), {
+    organizationId: doc.organizationId, subjectType: 'canonical_document', subjectId: doc.canonicalId, inReview: doc.stage === 'in_review',
+  });
+}
+
+const positiveId = (v: unknown): number | null => {
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN;
+  return Number.isSafeInteger(n) && n > 0 && n <= 2_147_483_647 ? n : null;
+};
+
+/** POST /:id/review-route/reassign {taskId, assigneeId, reason}: the sender or an administrator. */
+export async function reassignAct(req: Request, tx: CanonicalStoreHandle, p: { doc: ProjectionInput; notices: TaskEventNotice[] }): Promise<Outcome> {
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) return refuse(400, 'REASON_REQUIRED', `${reason.error} Nothing was changed.`);
+  const userId = resolveUserId(req);
+  if (userId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
+  const taskId = typeof req.body?.taskId === 'string' ? req.body.taskId.trim() : '';
+  const assigneeId = positiveId(req.body?.assigneeId);
+  if (!taskId || assigneeId === null) {
+    return refuse(400, 'ROUTE_INVALID', 'Name the assignment (taskId) and the person to give it to (assigneeId). Nothing was changed.');
+  }
+  const standing = await standingUnderRecordLock(tx, p.doc);
+  if (standing.state !== 'live') return refuse(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+  const done = await reassignMember(asTx(tx), req, {
+    organizationId: p.doc.organizationId, actorUserId: userId, reason: reason.reason, subject: actSubject(p.doc), standing, taskId, assigneeId,
+  });
+  p.notices.push(...done.notices);
+  return {
+    status: 200,
+    body: { ok: true, routeId: standing.route!.id, taskId, role: done.member.role, from: done.member.userId, to: done.to.userId, actId: done.actId },
+  };
+}
+
+/** POST /:id/review-route/hand-back {reason}: a named member, of their own assignment. */
+export async function handBackAct(req: Request, tx: CanonicalStoreHandle, p: { doc: ProjectionInput; notices: TaskEventNotice[] }): Promise<Outcome> {
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) return refuse(400, 'REASON_REQUIRED', `${reason.error} Nothing was changed.`);
+  const userId = resolveUserId(req);
+  if (userId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
+  const standing = await lockedStanding(tx, p.doc);
+  if (standing.state !== 'live') return refuse(409, 'ROUTE_NOT_OPEN', 'This document has no open review route. Nothing was changed.');
+  const done = await handBackMember(asTx(tx), {
+    organizationId: p.doc.organizationId, actorUserId: userId, reason: reason.reason, subject: actSubject(p.doc), standing,
+  });
+  p.notices.push(...done.notices);
+  return { status: 200, body: { ok: true, routeId: standing.route!.id, taskId: done.member.taskId, role: done.member.role, actId: done.actId } };
+}
+
 // ── The router's hooks: what /sign and /advance ask, and the route acts ─────
 
 /**
@@ -385,7 +457,7 @@ export function mountReviewRouteActs(m: ReviewRouteActMount): void {
     const vaultId = String(req.params.vaultId);
     if (!UUID.test(vaultId)) return res.status(404).json({ ok: false, error: 'not_found' });
     const read = await (await m.getDb()).transaction((tx) =>
-      readRouteCandidates(queryableFromDrizzle(tx as never), { organizationId, vaultId, readerId }));
+      readRouteCandidates(queryableFromDrizzle(tx as never), { organizationId, vaultId, readerId, forReassign: req.query.for === 'reassign' }));
     if (!read) return res.status(404).json({ ok: false, error: 'not_found' });
     return res.json({ ok: true, ...read });
   }));
@@ -411,4 +483,8 @@ export function mountReviewRouteActs(m: ReviewRouteActMount): void {
     m.router.post(`/:id/review-route/${act}`, m.guard, m.wrap((req, res) =>
       onRecord(m, req, res, (tx, doc, notices) => closeRouteByAct(req, tx, m.deps, { doc, act, notices }))));
   }
+  m.router.post('/:id/review-route/reassign', m.guard, m.wrap((req, res) =>
+    onRecord(m, req, res, (tx, doc, notices) => reassignAct(req, tx, { doc, notices }))));
+  m.router.post('/:id/review-route/hand-back', m.guard, m.wrap((req, res) =>
+    onRecord(m, req, res, (tx, doc, notices) => handBackAct(req, tx, { doc, notices }))));
 }
