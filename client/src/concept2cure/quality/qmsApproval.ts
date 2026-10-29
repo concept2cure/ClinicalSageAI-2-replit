@@ -100,6 +100,15 @@ export function signNcDisposition(
 }
 const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Reload the register and check the nonconformance before you sign again.';
 
+/** Close a deviation with a signature (server/services/qms/deviations.ts, P-57). */
+export function signDeviationClose(
+  id: number,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/deviations/${id}/close`, {}, input, UNCONFIRMED_CLOSE);
+}
+const UNCONFIRMED_CLOSE = 'The server did not confirm the close. Reload the register and check the deviation before you sign again.';
+
 /** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
 export function signSupplierApproval(
   id: number,
