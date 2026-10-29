@@ -111,3 +111,48 @@ Trunk 984913ea5 + this change. Every suite that renders AdminAccess, AdminSurfac
  ✓ client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Settings → Second factor at sign-in > says what sign-in asks for, and where each person enrols an authenticator
  Test Files  6 passed (6)
       Tests  51 passed (51)
+
+# Part 2 — on a254c975a + this change
+
+## The fold guards and the tests the retirement changed, verbose
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > offers the client type chips in words
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+ ✓ client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > attributes the retention period to admin-console and the hold family to Vault and admin-console
+ ✓ shared/types/__tests__/onboarding-discovery-contract.test.ts > organization-wide discovery contract > keeps recommendations in the reachable launch scope and gives no setup verdict from answers
+ Test Files  5 passed (5)
+      Tests  72 passed (72)
+
+## The broad regression set (280 test files naming the registry, views, aliases, routing, navigation, tours, launch scope, admin or setup; list in tools/regression-suites.txt)
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed | 274 passed (280)
+      Tests  14 failed | 3824 passed (3838)
+
+The 14 failures, none this fold's (each traced in README.md 'Regression'):
+- tests/regulatory/template-library-truth.test.ts > template library — CSR outline is the ICH E3 tree > numbers and titles equal e3TopLevel() §1–§16
+- server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse
+- server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse
+- server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts > callers of the CMC engines ask the composition boundary > 'server/services/authoring/module2-sav…': `'export async function readSavedModule…'` asks before it calls [ 'composeFullModule3' ]
+- client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group
+- client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run
+- client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so
+- client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run
+- client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again
+- client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked
+- client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference
+- client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does
+- client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy
+- client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot

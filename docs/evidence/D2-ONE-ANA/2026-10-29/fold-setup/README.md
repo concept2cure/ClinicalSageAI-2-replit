@@ -18,7 +18,7 @@
 
 No route was added. One route changed: `GET /api/mdx/admin` stops serving the read-only session-timeout row the session-policy card replaces, and its second-factor row says where a person sets up an authenticator app (Setup's Multi-factor row said it).
 
-**Status:** Part 1 (product) done; Part 2 (retirement checklist) waits for the shared checklist files.
+**Status:** done. Part 1 (product) is `f83fcce03`. Part 2, the retirement, is this change.
 
 ## What already exists
 
@@ -85,7 +85,15 @@ Searched by every name the capability could have:
 
 ## The deletion rule
 
-Part 1 deletes no user-facing capability. Setup stays mounted until Part 2: it now mounts the same `OrganizationSettingsCards` and publishes the Profile card's context under `setup`, so there is one implementation with two mounts until the alias lands.
+- **What was deleted:**
+  - Part 1 moved Setup's own code into `OrganizationProfileCard.tsx` and `AdminSettings.tsx`. Setup itself stayed mounted, over the same cards, until the alias landed.
+  - Part 2 deletes Setup itself, the `Setup` export in `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx`, along with its `surfaceViews.ts` registration and its registry entry.
+- **The reachable replacement, by path:** `client/src/concept2cure/v2/surfaces/AdminSettings.tsx` (`AdminSettingsTab`, `OrganizationSettingsCards`, `IdentityConsoleDoor`) and `OrganizationProfileCard.tsx`, mounted by `AdminAccess.tsx` on the Settings and SSO tabs. The id `setup` is an alias of `admin-console` in `client/src/concept2cure/v2/registryModel.ts` `DEEP_LINK_ALIASES`, and `ALIAS_APPLIES` opens the Settings tab.
+- **The proof that it is reachable:**
+  - `client/src/concept2cure/v2/__tests__/foldSetup.test.ts`: a link and an in-app move, with and without a project open, land on admin-console with `admin-console.open-tab { tab: 'settings' }`. admin-console mounts the six cards and claims the retention and hold routes. The old view, registry entry, component and publisher are gone, and so are its scope, rail, CI-list and tour entries.
+  - `server/services/entitlements/__tests__/launch-scope.test.ts` "the folded setup".
+  - `client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx`: the functions themselves.
+- **History:** see "Deletion history search" above.
 
 Moved, with their cases:
 - `adminSetupGoverned.test.tsx` → `adminSettingsGoverned.test.tsx` (renders `OrganizationSettingsCards`);
@@ -93,15 +101,31 @@ Moved, with their cases:
 - `adminSetupRetentionPeriod.test.tsx` → `adminSettingsRetentionPeriod.test.tsx`;
 - `adminSetupMfaCopy.test.tsx` keeps its name; it now tests the second-factor row on admin-console Settings.
 
-Part 2 deletes `Setup`. Its replacement by path is `client/src/concept2cure/v2/surfaces/AdminSettings.tsx`, mounted by `AdminAccess.tsx` on the Settings tab; the proof of reach is `adminConsoleSettings.test.tsx` now and the fold guard in Part 2.
 
 ## Red, green, mutations
 
-- **`red.txt`:** `adminConsoleSettings.test.tsx` **11/11 failed** before the change; the 2 new server cases failed (13 existing passed).
-- **`green.txt`:** 51 suites (everything that renders AdminAccess, AdminSurfaces, a moved card or HomeSetup, names `setup` or `identity-console`, and the server facet test), **471/471**; the six fold suites **51/51**.
-- **`mutations.txt`:** **21/21 killed**: each card unmounted (6), the door missing or misdirected (2), configuration published on any tab or not at all (2), the reason dropped from the check, the rename or the client type (3), unsaved state hidden, a failed read published as a profile, an unreachable server worded as a refusal, the old "Nothing on this tab" copy, Ask AnA inert, the session row served again, the enrolment pointer dropped, the row description dropped. Each reversed by replacement and md5-checked.
+- **`red.txt`:**
+  - Part 1: `adminConsoleSettings.test.tsx` **11/11 failed** before the change; the 2 new server cases failed (13 existing passed).
+  - Part 2: the fold guard `foldSetup.test.ts` **4/4 failed** on `f83fcce03` (no alias; no retention claim on admin-console; the setup view still registered; setup still a launch shell surface). Its mount checks already passed there, because Part 1 was in. The `launch-scope.test.ts` guard's red is mutation P6.
+- **`green.txt`:**
+  - Part 2: the fold guards and the tests the retirement changed, **72/72**. The broad set: 274/280 files, 3,824/3,838 tests; the 14 failures are traced under "Regression" and none is this fold's.
+  - Part 1: 51 suites (everything that renders AdminAccess, AdminSurfaces, a moved card or HomeSetup, names `setup` or `identity-console`, and the server facet test), **471/471**; the six fold suites **51/51**.
+- **`mutations.txt`:** Part 2 **12/12 killed**: the alias, its tab action or the wrong tab; a view, a registry entry, a launch-shell entry, a rail group, a discoverability line or a publishing `Setup` kept; the retention claim dropped; `ID_BASELINE` not lowered; the GAMP kit route left unmapped (`ci:launch-scope-api` fails on it). Part 1 **21/21 killed**: each card unmounted (6), the door missing or misdirected (2), configuration published on any tab or not at all (2), the reason dropped from the check, the rename or the client type (3), unsaved state hidden, a failed read published as a profile, an unreachable server worded as a refusal, the old "Nothing on this tab" copy, Ask AnA inert, the session row served again, the enrolment pointer dropped, the row description dropped. Each reversed by replacement and md5-checked.
 
-## Gates (Part 1)
+## Gates
+
+Part 2 (`gates.txt`, on `a254c975a` + this change), all green:
+- ci:launch-scope and its selftest;
+- ci:launch-scope-api and its selftest;
+- ci:ana-surface-context (108 exact);
+- ci:surface-discoverability;
+- ci:migration-drop-safety and its selftest, ci:migration-set-order, ci:migration-deploy-path;
+- check:catalog-copy, ci:program-ownership-single-source, ci:sql-interpolation;
+- ci:undefined-css-classes, ci:unreferenced-modules, check:microcopy.
+
+Part 2's ESLint is net 17 → 17 over its 14 files, with 0 errors. Scoped `tsc` over its 12 TS files reports 0 errors in them.
+
+Part 1:
 
 `gates.txt`, on `984913ea5` + this change, all green: ci:launch-scope-api (547 paths, none refused), ci:ana-surface-context, ci:undefined-css-classes, ci:surface-discoverability, ci:launch-scope, check:microcopy, ci:unreferenced-modules (73 = baseline).
 
@@ -111,13 +135,46 @@ File sizes: `AdminSurfaces.tsx` 2,340 → 1,880 lines; `AdminAccess.tsx` 776 →
 
 ## Not carried, and found
 
-- **GAMP 5 validation kit.** It lives only in `AdminConsole`, which nothing has mounted since `af973c5e8` (2026-07-27). The placement map calls it "Not real today". It is not carried. Whether to reach it (a card on Settings over `/api/validation-kit`) or delete `AdminConsole` (about 840 lines, with no reachable replacement for the kit) is a decision for the founder; this fold changes neither.
+- **GAMP 5 validation kit.** It lives only in `AdminConsole`, which nothing has mounted since `af973c5e8` (2026-07-27). The placement map calls it "Not real today". It is not carried. Whether to reach it (a card on Settings over `/api/validation-kit`) or delete `AdminConsole` (about 840 lines, with no reachable replacement for the kit) is a decision for the founder; this fold changes neither. Its route's registry claim moved from setup to admin-console only so that `ci:launch-scope-api` does not see an unmapped path (checklist step 3).
 - **The gateway account at Submit, on the first transmit.** Submit's `TransmitPanel` (`SubmissionSeqWorkspaces.tsx`) says when a gateway has no credentials and that an administrator adds them under Gateway accounts. It does not offer the choice. `GatewayAccountsSetting` does not fit there: it lists every gateway and environment, its PUT is owner or administrator only (a transmitter who is neither would be offered Change… buttons the server refuses), and the host file is 2,403 lines. Handed on.
 - **"Place legal hold" in Vault.** Vault does not offer it. `LegalHoldsCard`'s `PlaceHoldForm` asks for a project and then a document; reaching it from Vault's document pane needs that project and document preset, and `Vault.tsx` is 2,620 lines. Handed on.
 - **The AnA summary covers the Profile card only**, as Setup's did. The other cards' values are on screen and are not published; the summary says so.
 - **Found:** the Settings tab's "Org branding" row shows the organisation's name a second time, beside the Profile card. It is served by `mdx-admin.ts` and is not part of this fold.
 - **Found:** `SessionPolicySetting`'s "Reopen setup" message now says "Reopen this page", since the card is on admin-console and in onboarding.
 
-## Part 2 (pending "checklist go")
+## Checklist (`DEVICE_FOLDS_2026-10-29.md`, "The common checklist")
 
-Delete `Setup` from `AdminSurfaces.tsx`; alias `setup` → `admin-console` with `ALIAS_APPLIES` `admin-console.open-tab { tab: 'settings' }`; remove `setup` from `surfaceViews.ts`, `ui-surface-registry.ts` (its `apiPrefixes` move onto admin-console's entry in `ui-surface-registry.ui-v2.ts`), `NAV_GROUP_OF`, `LAUNCH_SHELL_SURFACES` (guard in `launch-scope.test.ts`), `check-surface-discoverability.mjs`; `ID_BASELINE` minus one; tours; the catalogue if it has a row; `REAL.components`, `dump-v2-surfaces.spec.tsx`, `NO_PROJECT_DOOR` where listed; a fold guard `foldSetup.test.ts`, red first.
+| Step | Done |
+|---|---|
+| 1. Delete the source component and its tests | Done. `Setup` deleted from `AdminSurfaces.tsx`; its tests were moved in Part 1 (above). `surfaceViews.ts` was its only importer. |
+| 2. `MdxSurfaceHost.tsx` | Not applicable: a v2 surface, not host-mounted. |
+| 3. The id leaves `surfaceViews.ts` and the registries; `apiPrefixes` move | Done. `ui-surface-registry.ts` drops the entry (`ui-surface-registry.ui-v2.ts` had none). admin-console now claims `/api/vault/legal-holds/retention` (setup's alone) and `/api/vault/legal-holds` (shared with the Vault). `/api/setup` and `/api/api-keys` were already admin-console's. `/api/admin` and `/api/users` are NEVER_GATED. `/api/regulatory-programs` and `/api/c2c/project-vault` stay the Vault's. `/api/validation-kit` moves to admin-console: only the unmounted `AdminConsole` names it, and `ci:launch-scope-api` fails it as unmapped otherwise (mutation P12). `launch-scope-device-features.test.ts` is not affected (not a device fold). |
+| 4. `registryModel.ts` | Done. `DEEP_LINK_ALIASES.setup = 'admin-console'`; `ALIAS_APPLIES.setup = admin-console.open-tab { tab: 'settings' }`; off `NAV_GROUP_OF`. It was in no `NAV_HIDDEN`, `SEGMENTS.focus`, `SURFACE_ACTIONS` or `SEGMENT_MODULES` entry. |
+| 5. `launch-scope.ts` (+ `mdx-project-features.ts`) with a guard | Done. Off `LAUNCH_SHELL_SURFACES`; not in `mdx-project-features.ts`. Guard: `launch-scope.test.ts` "the folded setup". |
+| 6. Catalogue (Rule 1) | Not applicable: `setup` has no row in `20260810_reconcile_module_catalog.sql` or `20260823_module_catalog_commercial_packaging.sql` (searched). |
+| 7. The AnA target stays and resolves through the alias | `shared/navigation` has no `setup` target; admin-console's stays. Setup had no surface actions. |
+| 8. Retarget the tour stops | None: no tour stops on `setup` (`shared/navigation/demo-scripts.ts`, searched). |
+| 9. CI | `ID_BASELINE` 109 → 108. `check-surface-discoverability.mjs` drops its entry. `REAL.components`, `dump-v2-surfaces.spec.tsx` and `NO_PROJECT_DOOR` had no setup entry. Also changed: `vault-legal-holds-launch-scope.test.ts` (the retention route's owner is admin-console), `onboarding-discovery-contract.test.ts` (a recommendation resolves through the shell's aliases, as `demo-scripts.test.ts` reads them), and `fixtures/collab-data.ts` (a dead `setup` row). |
+| 10. A fold guard | `foldSetup.test.ts`: red first (4/4), then green, then mutations. |
+| 11. Gates | All green; see above. |
+
+Callers that still name `setup` land on Settings through the alias and its tab action:
+- `ComplianceReports.tsx` (the letterhead link);
+- `OnboardingSecurity.tsx` ("Organization setup");
+- `navEntitlements.tsx` (the locked-feature notice);
+- the two onboarding-discovery recommendations in `shared/types/onboarding-discovery.ts`.
+
+`FUNCTION_PARITY.md` has the setup rows ticked, with their homes. The GAMP 5 row stays open.
+
+## Regression
+
+The broad set: every suite that names the registry, the views, aliases, routing, navigation, tours, launch scope, admin or setup. That is 280 test files, run on `a254c975a` + this change: **274/280 files and 3,824/3,838 tests pass** (`green.txt`).
+
+Before the two test fixes above it had 16 failures:
+- two were this fold's, and are fixed: the discovery contract and the legal-hold route owner;
+- the other 14 are not this fold's.
+
+The 14 that are not this fold's:
+- `runPolicySwitch`, `oneBoxDuringRun`, `engineChoices`: `ConversationThread` → `CanvasDocumentList` → `authoringCurrentRead` calls a `@/services/portal/authService` export their mocks do not define.
+- `launch-scope-api-gate.test.ts` (2): `/api/ectd/*` paths out of scope for `ectd-compile`, from another agent's eCTD-publishing fold in this tree.
+- `template-library-truth.test.ts`, `composition-boundary-callers.contract.test.ts`: authoring and CMC.

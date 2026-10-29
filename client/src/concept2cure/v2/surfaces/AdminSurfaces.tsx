@@ -29,8 +29,6 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
-import { OrganizationSettingsCards, SUMMARISE_CONFIGURATION } from './AdminSettings';
-import type { OrganizationProfileContext } from './OrganizationProfileCard';
 import { AuditEventChainBanner, auditEventChainForAna, useAuditEventChain } from './AuditEventChain';
 import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import '../styles/project-home-v2.css';
@@ -71,35 +69,12 @@ function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
   );
 }
 
-/* ════════════ Setup (org config) ════════════
-   Setup is folding into Admin and access (D2, 2026-10-29;
-   docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). Its controls moved, not
-   copied: the name and client type to OrganizationProfileCard.tsx, and every
-   setting card, with them, to admin-console's Settings tab (AdminSettings.tsx).
-   Until the fold's checklist change retires the `setup` id — an alias to
-   admin-console's Settings tab — this screen mounts the same cards and
-   publishes the Profile card's context under its own id. */
-
-export function Setup({ onAsk, onNav }: SurfaceViewProps) {
-  const [profileContext, setProfileContext] = useState<OrganizationProfileContext | null>(null);
-  usePublishSurfaceContext('setup', profileContext);
-
-  return (
-    <div className="page-inner">
-      <AdminHeader
-        eyebrow="Admin — organization"
-        title="Setup"
-        sub="Organization profile and module configuration, saved to the organization record and written to the audit trail."
-        actions={
-          <button className="btn ghost" onClick={() => onAsk && onAsk(SUMMARISE_CONFIGURATION)}>
-            {I.sparkles} Ask AnA
-          </button>
-        }
-      />
-      <OrganizationSettingsCards onNav={onNav} onProfileContext={setProfileContext} />
-    </div>
-  );
-}
+/* Setup (org config) folded into Admin and access (D2, 2026-10-29;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/). Its name and client type
+   are OrganizationProfileCard.tsx, and every setting card it mounted is on
+   admin-console's Settings tab (AdminSettings.tsx, mounted by AdminAccess.tsx).
+   `setup` is an alias of admin-console that opens that tab (registryModel.ts);
+   foldSetup.test.ts holds it. */
 
 /** The ledger route's `meta.chain` (server/routes/audit-trail-ledger.routes.ts
  *  AuditLedgerChainVerdict), reduced to what the banner and AnA state. */
