@@ -1,0 +1,27 @@
+# eslint.txt — npx eslint --no-ignore <file>: warnings at HEAD (git show HEAD:<file> | eslint --stdin) and now
+# head=new: the file is new in this change. Every file keeps HEAD's count; no errors. lines: physical lines now.
+
+head=0 now=0 errors=0 lines=163->180  server/routes/__tests__/artifacts-center-export-governance.test.ts
+head=3 now=3 errors=0 lines=427->468  server/routes/artifacts-center-routes.ts
+head=0 now=0 errors=0 lines=528->530  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+head=0 now=0 errors=0 lines=147->152  server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts
+head=0 now=0 errors=0 lines=89->94  server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+head=0 now=0 errors=0 lines=122->127  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+head=0 now=0 errors=0 lines=118->123  server/routes/c2c/__tests__/governed-decision-transition-refusal-and-failure-statuses.test.ts
+head=new now=0 errors=0 lines=0->548  server/routes/c2c/__tests__/project-write-gates.pglite.test.ts
+head=new now=0 errors=0 lines=0->46  server/routes/c2c/__tests__/support/admission-double.ts
+head=new now=0 errors=0 lines=0->262  server/routes/c2c/__tests__/support/project-write-gates-fixture.ts
+head=0 now=0 errors=0 lines=195->207  server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+head=0 now=0 errors=0 lines=64->74  server/routes/c2c/artifact-project-scope.ts
+head=24 now=24 errors=0 lines=4269->4307  server/routes/c2c/artifacts.ts
+head=1 now=1 errors=0 lines=288->294  server/routes/c2c/governance-ops.ts
+head=1 now=1 errors=0 lines=396->401  server/routes/c2c/haq-sessions.ts
+head=0 now=0 errors=0 lines=481->539  server/routes/c2c/project-access.ts
+head=17 now=17 errors=0 lines=2283->2307  server/routes/c2c/reviews.ts
+head=3 now=3 errors=0 lines=639->662  server/routes/c2c/tasks.ts
+head=10 now=10 errors=0 lines=2163->2163  server/routes/concept2cure.ts
+head=5 now=5 errors=0 lines=341->343  tests/artifact-routes-invalidate-bundles.test.ts
+head=0 now=0 errors=0 lines=220->222  tests/artifact-routes-project-scope.test.ts
+head=0 now=0 errors=0 lines=215->217  tests/artifact-status-audit-outcome.test.ts
+head=0 now=0 errors=0 lines=403->405  tests/artifact-status-lock-covers-approval.test.ts
+head=0 now=0 errors=0 lines=238->245  tests/artifact-status-project-scope.test.ts

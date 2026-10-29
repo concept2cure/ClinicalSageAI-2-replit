@@ -28,7 +28,12 @@ vi.mock('../../../db', () => ({
   db: { select: () => { throw new Error('no query expected on this path'); } },
   pool: { query: vi.fn(async () => { throw new Error('no query expected on this path'); }), connect: vi.fn() },
 }));
-vi.mock('../project-access', () => ({ verifyProjectAccess: async () => true }));
+vi.mock('../project-access', async () => {
+  const verifyProjectAccess = async () => true;
+  // The router's admission, decided by the same stub (c2c/__tests__/support/admission-double.ts).
+  const { admissionDecidedBy } = await import('./support/admission-double');
+  return { verifyProjectAccess, projectAdmissionMiddleware: admissionDecidedBy(verifyProjectAccess) };
+});
 vi.mock('../../../auth', () => ({ authMiddleware: (_q: unknown, _s: unknown, n: () => void) => n() }));
 vi.mock('../../../middleware/tenantContext', () => ({
   tenantContextMiddleware: (_q: unknown, _s: unknown, n: () => void) => n(),

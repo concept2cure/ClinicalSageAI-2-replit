@@ -46,7 +46,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { admittedProjectId, projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 import { looksLikeProgramUuid } from '../../lib/project-id';
 import { resolveProgramProjectAnchor } from '../../services/c2c/program-project-anchor';
 import { createNotification, upsertProjectWorkItem } from './notifications';
@@ -63,6 +63,20 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+
+/* Every /projects/:projectId route admits the project first (D6,
+   docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/). Creating a review thread
+   or task checked read access and the role table only, so a member without
+   edit permission and any caller of an archived project wrote them. Both are
+   review acts and are admitted in review mode: a viewer and an archived
+   project are refused, and the reviewer a live assignment admits is not. The
+   reads keep read mode. */
+router.param('projectId', projectAdmissionMiddleware({
+  routes: {
+    'POST /projects/:projectId/artifacts/:artifactId/review-threads': 'review',
+    'POST /projects/:projectId/artifacts/:artifactId/review-tasks': 'review',
+  },
+}));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 13 — REVIEW THREADS, COMMENTS & TASKS
@@ -183,7 +197,9 @@ router.get(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, admittedProjectId(req))
           )
         )
         .limit(1);
@@ -287,7 +303,9 @@ router.post(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, projectDbId)
           )
         )
         .limit(1);
@@ -1115,7 +1133,9 @@ router.get('/projects/:projectId/artifacts/:artifactId/review-record/export', as
       .where(
         and(
           eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
+          eq(concept2cureArtifacts.organizationId, organizationId),
+          // The admitted project's own artifact, never another project's through this URL.
+          eq(concept2cureArtifacts.projectId, admittedProjectId(req))
         )
       )
       .limit(1);
@@ -1153,7 +1173,9 @@ router.get(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, admittedProjectId(req))
           )
         )
         .limit(1);
@@ -1233,7 +1255,9 @@ router.post(
         .where(
           and(
             eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
+            eq(concept2cureArtifacts.organizationId, organizationId),
+            // The admitted project's own artifact, never another project's through this URL.
+            eq(concept2cureArtifacts.projectId, projectDbId)
           )
         )
         .limit(1);

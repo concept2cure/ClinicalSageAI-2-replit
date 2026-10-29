@@ -1,0 +1,43 @@
+{
+ "extends": "<repo>/tsconfig.json",
+ "compilerOptions": {
+  "incremental": false,
+  "noEmit": true
+ },
+ "include": [
+  "<repo>/client/src/**/*.d.ts",
+  "<repo>/server/**/*.d.ts",
+  "<repo>/shared/**/*.d.ts"
+ ],
+ "files": [
+  "<repo>/server/routes/__tests__/artifacts-center-export-governance.test.ts",
+  "<repo>/server/routes/artifacts-center-routes.ts",
+  "<repo>/server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts",
+  "<repo>/server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts",
+  "<repo>/server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts",
+  "<repo>/server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts",
+  "<repo>/server/routes/c2c/__tests__/governed-decision-transition-refusal-and-failure-statuses.test.ts",
+  "<repo>/server/routes/c2c/__tests__/project-write-gates.pglite.test.ts",
+  "<repo>/server/routes/c2c/__tests__/support/admission-double.ts",
+  "<repo>/server/routes/c2c/__tests__/support/project-write-gates-fixture.ts",
+  "<repo>/server/routes/c2c/__tests__/tasks-tenant-scope.test.ts",
+  "<repo>/server/routes/c2c/artifact-project-scope.ts",
+  "<repo>/server/routes/c2c/artifacts.ts",
+  "<repo>/server/routes/c2c/governance-ops.ts",
+  "<repo>/server/routes/c2c/haq-sessions.ts",
+  "<repo>/server/routes/c2c/project-access.ts",
+  "<repo>/server/routes/c2c/reviews.ts",
+  "<repo>/server/routes/c2c/tasks.ts",
+  "<repo>/server/routes/concept2cure.ts",
+  "<repo>/tests/artifact-routes-invalidate-bundles.test.ts",
+  "<repo>/tests/artifact-routes-project-scope.test.ts",
+  "<repo>/tests/artifact-status-audit-outcome.test.ts",
+  "<repo>/tests/artifact-status-lock-covers-approval.test.ts",
+  "<repo>/tests/artifact-status-project-scope.test.ts",
+  "<repo>/server/types/auth-request.ts",
+  "<repo>/server/auth/index.ts",
+  "<repo>/server/middleware/auth.ts",
+  "<repo>/server/middleware/tenantContext.ts",
+  "<repo>/server/auth.ts"
+ ]
+}

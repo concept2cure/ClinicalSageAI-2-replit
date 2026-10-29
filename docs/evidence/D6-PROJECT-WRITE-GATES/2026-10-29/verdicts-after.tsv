@@ -1,0 +1,657 @@
+method	path	case	status	code	message	rows kept	rows attempted
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	use-member	200	-	-	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	reviewer-no-edit	200	-	-	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	owner	200	-	-	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_threads:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	use-member	200	-	-	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	reviewer-no-edit	200	-	-	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	owner	200	-	-	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1	concept2cure_review_tasks:1,concept2cure_provenance_events:1,c2c_project_work_items:1
+POST	/api/concept2cure/projects/:projectId/submission-center/items	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items	owner	503	-	Communication Center persistence tables missing: concept2cure_authority_profiles	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/submission-center/items/:itemId/status	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/authority-profiles	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/advance	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents	owner	500	COMPANY_DOCUMENTS_UNAVAILABLE	Company documents could not be read or saved. Refresh to verify the current save	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents	owner	500	COMPANY_DOCUMENTS_UNAVAILABLE	Company documents could not be read or saved. Refresh to verify the current save	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	owner	400	VALIDATION	Required (questionRef) Nothing was changed.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId	owner	400	VALIDATION	Required (ctdSection) Nothing was changed.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response	owner	400	VALIDATION	Required (expectedRevision) Nothing was changed.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw	owner	400	VALIDATION	Required (reason) Nothing was changed.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required	owner	400	VALIDATION	Required (reason) Nothing was changed.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve	owner	400	VALIDATION	Say which revision of the response you read (expectedRevision). Nothing was sign	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments	owner	400	VALIDATION	Required (commitmentType) Nothing was changed.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill	owner	400	VALIDATION	Required (reason) Nothing was recorded.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner	owner	400	VALIDATION	Required (ownerUserId) Nothing was changed.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package	owner	500	-	INTERNAL_ERROR	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/publishops/services	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/publishops/services/:serviceId/status	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks	owner	200	-	-	project_tasks:1	project_tasks:1
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/tasks/:taskId	owner	200	-	-	project_tasks:1	project_tasks:1
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/tasks/:taskId	owner	200	-	-	project_tasks:1	project_tasks:1
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/bulk	owner	200	-	-	project_tasks:12	project_tasks:12
+POST	/api/concept2cure/projects/:projectId/tasks/assess	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	viewer	200	-	-	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	use-member	200	-	-	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	reviewer-no-edit	200	-	-	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	archived	200	-	-	-	-
+POST	/api/concept2cure/projects/:projectId/tasks/assess	owner	200	-	-	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations	owner	201	-	-	concept2cure_conversations:1,regulatory_audit_logs:1	concept2cure_conversations:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/conversations/:conversationId/messages	owner	400	VALIDATION_ERROR	Validation failed	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/conversations/:conversationId	owner	404	-	Conversation not found	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/conversations/:conversationId	owner	404	-	Conversation not found	-	-
+POST	/api/concept2cure/projects/:projectId/submission-package	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-package	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/submission-package	viewer	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/submission-package	use-member	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/submission-package	reviewer-no-edit	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/submission-package	archived	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/submission-package	owner	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/artifacts	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts	owner	201	-	-	concept2cure_artifacts:1,concept2cure_artifact_versions:1,regulatory_audit_logs:1,concept2cure_provenance_events:1	concept2cure_artifacts:1,concept2cure_artifact_versions:1,regulatory_audit_logs:1,concept2cure_provenance_events:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId	owner	500	-	Failed to update artifact	-	concept2cure_artifact_versions:1,concept2cure_artifacts:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/placement	owner	200	-	-	concept2cure_artifacts:1,regulatory_audit_logs:1,concept2cure_provenance_events:1	concept2cure_artifacts:1,regulatory_audit_logs:1,concept2cure_provenance_events:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export	owner	201	-	-	concept2cure_artifacts:1,concept2cure_artifact_versions:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_artifacts:1,concept2cure_artifact_versions:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	use-member	200	-	-	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	reviewer-no-edit	200	-	-	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/status	owner	200	-	-	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_artifacts:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section	owner	200	-	-	concept2cure_artifacts:1,concept2cure_provenance_events:1	concept2cure_artifacts:1,concept2cure_provenance_events:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback	owner	403	-	Role "member" is not permitted to rollback. Requires: admin, approver, reviewer	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	use-member	200	-	-	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	reviewer-no-edit	200	-	-	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	owner	200	-	-	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1	concept2cure_review_comments:1,concept2cure_provenance_events:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	use-member	200	-	-	concept2cure_review_comments:1,regulatory_audit_logs:1	concept2cure_review_comments:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	reviewer-no-edit	200	-	-	concept2cure_review_comments:1,regulatory_audit_logs:1	concept2cure_review_comments:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve	owner	200	-	-	concept2cure_review_comments:1,regulatory_audit_logs:1	concept2cure_review_comments:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	owner	403	-	Only admin, approver, or reviewer can assign reviewers	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId	owner	403	-	Only admin or approver can withdraw reviewer assignments	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind	owner	200	-	-	concept2cure_notifications:1,regulatory_audit_logs:1	concept2cure_notifications:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	use-member	403	-	Only reviewer, approver, or admin can submit review decisions	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	reviewer-no-edit	400	-	Artifact must be in review status to submit a decision	-	-
+POST	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit	owner	403	-	Only reviewer, approver, or admin can submit review decisions	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/haq-session	owner	200	-	-	concept2cure_artifacts:1,concept2cure_provenance_events:1	concept2cure_artifacts:1,concept2cure_provenance_events:1
+PUT	/api/concept2cure/projects/:projectId/cmc	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/cmc	owner	200	-	-	projects:1	projects:1
+POST	/api/concept2cure/projects/:projectId/linked	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/linked	owner	400	-	targetProjectId and kind are required	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:projectId/knowledge	owner	200	-	-	projects:1,regulatory_audit_logs:1	projects:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition	owner	500	TRANSITION_FAILED	The transition could not be completed and recorded. Reload the decision to see i	-	-
+POST	/api/concept2cure/projects/:projectId/apps	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:projectId/apps	owner	400	VALIDATION_ERROR	Validation failed	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:projectId/apps/:appId	owner	404	-	App not found in project connections	-	-
+PUT	/api/concept2cure/projects/:id	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:id	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:id	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:id	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:id	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:id	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:id	owner	200	-	-	projects:1,regulatory_audit_logs:1	projects:1,regulatory_audit_logs:1
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:id/ownership-preferences	owner	200	-	-	projects:1,regulatory_audit_logs:1	projects:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	viewer	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	use-member	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	reviewer-no-edit	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:id/sharing/members/:userId	owner	200	-	-	project_members:1,regulatory_audit_logs:1	project_members:1,regulatory_audit_logs:1
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	viewer	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	use-member	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	reviewer-no-edit	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:id/sharing/members/:userId	owner	200	-	-	project_members:1,regulatory_audit_logs:1	project_members:1,regulatory_audit_logs:1
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	viewer	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	use-member	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	reviewer-no-edit	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PATCH	/api/concept2cure/projects/:id/sharing/visibility	owner	200	-	-	project_visibility_settings:1,regulatory_audit_logs:1	project_visibility_settings:1,regulatory_audit_logs:1
+PUT	/api/concept2cure/projects/:projectId/collaborators	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+PUT	/api/concept2cure/projects/:projectId/collaborators	owner	200	-	-	projects:1,regulatory_audit_logs:1	projects:1,regulatory_audit_logs:1
+DELETE	/api/concept2cure/projects/:id	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+DELETE	/api/concept2cure/projects/:id	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:id	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+DELETE	/api/concept2cure/projects/:id	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:id	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+DELETE	/api/concept2cure/projects/:id	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+DELETE	/api/concept2cure/projects/:id	owner	200	-	-	projects:1,regulatory_audit_logs:1	projects:1,regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/export	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:id/export	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:id/export	viewer	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/export	use-member	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/export	reviewer-no-edit	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/export	archived	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/export	owner	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+POST	/api/concept2cure/projects/:id/transfer	viewer	403	PROJECT_WRITE_PERMISSION_DENIED	Your current organization role cannot change this project record.	-	-
+POST	/api/concept2cure/projects/:id/transfer	use-member	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:id/transfer	reviewer-no-edit	403	PROJECT_WRITE_PERMISSION_DENIED	Your current role and project permissions do not allow changes to this record.	-	-
+POST	/api/concept2cure/projects/:id/transfer	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:id/transfer	archived	409	PROJECT_ARCHIVED	This project is archived. Retained records can still be read.	-	-
+POST	/api/concept2cure/projects/:id/transfer	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+POST	/api/concept2cure/projects/:id/transfer	owner	400	INVALID_INPUT	Invalid payload	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	viewer	403	PROJECT_WRITE_ACCESS_DENIED	Current permissions do not permit a schedule change.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	use-member	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	reviewer-no-edit	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	archived	409	PROJECT_NOT_ACTIVE	The project is archived or deleted. Its retained schedule can still be read.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/generate	owner	200	-	-	project_schedule_of_events:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_schedule_revisions:1	project_schedule_of_events:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_workflow_stages:1,project_schedule_revisions:1
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	viewer	403	PROJECT_WRITE_ACCESS_DENIED	Current permissions do not permit a schedule change.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	use-member	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	reviewer-no-edit	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	archived	409	PROJECT_NOT_ACTIVE	The project is archived or deleted. Its retained schedule can still be read.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/amend	owner	200	-	-	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	viewer	403	PROJECT_WRITE_ACCESS_DENIED	Current permissions do not permit a schedule change.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	use-member	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	reviewer-no-edit	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	archived	409	PROJECT_NOT_ACTIVE	The project is archived or deleted. Its retained schedule can still be read.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/review	owner	200	-	-	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	viewer	403	PROJECT_WRITE_ACCESS_DENIED	Current permissions do not permit a schedule change.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	use-member	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	reviewer-no-edit	403	PROJECT_WRITE_ACCESS_DENIED	Current project permissions do not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	archived	409	PROJECT_NOT_ACTIVE	The project is archived or deleted. Its retained schedule can still be read.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+POST	/api/concept2cure/projects/:id/schedule-of-events/goals/reset	owner	200	-	-	project_schedule_goals:1,mdx_notifications:1	project_schedule_goals:1,mdx_notifications:1
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export	viewer	403	-	AUDIT_READ_RESTRICTED	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export	owner	403	-	AUDIT_READ_RESTRICTED	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/reviews/project-queue	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/reviews/project-queue	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/reviews/project-queue	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/reviews/project-queue	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/review-pulse	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/review-pulse	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/review-pulse	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/review-pulse	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/work-items	not-on-private	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:projectId/work-items	other-org	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:projectId/work-items	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/work-items	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/readiness-summary	not-on-private	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:projectId/readiness-summary	other-org	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:projectId/readiness-summary	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/readiness-summary	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/submission-center/items	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/submission-center/items	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/submission-center/items	viewer	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/submission-center/items	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/authority-profiles	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/authority-profiles	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/authority-profiles	viewer	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/authority-profiles	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications	viewer	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/company-legal-documents	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/company-legal-documents	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/company-legal-documents	viewer	409	PROJECT_ANCHOR_UNRESOLVED	This tracking record is not linked to a current project, so its legal documents 	-	-
+GET	/api/concept2cure/projects/:projectId/company-legal-documents	owner	409	PROJECT_ANCHOR_UNRESOLVED	This tracking record is not linked to a current project, so its legal documents 	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source	viewer	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source	owner	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	viewer	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/agency-communications/:eventId/questions	owner	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/commitments	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/commitments	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/commitments	viewer	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/commitments	owner	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options	viewer	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options	owner	500	-	INTERNAL_ERROR	-	-
+GET	/api/concept2cure/projects/:projectId/agency-questions	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-questions	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-questions	viewer	400	VALIDATION	Say which CTD module to read (ctdModule=1 to 5). Nothing was read.	-	-
+GET	/api/concept2cure/projects/:projectId/agency-questions	owner	400	VALIDATION	Say which CTD module to read (ctdModule=1 to 5). Nothing was read.	-	-
+GET	/api/concept2cure/projects/:projectId/publishops/services	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/publishops/services	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/publishops/services	viewer	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/publishops/services	owner	503	-	Communication Center persistence tables are missing. Run migrations 20260331_com	-	-
+GET	/api/concept2cure/projects/:projectId/tasks	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/tasks	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/tasks	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/tasks	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/tasks/summary	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/tasks/summary	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/tasks/summary	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/tasks/summary	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/dossier-metrics	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/dossier-metrics	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/dossier-metrics	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/dossier-metrics	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/versions	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/versions	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/versions	viewer	500	-	Failed to fetch versions	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/versions	owner	500	-	Failed to fetch versions	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report	viewer	200	-	-	concept2cure_provenance_events:1	concept2cure_provenance_events:1
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report	owner	200	-	-	concept2cure_provenance_events:1	concept2cure_provenance_events:1
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity	viewer	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity	owner	200	-	-	regulatory_audit_logs:1	regulatory_audit_logs:1
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/comments	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	viewer	500	-	Failed to list reviewers	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers	owner	500	-	Failed to list reviewers	-	-
+GET	/api/concept2cure/projects/:projectId/team	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/team	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/team	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/team	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status	viewer	500	-	Failed to fetch review status	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status	owner	500	-	Failed to fetch review status	-	-
+GET	/api/concept2cure/projects/:projectId/haq-session	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/haq-session	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/haq-session	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/haq-session	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/program-twin	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/program-twin	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/program-twin	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/program-twin	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verification	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verification	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verification	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/artifacts/:artifactId/verification	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/change-impact	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/change-impact	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/change-impact	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/change-impact	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/cmc	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/cmc	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/cmc	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/cmc	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/context	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/context	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/context	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/context	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/transform-context	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/transform-context	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/transform-context	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/transform-context	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/knowledge	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/knowledge	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/knowledge	viewer	200	-	-	projects:1	projects:1
+GET	/api/concept2cure/projects/:projectId/knowledge	owner	200	-	-	projects:1	projects:1
+GET	/api/concept2cure/projects/:projectId/activity	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/activity	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/activity	viewer	500	-	Failed to fetch project activity	-	-
+GET	/api/concept2cure/projects/:projectId/activity	owner	500	-	Failed to fetch project activity	-	-
+GET	/api/concept2cure/projects/:projectId/linked	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/linked	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/linked	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/linked	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions	viewer	500	-	Failed to load governance decisions	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions	owner	500	-	Failed to load governance decisions	-	-
+GET	/api/concept2cure/projects/:projectId/governance/summary	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/summary	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/summary	viewer	500	-	Failed to load governance summary	-	-
+GET	/api/concept2cure/projects/:projectId/governance/summary	owner	500	-	Failed to load governance summary	-	-
+GET	/api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace	viewer	500	-	Failed to load artifact decision trace	-	-
+GET	/api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace	owner	500	-	Failed to load artifact decision trace	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history	viewer	500	-	Failed to load decision lifecycle history	-	-
+GET	/api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history	owner	500	-	Failed to load decision lifecycle history	-	-
+GET	/api/concept2cure/projects/:projectId/governance/review-queue	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/review-queue	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/governance/review-queue	viewer	500	-	Failed to load review queue	-	-
+GET	/api/concept2cure/projects/:projectId/governance/review-queue	owner	500	-	Failed to load review queue	-	-
+GET	/api/concept2cure/projects/:projectId/apps	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/apps	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/apps	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/apps	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:id	not-on-private	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:id	other-org	404	-	Project not found	-	-
+GET	/api/concept2cure/projects/:id	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:id	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/collaborators	not-on-private	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/collaborators	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:projectId/collaborators	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:projectId/collaborators	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/sharing	not-on-private	404	PROJECT_PERMISSION_DENIED	Current project permissions do not permit this operation.	-	-
+GET	/api/concept2cure/projects/:id/sharing	other-org	404	PROJECT_NOT_FOUND	Project not found.	-	-
+GET	/api/concept2cure/projects/:id/sharing	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/sharing	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/unified-work	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+GET	/api/concept2cure/projects/:id/unified-work	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+GET	/api/concept2cure/projects/:id/unified-work	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/unified-work	owner	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/schedule-of-events	not-on-private	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+GET	/api/concept2cure/projects/:id/schedule-of-events	other-org	403	PROJECT_PERMISSION_DENIED	Current project access does not permit this operation.	-	-
+GET	/api/concept2cure/projects/:id/schedule-of-events	viewer	200	-	-	-	-
+GET	/api/concept2cure/projects/:id/schedule-of-events	owner	200	-	-	-	-
