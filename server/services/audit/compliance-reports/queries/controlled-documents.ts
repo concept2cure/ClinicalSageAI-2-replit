@@ -16,16 +16,38 @@
  * 'qms-change:<id>' with type 'qms-change-approval'. The retirement time is
  * the one the retirement wrote to metadata.retired.at.
  *
+ * An approval that was not the last one the document's review route required
+ * (RR2 records, 2026-10-29; services/review/approval-share.ts) is never the
+ * approval: the document stayed in review after it. It is written as its own
+ * type, 'qms-document-interim-approval'; one stored before 2026-10-29 carries
+ * 'qms-document-approval' and is told apart by its route. The approval columns
+ * exclude both, and `interim_approvals` lists them as what they are.
+ *
  * @module server/services/audit/compliance-reports/queries/controlled-documents
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
 import { actorJoin, cappedSection, columns, isoNaiveUtc, isoUtc, naiveUtcNote, utcWallClock } from './section';
 import { readQmsReviewSchedule } from '../../../qms/periodic-review';
 import type { QmsDocumentRow } from '../../../qms/document-approval-signature';
+import { approvalShareJoin, QMS_INTERIM_APPROVAL_TYPE } from '../../../review/approval-share';
 
 /** A signature that stands now: valid, not revoked, not superseded. */
 const STANDING = (a: string) =>
   `${a}.is_valid IS TRUE AND ${a}.verification_status IS DISTINCT FROM 'revoked' AND ${a}.superseded_by IS NULL`;
+
+/** Approvals of the version as the approval writer anchors them, each with its share of its route (`<a>_share`). */
+const VERSION_APPROVALS = (a: string, types: string) => `FROM electronic_signatures ${a}
+          ${approvalShareJoin(a, `${a}_share`)}
+         WHERE ${a}.organization_id = $1
+           AND ${a}.signed_target = 'qms-document:' || d.id
+           AND ${a}.signature_type IN (${types})
+           AND ${a}.signature_manifest->>'version' = d.version`;
+/** The document's approval: the final type, and not an earlier approval its route shows (RR2 records). */
+const APPROVAL = (a: string) => `${VERSION_APPROVALS(a, `'qms-document-approval'`)}
+           AND NOT ${a}_share.interim_approval`;
+/** Approvals that were not the last one the route required, of either type. */
+const INTERIM = (a: string) => `${VERSION_APPROVALS(a, `'qms-document-approval', '${QMS_INTERIM_APPROVAL_TYPE}'`)}
+           AND ${a}_share.interim_approval`;
 
 /** The retirement stamp is ISO text in metadata; rendered like every other time when it parses as one. */
 const RETIRED_AT = `CASE WHEN d.metadata->'retired'->>'at' ~ '^\\d{4}-\\d{2}-\\d{2}T'
@@ -51,13 +73,14 @@ SELECT d.id,
        sa.signature_meaning AS approval_meaning,
        sa.bound_payload_digest AS approval_digest,
        (SELECT count(*)::int
-          FROM electronic_signatures r
-         WHERE r.organization_id = $1
-           AND r.signed_target = 'qms-document:' || d.id
-           AND r.signature_type = 'qms-document-approval'
-           AND r.signature_manifest->>'version' = d.version
+          ${APPROVAL('r')}
            AND (r.verification_status = 'revoked' OR r.superseded_by IS NOT NULL)
            AND r.signed_at < ${utcWallClock(2)}) AS revoked_approval_signatures,
+       (SELECT string_agg(concat_ws(' · ', i.signer_name, i_share.approvals_recorded || ' of ' || i_share.approvals_required || ' required',
+                 ${isoNaiveUtc('i.signed_at')}), '; ' ORDER BY i.signed_at, i.id)
+          ${INTERIM('i')}
+           AND ${STANDING('i')}
+           AND i.signed_at < ${utcWallClock(2)}) AS interim_approvals,
        (d.status = 'retired') AS retired,
        ${RETIRED_AT} AS retired_at,
        sr.id AS retirement_signature_id,
@@ -68,11 +91,7 @@ SELECT d.id,
   ${actorJoin('d.approver_id', 'ap')}
   LEFT JOIN LATERAL (
         SELECT s.id, s.signed_at, s.signer_name, s.signature_meaning, s.bound_payload_digest
-          FROM electronic_signatures s
-         WHERE s.organization_id = $1
-           AND s.signed_target = 'qms-document:' || d.id
-           AND s.signature_type = 'qms-document-approval'
-           AND s.signature_manifest->>'version' = d.version
+          ${APPROVAL('s')}
            AND ${STANDING('s')}
            AND s.signed_at < ${utcWallClock(2)}
          ORDER BY s.signed_at DESC, s.id DESC
@@ -141,7 +160,9 @@ const IN_FORCE_APPROVAL_SQL = `
 SELECT DISTINCT ON (s.signed_target) s.signed_target, s.id,
        to_char(s.signed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS signed_at, s.signer_name
   FROM electronic_signatures s
+  ${approvalShareJoin('s', 's_share')}
  WHERE s.organization_id = $1
+   AND NOT s_share.interim_approval
    AND s.signed_target = ANY(ARRAY(SELECT jsonb_object_keys($3::jsonb)))
    AND s.signature_type = 'qms-document-approval'
    AND s.signature_manifest->>'version' = ($3::jsonb ->> s.signed_target)
@@ -211,6 +232,7 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
         currentState,
         'A document whose next version is in draft or review is listed as that draft; the version still in force, its effective date and the standing signature that approved it are given beside it. They are empty when no successor is open.',
         'Revoked approval signatures counts the approval signatures of this version that were revoked or superseded.',
+        'Interim approvals lists each standing approval signature of this version that was not the last one its review route required: who signed, its share (k of n required) and when. It is not the document\'s approval, since the document stayed in review after it; the approval columns name only the signature that approved the version.',
         'Next review is the date the approval signed. A periodic review is a separate signature on the version in force and does not change it: the last standing one signed by the end of the date, its outcome, and the next review it set, are given beside it. Next review due is that date, or Next review when there is none or the review found a revision required.',
         times,
       ],
@@ -250,6 +272,7 @@ export const controlledDocuments: ReportDefinition = {
         ['approval_meaning', 'Approval meaning'],
         ['approval_digest', 'Approved content digest'],
         ['revoked_approval_signatures', 'Revoked approval signatures'],
+        ['interim_approvals', 'Interim approvals (k of n required)'],
         ['retired', 'Retired'],
         ['retired_at', 'Retired at'],
         ['retirement_signature_id', 'Retirement signature'],

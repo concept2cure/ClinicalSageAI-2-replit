@@ -74,7 +74,7 @@ import { checkSigningAuthority } from '../../services/part11/signing-authority-g
 import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../../services/export/governedExportConsequence';
-import { assembleResponsePackage, closeRefusal, letterOverdue, outstandingResponses } from '../../services/agency-responses/response-logic';
+import { assembleResponsePackage, closeRefusal, letterOverdue, outstandingResponses, responseDueDate } from '../../services/agency-responses/response-logic';
 import { moduleQuestionsView, type CtdModule } from '../../services/agency-responses/module-view';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { renderResponsePackageDocx } from '../../services/agency-responses/response-package-docx';
@@ -364,6 +364,8 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
           sourceType: letter.sourceType,
           receivedDate: letter.receivedDate,
           dueDate: letter.dueDate,
+          /** The agency's date, or the one the response clock derives from the letter's class (S4); what overdue is judged by. */
+          responseDueDate: responseDueDate(letter),
           closureStatus: letter.closureStatus,
           responseRequired: letter.responseRequired,
           /** Why the letter may not be closed now, or null: the server's rule, shown as said. */

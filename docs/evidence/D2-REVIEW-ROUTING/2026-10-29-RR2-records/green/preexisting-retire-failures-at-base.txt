@@ -1,0 +1,18 @@
+# at 37c17a3f0 (server and client changes stashed): the four retirement failures, which predate this change
+ × tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 20066ms
+   → The actual QMS request did not wait on its authoritative target lock.
+ ↓ tests/db/review-route-qms-rr4.dbtest.ts > every exit from review closes the route (§2.9, B4) > Return for revision by a named reviewer: in_review → draft, the route returned, others cancelled, the sender told
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 15ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 16ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 16ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 19ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 18ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 68ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 316ms
+ × tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 90ms
+   → {"error":"Retirement is an electronic signature and requires a password, the signature meaning 'retirement' and a reason for change; missing or invalid: meaning","details":{"code":"ESIGNATURE_COMPONENT_MISSING","fieldErrors":{"meaning":["Signature meaning must be 'retirement' (21 CFR Part 11 §11.50)"]}}}: expected 400 to be 200 // Object.is equality
+ × tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 200ms
+   → {"error":"Retirement is an electronic signature and requires a password, the signature meaning 'retirement' and a reason for change; missing or invalid: meaning","details":{"code":"ESIGNATURE_COMPONENT_MISSING","fieldErrors":{"meaning":["Signature meaning must be 'retirement' (21 CFR Part 11 §11.50)"]}}}: expected 400 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 1 skipped (4)
+      Tests  3 failed | 7 passed | 36 skipped (46)

@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/documents/48a3649a-4279-4381-a131-447096bd3594/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 49,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "annotations": [
+          {
+            "id": "c36a0b60-13be-4de2-99ae-e6cf534a0447",
+            "parentId": null,
+            "versionId": "48a3649a-4279-4381-a131-447096bd3594",
+            "versionLabel": "1.0",
+            "programId": "fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+            "kind": "request_changes",
+            "anchor": {
+              "kind": "text",
+              "quote": "The dosing table",
+              "charStart": 11,
+              "charEnd": 27,
+              "textSha256": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595"
+            },
+            "anchorCurrent": true,
+            "status": "resolved",
+            "body": "Give the dose per kilogram.",
+            "bodySha256": "b5d58b65cc744024ee9249745cbfcb01517934bc141e1b8fd6f093e835bed146",
+            "authorId": 1,
+            "authorName": "Oona Runner",
+            "createdAt": "2026-10-29T20:23:19.096Z",
+            "lifecycleStage": null,
+            "resolution": {
+              "byId": 1,
+              "byName": "Oona Runner",
+              "at": "2026-10-29T20:23:20.003Z",
+              "note": "Dose per kilogram added in the next version.",
+              "addressedIn": null
+            },
+            "retraction": null,
+            "replies": [
+              {
+                "id": "dc9a29cf-bd9e-468a-a333-95f84ca8cb29",
+                "parentId": "c36a0b60-13be-4de2-99ae-e6cf534a0447",
+                "versionId": "48a3649a-4279-4381-a131-447096bd3594",
+                "versionLabel": "1.0",
+                "programId": "fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+                "kind": "comment",
+                "anchor": null,
+                "anchorCurrent": null,
+                "status": "open",
+                "body": "Agreed.",
+                "bodySha256": "49721faa8421febb20dcbfb1501817c14af322c3323990fead880c2c9b360363",
+                "authorId": 1,
+                "authorName": "Oona Runner",
+                "createdAt": "2026-10-29T20:23:19.408Z",
+                "lifecycleStage": null,
+                "resolution": null,
+                "retraction": null,
+                "replies": []
+              }
+            ]
+          },
+          {
+            "id": "82a32274-d9a7-4d8c-9bb0-6e7cdc6499f8",
+            "parentId": null,
+            "versionId": "48a3649a-4279-4381-a131-447096bd3594",
+            "versionLabel": "1.0",
+            "programId": "fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+            "kind": "comment",
+            "anchor": {
+              "kind": "document"
+            },
+            "anchorCurrent": null,
+            "status": "retracted",
+            "body": "Posted on the wrong document.",
+            "bodySha256": "3bd61b1fe282041f6a4f9e8d8dc6fe474d2a19cb3d29e89fcfe47260f7a14c3a",
+            "authorId": 1,
+            "authorName": "Oona Runner",
+            "createdAt": "2026-10-29T20:23:20.311Z",
+            "lifecycleStage": null,
+            "resolution": null,
+            "retraction": {
+              "byId": 1,
+              "byName": "Oona Runner",
+              "at": "2026-10-29T20:23:20.891Z",
+              "reason": "Posted on the wrong document by mistake."
+            },
+            "replies": []
+          }
+        ],
+        "openByVersion": [
+          {
+            "versionId": "48a3649a-4279-4381-a131-447096bd3594",
+            "versionLabel": "1.0",
+            "current": true,
+            "open": 0,
+            "openChangeRequests": 0
+          }
+        ]
+      }
+    }
+  }
+}

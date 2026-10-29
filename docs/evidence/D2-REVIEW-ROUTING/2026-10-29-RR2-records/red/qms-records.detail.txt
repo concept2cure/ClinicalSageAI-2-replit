@@ -1,0 +1,108 @@
+# detail of red/qms-records.dbtest.txt: every failed reader assertion, with expected and received
+AssertionError: expected { id: 53, signer_id: 54, …(3) } to match object { …(2) }
+(24 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "signature_meaning": "APPROVED",
+-   "signature_type": "qms-document-interim-approval",
++   "signature_type": "qms-document-approval",
+  }
+--
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+Expected: "Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)"
+Received: "Controlled document approved (e-signature)"
+--
+AssertionError: expected { id: 21, …(30) } to match object { status: 'in_review', …(3) }
+(27 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_meaning": null,
+-   "approval_signature_id": null,
+-   "approval_signer_name": null,
++   "approval_meaning": "APPROVED",
++   "approval_signature_id": 54,
++   "approval_signer_name": "Quinn Qa qms-rr2-c2fd0be5",
+--
+AssertionError: expected 'undefined' to contain 'Quinn Qa qms-rr2-c2fd0be5'
+Expected: "Quinn Qa qms-rr2-c2fd0be5"
+Received: "undefined"
+--
+AssertionError: expected 'undefined' to contain '1 of 2 required'
+Expected: "1 of 2 required"
+Received: "undefined"
+--
+AssertionError: expected { id: 54, …(21) } to match object { interim_approval: true, …(1) }
+(22 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_share": "1 of 2",
+-   "interim_approval": true,
++   "authentication_method": "password",
++   "binding_basis": "qms-document-version-content-sha256",
++   "bound_payload_digest": "ecbe263417a2e88b5ea42a25af8ee8b772a3b9b4ff1c8c568e38249a6647f5b9",
++   "id": 54,
+--
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+Expected: "Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)"
+Received: "Controlled document approved (e-signature)"
+--
+AssertionError: expected 'undefined' to contain 'Quinn Qa qms-rr2-c2fd0be5'
+Expected: "Quinn Qa qms-rr2-c2fd0be5"
+Received: "undefined"
+--
+AssertionError: expected { id: 55, …(21) } to match object { interim_approval: false, …(1) }
+(22 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_share": "2 of 2",
+-   "interim_approval": false,
++   "authentication_method": "password",
++   "binding_basis": "qms-document-version-content-sha256",
++   "bound_payload_digest": "ecbe263417a2e88b5ea42a25af8ee8b772a3b9b4ff1c8c568e38249a6647f5b9",
++   "id": 55,
+--
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+Expected: "Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)"
+Received: "Controlled document approved (e-signature)"
+--
+AssertionError: expected { id: 22, …(30) } to match object { status: 'in_review', …(2) }
+(28 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_signature_id": null,
+-   "approval_signer_name": null,
++   "approval_signature_id": 56,
++   "approval_signer_name": "Quinn Qa qms-rr2-c2fd0be5",
+    "status": "in_review",
+  }
+--
+AssertionError: expected { id: 56, …(21) } to match object { …(3) }
+(21 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_share": "1 of 2",
+-   "interim_approval": true,
+    "signature_type": "qms-document-approval",
+  }
+--
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+Expected: "Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)"
+Received: "Controlled document approved (e-signature)"
+--
+AssertionError: expected { id: 56, …(21) } to match object { interim_approval: true, …(1) }
+(22 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "approval_share": "1 of 2",
+-   "interim_approval": true,
++   "authentication_method": "password",
++   "binding_basis": "qms-document-version-content-sha256",
++   "bound_payload_digest": "1e199fee1fc94eaed150edd7cbe9d0f24a0acd8354b80b1234109c6e404901c9",
++   "id": 56,

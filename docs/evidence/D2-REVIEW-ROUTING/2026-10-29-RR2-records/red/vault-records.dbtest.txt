@@ -1,0 +1,21 @@
+# at 37c17a3f0 + the new cases only (server code unchanged). DB tier as in qms-records.dbtest.txt; npx vitest run --config vitest.db.config.ts tests/db/review-route-vault-rr2.dbtest.ts -t 'RR2 records'
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+ × tests/db/review-route-vault-rr2.dbtest.ts > an earlier Vault approval is its own record (RR2 records, Part 11 §11.50) > is its own signature type carrying k of n, and the audit trail never reads it as the approval 9140ms
+   → expected 'regulated-document-lifecycle' to be 'regulated-document-lifecycle-interim-…' // Object.is equality
+ × tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > two reviewers and two approvers: each line names everyone who signed, with printed name and UTC time 689ms
+   → expected undefined to deeply equal [ …(2) ]
+ × tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > a reviewer added after the review was signed off is on the line too; review_signature is not rewritten 527ms
+   → Cannot read properties of undefined (reading 'map')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > an earlier Vault approval is its own record (RR2 records, Part 11 §11.50) > is its own signature type carrying k of n, and the audit trail never reads it as the approval
+AssertionError: expected 'regulated-document-lifecycle' to be 'regulated-document-lifecycle-interim-…' // Object.is equality
+Expected: "regulated-document-lifecycle-interim-approval"
+Received: "regulated-document-lifecycle"
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > two reviewers and two approvers: each line names everyone who signed, with printed name and UTC time
+AssertionError: expected undefined to deeply equal [ …(2) ]
+- Expected:
++ Received:
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > a reviewer added after the review was signed off is on the line too; review_signature is not rewritten
+TypeError: Cannot read properties of undefined (reading 'map')
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 skipped (12)

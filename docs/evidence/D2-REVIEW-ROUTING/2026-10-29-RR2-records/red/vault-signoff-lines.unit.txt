@@ -1,0 +1,9 @@
+# with server/services/vault/vault-lifecycle.ts at 37c17a3f0 (stashed) and the new cases; RLS_ENFORCE=off npx vitest run server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts
+ ✓ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a failed route read keeps the stage and sign-offs, and marks the reviewers unread 8ms
+ ✓ server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's review route read on its own (RR1b) > a version with no route reads as no route, not as unread 1ms
+ × server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's sign-off lines (RR2 records, §2.12) > no route, or an unread one: no round lines, and the stored review line stands 6ms
+   → none: expected undefined to be null
+ × server/services/vault/__tests__/vault-lifecycle-round-unread.test.ts > a version's sign-off lines (RR2 records, §2.12) > only a sign-off made on the round reads its lines from the round 1ms
+   → roundSignOffs is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

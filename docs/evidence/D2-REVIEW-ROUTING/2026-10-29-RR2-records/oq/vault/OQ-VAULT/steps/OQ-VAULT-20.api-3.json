@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/documents/7d60dfd3-a53b-4967-8b01-e25dbd5ffbb2/relationships",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 71,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "relationships": [
+          {
+            "id": "dd061721-4193-4685-9b09-595d6d9d1c65",
+            "type": "supporting",
+            "direction": "outgoing",
+            "label": "Supported by",
+            "note": null,
+            "createdAt": "2026-10-29T20:23:12.335Z",
+            "createdBy": "Oona Runner",
+            "other": {
+              "documentId": "f64fedd5-d0e3-4b4d-862d-19670e7704bb",
+              "title": "OQ-002 supporting record 20261029202031",
+              "version": "1.0",
+              "documentType": "PROTOCOL",
+              "programId": "fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+              "programName": "OQ-002 Vault program 20261029202031",
+              "superseded": false
+            }
+          }
+        ]
+      }
+    }
+  }
+}

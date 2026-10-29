@@ -22,6 +22,7 @@ import { normalizeCtdCode, ctdCodeWithin } from '../../../../shared/regulatory/s
 import {
   agencyResponseDigest,
   letterOverdue,
+  responseDueDate,
   questionApproval,
   questionOverdue,
   utcDay,
@@ -128,6 +129,17 @@ describe('letterOverdue — one definition, the server\'s', () => {
   it('due today is not overdue; a due date late on the UTC day is still that day', () => {
     expect(letterOverdue({ ...past, dueDate: '2026-10-19T00:00:00.000Z' }, [inState('unanswered')], TODAY)).toBe(false);
     expect(letterOverdue({ ...past, dueDate: '2026-10-18T23:59:59.000Z' }, [inState('unanswered')], TODAY)).toBe(true);
+  });
+
+  /* P-39 step 3, S4: a letter whose class has a codified window is due by it
+     when the agency stated no date, and the agency's date still wins. */
+  it("a refuse-to-file letter with no stated date is overdue 30 days after receipt; the agency's own date wins", () => {
+    const rtf = { responseRequired: true, closureStatus: 'open', dueDate: null, letterClass: 'refuse_to_file_letter' };
+    expect(responseDueDate({ ...rtf, receivedDate: '2026-09-01T00:00:00.000Z' })).toBe('2026-10-01T00:00:00.000Z');
+    expect(letterOverdue({ ...rtf, receivedDate: '2026-09-01T00:00:00.000Z' }, [inState('unanswered')], TODAY)).toBe(true);
+    expect(letterOverdue({ ...rtf, receivedDate: '2026-10-01T00:00:00.000Z' }, [inState('unanswered')], TODAY)).toBe(false);
+    expect(letterOverdue({ ...rtf, receivedDate: '2026-09-01T00:00:00.000Z', dueDate: '2026-12-01T00:00:00.000Z' }, [inState('unanswered')], TODAY)).toBe(false);
+    expect(responseDueDate({ ...rtf, letterClass: null, receivedDate: '2026-09-01T00:00:00.000Z' })).toBeNull();
   });
 
   it('no due date, a closed letter, or a letter needing no response is never overdue', () => {

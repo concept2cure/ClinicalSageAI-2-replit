@@ -36,7 +36,8 @@ export const AGENCY_ANSWER = 'Recorded answer based on the retained source evide
 export const AGENCY_RESPONSE_SOURCE_DDL = `CREATE TABLE concept2cure_agency_communications (
   event_id text PRIMARY KEY, organization_id integer, project_id integer, communication_type text,
   source_type text, received_date timestamptz, due_date timestamptz, closure_status text,
-  human_review_status text, response_required boolean, audit_metadata jsonb);
+  human_review_status text, response_required boolean, audit_metadata jsonb,
+  letter_class text); -- migrations/20261029j_agency_letter_class.sql
 CREATE TABLE agency_communication_questions (
   id integer PRIMARY KEY, organization_id integer, project_id integer, communication_event_id text,
   question_ref text, question_text text, discipline text, ctd_section text, response_text text,

@@ -3685,6 +3685,7 @@ export const C2C_MIGRATION_FILES = [
   // Widens only. After 20260504_capa_mdr.sql (the constraint). No table.
   'migrations/20261029h_capa_source_deviation.sql',
   'migrations/20261029i_c2c_commitments_read_only.sql',
+  'migrations/20261029j_agency_letter_class.sql',
   // QMS job roles and training assignments (D2, P-49, 2026-10-29;
   // docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.1): qms_job_roles,
   // qms_job_role_members and qms_training_assignments, created only here. After

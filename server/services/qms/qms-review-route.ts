@@ -50,6 +50,7 @@ import {
   type RouteActSubject, type RouteRequest, type RouteSubject, type RouteTx,
 } from '../review/review-route';
 import { routeStanding, type RouteMember, type RouteRole, type RouteStanding } from '../review/review-route-standing';
+import { isInterimShare, shareOfNextApproval } from '../review/approval-share';
 import type { TaskEventNotice } from '../tasking/task-side-effects';
 import { decideAuthoringPermission, grantAuthoringPermission, resolveAuthoringDocumentScope } from '../authoring/authoring-permissions';
 import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
@@ -285,12 +286,8 @@ export function qmsApprovalRoute(p: { userId: number; reason: string; notices: T
       const member = signingMember(standing, p.userId, 'approver');
       await stillQmsApprover(client, Number(row.organization_id), p.userId);
       sameContent(standing, contentDigest);
-      const approvers = standing.members.filter((m) => m.role === 'approver');
-      const signed = approvers.filter((m) => m.outcome === 'signed').length;
-      return {
-        row, standing, member, userId: p.userId, reason: p.reason,
-        completes: signed + 1 === approvers.length, approvalsRequired: approvers.length, approvalsRecorded: signed + 1,
-      };
+      const share = shareOfNextApproval(standing);
+      return { row, standing, member, userId: p.userId, reason: p.reason, completes: !isInterimShare(share), ...share };
     },
     completes: (routed: unknown): { completes: boolean; approvalsRecorded: number; approvalsRequired: number } => {
       const r = routed as RoutedApproval;
