@@ -9,6 +9,12 @@
  * accepted hazard now reads it and says it in words. The acceptance's own
  * benefit-risk rationale and controls can be edited after it is signed, so
  * "Changed since it was signed" is the state that matters here.
+ *
+ * 2026-10-29 (D2, fold F1c): the Risk screen folded into Engineering evidence,
+ * which mounts the same register for the open project and hands its AnA context
+ * to the host, which publishes it under device-engineering. These cases run
+ * against the register as Engineering mounts it (./engineeringPanels.harness.tsx),
+ * and read the context the register hands up.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,10 +32,6 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: 5, name: 'Sam Signer', mfaEnabled: false }) }));
-vi.mock('../surfaceContext', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../surfaceContext')>()),
-  usePublishSurfaceContext: (_id: string, ctx: Published) => { H.published = ctx; },
-}));
 vi.mock('../../_shared/components/EsignModal', () => ({
   esignSignerOf: () => undefined,
   EsignModal: (p: { action: string; onSign: (i: Record<string, string>) => Promise<unknown> }) => (
@@ -39,7 +41,7 @@ vi.mock('../../_shared/components/EsignModal', () => ({
   ),
 }));
 
-import { Risk } from '../surfaces/Risk';
+import { EngineeringRiskPanel, RISK_READ, keyedToPanelProject } from './engineeringPanels.harness';
 
 const hazard = (id: number, over: Record<string, unknown> = {}) => ({
   id, ref_code: 'HZ-' + id, hazard: 'Hazard ' + id, hazardous_situation: 'Situation', harm: 'Mis-dosing of insulin',
@@ -71,7 +73,7 @@ beforeEach(() => {
   H.apiRequest.mockReset().mockImplementation(async (method: string, path: string) => {
     H.calls.push({ method, path });
     if (method === 'PATCH') return patchAnswer();
-    if (path === '/api/mdx/risk-items') return answer(200, { data: list });
+    if (path === RISK_READ) return answer(200, keyedToPanelProject(list));
     const id = Number(path.replace('/api/mdx/risk-items/', ''));
     if (details[id]) return details[id]();
     return answer(200, { data: null });
@@ -81,7 +83,7 @@ afterEach(() => cleanup());
 
 const settle = async () => { for (let i = 0; i < 6; i += 1) await act(async () => { await new Promise((r) => setTimeout(r, 0)); }); };
 async function mount() {
-  render(<Risk {...({ surface: { id: 'risk' }, onAsk: vi.fn(), onNav: vi.fn() } as unknown as React.ComponentProps<typeof Risk>)} />);
+  render(<EngineeringRiskPanel onContext={(ctx) => { H.published = ctx; }} />);
   await screen.findAllByText('Hazard 41');
   await settle();
 }
@@ -140,7 +142,7 @@ describe('only an accepted hazard is read for it', () => {
   it('a hazard accepted here is read once the signature is confirmed', async () => {
     list = [OPEN];
     details[42] = async () => answer(200, { data: { ...OPEN, status: 'accepted', acceptable: true, signedContent: facet('matches') } });
-    render(<Risk {...({ surface: { id: 'risk' }, onAsk: vi.fn(), onNav: vi.fn() } as unknown as React.ComponentProps<typeof Risk>)} />);
+    render(<EngineeringRiskPanel onContext={(ctx) => { H.published = ctx; }} />);
     await screen.findAllByText('Hazard 42');
     expect(detailReads(42)).toBe(0);
     fireEvent.click(within(drawer()).getByRole('button', { name: /Accept residual/ }));
@@ -170,7 +172,7 @@ describe("AnA's context carries the acceptance signature", () => {
 
   it('a hazard not accepted carries no acceptance signature', async () => {
     list = [OPEN];
-    render(<Risk {...({ surface: { id: 'risk' }, onAsk: vi.fn(), onNav: vi.fn() } as unknown as React.ComponentProps<typeof Risk>)} />);
+    render(<EngineeringRiskPanel onContext={(ctx) => { H.published = ctx; }} />);
     await screen.findAllByText('Hazard 42');
     await settle();
     expect((H.published as Published).facts?.selected.residualAcceptanceSignature).toBeNull();

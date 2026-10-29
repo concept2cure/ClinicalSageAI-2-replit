@@ -128,7 +128,7 @@ describe('project task routes live in one router', () => {
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
     // The project reads that shared the old banner went to the program-twin router (slice 11), not here.
-    for (const p of ['GET /projects/:projectId/cmc', 'GET /projects/:projectId/context', 'GET /projects/:projectId/transform-context']) {
+    for (const p of ['GET /projects/:projectId/context', 'GET /projects/:projectId/transform-context']) {
       expect(inTasks.has(p)).toBe(false);
     }
   });
@@ -270,8 +270,6 @@ const PROGRAM_TWIN_PATHS = [
   'GET /projects/:projectId/program-twin',
   'GET /projects/:projectId/artifacts/:artifactId/verification',
   'GET /projects/:projectId/change-impact',
-  'GET /projects/:projectId/cmc',
-  'PUT /projects/:projectId/cmc',
   'GET /projects/:projectId/context',
   'GET /projects/:projectId/transform-context',
 ];
@@ -286,6 +284,21 @@ describe('the program twin and project-context reads live in one router', () => 
       expect(inTwin.has(p), `${p} should be on the program-twin router`).toBe(true);
       expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
     }
+  });
+
+  /* Decision P-62: a project's CMC data has one home, the CMC / Module 3
+     register (server/api/cmc). GET and PUT …/cmc kept a second copy in
+     projects.metadata and had no caller; they are retired, and the context
+     and the task assessment read the register. */
+  it('serves no project-metadata CMC route, on any router that mounts at /api/concept2cure', async () => {
+    const routers = await Promise.all(['../program-twin', '../tasks', '../../concept2cure'].map(async (m) =>
+      new Set(registered((await import(m)).default as unknown as { stack: Layer[] }))));
+    for (const p of ['GET /projects/:projectId/cmc', 'PUT /projects/:projectId/cmc']) {
+      for (const served of routers) expect(served.has(p), `${p} is retired (P-62)`).toBe(false);
+    }
+    // Everything the program-twin router still serves is a read.
+    const twin = registered((await import('../program-twin')).default as unknown as { stack: Layer[] });
+    expect(twin.filter((p) => !p.startsWith('GET '))).toEqual([]);
   });
 });
 

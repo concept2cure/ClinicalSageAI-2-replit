@@ -55,6 +55,13 @@ export const FOLDED_MODULE_SUCCESSORS: Readonly<Record<string, string>> = Object
   'artifacts-center': 'vault',
   // 302d632db: the eCTD publishing reference folded into eCTD Compile.
   'ectd-publishing': 'ectd-compile',
+  // Fold F1c: the ISO 14971 risk file and the design-control trace folded into
+  // Engineering evidence (product 59b1482d2 and 79d00b348; retired with this entry).
+  risk: 'device-engineering',
+  'design-controls': 'device-engineering',
+  // Fold F2: the IVDR readiness board folded into IVDR evidence (product
+  // 1a6701ea6; retired with this entry).
+  'ivd-completeness': 'device-diagnostics',
 });
 
 /** Folded screens with no catalogue row ever, so no subscription to carry. */

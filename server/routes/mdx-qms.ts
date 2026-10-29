@@ -134,6 +134,7 @@ import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-
 import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
+import qmsControlledCopyRouter from './mdx-qms-controlled-copy';
 import qmsTrainingRouter from './mdx-qms-training';
 
 const router = Router();
@@ -928,6 +929,8 @@ router.use(qmsTrainingRouter);
 router.use(qmsRecordsRouter);
 /* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
 router.use(qmsDeviationsRouter);
+// The controlled copy of a version in force (MR-12 Stage 8): mdx-qms-controlled-copy.ts.
+router.use(qmsControlledCopyRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 

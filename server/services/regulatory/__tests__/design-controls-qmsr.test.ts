@@ -10,7 +10,9 @@
  *     blockers ("No design inputs defined (820.30(c)).") — and it hard-blocked
  *     on the QSR 820.30(e) independent reviewer, a requirement the QMSR does not
  *     carry (ISO 13485:2016 §7.3.5 names the participants differently);
- *   - client/src/concept2cure/v2/surfaces/DesignControls.tsx DC_820_30, whose
+ *   - client/src/concept2cure/v2/surfaces/DesignControls.tsx DC_820_30 (the
+ *     checklist is designControlChecklistDefs in DesignControlsTrace.tsx since
+ *     fold F1 slice B, and Engineering's since fold F1c), whose
  *     refs read '820.30(c) · ISO 13485 §7.3.3';
  *   - server/services/combination-products/combination-products-knowledge.ts
  *     DESIGN_CONTROL_ELEMENTS, citations '21 CFR 820.30(b)' … '(j)'.
@@ -145,10 +147,10 @@ describe('combination-products-knowledge.ts design-control elements read the cro
   });
 });
 
-describe('DesignControls.tsx checklist reads the crosswalk', () => {
+describe('DesignControlsTrace.tsx checklist reads the crosswalk', () => {
   it(`as of ${AFTER} each element ref is citeQms(id, asOf), in crosswalk order, labels unchanged`, async () => {
     const { designControlChecklistDefs } = await import(
-      '../../../../client/src/concept2cure/v2/surfaces/DesignControls'
+      '../../../../client/src/concept2cure/v2/surfaces/DesignControlsTrace'
     );
     const defs = designControlChecklistDefs(AFTER);
     expect(defs.map((d) => d.el)).toEqual(DESIGN_IDS);

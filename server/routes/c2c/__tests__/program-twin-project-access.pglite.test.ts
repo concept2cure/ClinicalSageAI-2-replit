@@ -18,6 +18,13 @@
  * private project read and wrote its CMC data, a viewer wrote it, and an
  * archived project took writes.
  *
+ * GET and PUT …/cmc were retired on 2026-10-29 (decision P-62: a project's
+ * CMC data has one home, the CMC / Module 3 register;
+ * docs/evidence/CMC-M3-GA/2026-10-29/p62-one-cmc-home/). The router now serves
+ * reads only. Its read cases are asked of …/context, which still reads the
+ * project and its tasks. The PUT is asked once more, across tenants, to show
+ * it is not served and writes nothing.
+ *
  * ── What runs for real here ──────────────────────────────────────────────────
  * PGlite is a real PostgreSQL. The tables are the ones `drizzle-kit push`
  * creates from shared/schema (the deploy's first step), and their policies come
@@ -108,6 +115,8 @@ vi.mock('../../../db', async () => {
   const pool = instrumentPool(h.pool as never);
   return { pool, getPool: () => pool, db: drizzle(pool as never, { schema }) };
 });
+// The context's CMC readiness resolves the project through the runtime module; it is the same pool here.
+vi.mock('../../../db/runtime', async () => await import('../../../db'));
 vi.mock('../shared', async importOriginal => ({
   ...(await importOriginal<typeof import('../shared')>()),
   concept2cureRateLimiter: h.pass,
@@ -133,6 +142,7 @@ const A_PROJECT = 401;
 const A_PRIVATE = 402;
 const A_ARCHIVED = 403;
 const B_SECRET = 'Org B confidential';
+/** What the retired PUT …/cmc took. */
 const CMC_WRITE = { drugSubstance: { substanceName: 'written by org A' } };
 
 type Actor = typeof A_OWNER;
@@ -266,14 +276,7 @@ describe('the database layer this route sits on, as deployed', () => {
 describe.each(['off', 'on'] as const)('another organization’s project, RLS_ENFORCE=%s', mode => {
   beforeEach(() => { process.env.RLS_ENFORCE = mode; });
 
-  it('GET …/cmc answers 404 and supplies none of its CMC data', async () => {
-    const res = await getAs(A_OWNER, B_PROJECT, 'cmc');
-    // The body first, so a failure shows what was supplied.
-    expect(JSON.stringify(res.body), `HTTP ${res.status}`).not.toContain(B_SECRET);
-    expect(res.status).toBe(404);
-  });
-
-  it('PUT …/cmc answers 404 and leaves its record exactly as it was', async () => {
+  it('PUT …/cmc (retired, P-62) is not served and leaves its record exactly as it was', async () => {
     const res = await putCmcAs(A_OWNER, B_PROJECT);
     // The record first, so a failure shows what was written.
     expect(await metadataOf(B_PROJECT), `HTTP ${res.status}`).toEqual(B_METADATA);
@@ -295,61 +298,33 @@ describe.each(['off', 'on'] as const)('another organization’s project, RLS_ENF
 });
 
 describe('inside the organization, where RLS cannot decide (RLS_ENFORCE=on)', () => {
-  it('a member who is not on a private project cannot read its CMC data or context', async () => {
-    const cmc = await getAs(A_COLLEAGUE, A_PRIVATE, 'cmc');
-    expect(JSON.stringify(cmc.body), `HTTP ${cmc.status}`).not.toContain('A private API');
-    expect(cmc.status).toBe(404);
-    expect(cmc.body.error?.code).toBe('PROJECT_NOT_FOUND');
+  it('a member who is not on a private project cannot read its context', async () => {
     const context = await getAs(A_COLLEAGUE, A_PRIVATE, 'context');
     expect(JSON.stringify(context.body), `HTTP ${context.status}`).not.toContain('A private task');
     expect(context.status).toBe(404);
+    expect(context.body.error?.code).toBe('PROJECT_NOT_FOUND');
   });
 
-  it('a member who is not on a private project cannot write its CMC data', async () => {
-    const before = await metadataOf(A_PRIVATE);
-    const res = await putCmcAs(A_COLLEAGUE, A_PRIVATE);
-    expect(await metadataOf(A_PRIVATE), `HTTP ${res.status}`).toEqual(before);
-    expect(res.status).toBe(404);
-  });
-
-  it('a viewer can read the CMC data and cannot write it', async () => {
-    const read = await getAs(A_VIEWER, A_PROJECT, 'cmc');
+  it('a viewer reads the context', async () => {
+    const read = await getAs(A_VIEWER, A_PROJECT, 'context');
     expect(read.status).toBe(200);
-    expect(read.body.data.drugProduct).toEqual({ productName: 'A tablet' });
-    const before = await metadataOf(A_PROJECT);
-    const write = await putCmcAs(A_VIEWER, A_PROJECT);
-    expect(await metadataOf(A_PROJECT), `HTTP ${write.status}`).toEqual(before);
-    expect(write.status).toBe(403);
-    expect(write.body.error?.code).toBe('PROJECT_WRITE_PERMISSION_DENIED');
+    expect(read.body.data.project.id).toBe(A_PROJECT);
   });
 
-  it('a member without edit permission on the project cannot write it', async () => {
-    const before = await metadataOf(A_PROJECT);
-    const res = await putCmcAs(A_COLLEAGUE, A_PROJECT);
-    expect(await metadataOf(A_PROJECT), `HTTP ${res.status}`).toEqual(before);
-    expect(res.status).toBe(403);
-    expect(res.body.error?.code).toBe('PROJECT_WRITE_PERMISSION_DENIED');
-  });
-
-  it('an archived project takes no CMC write', async () => {
-    const res = await putCmcAs(A_OWNER, A_ARCHIVED);
-    expect(await metadataOf(A_ARCHIVED), `HTTP ${res.status}`).toEqual({});
-    expect(res.status).toBe(409);
-    expect(res.body.error?.code).toBe('PROJECT_ARCHIVED');
-  });
-
-  it('the project’s owner reads, writes and reads back its CMC data and context', async () => {
-    const save = await putCmcAs(A_OWNER, A_PROJECT, { drugSubstance: { substanceName: 'A API' } });
-    expect(save.status).toBe(200);
-    expect(save.body.data.saved).toBe(true);
-    const read = await getAs(A_OWNER, A_PROJECT, 'cmc');
+  it('an archived project’s records stay readable', async () => {
+    const read = await getAs(A_OWNER, A_ARCHIVED, 'context');
     expect(read.status).toBe(200);
-    expect(read.body.data.drugSubstance).toEqual({ substanceName: 'A API' });
-    expect(read.body.data.drugProduct).toEqual({ productName: 'A tablet' });
+    expect(read.body.data.project.id).toBe(A_ARCHIVED);
+  });
+
+  it('the project’s owner reads its context, and its CMC readiness is not project metadata', async () => {
     const context = await getAs(A_OWNER, A_PROJECT, 'context');
     expect(context.status).toBe(200);
     expect(context.body.data.project.id).toBe(A_PROJECT);
     expect(context.body.data.tasks.recent.map((t: { name: string }) => t.name)).toEqual(['A task']);
+    // 401's metadata names "A tablet"; the context reads the register (P-62).
+    expect(JSON.stringify(context.body.data.cmc)).not.toContain('A tablet');
+    expect(['read', 'outside_composition_scope', 'unreadable']).toContain(context.body.data.cmc.state);
   });
 });
 
@@ -357,18 +332,13 @@ describe('a check that could not run is not an answer', () => {
   it.each([
     ['the membership read', /FROM organization_users/i, '57014'],
     ['the project read', /from "projects"/i, '08006'],
-  ])('when %s fails, GET and PUT answer 503 and nothing is supplied or written', async (_label, pattern, code) => {
+  ])('when %s fails, the context answers 503 and nothing is supplied', async (_label, pattern, code) => {
     h.state.failOn = { pattern, code };
-    const read = await getAs(A_OWNER, A_PROJECT, 'cmc');
+    const read = await getAs(A_OWNER, A_PROJECT, 'context');
+    h.state.failOn = null;
     expect(read.status).toBe(503);
     expect(read.body.error?.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
     expect(read.body.data).toBeUndefined();
-    const before = await metadataOf(A_PROJECT);
-    const write = await putCmcAs(A_OWNER, A_PROJECT);
-    expect(write.status).toBe(503);
-    expect(write.body.error?.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
-    h.state.failOn = null;
-    expect(await metadataOf(A_PROJECT)).toEqual(before);
   });
 });
 
@@ -378,8 +348,6 @@ describe('every statement on a tenant table these routes read carries the organi
     new RegExp(`\\b(?:from|update|join)\\s+"?(?:${tables})"?(?![\\w])`, 'i').test(s));
 
   it.each([
-    ['GET …/cmc', 'projects', () => getAs(A_OWNER, A_PROJECT, 'cmc')],
-    ['PUT …/cmc', 'projects', () => putCmcAs(A_OWNER, A_PROJECT)],
     ['GET …/context', 'projects|project_tasks', () => getAs(A_OWNER, A_PROJECT, 'context')],
     ['GET …/program-twin', 'concept2cure_signatures|concept2cure_review_comments', () => getAs(A_OWNER, A_PROJECT, 'program-twin')],
     ['GET …/verification', 'concept2cure_signatures|concept2cure_review_comments', () => getAs(A_OWNER, A_PROJECT, 'artifacts/art_1/verification')],

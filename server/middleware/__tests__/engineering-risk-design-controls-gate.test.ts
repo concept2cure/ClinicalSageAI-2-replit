@@ -18,14 +18,19 @@
  *
  * Asked of the real registry, the panels' calls as the launch-scope walk reads
  * them from the screens' own code, and the gate production builds.
+ *
+ * 2026-10-29 (D2, fold F1c, decision P-61 item 4): the fold is made. risk and
+ * design-controls have no registry entry, so device-engineering claims both
+ * families alone. A holder of either keeps them: its grant carries to
+ * device-engineering in the entitlement resolver, which this file stubs, so that
+ * is pinned with the real resolver in
+ * server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** The modules each test organization holds. */
 const HOLDS: Record<number, ReadonlySet<string>> = {
   401: new Set(['device-engineering']),
-  402: new Set(['risk']),
-  403: new Set(['design-controls']),
   404: new Set(['projects']),
 };
 vi.mock('../../services/license-manager.js', () => ({
@@ -40,7 +45,7 @@ import { invalidateEnforcementModeCache } from '../../services/entitlements/enfo
 import { LAUNCH_SURFACE_IDS } from '../../../shared/constants/launch-scope';
 import { getSurface } from '../../../shared/constants/ui-surface-registry';
 import { checkLaunchScopeApi, REAL } from '../../../scripts/ci/check-launch-scope-api';
-import { buildPrefixMap, moduleEntitlementGate } from '../moduleEntitlementGate';
+import { buildPrefixMap, modulesForPath, moduleEntitlementGate } from '../moduleEntitlementGate';
 
 /** The walk records each file relative to the repository root. */
 const PANELS = ['RiskRegister.tsx', 'DesignControlsTrace.tsx'].map((f) => `client/src/concept2cure/v2/surfaces/${f}`);
@@ -87,21 +92,18 @@ describe('the risk register and design-control trace in device-engineering, unde
     expect(await verdicts(401)).toEqual(each(REQUESTS, 'served'));
   });
 
-  it('a risk-only organization keeps the risk register, as before', async () => {
-    const risk = REQUESTS.filter((r) => r.startsWith(RISK));
-    expect(await verdicts(402, risk)).toEqual(each(risk, 'served'));
-  });
-
-  it('a design-controls-only organization keeps the design-control register, as before', async () => {
-    expect(await verdicts(403, [DC])).toEqual(each([DC], 'served'));
+  it('asks the gate for device-engineering alone: a folded module is no claimant', () => {
+    const map = buildPrefixMap();
+    for (const r of REQUESTS) expect([...(modulesForPath(r, map) ?? [])], r).toEqual(['device-engineering']);
   });
 
   it('refuses them to an organization entitled to none of the three', async () => {
     expect(await verdicts(404)).toEqual(each(REQUESTS, '403 MODULE_NOT_LICENSED'));
   });
 
-  it('leaves the risk and design-controls claims whole: moving them is founder decision 4', () => {
-    expect(getSurface('risk')!.apiPrefixes).toEqual([RISK]);
-    expect(getSurface('design-controls')!.apiPrefixes).toEqual([DC]);
+  it('the fold moved the claims: there is no risk or design-controls entry', () => {
+    expect(getSurface('risk')).toBeUndefined();
+    expect(getSurface('design-controls')).toBeUndefined();
+    expect(getSurface('device-engineering')!.apiPrefixes).toEqual(expect.arrayContaining([RISK, DC]));
   });
 });

@@ -100,7 +100,12 @@ async function signedProcedure(tenant: Tenant): Promise<void> {
   const id = Number(created.body.data.id); tenant.documentId = created.body.data.authoring_document_id;
   // Trusted saved-prose fixture; this does not claim the editor-save API was exercised.
   await owner.query('UPDATE authoring_sections SET content=$2 WHERE doc_id=$1', [tenant.documentId, PROSE]);
-  expect((await invoke(actor, 'patch', `/${id}`, { status: 'in_review', reason: 'Route saved invented procedure for review.' })).status).toBe(200);
+  // RR4 (decision D-Q; docs/design/REVIEW_ROUTING_2026-10-23.md §2.7): the signer approves as the organization's designated
+  // QMS approver, and sending for review names its route, as mdx-qms-request-rls.dbtest.ts sends it.
+  await owner.query('UPDATE organization_users SET qms_approver_designated_at=now(), qms_approver_designated_by=$3 WHERE organization_id=$1 AND user_id=$2', [tenant.id, signer, actor]);
+  const route = { reviewers: [], approvers: [signer], approvalDueDate: new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10) };
+  const sent = await invoke(actor, 'patch', `/${id}`, { status: 'in_review', reason: 'Route saved invented procedure for review.', route });
+  expect(sent.status, JSON.stringify(sent.body)).toBe(200);
   const signed = await invoke(signer, 'post', `/${id}/approve`, { password: PASSWORD, meaning: 'APPROVED', reason: 'Independent actual signature for retained invented procedure.' });
   expect(signed.status, JSON.stringify(signed.body)).toBe(200);
   expect(signed.body.meta.signature.id).toBeGreaterThan(0);

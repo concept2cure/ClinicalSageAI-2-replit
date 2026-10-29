@@ -148,8 +148,7 @@ export const WRITES: readonly WriteRoute[] = [
   { method: 'POST', path: `${ART}/reviews/submit`, mode: 'review', body: { decision: 'approve' } },
   // haq-sessions.ts
   { method: 'PUT', path: `${P}/haq-session`, mode: 'write', body: { questions: [{ id: 'q1', text: 'Gate probe question' }] } },
-  // program-twin.ts
-  { method: 'PUT', path: `${P}/cmc`, mode: 'write', body: { drugSubstance: { substanceName: 'Gate probe API' } } },
+  // program-twin.ts serves reads only: its PUT …/cmc is retired (decision P-62).
   // project-knowledge.ts
   { method: 'POST', path: `${P}/linked`, mode: 'write' },
   { method: 'PATCH', path: `${P}/knowledge`, mode: 'write' },

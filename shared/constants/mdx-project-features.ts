@@ -10,7 +10,7 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   'device-pma',
   'device-cer',
   'device-diagnostics',
-  'ivd-completeness',
+  // No IVD completeness: it folded into device-diagnostics (D2, fold F2, 2026-10-29).
   'device-clinical-studies',
   'device-software',
   'device-engineering',
@@ -24,9 +24,9 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   'device-validation',
   'device-submission',
   'device-analytics',
-  'design-controls',
+  // No risk management or design controls: both folded into device-engineering
+  // (D2, fold F1c, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/).
   'human-factors',
-  'risk',
   'labeling',
 ] as const;
 
