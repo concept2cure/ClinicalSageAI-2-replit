@@ -160,7 +160,15 @@ Every file that enters the Vault is scanned for malware before it is stored, on 
 - `validateEctdPackage` (422; a package this server assembled passes `origin: 'platform-generated'`);
 - the legacy import detector (an error finding).
 
-The bounded reader is replaced by one measured inflate before any reader, which also covers mammoth and exceljs. The reason is recorded there. Steps 1(a), 1(b) and 3 to 6 are open.
+The bounded reader is replaced by one measured inflate before any reader, which also covers mammoth and exceljs. The reason is recorded there.
+
+**Step 3 and step 1(a) done 2026-10-29** (`docs/evidence/D2-VAULT-DEFINE-STYLESHEET/2026-10-29/`):
+- `.xsl` and `.pptx` are Vault formats.
+- `.xsl` binds `application/xslt+xml` for its own name only, is checked as text and is read as raw text.
+- A version is stored under the type its name binds: an `.xpt` sent as octet-stream is stored as `application/x-sas-xport`.
+- A test holds every Vault format to a byte check and a name binding.
+
+Steps 1(b) and 4 to 6 (OCR off the request, the sweep, the pending state) are open.
 
 1. **Red tests first**, each run on HEAD and captured:
    - (a) a valid SAS V5 `.xpt` to `/api/vault/ingest` returns 400 `FILE_TYPE_NOT_ALLOWED`;

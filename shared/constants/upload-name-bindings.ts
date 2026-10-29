@@ -39,6 +39,9 @@ export const UPLOAD_NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<st
   // A browser has no type for .xpt and sends application/octet-stream; that is
   // admitted for this name only, and only for bytes that are a v5 transport file.
   ['.xpt', { canonical: 'application/x-sas-xport', declared: ['application/x-sas-xport', 'application/octet-stream'] }],
+  // The define.xml stylesheet. Browsers and operating systems send it under
+  // any of these; each is checked as text, and it is stored as XSLT.
+  ['.xsl', { canonical: 'application/xslt+xml', declared: ['application/xslt+xml', 'text/xsl', 'text/xml', 'application/xml', 'text/plain'] }],
   // A browser has no type for .ndjson either; octet-stream is checked as NDJSON text.
   ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain', 'application/octet-stream'] }],
 ]);
@@ -52,6 +55,7 @@ export const UPLOAD_NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<st
 export const NAME_ONLY_TYPES: ReadonlyMap<string, string> = new Map([
   ['application/x-sas-xport', '.xpt'],
   ['application/x-ndjson', '.ndjson'],
+  ['application/xslt+xml', '.xsl'],
 ]);
 
 /**

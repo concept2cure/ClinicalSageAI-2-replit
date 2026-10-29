@@ -49,6 +49,7 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({

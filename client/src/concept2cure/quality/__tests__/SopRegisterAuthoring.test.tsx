@@ -15,6 +15,7 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [TEMPLATE], loading: false, error: null }),
   useReviewDue: () => ({ rows: [], loading: false, error: null }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('../../mdx/lib/useSampleRows', () => ({ useSampleRows: (rows: unknown[]) => rows, useShowingSample: () => false }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Author' }) }));

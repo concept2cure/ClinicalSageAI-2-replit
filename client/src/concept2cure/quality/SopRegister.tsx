@@ -60,6 +60,7 @@ import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './Cont
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
+import { TrainingExpiry } from './TrainingExpiry';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -544,6 +545,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
           refresh={trainComp.refresh}
           canOpen={canOpen} onOpen={openReader} />
+        <TrainingExpiry />
       </div>
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
