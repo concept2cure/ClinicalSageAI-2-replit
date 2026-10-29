@@ -39,8 +39,6 @@ const CALLED = [
   '/api/ind-lifecycle/clock', //                   the 30-day clock, from the server engine (useServerClock)
   '/api/ind-lifecycle/cover-letter', //            assembleCoverLetter
   '/api/ind-lifecycle/cover-letter/pdf', //        downloadCoverLetterPdf
-  '/api/ind-lifecycle/briefing-book', //           wired['briefing-book']
-  '/api/ind-lifecycle/briefing-book/pdf',
   '/api/ind-lifecycle/loa', //                     wired.loa
   '/api/ind-lifecycle/loa/pdf',
   '/api/ind-lifecycle/right-of-reference', //      wired['right-of-reference']
@@ -193,6 +191,10 @@ describe('P-32: nothing is claimed that no screen calls', () => {
       '/api/ind-lifecycle/submission/7/cockpit',
       '/api/ind-lifecycle/amendments/7',
       '/api/ind-lifecycle/annual-reports/7',
+      // 2026-10-29: uncalled since 5894e1aaa, when the briefing book became the
+      // project's meeting-package document in the editor; the claim was dropped.
+      '/api/ind-lifecycle/briefing-book',
+      '/api/ind-lifecycle/briefing-book/pdf',
     ]) {
       expect(verdict(p), p).not.toBe('launch');
     }

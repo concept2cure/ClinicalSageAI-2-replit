@@ -1,0 +1,23 @@
+# Mutations to product code. Each applied alone, its test run, the file restored only if it still held exactly
+# the mutated bytes, then sha256-checked against the original (recorded in each mutation-M*.txt).
+
+| Id | Mutation | File | Test | Result | Restored |
+|---|---|---|---|---|---|
+| M1 | Engineering reads non-conformances by organization again | `server/routes/mdx-engineering.ts` | `mdx-engineering-panels-by-project.test.ts` | red (4 failed, 5 passed (9)) | yes |
+| M2 | Engineering reports non-conformances as the organization's | `server/routes/mdx-engineering.ts` | `mdx-engineering-panels-by-project.test.ts` | red (3 failed, 6 passed (9)) | yes |
+| M3 | Engineering reads documents by organization again (bridge dropped) | `server/routes/mdx-engineering.ts` | `mdx-engineering-panels-by-project.test.ts` | red (2 failed, 7 passed (9)) | yes |
+| M4 | the documents bridge stops repeating the organization on projects | `server/routes/mdx-engineering.ts` | `mdx-engineering-panels-by-project.test.ts` | red (2 failed, 7 passed (9)) | yes |
+| M5 | Engineering reports documents as the organization's | `server/routes/mdx-engineering.ts` | `mdx-engineering-panels-by-project.test.ts` | red (2 failed, 7 passed (9)) | yes |
+| M6 | the NC POST stops admitting the named project | `server/routes/mdx-qms.ts` | `mdx-qms-nonconforming-project.test.ts` | red (5 failed, 1 passed (6)) | yes |
+| M7 | the NC POST stops stamping the project | `server/routes/mdx-qms.ts` | `mdx-qms-nonconforming-project.test.ts` | red (1 failed, 5 passed (6)) | yes |
+| M8 | AnA log_nonconforming_product stops stamping the project | `server/services/ana/AnaToolExecutor.ts` | `ana/__tests__/nonconforming-tool-admits-program.test.ts` | red (1 failed, 3 passed (4)) | yes |
+| M9 | the tool definition stops offering program_id | `server/services/ana/qms-labeling-analytics-tool-defs.ts` | `ana/__tests__/nonconforming-tool-admits-program.test.ts` | red (1 failed, 3 passed (4)) | yes |
+| M10 | the purge list drops risk_items | `server/services/tenant/tenant-offboarding.ts` | `tenant/__tests__/tenant-purge-device-records.pglite.test.ts` | red (2 failed (2)) | yes |
+| M11 | the purge list drops risk_controls | `server/services/tenant/tenant-offboarding.ts` | `tenant/__tests__/tenant-purge-device-records.pglite.test.ts` | red (2 failed (2)) | yes |
+| M12 | the purge list drops qms_nonconforming_products | `server/services/tenant/tenant-offboarding.ts` | `tenant/__tests__/tenant-purge-device-records.pglite.test.ts` | red (2 failed (2)) | yes |
+| M13 | the purge list deletes risk_items after regulatory_programs | `server/services/tenant/tenant-offboarding.ts` | `tenant/__tests__/tenant-purge-device-records.pglite.test.ts` | red (2 failed (2)) | yes |
+| M14 | the migration adds no same-organization key | `migrations/20261029d_nonconforming_products_program_key.sql` | `nonconforming-products-program-key.pglite.test.ts` | red (3 failed, 4 passed (7)) | yes |
+| M15 | the key nulls the whole key (bare ON DELETE SET NULL) | `migrations/20261029d_nonconforming_products_program_key.sql` | `nonconforming-products-program-key.pglite.test.ts` | red (2 failed, 5 passed (7)) | yes |
+| M16 | the column is added unguarded (not replayable, Rule 1) | `migrations/20261029d_nonconforming_products_program_key.sql` | `nonconforming-products-program-key.pglite.test.ts` | red (suite fails to load: the replayed ADD COLUMN errors 42701) | yes |
+| M17 | the file is taken off the applier (schema test) | `scripts/db/migration-set.mjs` | `nonconforming-products-program-key.pglite.test.ts` | red (1 failed, 6 passed (7)) | yes |
+| M17g | the file is taken off the applier (deploy-path gate) | `scripts/db/migration-set.mjs` | `npm:ci:migration-deploy-path` | red (gate exit 1: the file is on no deploy path) | yes |

@@ -1,0 +1,18 @@
+# M3: Engineering reads documents by organization again (bridge dropped)
+# mutation: server/routes/mdx-engineering.ts: 228 chars replaced by 0 chars
+# test: server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+# exit=1  Tests  2 failed | 7 passed (9)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+
+## replaced
+          AND EXISTS (SELECT 1 FROM projects p
+                       WHERE p.id = a.project_id
+                         AND p.organization_id = a.organization_id
+                         AND p.regulatory_program_id = $2::uuid)
+
+## with
+
+
+## failing tests
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project 9ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > never shows a sibling project's artifacts, an unanchored project's, or a mis-anchored foreign project's 3ms

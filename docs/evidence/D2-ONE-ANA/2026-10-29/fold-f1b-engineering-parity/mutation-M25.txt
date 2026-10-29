@@ -1,0 +1,12 @@
+M25: Risk (the older screen) reads the organization with a project open
+file: client/src/concept2cure/v2/surfaces/Risk.tsx
+replaced: '  const programId = shellProgramId(useShellProject());'
+with: '  const programId = shellProgramId(useShellProject()) && null;'
+test: client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+exit: 1
+Tests  2 failed | 3 passed (5)
+× client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx > Risk reads the open project > reads that project's risk file, by its id, and names the project on a new hazard 72ms
+× client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx > Risk reads the open project > draws no hazard from an answer that is not the open project’s, and offers no New hazard to act on it 5010ms
+sha256 before 12e80853e14722789c96f7f0904f1cdebb7bffa2fdad157436a553be755202e5
+sha256 after  12e80853e14722789c96f7f0904f1cdebb7bffa2fdad157436a553be755202e5
+restored byte for byte: yes

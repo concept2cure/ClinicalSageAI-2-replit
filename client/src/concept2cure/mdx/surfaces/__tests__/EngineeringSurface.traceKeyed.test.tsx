@@ -11,6 +11,13 @@
  * panel on its own scope (10bbeeeea), so this is the route's new scope report,
  * exactly: the trace and the risk file keyed, the DHF, change requests,
  * non-conformances and documents still the organization's.
+ *
+ * Fold F1 slice B (2026-10-29): the trace panel is now the design-controls
+ * trace the Design controls screen mounts too (v2/surfaces/DesignControlsTrace.tsx).
+ * It reads the project's inputs itself (GET /api/design-controls?program_id=)
+ * and draws them only from an answer that says it is this project's. The two
+ * trace cases below pin that read; the route's `scopes.trace` no longer draws
+ * anything.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
@@ -44,11 +51,23 @@ const DATA = {
   documents: [],
 };
 
+/* The design-controls trace's own read, and the project's inputs as it returns them. */
+const DC_PATH = `/api/design-controls?program_id=${PROGRAM.id}`;
+const INPUTS = [
+  { id: 'DI-OWN-1', cat: 'performance', req: 'This project battery life', riskRef: null, outputs: [{ id: 'DO-1', desc: 'Output' }], ver: 'pass', verRef: 'VER-1', val: 'pass', valRef: 'VAL-1' },
+  { id: 'DI-OWN-2', cat: 'safety', req: 'This project alarm latency', riskRef: null, outputs: [], ver: null, verRef: null, val: null, valRef: null },
+];
+const KEYED_INPUTS = { data: INPUTS, meta: { count: 2, scope: 'program', programId: PROGRAM.id } };
+let dcAnswer: unknown;
+
 let fetchMock: ReturnType<typeof vi.fn>;
+let engineeringAnswer: unknown;
 beforeEach(() => {
-  fetchMock = vi.fn().mockResolvedValue({
-    ok: true, status: 200, json: async () => ({ data: DATA, meta: { scopes: ROUTE_SCOPES, unavailable: [] } }), text: async () => '',
-  });
+  dcAnswer = KEYED_INPUTS;
+  engineeringAnswer = { data: DATA, meta: { scopes: ROUTE_SCOPES, unavailable: [] } };
+  fetchMock = vi.fn(async (url: string) => ({
+    ok: true, status: 200, json: async () => (String(url) === DC_PATH ? dcAnswer : engineeringAnswer), text: async () => '',
+  }));
   vi.stubGlobal('fetch', fetchMock);
 });
 afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
@@ -65,7 +84,8 @@ async function mounted() {
 describe("EngineeringSurface — the trace is the project's", () => {
   it('draws the trace panel from the keyed read', async () => {
     const c = await mounted();
-    expect(c.textContent).toMatch(/2 traceability rows tracked/);
+    await waitFor(() => expect(c.querySelectorAll('[data-testid="eng-design-controls"] .dc-mrow')).toHaveLength(2));
+    expect(c.textContent).toMatch(/This project battery life/);
     expect(c.querySelector('[data-testid="eng-not-keyed-trace"]')).toBeNull();
   });
 
@@ -77,12 +97,11 @@ describe("EngineeringSurface — the trace is the project's", () => {
     expect(c.textContent).not.toMatch(/Other project biocompatibility|ECR-OTHER-9|NC-OTHER-4/);
   });
 
-  it('hides the trace again if the route stops reporting it keyed (fail closed)', async () => {
-    fetchMock.mockResolvedValue({
-      ok: true, status: 200, json: async () => ({ data: DATA, meta: { scopes: { ...ROUTE_SCOPES, trace: 'organization' }, unavailable: [] } }), text: async () => '',
-    });
+  it('hides the trace again if its read stops reporting it keyed (fail closed)', async () => {
+    dcAnswer = { data: INPUTS, meta: { count: 2, scope: 'organization' } };
     const c = await mounted();
-    expect(c.textContent).not.toMatch(/traceability rows tracked/);
-    expect(c.querySelector('[data-testid="eng-not-keyed-trace"]')).not.toBeNull();
+    await waitFor(() => expect(c.textContent).toMatch(/Couldn't load this project's design inputs/));
+    expect(c.textContent).not.toMatch(/This project battery life|traceability rows tracked/);
+    expect(c.querySelectorAll('.dc-mrow')).toHaveLength(0);
   });
 });

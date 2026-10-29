@@ -1,0 +1,13 @@
+# M8: AnA log_nonconforming_product stops stamping the project
+# mutation: server/services/ana/AnaToolExecutor.ts: 51 chars replaced by 46 chars
+# test: server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts
+# exit=1  Tests  1 failed | 3 passed (4)
+# restored byte for byte: True (sha256 b9035315dd2fde35174788984b72abe8e335fa20f9d320def034c854f9cb4d6a)
+
+## replaced
+        description, ctx.userId ?? null, programId,
+## with
+        description, ctx.userId ?? null, null,
+
+## failing tests
+× server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > files it under the caller's own project, after asking 13ms

@@ -122,12 +122,14 @@ describe('DesignControls — honest empty and error states', () => {
 });
 
 describe('DesignControls — no fixture symbols survive in source', () => {
-  const src = fs.readFileSync(
-    path.resolve(__dirname, '../surfaces/DesignControls.tsx'),
-    'utf8',
-  );
+  /* The screen's read, matrix and checklist moved into the trace both it and
+     Engineering mount (fold F1 slice B, 2026-10-29), which reads through
+     useProjectScopedRead over useLiveData, the hook useLiveRows wraps. */
+  const src = ['../surfaces/DesignControls.tsx', '../surfaces/DesignControlsTrace.tsx', '../projectScopedRead.tsx']
+    .map((f) => fs.readFileSync(path.resolve(__dirname, f), 'utf8'))
+    .join('\n');
   it('imports the fixture-free hooks, not the live-or-fixture ones', () => {
-    expect(src).toMatch(/useLiveRows/);
+    expect(src).toMatch(/\buseLive(Rows|Data)\b/);
     expect(src).toMatch(/EmptyState/);
     expect(src).not.toMatch(/useLiveList/);
     expect(src).not.toMatch(/SampleTag/);

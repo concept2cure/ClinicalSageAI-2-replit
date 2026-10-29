@@ -1,0 +1,10 @@
+# F2-M1-claim-restored-ind-claim-test: ind-checklist claims /api/ind-lifecycle/briefing-book again (ind-launch-claim.test.ts)
+# file mutated: shared/constants/ui-surface-registry.ts
+# restored byte-for-byte (cmp)
+ × server/services/entitlements/__tests__/ind-launch-claim.test.ts > P-32: nothing is claimed that no screen calls > the IND lifecycle routes production serves are exactly the called ones, plus the named sub-routes 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 62 passed (63)
+AssertionError: served under /api/ind-lifecycle with no screen caller:
++   "POST /api/ind-lifecycle/briefing-book",
++   "POST /api/ind-lifecycle/briefing-book/pdf",

@@ -3583,6 +3583,15 @@ export const C2C_MIGRATION_FILES = [
   // absent). Public with organization_id INTEGER NOT NULL; creates no table;
   // guarded; no DROP.
   'migrations/20261029c_design_controls_and_risk_items_program_keys.sql',
+  // A nonconforming-product record may name its project, by key, and only its
+  // own organization's (D2 / D6, 2026-10-29): qms_nonconforming_products
+  // .program_id UUID, nullable (existing records stay the organization's
+  // unscoped records), a NOT VALID composite key ON DELETE SET NULL
+  // (program_id) and an index for Engineering's project read. After 20260511
+  // (the table) and 20260926b (regulatory_programs_id_org_uq, created here too
+  // when absent). Public with organization_id INTEGER NOT NULL; creates no
+  // table; guarded; no DROP.
+  'migrations/20261029d_nonconforming_products_program_key.sql',
   // The IVD assessment workbench's store (D2, fold F2, 2026-10-29):
   // ivd_assessments and ivd_generated_documents, which only install-fresh
   // created, so saving and listing failed on every deployed database. Every
@@ -3592,6 +3601,15 @@ export const C2C_MIGRATION_FILES = [
   // so the sweep below polices both. Pinned by
   // tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts.
   'migrations/20260610_ivd_assessments.sql',
+  // The Vault's data-room seal (VR-19, D5, 2026-10-29): an e-signed record of
+  // every current document as it stood. public.vault_data_room_seals,
+  // append-only (UPDATE and TRUNCATE refused, DELETE only through the owner-run
+  // purge door purge_tenant_vault_seals). Its program key needs
+  // regulatory_programs (base schema) and creates regulatory_programs_id_org_uq
+  // when absent, as 20260926b does. Public with organization_id INTEGER NOT
+  // NULL, so the sweep below gives it its policy. Every statement is guarded;
+  // no DROP. docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md.
+  'migrations/20261029d_vault_data_room_seals.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -152,6 +152,38 @@ describe('a read it may not draw says so, and is never an empty board', () => {
     expect(screen.queryByTestId('ivd-readiness-board')).toBeNull();
   });
 
+  /* A 403 here is one of three facts, told apart by the server's code, never by
+     its wording: the module gate's MODULE_NOT_LICENSED and LAUNCH_SCOPE
+     (server/middleware/moduleEntitlementGate.ts) and the route's own
+     IVD_NO_TENANT. The board read every 403 as the last (ivd-board-under-diagnostics). */
+  it('a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed', async () => {
+    completeness = () => json({
+      error: 'Module access denied', code: 'MODULE_NOT_LICENSED', module: 'ivd-completeness', modules: ['ivd-completeness'],
+      reason: "ivd-completeness: Module 'ivd-completeness' requires standard tier or higher (current: free)",
+    }, 403);
+    mount();
+    const refused = await screen.findByTestId('ivd-readiness-unread');
+    expect(refused.textContent).toContain('This feature is not enabled for your organization, so the IVDR readiness was not read.');
+    expect(refused.textContent).not.toMatch(/could not be confirmed/);
+    expect(screen.queryByTestId('ivd-readiness-board')).toBeNull();
+  });
+
+  it('a refusal outside the release (403 LAUNCH_SCOPE) says so', async () => {
+    completeness = () => json({ error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' } }, 403);
+    mount();
+    const refused = await screen.findByTestId('ivd-readiness-unread');
+    expect(refused.textContent).toContain('This part of the product is not in this release, so the IVDR readiness was not read.');
+    expect(refused.textContent).not.toMatch(/could not be confirmed|not enabled/);
+  });
+
+  it('an organization the route could not confirm (403 IVD_NO_TENANT) says so', async () => {
+    completeness = () => json({ success: false, error: 'Organization context required', code: 'IVD_NO_TENANT' }, 403);
+    mount();
+    const refused = await screen.findByTestId('ivd-readiness-unread');
+    expect(refused.textContent).toContain('Your organization could not be confirmed, so the IVDR readiness was not read.');
+    expect(refused.textContent).not.toMatch(/not enabled|not in this release/);
+  });
+
   it('a family that could not be read is "Not read", and no overall figure is shown', async () => {
     const data = board();
     data.families[0] = family('gspr', 'General Safety & Performance Requirements', null);

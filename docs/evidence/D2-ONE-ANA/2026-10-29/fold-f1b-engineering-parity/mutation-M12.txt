@@ -1,0 +1,11 @@
+M12: the section 7.3 checklist is not drawn
+file: client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx
+replaced: '          <TraceChecklist dc={dc} onAsk={onAsk} />\n'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+exit: 1
+Tests  1 failed | 12 passed (13)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > shows the ISO 13485 §7.3 checklist, with the elements no store evidences 30ms
+sha256 before 66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+sha256 after  66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+restored byte for byte: yes

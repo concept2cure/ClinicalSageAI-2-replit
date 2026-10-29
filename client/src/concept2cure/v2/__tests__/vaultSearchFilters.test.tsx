@@ -45,6 +45,9 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
     if (url.includes('/search?')) return onSearch(url);
+    // The Vault's seals (VR-19), answered as a Vault never sealed, so a failed
+    // filtered read stays the one alert these tests look for.
+    if (url.endsWith('/seals')) return ok({ success: true, data: { seals: [] } });
     return ok({ success: true, data: {} });
   });
 });

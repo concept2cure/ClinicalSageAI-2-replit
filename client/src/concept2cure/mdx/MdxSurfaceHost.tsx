@@ -46,6 +46,7 @@ import { IvdSurface } from './surfaces/IvdSurface';
 import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
 import { SoftwareSurface } from './surfaces/SoftwareSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
+import type { EngineeringPanelsContext } from './surfaces/engineeringPanelsContext';
 import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
@@ -74,7 +75,7 @@ import './drafter.css';
    ci:surface-text-ramp. See GA ledger L102. */
 import './surface-text-ramp.css';
 import { publishShellProject, useShellProject } from '../v2/shellProject';
-import { usePublishSurfaceContext } from '../v2/surfaceContext';
+import { usePublishSurfaceContext, type SurfaceContext } from '../v2/surfaceContext';
 import { openNewProject } from '../v2/surfaceActions';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
@@ -180,6 +181,28 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
 const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
   'device-validation', 'device-submission', 'device-analytics',
 ]);
+
+type ScreenContext = Omit<SurfaceContext, 'surfaceId'>;
+
+/**
+ * device-engineering's context with its two panels': the project's risk
+ * register and design-control trace (fold F1 slice B mounted both;
+ * EngineeringSurface reports them through `onPanelsContext`). The store holds
+ * one context, so they ride this host's one publish rather than a second that
+ * would replace it. Merged only when they were read for the project in context:
+ * on a project switch the previous project's panels are still held here until
+ * the screen reports the next one's, and they are not this project's (D2,
+ * 2026-10-29, device-vault-admits-project fix 2).
+ */
+function withEngineeringPanels(base: ScreenContext, panels: EngineeringPanelsContext | null, program: Program | null): ScreenContext {
+  if (!panels || !program || panels.programId !== String(program.id)) return base;
+  const { risk, designControls } = panels;
+  return {
+    summary: `${base.summary} ${risk.summary} ${designControls.summary}`,
+    facts: { ...base.facts, riskRegister: risk.facts ?? null, designControlsTrace: designControls.facts ?? null },
+    availableActions: [...(base.availableActions ?? []), ...(risk.availableActions ?? []), ...(designControls.availableActions ?? [])],
+  };
+}
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
   if (nav === 'device-postmarket') return 'Reporting clocks are for this project; signals, CAPA board, trends and PMS plan execution are not shown until they are read for this project';
@@ -287,7 +310,9 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * the wrong one makes AnA confidently wrong. The program named in the
    * context comes only from `programForContext`, which already carries the
    * project-selection rule above: no feature may borrow a program. No leaf-level
-   * counts are published — the host does not hold them.
+   * counts are published — the host does not hold them — except on
+   * device-engineering, whose screen hands up its two panels' own context
+   * (withEngineeringPanels, below).
    */
   const programCount = programs.length;
   const anaContext = React.useMemo(() => {
@@ -327,6 +352,14 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     };
   }, [nav, liveProgramsResult.loading, liveProgramsResult.error, programForContext, programCount]);
 
+  /* What Engineering's risk register and design-control trace report; null
+     when the screen is not mounted (it clears on unmount). */
+  const [engineeringPanels, setEngineeringPanels] = React.useState<EngineeringPanelsContext | null>(null);
+  const engineeringContext = React.useMemo(
+    () => withEngineeringPanels(anaContext, engineeringPanels, programForContext),
+    [anaContext, engineeringPanels, programForContext],
+  );
+
   /*
    * One builder, fifteen literal publish calls. The AnA coverage gate counts
    * single-quoted literal surface ids, so a single dynamic
@@ -343,7 +376,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   usePublishSurfaceContext('device-diagnostics', nav === 'device-diagnostics' ? anaContext : null);
   usePublishSurfaceContext('device-clinical-studies', nav === 'device-clinical-studies' ? anaContext : null);
   usePublishSurfaceContext('device-software', nav === 'device-software' ? anaContext : null);
-  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? anaContext : null);
+  usePublishSurfaceContext('device-engineering', nav === 'device-engineering' ? engineeringContext : null);
   usePublishSurfaceContext('device-udi', nav === 'device-udi' ? anaContext : null);
   usePublishSurfaceContext('device-postmarket', nav === 'device-postmarket' ? anaContext : null);
   usePublishSurfaceContext('device-presub', nav === 'device-presub' ? anaContext : null);
@@ -379,7 +412,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <SoftwareSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-engineering':
-      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} onPanelsContext={setEngineeringPanels} />;
       break;
     case 'device-udi':
       /* Keyed by the project, so a switch starts the read afresh and never

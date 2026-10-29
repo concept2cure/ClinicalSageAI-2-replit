@@ -1,0 +1,11 @@
+M13: the matrix rows lose their Ask AnA
+file: client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx
+replaced: "onClick={() => onAsk('Show ' + i.riskRef + ' in the risk file and confirm this input controls it')}"
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+exit: 1
+Tests  1 failed | 12 passed (13)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > asks AnA from a row: the hazard an input controls 47ms
+sha256 before 66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+sha256 after  66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+restored byte for byte: yes

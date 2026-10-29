@@ -123,6 +123,7 @@ export const LOG_NONCONFORMING_PRODUCT: AnaTool = {
       lot_or_serial: { type: 'string' },
       source:        { type: 'string', enum: ['in_process', 'final_inspection', 'complaint', 'audit', 'supplier'] },
       description:   { type: 'string' },
+      program_id:    { type: 'string', description: "The project (regulatory_programs UUID) the nonconformance belongs to, when it concerns one. It is then shown on that project's Engineering screen. Omit for an organization-level record." },
     },
     required: ['nc_number', 'description'],
   },

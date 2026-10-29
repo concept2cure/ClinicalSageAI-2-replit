@@ -1,0 +1,20 @@
+# M16: the column is added unguarded (not replayable, Rule 1)
+# mutation: migrations/20261029d_nonconforming_products_program_key.sql: 268 chars replaced by 75 chars
+# test: tests/schema-contract/nonconforming-products-program-key.pglite.test.ts
+# exit=1  Tests  7 skipped (7)
+# restored byte for byte: True (sha256 86f2912027649f69e1de668a93163ab320963ef94561ce4895eb1b48300e6ebc)
+
+## replaced
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'public.qms_nonconforming_products'::regclass
+                    AND attname = 'program_id' AND NOT attisdropped) THEN
+    ALTER TABLE public.qms_nonconforming_products ADD COLUMN program_id UUID;
+  END IF;
+## with
+  ALTER TABLE public.qms_nonconforming_products ADD COLUMN program_id UUID;
+
+## failing tests
+
+
+## suite error (re-run with stderr)
+ FAIL  tests/schema-contract/nonconforming-products-program-key.pglite.test.ts [ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts ]
+error: column "program_id" of relation "qms_nonconforming_products" already exists

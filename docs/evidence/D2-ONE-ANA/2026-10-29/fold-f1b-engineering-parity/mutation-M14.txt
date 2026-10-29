@@ -1,0 +1,15 @@
+M14: Engineering offers no New design input
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: '{I.plus} New design input'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+exit: 1
+Tests  5 failed | 8 passed (13)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > adds a design input to the project 272ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with the organization's scope 34ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with another project's scope 32ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with no scope at all 35ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > an editor is offered it 232ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

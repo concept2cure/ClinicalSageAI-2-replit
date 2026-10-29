@@ -1,0 +1,17 @@
+# Fix 1 red: server/routes/__tests__/mdx-vault-admits-project.test.ts against head (mdx-vault.ts unchanged)
+# timeout 240 npx vitest run server/routes/__tests__/mdx-vault-admits-project.test.ts
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses another organization's project with 404, and reads no artifact and no upload 21ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses a project that does not exist with 404, and reads no artifact and no upload 4ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > refuses the organization's own deleted project with 404, and reads no artifact and no upload 3ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 3ms
+   → expected 200 to be 503 // Object.is equality
+ × GET /api/mdx/vault?program_id=: the project must be the caller organization's > reads the caller's own project after the check, both halves by organization and project 5ms
+   → expected { kind: 'read', …(2) } to deeply equal { kind: 'ownership' }
+ ✓ GET /api/mdx/vault?program_id=: the project must be the caller organization's > leaves the organization-wide list, with no project, as it was 3ms
+ ✓ GET /api/mdx/vault?program_id=: the project must be the caller organization's > still refuses a program_id that is not a uuid with 422, before any lookup 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)

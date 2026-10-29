@@ -1,0 +1,17 @@
+# I3-M2-risk-claim-moved: the fold done without decision 4: risk's own claim dropped, so /api/mdx/risk-items is claimed by device-engineering alone
+# file mutated: shared/constants/ui-surface-registry.ts
+# restored byte-for-byte (cmp)
+ × server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > a risk-only organization keeps the risk register, as before 8ms
+ × server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > leaves the risk and design-controls claims whole: moving them is founder decision 4 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+-   "/api/mdx/risk-items": "served",
+-   "/api/mdx/risk-items/7": "served",
+-   "/api/mdx/risk-items/7/controls": "served",
++   "/api/mdx/risk-items": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7/controls": "403 MODULE_NOT_LICENSED",
+AssertionError: expected [] to deeply equal [ '/api/mdx/risk-items' ]
+-   "/api/mdx/risk-items",

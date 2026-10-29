@@ -1,0 +1,13 @@
+# M7: the NC POST stops stamping the project
+# mutation: server/routes/mdx-qms.ts: 67 chars replaced by 62 chars
+# test: server/routes/__tests__/mdx-qms-nonconforming-project.test.ts
+# exit=1  Tests  1 failed | 5 passed (6)
+# restored byte for byte: True (sha256 e9bf37ca05bdbb66cd4a40741a43c050bfa56a49e844e6081c15d528c76f87e6)
+
+## replaced
+        p.source ?? null, p.description, getUserId(req), programId,
+## with
+        p.source ?? null, p.description, getUserId(req), null,
+
+## failing tests
+× server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > records it against the caller organization's own project, after asking 24ms

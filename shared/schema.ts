@@ -19977,6 +19977,10 @@ export const qmsNonconformingProducts = pgTable(
     dispositionAt:            timestamp('disposition_at', { withTimezone: true }),
     capaLinked:               boolean('capa_linked').default(false),
     metadata:                 jsonb('metadata').default('{}'),
+    // The project the record is filed under; NULL is the organization's
+    // unscoped record. Its same-organization key and project index come from
+    // migrations/20261029d_nonconforming_products_program_key.sql.
+    programId:                uuid('program_id'),
     createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

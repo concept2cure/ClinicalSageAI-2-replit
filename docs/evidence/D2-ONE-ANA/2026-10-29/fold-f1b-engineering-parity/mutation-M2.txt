@@ -1,0 +1,22 @@
+M2: Engineering does not mount the design-controls trace
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: '          <DesignControlsTrace dc={designControls} onAsk={(text) => onAskAna(text)} />\n'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+exit: 1
+Tests  13 failed (13)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > Engineering reads the open project's design inputs > reads them by the project 5056ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > draws the traceability matrix: input, output, verification, validation 5014ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > breaks down the gaps, and "Close the first gap" asks AnA about it 5015ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > shows the ISO 13485 §7.3 checklist, with the elements no store evidences 5012ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > asks AnA from a row: the hazard an input controls 5014ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > adds a design input to the project 5018ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with the organization's scope 5016ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with another project's scope 5016ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with no scope at all 5019ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see 5018ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 503 says the project could not be checked 5020ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > no New design input, and says the trace is view only 5012ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

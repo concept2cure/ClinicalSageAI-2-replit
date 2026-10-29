@@ -1,0 +1,2 @@
+# npm run typecheck:fast (tsc --noEmit -p tsconfig.check.json; tsconfig.json extended, incremental cache), whole project, working tree with all three items.
+# Output: none. exit 0

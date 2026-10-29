@@ -1,0 +1,9 @@
+# ci:launch-scope-api with the registry at HEAD 6184439b3 (this slice's registry edits set aside, restored after).
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [out-of-scope] /api/csr/jobs
+    called by ectd-compile
+    in client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx

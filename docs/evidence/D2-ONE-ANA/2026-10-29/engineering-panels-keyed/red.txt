@@ -1,0 +1,110 @@
+# Red: the new tests, before the product change.
+# One file at a time: timeout 300 npx vitest run <file> --reporter=verbose.
+
+## 1. At head (8b3ee4b57), every new test file, before any product file was edited
+
+=== server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project 22ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > never shows another project's non-conformances, the organization's unscoped ones, or another organization's 4ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > the open-issues card counts the project's records only 3ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it 4ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a store without the program key is a failed panel, not an empty one 4ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project 3ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > never shows a sibling project's artifacts, an unanchored project's, or a mis-anchored foreign project's 2ms
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before any panel is read 2ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports the DHF and change requests as the organization's, and every other panel as the project's 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'NC-OWN-1', 'NC-OWN-2', …(2) ] to deeply equal [ 'NC-OWN-1', 'NC-OWN-2' ]
+AssertionError: expected [ 'NC-OWN-1', 'NC-OWN-2', …(2) ] to not include 'NC-SIB-1'
+AssertionError: expected 3 to be 1 // Object.is equality
+AssertionError: expected [ { id: 'NC-OWN-1', …(6) }, …(2) ] to deeply equal []
+AssertionError: expected [ 'art-100', 'art-101', …(2) ] to deeply equal [ 'art-100', 'swl-1' ]
+AssertionError: expected [ 'Own design spec', …(3) ] to not include 'Sibling design spec'
+AssertionError: expected { risks: 'program', …(5) } to deeply equal { risks: 'program', …(5) }
+      Tests  7 failed | 2 passed (9)
+exit=1
+=== server/routes/__tests__/mdx-qms-nonconforming-project.test.ts
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > records it against the caller organization's own project, after asking 24ms
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses another organization's project with 404 "Project not found", and writes nothing 10ms
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses a project that does not exist with 404 "Project not found", and writes nothing 3ms
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > refuses an id that is not a project id with 404 "Project not found", and writes nothing 3ms
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > answers 503 when ownership cannot be checked, and writes nothing 4ms
+ × server/routes/__tests__/mdx-qms-nonconforming-project.test.ts > POST /api/mdx/qms/nonconforming — the project a record is filed under > with no project named, records the organization's unscoped record without asking, as before 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'INSERT INTO qms_nonconforming_product…' to match /program_id/
+AssertionError: expected 201 to be 404 // Object.is equality
+AssertionError: expected 201 to be 503 // Object.is equality
+AssertionError: expected 'INSERT INTO qms_nonconforming_product…' to match /program_id/
+      Tests  6 failed (6)
+exit=1
+=== server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts
+ × server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > offers the model a program_id to name the project 5ms
+ × server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > files it under the caller's own project, after asking 11ms
+ ✓ server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > refuses another organization's project, and writes no row 1ms
+ × server/services/ana/__tests__/nonconforming-tool-admits-program.test.ts > log_nonconforming_product: the project a non-conformance is filed under > with no program_id, files an organization-level record without asking, as before 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'nc_number', 'device_name', …(3) ] to include 'program_id'
+AssertionError: expected [ { kind: 'ownership' }, …(1) ] to deeply equal [ { kind: 'ownership' }, …(1) ]
+AssertionError: expected [ { kind: 'write', …(1) } ] to deeply equal [ { kind: 'write', programId: null } ]
+      Tests  3 failed | 1 passed (4)
+exit=1
+=== tests/schema-contract/nonconforming-products-program-key.pglite.test.ts
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261029d_nonconforming_products_program_key.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261029d_nonconforming_products_program_key.sql' }
+      Tests  7 skipped (7)
+exit=1
+=== server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts
+ × server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > is purged: its risk file, controls, nonconformances and projects go; the other tenant keeps all of its own 1952ms
+   → ENOENT: no such file or directory, open 'migrations/20261029d_nonconforming_products_program_key.sql'
+ × server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > the list names the risk file and the nonconformance log before the projects they are filed under 1465ms
+   → ENOENT: no such file or directory, open 'migrations/20261029d_nonconforming_products_program_key.sql'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Error: ENOENT: no such file or directory, open 'migrations/20261029d_nonconforming_products_program_key.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: 'migrations/20261029d_nonconforming_products_program_key.sql' }
+      Tests  2 failed (2)
+exit=1
+
+## 2. The purge test's real failure: the migration in place, PURGE_CHILD_TABLES unchanged
+# (the schema test's one failure here is its applier-position case: the file was not yet on C2C_MIGRATION_FILES)
+
+ × server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > is purged: its risk file, controls, nonconformances and projects go; the other tenant keeps all of its own 2571ms
+   → update or delete on table "regulatory_programs" violates foreign key constraint "risk_items_program_id_fkey" on table "risk_items"
+ × server/services/tenant/__tests__/tenant-purge-device-records.pglite.test.ts > a tenant with a hazard filed under a project > the list names the risk file and the nonconformance log before the projects they are filed under 1644ms
+ × tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > 20261029d on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps 4ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > 20261029d on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index 12ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > 20261029d on the applier > a third replay is still a no-op on the shape 11ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > existing records are the organization's unscoped records > the record written before the column keeps no project, through every replay 1ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > from here on the database holds the key > a record naming its own organization's project is written 2ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > from here on the database holds the key > a record naming another organization's project, or a missing one, is refused 4ms
+ ✓ tests/schema-contract/nonconforming-products-program-key.pglite.test.ts > from here on the database holds the key > deleting a project unbinds its records and keeps their organization 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected -1 to be greater than -1
+error: update or delete on table "regulatory_programs" violates foreign key constraint "risk_items_program_id_fkey" on table "risk_items"
+AssertionError: risk_controls: expected -1 to be greater than -1
+      Tests  3 failed | 6 passed (9)
+
+## 3. The final engineering panels test (refined after step 1: a cross-tenant anchored artifact, predicate-by-predicate double) against mdx-engineering.ts as at HEAD
+
+# R1: red for the final engineering panels test: mdx-engineering.ts as at HEAD
+# mutation: server/routes/mdx-engineering.ts replaced by its HEAD version
+# test: server/routes/__tests__/mdx-engineering-panels-by-project.test.ts
+# exit=1  Tests  7 failed | 2 passed (9)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+## failing tests
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project 23ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > never shows another project's non-conformances, the organization's unscoped ones, or another organization's 5ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > the open-issues card counts the project's records only 5ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it 6ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project 3ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > never shows a sibling project's artifacts, an unanchored project's, or a mis-anchored foreign project's 3ms
+× server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports the DHF and change requests as the organization's, and every other panel as the project's 5ms
+
+## 4. The amended trace-test case against mdx-engineering.ts as at HEAD
+
+# R2: red for the amended trace test case: mdx-engineering.ts as at HEAD
+# mutation: server/routes/mdx-engineering.ts replaced by its HEAD version
+# test: server/routes/__tests__/mdx-engineering-trace-by-project.test.ts
+# exit=1  Tests  1 failed | 5 passed (6)
+# restored byte for byte: True (sha256 3d302e10495d01fa66301857fbb7d34bb2b07f8ae7b4ba61cc02b01b8ed150b5)
+## failing tests
+× server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > the two panels still read by organization are reported as the organization's 9ms

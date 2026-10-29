@@ -1,0 +1,9 @@
+Type check.
+
+The whole-tree typecheck:fast was not run: it is killed for memory in this container (15 GB, no swap), as in F1b.
+So the changed and new files were checked with everything they import, under the repo's compiler options:
+a scratch tsconfig that extends tsconfig.json, lists them, and adds the ambient declarations a file list leaves out
+(typecheck-tsconfig.json, with the repo path written as <repo>).
+
+NODE_OPTIONS=--max-old-space-size=9000 npx tsc -p tsconfig.dvap.json
+0 errors; exit 0

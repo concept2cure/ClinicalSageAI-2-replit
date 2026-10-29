@@ -166,7 +166,15 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-09-29: '/api/programs' removed: every route under it is the device
     // 510(k) app's predicate intelligence, SE render or RTM, and Projects calls
     // none of them (docs/evidence/D2-API-SCOPE/2026-09-29-programs-claim/).
-    apiPrefixes: ['/api/projects'],
+    // 2026-10-29: '/api/c2c/projects' added. It is the project record: the
+    // Projects list and New project (GET and POST /), and Project home's
+    // /:id, dossier, team, activity, records and sources. Only
+    // submission-center and ivd-completeness claimed it, both standard tier,
+    // so under MODULE_ENFORCEMENT=enforce an organization holding Projects
+    // (free tier) but neither of those was refused its own projects. They
+    // keep their claims; the gate serves a holder of any claimant, so nobody
+    // loses access (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
+    apiPrefixes: ['/api/projects', '/api/c2c/projects'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -638,6 +646,13 @@ export const UI_SURFACES: UiSurface[] = [
     // the screen calls in place of the client copy it carried until 2026-10-15;
     // /readiness is not claimed — the screen's readiness verdict comes with the
     // checklist read.
+    // 2026-10-29: '/api/ind-lifecycle/briefing-book' removed. Since 5894e1aaa
+    // the briefing book is the project's meeting-package document in the
+    // editor, and no screen of this surface calls the form assembler or its
+    // /pdf. The only caller left is AgencyMeetings.tsx (/pdf), whose
+    // agency-meetings surface is outside the release. So the routes are
+    // unclaimed and refused in production as unattributed
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
     // Pinned by server/services/entitlements/__tests__/ind-launch-claim.test.ts.
     apiPrefixes: [
       '/api/ind-checklist',
@@ -645,7 +660,6 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-master-data/sponsors',
       '/api/ind-lifecycle/clock',
       '/api/ind-lifecycle/cover-letter',
-      '/api/ind-lifecycle/briefing-book',
       '/api/ind-lifecycle/loa',
       '/api/ind-lifecycle/right-of-reference',
       '/api/ind-lifecycle/annual-report',
@@ -925,7 +939,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'risk',
     // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
     // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr'],
+    // 2026-10-29 (ivd-board-under-diagnostics): the readiness panel's IVDR board and workbench read the last two.
+    // Shared with ivd-completeness, which keeps its claim until the F2 fold (founder decision 4).
+    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr', '/api/ivd-completeness', '/api/ivd-assessments'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

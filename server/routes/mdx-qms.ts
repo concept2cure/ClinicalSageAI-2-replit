@@ -135,6 +135,7 @@ import {
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
+import { admitProject } from '../lib/admit-project';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -1302,6 +1303,11 @@ const ncCreate = z.object({
   lotOrSerial:    z.string().max(120).optional().nullable(),
   source:         z.string().max(60).optional().nullable(),
   description:    z.string().min(1).max(4000),
+  /* The project the record is filed under (D2 / D6, 2026-10-29; 20261029d).
+     Admitted through admitProject before anything is written, so any string
+     that is not this organization's live project is 404 "Project not found".
+     Absent or null: the organization's unscoped record, as before. */
+  programId:      z.string().max(64).optional().nullable(),
 });
 const ncDispoBody = z.object({
   disposition:           z.enum(DISPOSITION),
@@ -1326,15 +1332,21 @@ router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res:
   const parsed = ncCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  const programId = p.programId || null;
   try {
+    /* A named project must be this organization's before the record is filed
+       under it (server/lib/admit-project.ts): 404 or 503, and nothing is
+       written. The program key (20261029d) holds every other writer to the
+       same rule. Engineering reads a project's records by this column. */
+    if (!(await admitProject(res, log, programId, orgId))) return;
     const { rows } = await qmsClient(req).query(`INSERT INTO qms_nonconforming_products (
          organization_id, nc_number, device_name, lot_or_serial, source, description,
-         detected_by, disposition
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending')
+         detected_by, disposition, program_id
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8)
        RETURNING *`,
       [
         orgId, p.ncNumber, p.deviceName ?? null, p.lotOrSerial ?? null,
-        p.source ?? null, p.description, getUserId(req),
+        p.source ?? null, p.description, getUserId(req), programId,
       ],
     );
     /* Recording a nonconforming product is §8.3 / 21 CFR 820.90 evidence, and it
@@ -1347,7 +1359,7 @@ router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res:
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.nonconforming.create',
       resourceType: 'qms_nonconforming_product', resourceId: String(rows[0].id),
-      details: { ncNumber: p.ncNumber, lotOrSerial: p.lotOrSerial ?? null, source: p.source ?? null },
+      details: { ncNumber: p.ncNumber, lotOrSerial: p.lotOrSerial ?? null, source: p.source ?? null, programId },
     }, requestConnectable(req));
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'nc-create', err); }

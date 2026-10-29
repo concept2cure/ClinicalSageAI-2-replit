@@ -1,0 +1,4 @@
+# PROBE, not a fix: /api/csr/jobs claimed by ectd-compile for this one run only, then the registry restored byte-for-byte.
+# It shows the only launch-scope-api-gate failures left after this slice are the CSR call from 7b209818a.
+      Tests  43 passed (43)
+restored
