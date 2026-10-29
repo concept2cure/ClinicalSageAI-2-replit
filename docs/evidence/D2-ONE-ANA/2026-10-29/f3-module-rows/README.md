@@ -64,7 +64,7 @@ An inventory workflow ran four read-only angles at `d019ca3d70`, each claim put 
 | | File | Result |
 |---|---|---|
 | Red at `55673579` | `red-part-b.txt` | 5 cases: no `sectionWithin` on any target, and the editor lands on the document's first section ("Cover letter.") |
-| Green | `green.txt` | The deep-link suite 17/17, editorTarget 22/22, the Project home and dossier suites. The wide client run is recorded there |
+| Green | `green.txt` | The deep-link suite 17/17, editorTarget 22/22, the Project home and dossier suites. Of 144 client files, 134 pass. 7 fail in code this change does not touch (fixed or handed on). 3 hang before part A as well |
 | Mutations | `mutations-part-b.txt` | 8/8 red, one after a case was added for the precedence it had not pinned |
 
 ## Not done
@@ -75,4 +75,6 @@ An inventory workflow ran four read-only angles at `d019ca3d70`, each claim put 
 
 - **Trunk's pushed typecheck read 10 errors at `8b58354a`**, none of them this change's: the CSR review loader's type and the public reference seed test. `142c133d` clears them, types only.
 
-- **Three client suites red at `8b58354a`, not this change's.** `filingPathNoDeadEnds.test.tsx` (the F16 gate: a surface it treats as locked is now in the launch scope), `projectHomeTeamResponsibilities.test.tsx` and `projectHomeIdentityFacts.test.tsx`.
+- **Three client suites red at `8b58354a`, not this change's.** Fixed since: `filingPathNoDeadEnds.test.tsx` (the F16 gate, `7d83530f`), `projectHomeTeamResponsibilities.test.tsx` and `projectHomeIdentityFacts.test.tsx` (`c74eb2da`).
+- **Three editor suites never finish** (`authoringAnaInsertGate`, `authoringAnaMarkdown`, `authoringConversationContext`). Each one hangs on its own, on trees from before part A and part B too. CI on `concept2cure-v2` has been queued and has not run since at least 03:09 UTC today, so it cannot show this either.
+- **Still red, not this change's:** the ConversationThread suites (useAuth with no AuthProvider), `authoringDraftTermination` (wording) and `vaultOpenInEditorCarriesDoc` (the working-copy reason dialog).
