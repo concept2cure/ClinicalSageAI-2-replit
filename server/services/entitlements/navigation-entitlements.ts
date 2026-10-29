@@ -25,6 +25,9 @@
  *      is an explicit grant; `false` is an explicit workspace decision to turn
  *      the module off, which locks it with a different explanation than an
  *      upsell (nobody needs to buy anything — an admin switched it off).
+ *      A fold's target with no row of its own takes the live grant of the
+ *      module folded into it, reported 'subscribed' (decision P-61 item 4;
+ *      getModuleCatalog reads it from the licence, folded-module-successors.ts).
  *   3. TIER + INDUSTRY — `available_modules.metadata` (`tiers`, `industries`)
  *      against the org's plan. A module the plan includes is entitled with or
  *      without a subscription row: a customer's rail must not go dark because

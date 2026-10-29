@@ -1,0 +1,41 @@
+# Item 1, green: the resolver reads the mapping (license-manager.ts readLicenseInfo, canAccessModule, getModuleCatalog; master-licensing.ts tenant read).
+# npx vitest run server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row 3ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target 1ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant 2ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks 50ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault 18ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center 16ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing 26ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither 102ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it 25ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing 49ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before 19ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it 12ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on 4ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module 10ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed 26ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed 17ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier 12ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping 165ms
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once 198ms
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+
+# The suites around the resolver, one file at a time:
+server/services/entitlements/__tests__/grant-expiry.test.ts ::       Tests  15 passed (15)
+server/services/__tests__/license-manager-reports-what-it-read.test.ts ::       Tests  16 passed (16)
+server/services/entitlements/__tests__/navigation-entitlements.test.ts ::       Tests  24 passed (24)
+server/routes/__tests__/module-subscriptions.test.ts ::       Tests  13 passed (13)
+server/routes/__tests__/module-subscriptions-platform-admin.test.ts ::       Tests  8 passed (8)
+server/routes/__tests__/module-subscriptions-unread-license-is-an-error.test.ts ::       Tests  6 passed (6)
+server/routes/__tests__/module-subscriptions-work-queue-unread-is-not-empty.test.ts ::       Tests  3 passed (3)
+server/routes/admin/__tests__/master-licensing.test.ts ::       Tests  13 passed (13)
+server/middleware/__tests__/moduleEntitlementGate.test.ts ::       Tests  18 passed (18)
+server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts ::       Tests  3 passed (3)
+server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts ::       Tests  6 passed (6)
+server/services/licensing/__tests__/entitlements-acceptance-not-assumed.test.ts ::       Tests  6 passed (6)
+server/services/industry-context/__tests__/resolver-unread-layer-not-a-default.test.ts ::       Tests  8 passed (8)
+server/services/regulatory/__tests__/workspace-config-gateway-size-limit-only-where-on-file.test.ts ::       Tests  12 passed (12)
+server/routes/__tests__/deep-research-board-a-failed-connector-is-an-error.test.ts ::       Tests  2 passed (2)
+client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx ::       Tests  9 passed (9)
