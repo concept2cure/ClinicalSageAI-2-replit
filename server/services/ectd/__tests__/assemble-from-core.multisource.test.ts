@@ -29,8 +29,8 @@ beforeAll(async () => {
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
     VALUES (1, 'C2C Multi-source', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
 
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
-    VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER});
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by)
+    VALUES (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER});
 
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Clinical Overview', '<p>Overview body</p>', '2.5');
