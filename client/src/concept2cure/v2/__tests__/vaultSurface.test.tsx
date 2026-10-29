@@ -374,6 +374,9 @@ describe('Vault — search', () => {
               folderId: 'module-3',
               ctdSection: '3.2.P.8',
               placementStatus: 'confirmed',
+              // Every hit says whether it is the current version; the read
+              // refuses a hit that does not (isVaultSearchShape, 8c87144fd).
+              current: true,
               // A body match: this phrase is in no title anywhere in the tree,
               // so a client-side substring filter could never have found it.
               snippet: 'the <b>shelf life</b> was established at 24 months',
@@ -423,7 +426,7 @@ describe('Vault — search', () => {
           results: [
             {
               id: DOC_ID, title: 'One of many', fileName: 'a.pdf', documentType: 'REPORT',
-              size: null, folderId: null, ctdSection: null, placementStatus: 'confirmed', snippet: null,
+              size: null, folderId: null, ctdSection: null, placementStatus: 'confirmed', snippet: null, current: true,
             },
           ],
         },
