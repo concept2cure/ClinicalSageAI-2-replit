@@ -101,7 +101,7 @@ describe('Quality records', () => {
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', `/api/capa-mdr/capa/${CAPA.id}/transition`, {
       to: 'closed_effective',
       reason: 'Three consecutive lots released within specification after the fix.',
-      effectivenessCheckResult: { summary: 'No recurrence in 3 lots.' },
+      effectivenessCheckResult: { outcome: 'effective', narrative: 'No recurrence in 3 lots.' },
     }));
     await waitFor(() => expect(screen.getByText('CAPA-007 moved to Closed, effective.')).toBeTruthy());
   });
@@ -139,5 +139,35 @@ describe('Quality records', () => {
       sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }],
     });
     await waitFor(() => expect(screen.getByText('CAPA-008 was raised from NC-2026-004.')).toBeTruthy());
+  });
+
+  it('completes a CAPA action only with its evidence, along the server action lifecycle', async () => {
+    H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: false, error: null };
+    H.reads[`/api/capa-mdr/capa/${CAPA.id}`] = {
+      data: { ...CAPA, actions: [{ id: 'a1', n: 1, type: 'corrective', description: 'Replace the HPLC column', owner: 'QC', dueDate: null, state: 'in_progress', completedAt: null }] },
+      loading: false, error: null,
+    };
+    H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ id: 'a1', n: 1, state: 'done', meta: {} }) });
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'CAPA-007' }));
+    expect(screen.getByText('Replace the HPLC column')).toBeTruthy();
+    const moves = ['Done', 'Blocked', 'Cancelled'].map((n) => screen.getByRole('button', { name: n }));
+    expect(moves).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: 'Planned' })).toBeNull();
+
+    fireEvent.click(moves[0]);
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Evidence of completion/), { target: { value: '   ' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record the move' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(H.apiRequest).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Evidence of completion/), { target: { value: 'Column log CL-22, re-test report TR-118' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record the move' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/capa-mdr/capa/actions/a1/transition', {
+      to: 'done', evidenceRefs: [{ kind: 'reference', label: 'Column log CL-22, re-test report TR-118' }],
+    }));
+    await waitFor(() => expect(screen.getByText('Action 1 is done.')).toBeTruthy());
   });
 });

@@ -11,7 +11,8 @@ Row: D2 (launch catalog). Decision: P-48 in `docs/LAUNCH_DEFINITION_OF_DONE.md`,
 | Tables | `migrations/20260511_qms_and_labeling.sql` (in `C2C_MIGRATION_FILES`) | `qms_nonconforming_products`, `qms_suppliers`, `qms_internal_audits`, `qms_management_reviews`, each with `organization_id integer NOT NULL`. | — |
 | Launch gate | `server/services/entitlements/launch-scope-api.ts` | Refused the four paths in production as "HIDDEN APP". | — |
 | Quality shell | `client/src/concept2cure/quality/App.tsx` | Had two tabs: the SOP register and Change control. | Did not reach the four records. |
-| CAPA | `server/routes/capa-mdr.ts`, `server/services/capa-mdr/` (state machine), `migrations/20260504_capa_mdr.sql` | The CAPA register: per project, a lifecycle state machine, action items, and governed audit rows. Claimed only by the hidden `device-postmarket` surface. | Nothing in Quality reached it. |
+| QC deviations, OOS | `server/routes/qc.routes.ts` (`/deviations`, `/oos-investigations`), `server/storage.ts:1495` | A stub. Reads return nothing, and every write throws `NOT_IMPLEMENTED` (an honest 501). No table exists behind it. | It is not a deviation register, so the Nonconformances tab does not duplicate it. Converging or deleting these stub routes is owed. |
+| CAPA | `server/routes/capa-mdr.ts`, `server/services/capa-mdr/` (state machine), `migrations/20260504_capa_mdr.sql` | The CAPA register: per project, a lifecycle state machine, action items, and governed audit rows. Claimed by `device-postmarket`, a Projects launch surface for device projects since 2026-10-23 (not hidden, as this README first said). | Nothing in Quality reached it. |
 
 Searches run: `qms_suppliers|qms_internal_audits|qms_management_reviews|qms_nonconforming_products` across migrations,
 server and client; `nonconform|supplier|internal-audit|management-review` in `client/src/concept2cure/**`; `/capa` in
@@ -43,10 +44,15 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   CAPA". The CAPA drawer opens with the record's title, source and problem filled in, and the record is sent as the
   CAPA's `sourceRefs` entry (`{ kind, id, label }`, shared/schema/capa-mdr.ts). The CAPA register's Source column names
   the record.
+- CAPA action items, the fourth commit. A CAPA's number opens its action items (`CapaActions.tsx`, read from
+  `GET /api/capa-mdr/capa/:id`). Each item offers only the moves in `ACTION_TRANSITIONS`, which now also moves to
+  `shared/constants/capa-lifecycle.ts`. Done needs the evidence of completion, sent as `evidenceRefs`; blocked and
+  cancelled need a reason. A close now records the effectiveness check in the documented shape (`{ outcome, narrative }`)
+  instead of `{ summary }`.
 
 ## Proof
 
-- `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 5 of 5 pass.
+- `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 6 of 6 pass.
   - A nonconformance lists. A short rationale is refused and nothing is sent. A full rationale sends
     `PATCH /api/mdx/qms/nonconforming/4/disposition` with the disposition and rationale, and the register confirms.
   - A failed supplier read renders "The suppliers register could not be read", not "No suppliers recorded yet".
@@ -55,14 +61,19 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - "Raise CAPA" with no project open is refused and nothing is sent.
   - "Raise CAPA" from NC-2026-004 sends `POST /api/capa-mdr/capa` with the open project and
     `sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }]`.
+  - An action in progress is offered Done, Blocked and Cancelled, never Planned. Done with blank evidence sends
+    nothing. With evidence, the screen sends `POST /api/capa-mdr/capa/actions/a1/transition` with `evidenceRefs`.
 - **Shown failing first:**
   - With the rationale guard removed, the first case fails (1 failed, 1 passed). Restored, both pass.
   - With the effectiveness guard removed, the CAPA case fails (1 failed, 3 passed). Restored, all four pass.
+  - With the evidence requirement removed from the Done drawer, the action case fails (1 failed, 5 passed). Restored,
+    all six pass.
 - `npx vitest run server/services/capa-mdr`: 42 of 42 pass with the moved lifecycle map.
 - `npm run ci:launch-scope-api` reports 538 API paths named by launch and shell screens, none refused.
 
 ## Owed
 
-- A CAPA's action items: they are added here, but moving them (in progress, done) and the CAPA's detail view are owed.
+- A nonconformance's `capa_linked` flag is not set when a CAPA is raised from it (no route writes it). The CAPA's
+  `sourceRefs` carries the link.
 - A management review's actions: the table counts open and closed actions, but no route records an action yet.
 - Staging screenshots with D1.

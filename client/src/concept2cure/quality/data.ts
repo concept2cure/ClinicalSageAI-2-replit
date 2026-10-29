@@ -132,13 +132,16 @@ export const STATUS_TONE: Record<DocStatus, StatusTone> = {
   retired: 'muted',
 };
 
-/** Today, as an ISO date — kept as a constant so fixtures + overdue logic agree
- *  in the absence of live data. Live rows carry a server-computed `overdue`. */
-const TODAY = '2026-06-04';
+/** Today, as the UTC day (YYYY-MM-DD) the server's review-due read also uses.
+ *  Until 2026-10-29 this was the constant '2026-06-04', left from the removed
+ *  fixtures, so every review that fell due after that day showed as not
+ *  overdue in the register and in the Record review drawer (CAT2-22). Live
+ *  review-due rows carry the server's own `overdue`. */
+export const todayUtc = (): string => new Date().toISOString().slice(0, 10);
 
 export function isReviewOverdue(
   nextReviewDate: string | null | undefined,
-  today: string = TODAY,
+  today: string = todayUtc(),
 ): boolean {
   if (!nextReviewDate) return false;
   return String(nextReviewDate).slice(0, 10) < today;
@@ -171,7 +174,7 @@ export const STANDARD_SECTIONS: SopSection[] = [
 
 /** Derive the review-due list from a document set — used when
  *  /api/mdx/qms/documents/review-due has not answered. */
-export function deriveReviewDue(docs: QmsDoc[], today: string = TODAY): ReviewDueRow[] {
+export function deriveReviewDue(docs: QmsDoc[], today: string = todayUtc()): ReviewDueRow[] {
   return docs
     .filter((d) => (d.status === 'effective' || d.status === 'in_review') && d.nextReviewDate)
     .map((d) => reviewRowOf(d, today))
@@ -179,7 +182,7 @@ export function deriveReviewDue(docs: QmsDoc[], today: string = TODAY): ReviewDu
 }
 
 /** A register document as a periodic review row: what Record review needs, from the panel or the register. */
-export function reviewRowOf(d: QmsDoc, today: string = TODAY): ReviewDueRow {
+export function reviewRowOf(d: QmsDoc, today: string = todayUtc()): ReviewDueRow {
   return {
     id: d.id,
     docNumber: d.docNumber,
