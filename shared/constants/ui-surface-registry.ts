@@ -921,7 +921,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'risk',
     // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
     // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr'],
+    // 2026-10-29 (ivd-board-under-diagnostics): the readiness panel's IVDR board and workbench read the last two.
+    // Shared with ivd-completeness, which keeps its claim until the F2 fold (founder decision 4).
+    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr', '/api/ivd-completeness', '/api/ivd-assessments'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

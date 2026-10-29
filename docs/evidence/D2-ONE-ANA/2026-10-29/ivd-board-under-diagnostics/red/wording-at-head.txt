@@ -1,0 +1,23 @@
+# npx vitest run client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx  (before the IvdReadinessBoard.tsx change)
+# trimmed to the verdict lines and the two assertions
+ ✓ reads the board with the project's id and draws its families 142ms
+ ✓ mounts the IVD assessment workbench for the same project 143ms
+ ✓ a response for the organization is not drawn under a project 52ms
+ ✓ a response for another project is not drawn 51ms
+ ✓ a project the organization does not own (404) says so 56ms
+ ✓ an ownership check that could not run (503) says so 60ms
+ ✓ a failed read (500) says so 39ms
+ × a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 53ms
+   → expected 'The IVDR readiness was not readYour o…' to contain 'This feature is not enabled for your …'
+ × a refusal outside the release (403 LAUNCH_SCOPE) says so 45ms
+   → expected 'The IVDR readiness was not readYour o…' to contain 'This part of the product is not in th…'
+ ✓ an organization the route could not confirm (403 IVD_NO_TENANT) says so 38ms
+ ✓ a family that could not be read is "Not read", and no overall figure is shown 189ms
+ ✓ a project with no records reads empty, as a read that succeeded 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "This feature is not enabled for your organization, so the IVDR readiness was not read."
+Received: "The IVDR readiness was not readYour organization could not be confirmed, so the IVDR readiness was not read.Try again"
+Expected: "This part of the product is not in this release, so the IVDR readiness was not read."
+Received: "The IVDR readiness was not readYour organization could not be confirmed, so the IVDR readiness was not read.Try again"
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)

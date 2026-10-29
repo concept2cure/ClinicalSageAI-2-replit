@@ -1,0 +1,71 @@
+# Keep-green runs on the final tree, one file at a time under timeout 240 (npx vitest run <file>; npm run -s <script>).
+# The shared tree also holds another session's in-flight F1 slice B edits; they are not part of this slice.
+
+  exit 0  server/middleware/__tests__/ivd-board-under-diagnostics.test.ts   Tests 5 passed (5)
+  exit 0  server/middleware/__tests__/launch-scope-device-features.test.ts   Tests 3 passed (3)
+  exit 1  server/middleware/__tests__/launch-scope-api-gate.test.ts   Tests 1 failed | 42 passed (43)
+  exit 0  server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts   Tests 204 passed (204)
+  exit 0  server/middleware/__tests__/moduleEntitlementGate.test.ts   Tests 18 passed (18)
+  exit 0  server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts   Tests 3 passed (3)
+  exit 0  server/services/entitlements/__tests__/launch-scope.test.ts   Tests 36 passed (36)
+  exit 0  server/services/entitlements/__tests__/navigation-entitlements.test.ts   Tests 24 passed (24)
+  exit 0  server/services/entitlements/__tests__/mdx-entitlements.test.ts   Tests 17 passed (17)
+  exit 0  server/services/entitlements/__tests__/module-grants.test.ts   Tests 6 passed (6)
+  exit 0  server/services/entitlements/__tests__/require-entitlement.test.ts   Tests 18 passed (18)
+  exit 0  server/services/entitlements/__tests__/enforcement-mode.test.ts   Tests 19 passed (19)
+  exit 0  server/services/entitlements/__tests__/enforcement-observations.test.ts   Tests 10 passed (10)
+  exit 0  server/bootstrap/__tests__/ivdr-entitlement-read-fails-closed.test.ts   Tests 4 passed (4)
+  exit 0  tests/ui-readiness/ui-surface-registry.test.ts   Tests 14 passed (14)
+  exit 0  tests/ui/surface-registry-coverage.test.ts   Tests 4 passed (4)
+  exit 0  ci:launch-scope  :: [ci:launch-scope] 7 apps · 53 surfaces · 13 modules · 34 surface files checked for fixture imports ✅ launch scope is routable, registered, licensable and fixture-free 
+  exit 0  ci:launch-scope:selftest  :: ✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route ✅ selftest: gate passes on the real tree 
+  exit 0  ci:launch-scope-api  :: ci:launch-scope-api: 537 API paths named by launch and shell screens; none refused. {"launch":487,"infrastructure":2,"never-gated":48} 
+  exit 0  ci:launch-scope-api:selftest  ::  selftest PASSED — the gate flags a launch screen that production would refuse. 
+  exit 0  ci:undefined-css-classes  :: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s). 
+  exit 0  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx   Tests 12 passed (12)
+  exit 0  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx   Tests 4 passed (4)
+  exit 0  client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx   Tests 3 passed (3)
+  exit 0  client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx   Tests 3 passed (3)
+  exit 0  client/src/concept2cure/v2/__tests__/deferredAssessmentWorkbenches.test.tsx   Tests 7 passed (7)
+  exit 0  client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx   Tests 25 passed (25)
+  exit 0  client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx   Tests 11 passed (11)
+  exit 0  client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx   Tests 9 passed (9)
+  exit 0  server/routes/__tests__/ivd-completeness-denominator.test.ts   Tests 3 passed (3)
+  exit 0  server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts   Tests 12 passed (12)
+  exit 0  server/routes/__tests__/ivd-assessments.error-envelope.test.ts   Tests 4 passed (4)
+  exit 0  server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts   Tests 14 passed (14)
+  exit 0  server/routes/__tests__/bla-ivd-request-readers.test.ts   Tests 9 passed (9)
+  exit 0  server/services/regulatory/__tests__/ivd-assessments.test.ts   Tests 5 passed (5)
+  exit 0  server/services/regulatory/__tests__/deferred-assessment-governance.pglite.test.ts   Tests 10 passed (10)
+  exit 0  tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts   Tests 8 passed (8)
+  exit 0 callable-apps       Tests  14 passed (14)
+
+# eslint on every file this slice touches, at head and after (0 errors both; the same 3 warnings: two max-lines on the registry files, one ignored test file).
+## at head
+  
+  /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx
+    0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+  
+  /home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ts
+    773:1  warning  File has too many lines (898). Maximum allowed is 500  max-lines
+  
+  /home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ui-v2.ts
+    587:1  warning  File has too many lines (1238). Maximum allowed is 500  max-lines
+  
+  ✖ 3 problems (0 errors, 3 warnings)
+  
+## after
+  
+  /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx
+    0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+  
+  /home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ts
+    773:1  warning  File has too many lines (898). Maximum allowed is 500  max-lines
+  
+  /home/user/ClinicalSageAI-2-replit/shared/constants/ui-surface-registry.ui-v2.ts
+    587:1  warning  File has too many lines (1238). Maximum allowed is 500  max-lines
+  
+  ✖ 3 problems (0 errors, 3 warnings)
+  
+
+# NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json  (whole tree, final): exit 0, 0 errors. At head before this slice: exit 0, 0 errors.

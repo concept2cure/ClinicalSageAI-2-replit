@@ -1,0 +1,16 @@
+# server/middleware/__tests__/launch-scope-api-gate.test.ts is red at HEAD 1746fa6a8, before this slice.
+# Run on a read-only export of HEAD (git archive HEAD into the scratchpad, node_modules linked), so neither this slice nor the other session's edits are in it.
+# The failure is ind-checklist claiming /api/ind-lifecycle/briefing-book, which no ind-checklist screen calls. Not an IVD or device-diagnostics file; not touched here.
+
+ × the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 7ms
+   → ind-checklist apiPrefixes no screen of it calls:
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
+      Tests  1 failed | 42 passed (43)
+
+# The same test on the working tree:
+ × the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 7ms
+   → ind-checklist apiPrefixes no screen of it calls:
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
+      Tests  1 failed | 42 passed (43)
