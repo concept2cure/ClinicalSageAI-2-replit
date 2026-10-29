@@ -1,0 +1,11 @@
+# M19: the key validates existing rows (not NOT VALID)
+# file: migrations/20261029l_qms_change_controls_program_key.sql
+# command: npx vitest run tests/schema-contract/change-controls-program-key.pglite.test.ts
+# exit: 1
+# original sha256 db14f4b14a7f11867cfd3ec0cf04fc78a579168aecd653d3c885903ccc392eb2; restored byte for byte: True
+
+ × tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index 21ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index

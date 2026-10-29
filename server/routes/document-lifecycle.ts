@@ -59,6 +59,7 @@ import {
   type LifecycleBinding,
   type LifecycleSigner,
 } from '../services/regulatory/lifecycle-signature';
+import { isInterimShare, shareWords, VAULT_INTERIM_APPROVAL_TYPE, type ApprovalShare } from '../services/review/approval-share';
 import {
   drizzleSignatureClient,
   persistGovernedActionSignature,
@@ -307,10 +308,16 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       occurredAt: Date;
       /** The review route this sign-off is made on (RR1a), carried in its record. */
       routeId?: string;
+      /**
+       * An approval's share of its route's approval (RR2 records): carried in its
+       * record, and one that is not the last is its own signature type
+       * (services/review/approval-share.ts).
+       */
+      share?: ApprovalShare;
     },
   ): Promise<ApprovalSignature> {
-    const { doc, signer, binding, occurredAt } = params;
-    const onRoute = params.routeId ? { routeId: params.routeId } : {};
+    const { doc, signer, binding, occurredAt, share } = params;
+    const onRoute = { ...(params.routeId ? { routeId: params.routeId } : {}), ...(share ?? {}) };
     const target = lifecycleTarget(doc.canonicalId);
     const meaning = LIFECYCLE_DECLARED_MEANING[params.meaning];
     const reason = params.reason;
@@ -338,13 +345,16 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       secondFactorVerified: signer.secondFactorVerified,
       ipAddress: signer.ipAddress ?? null,
       occurredAt,
-      signatureType: LIFECYCLE_SIGNATURE_TYPE,
+      signatureType: share && isInterimShare(share) ? VAULT_INTERIM_APPROVAL_TYPE : LIFECYCLE_SIGNATURE_TYPE,
       manifestKind: LIFECYCLE_SIGNATURE_TYPE,
       command: 'sign',
       binding: { digest: binding.digest, basis: binding.basis, note: binding.note },
-      extraManifest: { canonicalId: doc.canonicalId, title: doc.title, version: doc.version, stage: doc.stage },
+      extraManifest: { canonicalId: doc.canonicalId, title: doc.title, version: doc.version, stage: doc.stage, ...(share ?? {}) },
       complianceStatement:
-        'Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ' +
+        (share && isInterimShare(share)
+          ? `Regulated-document approval signature, ${shareWords(share)}. It does not approve the version, which stays in review until the last named approver signs. `
+          : 'Regulated-document lifecycle sign-off ') +
+        'applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ' +
         'ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.',
     });
     return {

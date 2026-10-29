@@ -275,6 +275,19 @@ Stage 3 is complete.
 
 ### Stage 5 — Document control: restore, withdraw, legal holds, and check-out if decided (Phase 3 · M, L with check-out · engineering) — closes CAT1-04, CAT1-15
 
+**Steps 1 (restore half) and 2 done 2026-10-29** (`docs/evidence/D5/2026-10-29-vault-version-restore/`):
+- An editor restores an earlier version from the versions panel with a reason. `restoreVaultVersion` (`server/services/vault/vault-version-restore.ts`) reads the version's verified bytes and checks them in again through the one ingest as the next version, with `lineage.restoredFrom` and the reason in the chained audit row.
+- The check-in admits those bytes only for the version being restored.
+- `vault.documents.restored_from_id` marks a restore, and a trigger admits it only for a live version of the same document holding the same bytes. 044c's program-hash unique index is narrowed to rows that are not restores (`migrations/20261029_vault_documents_restored_from.sql`).
+
+Four things differ from the steps below, and the evidence says why:
+- the ingest is called itself, not factored into a shared row writer;
+- the restore is one `vault.document.ingest` event, not a `vault.version.restored` action;
+- the unique index the steps did not mention had to be narrowed;
+- the verified reader has not moved.
+
+Steps 3–6 and the legal-hold half of step 1 are open.
+
 1. **Red first.**
    - Add `tests/db/vault-version-restore.dbtest.ts`. Check in v1, then v2, then `POST …/versions/<v1>/restore` with a reason, and expect v3 with v1's `content_hash` superseding v2. At HEAD the route 404s, and re-uploading v1's bytes returns 409 `CONTENT_ALREADY_A_VERSION`.
    - Add `tests/db/vault-legal-hold-append-only.dbtest.ts`. Running as the runtime role, `UPDATE vault.legal_holds SET reason = …` and `DELETE` both succeed at HEAD.

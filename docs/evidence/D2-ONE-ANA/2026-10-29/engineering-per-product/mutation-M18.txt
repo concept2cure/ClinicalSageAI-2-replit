@@ -1,0 +1,15 @@
+# M18: bare SET NULL: a program delete would null organization_id
+# file: migrations/20261029l_qms_change_controls_program_key.sql
+# command: npx vitest run tests/schema-contract/change-controls-program-key.pglite.test.ts
+# exit: 1
+# original sha256 db14f4b14a7f11867cfd3ec0cf04fc78a579168aecd653d3c885903ccc392eb2; restored byte for byte: True
+
+ × tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index 23ms
+ × tests/schema-contract/change-controls-program-key.pglite.test.ts > from here on the database holds the key > deleting a project unbinds its changes and keeps their organization 5ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index
+ FAIL  tests/schema-contract/change-controls-program-key.pglite.test.ts > from here on the database holds the key > deleting a project unbinds its changes and keeps their organization
+error: null value in column "organization_id" of relation "qms_change_controls" violates not-null constraint
+Serialized Error: { length: 670, severity: 'ERROR', code: '23502', detail: 'Failing row contains (5, null, CC-GAMMA, A change, null, other, minor, null, proposed, null, null, null, null, null, null, null, null, null, null, null, null, null, null, {}, 2026-10-29 20:22:25.914+00, 2026-10-29 20:22:25.914+00, null, null).', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'SQL statement "UPDATE ONLY "public"."qms_change_controls" SET "program_id" = NULL, "organization_id" = NULL WHERE $1 OPERATOR(pg_catalog.=) "program_id" AND $2 OPERATOR(pg_catalog.=) "organization_id""', schema: 'public', table: 'qms_change_controls', dataType: undefined, constraint: undefined, file: 'execMain.c', routine: 'ReportNotNullViolationError', query: 'DELETE FROM regulatory_programs WHERE id = $1', params: [ '33333333-3333-4333-8333-333333333333' ], queryOptions: undefined }

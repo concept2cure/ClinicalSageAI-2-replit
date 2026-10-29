@@ -3,9 +3,13 @@
  * in one place (D3, 2026-10-08).
  *
  * ── The isolation switches ──────────────────────────────────────────────────
- * Tenant policies grant every row when `app.rls_enforce` is not 'on', and the
- * identity.can_* helpers grant when `app.bypass_rls` (or the gcc policies'
- * `app.is_admin`) is 'true'. All three are ordinary session variables.
+ * Tenant policies grant every row when `app.rls_enforce` is not 'on'. That is
+ * an ordinary session variable. `app.bypass_rls` and `app.is_admin` used to be
+ * two more (the identity.can_* helpers and the gcc policies granted on them);
+ * since P-70 (2026-10-29, migrations/20261029j_no_session_rls_bypass.sql) no
+ * policy or function reads either, and ci:session-scoped-rls-bypass fails on
+ * one that does. They are still pinned empty and cleared below, so a connection
+ * never carries them whatever a database holds.
  * Production turns enforcement on only in the connection's startup packet
  * (rlsEnforcement.ts, buildRlsStartupOptions), so a session-level SET on a
  * runtime connection, from a bug or an injected statement, outlived the

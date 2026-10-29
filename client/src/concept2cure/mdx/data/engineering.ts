@@ -37,6 +37,7 @@ export const ENG_RISK_PROB = [
   { id: 'P5', label: 'Frequent'    },
 ];
 
+/** One section of one of the project's documents (c2c_document_sections; P-60). */
 export interface DhfRow {
   id: string;
   num: string;
@@ -46,6 +47,9 @@ export interface DhfRow {
   updated: string;
   status: string;
   meta: string;
+  /** The section's document (c2c_documents.id) and its title. */
+  documentId?: string;
+  document?: string;
 }
 
 export interface TraceRow {

@@ -1,0 +1,53 @@
+# at 37c17a3f0 + the new cases only (server code unchanged). DB tier: fresh provisioned database platform_ci_vault_fixture_rr2rec, RLS_ENFORCE=on, APP_DATABASE_URL as app_service; npx vitest run --config vitest.db.config.ts tests/db/review-route-qms-rr2.dbtest.ts
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > QMS reviewers one after another (RR2, §3) > opens the second reviewer on the first one’s signature, telling them only then 517ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > two QMS approvers (RR2, NEW-4: every named approver) > the first approval leaves the document in review; the last makes it effective; one digest throughout 386ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > re-blocks the approver, who then waits for the new reviewer 312ms
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > adding a reviewer to an open QMS route (RR2, §2.10) > is refused once an approval is signed, with nothing written 171ms
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval 137ms
+   → expected { id: 46, signer_id: 34, …(3) } to match object { …(2) }
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval 576ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected { id: 17, …(30) } to match object { status: 'in_review', …(3) }
+   → expected 'undefined' to contain 'Quinn Qa qms-rr2-6d9a5516'
+   → expected 'undefined' to contain '1 of 2 required'
+   → expected { id: 47, …(21) } to match object { interim_approval: true, …(1) }
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected 'undefined' to contain 'Quinn Qa qms-rr2-6d9a5516'
+   → expected { id: 48, …(21) } to match object { interim_approval: false, …(1) }
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route 171ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected { id: 18, …(30) } to match object { status: 'in_review', …(2) }
+   → expected { id: 49, …(21) } to match object { …(3) }
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+   → expected { id: 49, …(21) } to match object { interim_approval: true, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval
+AssertionError: expected { id: 46, signer_id: 34, …(3) } to match object { …(2) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected { id: 17, …(30) } to match object { status: 'in_review', …(3) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected 'undefined' to contain 'Quinn Qa qms-rr2-6d9a5516'
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected 'undefined' to contain '1 of 2 required'
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected { id: 47, …(21) } to match object { interim_approval: true, …(1) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected 'undefined' to contain 'Quinn Qa qms-rr2-6d9a5516'
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval
+AssertionError: expected { id: 48, …(21) } to match object { interim_approval: false, …(1) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+AssertionError: expected { id: 18, …(30) } to match object { status: 'in_review', …(2) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+AssertionError: expected { id: 49, …(21) } to match object { …(3) }
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+AssertionError: expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ FAIL  tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route
+AssertionError: expected { id: 49, …(21) } to match object { interim_approval: true, …(1) }
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)

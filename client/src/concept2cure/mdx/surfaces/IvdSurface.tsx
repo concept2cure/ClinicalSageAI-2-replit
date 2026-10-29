@@ -46,6 +46,8 @@ export interface IvdSurfaceProps {
   /** Shell navigation. The assessment workbench opens a saved record's working
    *  copy in Authoring through it; without it that control is disabled. */
   onNav?: (id: string) => void;
+  /** Open a letter in Communication on its record (P-39 step 3, S2). */
+  onOpenLetter?: (letterId: string) => void;
 }
 
 const PARAM_PILL: Record<IvdParamStatus, string> = {
@@ -78,7 +80,7 @@ export function IvdSurface(props: IvdSurfaceProps) {
   return <IvdProjectSurface {...props} program={props.program} />;
 }
 
-function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav }: IvdSurfaceProps & { program: Program }) {
+function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLetter }: IvdSurfaceProps & { program: Program }) {
   const programId = program?.id ?? null;
   /* The IVDR readiness board, read for this project only (`?program_id=`); it
      draws a response only when the response says it covers this project. */
@@ -623,6 +625,7 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav }: IvdSurfac
       onAskAna={onAskAna}
       onOpenEditor={onOpenEditor}
       programId={programId}
+      onOpenLetter={onOpenLetter}
     />
   );
 }

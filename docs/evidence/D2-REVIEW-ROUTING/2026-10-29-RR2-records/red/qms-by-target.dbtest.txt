@@ -1,0 +1,14 @@
+# server/routes/part11-compliance.ts at 37c17a3f0 (stashed), everything else at the fix; the by-target assertions added after the first red run
+ ✓ tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval 396ms
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval 622ms
+   → expected [ [ 164, …(4) ], [ 163, …(4) ] ] to deeply equal [ [ 164, …(4) ], [ 163, …(4) ] ]
+ × tests/db/review-route-qms-rr2.dbtest.ts > an interim QMS approval is its own record (RR2 records, Part 11 §11.50) > an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route 255ms
+   → expected { id: 165, document_id: null, …(15) } to match object { interim_approval: true, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ [ 164, …(4) ], [ 163, …(4) ] ] to deeply equal [ [ 164, …(4) ], [ 163, …(4) ] ]
+- Expected
++ Received
+AssertionError: expected { id: 165, document_id: null, …(15) } to match object { interim_approval: true, …(2) }
+- Expected
++ Received
+      Tests  2 failed | 1 passed | 4 skipped (7)

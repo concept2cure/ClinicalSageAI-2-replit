@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/part11/signatures/by-target?target=qms-document%3A5",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 8,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "qms-document:5",
+          "signature_type": "qms-document-approval",
+          "signature_purpose": "OQ-006 step 05: SOP approved for validation (signed)",
+          "signer_id": 2,
+          "signer_name": "Sid Signer",
+          "signer_title": null,
+          "signer_email": "oq-signer@validation.local",
+          "signature_meaning": "APPROVED",
+          "signature_hash": "b3fffd3ad67e4d33a7539b67bbd415b1f3eb2b30b9d83b4e4847fa20593baf74",
+          "binding_basis": "qms-document-version-content-sha256",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-10-29T20:29:00.836Z",
+          "ip_address": "127.0.0.1"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# MR-08 Stage 5 step 2, red: the final tests against HEAD (33e8bff0b) server code
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on, the database migrated. tests/db/vault-version-restore.dbtest.ts
+# The restore route does not exist (404), so no version can be had back. The database case depends on v1 from the first case.
+
+ × restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+   → {}: expected 404 to be 201 // Object.is equality
+ × restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+   → expected [ [ '2.0', true ], [ '1.0', false ] ] to deeply equal [ [ '3.0', true ], …(2) ]
+ × restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+   → expected 400 to be 409 // Object.is equality
+ × what a restore refuses > refuses each restore it cannot make, and saves nothing
+   → no reason: {}: expected 404 to be 422 // Object.is equality
+ × what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+   → {}: expected 404 to be 409 // Object.is equality
+ × what a restore refuses > refuses a stored file rewritten together with its storage record: only the recorded hash can tell
+   → {}: expected 404 to be 409 // Object.is equality
+ × what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+   → expected [Function] to throw error matching /VAULT_RESTORE_INVALID|immutable|writ…/i but got 'invalid input syntax for type uuid: ""'
+ × what a restore refuses > restores an earlier version that is not the oldest
+   → {}: expected 404 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  8 failed (8)

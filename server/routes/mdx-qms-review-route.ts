@@ -44,6 +44,7 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { QmsContentRefusedError } from '../services/qms/controlled-document-content';
 import { TASK_SIGNATURE_MEANINGS } from '../services/part11/signature-meanings';
+import { positiveId } from './mdx-qms-context';
 
 const log = createScopedLogger('mdx-qms-review-route');
 
@@ -101,11 +102,6 @@ function reasonOf(req: Request, res: Response, nothing = 'Nothing was changed.')
   }
   return reason.reason;
 }
-
-const positiveId = (v: unknown): number | null => {
-  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN;
-  return Number.isSafeInteger(n) && n > 0 && n <= 2_147_483_647 ? n : null;
-};
 
 async function readCandidates(req: Request, res: Response): Promise<Response> {
   const orgId = resolveOrgId(req);

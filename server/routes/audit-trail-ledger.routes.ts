@@ -86,6 +86,8 @@ import {
   AUDIT_CHAIN_ORDER_ASC_SQL,
 } from '../services/audit/chain.js';
 import { tenantChainVerdict } from '../services/audit/audited-export.js';
+import { approvalShareJoin, QMS_INTERIM_APPROVAL_TYPE, shareWords, VAULT_INTERIM_APPROVAL_TYPE } from '../services/review/approval-share.js';
+import { LIFECYCLE_SIGNATURE_TYPE } from '../services/regulatory/lifecycle-signature.js';
 
 const logger = createScopedLogger('audit-trail-ledger-routes');
 
@@ -301,6 +303,32 @@ const SIGNED_EVENT: Record<string, string> = {
 const AUTHORING_SIGNED_EVENT = 'Document e-signed';
 
 /**
+ * An approval that was not the last one its route required (RR2 records,
+ * 2026-10-29; services/review/approval-share.ts): the subject was still in
+ * review after it, so it is never named as the subject's approval. Keyed by
+ * the subject the signature's type names: its own interim type, or, for one
+ * stored before 2026-10-29, the final type its route shows to be interim.
+ */
+const INTERIM_SUBJECT: Record<string, { act: string; subject: string }> = {
+  [QMS_INTERIM_APPROVAL_TYPE]: { act: 'Controlled document approval signed', subject: 'the document' },
+  'qms-document-approval': { act: 'Controlled document approval signed', subject: 'the document' },
+  [VAULT_INTERIM_APPROVAL_TYPE]: { act: 'Version approval signed', subject: 'the version' },
+  [LIFECYCLE_SIGNATURE_TYPE]: { act: 'Version approval signed', subject: 'the version' },
+};
+
+/** The act a signature row records, as this ledger names it. */
+function signedEvent(es: Record<string, unknown>): string | null {
+  const type = String(es.signature_type);
+  const interim = es.interim_approval === true ? INTERIM_SUBJECT[type] : undefined;
+  if (!interim) return SIGNED_EVENT[type] ?? null;
+  const recorded = Number(es.approvals_recorded);
+  const required = Number(es.approvals_required);
+  const share = Number.isInteger(recorded) && Number.isInteger(required) && required > 0
+    ? `, ${shareWords({ approvalsRecorded: recorded, approvalsRequired: required })}` : '';
+  return `${interim.act}${share}; ${interim.subject} is not yet approved (e-signature)`;
+}
+
+/**
  * Which signature stores exist here. A deployment without one holds no
  * signature of that kind. Asked with to_regclass rather than by catching
  * 42P01: the ledger may read inside a transaction, which a failed statement
@@ -322,8 +350,10 @@ const QMS_SIGNATURES_SQL = `
   SELECT es.id::text AS id, es.signature_type, es.signature_meaning, es.signer_name, es.ip_address,
          es.signature_manifest::jsonb->>'auditId'   AS audit_id,
          es.signature_manifest::jsonb->>'docNumber' AS doc_number,
-         es.signature_manifest::jsonb->>'version'   AS version
+         es.signature_manifest::jsonb->>'version'   AS version,
+         share.approvals_recorded, share.approvals_required, share.interim_approval
     FROM electronic_signatures es
+    ${approvalShareJoin('es', 'share')}
    WHERE es.organization_id = $1
      AND es.signature_manifest::jsonb->>'auditId' = ANY($2::text[])`;
 
@@ -387,7 +417,7 @@ async function linkQmsSignatures(
       meaning: nonEmpty(es.signature_meaning),
       signerName: nonEmpty(es.signer_name),
       ipAddress: nonEmpty(es.ip_address),
-      event: SIGNED_EVENT[String(es.signature_type)] ?? null,
+      event: signedEvent(es),
       subject: docNumber ? `${docNumber}${version ? ` v${version}` : ''}` : null,
     });
   }

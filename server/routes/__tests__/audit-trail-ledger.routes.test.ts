@@ -307,36 +307,39 @@ describe('GET /api/audit-trail/ledger — an entry names the account that acted 
    "C2c Work Approve", unsigned, no meaning, no address. The signature row names
    its audit row (electronic_signatures.signature_manifest.auditId; an authoring
    e-sign records its signatureId), and the ledger now joins on exactly that. */
-describe('GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row', () => {
-  const SIG_FIXTURE = `
-    CREATE TABLE IF NOT EXISTS electronic_signatures (
-      id serial PRIMARY KEY, organization_id integer, signature_type text, signature_meaning text,
-      signer_name text, ip_address text, signature_manifest json);
-    CREATE TABLE IF NOT EXISTS authoring_signatures (
-      id uuid PRIMARY KEY, doc_id uuid, tenant_id integer, meaning text, signer_name text, ip_address text);
-    CREATE TABLE IF NOT EXISTS authoring_documents (id uuid PRIMARY KEY, tenant_id integer, title text);`;
-  const DOC = '6f1c2b1e-0a4d-4c7e-9f3a-111111111111';
-  const SIG = '9b2e7c55-3d1f-4b8a-8e6c-222222222222';
+const SIG_FIXTURE = `
+  CREATE TABLE IF NOT EXISTS electronic_signatures (
+    id serial PRIMARY KEY, organization_id integer, signature_type text, signature_meaning text,
+    signer_name text, ip_address text, signature_manifest json, signed_at timestamp DEFAULT now());
+  CREATE TABLE IF NOT EXISTS authoring_signatures (
+    id uuid PRIMARY KEY, doc_id uuid, tenant_id integer, meaning text, signer_name text, ip_address text);
+  CREATE TABLE IF NOT EXISTS authoring_documents (id uuid PRIMARY KEY, tenant_id integer, title text);
+  CREATE TABLE IF NOT EXISTS unified_tasks (
+    id serial PRIMARY KEY, organization_id integer, task_id text, review_route_id uuid, review_role text,
+    route_signature_id integer, deleted_at timestamptz);`;
+const DOC = '6f1c2b1e-0a4d-4c7e-9f3a-111111111111';
+const SIG = '9b2e7c55-3d1f-4b8a-8e6c-222222222222';
 
+async function write(action: string, resourceType: string, resourceId: string, details: Record<string, unknown>): Promise<string> {
+  await pglite.transaction(async (tx) => {
+    await writeChainedAuditRow(tx, { tenantId: ORG, userId: 11, action, resourceType, resourceId, details });
+  });
+  const r = await pglite.query<{ id: string }>('SELECT id FROM audit_logs ORDER BY chain_seq DESC LIMIT 1');
+  return r.rows[0].id;
+}
+const ledger = async () => {
+  const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
+  expect(res.status).toBe(200);
+  return res.body.data as AuditLedgerEntry[];
+};
+
+describe('GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row', () => {
   beforeAll(async () => {
     await pglite.exec(SIG_FIXTURE);
   });
   beforeEach(async () => {
-    await pglite.exec('DELETE FROM electronic_signatures; DELETE FROM authoring_signatures; DELETE FROM authoring_documents;');
+    await pglite.exec('DELETE FROM electronic_signatures; DELETE FROM authoring_signatures; DELETE FROM authoring_documents; DELETE FROM unified_tasks;');
   });
-
-  async function write(action: string, resourceType: string, resourceId: string, details: Record<string, unknown>): Promise<string> {
-    await pglite.transaction(async (tx) => {
-      await writeChainedAuditRow(tx, { tenantId: ORG, userId: 11, action, resourceType, resourceId, details });
-    });
-    const r = await pglite.query<{ id: string }>('SELECT id FROM audit_logs ORDER BY chain_seq DESC LIMIT 1');
-    return r.rows[0].id;
-  }
-  const ledger = async () => {
-    const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
-    expect(res.status).toBe(200);
-    return res.body.data as AuditLedgerEntry[];
-  };
 
   it('an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row', async () => {
     const auditId = await write('c2c.work.approve', 'qms-document', '1', {});
@@ -389,6 +392,85 @@ describe('GET /api/audit-trail/ledger — a signed act shows as signed, from its
     for (const id of [unsigned, foreign]) {
       expect(data.find((e) => e.id === `AUD-${id}`)).toMatchObject({ sig: false, signatureRef: null, event: 'C2c Work Approve' });
     }
+  });
+});
+
+describe('GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records)', () => {
+  beforeAll(async () => {
+    await pglite.exec(SIG_FIXTURE);
+  });
+  beforeEach(async () => {
+    await pglite.exec('DELETE FROM electronic_signatures; DELETE FROM unified_tasks;');
+  });
+
+  /* RR2 records (2026-10-29): with several named approvers, every approval but
+     the last leaves the document in review. Its signature is signed with the
+     meaning APPROVED, and until 2026-10-29 it carried the final approval's type,
+     so this ledger called it "Controlled document approved" while the SOP was
+     still under review. */
+  const ROUTE = '4a5b6c7d-0000-4000-8000-000000000001';
+  async function signature(type: string, meaning: string, manifest: Record<string, unknown>, signedAt: string): Promise<number> {
+    const r = await pglite.query<{ id: number }>(
+      `INSERT INTO electronic_signatures (organization_id, signature_type, signature_meaning, signer_name, signature_manifest, signed_at)
+       VALUES ($1, $2, $3, 'Quinn Approver', $4, $5::timestamp) RETURNING id`,
+      [ORG, type, meaning, JSON.stringify(manifest), signedAt],
+    );
+    return r.rows[0].id;
+  }
+  /** A route member stamped with its signature, as the route writes it (null: not signed). */
+  async function member(role: 'reviewer' | 'approver', signatureId: number | null, routeId = ROUTE): Promise<void> {
+    await pglite.query(
+      `INSERT INTO unified_tasks (organization_id, task_id, review_route_id, review_role, route_signature_id) VALUES ($1, $2, $3::uuid, $4, $5)`,
+      [ORG, `rt-${Math.random().toString(36).slice(2)}`, routeId, role, signatureId],
+    );
+  }
+  const entryOf = (data: AuditLedgerEntry[], auditId: string) => data.find((e) => e.id === `AUD-${auditId}`);
+
+  it('an interim QMS approval, written as its own type, reads k of n and never "approved"', async () => {
+    const auditId = await write('c2c.work.approve', 'qms-document', '5', {});
+    await signature('qms-document-interim-approval', 'APPROVED',
+      { auditId, docNumber: 'C2C-SOP-005', version: '1.0', approvalsRecorded: 1, approvalsRequired: 2 }, '2026-10-29 10:00:00');
+    const e = entryOf(await ledger(), auditId);
+    expect(e).toMatchObject({ sig: true, meaning: 'APPROVED', target: 'C2C-SOP-005 v1.0',
+      event: 'Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)' });
+  });
+
+  it('an approval stored before 2026-10-29 with the final type is read from its route: the earlier one is interim, the last one approved', async () => {
+    const first = await write('c2c.work.approve', 'qms-document', '6', {});
+    const last = await write('c2c.work.approve', 'qms-document', '6', {});
+    const a = await signature('qms-document-approval', 'APPROVED', { auditId: first, docNumber: 'C2C-SOP-006', version: '1.0' }, '2026-10-29 10:00:00');
+    const b = await signature('qms-document-approval', 'APPROVED', { auditId: last, docNumber: 'C2C-SOP-006', version: '1.0' }, '2026-10-29 11:00:00');
+    await member('approver', a);
+    await member('approver', b);
+    const data = await ledger();
+    expect(entryOf(data, first)?.event).toBe('Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)');
+    expect(entryOf(data, last)?.event).toBe('Controlled document approved (e-signature)');
+  });
+
+  it('a stored earlier approval stays interim when the other approver never signed', async () => {
+    const auditId = await write('c2c.work.approve', 'qms-document', '7', {});
+    const a = await signature('qms-document-approval', 'APPROVED', { auditId, docNumber: 'C2C-SOP-007', version: '1.0' }, '2026-10-29 10:00:00');
+    await member('approver', a);
+    await member('approver', null);
+    expect(entryOf(await ledger(), auditId)?.event).toBe('Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)');
+  });
+
+  it('a Vault version: an earlier approver’s signature reads k of n, written as its own type or stored before', async () => {
+    const typed = await write('c2c.work.sign', 'canonical_document', 'c1', {});
+    await signature('regulated-document-lifecycle-interim-approval', 'APPROVED', { auditId: typed, approvalsRecorded: 1, approvalsRequired: 3 }, '2026-10-29 10:00:00');
+    const stored = await write('c2c.work.sign', 'canonical_document', 'c2', {});
+    const review = await write('c2c.work.sign', 'canonical_document', 'c2', {});
+    const s = await signature('regulated-document-lifecycle', 'APPROVED', { auditId: stored }, '2026-10-29 10:00:00');
+    const r = await signature('regulated-document-lifecycle', 'REVIEWED', { auditId: review }, '2026-10-29 09:00:00');
+    const VAULT_ROUTE = '4a5b6c7d-0000-4000-8000-000000000002';
+    await member('reviewer', r, VAULT_ROUTE);
+    await member('approver', s, VAULT_ROUTE);
+    await member('approver', null, VAULT_ROUTE);
+    const data = await ledger();
+    expect(entryOf(data, typed)?.event).toBe('Version approval signed, 1 of 3 required; the version is not yet approved (e-signature)');
+    expect(entryOf(data, stored)?.event).toBe('Version approval signed, 1 of 2 required; the version is not yet approved (e-signature)');
+    // A review signature is not an approval: the audit row's own name stays.
+    expect(entryOf(data, review)?.event).toBe('C2c Work Sign');
   });
 });
 

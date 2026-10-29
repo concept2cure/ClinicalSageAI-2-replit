@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/quality/plans",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-006 QMP 20261029202431",
+      "description": "Validation exercise"
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "REASON_REQUIRED",
+      "message": "A reason of at least 8 characters is required to change a quality-management plan. Nothing was changed."
+    }
+  }
+}

@@ -97,6 +97,14 @@ const ASKED_THROUGH: Record<string, { reason: string; here: string; there: [file
     here: 'applicationRefusal(',
     there: ['server/services/cmc/load-approved-cmc-sources-for-project.ts', 'assessProgramCompositionScope('],
   },
+  'server/services/authoring/module2-saved-qc.ts': {
+    reason:
+      "Module 2 QC (3cb38d54f, G5) grades what a package run would build, so it takes the run's Module 3 door: " +
+      'its cmcSources come only from loadApprovedCmcSourcesForProject, which asks the program boundary, and ' +
+      'readSavedModule2Qc asks applicationRefusal of the submission before composeFullModule3.',
+    here: 'applicationRefusal(',
+    there: ['server/services/cmc/load-approved-cmc-sources-for-project.ts', 'assessProgramCompositionScope('],
+  },
 };
 
 /**

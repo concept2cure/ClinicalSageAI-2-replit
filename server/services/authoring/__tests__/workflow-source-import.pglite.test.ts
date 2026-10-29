@@ -275,6 +275,11 @@ describe('stored CSR assembly source',()=>{
     await expect(materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_CSR_HASH_MISMATCH'});
     await expect(materializeCsrAssemblySource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_INVALID'});
   });
+  it('carries the study’s ClinicalTrials.gov number from the job’s source, and none the source did not state',async()=>{
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).nctNumber).toBeNull();
+    await database.exec(`UPDATE csr_build_jobs SET study_info_snapshot='{"studyInfo":{"title":"Recorded CSR study","nctNumber":"NCT05330182"}}' WHERE id=1`);
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).nctNumber).toBe('NCT05330182');
+  });
   it('reports a job with no retained run as such, never inventing one',async()=>{
     expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).sourceRunId).toBeNull();
   });

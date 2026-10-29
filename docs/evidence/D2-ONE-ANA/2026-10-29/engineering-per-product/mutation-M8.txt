@@ -1,0 +1,15 @@
+# M8: change read includes deleted changes
+# file: server/routes/mdx-engineering.ts
+# command: npx vitest run server/routes/__tests__/mdx-engineering-per-product.test.ts
+# exit: 1
+# original sha256 0cab5e0a44820cd6a78329cb41e472e5a5d2d8d44119526d10f3b72c6742bb7d; restored byte for byte: True
+
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project 9ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > never shows a sibling project's change, the organization's unscoped one, another organization's or a deleted one 6ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open 3ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > never shows a sibling project's change, the organization's unscoped one, another organization's or a deleted one
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open

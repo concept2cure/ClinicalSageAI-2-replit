@@ -1394,10 +1394,10 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // card calls moved here: the retention period (RetentionPeriodCard.tsx), claimed by setup
     // alone, and the legal holds (LegalHoldsCard.tsx), shared with the Vault. The Profile
     // card's /api/organizations and /api/mdx/industry-profile, and /api/gateway-accounts, are
-    // LAUNCH_PLATFORM_API. '/api/validation-kit' is named only by AdminSurfaces.tsx
-    // AdminConsole, the GAMP 5 kit no surface has mounted since af973c5e8 (2026-07-27); it is
-    // claimed here, where the kit belongs if the founder chooses to reach it, rather than
-    // left unmapped (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/README.md, "Not carried").
+    // LAUNCH_PLATFORM_API. '/api/validation-kit' is the GAMP 5 validation package's, reached on
+    // Settings by ValidationKitCard.tsx (decision P-67, 2026-10-29), which replaced the
+    // AdminConsole no surface had mounted since af973c5e8 (2026-07-27)
+    // (docs/evidence/D4/2026-10-29/validation-kit-settings/).
     apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit'],
     anaToolFamilies: [],
     sharedContract: null,

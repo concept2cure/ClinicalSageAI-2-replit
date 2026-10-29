@@ -1,0 +1,11 @@
+# M21: the panel no longer says what it is not
+# file: client/src/concept2cure/mdx/surfaces/EngineeringDesignHistory.tsx
+# command: npx vitest run client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx
+# exit: 1
+# original sha256 590b950b6ebd1e700c9bb755e08b198465b7eab4a121eb7f1cf31fad6e0865c4; restored byte for byte: True
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index 43ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index

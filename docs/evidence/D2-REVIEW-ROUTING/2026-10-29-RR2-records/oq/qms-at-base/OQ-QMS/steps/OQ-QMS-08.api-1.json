@@ -1,0 +1,138 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/mdx/qms/documents/7",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 41,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 7,
+        "organization_id": 2,
+        "doc_number": "SOP-OQ-B-20261029202832",
+        "title": "OQ-006 Second SOP 20261029202832",
+        "doc_type": "sop",
+        "category": "production",
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-10-29T00:00:00.000Z",
+        "next_review_date": "2026-11-03T00:00:00.000Z",
+        "author_id": 1,
+        "approver_id": 2,
+        "approved_at": "2026-10-29T20:30:30.787Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-10-29T20:30:30.787+00:00",
+            "by": 2,
+            "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "a4a175ed7e7f215b8a2b6c1a25c883b7e4f984c9f0e5547c74b6670ce13fd163",
+            "twoPersonRule": "enforced"
+          },
+          "sections": [
+            {
+              "key": "purpose",
+              "hint": "Why this document exists and what it governs.",
+              "label": "Purpose",
+              "order": 1
+            },
+            {
+              "key": "scope",
+              "hint": "What and who it applies to, with explicit exclusions.",
+              "label": "Scope",
+              "order": 2
+            },
+            {
+              "key": "responsibilities",
+              "hint": "Roles accountable for each step.",
+              "label": "Responsibilities",
+              "order": 3
+            },
+            {
+              "key": "definitions",
+              "hint": "Terms, abbreviations, and acronyms used.",
+              "label": "Definitions",
+              "order": 4
+            },
+            {
+              "key": "procedure",
+              "hint": "The step-by-step controlled process.",
+              "label": "Procedure",
+              "order": 5
+            },
+            {
+              "key": "references",
+              "hint": "Regulations, standards, and linked documents.",
+              "label": "References",
+              "order": 6
+            },
+            {
+              "key": "attachments",
+              "hint": "Forms, templates, and records this document produces.",
+              "label": "Attachments",
+              "order": 7
+            },
+            {
+              "key": "revision_history",
+              "hint": "Version, date, author, and a summary of each change.",
+              "label": "Revision history",
+              "order": 8
+            },
+            {
+              "key": "approval",
+              "hint": "Author, reviewer, and approver signatures.",
+              "label": "Approval",
+              "order": 9
+            }
+          ],
+          "programId": "8f0b7b0c-e896-4923-b9a3-36743c9cf472",
+          "templateKey": "sop"
+        },
+        "created_at": "2026-10-29T20:29:32.312Z",
+        "updated_at": "2026-10-29T20:30:30.771Z",
+        "deleted_at": null,
+        "authoring_document_id": "7c03c18f-2bc2-4cff-a8b1-7b4749e32898",
+        "approval_signature": {
+          "version": "1.0",
+          "state": "valid",
+          "signatureId": 9,
+          "reason": null,
+          "signerName": "Sid Signer",
+          "signedAt": "2026-10-29T20:30:30.787Z",
+          "meaning": "APPROVED"
+        },
+        "retirement_signature": null
+      },
+      "meta": {
+        "training": {
+          "documentId": 7,
+          "docNumber": "SOP-OQ-B-20261029202832",
+          "title": "OQ-006 Second SOP 20261029202832",
+          "documentVersion": "1.0",
+          "status": "effective",
+          "contentDigest": "a4a175ed7e7f215b8a2b6c1a25c883b7e4f984c9f0e5547c74b6670ce13fd163",
+          "eligible": true,
+          "canEditControlledText": false,
+          "unavailableReason": null,
+          "sections": [
+            {
+              "key": "d5fc4136-949a-40d4-a7d7-2a7588aa843b",
+              "label": "Purpose",
+              "body": "OQ-006 Second SOP 20261029202832: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision."
+            }
+          ],
+          "acknowledgement": null
+        }
+      }
+    }
+  }
+}

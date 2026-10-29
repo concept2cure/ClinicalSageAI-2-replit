@@ -1,0 +1,50 @@
+# MR-08 Stage 5 step 2, green: on the committed tree
+# Real PostgreSQL 16, app_service, RLS_ENFORCE=on.
+
+## deploy-migrate, twice on each database (the second run is the replay)
+platform_ci_vault_fixture_local pass 1: ✅ Schema migration complete — safe to roll services.
+platform_ci_vault_fixture_local pass 2: ✅ Schema migration complete — safe to roll services.
+c2c_dbtest pass 1: ✅ Schema migration complete — safe to roll services.
+c2c_dbtest pass 2: ✅ Schema migration complete — safe to roll services.
+idx_vault_documents_program_hash_unique after: CREATE UNIQUE INDEX ... (program_id, content_hash) WHERE (restored_from_id IS NULL), on both
+
+## Gates
+[ci:migration-drop-safety] OK — 446 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:migration-set-order] OK — 446 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+## tests/db/vault-version-restore.dbtest.ts
+ ✓ restoring an earlier version of a Vault document > records v3 with v1's bytes, superseding v2, as a new stored file, with the reason on record
+ ✓ restoring an earlier version of a Vault document > lists all three versions, v3 current, with no review record of its own yet
+ ✓ restoring an earlier version of a Vault document > still refuses an upload of an earlier version's bytes: only a restore admits them
+ ✓ what a restore refuses > refuses each restore it cannot make, and saves nothing
+ ✓ what a restore refuses > refuses to restore a version whose stored file no longer matches its hash
+ ✓ what a restore refuses > refuses a stored file rewritten together with its storage record: only the recorded hash can tell
+ ✓ what a restore refuses > the database admits a restore only of a version of the same document holding the same bytes
+ ✓ what a restore refuses > restores an earlier version that is not the oldest
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+
+## Neighbouring Vault dbtests: version-checkin, versions, ingest, reupload, fixity, data-room-file, version-compare, processing-sweep
+ Test Files  8 passed (8)
+      Tests  73 passed (73)
+
+## Unit and client: server/services/vault, client Vault suites, and the fixtures that run the ingest insert
+# authoringFileToVault, authoringFileToVaultApprovalCarry, placement-vault-leaf-parity, vault-ingest-conflict
+      Tests  1213 passed (1213)
+ Test Files  113 passed (113)
+
+## Broader unit run (server/routes/__tests__, server/routes/c2c/__tests__, server/services/{vault,ana,authoring,ectd,tenant})
+# Red without this change too, on HEAD: authoringFromDraft (3), coauthorSnapshotStatus (7), globalBiotechTemplateEditor (2),
+# report-os-audit-recording (7), report-os-report-pack-export (16), report-os-saved-read-access (4),
+# submissions-request-current-access (1), lifecycle-parent-leaf-binding (1). With this change, exactly those, and nothing else:
+      3 server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+      7 server/routes/__tests__/coauthorSnapshotStatus.test.ts
+      1 server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts
+      7 server/routes/__tests__/report-os-audit-recording.test.ts
+     16 server/routes/__tests__/report-os-report-pack-export.test.ts
+      4 server/routes/__tests__/report-os-saved-read-access.test.ts
+      1 server/routes/__tests__/submissions-request-current-access.pglite.test.ts
+      1 server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts
+
+## Type check
+tsc exit 0

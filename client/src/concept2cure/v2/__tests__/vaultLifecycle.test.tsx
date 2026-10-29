@@ -313,3 +313,34 @@ describe('a sign-off carried from Authoring (FD5 (c))', () => {
     expect(shown).toContain('Approval signed in Authoring by Abe Approver · meaning: approved · 2026-10-01 10:00:00 UTC');
   });
 });
+
+/* RR2 records (2026-10-29): the review sign-off (review_signature) is written
+   once per round, by the signature that completes the review, so on a route
+   with several reviewers the line named one of them. A routed version's lines
+   come from the round: every reviewer and approver who signed. */
+describe('a routed version names every signer on its sign-off lines (RR2 records)', () => {
+  it('one line per reviewer and per approver who signed, each with printed name, meaning and UTC time', async () => {
+    const { LifecycleSummary } = await import('../surfaces/VaultLifecycle');
+    const at = (h: number) => `2026-10-01T${String(h).padStart(2, '0')}:00:00.000Z`;
+    const so = (name: string, meaning: string, h: number, id: number) => ({ printedName: name, meaning, signedAt: at(h), signatureRef: `esig:${id}`, signerId: id });
+    render(
+      <LifecycleSummary
+        lifecycle={{
+          canonicalId: 'c1',
+          stage: 'approved',
+          review: so('Ria Reviewer', 'REVIEWED', 11, 2),
+          approval: so('Ava Approver', 'APPROVED', 13, 4),
+          reviewSignOffs: [so('Rae Reviewer', 'REVIEWED', 10, 1), so('Ria Reviewer', 'REVIEWED', 11, 2)],
+          approvalSignOffs: [so('Ann Approver', 'APPROVED', 12, 3), so('Ava Approver', 'APPROVED', 13, 4)],
+        }}
+      />,
+    );
+    const shown = screen.getByTestId('vault-version-stage').textContent ?? '';
+    expect(shown).toContain('Review signed by Rae Reviewer · meaning: reviewed · 2026-10-01 10:00:00 UTC');
+    expect(shown).toContain('Review signed by Ria Reviewer · meaning: reviewed · 2026-10-01 11:00:00 UTC');
+    expect(shown).toContain('Approval signed by Ann Approver · meaning: approved · 2026-10-01 12:00:00 UTC');
+    expect(shown).toContain('Approval signed by Ava Approver · meaning: approved · 2026-10-01 13:00:00 UTC');
+    expect(shown.match(/Review signed by/g)).toHaveLength(2);
+    expect(shown.match(/Approval signed by/g)).toHaveLength(2);
+  });
+});

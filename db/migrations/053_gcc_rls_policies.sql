@@ -6,6 +6,15 @@
 -- Reference: Concept2Cure Architecture Specification Section 3
 -- Compliance: FDA 21 CFR Part 11, SOC2, HIPAA
 -- ============================================================================
+--
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): identity.can_access_org and can_write_org no longer return TRUE
+-- when app.bypass_rls is 'true'. Any role can set a custom setting, so the
+-- runtime role could lift every policy these helpers decide from inside its own
+-- connection. The "System/admin bypass" blocks are removed, with nothing in
+-- their place. 069 redefines both helpers the same way; databases installed
+-- before today get the same change from
+-- migrations/20261029j_no_session_rls_bypass.sql (deploy set).
 
 BEGIN;
 
@@ -56,11 +65,6 @@ AS $$
 DECLARE
     v_current_org_id UUID := identity.current_org_id();
 BEGIN
-    -- System/admin bypass
-    IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-        RETURN TRUE;
-    END IF;
-
     -- No context set = deny
     IF v_current_org_id IS NULL THEN
         RETURN FALSE;
@@ -93,11 +97,6 @@ AS $$
 DECLARE
     v_current_org_id UUID := identity.current_org_id();
 BEGIN
-    -- System/admin bypass
-    IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-        RETURN TRUE;
-    END IF;
-
     -- No context set = deny
     IF v_current_org_id IS NULL THEN
         RETURN FALSE;

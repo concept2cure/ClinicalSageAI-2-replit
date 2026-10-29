@@ -1,0 +1,27 @@
+# RED at cbcd32f58b (pre-change code, working tree without slice 1): tests/schema-contract/qms-training-assignments-replay.pglite.test.ts, PGlite (2026-10-29T18:44:35Z)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > the file is on the deploy path > is in C2C_MIGRATION_FILES after qms_documents and its same-org key, immediately before the tenant tail
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > replayed on every deploy > creates the three tables with their named rules, and two more replays over live rows change nothing
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > an assignment names exactly one job role or one person > refuses neither and both, and accepts each alone
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > a role name is trimmed, 1 to 80 characters, and its pairs are set together > refuses a blank, untrimmed or over-long name, an over-long description and a half-set pair
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > a role name, case-insensitively, until the role is deleted
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > a member, until removed
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > an assignment of a role and of a person, until withdrawn
+ ↓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > nothing names another organization's role or document > refuses a member of a foreign role, and an assignment of a foreign role or a foreign document
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/qms-training-assignments-replay.pglite.test.ts [ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts ]
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261029g_qms_job_roles_and_training_assignments.sql'
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 skipped (8)
+   Start at  18:44:35
+   Duration  3.04s (transform 160ms, setup 88ms, import 148ms, tests 2.52s, environment 0ms)
+

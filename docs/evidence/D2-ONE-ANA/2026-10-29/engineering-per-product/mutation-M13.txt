@@ -1,0 +1,16 @@
+# M13: the one writer never stamps the project
+# file: server/services/qms/changeControl.service.ts
+# command: npx vitest run server/routes/__tests__/qms-change-project.test.ts server/services/ana/__tests__/change-tool-admits-program.test.ts
+# exit: 1
+# original sha256 d2edb3afa0e551440617777afc5569c2b17561d0bcb0cdbfa9fec33444c92401; restored byte for byte: True
+
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking 28ms
+ × server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > raises it under the caller's own project, after asking 23ms
+ Test Files  2 failed (2)
+      Tests  2 failed | 9 passed (11)
+  "level": "error",
+  "level": "error",
+  "level": "error",
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking
+ FAIL  server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > raises it under the caller's own project, after asking

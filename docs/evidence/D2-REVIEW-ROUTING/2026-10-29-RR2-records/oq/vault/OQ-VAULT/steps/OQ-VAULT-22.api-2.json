@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5211/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 112,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "48a3649a-4279-4381-a131-447096bd3594",
+        "programId": "fbc8a9c2-460f-4e78-805b-ec92c97628b7",
+        "documentCode": "OQ-002 annotated notes 20261029202031.txt",
+        "documentTitle": "OQ-002 annotated notes 20261029202031",
+        "documentType": "OTHER",
+        "version": "1.0",
+        "fileName": "OQ-002-annotated-notes-20261029202031.txt",
+        "fileSize": 51,
+        "mimeType": "text/plain",
+        "contentHash": "5d4c36f7f7a8aec19de53b35dac6fd5398c200eb25ac8d4484d9b09025320595",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "extraction": "extracted",
+        "wordCount": 10,
+        "createdAt": "2026-10-29T20:23:17.898Z",
+        "updatedAt": "2026-10-29T20:23:17.898Z"
+      },
+      "filing": {
+        "view": "pharma",
+        "folderId": null,
+        "evidenceKind": null,
+        "ctdSection": null,
+        "placementStatus": "unfiled",
+        "confidence": "none",
+        "rationale": "No filing rule matched the name, title, or document text — needs a person to file it.",
+        "folderLabel": "",
+        "needsReview": true
+      }
+    }
+  }
+}
