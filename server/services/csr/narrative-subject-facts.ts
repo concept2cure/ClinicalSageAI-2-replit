@@ -37,6 +37,23 @@ export interface SubjectFacts {
   facts: NarrativeFact[];
   /** Values the rows do not record (or record unusably), for the QC list. */
   missing: string[];
+  /** Present only for a withdrawal ADSL records per subject, with no ADAE event recording it (D17). */
+  withdrawal?: WithdrawalFacts;
+}
+/**
+ * A withdrawal for an AE that the data record per subject only (D17, 2026-10-30):
+ * when it happened, what recorded it, and the treatment-emergent events with
+ * onset on or before it. The data do not say which event led to it, so none is
+ * singled out; events after it are not candidates and are not listed.
+ */
+export interface WithdrawalFacts {
+  /** What records the withdrawal, for example "DSRAEFL = Y". */
+  recordedBy: string;
+  date?: string; day?: number;
+  /** TEAEs with onset on or before the withdrawal, in ADAE order. */
+  events: EventFacts[];
+  /** TEAEs with no recorded onset: neither placed before nor after it. */
+  undated: EventFacts[];
 }
 
 export type NarrativeDatasets = Pick<AdamDatasets, 'ADSL' | 'ADAE' | 'ADEX' | 'ADCM' | 'ADMH'>;
@@ -99,8 +116,8 @@ const SERIOUSNESS: Array<[string, string]> = [
   ['AESMIE', 'other medically important event'],
 ];
 
-function eventFacts(adae: AdamDataset, event: SelectedEvent, n: number, out: SubjectFacts): EventFacts {
-  const r = new FactReader(adae, event.row, event.index, `event${n}`);
+function eventFacts(adae: AdamDataset, event: SelectedEvent, n: number, out: Pick<SubjectFacts, 'facts' | 'missing'>, label: string): EventFacts {
+  const r = new FactReader(adae, event.row, event.index, `${label}${n}`);
   const serious = text(event.row, 'AESER').toUpperCase() === 'Y';
   const seriousnessCriteria = SERIOUSNESS.filter(([v]) => has(adae, v) && text(event.row, v).toUpperCase() === 'Y').map(([, label]) => label);
   const facts: EventFacts = {
@@ -118,6 +135,49 @@ function eventFacts(adae: AdamDataset, event: SelectedEvent, n: number, out: Sub
   if (serious && !seriousnessCriteria.length) r.missing.push(`event${n}.seriousnessCriteria`);
   out.facts.push(...r.facts); out.missing.push(...r.missing.filter(m => !/\.(endDate|endDay)$/.test(m)));
   return facts;
+}
+
+const DAY_MS = 86_400_000;
+/** ADaM study day: the date minus the first dose date, plus one on or after it (no day 0), as ADAE ASTDY counts. */
+function studyDay(date: string, first: string): number {
+  const diff = Math.round((Date.parse(date) - Date.parse(first)) / DAY_MS);
+  return diff >= 0 ? diff + 1 : diff;
+}
+
+/** On or before the withdrawal by date when both are recorded, else by study day; null when the onset is not recorded. */
+function precedes(e: EventFacts, w: Pick<WithdrawalFacts, 'date' | 'day'>): boolean | null {
+  if (e.onsetDate && w.date) return e.onsetDate <= w.date;
+  if (e.onsetDay !== undefined && w.day !== undefined) return e.onsetDay <= w.day;
+  return null;
+}
+
+/** The subject-level withdrawal, its date and day, and the TEAEs on or before it (D17); facts are kept for the listed events only. */
+function withdrawal(d: NarrativeDatasets, s: SelectedSubject, out: SubjectFacts): WithdrawalFacts | undefined {
+  const level = s.subjectLevelWithdrawal;
+  if (!level || s.events.some(e => e.categories.includes('discontinuation'))) return undefined;
+  const r = new FactReader(d.ADSL, s.adsl, s.adslIndex);
+  const w: WithdrawalFacts = { recordedBy: `${level.flag} = Y`, events: [], undated: [] };
+  r.text('withdrawalFlag', level.flag);
+  if (level.dateVariable) w.date = r.date('withdrawalDate', level.dateVariable);
+  else out.missing.push('withdrawalDate (conventions.aeDiscontinuationDate not declared)');
+  if (w.date && out.firstDoseDate) {
+    w.day = studyDay(w.date, out.firstDoseDate);
+    out.facts.push({ field: 'withdrawalDay', value: w.day, source: `${where(d.ADSL, s.adslIndex, level.dateVariable!)} − ${where(d.ADSL, s.adslIndex, 'TRTSDT')} + 1` });
+  }
+  out.facts.push(...r.facts); out.missing.push(...r.missing);
+  level.teae.forEach((row, n) => {
+    const scratch = { facts: [] as NarrativeFact[], missing: [] as string[] };
+    const e = eventFacts(d.ADAE, { ...row, categories: [] }, n + 1, scratch, 'withdrawalEvent');
+    const before = precedes(e, w);
+    if (before === false) return;
+    if (before === null) {
+      w.undated.push(e);
+      out.missing.push(`withdrawalEvents.${e.term}.onset (ASTDT and ASTDY blank)`);
+    } else w.events.push(e);
+    out.facts.push(...scratch.facts); out.missing.push(...scratch.missing.filter(m => !/\.(endDate|endDay)$/.test(m)));
+  });
+  if (!w.events.length) out.missing.push('withdrawalEvents (no treatment-emergent ADAE event has onset on or before the withdrawal)');
+  return w;
 }
 
 function rowsOf(ds: AdamDataset | undefined, index: Map<string, number[]>, subjectId: string) {
@@ -191,7 +251,9 @@ export function subjectNarrativeFacts(d: NarrativeDatasets, idx: NarrativeIndex,
   const out: SubjectFacts = { subjectId: s.subjectId, armName: s.armName, treatment, medicalHistory: [], concomitantMedications: [],
     events: [], categories: [...s.categories], facts: [], missing: [] };
   subjectLevel(d, s, out);
-  out.events = s.events.map((e, n) => eventFacts(d.ADAE, e, n + 1, out));
+  out.events = s.events.map((e, n) => eventFacts(d.ADAE, e, n + 1, out, 'event'));
+  const w = withdrawal(d, s, out);
+  if (w) out.withdrawal = w;
   exposure(d, idx, out);
   concomitant(d, idx, out);
   history(d, idx, out);

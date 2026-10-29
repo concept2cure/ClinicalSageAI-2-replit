@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > shows each declared population under its declared label, between the built-in populations and Completed 12ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > never maps a declared population onto mITT or per-protocol 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a flag the table already reports, a missing flag and a non-Y/N value 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a duplicate declaration in the manifest 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > has a Total column and states n, mean (SD), median and min, max for age 4ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents none without it 6ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > orders age groups by the youngest age in each when AGEGR1N is absent 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > counts sex, race and ethnicity, and states an unrecorded ethnicity as not recorded 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > summarises height and the declared characteristics, and omits weight and BMI the ADSL does not hold 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses descriptive-only fields on a source that does not declare the descriptive table 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > imports an armless dose-response result with its method and population, and shows them 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses an armless result without its method or population, or with a comparator 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > states “Efficacy results not supplied” in §11.4 when the manifest names no efficacy file 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses a mismatch between the manifest and the efficacy file supplied 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > holds a hand-built source: empty efficacy needs the declaration, and the declaration needs empty efficacy 1ms
+ ✓ server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change 100ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  21:06:13
+   Duration  1.23s (transform 412ms, setup 117ms, import 448ms, tests 158ms, environment 0ms)
+
