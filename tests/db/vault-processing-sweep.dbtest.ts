@@ -100,7 +100,9 @@ const catalog = async (id: string) => (await owner.query(
      FROM vault.documents d LEFT JOIN vault.document_catalog c ON c.document_id = d.id WHERE d.id = $1`, [id])).rows[0];
 const extractedRows = async (id: string) => (await owner.query(
   `SELECT new_values FROM audit_logs WHERE action = 'vault.document.extracted' AND record_id = $1`, [id])).rows;
-const sweep = async () => (await import('../../server/jobs/vaultProcessingSweep')).runVaultProcessingOnce();
+// This suite's own organisation only: the sweep is estate-wide, and suites run
+// beside it leave their own scans pending.
+const sweep = async () => (await import('../../server/jobs/vaultProcessingSweep')).runVaultProcessingOnce({ organizationIds: [mine.orgId] });
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
@@ -120,13 +122,6 @@ beforeAll(async () => {
   mine = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
   await seedVaultFixtureParent(owner, mine, { userId, namespace: `${PROBE}parent` });
   await assertVaultFixtureRuntime(mine);
-  // The sweep is estate-wide, and reads ten versions per organisation per run:
-  // read whatever earlier suites left pending, so the counts below are this
-  // suite's own.
-  for (let i = 0; i < 50; i++) {
-    const r = await sweep();
-    if (!r.extracted && !r.failed) break;
-  }
 });
 
 afterAll(async () => {
