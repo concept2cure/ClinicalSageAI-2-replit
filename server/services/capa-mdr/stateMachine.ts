@@ -17,7 +17,7 @@ import type {
   ComplaintState,
   MdrState,
 } from '@shared/schema/capa-mdr';
-import { CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
+import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Complaint lifecycle (21 CFR 820.198)
@@ -77,13 +77,7 @@ const MDR_TRANSITIONS: Record<MdrState, readonly MdrState[]> = {
 // Action item lifecycle (per 21 CFR 820.100(a)(2-3))
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ACTION_TRANSITIONS: Record<ActionState, readonly ActionState[]> = {
-  planned: ['in_progress', 'cancelled'] as const,
-  in_progress: ['done', 'blocked', 'cancelled'] as const,
-  blocked: ['in_progress', 'cancelled'] as const,
-  done: [] as const,
-  cancelled: [] as const,
-};
+// The map is shared with the Quality CAPA register: shared/constants/capa-lifecycle.ts.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
