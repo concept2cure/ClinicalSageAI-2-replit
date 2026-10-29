@@ -388,7 +388,7 @@ router.post('/batch-releases/:id/release', async (_req: Request, res: Response) 
   });
 });
 
-// Deviations are the Quality register's (P-49, 2026-10-29): /api/mdx/qms/deviations
+// Deviations are the Quality register's (P-50, 2026-10-29): /api/mdx/qms/deviations
 // (server/routes/mdx-qms-deviations.ts). The stub that stood here had no store and answered 501.
 
 // ============================================================================

@@ -133,7 +133,7 @@ const CASES: Array<{
     status: 200,
   },
   {
-    name: 'recording a deviation (P-49)',
+    name: 'recording a deviation (P-50)',
     method: 'post',
     path: '/api/mdx/qms/deviations',
     body: { deviationNumber: 'DEV-2026-001', title: 'EM excursion', description: 'Viable count above action limit.', deviationType: 'unplanned', classification: 'major', detectedDate: '2026-10-20' },

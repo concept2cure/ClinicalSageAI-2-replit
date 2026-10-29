@@ -139,7 +139,7 @@ export interface DeviationTaskSource {
 }
 
 /**
- * A deviation owes its close by its target date (P-49), to the person who
+ * A deviation owes its close by its target date (P-50), to the person who
  * recorded the date, until it is closed. A critical deviation's task is
  * critical, a major one's high.
  */

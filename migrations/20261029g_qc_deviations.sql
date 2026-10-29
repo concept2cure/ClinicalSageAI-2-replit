@@ -1,13 +1,13 @@
 -- =============================================================================
--- 20261029g_qc_deviations.sql — the GMP deviation record (D2, 2026-10-29, P-49)
+-- 20261029g_qc_deviations.sql — the GMP deviation record (D2, 2026-10-29, P-50)
 -- =============================================================================
 -- WHY. A deviation is a departure from an approved procedure or instruction
 -- (21 CFR 211.192, 211.100(b); EU GMP Chapter 1, 1.4(xiv)) and is often not
 -- product-keyed: a missed environmental-monitoring reading, a skipped step.
 -- The nonconformance register (qms_nonconforming_products) is keyed to a
--- product and a lot, so it cannot hold one. P-49
+-- product and a lot, so it cannot hold one. P-50
 -- (docs/LAUNCH_DEFINITION_OF_DONE.md) gives deviations their own record in
--- Quality. Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/p49-deviations/.
+-- Quality. Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/p50-deviations/.
 --
 -- WHAT. The table shared/schema/qc-schemas.ts has defined as qcDeviations
 -- since the QC module, which nothing ever created: the /api/qc/deviations

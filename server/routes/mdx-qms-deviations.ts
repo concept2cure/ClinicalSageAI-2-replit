@@ -1,6 +1,6 @@
 /**
  * The GMP deviation register's routes under /api/mdx/qms, mounted by
- * mdx-qms.ts (P-49, 2026-10-29).
+ * mdx-qms.ts (P-50, 2026-10-29).
  *
  *   GET    /api/mdx/qms/deviations              list, newest first
  *   POST   /api/mdx/qms/deviations              record one (open)

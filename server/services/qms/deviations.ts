@@ -1,5 +1,5 @@
 /**
- * The GMP deviation record's writes (P-49, 2026-10-29): record one, move it
+ * The GMP deviation record's writes (P-50, 2026-10-29): record one, move it
  * along its lifecycle with its investigation, and close it.
  *
  * The store is qc_deviations (migrations/20261029g_qc_deviations.sql). Every

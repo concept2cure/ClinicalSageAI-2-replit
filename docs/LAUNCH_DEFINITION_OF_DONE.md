@@ -813,6 +813,15 @@ close the gap between what we have and what Veeva offers here"). That direction 
 
 ## Product decisions, 2026-10-25 (founder)
 
+- **Who may change an organisation view (left open above; answered 2026-10-29 by the saved-views design,
+  `docs/design/VAULT_SAVED_VIEWS_2026-10-29.md` §3.3, as the founder's delegated product call).** Any member may
+  save a personal view, viewers included, because a personal view is a search remembered. Publishing to the
+  organisation, sharing a personal view, and changing a shared view's parameters take a writing role and are the
+  creator's. An organisation manager may rename or delete any organisation view. The creator may always withdraw
+  their own (make it personal, or delete it), even after losing a writing role. A view is a preference, not a
+  governed record: no chained audit row, with the creator, last editor and time kept on the row. The day a view
+  drives a governed act it becomes a governed record, audited and versioned.
+
 ### P-47 — A client starts at their projects; features live in the project, not in an app list
 
 Decided by the founder on 2026-10-25, after testing the product as a client and finding they could not tell how
@@ -872,18 +881,43 @@ vigilance stay with device post-market. The CAPA lifecycle map moves to
 `shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
 
-### P-49 to P-56: decided under the founder's delegation of 2026-10-29
+### P-49 — Training on a controlled SOP is assigned by role and by name, opens at approval, and reaches the people assigned
+
+Decided by the founder, 2026-10-29, answering MR-12's NEW-2 and NEW-3 and the distribution question in
+`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8 item 8 (the recommendations, chosen as offered):
+
+- **Assignment (NEW-2): roles, plus named people.** Each controlled document lists the job roles and any named people
+  who must train on it. The organisation manages its own list of job roles; a role is a job function (QA,
+  Manufacturing, Clinical Operations), not a permission role, so assigning by role never means "everyone with access".
+  Curricula (sets of documents assigned to a role together) can be added later without moving data.
+- **Training before the effective date (NEW-3): yes, once approved.** Between approval and the effective date is the
+  training period. An acknowledgment of an approved version binds that version's digest and release signature, and it
+  counts toward compliance from the moment that version is in force. Nothing counts toward a version that is not yet
+  in force.
+- **Distribution: the people assigned.** When a version is approved, each person it is assigned to (by role or by
+  name) receives a task to read and acknowledge it, due by its effective date. The task uses the existing
+  deadline-task infrastructure; there is no second scheduler. Nobody else is notified.
+- **Compliance counts the assigned people.** The denominator is the distinct people assigned, the numerator their
+  unexpired acknowledgments of the version in force. A document assigned to nobody reads "not assigned", never 0/N.
+
+Not decided here: MR-12 NEW-4 (review quorum and the retirement meaning).
+
+### P-50 to P-56: decided under the founder's delegation of 2026-10-29
 
 The founder delegated, on 2026-10-29: "make founder level decisions based on the best situation for the platform and
 our paying clients and human users … we're not ready for ETMF or CTMS. You could park those completely … We're
 focusing on completing what we have started and perfecting it all." These decide the questions that sessions had
 left open (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8,
 `docs/work-orders/MR-12-qms-controlled-document-control.md` NEW-2 to NEW-4, and
-`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). The test for each was:
+`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). Training assignment,
+training before the effective date and distribution (MR-12 NEW-2, NEW-3; parity §8 item 8) are P-49, the training
+lane's, and are not decided again here. *(Corrected 2026-10-29: this block first carried its own training entry and
+numbered the deviation decision P-49; it was written while P-49 landed from the training lane, which governs.)* The
+test for each was:
 does it complete something already in the catalog, for the client who pays for it, without widening the catalog?
 None widens it.
 
-### P-49 — Deviations are their own record in Quality
+### P-50 — Deviations are their own record in Quality
 
 A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
 Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
@@ -906,23 +940,6 @@ The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage 
 in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
 would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
 nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
-
-### P-50 — Training is assigned per document, may be done before the effective date, and is distributed as tasks
-
-- **Assignment (NEW-2).**
-  - A controlled document names who must train on it: named members, organisation roles, or both, as MR-12 Stage 4
-    designs.
-  - A document with no assignment counts every active member, and says "Everyone (no assignment)". An obligation
-    nobody was assigned must not drop out of view; over-including is the safe direction.
-  - Curricula and job-function roles wait until after D10. For a five-to-fifty-person biotech, a person-or-role list
-    per document is the whole need.
-- **Before the effective date (NEW-3).** Yes. Once a version is approved, its assigned people may acknowledge it
-  before its effective date. That window is the point of an effective date. The acknowledgment binds the approved
-  version's content digest, as today.
-- **Distribution.** When a version is approved, each assigned person gets one task in the one task store, due on the
-  effective date, or on approval if it is already effective. The task completes when they acknowledge, and is
-  cancelled when the version is superseded or retired (`services/tasking/source-task.ts`). This is the distribution
-  of an effective SOP; no separate distribution list is kept.
 
 ### P-51 — Review and approval follow the review-routing decision; retirement has its own meaning (NEW-4)
 
@@ -965,7 +982,7 @@ for `assess_inspection_readiness`, which answers from stated inputs, labelled (2
 
 - **Lanes released.**
   - The Weave-gap lane's items (G2, G3, G6, G15, and G11 and G17 with them) are released to the next free session.
-  - The training-assignment lane, claimed 2026-10-23 and idle, is released to the Quality lane, which carries P-50.
+  - The training-assignment lane is not released: it is active, and landed P-49 on 2026-10-29.
 - **P-39's order stands.** Commitments converge (step 2) before the correspondence family (step 3), so G3's parser
   waits; zero duplication outranks speed.
 - **Device post-market stays in Projects**, as P-48's correction of 2026-10-29 already reads (Q6).

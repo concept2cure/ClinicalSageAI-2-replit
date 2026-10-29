@@ -3625,7 +3625,17 @@ export const C2C_MIGRATION_FILES = [
   // pair on the same transaction. After the base schema (organization_users).
   // Public with organization_id INTEGER NOT NULL; creates no table; no DROP.
   'migrations/20261029f_qms_approver_designation.sql',
-  // The GMP deviation record (D2, 2026-10-29, P-49): qc_deviations, as
+  // Saved queries and Vault saved views (D2, P-46, 2026-10-29;
+  // docs/design/VAULT_SAVED_VIEWS_2026-10-29.md): saved_precedent_queries, its
+  // only creator, previously install-fresh only (deploy-path baseline). Amended
+  // in place: surface, visibility, program_id, updated_by; scope -> jsonb and
+  // timestamps -> timestamptz where still old; four CHECKs and a same-org
+  // project key ON DELETE CASCADE. After organizations/users (push) and
+  // regulatory_programs (20260524, index 1); creates regulatory_programs_id_org_uq
+  // when absent, as 20260926b does. Public with organization_id INTEGER NOT NULL,
+  // so the sweeps below police it. Every statement guarded; no DROP.
+  'migrations/20260505_saved_precedent_queries.sql',
+  // The GMP deviation record (D2, 2026-10-29, P-50): qc_deviations, as
   // shared/schema/qc-schemas.ts has defined it since the QC module and nothing
   // ever created (its /api/qc routes were a 501 stub), with client_workspace_id
   // nullable. After the base schema (organizations). Public with

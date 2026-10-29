@@ -15,8 +15,13 @@
  *
  * Every response uses the canonical { data, meta? } / { error, details? }
  * envelopes via server/lib/api-response.ts. Mutations are validated
- * against Zod schemas on the way in; the global audit middleware writes
- * audit_logs entries on every successful 2xx response.
+ * against Zod schemas on the way in.
+ *
+ * No audit row is written. These are saved search parameters, not governed
+ * records (docs/design/VAULT_SAVED_VIEWS_2026-10-29.md §3.4). The table also
+ * holds Vault saved views (surface 'vault', P-46). Every statement here is
+ * predicated on surface = 'precedent', and responses carry only the ten
+ * precedent columns; saved-view-store-predicates.test.ts holds both.
  */
 
 import { Router, Request, Response } from 'express';
@@ -79,15 +84,30 @@ const patchSchema = z
 
 const idParamSchema = z.coerce.number().int().positive();
 
+/** The ten columns a precedent body has always carried. The table's newer
+ *  columns (surface, visibility, program_id, updated_by) belong to Vault views. */
+const PRECEDENT_COLUMNS = {
+  id: savedPrecedentQueries.id,
+  organizationId: savedPrecedentQueries.organizationId,
+  userId: savedPrecedentQueries.userId,
+  label: savedPrecedentQueries.label,
+  query: savedPrecedentQueries.query,
+  scope: savedPrecedentQueries.scope,
+  hits: savedPrecedentQueries.hits,
+  lastRunAt: savedPrecedentQueries.lastRunAt,
+  createdAt: savedPrecedentQueries.createdAt,
+  updatedAt: savedPrecedentQueries.updatedAt,
+};
+
 router.get('/', async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
 
     const rows = await requestDb(req)
-      .select()
+      .select(PRECEDENT_COLUMNS)
       .from(savedPrecedentQueries)
-      .where(eq(savedPrecedentQueries.organizationId, orgId))
+      .where(and(eq(savedPrecedentQueries.organizationId, orgId), eq(savedPrecedentQueries.surface, 'precedent')))
       .orderBy(desc(savedPrecedentQueries.updatedAt));
 
     return ok(
@@ -126,12 +146,14 @@ router.post('/', async (req: Request, res: Response) => {
       .values({
         organizationId: orgId,
         userId,
+        surface: 'precedent',
+        visibility: 'org_public',
         label,
         query,
         scope: scope ?? null,
         hits: -1,
       })
-      .returning();
+      .returning(PRECEDENT_COLUMNS);
 
     log.info('saved precedent query created', { orgId, userId, savedQueryId: row.id, label });
     return created(res, row);
@@ -166,8 +188,8 @@ router.patch('/:id', async (req: Request, res: Response) => {
     const [row] = await requestDb(req)
       .update(savedPrecedentQueries)
       .set(updates)
-      .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
-      .returning();
+      .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId), eq(savedPrecedentQueries.surface, 'precedent')))
+      .returning(PRECEDENT_COLUMNS);
     if (!row) return notFoundInTenant(res, 'Saved query');
 
     log.info('saved precedent query updated', { orgId, savedQueryId: id, fields: Object.keys(body) });
@@ -188,7 +210,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     const [row] = await requestDb(req)
       .delete(savedPrecedentQueries)
-      .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
+      .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId), eq(savedPrecedentQueries.surface, 'precedent')))
       .returning({ id: savedPrecedentQueries.id });
     if (!row) return notFoundInTenant(res, 'Saved query');
 

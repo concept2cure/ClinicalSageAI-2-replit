@@ -1,6 +1,6 @@
-# P-49: deviations are their own record in Quality (server half)
+# P-50: deviations are their own record in Quality (server half)
 
-Row: D2 (launch catalog: QMS). Decision: P-49 in `docs/LAUNCH_DEFINITION_OF_DONE.md`, under the founder's delegation
+Row: D2 (launch catalog: QMS). Decision: P-50 in `docs/LAUNCH_DEFINITION_OF_DONE.md`, under the founder's delegation
 of 2026-10-29. Slice G16 of `docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md`.
 
 ## What already exists

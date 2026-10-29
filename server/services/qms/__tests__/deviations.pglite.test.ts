@@ -1,5 +1,5 @@
 /**
- * P-49: the deviation record, against PostgreSQL in process with the set's own
+ * P-50: the deviation record, against PostgreSQL in process with the set's own
  * migration (20261029g_qc_deviations.sql). A deviation is recorded open, moves
  * only along DEVIATION_TRANSITIONS, goes for approval only with its root cause
  * and resolution, and closes only from pending approval. The signing ceremony
