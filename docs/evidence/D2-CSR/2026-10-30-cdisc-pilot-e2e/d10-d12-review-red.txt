@@ -1,0 +1,88 @@
+## Review red 1 (HEIGHTBL not a positive number)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > shows each declared population under its declared label, between the built-in populations and Completed 12ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > never maps a declared population onto mITT or per-protocol 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a flag the table already reports, a missing flag and a non-Y/N value 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a duplicate declaration in the manifest 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > has a Total column and states n, mean (SD), median and min, max for age 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents none without it 6ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > orders age groups by the youngest age in each when AGEGR1N is absent 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > counts sex, race and ethnicity, and states an unrecorded ethnicity as not recorded 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > summarises height and the declared characteristics, and omits weight and BMI the ADSL does not hold 2ms
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value 7ms
+   → expected a refusal
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses descriptive-only fields on a source that does not declare the descriptive table 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > imports an armless dose-response result with its method and population, and shows them 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses an armless result without its method or population, or with a comparator 0ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > states “Efficacy results not supplied” in §11.4 when the manifest names no efficacy file 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses a mismatch between the manifest and the efficacy file supplied 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > holds a hand-built source: empty efficacy needs the declaration, and the declaration needs empty efficacy 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value
+Error: expected a refusal
+ ❯ refusal server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:63:9
+     61| const refusal = (fn: () => unknown) => {
+     62|   try { fn(); } catch (error) { return error as { code: string; issues…
+     63|   throw new Error('expected a refusal');
+       |         ^
+     64| };
+     65| const issues = (source: unknown) => {
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:171:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  22:55:48
+   Duration  660ms (transform 280ms, setup 88ms, import 254ms, tests 55ms, environment 0ms)
+
+
+## Review red 2 (declared label repeats a built-in row)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > shows each declared population under its declared label, between the built-in populations and Completed 12ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > never maps a declared population onto mITT or per-protocol 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a flag the table already reports, a missing flag and a non-Y/N value 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > refuses a duplicate declaration in the manifest 1ms
+ × server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags 8ms
+   → expected [] to include 'A declared population label repeats a…'
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > has a Total column and states n, mean (SD), median and min, max for age 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > takes age groups from ADSL AGEGR1 in AGEGR1N order, and invents none without it 6ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > orders age groups by the youngest age in each when AGEGR1N is absent 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > counts sex, race and ethnicity, and states an unrecorded ethnicity as not recorded 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > summarises height and the declared characteristics, and omits weight and BMI the ADSL does not hold 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses a categorical value outside its declared categories and a non-numeric continuous value 6ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D12: the descriptive demographics table > refuses descriptive-only fields on a source that does not declare the descriptive table 3ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > imports an armless dose-response result with its method and population, and shows them 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses an armless result without its method or population, or with a comparator 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > states “Efficacy results not supplied” in §11.4 when the manifest names no efficacy file 2ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > refuses a mismatch between the manifest and the efficacy file supplied 1ms
+ ✓ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D10: armless efficacy results, and a run without efficacy > holds a hand-built source: empty efficacy needs the declaration, and the declaration needs empty efficacy 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts > D11: further named populations from declared ADSL flags > holds a hand-built source to its declared counts and flags
+AssertionError: expected [] to include 'A declared population label repeats a…'
+ ❯ server/services/csr/__tests__/csr-populations-demographics-efficacy.test.ts:110:30
+    108|     for (const label of ['Safety', 'mITT', 'completed']) {
+    109|       source.studyData.additionalPopulations = [{ key: 'EVAL', label, …
+    110|       expect(issues(source)).toContain('A declared population label re…
+       |                              ^
+    111|     }
+    112|     source.studyData.additionalPopulations = undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  22:56:39
+   Duration  687ms (transform 249ms, setup 83ms, import 222ms, tests 63ms, environment 0ms)
+

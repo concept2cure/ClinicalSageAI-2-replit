@@ -1,0 +1,74 @@
+{
+ "attribution": "CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC). Counts only; no pilot value.",
+ "narrativeJob": {
+  "status": "complete",
+  "selected": 95,
+  "composed": 95,
+  "refused": 0,
+  "sections": {
+   "written": [
+    "14.3.3",
+    "12.3.2"
+   ],
+   "kept": []
+  }
+ },
+ "factGate": {
+  "ok": 95,
+  "failed": 0,
+  "facts": 5043
+ },
+ "narrativeOracle": {
+  "withdrawalSubjects": 92,
+  "checks": 1104,
+  "matched": 1104,
+  "candidateEvents": 484,
+  "candidateSentencesChecked": 484,
+  "afterWithdrawalExcluded": 0,
+  "noPrecedingTeae": 0,
+  "undated": 0,
+  "mismatched": 0
+ },
+ "narrativeOracleShownFailing": {
+  "onsetDayShiftedInOneNarrative": {
+   "matched": 1103,
+   "mismatched": 1
+  },
+  "causeInsertedInOneNarrative": {
+   "matched": 1102,
+   "mismatched": 2
+  }
+ },
+ "spotCheck10": "TOTAL 132/132",
+ "spotCheck10ShownFailing": "TOTAL 130/132",
+ "causeGateOnPilot": {
+  "withdrawal": 92,
+  "causeRewriteRefused": 92,
+  "causeRewriteAccepted": 0,
+  "pronounRewriteRefused": 92,
+  "benignRewriteAccepted": 92,
+  "benignRewriteRefused": 0
+ },
+ "tablesAgainstRun2": "identical (all 11 tables, and the 95-subject selection)",
+ "engineVsOracle": {
+  "cells": 1436,
+  "matched": 1436,
+  "mismatched": 0
+ },
+ "engineVsPublished": {
+  "cells": 174,
+  "matched": 174,
+  "mismatched": 0
+ },
+ "assembly": {
+  "status": "incomplete",
+  "unresolvedReferences": [
+   {
+    "reference": "Section 14.3.3",
+    "number": "14.3.3",
+    "section": "12.3.2"
+   }
+  ],
+  "pages": 3636
+ }
+}
