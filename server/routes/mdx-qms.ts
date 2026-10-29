@@ -132,7 +132,7 @@ import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
 import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
-import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
 
@@ -1225,13 +1225,13 @@ router.get('/qms/changes/summary', async (req: Request, res: Response) => {
    document, supplier, audit and nonconformance writes carry (P1-31). A viewer
    could open, edit, transition and delete a change record and its links; only
    the approve step (a signature with its own authority check) refused it. */
-router.post('/qms/changes', requireEditorAccess, async (req: Request, res: Response) => {
+router.post('/qms/changes', requireEditorAccess, admitBodyProject, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = changeCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
-    const row = await createChange(orgId, { ...parsed.data, proposedBy: getUserId(req) }, requestPgClient(req));
+    const row = await createChange(orgId, { ...parsed.data, programId: admittedProject(res), proposedBy: getUserId(req) }, requestPgClient(req));
     /* WO-16C #133. Was `void auditService.logAction({…})`. `createChange` has
        already inserted the change request and returned it, so the register entry
        stands; `meta.auditTrail` now says whether the §11.10(e) record of who
@@ -1240,7 +1240,7 @@ router.post('/qms/changes', requireEditorAccess, async (req: Request, res: Respo
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.create',
       resourceType: 'qms_change_control', resourceId: row.id,
-      details: { changeNumber: row.change_number, classification: row.classification },
+      details: { changeNumber: row.change_number, classification: row.classification, programId: row.program_id ?? null },
     }, requestConnectable(req));
     return created(res, row, { auditTrail });
   } catch (err: unknown) {

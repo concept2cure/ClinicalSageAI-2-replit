@@ -1,0 +1,13 @@
+# M25: the form starts on the open project
+# file: client/src/concept2cure/quality/ChangeControl.tsx
+# command: npx vitest run client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx
+# exit: 1
+# original sha256 ee2c1351d66cdf8c1c9a718959fd6b5d3f5cdfceba13cbf336eeea03426c093b; restored byte for byte: True
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide 462ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change 170ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change

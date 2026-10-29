@@ -1,0 +1,7 @@
+Engineering's two P-60 reads on the deploy-shaped database (PostgreSQL 16.15, install-fresh + deploy-migrate, then deploy-migrate replayed). The probe reads the SQL text out of server/routes/mdx-engineering.ts, seeds two organizations, three projects, four documents with sections and six change controls in one transaction, runs both reads for organization A's project OWN with the route's parameters, and rolls back.
+Seeded: OWN's live 510(k) with §1 approved, §2 a todo heading over §2.1, §3 todo (all mandatory); an archived OWN document; a sibling project's and another organization's documents; changes CC-OWN-1 (proposed), CC-OWN-2 (under assessment), CC-OWN-DEL (deleted), CC-SIB-1, CC-NONE-1 (no project), CC-FOR-1 (other organization).
+
+dhf read for org A, project OWN: ["Own 510(k) §1 approved mandatory","Own 510(k) §2.1 drafted mandatory","Own 510(k) §3 todo mandatory"]
+ecrs read for org A, project OWN: ["CC-OWN-2 under_assessment","CC-OWN-1 proposed"]
+a change naming another organization's project: 23503
+after deleting the sibling project, its change: {"organization_id":11,"program_id":null}

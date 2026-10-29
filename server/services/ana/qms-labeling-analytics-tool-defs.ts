@@ -147,6 +147,7 @@ export const QMS_CHANGE_CREATE: AnaTool = {
       implementation_plan:        { type: 'string' },
       target_implementation_date: { type: 'string', description: 'ISO date (YYYY-MM-DD).' },
       qms_document_id:            { type: 'number', description: 'Optional QMS document this change controls.' },
+      program_id:                 { type: 'string', description: "The project (regulatory_programs UUID) the change belongs to, when it changes one product. It is then shown on that project's Engineering screen. Omit for an organization-wide change." },
     },
     required: ['change_number', 'title'],
   },

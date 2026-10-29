@@ -1,0 +1,261 @@
+Red. Each section was captured on the tree as it stood before the change it covers.
+
+## §1 red, at HEAD 267b91e70, 2026-10-29T19:42:14Z: the six new test files and the five amended ones, before any product file is edited
+Command: npx vitest run <the eleven files below>
+Database: none (route and tool doubles; PGlite for the schema file).
+
+### client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx: 6 failed, 12 passed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows none of another project's DHF, trace, change-request or non-conformance rows
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says why each of the three panels is not shown
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not read for the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the all-clear when the risk file has records and all are verified
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > treats an unreported scope as not keyed (fail closed)
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > renders the panels again once the route reports them keyed to the project
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > prints them once the route reports change requests and the DHF keyed to the project
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > lists and counts the documents once the route reports them keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say the records are organization-wide when the route did not report it
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not promise that records appear here while the read is not keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say an unreported read is organization-wide in its empty hint
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the original empty hints once the route reports the panels keyed to the project
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed
+
+### server/routes/__tests__/mdx-engineering.contract.test.ts: 1 failed, 18 passed
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 403 without org context
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 422 when programId is not a UUID
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > 404 for a program outside the caller tenant
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns every key the useEngineering hook destructures
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > returns empty arrays, never fabricated rows, for an empty tenant
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > maps ISO 14971 integer scales onto the surface heatmap keys
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > falls back to initial severity when no control has moved residual risk
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > clamps out-of-range scale values rather than dropping the hazard
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > survives a missing optional table instead of blanking the surface
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not call a design input verified while its validation is pending
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > renders the design outputs, not [object Object]
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > passes the store id through instead of re-prefixing a TEXT key
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > does not list a merely unmigrated table as unavailable
+ × server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing
+
+### server/routes/__tests__/mdx-engineering-per-product.test.ts: 11 failed, 3 passed
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > leaves out an empty heading, as the documents' readiness does, so it is not reported as a blocker
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > never shows a sibling project's change, the organization's unscoped one, another organization's or a deleted one
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+ ✓ server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before either panel is read
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+
+### client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx: 1 failed, 9 passed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not claim nothing is blocking when the blocker sources failed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > says an empty read has nothing to check
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not draw an all-zero ISO 14971 matrix over a failed risk read
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > draws the matrix when the risk file read cleanly
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not report a hazard count over a risk file it could not read
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — an unreadable panel is not an all-clear > does not print "Documents in flight 0" when the documents read failed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no review-pending count over a risk file it could not read
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no hard-blocker count over sources it could not read, once every source is keyed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no counts while the sources are still loading
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints the counts once the sources have been read
+
+### server/routes/__tests__/mdx-engineering-panels-by-project.test.ts: 1 failed, 8 passed
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > reads the project's own non-conformances, after the ownership check, and reports the panel keyed to the project
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > never shows another project's non-conformances, the organization's unscoped ones, or another organization's
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > the open-issues card counts the project's records only
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a project with none of its own reads an empty panel, still keyed to it
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — non-conformances > a store without the program key is a failed panel, not an empty one
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > reads the artifacts of the project's own anchored records, plus its IEC 62304 items, and reports the panel keyed to the project
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — documents > never shows a sibling project's artifacts, an unanchored project's, or a mis-anchored foreign project's
+ ✓ server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > another organization's project is refused before any panel is read
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+
+### tests/schema-contract/change-controls-program-key.pglite.test.ts: 0 failed, 0 passed, 7 not run
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > runs after the files that create its table and the program key, and before the uuid and tenant sweeps
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a replay adds nothing: one nullable uuid column, one NOT VALID key that nulls only the program, one partial index
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > 20261029l on the applier > a third replay is still a no-op on the shape
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > existing changes are the organization's records > the change written before the column keeps no project, through every replay
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > from here on the database holds the key > a change naming its own organization's project is written
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > from here on the database holds the key > a change naming another organization's project, or a missing one, is refused
+ ↓ tests/schema-contract/change-controls-program-key.pglite.test.ts > from here on the database holds the key > deleting a project unbinds its changes and keeps their organization
+
+### server/routes/__tests__/mdx-engineering-trace-by-project.test.ts: 1 failed, 5 passed
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > reads the project's own design inputs, after the ownership check, and reports the panel keyed to the project
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > never shows another project's inputs or the organization's unscoped ones
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > a project with no design inputs of its own reads an empty trace, still keyed to it
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > another organization's project is refused before the trace is read
+ ✓ server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > a store without the program key is a failed panel, not an empty one
+ × server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's
+
+### server/routes/__tests__/qms-change-project.test.ts: 6 failed, 1 passed
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses another organization's project with 404 "Project not found", and writes nothing
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses a project that does not exist with 404 "Project not found", and writes nothing
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses an id that is not a project id with 404 "Project not found", and writes nothing
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > answers 503 when ownership cannot be checked, and writes nothing
+ × server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > with no project named, records the organization's change without asking, as before
+ ✓ server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > an edit cannot move a change onto a project: PATCH writes no program_id
+
+### client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx: 5 failed, 0 passed
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > lists the project's document sections, grouped under the document each belongs to
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > a blocked section reaches the blocker feed by its section and document, not as a DHF entry
+ × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > an empty design history says where sections come from
+
+### client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx: 2 failed, 2 passed
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none
+
+### server/services/ana/__tests__/change-tool-admits-program.test.ts: 3 failed, 1 passed
+ × server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > offers the model a program_id to name the project
+ × server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > raises it under the caller's own project, after asking
+ ✓ server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > refuses another organization's project, and writes no row
+ × server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > with no program_id, raises an organization-level change without asking, as before
+
+### tests/schema-contract/change-controls-program-key.pglite.test.ts: the file fails to load
+Error: ENOENT: no such file or directory, open '<repo>/migrations/20261029l_qms_change_controls_program_key.sql'
+
+### Why each failed (first line of each assertion)
+FAIL  server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+   AssertionError: expected { risks: 'program', …(5) } to deeply equal { risks: 'program', …(5) }
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+   AssertionError: expected 'organization' to be 'program' // Object.is equality
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit
+   AssertionError: expected [] to deeply equal [ 'doc_own' ]
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary
+   AssertionError: expected undefined to match object { label: 'Section 1', ver: 'v2', …(2) }
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only
+   AssertionError: expected +0 to be 33 // Object.is equality
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it
+   AssertionError: expected 'organization' to be 'program' // Object.is equality
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+   AssertionError: expected [] to deeply equal ArrayContaining ["dhf", "summary"]
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project
+   AssertionError: expected 'organization' to be 'program' // Object.is equality
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes
+   AssertionError: expected [ { …(2) } ] to deeply equal []
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open
+   AssertionError: expected [] to deeply equal [ 'open', 'review', 'approved', …(1) ]
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+   AssertionError: expected [] to deeply equal ArrayContaining ["ecrs", "summary"]
+FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+   AssertionError: expected { risks: 'program', …(5) } to deeply equal { risks: 'program', …(5) }
+FAIL  server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's
+   AssertionError: expected { risks: 'program', …(5) } to match object { risks: 'program', …(5) }
+FAIL  server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections
+   AssertionError: expected +0 to be 50 // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > records it against the caller organization's own project, after asking
+   AssertionError: expected 'NOT WRITTEN' to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses another organization's project with 404 "Project not found", and writes nothing
+   AssertionError: expected 201 to be 404 // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses a project that does not exist with 404 "Project not found", and writes nothing
+   AssertionError: expected 201 to be 404 // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > refuses an id that is not a project id with 404 "Project not found", and writes nothing
+   AssertionError: expected 201 to be 404 // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > answers 503 when ownership cannot be checked, and writes nothing
+   AssertionError: expected 201 to be 503 // Object.is equality
+FAIL  server/routes/__tests__/qms-change-project.test.ts > POST /api/mdx/qms/changes — the project a change is raised against > with no project named, records the organization's change without asking, as before
+   AssertionError: expected 'NOT WRITTEN' to be null
+FAIL  server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > offers the model a program_id to name the project
+   AssertionError: expected [ 'change_number', 'title', …(9) ] to include 'program_id'
+FAIL  server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > raises it under the caller's own project, after asking
+   AssertionError: expected [ { kind: 'ownership' }, …(1) ] to deeply equal [ { kind: 'ownership' }, …(1) ]
+FAIL  server/services/ana/__tests__/change-tool-admits-program.test.ts > qms_change_create: the project a change is raised against > with no program_id, raises an organization-level change without asking, as before
+   AssertionError: expected [ { kind: 'write', …(1) } ] to deeply equal [ { kind: 'write', programId: null } ]
+FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide
+   TestingLibraryElementError: Unable to find an accessible element with the role "radiogroup" and name `/Project/`
+FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it
+   TestingLibraryElementError: Unable to find an accessible element with the role "radio" and name "SP-1 · Sensor patch"
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > lists the project's document sections, grouped under the document each belongs to
+   TestingLibraryElementError: Unable to find an element by: [data-testid="eng-design-history"]
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > says what the panel is and is not: not an inspected design history file index
+   TestingLibraryElementError: Unable to find an element by: [data-testid="eng-design-history-note"]
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > counts the project's mandatory sections approved, and does not call it DHF completion
+   AssertionError: expected <div class="metric-card">…(3)</div> to be undefined
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > a blocked section reaches the blocker feed by its section and document, not as a DHF entry
+   AssertionError: expected 'dhfDHF §3Section 3Sensor 510(k) · man…' not to match /DHF §/
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designHistory.test.tsx > EngineeringSurface — the project's design history > an empty design history says where sections come from
+   AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to match /This project's document sections appe…/
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel
+   AssertionError: expected 'Hard blockers not counted: DHF sectio…' to match /hard blockers not counted: document …/i
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's
+   AssertionError: metric card "Mandatory sections approved" must render: expected undefined to be truthy
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > prints them once the route reports change requests and the DHF keyed to the project
+   AssertionError: metric card "Mandatory sections approved" must render: expected undefined to be truthy
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's
+   AssertionError: metric card "Mandatory sections approved" must render: expected undefined to be truthy
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the original empty hints once the route reports the panels keyed to the project
+   AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to match /This project's document sections appe…/
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed
+   AssertionError: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to match /Could not load document sections/
+FAIL  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx > EngineeringSurface — the blocker sub-head counts only what was read > prints no hard-blocker count over sources it could not read, once every source is keyed
+   AssertionError: expected 'Not counted until the design history …' to match /Not counted until the design history,…/
+
+ Test Files  11 failed (11)
+      Tests  37 failed | 59 passed | 7 skipped (103)
+
+Passing at HEAD by design (they pin behaviour the change must keep): the foreign-project refusal before any panel read; AnA's refusal of a foreign program_id (the registry wrapper's); PATCH writes no program_id; the form's organisation-wide and no-open-project cases; and the route, contract and surface cases that did not change meaning.
+
+## §2 the route as at HEAD (M0), under the new and amended route tests, after the change was written
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST computes initial_risk = severity × probability 3ms
+ × tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over mandatory sections only 6ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project 21ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit 5ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary 4ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only 4ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project 2ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open 3ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one 2ms
+ × server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 3ms
+ ✓ server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 3ms
+ × server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections 9ms
+ × server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's 12ms
+ × server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's 8ms
+ Test Files  5 failed (5)
+      Tests  15 failed | 58 passed (73)
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+  "level": "error",
+stderr | server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows
+  "level": "error",
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over mandatory sections only
+ FAIL  server/routes/__tests__/mdx-engineering-panels-by-project.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > reads the project's own document sections, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > never shows a sibling project's sections, another organization's, an archived document's, or the organization's kit
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > names each section's document, its version and its status in the screen's vocabulary
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > counts the summary's figure over the project's mandatory sections only
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a project with no sections reads an empty panel, still keyed to it
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — the design history is the project's document sections > a failed read is a failed panel, not an empty design history
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > reads the project's own change controls, after the ownership check, and reports the panel keyed to the project
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > no longer reads change_requests, which nothing writes
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > maps the register's lifecycle onto the screen's four states, and counts the undecided ones as open
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — change requests are the project's change controls > a store without the project key is a failed panel, not an empty one
+ FAIL  server/routes/__tests__/mdx-engineering-per-product.test.ts > GET /api/mdx/engineering/:programId — refusal and scope report > reports every panel as the project's
+ FAIL  server/routes/__tests__/mdx-engineering-trace-by-project.test.ts > GET /api/mdx/engineering/:programId — the design-controls trace > every panel is reported as the project's
+ FAIL  server/routes/__tests__/mdx-engineering.contract.test.ts > GET /api/mdx/engineering/:programId > computes DHF completion only over mandatory sections

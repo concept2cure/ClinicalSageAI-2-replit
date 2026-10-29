@@ -1,0 +1,39 @@
+# M18g: the migration with a bare ON DELETE SET NULL, applied to a copy of the deploy-shaped database (c2c_p60_m18), then ci:purge-coverage against it
+109c109
+<       ON DELETE SET NULL (program_id)
+---
+>       ON DELETE SET NULL
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+   platform records of a purge, kept by design and not residue (PURGE_PLATFORM_RECORDS): 1
+     tenant_offboarding_certificates: The offboarding certificate (P-58, migrations/20261029k_tenant_offboarding_custody.sql): one row per purged tenant, written by its purge, with the export digest, the rows erased per table, the held records erased, the custody signature, who purged and when. Counts, identifiers, digests and times only. Append-only for every role; it is the platform's record that the tenant's data was returned and erased.
+   keys from a table the purge does not erase (a held row stops the purge; a platform record is written after it): 2
+     public.submission_orchestrator_inputs (program_id) → public.regulatory_programs, NO ACTION [submission_orchestrator_inputs_program_id_fkey]
+     public.tenant_offboarding_certificates (custody_signature_id) → public.electronic_signatures, NO ACTION [tenant_offboarding_certificates_custody_signature_fk]
+❌ purge-coverage: 1 foreign key(s) stop a tenant purge part-way:
+  ✗ public.qms_change_controls (program_id, organization_id) → public.regulatory_programs, SET NULL on a NOT NULL column [qms_change_controls_program_same_org_fk]: the purge never deletes it
+
+The purge deletes the list in order in one transaction. For a tenant holding one such row, the
+referenced DELETE fails (23503, or 23502 for SET NULL on a NOT NULL column) and the WHOLE erasure
+rolls back. List the referencing table in PURGE_CHILD_TABLES before the table it names (with a
+PURGE_PARENT_SCOPED predicate when it has no organization_id), or, when its rows must not be erased,
+name it with its reason in PURGE_REFERRERS_NOT_ERASED.
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_assembly_runs
+  - csr_narrative_runs
+  - qc_deviations
+
+First: confirm the table still exists on a CURRENT schema. This gate reads the
+live database, and a table some migration drops can linger on a local one
+that has not replayed it — in which case the fix is to migrate, not to list
+a table that a correctly-migrated database does not have. Listing a phantom
+here makes the purge look more complete than it is, which is the opposite of
+what this gate is for.
+
+If it is real: add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON
+DELETE CASCADE path from a table already there. A tenant that asks to be
+erased must not keep rows in a table nobody remembered to list.
+exit 1

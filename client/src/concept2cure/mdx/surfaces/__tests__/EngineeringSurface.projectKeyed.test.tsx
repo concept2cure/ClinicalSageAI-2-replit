@@ -181,7 +181,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     // not printed while the only sources that can raise one are left out.
     expect(blockerSub(container)).toMatch(/1 review-pending/);
     expect(blockerSub(container)).not.toMatch(/\d+ hard blockers/);
-    expect(blockerSub(container)).toMatch(/hard blockers not counted: DHF sections and non-conformances are left out/i);
+    expect(blockerSub(container)).toMatch(/hard blockers not counted: document sections and non-conformances are left out/i);
   });
 
   it('does not claim change requests or non-conformances were checked when they were not read for the project', async () => {
@@ -259,7 +259,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i));
 
     const ecr = card(container, 'Open change requests');
-    const dhfCard = card(container, 'DHF completion');
+    const dhfCard = card(container, 'Mandatory sections approved');
     expect(ecr.querySelector('.metric-val')?.textContent).not.toMatch(/5/);
     expect(dhfCard.querySelector('.metric-val')?.textContent).not.toMatch(/64/);
     expect(ecr.textContent ?? '').toMatch(NOT_KEYED);
@@ -277,7 +277,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     await waitFor(() => expect(text(container)).not.toMatch(/Loading/i));
 
     expect(card(container, 'Open change requests').querySelector('.metric-val')?.textContent).toBe('5');
-    expect(card(container, 'DHF completion').querySelector('.metric-val')?.textContent).toBe('64%');
+    expect(card(container, 'Mandatory sections approved').querySelector('.metric-val')?.textContent).toBe('64%');
   });
 
   it("does not list or count the organisation's documents as this project's", async () => {
@@ -290,7 +290,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     expect(docs.querySelector('.metric-val')?.textContent).not.toBe('1');
     expect(docs.textContent ?? '').not.toMatch(/1 ready/);
     expect(docs.textContent ?? '').toMatch(NOT_KEYED);
-    expect(card(container, 'DHF completion').textContent ?? '').not.toMatch(/avg doc 100%/);
+    expect(card(container, 'Mandatory sections approved').textContent ?? '').not.toMatch(/avg doc 100%/);
     const note = screen.getByTestId('eng-not-keyed-documents');
     expect(note.textContent ?? '').toMatch(NOT_KEYED);
   });
@@ -380,7 +380,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     const { container } = mount();
     await loadedAndExpanded(container);
 
-    expect(text(container)).toMatch(/Device-category sections appear here once the 510\(k\) section set is created\./);
+    expect(text(container)).toMatch(/This project's document sections appear here once its documents have sections\./);
     expect(text(container)).toMatch(/Engineering change requests appear here as they are raised\./);
     expect(text(container)).not.toMatch(/Nothing is recorded for the organization/);
   });
@@ -397,7 +397,7 @@ describe('EngineeringSurface — panels that read across projects are not shown 
     fireEvent.click(container.querySelector('[aria-expanded]') as HTMLElement);
 
     expect(container.querySelector('[data-testid^="eng-not-keyed-"]')).toBeNull();
-    expect(text(container)).toMatch(/Could not load DHF sections/);
+    expect(text(container)).toMatch(/Could not load document sections/);
     expect(text(container)).toMatch(/Could not load change requests/);
   });
 });

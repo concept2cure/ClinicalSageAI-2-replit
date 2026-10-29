@@ -1,0 +1,77 @@
+// Run Engineering's two P-60 panel reads, as the route sends them, on the
+// deploy-shaped database: the SQL text is read out of server/routes/mdx-engineering.ts
+// so the probe cannot drift from it. Seeds two organizations, three programs,
+// documents and sections, and change controls, in one transaction that is
+// rolled back. usage: node probe.mjs (DATABASE_URL set)
+import fs from 'node:fs';
+import pg from 'pg';
+
+const src = fs.readFileSync('/home/user/ClinicalSageAI-2-replit/server/routes/mdx-engineering.ts', 'utf8');
+const sqlOf = (panel) => {
+  const m = new RegExp(`'${panel}',\\s*\`([\\s\\S]*?)\``).exec(src);
+  if (!m) throw new Error(`no SQL for ${panel}`);
+  return m[1];
+};
+const DHF = sqlOf('dhf');
+const ECRS = sqlOf('ecrs');
+
+const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await c.connect();
+const q = (s, a) => c.query(s, a);
+try {
+  await q('BEGIN');
+  const org = async (n) => (await q(`INSERT INTO organizations (name, slug) VALUES ($1, $1) RETURNING id`, [`p60-probe-${n}-${Date.now()}`])).rows[0].id;
+  const A = await org('a');
+  const B = await org('b');
+  const prog = async (o, code) => (await q(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, $3, '510K', 'device', 'FDA', $4) RETURNING id`, [o, code, code, code])).rows[0].id;
+  const OWN = await prog(A, 'P60-OWN');
+  const SIB = await prog(A, 'P60-SIB');
+  const FOR = await prog(B, 'P60-FOR');
+  const doc = async (id, o, p, title, status = 'draft') => q(
+    `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title, status)
+     VALUES ($1, $2, $3, 'k510', 'fda', 'fda-510k-2024', $4, $5)`, [id, o, p, title, status]);
+  const tag = Date.now();
+  await doc(`doc_p60_own_${tag}`, A, OWN, 'Own 510(k)');
+  await doc(`doc_p60_arch_${tag}`, A, OWN, 'Archived 510(k)', 'archived');
+  await doc(`doc_p60_sib_${tag}`, A, SIB, 'Sibling 510(k)');
+  await doc(`doc_p60_for_${tag}`, B, FOR, 'Foreign 510(k)');
+  const sec = (d, key, parent, order, mandatory, status) => q(
+    `INSERT INTO c2c_document_sections (document_id, section_key, parent_key, label, path_order, mandatory, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`, [d, key, parent, `Section ${key}`, order, mandatory, status]);
+  await sec(`doc_p60_own_${tag}`, '1', null, 1, true, 'approved');
+  await sec(`doc_p60_own_${tag}`, '2', null, 2, true, 'todo');
+  await sec(`doc_p60_own_${tag}`, '2.1', '2', 3, true, 'drafted'); // 2 is an empty heading
+  await sec(`doc_p60_own_${tag}`, '3', null, 4, true, 'todo');
+  await sec(`doc_p60_arch_${tag}`, '1', null, 1, true, 'approved');
+  await sec(`doc_p60_sib_${tag}`, '1', null, 1, true, 'approved');
+  await sec(`doc_p60_for_${tag}`, '1', null, 1, true, 'approved');
+  const cc = (o, n, p, status, deleted = false) => q(
+    `INSERT INTO qms_change_controls (organization_id, change_number, title, status, program_id, deleted_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`, [o, n, n, status, p, deleted ? new Date() : null]);
+  await cc(A, 'CC-OWN-1', OWN, 'proposed');
+  await cc(A, 'CC-OWN-2', OWN, 'under_assessment');
+  await cc(A, 'CC-OWN-DEL', OWN, 'proposed', true);
+  await cc(A, 'CC-SIB-1', SIB, 'proposed');
+  await cc(A, 'CC-NONE-1', null, 'proposed');
+  await cc(B, 'CC-FOR-1', FOR, 'proposed');
+  // The key refuses another organization's project.
+  let crossRefused = null;
+  try { await q('SAVEPOINT x'); await cc(A, 'CC-CROSS', FOR, 'proposed'); } catch (e) { crossRefused = e.code; await q('ROLLBACK TO SAVEPOINT x'); }
+
+  const dhf = (await q(DHF, [A, OWN])).rows.map((r) => `${r.document_title} §${r.section_key} ${r.status}${r.mandatory ? ' mandatory' : ''}`);
+  const ecrs = (await q(ECRS, [A, OWN])).rows.map((r) => `${r.change_number} ${r.status}`);
+  console.log('dhf read for org A, project OWN:', JSON.stringify(dhf));
+  console.log('ecrs read for org A, project OWN:', JSON.stringify(ecrs));
+  console.log('a change naming another organization\'s project:', crossRefused);
+  // Deleting the project unbinds its changes and keeps their organization (the purge order deletes programs).
+  await q('SAVEPOINT y');
+  await q(`DELETE FROM c2c_documents WHERE project_id = $1`, [SIB]);
+  await q(`DELETE FROM regulatory_programs WHERE id = $1`, [SIB]);
+  const sib = (await q(`SELECT organization_id, program_id FROM qms_change_controls WHERE change_number = 'CC-SIB-1' AND organization_id = $1`, [A])).rows[0];
+  console.log('after deleting the sibling project, its change:', JSON.stringify(sib));
+} finally {
+  await q('ROLLBACK').catch(() => {});
+  await c.end();
+}

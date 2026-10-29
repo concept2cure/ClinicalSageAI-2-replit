@@ -96,6 +96,8 @@ export interface ChangeControlRow {
   effectiveness_review: string | null;
   closed_at: string | null;
   qms_document_id: number | null;
+  /** The project (regulatory_programs.id) the change belongs to, or null for the organization's (20261029l). */
+  program_id: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -125,27 +127,41 @@ export class ChangeLinkRefusedError extends Error {
 
 // ─── Register ────────────────────────────────────────────────────────────────
 
+/**
+ * Raise a change. The one writer of the register, for the route and AnA's
+ * qms_change_create alike.
+ *
+ * `programId` is the project the change belongs to (P-60, 2026-10-29;
+ * migrations/20261029l): a product's design changes are that product's
+ * (21 CFR 820.30(j), ISO 13485 §7.3.10), and its Engineering screen reads them
+ * by this column. The caller has already asked whether the organization owns
+ * it (admitBodyProject, over admitProject, on the route; the registry wrapper's
+ * foreignProgramRefusal for the tool); the same-organization key holds every
+ * other writer to that.
+ * Absent, the change is the organization's, as every change was before.
+ */
 export async function createChange(orgId: number, p: {
   changeNumber: string; title: string; description?: string | null;
   changeType?: string; classification?: string; riskLevel?: string | null;
   reason?: string | null; impactAssessment?: string | null; implementationPlan?: string | null;
   targetImplementationDate?: string | null; qmsDocumentId?: number | null;
   proposedBy?: number | null; metadata?: Record<string, unknown> | null;
+  programId?: string | null;
 }, client: RequestSqlClient = pool): Promise<ChangeControlRow> {
   const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `INSERT INTO qms_change_controls (
        organization_id, change_number, title, description, change_type, classification,
        risk_level, reason, impact_assessment, implementation_plan,
-       target_implementation_date, qms_document_id, proposed_by, metadata
+       target_implementation_date, qms_document_id, proposed_by, metadata, program_id
      ) VALUES ($1,$2,$3,$4,COALESCE($5,'other'),COALESCE($6,'minor'),
-               $7,$8,$9,$10,$11,$12,$13,COALESCE($14::jsonb,'{}'::jsonb))
+               $7,$8,$9,$10,$11,$12,$13,COALESCE($14::jsonb,'{}'::jsonb),$15)
      RETURNING *`,
     [
       orgId, p.changeNumber, p.title, p.description ?? null,
       p.changeType ?? null, p.classification ?? null, p.riskLevel ?? null,
       p.reason ?? null, p.impactAssessment ?? null, p.implementationPlan ?? null,
       p.targetImplementationDate ?? null, p.qmsDocumentId ?? null, p.proposedBy ?? null,
-      p.metadata ? JSON.stringify(p.metadata) : null,
+      p.metadata ? JSON.stringify(p.metadata) : null, p.programId || null,
     ],
   );
   return rows[0];
