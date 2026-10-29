@@ -92,6 +92,8 @@ describe('ProjectHome sourced responsibility integration', () => {
 });
 
 describe('ProjectHome team program-switch isolation', () => {
+  /* A different project opens on its own step, never the previous project's
+     (D2 A2.1, 2aace71d), so after a switch a person opens Plan again to see its team. */
   it('hides the previous program roster immediately while its replacement loads', async () => {
     const pending = pendingRead(); serve(roster());
     const original = request.getMockImplementation()!;
@@ -102,6 +104,9 @@ describe('ProjectHome team program-switch isolation', () => {
     await screen.findByText('Alex Chen · Account #7');
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<><ProjectHome {...props} /><Probe seen={seen} /></>);
+    expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
+    expect(seen.ctx?.facts?.team ?? null).toBeNull();
+    openPlan();
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
     expect(screen.getByText('Loading team…')).toBeTruthy();
     expect(seen.ctx?.facts?.team ?? null).toBeNull();
@@ -119,6 +124,7 @@ describe('ProjectHome team program-switch isolation', () => {
     openPlan();
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<ProjectHome {...props} />);
+    openPlan();
     await screen.findByText('Alex Chen · Account #9');
     await act(async () => pending.resolve(ok(roster())));
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
