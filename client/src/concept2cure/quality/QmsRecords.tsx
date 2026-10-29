@@ -27,11 +27,17 @@ import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { useCapasBySource } from './capaSources';
 import type { QmsRecordTab } from './qmsRecordData';
-import { type Column, type RowAction, type RegisterConfig, plural } from './qmsRegisterKit';
+import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, plural } from './qmsRegisterKit';
+
+/** How many rows AnA is passed; the count says when there are more. */
+const MAX_FACT_ROWS = 100;
+type ReportContext = (ctx: Omit<RecordRegisterContext, 'tab'>) => void;
 import { CAPAS } from './qmsCapaRegister';
 import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegisters';
 
-function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { config: RegisterConfig<R>; onAsk: (q: string) => void }) {
+function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
+  config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
+}) {
   const read = useFetchJson<unknown>(config.listPath);
   const rows = React.useMemo(() => listOf<R>(read.data), [read.data]);
   const [drawer, setDrawer] = React.useState<{ kind: 'create' } | { kind: 'row'; row: R; action: RowAction<R> } | null>(null);
@@ -78,6 +84,20 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
   /* No list in the body is a failed read, not an empty register. */
   const failed = !read.loading && (read.error != null || (read.data != null && rows === null));
   const loaded = rows !== null && !read.loading;
+
+  /* What AnA is told: the register as read, or that it is loading or failed. A
+     failed read is never passed on as an empty register. */
+  React.useEffect(() => {
+    if (!onContext) return;
+    const base = { title: config.title, noun: config.noun };
+    if (failed) onContext({ ...base, state: 'failed', count: null, counts: [], records: [], truncated: false });
+    else if (!loaded || !rows) onContext({ ...base, state: 'loading', count: null, counts: [], records: [], truncated: false });
+    else onContext({
+      ...base, state: 'ready', count: rows.length,
+      counts: config.kpis(rows, today).map((k) => ({ label: k.label, val: k.val })),
+      records: rows.slice(0, MAX_FACT_ROWS).map(config.facts), truncated: rows.length > MAX_FACT_ROWS,
+    });
+  }, [onContext, config, failed, loaded, rows, today]);
 
   return (
     <>
@@ -194,12 +214,15 @@ export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   reviews: REVIEWS.ask,
 };
 
-export function QmsRecords({ tab, onAsk }: { tab: QmsRecordTab; onAsk: (q: string) => void }) {
+export function QmsRecords({ tab, onAsk, onContext }: {
+  tab: QmsRecordTab; onAsk: (q: string) => void; onContext?: (ctx: RecordRegisterContext) => void;
+}) {
+  const report = React.useCallback<ReportContext>((ctx) => onContext?.({ ...ctx, tab }), [onContext, tab]);
   switch (tab) {
-    case 'capa': return <RecordRegister key={tab} config={CAPAS} onAsk={onAsk} />;
-    case 'nonconforming': return <RecordRegister key={tab} config={NONCONFORMANCES} onAsk={onAsk} />;
-    case 'suppliers': return <RecordRegister key={tab} config={SUPPLIERS} onAsk={onAsk} />;
-    case 'audits': return <RecordRegister key={tab} config={AUDITS} onAsk={onAsk} />;
-    case 'reviews': return <RecordRegister key={tab} config={REVIEWS} onAsk={onAsk} />;
+    case 'capa': return <RecordRegister key={tab} config={CAPAS} onAsk={onAsk} onContext={report} />;
+    case 'nonconforming': return <RecordRegister key={tab} config={NONCONFORMANCES} onAsk={onAsk} onContext={report} />;
+    case 'suppliers': return <RecordRegister key={tab} config={SUPPLIERS} onAsk={onAsk} onContext={report} />;
+    case 'audits': return <RecordRegister key={tab} config={AUDITS} onAsk={onAsk} onContext={report} />;
+    case 'reviews': return <RecordRegister key={tab} config={REVIEWS} onAsk={onAsk} onContext={report} />;
   }
 }
