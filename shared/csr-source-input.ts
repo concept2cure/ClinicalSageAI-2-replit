@@ -24,8 +24,8 @@ const participant = z.object({ subjectId: id, armId: id, randomized: z.boolean()
 const arm = z.object({ armId: id, armName: text, randomized: count,
   populations: z.object({ safety: count, itt: count, completed: count, mitt: count.optional(), perProtocol: count.optional() }).strict(),
 }).strict();
-const disposition = z.object({ subjectId: id, armId: id,
-  status: z.enum(['completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other']), reason: text.optional() }).strict();
+const dispositionStatus = z.enum(['completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other']);
+const disposition = z.object({ subjectId: id, armId: id, status: dispositionStatus, reason: text.optional() }).strict();
 const demographic = z.object({ subjectId: id, armId: id, age: finite.min(0).max(125), sex: z.enum(['M', 'F', 'Other']),
   race: text.optional(), ethnicity: text.optional(), weight: finite.positive().optional(), bmi: finite.positive().optional() }).strict();
 const interval = z.object({ lower: finite, upper: finite, level: text }).strict();
@@ -36,11 +36,16 @@ const efficacy = z.object({ endpointName: text, endpointType: z.enum(['primary',
   pValue: finite.min(0).max(1).optional(), comparatorArmId: id.optional(),
   credibleInterval: interval.optional(),
   posteriorProbability: z.object({ value: finite.min(0).max(1), hypothesis: text }).strict().optional() }).strict();
+/** One efficacy result as the approved SAP output reports it; imported, never computed (also the ADaM bundle's efficacy file). */
+export const CsrEfficacyResultSchema = efficacy;
 const ae = z.object({ subjectId: id, armId: id, pt: text, soc: text, severity: z.enum(['mild', 'moderate', 'severe']),
   serious: z.boolean(), related: z.enum(['related', 'unrelated', 'unknown']),
   outcome: z.enum(['recovered', 'recovering', 'not-recovered', 'fatal', 'unknown']).optional(), ledToDiscontinuation: z.boolean().optional() }).strict();
 const exposure = z.object({ armId: id, meanDailyDose: text.optional(), meanExposureDays: finite.min(0), totalPersonYears: finite.min(0).optional() }).strict();
 const lab = z.object({ armId: id, parameter: text, shiftFromNormal: count, shiftToHigh: count, shiftToLow: count, totalAssessed: count }).strict();
+/** §12.5: one safety subject's baseline and last on-treatment value of one parameter. */
+const vitalSign = z.object({ subjectId: id, armId: id, parameter: text, baseline: finite, lastOnTreatment: finite }).strict();
+const concomitantMedication = z.object({ subjectId: id, armId: id, medication: text, atcClass: text.optional() }).strict();
 
 const CsrSourceEnvelopeFieldsSchema = z.object({
   format: z.literal(CSR_SOURCE_FORMAT),
@@ -55,7 +60,12 @@ const CsrSourceEnvelopeFieldsSchema = z.object({
   studyData: z.object({ studyId: id, protocolNumber: id, treatmentArms: z.array(arm).min(1).max(100),
     disposition: z.array(disposition).min(1).max(maxRecords), demographics: z.array(demographic).min(1).max(maxRecords),
     efficacy: z.array(efficacy).min(1).max(10_000), adverseEvents: z.array(ae).max(maxRecords),
-    exposure: z.array(exposure).max(100).optional(), labShifts: z.array(lab).max(10_000).optional() }).strict(),
+    exposure: z.array(exposure).max(100).optional(), labShifts: z.array(lab).max(10_000).optional(),
+    /** Declared final-disposition categories: a declared category with no subject is a recorded 0; an undeclared, unused one is "not recorded". */
+    dispositionCategories: z.array(dispositionStatus).min(1).max(6).optional(),
+    dispositionBasis: z.enum(['end-of-study', 'end-of-treatment']).optional(),
+    vitalSigns: z.array(vitalSign).max(maxRecords).optional(),
+    concomitantMedications: z.array(concomitantMedication).max(maxRecords).optional() }).strict(),
 }).strict();
 type CsrSourceData = z.infer<typeof CsrSourceEnvelopeFieldsSchema>;
 type ValidationFailure = (message: string, path?: (string | number)[]) => void;
@@ -78,6 +88,29 @@ function validatePopulationCounts(
   }
 }
 
+/** CSR slice 6 (2026-10-29): the disposition declarations, vital signs and concomitant medications. */
+function validateDeclaredAndSubjectDomains(source: CsrSourceData, subjects: Map<string, CsrSourceData['participants'][number]>, fail: ValidationFailure) {
+  const categories = source.studyData.dispositionCategories;
+  if (categories) {
+    if (new Set(categories).size !== categories.length) fail('Declared disposition categories must be unique.');
+    if (source.studyData.disposition.some(r => !categories.includes(r.status))) fail('A disposition record uses a status outside the declared disposition categories.');
+  }
+  const inSafetyArm = (r: { subjectId: string; armId: string }) => {
+    const p = subjects.get(r.subjectId);
+    return !!p && p.armId === r.armId && p.safety;
+  };
+  const vitals = new Set<string>();
+  source.studyData.vitalSigns?.forEach(r => {
+    if (!inSafetyArm(r)) fail('Every vital-sign record must belong to a recorded subject in that arm’s safety population.');
+    const key = JSON.stringify([r.subjectId, r.parameter]);
+    if (vitals.has(key)) fail('Vital signs require one baseline and last-value record per subject and parameter.');
+    vitals.add(key);
+  });
+  source.studyData.concomitantMedications?.forEach(r => {
+    if (!inSafetyArm(r)) fail('Every concomitant medication must belong to a recorded subject in that arm’s safety population.');
+  });
+}
+
 export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine((source, ctx) => {
   const fail = (message: string, path: (string | number)[] = []) => ctx.addIssue({ code: z.ZodIssueCode.custom, message, path });
   if (source.studyInfo.protocolNumber !== source.studyData.protocolNumber) fail('Study information and observations must identify the same protocol.', ['studyInfo', 'protocolNumber']);
@@ -87,6 +120,7 @@ export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine
   if (subjects.size !== source.participants.length) fail('Participant identifiers must be unique across the study.');
   source.participants.forEach(p => { if (!arms.has(p.armId)) fail('A participant names an unknown treatment arm.'); });
   validatePopulationCounts(source, arms, fail);
+  validateDeclaredAndSubjectDomains(source, subjects, fail);
   const randomized = source.participants.filter(p => p.randomized);
   if (randomized.length === 0) fail('This tabulation contract requires recorded randomized participants.');
   if (source.studyInfo.sampleSize !== undefined && source.studyInfo.sampleSize !== randomized.length) fail('Study sample size must match the randomized participant count.');

@@ -7,6 +7,8 @@ import { hasCsrIdentifierMarker } from '../clinical-regulatory-evidence/csr-cont
 export const CSR_TABLE_KEYS = [
   'disposition', 'analysisPopulations', 'demographics', 'primaryEfficacy', 'secondaryEfficacy',
   'exposure', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts',
+  // CSR slice 6 (2026-10-29): built only when the source supplies them (ADVS/ADEG, ADCM).
+  'vitalSigns', 'concomitantMedications',
 ] as const;
 export type CsrTableKey = typeof CSR_TABLE_KEYS[number];
 type Table = { title: string; headers: string[]; rows: string[][] };
@@ -32,23 +34,25 @@ export function parseCsrEvidenceSelection(value: unknown): CsrEvidenceSelection 
   return { programId: value.programId.toLowerCase(), runId: value.runId.toLowerCase(),
     studyId: value.studyId, sectionNumber: value.sectionNumber };
 }
-const SAFETY: CsrTableKey[] = ['analysisPopulations', 'exposure', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts'];
+const SAFETY: CsrTableKey[] = ['analysisPopulations', 'exposure', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts', 'vitalSigns'];
 // Keyed by ICH_E3_GUIDANCE numbers. 2026-10-29: '2.4', '2.8', '2.9' and '2.10'
 // were csr-builder's invented synopsis children, deleted with its outline; E3's
 // synopsis is one heading, §2, which reads every table.
 const SECTIONS: Record<string, readonly CsrTableKey[]> = {
   '2': CSR_TABLE_KEYS, '10': ['disposition'], '10.1': ['disposition'],
   '11': ['analysisPopulations', 'demographics', 'primaryEfficacy', 'secondaryEfficacy'],
-  '11.1': ['analysisPopulations'], '11.2': ['analysisPopulations', 'demographics'],
+  '11.1': ['analysisPopulations'], '11.2': ['analysisPopulations', 'demographics', 'concomitantMedications'],
   '11.4': ['analysisPopulations', 'primaryEfficacy', 'secondaryEfficacy'],
   '12': SAFETY, '12.1': ['analysisPopulations', 'exposure'],
   '12.2': ['analysisPopulations', 'aeOverallSummary', 'aeBySOC', 'aeTopPT'],
   '12.3': ['analysisPopulations', 'deathsSAEsDiscontinuations'],
-  '12.4': ['analysisPopulations', 'labShifts'], '12.6': SAFETY, '13': CSR_TABLE_KEYS,
+  '12.4': ['analysisPopulations', 'labShifts'],
+  // 2026-10-29 (slice 6): §12.5 reads the vital-sign/ECG table, which carries its own n per arm.
+  '12.5': ['vitalSigns'], '12.6': SAFETY, '13': CSR_TABLE_KEYS,
 };
 export function csrSectionTableKeys(section: string): readonly CsrTableKey[] {
-  // Do not use a parent-section fallback for unsupported subtopics (e.g. 12.5
-  // vital signs), which would imply that unrelated safety tables support them.
+  // Do not use a parent-section fallback for unsupported subtopics, which would
+  // imply that unrelated safety tables support them.
   const parts = section.split('.');
   return SECTIONS[parts.length > 1 ? parts.slice(0, 2).join('.') : section] ?? [];
 }

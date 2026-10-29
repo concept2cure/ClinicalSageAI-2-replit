@@ -1,0 +1,15 @@
+ × server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders statuses no record uses, and the source did not declare, as "not recorded" 12ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a recorded zero as 0: a status used in one arm is a recorded classification in every arm 1ms
+ × server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a declared category with no subject as a recorded 0 2ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders a source that records every status byte-identically to the previous builder 1ms
+ × server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > labels completion by the basis the source declares, and keeps the previous label when it declares none 2ms
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > leaves every other table unchanged by the declarations 4ms
+ × server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > accepts declared categories and a basis 9ms
+ × server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > refuses a disposition record whose status the declared categories omit, and a repeated category 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'Death', '0', '0', '0' ] to deeply equal [ 'Death', 'not recorded', …(2) ]
+AssertionError: expected [ 'Other', '0', '0', '0' ] to deeply equal [ 'Other', 'not recorded', …(2) ]
+AssertionError: expected undefined to deeply equal [ 'Completed study', '1', '1', '2' ]
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected '[{"code":"unrecognized_keys","keys":[…' to match /declared disposition categories/
+      Tests  5 failed | 3 passed (8)
