@@ -110,10 +110,29 @@ Searches run:
   - `ci:migration-set-order`, `ci:migration-drop-safety` (444 migrations), the warning ratchet and
     `ci:launch-scope-api` pass, and `tsc --noEmit` reports no error.
 
+## The close is independent of the investigation (2026-10-29)
+
+Before this change, the person who completed an investigation could sign its close. GMP expects the approval of a
+deviation's investigation to be independent of it (21 CFR 211.192; ICH Q10 §2.6).
+
+- **The investigation now has an author.** Sending a deviation for approval records who did it:
+  `investigation_details = {completedBy, completedAt}`. `updateDeviation` takes the actor, and the PATCH route refuses
+  a request without a user (401).
+- **The close refuses that person.**
+  - `closeDeviation` adds `completedBy <> signer` to its guarded UPDATE.
+  - When the guard is what refused, the route answers `DEVIATION_SELF_CLOSE` (403, "another person signs its close";
+    nothing is signed).
+  - A deviation sent back and resubmitted records the latest sender.
+- **The Close form says so** before the password is asked for.
+- **Proof.**
+  - `deviations.pglite.test.ts`: "is not closed by the person who sent it for approval". User 9 sends it, user 9's close
+    is refused, and user 8's close succeeds.
+  - Mutation: deleting the `completedBy` guard line fails that case, and only that case. Restoring the line makes it
+    pass.
+  - `qms-signed-decisions.test.ts`, `qms-governed-writes-audited.test.ts` and `QmsRecords.test.tsx` pass.
+
 ## Owed
 
 - **Cancelling a deviation** opened in error, with a reason: not offered.
-- **The QA close is not separated from the investigator.** No authorship is modelled for deviations, so an
-  independence check would refuse every close (`governed-signed-act.ts` says the same of its other acts).
 - **A project key on a deviation**, as the nonconformance register gained in 20261029d: not added.
 

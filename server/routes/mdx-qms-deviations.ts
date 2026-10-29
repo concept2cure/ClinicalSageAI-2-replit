@@ -94,25 +94,27 @@ router.patch('/qms/deviations/:id', requireEditorAccess, async (req: Request, re
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be a positive integer');
+  const actor = getUserId(req);
+  if (actor === null) return clientError(res, 401, 'User context required');
   const parsed = deviationPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
-    const row = await updateDeviation(qmsClient(req), orgId, id, parsed.data);
+    const row = await updateDeviation(qmsClient(req), orgId, id, parsed.data, actor);
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      tenantId: orgId, userId: actor,
       action: 'mdx.qms.deviation.update',
       resourceType: 'qc_deviation', resourceId: String(id),
       details: { changedFields: Object.keys(parsed.data), status: parsed.data.status ?? null },
     }, requestConnectable(req));
-    const actor = getUserId(req);
-    if (actor) await scheduleDeviationTask(orgId, row as DeviationTaskSource, actor);
+    await scheduleDeviationTask(orgId, row as DeviationTaskSource, actor);
     return ok(res, row, { auditTrail });
   } catch (err) { return refused(res, err) ?? serverError(res, log, 'deviation-update', err); }
 });
 
 /* The close is a signed decision (approval or responsibility): the signer
    answers for the investigation, the root cause and the resolution. Only a
-   deviation pending approval with both recorded can close. */
+   deviation pending approval with both recorded can close, and not by the
+   person who sent it for approval (DEVIATION_SELF_CLOSE). */
 router.post('/qms/deviations/:id/close', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');

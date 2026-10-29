@@ -44,26 +44,36 @@ describe('the deviation record', () => {
 
   it('moves only along its lifecycle, and goes for approval only with root cause and resolution', async () => {
     const { row } = await recordNewDeviation(client(), 1, 7, EM);
-    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'pending_approval' }))).toBe('DEVIATION_MOVE_REFUSED');
-    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'closed' }))).toBe('DEVIATION_MOVE_REFUSED');
-    expect(await updateDeviation(client(), 1, row.id, { status: 'under_investigation', immediateActions: 'Filling stopped; line cleaned.' }))
+    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'pending_approval' }, 7))).toBe('DEVIATION_MOVE_REFUSED');
+    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'closed' }, 7))).toBe('DEVIATION_MOVE_REFUSED');
+    expect(await updateDeviation(client(), 1, row.id, { status: 'under_investigation', immediateActions: 'Filling stopped; line cleaned.' }, 7))
       .toMatchObject({ status: 'under_investigation', investigation_status: 'in_progress' });
-    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'pending_approval', rootCause: 'HEPA seal gap.' }))).toBe('DEVIATION_MOVE_REFUSED');
+    expect(await refusal(updateDeviation(client(), 1, row.id, { status: 'pending_approval', rootCause: 'HEPA seal gap.' }, 7))).toBe('DEVIATION_MOVE_REFUSED');
     expect(await updateDeviation(client(), 1, row.id, {
       status: 'pending_approval', rootCause: 'HEPA seal gap.', resolutionDescription: 'Seal replaced; room requalified.',
-    })).toMatchObject({ status: 'pending_approval', root_cause_identified: true, investigation_status: 'completed' });
-    expect(await refusal(updateDeviation(client(), 2, row.id, { status: 'under_investigation' }))).toBe('DEVIATION_NOT_FOUND');
+    }, 7)).toMatchObject({ status: 'pending_approval', root_cause_identified: true, investigation_status: 'completed' });
+    expect(await refusal(updateDeviation(client(), 2, row.id, { status: 'under_investigation' }, 7))).toBe('DEVIATION_NOT_FOUND');
   });
 
   it('closes only from pending approval, dated and named, and never twice', async () => {
     const { row } = await recordNewDeviation(client(), 1, 7, EM);
     expect(await refusal(closeDeviation(client(), 1, row.id, 9))).toBe('DEVIATION_NOT_READY');
-    await updateDeviation(client(), 1, row.id, { status: 'under_investigation' });
-    await updateDeviation(client(), 1, row.id, { status: 'pending_approval', rootCause: 'HEPA seal gap.', resolutionDescription: 'Seal replaced.' });
+    await updateDeviation(client(), 1, row.id, { status: 'under_investigation' }, 7);
+    await updateDeviation(client(), 1, row.id, { status: 'pending_approval', rootCause: 'HEPA seal gap.', resolutionDescription: 'Seal replaced.' }, 7);
     const closed = await closeDeviation(client(), 1, row.id, 9);
     expect(closed).toMatchObject({ status: 'closed', qa_approved_by: '9' });
     expect(closed.actual_closure_date).toBeTruthy();
     expect(await refusal(closeDeviation(client(), 1, row.id, 9))).toBe('DEVIATION_NOT_READY');
-    expect(await refusal(updateDeviation(client(), 1, row.id, { rootCause: 'Edited after close.' }))).toBe('DEVIATION_MOVE_REFUSED');
+    expect(await refusal(updateDeviation(client(), 1, row.id, { rootCause: 'Edited after close.' }, 7))).toBe('DEVIATION_MOVE_REFUSED');
+  });
+
+  it('is not closed by the person who sent it for approval (21 CFR 211.192)', async () => {
+    const { row } = await recordNewDeviation(client(), 1, 7, EM);
+    await updateDeviation(client(), 1, row.id, { status: 'under_investigation' }, 7);
+    expect(await updateDeviation(client(), 1, row.id,
+      { status: 'pending_approval', rootCause: 'HEPA seal gap.', resolutionDescription: 'Seal replaced.' }, 9))
+      .toMatchObject({ investigation_details: { completedBy: '9' } });
+    expect(await refusal(closeDeviation(client(), 1, row.id, 9))).toBe('DEVIATION_SELF_CLOSE');
+    expect(await closeDeviation(client(), 1, row.id, 8)).toMatchObject({ status: 'closed', qa_approved_by: '8' });
   });
 });

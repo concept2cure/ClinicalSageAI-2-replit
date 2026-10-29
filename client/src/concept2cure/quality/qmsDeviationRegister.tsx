@@ -71,7 +71,7 @@ const CLOSE: RowAction<DeviationRow> = {
     eyebrow: 'Quality',
     title: `Close ${r.deviation_number}`,
     sub: `Root cause: ${clip(r.root_cause, 160)} Resolution: ${clip(r.resolution_description, 160)}`,
-    governed: 'You sign the close in the next step, with your reason. You answer for the investigation, and a closed deviation is not changed.',
+    governed: 'You sign the close in the next step, with your reason. You answer for the investigation, and a closed deviation is not changed. The person who sent it for approval does not sign its close.',
     submitLabel: 'Continue to sign',
     fields: [],
   }),
