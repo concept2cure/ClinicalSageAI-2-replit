@@ -17,7 +17,8 @@
  *     change through Edit details (vault-metadata-edit.service.ts) and
  *     Confirm / Move (placeVaultDocument), each with a reason or decision and
  *     its own audit row. A value the retry asked for that differs from the
- *     record is reported back (`differs`) rather than applied;
+ *     record, a folder, kind or section included, is reported back
+ *     (`differs`) rather than applied;
  *   - retention policy, lineage and file name are write-once (NULL → value
  *     only), and the storage pointer moves only when the record has none —
  *     the transitions VR-06's planned trigger allows. Such a change is one
@@ -105,20 +106,28 @@ export function reuploadChanges(before: RecordedVersion, after: Record<string, u
 
 /** A value the retry asked for that differs from the record, which it does not change. */
 export interface ReuploadDiffer {
-  field: 'document_title' | 'document_type' | 'classification';
+  field: 'document_title' | 'document_type' | 'classification' | 'folder_id' | 'evidence_kind' | 'ctd_section';
   recorded: string | null;
   requested: string;
 }
 
-/** The descriptive fields the retry stated that differ from the record. */
+/**
+ * The fields the retry stated that differ from the record: its details, and
+ * its filing (folder, kind, CTD section; Part 11 review F3, 2026-10-22).
+ * Neither is applied. A retry that asked to file the document elsewhere was
+ * told "nothing changed" with no word that its folder had been ignored.
+ */
 export function reuploadDiffers(
   before: RecordedVersion,
-  requested: { documentTitle?: string; documentType?: string; classification?: string },
+  requested: { documentTitle?: string; documentType?: string; classification?: string; folderId?: string; evidenceKind?: string; ctdSection?: string },
 ): ReuploadDiffer[] {
   const asked: Array<[ReuploadDiffer['field'], string | undefined]> = [
     ['document_title', requested.documentTitle],
     ['document_type', requested.documentType],
     ['classification', requested.classification],
+    ['folder_id', requested.folderId],
+    ['evidence_kind', requested.evidenceKind],
+    ['ctd_section', requested.ctdSection],
   ];
   return asked
     .filter((pair): pair is [ReuploadDiffer['field'], string] => typeof pair[1] === 'string' && pair[1] !== (before[pair[0]] ?? null))

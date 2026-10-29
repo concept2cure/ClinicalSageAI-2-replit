@@ -259,3 +259,32 @@ describe('useVaultUpload — each file carries the fields its row gave (gap 7.1)
     ]);
   });
 });
+
+describe('useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3)', () => {
+  it('a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        document: { documentTitle: 'Protocol' },
+        filing: { folderId: 'module-5', folderLabel: 'Module 5 · Clinical', placementStatus: 'confirmed', needsReview: false },
+        reupload: {
+          unchanged: true,
+          changes: [],
+          differs: [{ field: 'folder_id', recorded: 'module-5', requested: 'module-1' }],
+        },
+      }),
+    }) as Response));
+    let latest: VaultUploadState | null = null;
+    render(<HookHost onState={(s) => { latest = s; }} />);
+
+    const outcome = await latest!.upload([new File(['x'], 'protocol.pdf')], { fields: [{ folderId: 'module-1' }] });
+
+    expect(outcome.alreadyRecorded).toEqual([{ name: 'protocol.pdf', title: 'Protocol', differs: false, filingDiffers: true }]);
+    await waitFor(() => expect(latest!.note).toBeTruthy());
+    expect(latest!.note!.text).toMatch(/Already in the Vault, nothing changed: protocol\.pdf/);
+    expect(latest!.note!.text).toMatch(/folder, kind or CTD section is changed with Move/);
+    expect(latest!.note!.text).not.toMatch(/Edit details/);
+  });
+});

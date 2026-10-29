@@ -31,6 +31,7 @@ import {
   isVaultDoc,
   flattenDocs,
   type VaultDoc,
+  type VaultDocFiling,
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
@@ -316,6 +317,19 @@ export function vaultCountLabel(v: Pick<VaultDisplayShape, 'documentCount' | 'do
 export function isSettled(d: VaultDoc): boolean {
   if (d.src === 'upload') return APPROVED_STAGES.includes(d.lifecycleStage ?? '');
   return ['final', 'approved', 'reviewed'].includes(d.status);
+}
+
+/**
+ * Who made a filing decision, and when: "Fern Filer, 2026-10-29 05:00 UTC"
+ * (Part 11 review F4). A suggestion names nobody, so it gets no line; a filing
+ * with no person recorded says so rather than leaving the reader to assume
+ * one. Nothing from a server that predates the fields.
+ */
+export function filingDecisionLine(f: VaultDocFiling): string | null {
+  if (f.placedAt === undefined || f.placementStatus === 'suggested') return null;
+  if (!f.placedByRecorded && !f.placedAt) return f.placementStatus === 'confirmed' ? 'Not recorded' : null;
+  const who = f.placedBy ?? (f.placedByRecorded ? 'Recorded; name not available' : 'Not recorded');
+  return f.placedAt ? `${who}, ${f.placedAt.slice(0, 10)} ${f.placedAt.slice(11, 16)} UTC` : who;
 }
 
 function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: VaultTreeProps) {
@@ -1962,6 +1976,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             : 'Unfiled'}
                         </span>
                       </div>
+                      {filingDecisionLine(sel.filing) && (
+                        <div className="vd-d-filing-row" data-testid="vault-filing-decided">
+                          <span className="k">{sel.filing.placementStatus === 'unfiled' ? 'Unfiled by' : 'Filed by'}</span>
+                          <span className="v">{filingDecisionLine(sel.filing)}</span>
+                        </div>
+                      )}
                       {sel.filing.evidenceKind && (
                         <div className="vd-d-filing-row">
                           <span className="k">Looks like</span>
