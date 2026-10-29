@@ -194,6 +194,21 @@ describe('a turn that asked to drive (D-7, decided 2026-10-22)', () => {
     expect(driveEvents).toContain('drive_turn_end');
   });
 
+  // A step the server says did not run (D-7's refused screen action, or one
+  // the turn stopped before) is not a failure: it keeps its own status.
+  it('a step the server says did not run is not run on this page, never failed', async () => {
+    const s = streamServing([poll()]);
+    const { result } = await started(s, { liveDrive: true });
+    await act(async () => {
+      s.push({ type: 'tool_use', name: 'act_on_screen', label: 'Filling in the form', toolUseId: 'tu_a', round: 2, input: {} });
+      s.push({ type: 'tool_result', name: 'act_on_screen', toolUseId: 'tu_a', round: 2, status: 'not_run', message: 'Not run: the page was closed, so AnA stopped driving the screen.' });
+      await vi.advanceTimersByTimeAsync(5);
+    });
+    expect(assistant(result).toolCalls).toEqual([
+      expect.objectContaining({ name: 'act_on_screen', status: 'not_run', message: 'Not run: the page was closed, so AnA stopped driving the screen.' }),
+    ]);
+  });
+
   it("the person's Stop of a driving turn is confirmed by the server before it shows Stopped", async () => {
     let cancels = 0;
     const s = streamServing([poll()], [[/\/stream\/run_d\/control$/, () => { cancels++; return json(503, {}); }]]);

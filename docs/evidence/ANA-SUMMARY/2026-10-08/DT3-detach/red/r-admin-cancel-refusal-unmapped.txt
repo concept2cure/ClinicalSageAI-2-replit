@@ -1,6 +1,6 @@
 # r-admin-cancel-refusal-unmapped: exit 1 (non-zero = red)
 # tests: server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts  -t refused 503
- × server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > a cancel whose audit row the chain refused is refused 503: nothing changed, try again 32ms
+ × server/routes/ana-ri/__tests__/stream-admin-cancel.test.ts > an admin's cancel through the control route > a cancel whose audit row the chain refused is refused 503: nothing changed, try again 63ms
    → expected 409 to be 503 // Object.is equality
  Test Files  1 failed (1)
       Tests  1 failed | 6 skipped (7)

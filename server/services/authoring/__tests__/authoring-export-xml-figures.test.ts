@@ -9,13 +9,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import { renderAuthoringExport } from '../authoring-export';
+import { releaseGovernanceRead } from './release-governance-reads';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 const WEBP = `data:image/webp;base64,${'UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='.repeat(4)}`;
 
 async function xmlOf(content: string): Promise<string> {
   const out = await renderAuthoringExport({
-    executor: { query: async () => ({ rows: [] }) } as never,
+    executor: { query: async (sql: string) => releaseGovernanceRead(sql) ?? { rows: [] } } as never,
     tenantId: 7,
     doc: { id: 'd1', title: 'Doc', module: 'M2', status: 'draft', created_at: '2026-10-05' } as never,
     sections: [{ id: 's1', code: '2.5.1', title: 'Results', content, order_index: 0 } as never],

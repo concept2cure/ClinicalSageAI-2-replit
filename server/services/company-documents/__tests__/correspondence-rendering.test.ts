@@ -8,6 +8,7 @@ vi.mock('../../../export/renderers', () => ({ renderHtmlToPdfTracked: mocks.pdf 
 vi.mock('../../pdf-converter', () => ({ convertDocxToPdf: mocks.convert }));
 import { companyProfileHash } from '../provenance';
 import { AuthoringPdfRenderingError, renderAuthoringExport, sectionsDigest } from '../../authoring/authoring-export';
+import { releaseGovernanceRead } from '../../authoring/__tests__/release-governance-reads';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -16,7 +17,7 @@ const profile: CompanyDocumentProfile = { version: 1, revision: 4, companyName: 
     header: { text: 'Historical running header', showLogo: true }, footer: { text: 'Historical footer', showPageNumbers: true } }), importedFrom: null,
   applyToReports: false, applyToSubmissionCorrespondence: true, legalDocuments: [] };
 const origin = { version: 1, organizationId: 7, programId: PROGRAM, companyDocumentRevision: 4, companyProfileHash: companyProfileHash(profile), companyBrandingApplied: true };
-const executor = { query: async () => ({ rows: [] }) };
+const executor = { query: async (sql: string) => releaseGovernanceRead(sql) ?? { rows: [] } };
 const args = () => ({ executor, tenantId: 7, doc: { id: 'doc-1', title: 'Correspondence response', client_program_id: PROGRAM, provenance: { source: 'seed', companyCorrespondence: origin } },
   sections: [{ id: 's1', code: 'correspondence', title: 'Response body', content: '<p><strong>Reviewed body.</strong></p>' }], signatures: [] });
 const signature = () => ({ signer_email: 'reviewer@example.test', signer_name: 'Verified reviewer', meaning: 'APPROVER', reason: 'Approve reviewed correspondence',
