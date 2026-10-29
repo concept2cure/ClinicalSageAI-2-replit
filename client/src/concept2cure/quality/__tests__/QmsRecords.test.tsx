@@ -19,6 +19,18 @@ vi.mock('../../mdx/hooks/useFetchJson', () => ({
   useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
 }));
 vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program }));
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Q. Approver' }) }));
+/* The signing dialog hands over what a signer typed (ChangeControlApproval.test.tsx). */
+vi.mock('../../_shared/components/EsignModal', () => ({
+  esignSignerOf: () => undefined,
+  EsignModal: (p: { action: string; meanings?: string[]; onSign: (i: { meaning: string; reason: string; password: string }) => Promise<unknown> }) => (
+    <div role="dialog" aria-label={p.action} data-meanings={(p.meanings ?? []).join(',')}>
+      <button onClick={() => void p.onSign({ meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.', password: 'pw' }).catch(() => undefined)}>
+        stub-sign
+      </button>
+    </div>
+  ),
+}));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
@@ -42,9 +54,9 @@ const CAPA = {
 afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; });
 
 describe('Quality records', () => {
-  it('lists nonconformances and records a disposition only with its rationale', async () => {
+  it('lists nonconformances and dispositions one only through a signature, its reason the rationale', async () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
-    H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ data: { ...NC, disposition: 'rework' } }) });
+    H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...NC, disposition: 'rework' }, signedAt: '2026-10-29T12:00:00.000Z', meaning: 'approval' }) });
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
 
     expect(screen.getByText('NC-2026-004')).toBeTruthy();
@@ -53,21 +65,19 @@ describe('Quality records', () => {
     fireEvent.click(screen.getByRole('button', { name: /Disposition/ }));
     const drawer = screen.getByRole('dialog');
     fireEvent.change(within(drawer).getByLabelText(/^Disposition/), { target: { value: 'rework' } });
-    fireEvent.change(within(drawer).getByLabelText(/Rationale/), { target: { value: 'short' } });
-    fireEvent.click(within(drawer).getByRole('button', { name: 'Record disposition' }));
-    await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/Not recorded — a rationale/)).toBeTruthy());
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Continue to sign' }));
+    // Nothing is sent until the signature.
+    const signing = await screen.findByRole('dialog', { name: 'Sign disposition' });
+    expect(signing.getAttribute('data-meanings')).toBe('approval,responsibility');
     expect(H.apiRequest).not.toHaveBeenCalled();
 
-    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Rationale/), {
-      target: { value: 'Re-test after column replacement confirmed the assay result is a lab error.' },
-    });
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Record disposition' }));
+    fireEvent.click(within(signing).getByRole('button', { name: 'stub-sign' }));
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledTimes(1));
     expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/nonconforming/4/disposition', {
-      disposition: 'rework',
-      dispositionRationale: 'Re-test after column replacement confirmed the assay result is a lab error.',
+      disposition: 'rework', password: 'pw', meaning: 'approval',
+      reason: 'Re-test after column replacement confirmed a lab error.',
     });
-    await waitFor(() => expect(screen.getByText('NC-2026-004: Rework was recorded.')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('NC-2026-004: Rework was signed.')).toBeTruthy());
   });
 
   it('shows a failed supplier read as a failure, not an empty register', () => {
