@@ -1,0 +1,10 @@
+Mutation M8-door-name-row-missing
+File: .design/client-journey/INFORMATION_ARCHITECTURE.md
+- | Device workstream | No door (the human-factors package opens Evidence) | Build the usability engineering file |
++ 
+Test: client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+
+× client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway 325ms
+Tests  1 failed | 27 passed (28)
+
+Restored byte for byte: yes

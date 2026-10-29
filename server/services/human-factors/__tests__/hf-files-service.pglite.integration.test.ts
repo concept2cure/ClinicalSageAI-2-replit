@@ -7,9 +7,19 @@
  * the surface's completeness is computed against a stable denominator, never a
  * stored verdict). Also locks required-input validation, malformed-map rejection,
  * soft-delete, and strict tenant scope.
+ *
+ * D2, 2026-10-29 (docs/evidence/D2-ONE-ANA/2026-10-29/device-features-human-factors/):
+ * the schema is the real one, applied from the creating migrations
+ * (20260524 regulatory_programs, 20260801 hf_engineering_files) and
+ * 20261029's program key, instead of a hand-written copy that would not have
+ * the column. A file recorded with a project reads back only under that
+ * project; a file recorded without one is the organization's unscoped file
+ * and no project read returns it.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 let pglite: PGlite;
 const pool = {
@@ -27,17 +37,28 @@ import {
 const ORG = 7;
 const OTHER = 9;
 
-const DDL = `
-CREATE TABLE hf_engineering_files (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id int NOT NULL, device text NOT NULL,
-  framework text NOT NULL DEFAULT 'IEC 62366-1', present jsonb NOT NULL DEFAULT '{}'::jsonb,
-  created_by int,
-  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz
-);
-`;
+const ROOT = join(__dirname, '..', '..', '..', '..');
+const MIGRATIONS = [
+  'migrations/20260524_program_workbench_schema.sql',
+  'db/migrations/20260801_hf_files_store.sql',
+  'migrations/20261029_hf_engineering_files_program_key.sql',
+];
+const P_ORG = '11111111-1111-4111-8111-111111111111'; // organization 7
+const P_ORG_2 = '22222222-2222-4222-8222-222222222222'; // organization 7, a second project
+const P_OTHER = '33333333-3333-4333-8333-333333333333'; // organization 9
 
-beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000);
+beforeAll(async () => {
+  pglite = new PGlite();
+  await pglite.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT); CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);`);
+  for (const f of MIGRATIONS) await pglite.exec(readFileSync(join(ROOT, f), 'utf8'));
+  for (const [id, org] of [[P_ORG, ORG], [P_ORG_2, ORG], [P_OTHER, OTHER]] as const) {
+    await pglite.query(
+      `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, $4, '510K', 'device', 'FDA', $5)`,
+      [id, org, id, id.slice(0, 8), id],
+    );
+  }
+}, 60_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => { await pglite.exec(`DELETE FROM hf_engineering_files;`); });
 
@@ -97,5 +118,30 @@ describe('hf-files-service', () => {
     expect(await listHfFiles(ORG)).toEqual([]);                   // soft-deleted excluded
     expect(await getHfFile(ORG, mine.id)).toBeNull();
     expect(await deleteHfFile(ORG, mine.id)).toBe(false);        // already gone
+  });
+
+  it('records the project a file is created for, and reads it back only under that project', async () => {
+    const keyed = await createHfFile(ORG, { device: 'Alpha pump', programId: P_ORG });
+    await createHfFile(ORG, { device: 'Beta pump', programId: P_ORG_2 });
+    await createHfFile(ORG, { device: 'Unscoped pump' });
+    expect(keyed.program_id).toBe(P_ORG);
+
+    expect((await listHfFiles(ORG, { programId: P_ORG })).map((r) => r.device)).toEqual(['Alpha pump']);
+    expect((await listHfFiles(ORG, { programId: P_ORG_2 })).map((r) => r.device)).toEqual(['Beta pump']);
+    // Another organization's project is never read through this organization.
+    expect(await listHfFiles(ORG, { programId: P_OTHER })).toEqual([]);
+  });
+
+  it('keeps a file with no project out of every project read', async () => {
+    const unscoped = await createHfFile(ORG, { device: 'Unscoped pump' });
+    expect(unscoped.program_id).toBeNull();
+    expect(await listHfFiles(ORG, { programId: P_ORG })).toEqual([]);
+    // The organization read without a project is unchanged: it still returns the file.
+    expect((await listHfFiles(ORG)).map((r) => r.device)).toEqual(['Unscoped pump']);
+  });
+
+  it('refuses, at the database, a file naming another organization\'s project', async () => {
+    await expect(createHfFile(ORG, { device: 'Cross pump', programId: P_OTHER })).rejects.toMatchObject({ code: '23503' });
+    expect(await listHfFiles(ORG)).toEqual([]);
   });
 });
