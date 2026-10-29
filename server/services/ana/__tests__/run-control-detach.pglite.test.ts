@@ -62,6 +62,7 @@ import {
   holdForPerson,
   readRun,
   readRunEnding,
+  recordApprovalDecision,
   reapOrphanedRuns,
   RunStopped,
   runStopDetailOf,
@@ -484,6 +485,37 @@ describe('claimApproval: the held approval is claimed once, on a run still waiti
     expect(await claimApproval(pool(), runId, ORG, COLLEAGUE, 'tu_save')).toBe('not_waiting');
     expect(await claimApproval(pool(), runId, OTHER_ORG, ASKER, 'tu_save')).toBe('not_waiting');
     expect(await claimApproval(pool(), runId, ORG, ASKER, 'tu_other')).toBe('not_waiting');
+  });
+
+  const decisionRow = async (runId: string) =>
+    (await q(`SELECT status, approval_decision FROM ana_runs WHERE id = $1`, [runId])).rows[0];
+
+  // The approval window closing is the waiting turn's own deny. It used to
+  // match a claimed approval too, so the turn recorded "nobody authorised
+  // this, so it did not run" while the person's action was being carried out.
+  it("the approval window closing does not deny an approval its person has claimed; the person's decision still lands", async () => {
+    const { runId } = await held();
+    expect(await claimApproval(pool(), runId, ORG, ASKER, 'tu_save')).toBe('claimed');
+    const windowClosed = await recordApprovalDecision(pool(), runId, ORG, {
+      toolUseId: 'tu_save', decided: 'denied', decidedAt: new Date().toISOString(), byUserId: null, error: 'no decision within the approval window',
+    });
+    expect(windowClosed).toBe(false);
+    expect(await decisionRow(runId)).toMatchObject({ status: 'awaiting_approval', approval_decision: null });
+    const decided = await recordApprovalDecision(pool(), runId, ORG, {
+      toolUseId: 'tu_save', decided: 'approved', decidedAt: new Date().toISOString(), byUserId: ASKER, result: { success: true },
+    });
+    expect(decided).toBe(true);
+    expect(await decisionRow(runId)).toMatchObject({ status: 'running', approval_decision: expect.objectContaining({ decided: 'approved', byUserId: ASKER }) });
+  });
+
+  it('an approval nobody claimed is still denied when the window closes', async () => {
+    const { runId } = await held();
+    expect(
+      await recordApprovalDecision(pool(), runId, ORG, {
+        toolUseId: 'tu_save', decided: 'denied', decidedAt: new Date().toISOString(), byUserId: null, error: 'no decision within the approval window',
+      }),
+    ).toBe(true);
+    expect(await decisionRow(runId)).toMatchObject({ status: 'running', approval_decision: expect.objectContaining({ decided: 'denied', byUserId: null }) });
   });
 
   it('a claim released (the sign-off row was refused) can be claimed again', async () => {

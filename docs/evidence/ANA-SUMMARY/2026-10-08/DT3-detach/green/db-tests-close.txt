@@ -1,0 +1,20 @@
+# DB tier, 2026-10-29 on 7d6f376e0: concept2cure-ri_qa_fresh2 (built by deploy-migrate in this container), RLS_ENFORCE=on, vitest.db.config.ts, the runtime role via APP_DATABASE_URL
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a stop accepted on instance B aborts the run on instance A, by NOTIFY 534ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a listener on a connection another tenant opened still delivers this tenant's stop 77ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a pause wait on A is woken by a resume accepted on B, not by its timeout 270ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: delivery (real PostgreSQL, RLS enforcing) > a steer accepted on B is drained exactly once on A 55ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > control from another organization is refused on B and never reaches A 334ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: refusal and fallback > with no LISTEN client, the declared poll fallback still delivers the stop 2048ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > shutdown returns the LISTEN connection, so closing the pool completes 44ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control lifecycle: shutdown and the reaper > the reaper fails a run whose instance stopped heartbeating, across tenants 81ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > an admin's cancel accepted on B aborts A's run, as admin_cancelled 168ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > B's reaper fails A's stale run, notifies, and A aborts as orphaned 182ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > a stopRunsFor on B (the person signed out) aborts A's run, as session_ended 187ms
+ ✓ server/services/ana/__tests__/run-control-cross-instance.dbtest.ts > run control across two instances: a detached run (DT3) > a person's stop with no organisation named (system scope) reaches A too 153ms
+ ✓ server/services/ana/__tests__/run-admin-cancel-audit.dbtest.ts > an administrator's cancel and its chained audit row, one transaction, under RLS (DT3 review) > lands with its chained row: the administrator, whose run, the reason, sealed on the tenant chain 1891ms
+ ✓ server/services/ana/__tests__/run-admin-cancel-audit.dbtest.ts > an administrator's cancel and its chained audit row, one transaction, under RLS (DT3 review) > a row the database refuses rolls the cancel back: the run goes on, with no control event 117ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > the asker's visible read stamps last_watched_at, in the run's own organisation 75ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > another organisation's request finds no run and stamps nothing, though it names the id 31ms
+ ✓ server/routes/ana-ri/__tests__/runs-watched-stamp-rls.dbtest.ts > the asker's watched stamp under RLS, on the request's own connection (DT3) > a second read within 5 s does not stamp again 40ms
+ Test Files  3 passed (3)
+      Tests  17 passed (17)

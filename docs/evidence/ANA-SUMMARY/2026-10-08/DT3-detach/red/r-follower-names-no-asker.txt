@@ -1,6 +1,6 @@
 # r-follower-names-no-asker: exit 1 (non-zero = red)
 # tests: server/routes/ana-ri/__tests__/runs-read.pglite.test.ts  -t names whose turn
- × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin's read names whose turn it is; the asker's does not 60ms
+ × server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin's read names whose turn it is; the asker's does not 73ms
    → expected null to be 'Sam Rivera' // Object.is equality
  Test Files  1 failed (1)
       Tests  1 failed | 21 skipped (22)

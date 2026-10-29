@@ -1,9 +1,9 @@
 # r-d7-screen-action-runs-after-close: exit 1 (non-zero = red)
 # tests: server/routes/ana-ri/__tests__/stream-detach.test.ts server/routes/ana-ri/__tests__/stream-detach-review.test.ts  -t screen action after the close
- × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on 80ms
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on 233ms
    → expected 1 to be undefined
  Test Files  1 failed | 1 skipped (2)
-      Tests  1 failed | 45 skipped (46)
+      Tests  1 failed | 48 skipped (49)
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
  FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > a Live Drive turn whose page closes (D-7, decided 2026-10-22) > a screen action after the close is refused, never run, and listed as a step that did not run; the rest goes on
 AssertionError: expected 1 to be undefined
