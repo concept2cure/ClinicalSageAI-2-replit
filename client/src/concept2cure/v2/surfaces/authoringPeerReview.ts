@@ -4,6 +4,7 @@ import {
   authoringReviewInputSchema, authoringReviewReadSchema, authoringReviewResponseSchema,
   type AuthoringReviewContext, type AuthoringReviewInput, type AuthoringReviewRow,
 } from '@shared/authoring/peer-review';
+import type { ScientificReviewSubmission } from '@shared/authoring/csr-scientific-review';
 
 export interface PeerReviewScope { documentId: string; userId: number; organizationId: number }
 export type PeerVerdict = AuthoringReviewInput['review_status'];
@@ -12,7 +13,10 @@ const READ_FAILED = 'The complete saved document and your review request could n
 const REFUSED = 'The service refused this decision. Reload the review record before trying again.';
 
 export class PeerReviewError extends Error {
-  constructor(message: string, public readonly reloadRequired = false) { super(message); this.name = 'PeerReviewError'; }
+  /** The server's refusal code, when it gave one: a CSR approval refused for want of its scientific review says so. */
+  constructor(message: string, public readonly reloadRequired = false, public readonly code: string | null = null) {
+    super(message); this.name = 'PeerReviewError';
+  }
 }
 
 function canonicalId(value: unknown): number | null {
@@ -48,7 +52,9 @@ export async function readPeerReview(scope: PeerReviewScope): Promise<AuthoringR
   return context;
 }
 
-export function capturedReviewInput(context: AuthoringReviewContext, verdict: PeerVerdict, note: string): AuthoringReviewInput {
+export function capturedReviewInput(
+  context: AuthoringReviewContext, verdict: PeerVerdict, note: string, csrEvidence: ScientificReviewSubmission | null = null,
+): AuthoringReviewInput {
   if (!context.canReview || !context.myReview) throw new PeerReviewError(context.unavailableReason ?? REFUSED, true);
   const trimmed = note.trim();
   if ((verdict !== 'approved' && trimmed.length < 8) || trimmed.length > 4000) {
@@ -57,7 +63,7 @@ export function capturedReviewInput(context: AuthoringReviewContext, verdict: Pe
   return authoringReviewInputSchema.parse({ review_status: verdict, ...(trimmed ? { review_comments: trimmed } : {}), expected: {
     reviewId: context.myReview.reviewId, requestedAt: context.myReview.requestedAt,
     snapshotHash: context.snapshotHash, bindingBasis: context.bindingBasis,
-  } });
+  }, ...(verdict === 'approved' && csrEvidence ? { csr_evidence: csrEvidence } : {}) });
 }
 
 function receiptMatches(review: AuthoringReviewRow, scope: PeerReviewScope, context: AuthoringReviewContext, input: AuthoringReviewInput): boolean {
@@ -69,18 +75,26 @@ function receiptMatches(review: AuthoringReviewRow, scope: PeerReviewScope, cont
     JSON.stringify(review.reviewed_snapshot) === JSON.stringify(context.snapshot);
 }
 
+function refusalCode(body: unknown): string | null {
+  const code = (body as { error?: { code?: unknown } } | null)?.error?.code;
+  return typeof code === 'string' ? code : null;
+}
+
 function refusal(error: unknown): PeerReviewError {
   if (error instanceof ApiRequestError && error.status >= 400 && error.status < 500 && error.status !== 408) {
-    return new PeerReviewError(redactInternals(error.message, REFUSED), true);
+    return new PeerReviewError(redactInternals(error.message, REFUSED), true, error.code ?? refusalCode(error.payload));
   }
   return new PeerReviewError(UNCONFIRMED, true);
 }
 
-export async function recordPeerReview(scope: PeerReviewScope, context: AuthoringReviewContext, verdict: PeerVerdict, note: string): Promise<AuthoringReviewRow> {
+export async function recordPeerReview(
+  scope: PeerReviewScope, context: AuthoringReviewContext, verdict: PeerVerdict, note: string,
+  csrEvidence: ScientificReviewSubmission | null = null,
+): Promise<AuthoringReviewRow> {
   if (context.documentId !== scope.documentId || context.actorId !== String(scope.userId) || context.organizationId !== scope.organizationId) {
     throw new PeerReviewError(READ_FAILED, true);
   }
-  const input = capturedReviewInput(context, verdict, note);
+  const input = capturedReviewInput(context, verdict, note, csrEvidence);
   const headers = headersFor(scope);
   let response: Response;
   try { response = await apiRequest('POST', `/api/authoring/documents/${encodeURIComponent(scope.documentId)}/review`, input, headers); }
@@ -88,7 +102,9 @@ export async function recordPeerReview(scope: PeerReviewScope, context: Authorin
   const body: unknown = await response.json().catch(() => null);
   headersFor(scope);
   if (!response.ok) {
-    if (response.status >= 400 && response.status < 500 && response.status !== 408) throw new PeerReviewError(serverMessage(body) ?? REFUSED, true);
+    if (response.status >= 400 && response.status < 500 && response.status !== 408) {
+      throw new PeerReviewError(serverMessage(body) ?? REFUSED, true, refusalCode(body));
+    }
     throw new PeerReviewError(UNCONFIRMED, true);
   }
   const parsed = authoringReviewResponseSchema.safeParse(body);

@@ -245,7 +245,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
-  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
+  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} programId={decisionFor.programId ?? null} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
     refreshBoard(); fireToast(recordedNotice(receipt));
   }} />;
 
