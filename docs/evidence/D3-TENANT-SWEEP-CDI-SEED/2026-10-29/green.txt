@@ -1,0 +1,34 @@
+# Green after the fixture change, at 43fb57cc plus the working-tree diff in fix.diff.
+# timeout 300 npx vitest run tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > matches the fixture atom key type 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every Cortex atom reference matches its parent key type 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 6ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > matches a UUID-backed atom store without rewriting it 1608ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 24ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key 5ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps 91ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 14ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 2ms
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  06:36:57
+   Duration  13.59s (transform 550ms, setup 67ms, import 1.05s, tests 12.22s, environment 0ms)
+
+# npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 431 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+# npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 431 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).

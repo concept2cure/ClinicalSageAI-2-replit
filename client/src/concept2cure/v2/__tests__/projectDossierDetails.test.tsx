@@ -56,7 +56,7 @@ describe('the existing dossier details on Author', () => {
   it('prints home review and draft totals without pooling the added market', () => {
     const r = read();
     r.state.data!.rows.push({ ...r.state.data!.rows[0], documentId: 'market', agency: 'ema', inReview: 30, drafted: 40 });
-    render(<DossierReadinessCard read={r} />);
+    render(<DossierReadinessCard read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('1 in review · 1 drafted')).toBeTruthy();
     expect(document.body.textContent).not.toContain('31 in review');
     expect(document.body.textContent).not.toContain('41 drafted');
@@ -76,7 +76,7 @@ describe('the existing dossier details on Author', () => {
     const r = read();
     r.state.data!.home = { state: 'unavailable', pct: null, reason: 'Store unavailable.' };
     r.state.data!.rows = [];
-    render(<DossierReadinessCard read={r} />);
+    render(<DossierReadinessCard read={r} copyFor={() => ({ kind: 'none' })} onOpen={vi.fn()} />);
     expect(screen.getByText('Store unavailable.')).toBeTruthy();
     expect(screen.queryByText(/in review.*drafted/)).toBeNull();
     expect(dossierFacts({ ...r, state: { ...r.state, data: null, error: 'read failed' } })).toEqual({ dossier: null, dossierUnavailable: 'the dossier read failed' });

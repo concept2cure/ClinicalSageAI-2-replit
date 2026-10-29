@@ -46,3 +46,26 @@ Run per group of 8 (the whole set in one process stalled), each with a time limi
 ## Typecheck
 ci:typecheck:no-regression: run by the pre-push hook for this push. A run beside four test agents was
 killed by the host for memory (exit 137) and is not counted.
+
+## Part C (the readiness card's market line), on 43fb57cc with the change
+Each file run alone, under timeout 240.
+
+### The changed suites
+projectHomeDocuments 26/26 (5 new), projectDossierDetails 8/8, projectSideNotRead 1/1.
+
+### The dossier and F3 suites
+projectDossierParity 7/7, editingCopy 3/3, dossierMapProgramScope 3/3, projectArtifactReadiness 15/15,
+projectSectionTracking 21/21, microWireups 5/5, projectHomeLaunchScope 14/14, documentAuthoringDeepLink 17/17,
+editorTarget 22/22. The two suites whose dossier holds an added market: projectHomeReadiness 12/12,
+filingOutlinePerMarket 3/3.
+
+### Every client suite that renders Project home (40 files)
+40 files pass, 0 fail, 398 tests. Nothing was red at head in this set.
+
+### ESLint per file (plain npx eslint), head -> now
+ProjectDossier.tsx 0->0, ProjectHome.tsx 6->6 (the ProjectHome function's 370 lines and complexity 142
+unchanged), ProjectSide.tsx 0->0, projectHomeDocuments.test.tsx 0->0, projectDossierDetails.test.tsx 0->0,
+projectSideNotRead.test.tsx 0->0.
+
+### Typecheck
+tsc --noEmit -p tsconfig.check.json over the whole working tree: exit 0, 0 errors.
