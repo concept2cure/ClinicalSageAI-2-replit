@@ -7,6 +7,8 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
+import { IndBriefingBookStart } from './IndBriefingBookStart';
+import { openImportedDocument } from '../editor/SourceImportDialog';
 import {
   INDL_STATUS_LABEL,
   INDL_CLOCK_STATUS,
@@ -219,29 +221,8 @@ export function sectionsText(sections: unknown): string {
     .join('\n\n');
 }
 
-/** Parse "topic | question" lines into numbered briefing questions. Only what
-    the user typed goes up — an absent topic stays empty, never invented. */
-function parseQuestions(raw: string): Array<{ number: number; topic: string; question: string }> {
-  return raw
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line, i) => {
-      const at = line.indexOf('|');
-      return at >= 0
-        ? { number: i + 1, topic: line.slice(0, at).trim(), question: line.slice(at + 1).trim() }
-        : { number: i + 1, topic: '', question: line };
-    });
-}
-
 /* Field option lists — the server enums, stated once. */
 export const OPTS = (vs: string[]) => vs.map((v) => ({ v, label: v }));
-const MEETING_TYPES = [
-  { v: 'pre_ind', label: 'Pre-IND' },
-  { v: 'type_a', label: 'Type A' },
-  { v: 'type_b', label: 'Type B' },
-  { v: 'type_c', label: 'Type C' },
-];
 const REF_FILE_TYPES = OPTS(['DMF', 'IND', 'NDA', 'BLA']);
 const FDA_CENTERS = [
   { v: 'CDER', label: 'CDER — Center for Drug Evaluation and Research' },
@@ -1015,35 +996,6 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       : null;
 
   const wired: Record<string, WiredDeliverable> = {
-    'briefing-book': {
-      assemblePath: '/api/ind-lifecycle/briefing-book',
-      pdf: { path: '/api/ind-lifecycle/briefing-book/pdf', filename: 'fda-briefing-book.pdf' },
-      fields: [
-        { key: 'bb.meetingType', label: 'Meeting type', kind: 'select', options: MEETING_TYPES, placeholder: NOT_STATED },
-        { key: 'bb.indication', label: 'Indication', kind: 'text' },
-        { key: 'bb.background', label: 'Product background and rationale', kind: 'textarea' },
-        { key: 'bb.nonclinical', label: 'Nonclinical data summary', kind: 'textarea' },
-        { key: 'bb.plan', label: 'Proposed clinical development plan', kind: 'textarea' },
-        { key: 'bb.questions', label: 'Questions for FDA (one per line, "topic | question")', kind: 'textarea' },
-      ],
-      payload: () => ({
-        productName: prog.productName ?? drug,
-        indication: fv('bb.indication'),
-        ...chosen('bb.meetingType', 'meetingType'),
-        questions: parseQuestions(fv('bb.questions')),
-        ...(fv('bb.background') ? { productBackground: fv('bb.background') } : {}),
-        ...(fv('bb.nonclinical') ? { nonclinicalSummary: fv('bb.nonclinical') } : {}),
-        ...(fv('bb.plan') ? { proposedClinicalPlan: fv('bb.plan') } : {}),
-      }),
-      toView: (json: any) =>
-        json && Array.isArray(json.sections)
-          ? {
-              text: sectionsText(json.sections),
-              gaps: Array.isArray(json.gaps) ? json.gaps.map((g: any) => String(g?.message ?? g)) : [],
-              canFile: false,
-            }
-          : null,
-    },
     loa: {
       assemblePath: '/api/ind-lifecycle/loa',
       pdf: { path: '/api/ind-lifecycle/loa/pdf', filename: 'ind-letter-of-authorization.pdf' },
@@ -1683,6 +1635,22 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                     </>
+                  ) : d.id === 'briefing-book' ? (
+                    /* The book is an editor document (slice G14): started or
+                       opened from the FDA meeting-package template, never
+                       assembled here into a preview that cannot be filed. */
+                    prog.programId ? (
+                      <IndBriefingBookStart
+                        programId={prog.programId}
+                        onOpenDocument={(docId) => openImportedDocument(docId, prog.programId!, (id) => onNav && onNav(id))}
+                        onAsk={ask}
+                      />
+                    ) : (
+                      <div className="indl-dcard-desc" role="status">
+                        This IND is not linked to a project, so its briefing book cannot be started in the editor. Link the
+                        IND submission to its project first.
+                      </div>
+                    )
                   ) : wired[d.id] ? (
                     (() => {
                       const w = wired[d.id];
