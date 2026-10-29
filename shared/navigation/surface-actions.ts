@@ -277,6 +277,22 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       },
     ],
   },
+  {
+    /* Fold F3 slice B (D2, 2026-10-29): the Vault's counterpart of
+       artifacts-center.focus-artifact, for every document of the tree. */
+    id: 'vault.focus-document',
+    surfaceId: 'vault',
+    label: 'Select a vault document',
+    description:
+      'On the project Vault, select a named document of the tree (an authored section, an uploaded file or a governed artifact) so its detail pane shows it, opening its folder. Resolved against the real tree by title, or by section code when given exactly; an unknown or ambiguous name is an honest miss, never a guess. It only selects: downloading, filing and signing stay a person\'s acts.',
+    params: [
+      {
+        name: 'document',
+        required: true,
+        description: 'The document title as shown in the vault (case-insensitive; partial titles resolve when unambiguous), or its exact section code.',
+      },
+    ],
+  },
 
   // ── Task board (nav target 'tasking' → the tasks surface) ──
   {

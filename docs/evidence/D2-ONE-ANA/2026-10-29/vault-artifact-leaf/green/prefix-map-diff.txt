@@ -1,0 +1,11 @@
+# The whole prefix map the module gate builds (buildPrefixMap over the real registry), HEAD eeaf0ac39's registry against the working tree.
+# Only the vault entry's apiPrefixes line differs between the two, beside its dated comment (git diff HEAD -- shared/constants/ui-surface-registry*.ts);
+# 'before' is the working-tree registry with that one claim taken off the vault entry in memory.
+#  284 gated prefixes before; 284 after.
+
+12c12
+< /api/artifacts-center	artifacts-center
+---
+> /api/artifacts-center	artifacts-center,vault
+
+# diff: rows changed = 1
