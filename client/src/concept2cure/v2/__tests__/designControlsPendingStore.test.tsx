@@ -18,6 +18,14 @@
  *
  * Vault.tsx:952 and rbmBoard.ts:254 already branch on this exact flag. This
  * surface is the deviation.
+ *
+ * 2026-10-29 (D2, fold F1c): the Design controls screen folded into Engineering
+ * evidence, which mounts the same trace (v2/surfaces/DesignControlsTrace.tsx)
+ * for the open project and hands its AnA context to the host. These cases run
+ * against the trace as Engineering mounts it (./engineeringPanels.harness.tsx),
+ * over the route's bodies for an admitted project. The old screen's header and
+ * its "live" eyebrow went with it; the panel is pinned to claim no live store
+ * over one that does not exist.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,33 +37,26 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { DesignControls } from '../surfaces/DesignControls';
-import { useActiveSurfaceContext } from '../surfaceContext';
+import { EngineeringDesignControlsPanel, keyedToPanelProject } from './engineeringPanels.harness';
 
-function Spy() {
-  const ctx = useActiveSurfaceContext('design-controls');
-  return <pre data-testid="ctx">{JSON.stringify(ctx)}</pre>;
-}
+/** What the panel hands the host for AnA, as the last report. */
+let published: unknown = null;
 
-/** Verbatim bodies from server/routes/design-controls.routes.ts. */
-const PENDING = { data: [], meta: { count: 0, pendingStore: true } };   // :59, 42P01
-const EMPTY = { data: [], meta: { count: 0 } };                          // :56, zero rows
+/** The bodies server/routes/design-controls.routes.ts answers for an admitted project. */
+const PENDING = keyedToPanelProject([], { pendingStore: true });   // 42P01
+const EMPTY = keyedToPanelProject([]);                              // zero rows
 
 function respond(body: unknown) {
   apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => body }));
 }
 function mount() {
-  return render(
-    <>
-      <DesignControls {...({ surface: { id: 'design-controls' }, onAsk: vi.fn(), onNav: vi.fn() } as any)} />
-      <Spy />
-    </>,
-  );
+  const view = render(<EngineeringDesignControlsPanel onContext={(ctx) => { published = ctx; }} />);
+  return { ...view, ctx: () => JSON.stringify(published) };
 }
 const settled = (el: HTMLElement) =>
   waitFor(() => expect(el.textContent ?? '').not.toMatch(/Loading design inputs/));
 
-beforeEach(() => apiRequest.mockReset());
+beforeEach(() => { apiRequest.mockReset(); published = null; });
 afterEach(() => cleanup());
 
 describe('Design controls — an unprovisioned store is not an empty DHF', () => {
@@ -76,8 +77,7 @@ describe('Design controls — an unprovisioned store is not an empty DHF', () =>
     respond(PENDING);
     const { container } = mount();
     await settled(container);
-    const eyebrow = container.querySelector('.sp-eyebrow')?.textContent ?? '';
-    expect(/live/.test(eyebrow), 'the "live" pill asserts a connected store').toBe(false);
+    expect(/\blive\b/i.test(container.textContent ?? ''), 'a "live" claim asserts a connected store').toBe(false);
   });
 
   it('renders differently from a provisioned-but-empty store', async () => {
@@ -98,9 +98,10 @@ describe('Design controls — an unprovisioned store is not an empty DHF', () =>
 
   it('does not publish an 820.30 completeness claim over a store that does not exist', async () => {
     respond(PENDING);
-    const { container } = mount();
+    const { container, ctx: readCtx } = mount();
     await settled(container);
-    const ctx = container.querySelector('[data-testid="ctx"]')?.textContent ?? '';
+    const ctx = readCtx();
+    expect(ctx, 'the panel handed its context up').toMatch(/"summary"/);
 
     // This string goes on the wire to AnA as `module_context` on every turn
     // (V2App.tsx:370-372), and is what she answers a DHF question from.
@@ -135,7 +136,7 @@ describe('Design controls — an unprovisioned store is not an empty DHF', () =>
     const { container } = mount();
     await settled(container);
 
-    fireEvent.click(container.querySelector('button.sp-primary') as HTMLElement);
+    fireEvent.click(Array.from(container.querySelectorAll('button')).find(b => /New design input/.test(b.textContent || ''))!);
     fireEvent.change(container.querySelector('input[type="text"]') as HTMLInputElement, { target: { value: 'Battery lasts 14 days' } });
     fireEvent.change(container.querySelector('select') as HTMLSelectElement, { target: { value: 'performance' } });
     fireEvent.click(Array.from(container.querySelectorAll('button')).find(b => /Add design input/.test(b.textContent || ''))!);

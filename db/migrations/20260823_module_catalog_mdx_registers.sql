@@ -1,3 +1,18 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F1c: design-controls into Engineering evidence (CLAUDE.md Rule 1).
+-- The design-control trace (DesignControlsTrace.tsx) is the project's, inside
+-- Engineering evidence (device-engineering), and the Design controls screen is
+-- retired; `design-controls` is an alias that opens Engineering. Removed: its
+-- row from the upsert below and from the end-state assertion, so this file seeds
+-- human-factors alone. A fresh database never holds a design-controls row
+-- (20260814j, its other writer, no longer inserts it either). On a deployed
+-- database 20260810 step 1, which never listed the id, deprecates the row on
+-- every replay, and nothing here clears the flag any more. The row, its metadata
+-- (its 'standard' tier included), module_subscriptions FKs and every tenant
+-- record stay; no DELETE. A live grant of it carries to device-engineering in the
+-- entitlement resolver (decision P-61 item 4,
+-- server/services/entitlements/folded-module-successors.ts). The notes below
+-- describe the file as first written, for two rows.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
 -- =============================================================================
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
@@ -165,7 +180,6 @@
 BEGIN;
 
 INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES
-  ('design-controls', 'Design controls (DHF)', 'The design control register for ISO 13485 and 21 CFR 820.30 — design inputs and outputs, design reviews, verification and validation, and the traceability matrix that ties each requirement to the evidence that satisfies it.', 'Evidence & data', '/concept2cure/design-controls', 'gitBranch', 255, '{"tiers": ["standard"], "industries": []}'::json),
   ('human-factors', 'Human factors (IEC 62366-1)', 'Usability engineering under IEC 62366-1 — use-related risk analysis and critical tasks, formative and summative evaluation, and the usability engineering file that supports the submission.', 'Evidence & data', '/concept2cure/human-factors', 'users', 305, '{"tiers": ["standard"], "industries": []}'::json)
 ON CONFLICT (module_id) DO UPDATE SET
   name        = EXCLUDED.name,
@@ -208,7 +222,7 @@ DO $$
 DECLARE v_bad TEXT;
 BEGIN
   SELECT string_agg(want.module_id, ', ' ORDER BY want.module_id) INTO v_bad
-  FROM (VALUES ('design-controls'::text), ('human-factors')) AS want(module_id)
+  FROM (VALUES ('human-factors'::text)) AS want(module_id)
   WHERE NOT EXISTS (
     SELECT 1 FROM available_modules m
      WHERE m.module_id = want.module_id

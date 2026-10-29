@@ -17,6 +17,18 @@
 --   - Descriptions only; no module, entitlement or price changes.
 --   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
 -- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-29 (CLAUDE.md Rule 1), D2 folds F1c and F2 ═════
+-- WHAT CHANGED: two rows removed, risk and ivd-completeness (32 descriptions,
+-- not 34).
+-- WHY: risk folded into Engineering evidence (device-engineering) and
+-- ivd-completeness into IVDR evidence (device-diagnostics). 20260810 no longer
+-- upserts either row, so a fresh database never holds them, and the guard below
+-- ("copy names modules that are not in available_modules") would refuse the
+-- deploy. A replayed database keeps both rows, deprecated (20260810 step 1),
+-- with the description this file last gave them and their subscriptions.
+-- Descriptions only; no other row changes.
+-- CHANGED BY: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/.
+-- ═════════════════════════════════════════════════════════════════════════════
 -- ══ AMENDED IN PLACE 2026-10-26 (CLAUDE.md Rule 1) ══════════════════════════
 -- WHAT CHANGED: three descriptions open with the name section 9 of
 -- .design/client-journey/INFORMATION_ARCHITECTURE.md gives the feature, not a
@@ -127,7 +139,6 @@ INSERT INTO module_copy (module_id, description) VALUES
   ('insights', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.'),
   ('ind-checklist', 'IND forms — the IND checklist and Module 1 forms (1571, 1572, 3674); the cover letter, briefing book, Letter of Authorization and Statement of Right of Reference; and annual reports and amendments placed into the IND''s eCTD sequence. IND safety reports are not part of this release.'),
   ('intelligence-catalog', 'Reference catalog of the deterministic tools available across regulatory domains, with the trust level of each.'),
-  ('ivd-completeness', 'IVDR technical-file completeness — GSPR Annex I, the Performance Evaluation Report under Annex XIII, analytical and clinical performance, scientific validity, and PMPF and PMS planning.'),
   ('labeling', 'Device labeling and instructions for use — authoring, the symbols register, and translation workflow.'),
   ('pdev', 'Product development through IND — activity tracking, AI drafting, evidence capture and confirmation across CMC, nonclinical, clinical and regulatory.'),
   ('projects', 'The portfolio entry point — programs, status and starred work; the door to everything else.'),
@@ -137,7 +148,6 @@ INSERT INTO module_copy (module_id, description) VALUES
   ('quality', 'SOP and controlled-document register with periodic review and read-and-understood tracking, plus the change-control log.'),
   ('rbm', 'Risk-based monitoring under ICH E6(R3) — risk assessment, key risk indicators, quality tolerance limits, central monitoring and site risk.'),
   ('report-governance', 'Sealed-report lifecycle — cryptographic integrity verification, provenance and attestations, and governed sealing and revocation with justification.'),
-  ('risk', 'ISO 14971 risk management — the risk file, hazard analysis, and control measures with verification of effectiveness.'),
   ('shadow-review', 'AnA simulates the reviewer — FDA filing, EMA Day 120, PMDA, and MDR and IVDR notified body — and scores refuse-to-file and major-deficiency risk before you submit.'),
   ('source-tracer', 'Sentence-level provenance. Every claim carries a typed source link with a confidence score, untraced claims are surfaced, and citations are verified against PubMed and CrossRef.'),
   ('submission-center', 'The submission workspace — package assembly and preview, validation, and dispatch by agency gateway or eSTAR export.'),

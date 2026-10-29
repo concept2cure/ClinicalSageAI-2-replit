@@ -1,3 +1,12 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 folds F1c and F2 (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts risk or ivd-completeness; its replay deprecates the
+-- existing rows. Remove their packaging rows too, so the unknown-module guard
+-- below still passes on a fresh database that never holds them. Replayed
+-- databases keep the deprecated rows, the tier each was given ('standard'), their
+-- subscriptions and every other module's tier unchanged (device-engineering and
+-- device-diagnostics stay 'standard'). design-controls never had a row here; its
+-- tier was 20260823_module_catalog_mdx_registers's, amended the same day.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/grant-continuity-and-f1c-f2/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
 -- 20260814j no longer inserts ectd-publishing, and 20260810 no longer keeps it
 -- off its deprecation or heals it. Remove its packaging row too, so the
@@ -245,7 +254,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('inconsistency', 'standard'),
   ('ind-checklist', 'standard'),
   ('insights', 'standard'),
-  ('ivd-completeness', 'standard'),
   ('labeling', 'standard'),
   ('labeling-pi', 'standard'),
   ('maa-cockpit', 'standard'),
@@ -261,7 +269,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('report-governance', 'standard'),
   ('research-admin', 'standard'),
   ('review', 'standard'),
-  ('risk', 'standard'),
   ('safety-narrative', 'standard'),
   ('source-tracer', 'standard'),
   ('submission-center', 'standard'),
