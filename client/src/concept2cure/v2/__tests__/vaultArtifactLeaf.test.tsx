@@ -13,7 +13,8 @@
  *              must not write a record.
  *   download   GET /api/artifacts-center/:a/export (the governed DOCX, recorded
  *              before it is delivered). A refusal says why.
- *   manifest   the Artifacts center's CSV index, one builder for both screens.
+ *   manifest   the Artifacts center's CSV index, one builder for both screens
+ *              (the gallery is the Vault's organization view since slice C).
  *   editor     the authoring.open-document directive the Artifacts center rides.
  *   AnA        Ask AnA on the leaf, and vault.focus-document.
  *
@@ -38,7 +39,6 @@ vi.mock('../download', async (importOriginal) => ({
 import { ApiRequestError } from '@/lib/queryClient';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { Vault } from '../surfaces/Vault';
-import { ArtifactsCenter } from '../surfaces/AdminSurfaces';
 import { __resetSurfaceActionBus, applySurfaceAction, registerSurfaceActionHandlers, registeredSurfaceId } from '../surfaceActions';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
@@ -310,7 +310,7 @@ describe('an artifact leaf — the governed DOCX download', () => {
   });
 });
 
-describe('the governed-artifact manifest — one builder for the Vault and the Artifacts center', () => {
+describe('the governed-artifact manifest — one builder for the Vault’s project and organization views', () => {
   it('the Vault exports the branch’s rows as CSV, with their governance', async () => {
     mockApi();
     render(<Vault {...props()} />);
@@ -332,40 +332,8 @@ describe('the governed-artifact manifest — one builder for the Vault and the A
     expect(imported[5]).toBe('Imported file');
     expect(imported[6]).toBe('Not recorded');
   });
-
-  it('the Artifacts center’s export uses the same builder and columns', async () => {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === '/api/artifacts-center'
-        ? ok({
-            success: true,
-            data: [{
-              id: 'artifact_9', name: 'IND cover letter', kind: 'Regulatory document', fmt: 'docx', size: '2 KB', model: null,
-              when: 'today', ver: 'v7', sig: true, sigVersion: 7, sigStale: false, reviewed: true, sourceCount: 2, prog: 'BX-204',
-              ctdSection: '1.2', status: 'approved', origin: null, author: 'R. Writer', contentHash: 'a'.repeat(64),
-            }, {
-              id: 'artifact_10', name: 'Withdrawn memo', kind: 'Memo', fmt: 'docx', size: '1 KB', model: null,
-              when: 'today', ver: 'v1', sig: false, sigVersion: null, sigStale: null, reviewed: false, sourceCount: 0, prog: 'BX-204',
-              ctdSection: null, status: 'archived', origin: null, author: null, contentHash: null,
-            }],
-          })
-        : ok({ data: [] }),
-    );
-    render(<ArtifactsCenter surface={{ id: 'artifacts-center', label: 'Artifacts center' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
-    await screen.findByText('IND cover letter');
-    fireEvent.click(screen.getByTestId('artifacts-export-manifest'));
-    expect(dl.csv).toHaveBeenCalledTimes(1);
-    const [name, headers, rows] = dl.csv.mock.calls[0] as [string, string[], unknown[][]];
-    expect(name).toBe('artifacts-manifest.csv');
-    expect(headers).toEqual(MANIFEST_HEADERS);
-    expect(rows[0]).toEqual([
-      'IND cover letter', 'artifact_9', '1.2', 'Regulatory document', 'DOCX', 'Not recorded', 'Not recorded', 'R. Writer',
-      'Approved', 'v7', 'yes', 'Recorded on the current version', 2, 'a'.repeat(64), '2 KB', 'BX-204', 'today',
-    ]);
-    // A status the Vault has no label for is written as the row records it, not as unavailable.
-    expect(rows[1][8]).toBe('archived');
-    expect(rows[1][13]).toBe('Not recorded');
-  });
+  /* The Artifacts center's export of the same builder and columns moved with the gallery
+     into the Vault's organization view (fold F3 slice C): vaultOrganizationArtifacts.test.tsx. */
 });
 
 describe('an artifact leaf — the editor, and Ask AnA', () => {

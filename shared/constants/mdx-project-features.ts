@@ -17,7 +17,8 @@ export const MDX_PROJECT_FEATURE_SURFACE_IDS = [
   'device-udi',
   'device-postmarket',
   'device-presub',
-  'device-vault',
+  // No device vault: it folded into the Vault, a core service of every project
+  // (D2, fold F3, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/).
   // No device task workbench: it folded into Tasks, a core service of every
   // project (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/).
   'device-validation',

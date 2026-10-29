@@ -278,18 +278,28 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
   {
-    /* Fold F3 slice B (D2, 2026-10-29): the Vault's counterpart of
-       artifacts-center.focus-artifact, for every document of the tree. */
+    /* Fold F3 slice B (D2, 2026-10-29): the Vault's counterpart of the
+       Artifacts center's focus-artifact, for every document of the tree. Slice
+       C: it also takes a governed artifact's id, which is how the Live Drive
+       hand-off (V2App followWork) opens what AnA just saved, and with no
+       project open it focuses the Vault's organization view, where the
+       Artifacts center's gallery folded. One of the two params is needed; the
+       screen refuses neither ("No document named."). */
     id: 'vault.focus-document',
     surfaceId: 'vault',
     label: 'Select a vault document',
     description:
-      'On the project Vault, select a named document of the tree (an authored section, an uploaded file or a governed artifact) so its detail pane shows it, opening its folder. Resolved against the real tree by title, or by section code when given exactly; an unknown or ambiguous name is an honest miss, never a guess. It only selects: downloading, filing and signing stay a person\'s acts.',
+      'On the Vault, select a document so its detail is shown. With a project open: a document of its tree (an authored section, an uploaded file or a governed artifact), opening its folder. With no project open: a governed artifact in the list of the projects the user can open. Resolved by title, by section code when given exactly, or by a governed artifact\'s id; an unknown or ambiguous name is an honest miss, never a guess. Give a document or an artifactId. It only selects: downloading, filing and signing stay a person\'s acts.',
     params: [
       {
         name: 'document',
-        required: true,
+        required: false,
         description: 'The document title as shown in the vault (case-insensitive; partial titles resolve when unambiguous), or its exact section code.',
+      },
+      {
+        name: 'artifactId',
+        required: false,
+        description: 'A governed artifact\'s registry id (artifact_…), exactly. Takes precedence over the title.',
       },
     ],
   },
@@ -636,21 +646,9 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Artifacts center ──
-  {
-    id: 'artifacts-center.focus-artifact',
-    surfaceId: 'artifacts-center',
-    label: 'Focus an artifact',
-    description:
-      'In the artifacts center, bring a named artifact into view and highlight it — the same focus the follow-the-work hand-off applies when a driven turn saves a draft. Resolved against the real gallery with honest misses.',
-    params: [
-      {
-        name: 'artifact',
-        required: true,
-        description: 'The artifact name as shown in the gallery (case-insensitive; partial names resolve when unambiguous).',
-      },
-    ],
-  },
+  // ── Artifacts center: none. It folded into the Vault (D2, fold F3 slice C,
+  //    2026-10-29), where vault.focus-document focuses a governed artifact by
+  //    name or id, in a project's tree or across the projects the user can open.
 
   // ── Quality (SOP register / change control) ──
   {

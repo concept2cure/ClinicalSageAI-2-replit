@@ -194,6 +194,26 @@ describe('the folded device task workbench', () => {
   });
 });
 
+describe('the folded Artifacts center and device vault', () => {
+  it('are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/. The subset pin in
+       'the scope list itself' would pass with either id left in a list, so this
+       names them. A new organisation is granted the Vault and not the retired
+       module; an existing grant is kept, deprecated, by the catalogue. */
+    const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(vault.surfaces).toEqual(['vault']);
+    expect(vault.modules).toEqual(['vault']);
+    expect(projects.surfaces).not.toContain('device-vault');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
+    for (const id of ['artifacts-center', 'device-vault']) {
+      expect(isLaunchSurface(id), id).toBe(false);
+      expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain(id);
+    }
+    expect(LAUNCH_MODULE_IDS).toContain('vault');
+  });
+});
+
 describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
   it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
@@ -283,7 +303,8 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
   it('grants a new organisation exactly the modules it was granted before the fold', () => {
     expect([...LAUNCH_MODULE_IDS].sort()).toEqual(
       [
-        'projects', 'tasks', 'vault', 'artifacts-center', 'document-authoring', 'review', 'protocol-dev',
+        // artifacts-center left on 2026-10-29: it folded into the Vault (fold F3), which every new organisation is granted.
+        'projects', 'tasks', 'vault', 'document-authoring', 'review', 'protocol-dev',
         'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
       ].sort(),
     );

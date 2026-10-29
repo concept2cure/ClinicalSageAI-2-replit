@@ -1,3 +1,14 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
+-- The Artifacts center (artifacts-center) and the device kit's document vault
+-- (device-vault) are folded into the Vault: each project's Governed artifacts
+-- branch lists every artifact of the project with its versions, audit report and
+-- governed DOCX, and the Vault's organization view lists the governed artifacts of
+-- the projects the caller can open. Remove both ids from step 1's keep-list and
+-- step 2's upsert, so step 1 deprecates the existing rows on every replay. The
+-- rows, their metadata, module_subscriptions FKs and every tenant record stay; no
+-- DELETE, and no later UPDATE this upsert could undo. 20260823's packaging rows
+-- are removed with them. The Vault is free at the same tier as artifacts-center.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
 -- The device task workbench (device-tasks) is folded into Tasks: TaskBoard.tsx
 -- reads the same submission-ops work item by item and marks another store's
@@ -245,7 +256,6 @@ UPDATE available_modules
        updated_at = now()
  WHERE module_id NOT IN (
    'agency-meetings',
-   'artifacts-center',
    'audit-trail',
    'authoring-engine',
    'batch-draft',
@@ -273,7 +283,6 @@ UPDATE available_modules
    'device-submission',
    'device-udi',
    'device-validation',
-   'device-vault',
    'device-workstream',
    'dispatch-readiness',
    'doc-journey',
@@ -363,12 +372,10 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('protocol-dev', 'The protocol workspace', 'Protocol authoring hub (C2C-17..22): full eCTD-style section tree, SoA grid, risk register (5×5), milestones, budget/feasibility, amendments, deviations/CAPA, reviews, informed consent — deterministic completeness gate on finalize (ICH M11 / 45 CFR 46 / PHS Policy).', 'Author & assemble', '/concept2cure/protocol-dev', 'clipboardList', 210, '{"tiers": [], "industries": []}'::json),
   ('source-tracer', 'Source Tracer', 'Sentence-level provenance bound to sourceLinks.ts: every sentence carries a typed SourceLink (sourceType ∈ trial_data|literature|regulatory_guidance|internal_data) with a 0–1 confidence. POST /sources/analyze finds untraced claims (claimsFound). Literature citations are verified against PubMed+CrossRef via /api/citations/verify (verified|not_found|unverifiable|error) — an unconfirmed citation is flagged, never assumed. Fixture-backed with a Sample-data pill until live-wired. Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts', 'Author & assemble', '/concept2cure/source-tracer', 'search', 220, '{"tiers": [], "industries": []}'::json),
   ('template-library', 'Template library', 'Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface.', 'Author & assemble', '/concept2cure/template-library', 'template', 230, '{"tiers": [], "industries": []}'::json),
-  ('artifacts-center', 'Artifacts Center', 'Cross-project artifact library, version chain, provenance, signature status.', 'Evidence & data', '/concept2cure/artifacts-center', 'sparkles', 240, '{"tiers": [], "industries": []}'::json),
   ('decision-lineage', 'Decision lineage', 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export. Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage', 'Evidence & data', '/concept2cure/decision-lineage', 'gitBranch', 250, '{"tiers": [], "industries": []}'::json),
   ('device-clinical-studies', 'Device clinical studies', 'Study list, detail, summaries, archetypes and RBM attention. Six endpoints; distinct from clinical-ops, which is the drug-trial operations surface.', 'Evidence & data', '/concept2cure/device-clinical-studies', 'stethoscope', 260, '{"tiers": [], "industries": []}'::json),
   ('device-engineering', 'Engineering evidence', 'Program-scoped engineering rollup. Distinct from design-controls and human-factors, which are org-scoped registers.', 'Evidence & data', '/concept2cure/device-engineering', 'wrench', 270, '{"tiers": [], "industries": []}'::json),
   ('device-software', 'Software lifecycle', 'IEC 62304 software lifecycle and completeness summary. The only implementation in the product.', 'Evidence & data', '/concept2cure/device-software', 'code', 280, '{"tiers": [], "industries": []}'::json),
-  ('device-vault', 'Device artifact vault', 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.', 'Evidence & data', '/concept2cure/device-vault', 'vault', 290, '{"tiers": [], "industries": []}'::json),
   ('evidence-search', 'Evidence search (RAG)', 'Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.', 'Evidence & data', '/concept2cure/evidence-search', 'search', 300, '{"tiers": [], "industries": []}'::json),
   ('insights', 'Reporting & analytics', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.', 'Evidence & data', '/concept2cure/insights', 'barChart', 310, '{"tiers": [], "industries": []}'::json),
   ('vault', 'Vault', 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.', 'Evidence & data', '/concept2cure/vault', 'vault', 320, '{"tiers": [], "industries": []}'::json),
