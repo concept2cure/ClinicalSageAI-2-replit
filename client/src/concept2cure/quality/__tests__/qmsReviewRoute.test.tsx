@@ -114,8 +114,9 @@ describe('Send for review names the route (RR4, §2.7)', () => {
     const send = within(form).getByTestId('qms-route-send') as HTMLButtonElement;
     expect(send.disabled).toBe(true);
     expect(within(form).getByTestId('qms-route-note').textContent).toContain('Choose the QMS approver.');
-    // Only the members the validator admits as approver are offered there; the non-designated reviewer is not.
-    expect(within(form).queryByTestId('qms-approver-5')).toBeNull();
+    // Only the members the validator admits as approver can be chosen there; the non-designated one is shown disabled, with why.
+    expect((within(form).getByTestId('qms-approver-5') as HTMLInputElement).disabled).toBe(true);
+    expect(form.textContent).toContain('Rae Reviewer is not designated as a QMS approver in this organization.');
     expect(within(form).getByTestId('qms-reviewer-5')).toBeTruthy();
     expect(within(form).getByTestId('qms-route-not-offered').textContent).toContain('Sam Sender is an author of this document');
     expect(within(form).getByTestId('qms-route-zone').textContent).toContain('Europe/London');

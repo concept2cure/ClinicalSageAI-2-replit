@@ -374,4 +374,6 @@
 @media (max-width: 600px) {
   .qms-route-acts { flex-direction: column; }
   .qms-route-acts .de-btn { width: 100%; }
+  /* The shared drawer's close is 30 px (journey-v2.css .de-x); in the register's route sheets it is a 44 px target on a phone. */
+  .c2c-v2 .qms-shell .de-x { width: 44px; height: 44px; }
 }

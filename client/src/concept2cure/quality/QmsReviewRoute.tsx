@@ -50,6 +50,18 @@ function useQmsCandidates(id: number, purpose: 'send' | 'reassign') {
   return { loading: read.loading, data: read.loading ? null : read.data, again: () => setEpoch((n) => n + 1) };
 }
 
+/**
+ * The approver list also shows, disabled with the validator's reason, the
+ * members who may review but not approve (not one of the organization's QMS
+ * approvers, or a reviewer of this content), so the sender sees why someone
+ * with the Approver role is not offered.
+ */
+function approverOptions(candidates: RouteCandidateView[], reviewers: string[]): PickerOption[] {
+  const refused = candidates.filter((c) => c.approver !== null && c.reviewer === null)
+    .map((c) => ({ id: String(c.id), label: c.name, note: c.approver!.message, disabled: true }));
+  return [...optionsFor(candidates, 'approver', reviewers, 'Chosen as a reviewer.'), ...refused];
+}
+
 function optionsFor(candidates: RouteCandidateView[], role: 'reviewer' | 'approver', takenElsewhere: string[], elsewhere: string): PickerOption[] {
   return candidates.filter((c) => c[role] === null).map((c) => {
     const id = String(c.id);
@@ -133,7 +145,7 @@ export function QmsRouteForm({ doc, mode, onClose, onSent }: { doc: QmsRouteDoc;
           <legend className="de-label">QMS approver<span className="req">*</span></legend>
           <div className="de-desc">One of this organization's QMS approvers. Their signature makes the document effective.</div>
           <PeoplePicker name="qms-route-approver" multiple={false} searchLabel="Find the QMS approver" testIdPrefix="qms-approver"
-            options={optionsFor(c, 'approver', f.reviewers, 'Chosen as a reviewer.')} selected={f.approver ? [f.approver] : []}
+            options={approverOptions(c, f.reviewers)} selected={f.approver ? [f.approver] : []}
             onChange={(ids) => set({ approver: ids[0] ?? null })} />
         </fieldset>
         <fieldset className="de-field" data-testid="qms-route-reviewers">
