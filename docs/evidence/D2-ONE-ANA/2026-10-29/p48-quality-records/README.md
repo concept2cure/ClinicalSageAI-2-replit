@@ -63,6 +63,11 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - The source kinds are one constant (`CAPA_SOURCE_KIND`), used by Raise CAPA and by the column.
   - This replaces the owed `capa_linked` flag, which nothing wrote. The link is not stored twice.
 
+- AnA reads the register on screen, the seventh change. The new tabs' "Ask AnA" read-outs had nothing to read: AnA has no tool for these registers. Each register now reports to the Quality shell what it read: its rows' recorded values (`facts`, per configuration), its counts, and whether it is loading or failed. The shell publishes that as the tab's surface context (`recordTabContext`, `App.tsx`).
+  - A failed read is published as a failure, never as an empty register.
+  - Another tab's rows are never published under the current one.
+  - At most 100 rows are passed, and the summary says when there are more.
+
 ## Proof
 
 - `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 6 of 6 pass.
@@ -86,6 +91,12 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - NC-2026-004 shows CAPA-008, the CAPA raised from it, and NC-2026-005 shows none;
   - with the CAPA read failed, the column says "not read".
   - **Shown failing first:** rendering "—" for an unread register fails the case.
+- `recordTabContext.test.tsx` passes 2 of 2:
+  - the summary names the rows and counts read;
+  - a failed read is a failure;
+  - another tab's context is not borrowed.
+  - **Shown failing first:** with the tab match removed, the second case fails.
+- `QmsRecords.test.tsx` passes 9 of 9. The register reports its rows' facts (NC-2026-004, awaiting disposition), and a failed read reports `failed` with no records.
 - `ChangeLinkForm.test.tsx` passes 2 of 2:
   - a CAPA picked from the register is sent with its own number and title;
   - a failed register read is said, and the typed reference is kept.

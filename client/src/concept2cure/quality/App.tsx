@@ -25,6 +25,7 @@ import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
 import type { QmsRecordTab } from './qmsRecordData';
+import type { RecordRegisterContext } from './qmsRegisterKit';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -77,6 +78,33 @@ const ASK_STARTER: Record<QualityTab, string> = {
   ...QMS_RECORD_ASK,
 };
 
+/**
+ * What AnA is told on a record tab: the register's rows as read, or that it is
+ * still loading, or that its read failed (never an empty register in its place).
+ */
+export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext | null) {
+  const here = HERE[tab];
+  const actions = [
+    'Switch between the Quality tabs',
+    `Raise or update ${here.toLowerCase()} records through the screen's drawers; each write is the person's own and is audited`,
+    'AnA reads the register as shown; it does not record, disposition, approve or close records for the user',
+  ];
+  if (!ctx || ctx.tab !== tab || ctx.state === 'loading') {
+    return { summary: `The user is on the ${here} tab of Quality. The register is still loading — its records are not readable yet.`, facts: { tab }, availableActions: actions };
+  }
+  if (ctx.state === 'failed') {
+    return { summary: `The user is on the ${here} tab of Quality. The register could not be read — a failure, not an empty register.`, facts: { tab, registerRead: 'failed' }, availableActions: actions };
+  }
+  const n = ctx.count ?? 0;
+  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}`).join('; ');
+  return {
+    summary: `The user is on the ${here} tab of Quality. The register holds ${n} ${n === 1 ? ctx.noun[0] : ctx.noun[1]}` +
+      (counts ? ` (${counts})` : '') + '.' + (ctx.truncated ? ` Only the first ${ctx.records.length} are listed in the facts.` : ''),
+    facts: { tab, recordCount: n, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
+    availableActions: actions,
+  };
+}
+
 export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumentId,qmsTargetRequest }: QualityAppProps) {
   const [tab, setTab] = React.useState<QualityTab>(initialTab);
   React.useEffect(()=>{if(qmsDocumentId)setTab('sop');},[qmsDocumentId,qmsTargetRequest]);
@@ -109,6 +137,9 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      none — the example change log (FIXTURE_CHANGES) and the sample mode that
      could show it were removed on 2026-10-14. */
   const changeReg = useChangeRegister();
+  /* The record register on screen reports what it read (QmsRecords.tsx), so
+     what AnA is told about a record tab is the register's own rows. */
+  const [recordCtx, setRecordCtx] = React.useState<RecordRegisterContext | null>(null);
   const changes: ChangeControlRow[] = changeReg.changes ?? NO_CHANGES;
 
   const onAsk = React.useCallback(
@@ -243,6 +274,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
       facts: { tab, editingDocument: true },
       availableActions: ['Read or edit the open document through its workbench permissions', 'Return to the Quality register using the workbench’s Back control'],
     };
+    if (tab !== 'sop' && tab !== 'change') return recordTabContext(tab, recordCtx);
     const openRow = openId !== null ? (changes.find((c) => c.id === openId) ?? null) : null;
     const state: string[] = [];
     if (sopFilter !== 'all') {
@@ -287,7 +319,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
       ],
     };
-  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error]);
+  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -332,7 +364,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
       <div className="qms-page">
         <div className="qms-page-inner">
           {tab !== 'sop' && tab !== 'change' ? (
-            <QmsRecords tab={tab} onAsk={onAsk} />
+            <QmsRecords tab={tab} onAsk={onAsk} onContext={setRecordCtx} />
           ) : tab === 'sop' ? (
             <SopRegister onAsk={onAsk} onNavigate={onNavigate} filter={sopFilter} onFilterChange={setSopFilter}
               onEditorOpenChange={setEditingDocument} qmsDocumentId={qmsDocumentId} qmsTargetRequest={qmsTargetRequest} />
