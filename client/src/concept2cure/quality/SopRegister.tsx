@@ -68,6 +68,7 @@ import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
+import { RegisterSignatureLine } from './RegisterSignatureLine';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -471,7 +472,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
                 >
                   {d.docNumber}
                 </button>
-                <div className="qms-cell qms-title" title={d.title}>{d.title}</div>
+                <div className="qms-cell qms-title" title={d.title}>{d.title}<RegisterSignatureLine doc={d} /></div>
                 <div className="qms-cell">
                   <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
                 </div>

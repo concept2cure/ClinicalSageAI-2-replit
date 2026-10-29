@@ -119,7 +119,8 @@ import {
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
 import { saveQmsControlledText } from '../services/qms/training-controlled-text';
 import { describeQmsTrainingDocument } from '../services/qms/training-content';
-import { inForceSummary } from '../services/qms/in-force-release';
+import { inForceSummary, readInForceReleases } from '../services/qms/in-force-release';
+import { readRegisterSignatures } from '../services/qms/register-signatures';
 import {
   QMS_PERIODIC_REVIEW_CODE_STATUS, qmsPeriodicReviewBody, readQmsReviewSchedule, recordQmsPeriodicReview,
   type QmsReviewSchedule,
@@ -365,7 +366,10 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
     // draft; each names its last counted periodic review and when it is next due.
     const schedule = await readQmsReviewSchedule(client, orgId, rows as QmsDocumentRow[]);
     const rounds = await registerRounds(client, orgId, rows);
-    return ok(res, rows.map((row) => withRound(scheduledRegisterRow(row, schedule), rounds)), { count: rows.length });
+    // §11.50: who approved each version in force, when and as what; who retired a retired one.
+    const signatures = await readRegisterSignatures(client, orgId, rows as QmsDocumentRow[], schedule.inForce);
+    return ok(res, rows.map((row) => ({ ...withRound(scheduledRegisterRow(row, schedule), rounds), ...signatures(row as QmsDocumentRow) })),
+      { count: rows.length });
   } catch (err) { return serverError(res, log, 'doc-list', err); }
 });
 
@@ -561,8 +565,10 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
       [id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Document');
-    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document: rows[0] as QmsDocumentRow });
-    return ok(res, qmsRegisterRow(rows[0]), { training });
+    const document = rows[0] as QmsDocumentRow;
+    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document });
+    const signatures = await readRegisterSignatures(client, orgId, [document], await readInForceReleases(client, orgId, [document]));
+    return ok(res, { ...qmsRegisterRow(rows[0]), ...signatures(document) }, { training });
   } catch (err) {
     if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     const contentRefusal = qmsContentRefusal(res, err); if (contentRefusal) return contentRefusal;

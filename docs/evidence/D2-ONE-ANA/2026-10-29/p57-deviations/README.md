@@ -110,10 +110,57 @@ Searches run:
   - `ci:migration-set-order`, `ci:migration-drop-safety` (444 migrations), the warning ratchet and
     `ci:launch-scope-api` pass, and `tsc --noEmit` reports no error.
 
-## Owed
+## The close is independent of the investigation (2026-10-29)
 
-- **Cancelling a deviation** opened in error, with a reason: not offered.
-- **The QA close is not separated from the investigator.** No authorship is modelled for deviations, so an
-  independence check would refuse every close (`governed-signed-act.ts` says the same of its other acts).
-- **A project key on a deviation**, as the nonconformance register gained in 20261029d: not added.
+Before this change, the person who completed an investigation could sign its close. GMP expects the approval of a
+deviation's investigation to be independent of it (21 CFR 211.192; ICH Q10 §2.6).
+
+- **The investigation now has an author.** Sending a deviation for approval records who did it:
+  `investigation_details = {completedBy, completedAt}`. `updateDeviation` takes the actor, and the PATCH route refuses
+  a request without a user (401).
+- **The close refuses that person.**
+  - `closeDeviation` adds `completedBy <> signer` to its guarded UPDATE.
+  - When the guard is what refused, the route answers `DEVIATION_SELF_CLOSE` (403, "another person signs its close";
+    nothing is signed).
+  - A deviation sent back and resubmitted records the latest sender.
+- **The Close form says so** before the password is asked for.
+- **Proof.**
+  - `deviations.pglite.test.ts`: "is not closed by the person who sent it for approval". User 9 sends it, user 9's close
+    is refused, and user 8's close succeeds.
+  - Mutation: deleting the `completedBy` guard line fails that case, and only that case. Restoring the line makes it
+    pass.
+  - `qms-signed-decisions.test.ts`, `qms-governed-writes-audited.test.ts` and `QmsRecords.test.tsx` pass.
+
+## Cancelling a deviation recorded in error (2026-10-29)
+
+A deviation recorded in error, such as a duplicate or an event that was not a departure, is cancelled. It is never
+deleted.
+
+- **`cancelled` is a lifecycle end.** It joins `closed` in `DEVIATION_STATUSES` and `DEVIATION_ENDED`, and it has no
+  moves. A status PATCH to it is refused, like one to `closed`, and a cancelled deviation is not changed.
+- **`POST /qms/deviations/:id/cancel`** is a signed decision (`approval` or `responsibility`), through
+  `signGovernedAct`.
+  - `cancelDeviation` stores the signer's reason, who and when in `metadata.cancelled`, from any status that has not
+    ended.
+  - The person who recorded the deviation (`detected_by`) does not sign its cancellation (`DEVIATION_SELF_CANCEL`, 403),
+    so no one voids their own record.
+  - The task plan closes the deviation's reminder as cancelled.
+- **The register.**
+  - A "Cancel deviation" row action states both rules before the signing step.
+  - The row shows "(cancelled: reason)".
+  - The Open KPI counts cancelled deviations apart from closed ones, and the AnA facts carry the reason.
+  - Raise CAPA is not offered on a cancelled deviation.
+- **Proof.**
+  - `deviations.pglite.test.ts`: "is cancelled with its reason by someone other than its recorder…".
+    - The recorder is refused, and another tenant gets 404.
+    - Someone else cancels, and the reason is stored.
+    - A second cancel, a close, an edit, and a PATCH to `cancelled` are each refused.
+  - Mutation: deleting the `detected_by` guard fails that case, and only that case. Restoring it makes it pass.
+
+## Not built: a project key on a deviation
+
+Nonconformances gained a project key in 20261029d because the project's Engineering screen reads them by project. No
+project surface reads deviations: a GMP deviation belongs to a site, process or batch, and the record carries the
+batch and product. A key that nothing reads is not added. It is added with the first project surface that lists a
+project's deviations.
 

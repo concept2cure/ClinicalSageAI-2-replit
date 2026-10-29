@@ -120,6 +120,15 @@ export function signDeviationClose(
 }
 const UNCONFIRMED_CLOSE = 'The server did not confirm the close. Reload the register and check the deviation before you sign again.';
 
+/** Cancel a deviation recorded in error; the signer's reason is the cancellation's. */
+export function signDeviationCancel(
+  id: number,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/deviations/${id}/cancel`, {}, input, UNCONFIRMED_CANCEL);
+}
+const UNCONFIRMED_CANCEL = 'The server did not confirm the cancellation. Reload the register and check the deviation before you sign again.';
+
 /** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
 export function signSupplierApproval(
   id: number,

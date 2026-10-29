@@ -3655,6 +3655,7 @@ export const C2C_MIGRATION_FILES = [
   // definition lacks it (pg_get_constraintdef), so a replay never re-validates.
   // Widens only. After 20260504_capa_mdr.sql (the constraint). No table.
   'migrations/20261029h_capa_source_deviation.sql',
+  'migrations/20261029i_c2c_commitments_read_only.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

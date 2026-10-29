@@ -228,6 +228,7 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
    - extend `GET /qms/documents` (`mdx-qms.ts:340`) and `GET /qms/documents/:id` (`:433`) with a `LEFT JOIN LATERAL` to the standing approval and retirement signature, reusing the STANDING predicate from `server/services/audit/compliance-reports/queries/controlled-documents.ts:24-26` (`signer_name`, `signed_at`, `signature_meaning`, `bound_payload_digest`); once Stage 2 has landed, join through the snapshot's `approval_signature_id`;
    - add "Approved by", "Signed (UTC)" and "Meaning" to the row grid in `SopRegister.tsx:377-470` and a detail panel. The toast in `quality/qmsApproval.ts:40-54` stays as confirmation, not as the record.
    - A printable record of a version with its signature block is delivered by Stage 8's controlled copy; do not build a second renderer here.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-signature-block/`). The block is read through the exact approval reader that training uses, batched (`readQmsReleaseApprovals`), not a second join, and shown under each row's title and on `GET /:id`.
 5. PATCH audit: move the audit write of `PATCH /qms/documents/:id` (`mdx-qms.ts:448-510`, after-commit at `:496-506`) into the same transaction as the UPDATE through `recordGovernedAction(client, …)`, with before and after values. Apply the same change to the create route (`:361-399`).
 6. Go green. File red and green output under `docs/evidence/MR-12/<date>/`.
 
