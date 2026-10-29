@@ -19,6 +19,8 @@
  *          meta.signing.canSign: whether this person may sign
  *   • GET  /gateways/transmittals/:id/status — poll the gateway
  *   • GET  /gateways/transmittals/:id/ack    — download the ACK (binary)
+ *   • GET  /gateways/transmittals/:id/sent-package — the exact package that
+ *          transmittal sent, kept before the wire (2026-10-29, W5/D7)
  *   • POST /gateways/transmittals/:id/technical-rejection — the agency did not
  *          load the sequence a package transmittal filed: a governed sign
  *          (reason, §11.50 meaning, re-auth) carrying the agency's notice as a
@@ -74,6 +76,9 @@ interface Transmittal {
     gatewayAccount?: { mode?: string | null; senderIdentifier?: string | null } | null;
     /** The sequence number a sequence transmit filed (transmitSequence). */
     sequence?: string | null;
+    /** 2026-10-29 (W5/D7): where the exact bytes sent are kept, stamped by the
+     *  guarded transmit before the wire. Absent on rows sent before then. */
+    sentPackage?: { sha256?: string | null; sizeBytes?: number | null } | null;
     [k: string]: unknown;
   } | null;
 }
@@ -340,6 +345,26 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
     }
   }, [fireToast]);
 
+  /* The exact package a transmittal sent, as kept before the wire. The server
+     reads it under the project's access, checks it against the digest the row
+     records as sent, and records the download; a refusal says why. */
+  const downloadSentPackage = useCallback(async (id: number) => {
+    try {
+      const res = await apiRequest('GET', `/api/mdx/gateways/transmittals/${id}/sent-package`);
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        fireToast(serverMessage(json) ?? `The package was not downloaded (HTTP ${res.status}).`, 'error');
+        return;
+      }
+      const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `transmittal-${id}-sent-package.zip`;
+      downloadBlob(name, await res.blob());
+      fireToast('Downloaded the exact package this transmittal sent.');
+    } catch (e) {
+      // apiRequest refuses a non-2xx with the server's own sanitized sentence.
+      fireToast(e instanceof ApiRequestError ? e.message : 'The package could not be downloaded.', 'error');
+    }
+  }, [fireToast]);
+
   /* The agency did not load the sequence this transmittal filed. The server
      takes it off the filed history only with the agency's notice as evidence,
      under re-authentication and a declared meaning, and refuses anything but
@@ -525,6 +550,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
+                    <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadSentPackage(t.id)} disabled={!t.metadata?.sentPackage} title={t.metadata?.sentPackage ? 'Download the exact package this transmittal sent' : 'Sent before the platform kept the bytes it sends'}>{I.download} Package</button>
                     {t.region === 'fda' && t.gateway === 'esg' && canGovernedWrite(authUser) && <As2ReceiptUpload transmittalId={t.id} onRecorded={load} />}
                     {offerRejection(t) && (
                       <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
