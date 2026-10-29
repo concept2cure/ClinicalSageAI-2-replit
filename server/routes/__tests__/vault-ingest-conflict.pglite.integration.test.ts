@@ -120,6 +120,8 @@ beforeAll(async () => {
       -- so without the column every statement here fails 42703.
       retention_until DATE,
       parent_document_id UUID, supersedes_id UUID,
+      -- The version a restore holds the bytes of (migrations/20261029_vault_documents_restored_from.sql).
+      restored_from_id UUID,
       extracted_text TEXT, page_count INT, word_count INT,
       folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
       placement_status TEXT NOT NULL DEFAULT 'unfiled',

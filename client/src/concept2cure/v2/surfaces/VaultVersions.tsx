@@ -10,7 +10,8 @@
  * through the one upload path (useVaultUpload); the server assigns the number
  * and keeps the document's code and filing. "Export signed history" downloads
  * the signed audit export (GET /api/audit/export/signed) for exactly these
- * versions' records, and says what it contains.
+ * versions' records, and says what it contains. An earlier version can be
+ * restored as the next version, with a reason (VaultVersionRestore.tsx).
  *
  * A version whose link to an earlier one is not one the database rules admit is
  * marked as not linked, and stands on its own. A failed read says so: "one
@@ -23,6 +24,7 @@ import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { VaultVersionCompare } from './VaultVersionCompare';
 import { VaultVersionViewer, VersionViewButton, useVaultVersionViewer } from './VaultVersionViewer';
 import { useVaultCanWrite } from './VaultViewOnly';
+import { RestoreVersionButton } from './VaultVersionRestore';
 import { downloadBlob, safeFileName } from '../download';
 import {
   APPROVED_STAGES,
@@ -45,6 +47,8 @@ export interface VaultVersion {
   createdAt: string;
   current: boolean;
   link: 'none' | 'verified' | 'unverified';
+  /** The earlier version whose file this one restores (MR-08 Stage 5). Absent when the server did not say. */
+  restoredFrom?: { versionId: string; version: string | null } | null;
   /** Its review and approval (VR-13); null when nobody has started one. */
   lifecycle?: VaultVersionLifecycle | null;
   /** The live submission leaves that name it (VR-14a). Absent when the server did not say. */
@@ -328,6 +332,23 @@ function supersededBy(versions: VaultVersion[]): string[] {
     .map((v) => `${v.version ? `v${v.version}` : 'An unnumbered version'} (${stageLabel(v.lifecycle?.stage)})`);
 }
 
+/** " · restored from v1.0" on a version that restores an earlier one (MR-08 Stage 5). */
+function restoredFromText(v: VaultVersion): string {
+  if (!v.restoredFrom) return '';
+  return ` · restored from ${v.restoredFrom.version ? `v${v.restoredFrom.version}` : 'an earlier version'}`;
+}
+
+/** Restore, offered on an earlier version only (VaultVersionRestore.tsx). */
+function EarlierVersionRestore({ version, current, projectId, onRestored }: {
+  version: VaultVersion; current: VaultVersion | undefined; projectId?: string; onRestored?: () => void;
+}) {
+  if (version.current || !current || !projectId) return null;
+  return (
+    <RestoreVersionButton projectId={projectId} documentId={current.id} versionId={version.id}
+      versionLabel={version.version ? `v${version.version}` : 'this version'} onRestored={onRestored} />
+  );
+}
+
 /** Every version, newest first, each downloadable through the page's audited download. */
 function VersionRows({ versions, title, onDownload, downloadingId, onView, viewingId, onLifecycleChanged, onCompare, projectId, signing, onOpenSection }: {
   versions: VaultVersion[];
@@ -362,6 +383,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
               </>
             ) : null}
             {LINK_TEXT[v.link]}
+            {restoredFromText(v)}
             <span data-testid={`vault-version-placed-${v.id}`}>{placedInText(v.placements)}</span>
             <span data-testid={`vault-version-estar-${v.id}`}>{estarText(v.estarUses)}</span>
             <span data-testid={`vault-version-cmc-${v.id}`}>{cmcEvidenceText(v.cmcEvidence)}</span>
@@ -384,6 +406,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
               Compare with {current.version ? `v${current.version}` : 'the current version'}
             </button>
           ) : null}
+          <EarlierVersionRestore version={v} current={current} projectId={projectId} onRestored={onLifecycleChanged} />
           {v.current ? <EarlierVersionCitations versions={versions} onOpenSection={onOpenSection} /> : null}
           {v.current && onLifecycleChanged ? (
             <VersionLifecycleActions
