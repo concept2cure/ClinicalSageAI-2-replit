@@ -308,9 +308,6 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
     const csvContent = rows.join('\n');
     const filename = `RTM_Program_${programId}_${new Date().toISOString().slice(0, 10)}.csv`;
 
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
     // Register governed export (fail-closed for regulated outputs).
     // SECURITY: JWT-bound — the audit attribution must be the actual
     // principal, never a `|| 1` fallback that would silently rewrite
@@ -343,6 +340,10 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
       });
     }
 
+    // The file headers follow the record, so a refusal above is an error the
+    // browser shows, never a saved file of error JSON.
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(csvContent);
   } catch (error: any) {
     return respondToRtmFailure(res, error, req.params.programId, 'export');
