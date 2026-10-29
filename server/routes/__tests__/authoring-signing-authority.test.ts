@@ -117,7 +117,7 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
+        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approving this document', reason: 'approving now' });
 
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
@@ -129,7 +129,7 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ password: 'not-the-password', meaning: 'REVIEWER', intent: 'Review', reason: 'reviewing now' });
+        .send({ password: 'not-the-password', meaning: 'REVIEWER', intent: 'Reviewed this document', reason: 'reviewing now' });
 
       expect(res.status).toBe(403);
     });
@@ -143,7 +143,7 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ password: 'definitely-wrong', meaning: 'APPROVER', intent: 'Approve', reason: 'approving' });
+        .send({ password: 'definitely-wrong', meaning: 'APPROVER', intent: 'Approving this document', reason: 'approving' });
 
       expect(res.status).toBe(403);
       expect(res.status).not.toBe(401);
@@ -155,7 +155,7 @@ describe('§11.10(g) — authoring e-signature requires signing authority', () =
       const res = await request(makeApp())
         .post(`/api/authoring/docs/D1/${path}`)
         .set('Authorization', await bearer())
-        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve', reason: 'approving now' });
+        .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approving this document', reason: 'approving now' });
 
       // Past the authority gate. What it becomes next (404 for the unknown
       // document, 401 for the unverifiable password) is another control's business —
@@ -174,7 +174,7 @@ describe('§11.70 — a signature must be linked to a real record', () => {
     const res = await request(makeApp())
       .post('/api/authoring/docs/does-not-exist/e-sign')
       .set('Authorization', await bearer())
-      .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approve' });
+      .send({ password: 'not-the-password', meaning: 'APPROVER', intent: 'Approving this document' });
 
     // computeDocHash hashes zero section rows to sha256(""), which is
     // indistinguishable from an unknown or cross-tenant id — so without this
