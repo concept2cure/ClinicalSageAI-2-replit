@@ -12,7 +12,7 @@
  * Endpoints:
  * GET  /usage              — Get usage data (date range, granularity)
  * GET  /usage/summary      — Get usage summary for current billing period
- * GET  /invoices           — List invoices from Stripe
+ * GET  /invoices           — List invoices from Stripe (billing administrators; paged by cursor)
  * GET  /budgets            — Get current budget settings
  * POST /budgets            — Update budget settings
  * GET  /alerts/history     — Get alert history
@@ -47,6 +47,7 @@ import {
 } from '../services/credit-ledger.js';
 import { resolveCapabilities } from '../services/entitlements/resolver.js';
 import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
+import { BILLING_ADMIN_ROLES } from '../../shared/constants/permissions.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -233,16 +234,34 @@ router.get('/usage/summary', authenticateToken, async (req: Request, res: Respon
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /invoices — List invoices from Stripe
+//
+// Billing administrators only (BILLING_ADMIN_ROLES, admin and owner): the
+// amounts, statuses and hosted invoice links are the organisation's billing
+// record. It answered any authenticated member until the fold of billing into
+// Licensing (2026-10-29), which is where the list is read now.
+//
+// Three answers, never confused:
+//   - no Stripe customer: `billingSetUp: false`, and Stripe is not asked. The
+//     record is created by the first checkout (services/billing.ts).
+//   - a customer with no invoices: `billingSetUp: true` and an empty page.
+//   - a failed read (Stripe unconfigured, unreachable, refusing): 500.
+// Paged by Stripe's cursor: `nextCursor` is the id to pass as `startingAfter`
+// for the next, older page, and null on the last. Stripe's list gives no total.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/invoices', authenticateToken, async (req: Request, res: Response) => {
+const STRIPE_INVOICE_ID = /^in_[A-Za-z0-9]+$/;
+
+router.get('/invoices', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10) || 10));
+    const startingAfter = req.query.startingAfter;
+    if (startingAfter !== undefined && (typeof startingAfter !== 'string' || !STRIPE_INVOICE_ID.test(startingAfter))) {
+      return res.status(400).json({ error: 'startingAfter must be a Stripe invoice id' });
+    }
 
     // Look up the Stripe customer ID for this org
     const orgResult = await pool.query(
@@ -252,22 +271,15 @@ router.get('/invoices', authenticateToken, async (req: Request, res: Response) =
 
     const stripeCustomerId = orgResult.rows[0]?.stripe_customer_id;
     if (!stripeCustomerId) {
-      return res.json({ invoices: [], hasMore: false, total: 0 });
+      return res.json({ billingSetUp: false, invoices: [], hasMore: false, nextCursor: null });
     }
 
     const stripe = getStripe();
-
-    // Stripe uses cursor-based pagination; for simplicity we use starting_after
-    // For page 1, no cursor. For subsequent pages, caller can pass `startingAfter`.
     const listParams: Stripe.InvoiceListParams = {
       customer: stripeCustomerId,
       limit,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
     };
-
-    const startingAfter = req.query.startingAfter as string | undefined;
-    if (startingAfter) {
-      listParams.starting_after = startingAfter;
-    }
 
     const stripeInvoices = await stripe.invoices.list(listParams);
 
@@ -285,10 +297,12 @@ router.get('/invoices', authenticateToken, async (req: Request, res: Response) =
       periodEnd: inv.period_end ? new Date(inv.period_end * 1000).toISOString() : null,
     }));
 
+    const last = stripeInvoices.data[stripeInvoices.data.length - 1];
     res.json({
+      billingSetUp: true,
       invoices,
       hasMore: stripeInvoices.has_more,
-      total: stripeInvoices.data.length,
+      nextCursor: stripeInvoices.has_more && last ? last.id : null,
     });
   } catch (error) {
     return serverError(res, logger, 'reading invoices', error);
@@ -746,7 +760,7 @@ router.get('/seats', authenticateToken, async (req: Request, res: Response) => {
 });
 
 // PUT /seats — set purchased seats. GOVERNED: admin/owner only, reason required, audited.
-router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+router.put('/seats', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
@@ -782,7 +796,7 @@ router.get('/weekly-overage', authenticateToken, async (req: Request, res: Respo
 
 // PUT /weekly-limits/:metric — set/raise a weekly limit + overage cap.
 // GOVERNED: org admins only, reason-for-change required, audited (21 CFR Part 11).
-router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+router.put('/weekly-limits/:metric', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
@@ -886,7 +900,7 @@ function mergeAutoReloadSettings(current: Awaited<ReturnType<typeof getAutoReloa
   };
 }
 
-router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+router.put('/credits/auto-reload', authenticateToken, requireRole(...BILLING_ADMIN_ROLES), async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });

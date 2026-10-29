@@ -21,6 +21,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { isOrgAdminRole } from './orgAdmin';
+import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
 import { useShellProject, type ShellProject } from './shellProject';
 
@@ -257,6 +258,7 @@ export function Rail({
             initials={initials}
             role={role}
             isOrgAdmin={isOrgAdmin}
+            billingAdmin={canAdministerBilling(user)}
             platformAdmin={platformAdmin}
             segment={segment}
             onClose={dismissAcct}
@@ -310,7 +312,8 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
  * (named so on 2026-10-26: "Plan" is the project's first step, the
  * subscription is "subscription", section 9 of
  * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
- * surface's registry label, as the breadcrumb and ⌘K do; they are written out
+ * surface's registry label, as the breadcrumb and ⌘K do, except Billing, which
+ * names the billing job on Licensing for billing administrators; they are written out
  * because config/ui-surface-registry.json's audit (npm run audit:ui-authority)
  * reads this menu's labels from this file, and shellNav.test.tsx and
  * clientNamesSlice1.test.tsx hold them to the registry.
@@ -328,6 +331,7 @@ function AccountMenu({
   initials,
   role,
   isOrgAdmin,
+  billingAdmin,
   platformAdmin,
   segment,
   onClose,
@@ -341,6 +345,9 @@ function AccountMenu({
   initials: string;
   role: string;
   isOrgAdmin: boolean;
+  /** The session carries the billing-administration permission, derived from
+   *  the invoice route's own role list (shared/constants/permissions.ts). */
+  billingAdmin: boolean;
   platformAdmin: boolean;
   segment: string;
   onClose: () => void;
@@ -387,7 +394,14 @@ function AccountMenu({
        the entry is offered. */
     ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
-    { label: 'Billing', ic: 'creditCard', to: 'billing' },
+    /* Billing is the invoices and the Stripe portal, which are on Licensing
+       under the plan status (D2, fold billing into Licensing, 2026-10-29). It
+       was in every member's menu and opened the `billing` screen, whose invoice
+       list answered any member. It is offered now when the session carries the
+       permission the server derives from the invoice route's own role list, and
+       it names the job, not the page: Compare subscriptions below is the same
+       screen's door for choosing a subscription, which every member keeps. */
+    ...(billingAdmin ? [{ label: 'Billing', ic: 'creditCard', to: 'licensing' }] : []),
     { sep: true },
     { clientType: true },
     { sep: true },
