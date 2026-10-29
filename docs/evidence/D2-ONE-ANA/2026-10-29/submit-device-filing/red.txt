@@ -1,0 +1,32 @@
+# Red: projectSubmitDeviceFiling.test.tsx at head 5b541627 plus the lead's PATHWAY_FEATURES export, before any ProjectMarkets change
+# npx vitest run client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx
+ × Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k' 5112ms
+   → Unable to find role="button" and name "Assemble the eSTAR"
+ × Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma' 5047ms
+   → Unable to find role="button" and name "Export the PMA package"
+ × Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer' 5065ms
+   → Unable to find role="button" and name "Export the CER"
+ × Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics' 5061ms
+   → Unable to find role="button" and name "Assemble the technical documentation"
+ × Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one 5055ms
+   → Unable to find role="button" and name "Assemble the eSTAR"
+ × Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button 5090ms
+   → expected 'MarketsCheck what stops sending See e…' to contain '510(k) and eSTAR, where this filing i…'
+ × Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button 5055ms
+   → expected 'MarketsCheck what stops sending See e…' to contain 'PMA, where this filing is assembled, …'
+ × Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button 5041ms
+   → expected 'MarketsCheck what stops sending See e…' to contain 'Clinical evaluation (CER), where this…'
+ × Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button 5070ms
+   → expected 'MarketsCheck what stops sending See e…' to contain 'IVDR evidence, where this filing is a…'
+ ✓ Submit — a device project assembles its filing from here > a pathway with no feature (De Novo) is given no door and no guessed one 54ms
+ ✓ Submit — a device project assembles its filing from here > a device project that records no pathway is given no door 44ms
+ × Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project 5058ms
+   → Unable to find role="button" and name "Assemble the eSTAR"
+ ✓ Submit — a device project assembles its filing from here > a drug project is offered no device door 50ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'MarketsCheck what stops sending See e…' to contain '510(k) and eSTAR, where this filing i…'
+AssertionError: expected 'MarketsCheck what stops sending See e…' to contain 'PMA, where this filing is assembled, …'
+AssertionError: expected 'MarketsCheck what stops sending See e…' to contain 'Clinical evaluation (CER), where this…'
+AssertionError: expected 'MarketsCheck what stops sending See e…' to contain 'IVDR evidence, where this filing is a…'
+ Test Files  1 failed (1)
+      Tests  10 failed | 3 passed (13)

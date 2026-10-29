@@ -1848,7 +1848,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               (F9), then what Lifecycle promised, named as coming later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} usInd={usInd} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} deviceFiling={deviceFiling} project={prog?.id === pid ? prog : null} canChange={prog?.canChange} documentClass={documentClass} regionalApplication={regionalApplication} usInd={usInd} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}

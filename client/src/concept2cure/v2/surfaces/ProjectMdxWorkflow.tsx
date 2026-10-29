@@ -27,7 +27,7 @@ function filingToken(value: string | null | undefined): string | null {
 const FILING_LABELS: Record<string, string> = { '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', mdr: 'EU MDR CER', ivdr: 'EU IVDR PER' };
 /** Each primary pathway's own feature, and the names of its strategy and assembly doors (section 9: a device
  *  door's name depends on the pathway the project files). A De Novo or an unrecorded route has none. */
-const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
+export const PATHWAY_FEATURES: Record<string, { surface: string; doors: { strategy: string; assembly: string } }> = {
   '510k': { surface: 'device-510k', doors: DEVICE_DOORS.pathway['510k'] },
   pma: { surface: 'device-pma', doors: DEVICE_DOORS.pathway.pma },
   mdr: { surface: 'device-cer', doors: DEVICE_DOORS.pathway.mdr },
