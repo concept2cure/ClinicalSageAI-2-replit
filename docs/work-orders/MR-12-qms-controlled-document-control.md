@@ -290,6 +290,7 @@ P11-03's draft-to-effective and unsigned-effective points are fixed at head, its
 4. Change-control links in `server/services/qms/changeControl.service.ts`:
    - At insert (`:330`), validate `linked_id` against the CAPA or deviation table named by `linked_ref`, in the same organization; refuse otherwise. The link is polymorphic, so validation lives in the service, not in a foreign key.
    - Replace the hard `DELETE FROM qms_change_links` (`:343`) with an unlink that sets `removed_at` and `removed_by` and writes an audit row. Add the columns by amending the creating migration in place with `ADD COLUMN IF NOT EXISTS` and a dated header note (Rule 1). Readers filter `removed_at IS NULL`.
+   **Done 2026-10-29** (`docs/evidence/MR-12/2026-10-29-change-links-kept/`). Links are checked by reference against the deviation, CAPA and supplier registers, and by id against `qms_documents`. A removal keeps the row, with who removed it and their reason. The controlled-copy half (step 3) is open.
 5. File red and green output under `docs/evidence/MR-12/<date>/`.
 
 **Acceptance**

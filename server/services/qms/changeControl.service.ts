@@ -113,6 +113,14 @@ export interface ChangeLinkRow {
   note: string | null;
   created_by: number | null;
   created_at: string;
+  removed_at?: string | null;
+  removed_by?: number | null;
+  removal_reason?: string | null;
+}
+
+/** A link that names no record of this organisation in the register its type names (MR-12 Stage 8). */
+export class ChangeLinkRefusedError extends Error {
+  readonly code = 'CHANGE_LINK_TARGET_NOT_FOUND';
 }
 
 // ─── Register ────────────────────────────────────────────────────────────────
@@ -297,7 +305,7 @@ export async function deleteChange(orgId: number, id: number, client: RequestSql
 
 export async function listLinks(orgId: number, changeId: number, client: RequestSqlClient = pool): Promise<ChangeLinkRow[]> {
   const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
-    `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = $2 ORDER BY created_at ASC`,
+    `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = $2 AND removed_at IS NULL ORDER BY created_at ASC`,
     [orgId, changeId],
   );
   return rows;
@@ -312,7 +320,7 @@ export async function listLinksForChanges(orgId: number, changeIds: number[], cl
   const out = new Map<number, ChangeLinkRow[]>();
   if (changeIds.length === 0) return out;
   const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
-    `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = ANY($2::int[])
+    `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = ANY($2::int[]) AND removed_at IS NULL
       ORDER BY change_id, created_at ASC, id ASC`,
     [orgId, changeIds],
   );
@@ -323,10 +331,39 @@ export async function listLinksForChanges(orgId: number, changeIds: number[], cl
   return out;
 }
 
+/*
+ * The register each record type is held in, and the read that finds one of this
+ * organisation's records by its reference (MR-12 Stage 8, CAT2-25). A link to a
+ * deviation, a CAPA or a supplier must name one; a document link that carries
+ * its id must name this organisation's document. Other types (validation, risk,
+ * other) keep the typed reference: the platform holds no register for them.
+ */
+const LINK_TARGET_BY_REF: Partial<Record<string, string>> = {
+  deviation: `SELECT 1 FROM qc_deviations WHERE organization_id = $1 AND deviation_number = $2 LIMIT 1`,
+  capa: `SELECT 1 FROM capa_records c JOIN regulatory_programs p ON p.id::text = c.program_id
+          WHERE p.organization_id = $1 AND c.capa_code = $2 LIMIT 1`,
+  supplier: `SELECT 1 FROM qms_suppliers WHERE organization_id = $1 AND deleted_at IS NULL
+              AND (supplier_code = $2 OR supplier_name = $2) LIMIT 1`,
+};
+const DOCUMENT_BY_ID = `SELECT 1 FROM qms_documents WHERE organization_id = $1 AND id = $2 AND deleted_at IS NULL LIMIT 1`;
+
+async function refuseUnresolvedTarget(client: RequestSqlClient, orgId: number, p: { linkType: string; linkedRef: string; linkedId?: number | null }): Promise<void> {
+  const q = queryRowsClient(client);
+  const byRef = LINK_TARGET_BY_REF[p.linkType];
+  if (byRef && (await q.query(byRef, [orgId, p.linkedRef])).rows.length === 0) {
+    throw new ChangeLinkRefusedError(`No ${p.linkType} ${p.linkedRef} is recorded in this organisation. Link a record from its register. Nothing was linked.`);
+  }
+  if ((p.linkType === 'document' || p.linkType === 'sop') && p.linkedId != null
+      && (await q.query(DOCUMENT_BY_ID, [orgId, p.linkedId])).rows.length === 0) {
+    throw new ChangeLinkRefusedError(`Controlled document ${p.linkedId} is not in this organisation. Nothing was linked.`);
+  }
+}
+
 export async function addLink(orgId: number, changeId: number, p: {
   linkType: string; linkedRef: string; linkedLabel?: string | null; linkedId?: number | null;
   relationship?: string; note?: string | null; createdBy?: number | null;
 }, client: RequestSqlClient = pool): Promise<ChangeLinkRow> {
+  await refuseUnresolvedTarget(client, orgId, p);
   const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
     `INSERT INTO qms_change_links (
        organization_id, change_id, link_type, linked_ref, linked_label, linked_id, relationship, note, created_by
@@ -340,10 +377,17 @@ export async function addLink(orgId: number, changeId: number, p: {
   return rows[0];
 }
 
-export async function removeLink(orgId: number, changeId: number, linkId: number, client: RequestSqlClient = pool): Promise<boolean> {
+/**
+ * Remove a link: it is kept, stamped with who removed it, when and why, and no
+ * reader lists it again (MR-12 Stage 8). False when it is not a standing link
+ * of this change.
+ */
+export async function removeLink(orgId: number, changeId: number, linkId: number,
+  removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<boolean> {
   const { rows } = await queryRowsClient(client).query(
-    `DELETE FROM qms_change_links WHERE id = $1 AND change_id = $2 AND organization_id = $3 RETURNING id`,
-    [linkId, changeId, orgId],
+    `UPDATE qms_change_links SET removed_at = NOW(), removed_by = $4, removal_reason = $5
+      WHERE id = $1 AND change_id = $2 AND organization_id = $3 AND removed_at IS NULL RETURNING id`,
+    [linkId, changeId, orgId, removal.removedBy, removal.reason],
   );
   return rows.length > 0;
 }
