@@ -1,0 +1,31 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > two instances booting together resume each stalled item once, as its requester; a live run is left alone 378ms
+   → expected [ Array(6) ] to deeply equal [ 'assembly:1:5', 'build:4:5', …(1) ]
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > a requester whose project access was removed gets a typed failure in each queue, and nothing runs 73ms
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > a requester who no longer exists, or an archived project, is a typed failure too 57ms
+ ✓ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > an organization not permitted background work is left as it is 32ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts > CSR queue boot recovery (SYNTHETIC data) > two instances booting together resume each stalled item once, as its requester; a live run is left alone
+AssertionError: expected [ Array(6) ] to deeply equal [ 'assembly:1:5', 'build:4:5', …(1) ]
+- Expected
++ Received
+  [
+    "assembly:1:5",
++   "assembly:1:5",
+    "build:4:5",
++   "build:4:5",
++   "narrative:1:5",
+    "narrative:1:5",
+  ]
+ ❯ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts:111:79
+    109|     const [a, b] = await Promise.all([runCsrQueueRecovery(sweepDeps(di…
+    110|
+    111|     expect(dispatched.map(i => `${i.queue}:${i.id}:${i.requestedBy}`).…
+       |                                                                               ^
+    112|     expect(a.resumed + b.resumed).toBe(3);
+    113|     expect(a.notClaimed + b.notClaimed).toBe(3);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:52:42
+   Duration  9.16s (transform 2.86s, setup 131ms, import 5.15s, tests 3.49s, environment 0ms)
