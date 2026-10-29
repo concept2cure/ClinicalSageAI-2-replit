@@ -31,6 +31,7 @@ import { usableIdentifier } from './regulatory-identifiers';
 import { readSubmissionPackageIdentity, packageIdentityRefusal, dryRunPackageIdentity, recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity, type RecordedPackageIdentity, type RecordedPackageIdentitySnapshot } from './package-identity';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable';
 import { packageSequenceFromCore, type PackageFromCoreResult, type PriorState } from './package-from-core';
+import { FdaSubmissionIdentityRefusal } from './sequence-spine-fda-identity';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
 import { toPackagerRegion, type LeafFileResolver } from './core-to-packager';
@@ -323,7 +324,9 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
   };
 
-  // 4. Drive the real publisher off the canonical core.
+  // 4. Drive the real publisher off the canonical core. A sequence whose FDA
+  //    submission-id cannot be declared truthfully is a refusal, recorded as
+  //    one (sequence-spine-fda-identity.ts, 2026-10-29).
   const result = await packageSequenceFromCore({
     sequenceId,
     organizationId,
@@ -337,6 +340,13 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     resolveFile,
     emitUnzipped: params.emitUnzipped,
     priorState: params.priorState,
+  }).catch(async (err: unknown) => {
+    if (!(err instanceof FdaSubmissionIdentityRefusal)) throw err;
+    const auditTrail = await recordAuditRow({
+      organizationId, userId, action: 'ECTD_ASSEMBLE_BLOCKED', resourceType: 'ectd_sequence', resourceId: sequenceId,
+      details: { reason: 'fda_submission_identity', code: err.code },
+    });
+    throw new EctdAssemblyBlockedError(err.message, auditTrail);
   });
 
   if (unresolvedLeaves.length > 0) {
