@@ -1,0 +1,8 @@
+Type check of the changed files and everything they import.
+A scratch tsconfig extends ./tsconfig.json (strict), with noEmit and incremental off. It lists the three changed
+files, the repo's declaration files (server/types, shared/types, client/src *.d.ts) and the three modules that
+augment express's Request (server/auth.ts, server/middleware/auth.ts, server/middleware/tenantContext.ts).
+The AnA test imports AnaToolExecutor.ts, so the executor and its imports are checked too.
+NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p <scratch>/tsconfig.json
+
+exit 0, 0 lines of output (1m14s)

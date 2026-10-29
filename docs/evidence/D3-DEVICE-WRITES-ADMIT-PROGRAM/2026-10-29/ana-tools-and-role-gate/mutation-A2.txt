@@ -1,0 +1,21 @@
+Mutation A2: the editor-role decision admits every caller (server/services/part11/editor-role.ts, through the same
+scratch alias harness as A1; the working tree was not touched). This is the check behind writeRoleRefusal, which
+the registry wrapper runs for every confirm-class tool, both of these included.
+Diff against the control copy:
+  24a25,26
+  >   /* MUTANT A2: every caller is an editor. */
+  >   if (Date.now() > 0) return { allowed: true, role: "mutant" };
+  44c46
+  < console.warn('[harness] control copy of editor-role.ts loaded');
+  ---
+  > console.warn('[harness] a2 copy of editor-role.ts loaded');
+
+  [harness] a2 copy of editor-role.ts loaded
+  [harness] a2 copy of tool-record-scope.ts loaded
+Tests  2 failed | 14 passed (16)
+  × 'create_udi_record' > refuses a viewer, as the HTTP write refuses one, and writes no row
+      INSERT sent: udi_records program_id=aaaaaaaa…
+  × 'create_labeling_document' > refuses a viewer, as the HTTP write refuses one, and writes no row
+      INSERT sent: labeling_documents program_id=aaaaaaaa…
+
+Red confined to the two viewer cases. Control: Tests  16 passed (16)

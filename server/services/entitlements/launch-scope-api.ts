@@ -110,6 +110,7 @@ export const LAUNCH_EXCLUDED_API: Readonly<Record<string, string>> = {
   '/api/chat/send-message': 'DEAD: a non-streaming AnA turn no client has ever called; AnA answers through /api/ana-ri',
   '/api/chat/stream': 'DEAD: an alias of POST /api/ana-ri/stream kept for callers that do not exist',
   '/api/chat/thread': 'DEAD: one transcript read/rename/delete no client calls (the handler says so); threads are /api/chat/threads',
+  '/api/programs': "HIDDEN APP: the device 510(k) app's predicate-intelligence defense packet and renders, SE-matrix render and RTM exports (routes/predicate-intelligence.ts, se-matrix.ts, rtm-export.ts). device-510k claims the root and became a Projects feature in 62a8d5e7; no launch screen calls any route under it (trunk-red-sweep-2, 2026-10-29)",
 };
 
 function onPrefix(path: string, prefix: string): boolean {

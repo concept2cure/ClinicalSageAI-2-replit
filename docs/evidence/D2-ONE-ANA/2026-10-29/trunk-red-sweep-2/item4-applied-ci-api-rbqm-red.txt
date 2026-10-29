@@ -1,0 +1,12 @@
+# item 4 applied: ci:launch-scope-api after the narrowing, before useRbqm.ts wrote its routes whole
+# The walk read `/api/mdx/rbm-summary${base}` as '/api/mdx/rbm-summary:p', which no claim matches at a segment.
+# At head the bare /api/mdx claims made that read 'launch', while the real request /api/mdx/rbm-summary/<id> was refused (hidden 'rbm' holds the longer claim).
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [out-of-scope] /api/mdx/rbm-summary:p
+    called by device-clinical-studies
+    in client/src/concept2cure/mdx/hooks/useRbqm.ts
+  [out-of-scope] /api/mdx/rbm-attention:p
+    called by device-clinical-studies
+    in client/src/concept2cure/mdx/hooks/useRbqm.ts

@@ -30,6 +30,9 @@ change. Items 4 and 5 are not fixed. The reasons are below.
 - `server/services/entitlements/launch-scope-api.ts` and `shared/constants/ui-surface-registry*.ts`:
   the launch-scope verdict and the claims it reads. `scripts/ci/check-launch-scope-api.ts --list`
   lists every API path a launch or shell screen names.
+- `server/middleware/__tests__/launch-scope-api-gate.test.ts` already asks that same walk about the CMC (P-28) and
+  IND (P-32) screens. The device check added for item 4 follows that pattern, in its own file, and
+  `launch-reproof-narrowing.test.ts` holds the 2026-10-15 re-proof's findings.
 - `client/src/concept2cure/hooks/useRejectWorkflow.ts` and
   `client/src/concept2cure/services/workflowDecisionService.ts` (`62a8d5e7`), with their tests, and the
   route `POST /api/approval-workflows/:id/reject` (`server/routes/approval-workflow.ts:109`).
@@ -41,7 +44,7 @@ change. Items 4 and 5 are not fixed. The reasons are below.
 | 1 insightsLabelCurrencyMatrix:41, insightsLifecycleCalendar:49 | 182c4b0e (2026-10-26) | stale test | the fixture token now carries `userId`/`organizationId` claims; the expectation is the 4-argument form from reportCatalogPersona.test.tsx, with the headers | red 1/1 and 1/1, then green 1/1 and 1/1 |
 | 2 projectDocumentDisposition:100 | 8c87144f (2026-10-23) | stale test | the search hit fixture carries `current: true`, as the server sends and as 8c87144f did for vaultSearchSelection.test.tsx | red 1 of 6, then green 6/6 |
 | 3 mdx-surfaces-interactive-smoke, Files tab | 62a8d5e7 (2026-10-23) | stale test | the documents fixture uses `doc_type: 'k510'`, the stored vocabulary | red 1 of 5, then green 5/5 |
-| 4 launch-scope-api-gate, 5 cases | 62a8d5e7 (2026-10-23) | both: some expectations stale, some product | not fixed; see below | red 5 of 43, unchanged |
+| 4 launch-scope-api-gate, 5 cases | 62a8d5e7 (2026-10-23) | both: some expectations stale, some product | applied after the lead's go; see "Item 4, applied" | red 5 of 43, then 43/43; reproof red 24 of 203, then 204/204 |
 | 5 ci:check-client-reachability | 62a8d5e7 (2026-10-23) | neither: a real unreachable capability | not fixed and not deleted; see below | red, 2 files, unchanged |
 | 6 projectFilesAssemblyFlow:106 | 4d8cf50d (2026-10-26) | stale test | the working-document list fixture carries `readScope: 'document'`, as 4d8cf50d did for four sibling tests | red 7 of 9, then green 9/9 |
 
@@ -76,7 +79,7 @@ sourceFirstAssemblyFlow. It missed this file.
 
 ## Not fixed
 
-### Item 4: launch-scope-api-gate.test.ts, 5 cases (blocked on a scope decision)
+### Item 4: launch-scope-api-gate.test.ts, 5 cases (first pass: blocked; since applied, see "Item 4, applied")
 
 `62a8d5e7` added 25 device surfaces to the Projects launch app (`shared/constants/launch-scope.ts`).
 Eleven of them claim all of `/api/mdx`, `device-510k` claims all of `/api/programs`, and
@@ -152,6 +155,143 @@ decision with three parts:
 Separately, the route passes no organization to `approvalOrchestrator.processApproval` (not
 verified further). Deleting the files would also be wrong: the working agreement names no
 replacement that delivers the same outcome. Adding them to the baseline would loosen the gate.
+
+## Item 4, applied
+
+The lead decided on 2026-10-29 to go ahead. The package-transmit refusal of 2026-10-17 was a recorded
+decision. 62a8d5e7 reopened those routes only through broad namespace claims, so restoring the refusal
+fixes a regression and does not change the founder's catalog. Every surface stays in scope.
+
+### What changed
+
+- **`shared/constants/ui-surface-registry.ts` and `ui-surface-registry.ui-v2.ts`.** Each admitted
+  feature now claims the `/api/mdx` families its screens call, not the root. The table is below. Each
+  entry carries a dated note.
+  - device-validation and device-submission claim `/api/submission-ops/blockers`, not the root.
+    `/api/submission-ops/packages` stays claimed by Tasks, as it is today.
+  - device-510k, device-pma and device-cer also claim `/api/mdx/audit`. That is the Audit trail tab
+    their pathway screen reads (`services/programTabsService.ts`), served before only through the root
+    claims of other features.
+- **`server/services/entitlements/launch-scope-api.ts`.** `/api/programs` is added to
+  `LAUNCH_EXCLUDED_API` as HIDDEN APP, because no launch screen calls any route under it.
+  device-510k keeps the claim for its module.
+- **`client/src/concept2cure/mdx/hooks/useRbqm.ts`.** The two RBQM reads are written whole
+  (`/api/mdx/rbm-summary/${id}`). The requests are unchanged.
+- **Tests.**
+  - New: `server/middleware/__tests__/launch-scope-device-features.test.ts`.
+  - `launch-scope-api-gate.test.ts`: the stale cases move to "served", and real device-kit routes
+    with no caller are added as refused examples.
+  - `launch-reproof-narrowing.test.ts`: `/api/mdx/vault` and `/api/submission-ops/blockers` move to
+    STILL_SERVED, and `/api/programs` joins the findings with its note.
+
+| surface | before | now |
+|---|---|---|
+| device-workstream | /api/mdx | /api/mdx/client-review |
+| device-diagnostics | /api/mdx | /api/mdx/audit, /cdx, /clia, /ivdr |
+| device-clinical-studies | /api/mdx | /api/mdx/clinical-studies, /effective-context, /rbm-attention, /rbm-summary, /study-archetypes |
+| device-software | /api/mdx | /api/mdx/software, /software-summary |
+| device-engineering | /api/mdx | /api/mdx/engineering |
+| device-udi | /api/mdx | /api/mdx/udi |
+| device-postmarket | /api/mdx | /api/mdx/postmarket |
+| device-vault | /api/mdx | /api/mdx/vault |
+| device-analytics | /api/mdx | /api/mdx/analytics |
+| labeling | /api/mdx | /api/mdx/labeling |
+| risk | /api/mdx | /api/mdx/risk-items |
+| device-510k, device-pma, device-cer | (none under /api/mdx) | /api/mdx/audit |
+| device-validation, device-submission | /api/submission-ops | /api/submission-ops/blockers |
+
+Every other claim on these surfaces is unchanged. The hidden `labeling-pi` keeps `/api/mdx`, so the
+kit's other routes stay attributed and are refused as out of scope, not left unmapped.
+
+### What the new check found first: a refusal production makes today
+
+The check was run against the registry as it was at head. It failed on two things
+(`item4-applied-red.txt`):
+
+- the 13 root claims;
+- the Clinical studies screen's RBQM summary and attention reads.
+
+The RBQM reads are refused in production now. The walk read `/api/mdx/rbm-summary${base}` as
+`/api/mdx/rbm-summary:p`, which matched only the bare `/api/mdx` root, so the gate reported it as
+launch. The real request, `/api/mdx/rbm-summary/<id>`, matches the hidden `rbm` surface's longer claim
+and is refused. ci:launch-scope-api passed over it.
+
+Two changes fix it:
+
+- device-clinical-studies claims the two families;
+- useRbqm.ts writes the routes whole.
+
+Without the second change, ci:launch-scope-api now flags them (`item4-applied-ci-api-rbqm-red.txt`).
+
+### The check (condition 2)
+
+`launch-scope-device-features.test.ts` enumerates every API call the admitted device screens name, in
+two ways:
+
+- the walk ci:launch-scope-api runs, over each feature's import graph;
+- a direct read of 25 named hooks and screens, among them useK510, useDossier, usePresub, useUdi,
+  Labeling.tsx, Risk.tsx, useVault, useRbqm, useIvd, useSubmissions, useWorkbench and HumanFactors.tsx.
+
+It has three cases:
+
+1. The walk reaches each named hook from its feature.
+2. Every call is served by the gate production builds (launch scope on, unattributed enforced). A
+   `${…}` is tried as a segment and, where it joins text, as nothing too.
+3. No device feature claims the `/api/mdx` or `/api/submission-ops` root, or a family that no screen of
+   it calls.
+
+Mutations, each restored from a byte copy (cmp identical), with both suites green again after
+(`item4-applied-mutations.txt`):
+
+- `/api/mdx/udi` removed from device-udi: case 2 refuses `/api/mdx/udi/summary`.
+- device-udi re-widened to `/api/mdx`, and the `/api/programs` exclusion removed: launch-scope-api-gate
+  fails 4 cases (letter case, device kit, package transmit, `/api/programs`).
+
+### Each path, with its caller
+
+`item4-applied-paths.txt` lists every path the two tests judge, its verdict, and its caller or
+"no caller". In short:
+
+- **Served.** risk-items, clinical-studies, labeling/*, vault/*, the eSTAR official and build routes,
+  and submission-ops/blockers. A device screen calls each.
+- **Refused.** The gateways root, the package transmit, `/api/programs/*` and ten
+  `/api/submission-ops/*` paths. Nothing calls them.
+
+One more stale example turned up. `/api/mdx/qms/Suppliers`, in the letter-case case, was admitted by
+P-48 (`dc9e22a1`, 2026-10-29), and the earlier failure on risk-items hid it at head. It moves to the
+served list, and `/api/mdx/qms/Readiness` (DEAD) takes its place.
+
+### Left as they are (condition 5)
+
+- **`/api/manufacturing`.** Claimed by device-workstream and device-diagnostics. No client file names
+  it, so it is served with no caller.
+- **`/api/ivdr`.** Claimed by the same two surfaces. Called by device-diagnostics through `useIvd.ts`
+  (clinical-evidence, gspr-checklist/:id/matrix, validations).
+- **`/api/cer`.** Claimed by device-cer and device-workstream. No client file names `/api/cer/...`
+  (the CER screen calls `/api/cerv2`), so it is served with no caller.
+
+### Gates and tests (`item4-applied-green.txt`)
+
+- **Gates:** ci:launch-scope, ci:launch-scope:selftest, ci:launch-scope-api (538 paths, none refused)
+  and ci:launch-scope-api:selftest all pass.
+- **The suites this change touches:** launch-scope-api-gate 43/43, launch-reproof-narrowing 204/204,
+  launch-scope-device-features 3/3, useRbqm 7/7.
+- **Other suites that read the registry or the gate:**
+  - moduleEntitlementGate 18/18 and launch-scope 36/36;
+  - the claim tests: csr-readiness 7, reporting 19, ind 65 and company-documents 10;
+  - vault-legal-holds-launch-scope 7;
+  - the cmc composition-boundary callers 15;
+  - recorded-downloads 36;
+  - ui-surface-registry 14 and surface-registry-coverage 4;
+  - the client suites that read `apiPrefixes`: appsCatalogEntitlement 9, workflowDiscovery 12, appsLive 6,
+    appsLicenceLimitNotRecorded 1, workflowAudit 120, usageBillingLive 8, surfaceRender 253 and
+    liveBranchRender 119.
+
+Each file was run alone. Plain `npx eslint` shows the same count as head on every touched file. The
+gate test keeps its one pre-existing max-lines-per-function warning; the new check sits in its own
+file so the gate test does not gain a max-lines warning. A scoped `tsc` reports no errors in the
+touched files; its 7 errors are in untouched middleware and come from Request augmentations outside
+the scoped include.
 
 ## Checks
 
