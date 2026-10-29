@@ -49,8 +49,7 @@ Searches run:
     when the next date was not moved. A revoked supplier owes neither;
   - a planned internal audit owes its start, due on its planned date, with 14 days' notice, to its lead auditor. The
     task is completed when the audit starts or closes, and cancelled with the audit or when its date moves.
-- `mdx-qms.ts`'s four write queries type their rows (`SupplierTaskSource`, `InternalAuditTaskSource`) instead of
-  passing an untyped row to the planners.
+- `mdx-qms.ts` hands each write's row to the planners as `SupplierTaskSource` or `InternalAuditTaskSource`.
 
 ## Proof
 
@@ -91,3 +90,8 @@ Searches run:
 - A supplier owner: the register names none, so a supplier's tasks go to the person who recorded the date.
 - No route moves a CAPA's target close date. When one does, its task follows (the planner compares the date).
 - A dbtest against Postgres (no server here).
+- `ci:sql-interpolation` misses an interpolation when the call has a type parameter. The first attempt typed the four
+  write queries as `query<Row>(…)`, and the gate then counted 2 interpolations in `mdx-qms.ts` instead of 8. The six
+  `SET ${setFrags.join(', ')}` interpolations, built from fixed column maps, were still there. The type parameters
+  were taken out and the baseline was not lowered. The scanner's pattern should admit `query<…>(` too; that gate
+  belongs to the security lane.
