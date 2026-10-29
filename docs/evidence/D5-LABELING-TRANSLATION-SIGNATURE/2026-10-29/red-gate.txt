@@ -1,0 +1,11 @@
+# RED: ci:sign-ceremony at HEAD 43fb57cc with only the mdx-labeling.ts baseline entry removed (for one run; the file was restored from a copy, sha256 1859321c… before and after).
+$ (baseline entry for server/routes/mdx-labeling.ts removed) npm run ci:sign-ceremony
+[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:
+  ✗ server/routes/mdx-labeling.ts:309  (approval stamp with no signature-row write in its handler)
+
+  A `sign` row is read as an electronic signature. Route the act through the
+  canonical ceremony (POST /api/c2c/actions/sign, or verifyReauth + the ledger
+  pair + persistGovernedSignSignature on one transaction, as
+  server/services/protocol-development/protocol-signature.ts does), or record
+  it under a command that does not claim a signature.
+exit 1

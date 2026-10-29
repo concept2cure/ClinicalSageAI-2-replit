@@ -1,0 +1,7 @@
+# Fix 1 green: the row through RunScopeNote.
+$ timeout 240 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx
+ ✓ run history row — what an organization-scope run counted > a run under a project whose engine counted the organization says both lines 206ms
+ ✓ run history row — what an organization-scope run counted > an account run is the organization’s by its own scope: the first line only 82ms
+ ✓ run history row — what an organization-scope run counted > a domain register whose engine computed the project says neither 47ms
+ ✓ run history row — what an organization-scope run counted > a project report says neither 45ms
+      Tests  4 passed (4)

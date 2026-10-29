@@ -1,0 +1,34 @@
+# Red at 90512f55, before the fixture change. 43fb57cc (the head this fix sits on) changes nothing under
+# tests/schema-contract/, migrations/, db/migrations/ or scripts/db/ (git diff --stat 90512f55 43fb57cc), so the
+# same inputs give the same red.
+# timeout 300 npx vitest run tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+# Trimmed: passing-test lines and PGlite wasm frames dropped; the serialized error's
+# 'query' field (the whole 1.9 MB seed) cut to 300 chars.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key
+ ↓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated
+Error: pass 1: migrations/20261027_cdi_public_reference_seed.sql failed — CDI reference seed requires the canonical CRE source store
+ ❯ tests/schema-contract/tenant-isolation-sweep.contract.test.ts:394:17
+    392|         } catch (err) {
+    393|           await pg.exec('ROLLBACK').catch(() => {});
+    394|           throw new Error(`pass ${pass}: ${rel} failed — ${(err as Err…
+       |                 ^
+    395|         }
+    396|       }
+Caused by: error: CDI reference seed requires the canonical CRE source store
+ ❯ pe.Le node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ node_modules/@electric-sql/pglite/dist/index.js:5:1155
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 173, severity: 'ERROR', code: 'P0001', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function inline_code_block line 7 at RAISE', schema: undefined, table: undefined, dataType: undefined, c
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  17 passed | 3 skipped (20)
+   Start at  06:29:22
+   Duration  11.74s (transform 538ms, setup 55ms, import 993ms, tests 10.50s, environment 0ms)

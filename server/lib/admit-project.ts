@@ -7,7 +7,8 @@
  *
  * The question itself is programInOrganization's
  * (server/services/c2c/program-access.ts); this only words the refusal. Read by
- * mdx-udi.ts and mdx-labeling.ts (D3, 2026-10-29).
+ * mdx-udi.ts, mdx-labeling.ts, human-factors.ts and mdx-engineering.ts (D3,
+ * 2026-10-29). q-sub.ts gives the same answers through its service's refusal.
  */
 import type { Response } from 'express';
 import { pool } from '../db';

@@ -11,7 +11,8 @@
  * newest is not the alias holder.
  *
  * Read by the editor's filing pane (FilingMarkets), the outline's start guard
- * (startOutlineSection) and Project home's module rows (ProjectDossier).
+ * (startOutlineSection), and Project home's module rows and readiness card's
+ * market lines (ProjectDossier).
  */
 export type EditingCopy<T> =
   | { kind: 'one'; doc: T }

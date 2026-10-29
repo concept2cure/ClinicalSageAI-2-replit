@@ -124,8 +124,31 @@ const SECTION_STATUS_LABELS = new Map([
 ]);
 const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (status || 'Status not recorded');
 
-/** The aside card: the home filing's figure, and each added market's line. */
-export function DossierReadinessCard({ read }: { read: DossierState }) {
+/** A market line's door: the editing copy of the filing the line measures,
+ *  opened whole (the line counts the whole filing, so no module rides along),
+ *  or why there is none, in the rows' words. Never a dead button (F3 part C). */
+function MarketCopy({ name, copy, onOpen }: {
+  name: string; copy: RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
+  if (copy.kind !== 'one') return <div data-testid="pj-dossier-market-copy">{noCopyWords(true, copy)}</div>;
+  return (
+    <div data-testid="pj-dossier-market-copy">
+      <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(copy.doc, null)}
+        aria-label={`Open ${copy.doc.title}, the editing copy for ${name}`}>Open {copy.doc.title}</button>
+    </div>
+  );
+}
+
+/** The aside card: the home filing's figure, and each added market's line.
+ *  A market's line opens the editing copy of the filing it measures
+ *  (`DossierMarket.documentId`), as that market's rows in Module completion
+ *  do. It was words only until 2026-10-29. */
+export function DossierReadinessCard({ read, copyFor, onOpen }: {
+  read: DossierState;
+  /** The editing copy of a filing, the lookup Module completion's rows use. */
+  copyFor: (filingId: string) => RowCopy;
+  onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
   const { state, retry } = read;
   const d = state.data;
   let body: React.ReactNode;
@@ -164,6 +187,7 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
                   <> {m.notHeld.length} required section{m.notHeld.length === 1 ? ' is' : 's are'} not in this project&apos;s dossier.</>
                 )}
                 {m.notHeld === null && <> Whether its required sections are all held could not be read.</>}
+                <MarketCopy name={marketName(m)} copy={copyFor(m.documentId)} onOpen={onOpen} />
               </li>
             ))}
           </ul>
@@ -187,13 +211,14 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
 /** The editing copy of the filing a row measures, or why it is not known. */
 export type RowCopy = EditingCopy<BuiltDocument> | { kind: 'unread'; failed: boolean };
 
-/** What a row says when it has no copy to open (F3: never a dead end, never a guess). */
-function noCopyWords(r: DossierRow, copy: Exclude<RowCopy, { kind: 'one' }>): string {
+/** What a row or a market line says when it has no copy to open (F3: never a
+ *  dead end, never a guess). `forMarket`: the filing is an added market's. */
+function noCopyWords(forMarket: boolean, copy: Exclude<RowCopy, { kind: 'one' }>): string {
   if (copy.kind === 'several') return `${copy.docs.length} documents are bound to this filing, so none is opened from here.`;
   if (copy.kind === 'unread') {
     return copy.failed ? 'The project\'s documents could not be read, so its editing copy is not known.' : 'Reading the project\'s documents…';
   }
-  return r.agency
+  return forMarket
     ? 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.'
     : 'No editing copy of this filing yet.';
 }
@@ -234,7 +259,7 @@ function ModuleRow({ r, copy, onOpen }: {
       ) : (
         <>
           <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>
-          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(r, copy)}</span>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(Boolean(r.agency), copy)}</span>
         </>
       )}
       <span className="pj-lmod-doc">{hasUpdated ? <>Updated <time dateTime={r.lastUpdated!}>{updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></> : 'Update time not recorded.'}</span>

@@ -1,0 +1,16 @@
+# plain npx eslint <file>, now; head counted from git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>
+server/routes/mdx-labeling.ts  now: 0 problems  head: 0 problems
+client/src/concept2cure/v2/surfaces/Labeling.tsx  now: ✖ 2 problems (0 errors, 2 warnings)  head: ✖ 2 problems (0 errors, 2 warnings)
+client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx  now: 0 problems  head: (new file)
+server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts  now: 0 problems  head: (new file)
+server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts  now: 0 problems  head: 0 problems
+client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx  now: 0 problems  head: (new file)
+scripts/ci/check-sign-ceremony.mjs  now: ✖ 1 problem (0 errors, 1 warning)  head: ✖ 1 problem (0 errors, 1 warning)
+scripts/ci/check-sign-ceremony.selftest.mjs  now: ✖ 1 problem (0 errors, 1 warning)  head: ✖ 1 problem (0 errors, 1 warning)
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Labeling.tsx
+  159:8  warning  Function 'Labeling' has too many lines (419). Maximum allowed is 100  max-lines-per-function
+  159:8  warning  Function 'Labeling' has a complexity of 47. Maximum allowed is 15     complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+

@@ -1,0 +1,10 @@
+# Fix 1 red: the new tests against the committed row (first line only).
+$ timeout 240 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx
+ × run history row — what an organization-scope run counted > a run under a project whose engine counted the organization says both lines 217ms
+   → Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ run history row — what an organization-scope run counted > an account run is the organization’s by its own scope: the first line only 50ms
+ ✓ run history row — what an organization-scope run counted > a domain register whose engine computed the project says neither 41ms
+ ✓ run history row — what an organization-scope run counted > a project report says neither 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+      Tests  1 failed | 3 passed (4)

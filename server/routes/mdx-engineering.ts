@@ -39,11 +39,11 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
-import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
+import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import type { QueryResultRow } from 'pg';
 import { pool } from '../db';
 import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
-import { programInOrganization } from '../services/c2c/program-access';
+import { admitProject } from '../lib/admit-project';
 
 const router = Router();
 const log = createScopedLogger('mdx-engineering');
@@ -152,9 +152,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
   }
 
   try {
-    /* Verify tenancy before reading anything. A valid UUID from another
-       org and a non-existent UUID both 404, so neither leaks. */
-    if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'Project');
+    /* Verify tenancy before reading anything, through the shared refusal
+       (server/lib/admit-project.ts), as q-sub, mdx-udi, mdx-labeling and
+       human-factors do. A valid UUID from another org and a non-existent UUID
+       both 404, so neither leaks. A check that could not run is 503
+       VERIFICATION_UNAVAILABLE: it reached the catch below as a 500 before
+       (D2, 2026-10-29). Either way nothing is read. */
+    if (!(await admitProject(res, log, programId, orgId))) return;
 
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the

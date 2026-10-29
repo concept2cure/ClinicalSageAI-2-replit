@@ -1,0 +1,7 @@
+# mutation c2-computed-scope-not-read: 'if (run.computedScope !== 'organization') return null;' -> 'if (run.computedScope !== 'organisation') return null;'
+# file: client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx; test: insightsRunHistoryScopeNote.test.tsx; restored after, sha256sum -c OK
+ × run history row — what an organization-scope run counted > a run under a project whose engine counted the organization says both lines 283ms
+   → Unable to find an element with the text: Organization-wide records. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × run history row — what an organization-scope run counted > an account run is the organization’s by its own scope: the first line only 86ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

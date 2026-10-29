@@ -1,6 +1,6 @@
 # F3 item 3: a module row opens the filing's editing copy, at that module (D2, 2026-10-29)
 
-Lane: `…session_01T2wooCZu46W7msw4TJuuzr`, board row "D2 — F3 item 3". Spec: `docs/design/FILING_SPINE.md` §7.2 F3, item 3: "Module rows open the governed document at that module." The filing-spine status read of 2026-10-22 found it only partly landed. Part A opens the right document. Part B opens it at that module.
+Lane: `…session_01T2wooCZu46W7msw4TJuuzr`, board row "D2 — F3 item 3". Spec: `docs/design/FILING_SPINE.md` §7.2 F3, item 3: "Module rows open the governed document at that module." The filing-spine status read of 2026-10-22 found it only partly landed. Part A opens the right document. Part B opens it at that module. Part C gives the readiness card's market line the same door.
 
 ## What already exists
 
@@ -67,9 +67,47 @@ An inventory workflow ran four read-only angles at `d019ca3d70`, each claim put 
 | Green | `green.txt` | The deep-link suite 17/17, editorTarget 22/22, the Project home and dossier suites. Of 144 client files, 134 pass. 7 fail in code this change does not touch (fixed or handed on). 3 hang before part A as well |
 | Mutations | `mutations-part-b.txt` | 8/8 red, one after a case was added for the precedence it had not pinned |
 
+## Part C: the readiness card's market line
+
+### What already exists
+
+- **The card.** `ProjectDossier.tsx` `DossierReadinessCard`, in the side column on Project home's Author step. Project home mounts it through `ProjectSide.tsx`.
+  - It reads `GET /api/c2c/projects/:id/dossier`, the same read as Module completion (F23).
+  - Each added market (`markets[]`, `scope: 'market'`) gets its own line: agency and application type, its figure, what it counts, and whether its required sections are held.
+  - The line carries the filing it measures, `DossierMarket.documentId`, the same `c2c_documents` id as the market's rows. The card used it only as a React key. Nothing on the line could be clicked.
+- **A market's rows already open its copy** (part A).
+  - `copyFor(filingId)`, inside `AuthorWorkspace` on Project home, runs `editingCopyOf` over the project's documents. Project home reads that list once (`useDocumentList`).
+  - It answers a `RowCopy`: `one`, `none`, `several`, or `unread` (still reading, or failed).
+  - `ModuleRow` opens `one` through `onOpenDoc`, which is `setEditorTarget({ docId, programId, within })`. For every other answer it shows `noCopyWords`.
+- **Which door.** FILING_SPINE.md F3 item 3 names a door for module rows and none for the card. INFORMATION_ARCHITECTURE.md lists the card only as "readiness" (Project home item 3, Author item 5). So the docs do not place it. There were three candidates:
+  - **The market's editing copy.** This is the filing the line measures, opened through the door its rows already use.
+  - **The market's rows in Module completion.** They show the same figures, and the page has no in-page anchor to take you to them.
+  - **The market's Submit row** (`ProjectMarkets.tsx`). It shows the server's dispatch verdict, which measures something other than sections approved or locked.
+
+  The editing copy is chosen. The line and the market's rows measure the same filing on the same read, so either one opens the same document. The line opens the copy whole, with no `within`, because it counts the whole filing (Module 1 and 3.2.R), not one module.
+
+### What changed
+
+- **The line has a door** (`MarketCopy`, in `ProjectDossier.tsx`).
+  - With one copy: a button, "Open {title}", named "Open {title}, the editing copy for {market}". It calls `onOpen(doc, null)`.
+  - With no copy, several copies, or the list still reading or failed: the words `noCopyWords` gives a market's row, and no button.
+- **`noCopyWords`** takes whether the filing is a market's, where it took the row. A row passes `Boolean(r.agency)`, which is what `r.agency ?` tested before.
+- **One lookup.** `copyFor` moved out of `AuthorWorkspace` unchanged, as `filingCopyIn(docs)` in `ProjectHome.tsx`. Module completion and the card both call it on the one document read. `ProjectSide` passes `copyFor` and `onOpenDoc` through to the card.
+- **Both props are required** on `DossierReadinessCard` and `ProjectSide`, so a mount without them does not typecheck. `projectDossierDetails` and `projectSideNotRead` pass them.
+- `ProjectHome.tsx` holds at head's 6 warnings. The `ProjectHome` function keeps its 370 lines and complexity 142.
+
+### Red, then green
+
+| | File | Result |
+|---|---|---|
+| Red at `43fb57cc` | `red-part-c.txt` | 5 cases, each on its defect. Every line reads only "EMA · MAA: 0% · 0 of 4 sections approved or locked." It has no button and none of the "none", "several", "not known" or "reading" wording |
+| Green | `green.txt` | `projectHomeDocuments` 26/26, the dossier and F3 suites, and all 40 client files that render Project home (398 tests, none red). ESLint per file at head's count. Typecheck 0 errors |
+| Mutations | `mutations-part-c.txt` | 8/8 red. One mutation was rewritten so that it goes red on its own defect, not on a missing name |
+
 ## Not done
 
-- **The readiness card's market line** (`DossierReadinessCard`) is still words only. The market's own rows in Module completion now open its copy.
+- **The card's home line** (`pj-dossier-home`) also measures one filing, and it opens nothing. The home rows in Module completion open that filing's copy. It was not part of this change.
+- **`editor/editingCopy.ts`'s header** lists the module rows among its readers and does not name the card. That file is outside this change.
 
 ## Handed on
 
