@@ -57,7 +57,6 @@ const CATALOG_FILES = [
 const CONTEXTUAL = {
   apps: 'the catalog itself — listing it inside itself is a loop',
   'admin-console': 'platform administration, reached from the admin area not subscribed to',
-  setup: 'first-run configuration, reached before any catalog exists',
   onboarding: 'first-run flow, entered automatically',
   'onboarding-ingest': 'step within the onboarding flow',
   billing: 'account administration, not a subscribable capability',

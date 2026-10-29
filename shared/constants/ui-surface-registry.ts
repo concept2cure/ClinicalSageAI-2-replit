@@ -292,9 +292,10 @@ export const UI_SURFACES: UiSurface[] = [
     // surface, outside the catalog. The launch Vault reads the same stores through
     // /api/c2c/project-vault. Unclaimed 2026-10-22.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
-    // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
-    // Vault retains the preservation API family for its records. Its /retention
-    // sub-path is Setup's, below.
+    // (server/routes/vault-legal-holds.ts). LegalHoldsCard calls them from Admin and access →
+    // Settings (Setup's, until it folded in, D2 2026-10-29), so admin-console claims them too;
+    // Vault retains the preservation API family for its records. Its /retention sub-path is
+    // admin-console's alone.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
@@ -1005,26 +1006,12 @@ export const UI_SURFACES: UiSurface[] = [
   },
 
   // ─── Tier: admin ─────────────────────────────────────────────────────────────
-  {
-    id: 'setup',
-    label: 'Admin / setup',
-    navTier: 'admin',
-    layoutMode: 'setup',
-    icon: 'settings',
-    group: 'admin',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
-    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
-    // reads and sets the organisation's retention period. LegalHoldsCard (2026-10-14, D2)
-    // lists, places and lifts holds, using named project and Vault document choices.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/regulatory-programs', '/api/c2c/project-vault'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Org profile, users/roles, MFA policy, SSO/SCIM, module subscriptions, feature flags, API keys.',
-  },
+  // setup folded into admin-console (D2, 2026-10-29): the organisation's name and client
+  // type, the gateway, session, PDF/A, retention and legal-hold cards are on Admin and
+  // access → Settings, and `setup` is an alias that opens that tab (registryModel.ts). Its
+  // claims moved there or were never its own: /api/setup, /api/api-keys and the hold routes
+  // are admin-console's; /api/admin and /api/users are NEVER_GATED; /api/regulatory-programs
+  // and /api/c2c/project-vault stay the Vault's (docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/).
   {
     id: 'audit-trail',
     label: 'Audit trail',

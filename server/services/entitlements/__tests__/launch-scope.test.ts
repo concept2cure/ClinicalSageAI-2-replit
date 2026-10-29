@@ -228,6 +228,20 @@ describe('the folded Part 11 console', () => {
   });
 });
 
+describe('the folded setup', () => {
+  it('is in no scope list and no grant: Admin and access → Settings holds the organisation\'s setup (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/. It was a shell surface,
+       never a catalogue module; its name and client type, and the gateway,
+       session, PDF/A, retention and legal-hold cards, are on admin-console's
+       Settings tab. admin-console stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('setup')).toBe(false);
+    expect(isLaunchSurface('setup')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('setup');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('admin-console');
+    expect(isLaunchSurface('admin-console')).toBe(true);
+  });
+});
+
 describe('the folded AnA memory', () => {
   it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
     /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on

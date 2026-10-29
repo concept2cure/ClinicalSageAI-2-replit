@@ -64,13 +64,13 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/v1/auth': 'the session the shell reads on load',
   '/api/tenants': 'tenant context (TenantContext.tsx) on load',
   '/api/clients': 'the client workspace list tenant context reads on load',
-  '/api/organizations': "the shell's organisation read (V2App.tsx), Setup's profile and settings, onboarding",
+  '/api/organizations': "the shell's organisation read (V2App.tsx), the profile and settings on Admin and access → Settings (Setup's until it folded in, D2 2026-10-29), onboarding",
   '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
-  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written by Setup and onboarding",
+  '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written from Admin and access → Settings and onboarding",
   '/api/mdx/notifications': "the shell's task tray (TaskTray.tsx): the list, the unread count, mark read",
   '/api/mdx/notification-subscriptions': 'the task tray NotificationPreferences: actual organization-scoped in-app category preferences; unsupported channels are refused',
-  '/api/client-branding/company-documents': 'Shared Company settings in Setup/Admin and saved identity, letterhead and legal originals in submissions/reports; current tenant/member, administrator, program and governed export checks remain in the company router and services',
-  '/api/gateway-accounts': "the agency gateway account choice (GatewayAccountsSetting.tsx): admin Setup, the onboarding wizard's Agency accounts step every organisation passes, and each transmittal (D7); bound to no one surface's module so an organisation is never refused it at onboarding",
+  '/api/client-branding/company-documents': 'Shared Company settings on Admin and access → Settings and saved identity, letterhead and legal originals in submissions/reports; current tenant/member, administrator, program and governed export checks remain in the company router and services',
+  '/api/gateway-accounts': "the agency gateway account choice (GatewayAccountsSetting.tsx): Admin and access → Settings, the onboarding wizard's Agency accounts step every organisation passes, and each transmittal (D7); bound to no one surface's module so an organisation is never refused it at onboarding",
 };
 
 /**
