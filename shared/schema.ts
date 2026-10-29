@@ -7524,6 +7524,35 @@ export type ProjectScheduleRevision = InferSelectModel<typeof projectScheduleRev
 export type InsertProjectScheduleRevision = z.infer<typeof insertProjectScheduleRevisionSchema>;
 
 /**
+ * Review routes (migrations/20261023_review_routes.sql): the header of one
+ * named review-and-approval route on a subject (a Vault version's lifecycle
+ * record, a QMS document, an Authoring document). Its members are
+ * unified_tasks rows carrying review_route_id. The migration owns its
+ * constraints, its indexes and the composite member key; written only by
+ * server/services/review/review-route.ts, read by routeStanding there.
+ */
+export const reviewRoutes = pgTable('review_routes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: integer('organization_id').notNull(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: text('subject_id').notNull(),
+  round: integer('round').notNull(),
+  senderId: integer('sender_id').notNull(),
+  senderName: text('sender_name').notNull(),
+  reviewOrder: text('review_order').notNull(),
+  reviewDueAt: timestamp('review_due_at', { withTimezone: true }),
+  reviewerStepDueAt: timestamp('reviewer_step_due_at', { withTimezone: true }).array(),
+  approvalDueAt: timestamp('approval_due_at', { withTimezone: true }).notNull(),
+  contentDigest: text('content_digest').notNull(),
+  status: text('status').default('open').notNull(),
+  statusReason: text('status_reason'),
+  statusBy: integer('status_by'),
+  statusAt: timestamp('status_at', { withTimezone: true }),
+  senderOverdueNotifiedAt: timestamp('sender_overdue_notified_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
  * Unified Tasks Table
  *
  * Central table for managing tasks across ALL modules in the ecosystem.
@@ -7629,6 +7658,18 @@ export const unifiedTasks = pgTable(
     // No FK on deletedBy: the tombstone must outlive the account.
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     deletedBy: integer('deleted_by'),
+
+    // Review route membership (migrations/20261023_review_routes.sql, RR1a of
+    // docs/design/REVIEW_ROUTING_2026-10-23.md). A row with reviewRouteId is a
+    // route member: the person's inbox entry, written only by
+    // server/services/review/review-route.ts. Every generic writer refuses it
+    // (refuseRouteTaskWrite, services/tasking/task-state-machine.ts) and the
+    // database refuses it too (unified_tasks_route_rows_guard).
+    reviewRouteId: uuid('review_route_id'),
+    reviewRole: text('review_role'), // 'reviewer' | 'approver'
+    reviewStep: integer('review_step'),
+    routeSignatureId: integer('route_signature_id'), // electronic_signatures.id
+    routeActId: text('route_act_id'), // c2c_ana_actions id of a return or hand-back
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),

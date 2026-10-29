@@ -1,0 +1,39 @@
+Green, one file at a time under timeout 240, after the change and after every mutation was restored.
+server/routes/__tests__/human-factors-reads-the-project.test.ts | Test Files 1 passed (1) | Tests 22 passed (22)
+server/routes/__tests__/human-factors-read.test.ts | Test Files 1 passed (1) | Tests 4 passed (4)
+server/routes/__tests__/human-factors-files-read.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+server/routes/__tests__/human-factors-write.test.ts | Test Files 1 passed (1) | Tests 6 passed (6)
+server/routes/__tests__/human-factors-governed-writes.test.ts | Test Files 1 passed (1) | Tests 11 passed (11)
+server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+server/services/regulatory/__tests__/human-factors.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+tests/schema-contract/hf-engineering-files-program-key.pglite.test.ts | Test Files 1 passed (1) | Tests 7 passed (7)
+client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx | Test Files 1 passed (1) | Tests 12 passed (12)
+client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx | Test Files 1 passed (1) | Tests 9 passed (9)
+client/src/concept2cure/v2/__tests__/humanFactorsHonesty.test.tsx | Test Files 1 passed (1) | Tests 8 passed (8)
+client/src/concept2cure/v2/__tests__/humanFactorsSummativeGate.test.tsx | Test Files 1 passed (1) | Tests 7 passed (7)
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx | Test Files 1 passed (1) | Tests 27 passed (27)
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx | Test Files 1 passed (1) | Tests 25 passed (25)
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx | Test Files 1 passed (1) | Tests 53 passed (53)
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx | Test Files 1 passed (1) | Tests 28 passed (28)
+server/middleware/__tests__/launch-scope-device-features.test.ts | Test Files 1 passed (1) | Tests 3 passed (3)
+
+Migration-set contract tests (the set as it stands now, with 20261029 on it):
+tests/schema-contract/tenant-isolation-sweep.contract.test.ts | Test Files 1 failed (1) | Tests 17 passed | 3 skipped (20)
+tests/schema-contract/uuid-tenant-isolation.contract.test.ts | Test Files 1 passed (1) | Tests 10 passed (10)
+tests/schema-contract/c2c-apply-path.contract.test.ts | Test Files 1 passed (1) | Tests 6 passed (6)
+tests/schema-contract/column-reachability-guard.contract.test.ts | Test Files 1 passed (1) | Tests 27 passed (27)
+tests/schema-contract/deploy-migration-mechanism.contract.test.ts | Test Files 1 passed (1) | Tests 446 passed (446)
+tests/schema-contract/check-constraint-replay.pglite.test.ts | Test Files 1 passed (1) | Tests 6 passed (6)
+tests/schema-contract/program-same-org-keys.pglite.test.ts | Test Files 1 passed (1) | Tests 27 passed (27)
+
+tenant-isolation-sweep fails at the suite level on a file ordered BEFORE 20261029, so pass 1 never reaches it:
+  Error: pass 1: migrations/20261027_cdi_public_reference_seed.sql failed — CDI reference seed requires the canonical CRE source store
+  The same error and the same 17 passed / 3 skipped with 20261029 taken off the set (mutation-M7.txt). Not this slice's.
+
+Gates:
+[ci:migration-set-order] OK — 431 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+[ci:migration-drop-safety] OK — 431 migrations, 41 DROP(s), none re-created by the set; 7 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1066 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+Typecheck: npm run typecheck (full, cold) exit 0, no errors, over the whole working tree.

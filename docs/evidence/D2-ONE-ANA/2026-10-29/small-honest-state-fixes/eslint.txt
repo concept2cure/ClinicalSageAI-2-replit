@@ -1,0 +1,17 @@
+# Plain npx eslint. Head read with: git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>
+== client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx (head)
+== client/src/concept2cure/v2/surfaces/InsightsRunsPanel.tsx (after)
+== server/routes/mdx-engineering.ts (head)
+  146:75  warning  Async arrow function has too many lines (320). Maximum allowed is 100  max-lines-per-function
+✖ 1 problem (0 errors, 1 warning)
+== server/routes/mdx-engineering.ts (after)
+  146:75  warning  Async arrow function has too many lines (320). Maximum allowed is 100  max-lines-per-function
+✖ 1 problem (0 errors, 1 warning)
+== server/routes/__tests__/mdx-engineering.contract.test.ts (head)
+  45:52  warning  Arrow function has too many lines (211). Maximum allowed is 100  max-lines-per-function
+✖ 1 problem (0 errors, 1 warning)
+== server/routes/__tests__/mdx-engineering.contract.test.ts (after)
+  45:52  warning  Arrow function has too many lines (211). Maximum allowed is 100  max-lines-per-function
+✖ 1 problem (0 errors, 1 warning)
+== client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx (new; after)
+(no output = no problems)

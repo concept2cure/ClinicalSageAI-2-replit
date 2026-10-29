@@ -1,0 +1,56 @@
+Red: the labeling role-gate test, in the working tree, against server/routes/mdx-labeling.ts at HEAD
+(sha256 c13bbc0a…, git diff empty), before the route changed.
+timeout 240 npx vitest run --config vitest.config.ts server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+
+Tests  12 failed | 12 passed (24)
+
+Each refused case, and the statements the request sent (first 60 characters of each):
+  × 'post' '/api/mdx/labeling' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: INSERT INTO labeling_documents (
+  × 'post' '/api/mdx/labeling' takes an editing role > refuses a member with no role, and sends nothing
+      sent: INSERT INTO labeling_documents (
+  × 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: UPDATE labeling_documents SET status = $1, updated_at = NOW(
+  × 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a member with no role, and sends nothing
+      sent: UPDATE labeling_documents SET status = $1, updated_at = NOW(
+  × 'post' '/api/mdx/labeling/1/translations' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: SELECT 1 FROM labeling_documents WHERE id = $1 AND organizat | INSERT INTO labeling_translations (
+  × 'post' '/api/mdx/labeling/1/translations' takes an editing role > refuses a member with no role, and sends nothing
+      sent: SELECT 1 FROM labeling_documents WHERE id = $1 AND organizat | INSERT INTO labeling_translations (
+  × 'patch' '/api/mdx/labeling/translations/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: UPDATE labeling_translations SET status = $1, approved_by = 
+  × 'patch' '/api/mdx/labeling/translations/1' takes an editing role > refuses a member with no role, and sends nothing
+      sent: UPDATE labeling_translations SET status = $1, approved_by = 
+  × 'post' '/api/mdx/labeling/1/symbols' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: SELECT 1 FROM labeling_documents WHERE id = $1 AND organizat | INSERT INTO labeling_symbols (
+  × 'post' '/api/mdx/labeling/1/symbols' takes an editing role > refuses a member with no role, and sends nothing
+      sent: SELECT 1 FROM labeling_documents WHERE id = $1 AND organizat | INSERT INTO labeling_symbols (
+  × 'delete' '/api/mdx/labeling/symbols/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+      sent: DELETE FROM labeling_symbols WHERE id = $1 AND organization_
+  × 'delete' '/api/mdx/labeling/symbols/1' takes an editing role > refuses a member with no role, and sends nothing
+      sent: DELETE FROM labeling_symbols WHERE id = $1 AND organization_
+
+The PATCH of a translation to 'approved' stamps approved_by and approved_at, so a viewer could approve a translation.
+
+The 12 that pass: the six editor writes, the five viewer reads, and the reference (POST /api/mdx/udi refuses a
+viewer with 403 {"error":"Insufficient permissions"} and sends nothing).
+
+One diff in full:
+ FAIL  'post' '/api/mdx/labeling' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "INSERT INTO labeling_documents (
++          organization_id, program_id, device_name, doc_kind, version, status,
++          language, region, udi_di, effective_date, expires_at, artifact_id
++        ) VALUES (
++          $1,$2,$3,$4,COALESCE($5,'1.0'),COALESCE($6,'draft'),
++          COALESCE($7,'en'),$8,$9,$10,$11,$12
++        )
++        RETURNING *",
++ ]
+

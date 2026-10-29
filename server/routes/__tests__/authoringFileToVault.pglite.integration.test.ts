@@ -98,6 +98,11 @@ beforeAll(async () => {
       'migrations/20260921_audit_logs_chain_seq.sql',
       'migrations/20260921_authoring_document_provenance.sql',
       'migrations/20260930_vault_documents_version_lineage.sql',
+      // A check-in withdraws an open review route on its head's lifecycle
+      // record (RR1a), so the refiling path reads canonical_documents; and the
+      // Vault lifecycle read lists each version's round from review_routes.
+      'migrations/20260731c_canonical_documents.sql',
+      'migrations/20261023_review_routes.sql',
     ],
   });
   h.db = jdb.db;

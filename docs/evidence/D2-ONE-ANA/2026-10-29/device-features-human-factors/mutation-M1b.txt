@@ -1,0 +1,15 @@
+Mutation M1b-create-skips-ownership
+File: server/routes/human-factors.ts
+-     if (!(await admitProject(res, logger, programId, orgId))) return;
+-     const file = await createHfFile(orgId, {
++     const file = await createHfFile(orgId, {
+Test: server/routes/__tests__/human-factors-reads-the-project.test.ts
+
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses another organization's project (bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb) with 404, and cre
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses a project that does not exist (cccccccc-cccc-4ccc-8ccc-cccccccccccc) with 404, and crea
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses the organization's own deleted project (dddddddd-dddd-4ddd-8ddd-dddddddddddd) with 404,
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses a value that is not a project id (not-a-project) with 404, and creates no file 2ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > answers 503 when ownership cannot be checked, and creates no file 3ms
+Tests  5 failed | 17 passed (22)
+
+Restored byte for byte: yes

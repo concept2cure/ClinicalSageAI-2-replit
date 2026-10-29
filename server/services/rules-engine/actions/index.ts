@@ -17,6 +17,7 @@ import type {
   RuleDefinition,
 } from '../types';
 import type { ProjectRulesEngine } from '../engine';
+import { refuseRouteColumnsInInput } from '../../tasking/task-state-machine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Task Handler
@@ -35,6 +36,9 @@ export class CreateTaskHandler implements ActionHandler {
     const start = Date.now();
     try {
       const params = action.params as any;
+      // A rule's stored action never makes a review route member (RR1a, M9):
+      // the refusal is this action's failure, and nothing is inserted.
+      refuseRouteColumnsInInput(params, 'rules.create_task');
       const dueDate = params.dueInDays ? new Date(Date.now() + params.dueInDays * 86400000) : null;
 
       // Resolve assignee by role if specified

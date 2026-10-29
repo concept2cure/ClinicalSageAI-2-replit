@@ -1,0 +1,7 @@
+# item 1 green (working tree, after fixture/expectation update)
+ ✓ client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx > existing Insights matrix run > runs the catalog type and preserves nullable columns, recorded values and explicit unknown currency in the UI 380ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+ ✓ client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx > existing Insights lifecycle run > runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer 510ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)

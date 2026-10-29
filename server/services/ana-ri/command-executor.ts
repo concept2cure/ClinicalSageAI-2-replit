@@ -1116,6 +1116,20 @@ export async function createTask(
     moduleType?: string;
   }
 ): Promise<CommandResult> {
+  // A route member is written only by the review route (RR1a, M9). AnA has no
+  // path to send, sign or route anything; a create naming a route column
+  // creates nothing.
+  {
+    const { refuseRouteColumnsInInput, RouteTaskWriteRefused } = await import('../tasking/task-state-machine.js');
+    try {
+      refuseRouteColumnsInInput(params, 'ana.create_task');
+    } catch (err) {
+      if (err instanceof RouteTaskWriteRefused) {
+        return { success: false, action: 'create_task', message: err.message, error: err.code };
+      }
+      throw err;
+    }
+  }
   try {
     const result = await pool.query(
       `INSERT INTO project_tasks
@@ -1211,9 +1225,11 @@ export async function updateTask(
       approvalStatus: string | null;
       approvers: unknown;
     } | null = null;
+    /** The mirror row is a review route member: AnA may not move it (RR1a, B1). */
+    let mirrorIsRouteTask = false;
     try {
       const currentRes = await pool.query(
-        `SELECT status, approval_required, approval_status, approvers
+        `SELECT status, approval_required, approval_status, approvers, review_route_id
            FROM unified_tasks
          WHERE source_entity_type = 'project_task'
            AND source_entity_id = $1
@@ -1222,6 +1238,7 @@ export async function updateTask(
         [String(params.taskId), ctx.organizationId]
       );
       mirrorFrom = currentRes.rows[0] ? String(currentRes.rows[0].status) : null;
+      mirrorIsRouteTask = Boolean(currentRes.rows[0]) && currentRes.rows[0].review_route_id != null;
       mirrorApproval = currentRes.rows[0]
         ? {
             approvalRequired: currentRes.rows[0].approval_required as boolean | null,
@@ -1236,6 +1253,14 @@ export async function updateTask(
         '[ana-ri] unified_tasks mirror read failed (non-fatal):',
         err instanceof Error ? err.message : err
       );
+    }
+
+    // A route member belongs to its review route: refused before any write,
+    // so project_tasks is not changed either (RR1a, B1; §6: AnA has no path
+    // to sign, return or reassign).
+    if (mirrorIsRouteTask) {
+      const { ROUTE_TASK_REFUSAL_MESSAGE } = await import('../tasking/task-state-machine.js');
+      return { success: false, action: 'update_task', message: ROUTE_TASK_REFUSAL_MESSAGE, error: 'ROUTE_TASK_OWNED_BY_ROUTE' };
     }
 
     // Same domain rules as the routes: AnA must not drive a transition the HTTP

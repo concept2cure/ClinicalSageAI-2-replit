@@ -51,7 +51,9 @@ describe('GET /api/human-factors', () => {
     for (const k of ['task', 'useError', 'potentialHarmSeverity', 'mitigated']) {
       expect(res.body.data.scenarios[0]).toHaveProperty(k);
     }
-    expect(query.mock.calls[0][1]).toEqual([7]);
+    // Org-scoped, and no project named: the program filter is a bind parameter (null here),
+    // never SQL text (hf-files-service.ts listHfFiles; D2, 2026-10-29).
+    expect(query.mock.calls[0][1]).toEqual([7, null]);
   });
 
   it('returns null data when the org has no file', async () => {

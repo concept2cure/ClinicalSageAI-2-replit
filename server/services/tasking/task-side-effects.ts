@@ -205,10 +205,12 @@ async function unblockDependents(
   //    order: two completions sharing dependents through different linkage
   //    systems then queue on the first shared row instead of each holding one
   //    the other waits for (a deadlock). Successor rows are org-scoped here.
+  //    A route member is never a dependent the cascade moves: its steps are
+  //    opened by its review route, not by the generic graph (RR1a, B1, §3).
   const dependentsQuery = run
     .select()
     .from(unifiedTasks)
-    .where(and(live, inArray(unifiedTasks.taskId, ids)))
+    .where(and(live, inArray(unifiedTasks.taskId, ids), isNull(unifiedTasks.reviewRouteId)))
     .orderBy(unifiedTasks.taskId);
   const dependents = await (lock ? dependentsQuery.for('no key update') : dependentsQuery);
 

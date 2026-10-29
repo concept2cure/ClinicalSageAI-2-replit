@@ -303,6 +303,8 @@ const MIGRATIONS = [
   'migrations/20261001_integer_project_same_org_keys.sql',
   // One anchor row per program (PF-08).
   'migrations/20261001b_projects_one_anchor_per_program.sql',
+  // The review route header (RR1a): every lifecycle sign-off reads the record's route standing.
+  'migrations/20261023_review_routes.sql',
 ] as const;
 /**
  * Columns the walk's database cannot get from a migration file:

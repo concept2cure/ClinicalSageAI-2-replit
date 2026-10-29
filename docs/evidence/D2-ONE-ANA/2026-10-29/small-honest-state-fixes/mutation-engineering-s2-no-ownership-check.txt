@@ -1,0 +1,33 @@
+# mutation s2-no-ownership-check: 'if (!(await admitProject(res, log, programId, orgId))) return;' -> ''
+# file: server/routes/mdx-engineering.ts; test: server/routes/__tests__/mdx-engineering.contract.test.ts; restored after, sha256sum -c OK
+ × GET /api/mdx/engineering/:programId > 404 for a program outside the caller tenant 10ms
+   → expected 200 to be 404 // Object.is equality
+ × GET /api/mdx/engineering/:programId > returns empty arrays, never fabricated rows, for an empty tenant 5ms
+   → expected [ { …(11) } ] to deeply equal []
+ × GET /api/mdx/engineering/:programId > maps ISO 14971 integer scales onto the surface heatmap keys 4ms
+   → expected 'R-11111111-2222-3333-4444-555555555555' to be 'R-018' // Object.is equality
+ × GET /api/mdx/engineering/:programId > falls back to initial severity when no control has moved residual risk 5ms
+   → expected null to be 'S4P3' // Object.is equality
+ × GET /api/mdx/engineering/:programId > clamps out-of-range scale values rather than dropping the hazard 3ms
+   → expected null to be 'S5P1' // Object.is equality
+ × GET /api/mdx/engineering/:programId > survives a missing optional table instead of blanking the surface 5ms
+ × GET /api/mdx/engineering/:programId > does not call a design input verified while its validation is pending 3ms
+   → Cannot read properties of undefined (reading 'state')
+ × GET /api/mdx/engineering/:programId > renders the design outputs, not [object Object] 3ms
+   → Cannot read properties of undefined (reading 'output')
+ × GET /api/mdx/engineering/:programId > passes the store id through instead of re-prefixing a TEXT key 2ms
+   → Cannot read properties of undefined (reading 'id')
+ × GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 3ms
+   → expected [ 'trace' ] to include 'risks'
+ × GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed 3ms
+   → expected 1 to be +0 // Object.is equality
+ × GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed 3ms
+   → expected [ 'riskLastUpdated' ] to include 'documents'
+ × GET /api/mdx/engineering/:programId > does not list a merely unmigrated table as unavailable 3ms
+ × GET /api/mdx/engineering/:programId > computes DHF completion only over required sections 3ms
+   → Cannot read properties of undefined (reading 'summary')
+ × GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing 2ms
+   → expected 200 to be 503 // Object.is equality
+ × GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  16 failed | 3 passed (19)

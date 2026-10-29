@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a) 1312ms
+   → expected null to be 25 // Object.is equality
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 10ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 5ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 5ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 1ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 28ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 19ms
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:52:26.930Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:52:26.933Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-10-29T05:52:26.935Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 134ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a)
+AssertionError: expected null to be 25 // Object.is equality
+
+- Expected:
+25
+
++ Received:
+null
+
+ ❯ server/services/tasking/__tests__/task-project.pglite.test.ts:121:126
+    119|   it('a task raised on a Vault version\u2019s lifecycle record: its pr…
+    120|     const { projectForTaskSource } = await import('../task-project');
+    121|     expect(await projectForTaskSource(rdb, { orgId: 1, sourceEntityTyp…
+       |                                                                                                                              ^
+    122|     expect(await projectForTaskSource(rdb, { orgId: 1, sourceEntityTyp…
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  05:52:20
+   Duration  6.19s (transform 1.29s, setup 107ms, import 826ms, tests 4.88s, environment 0ms)
+

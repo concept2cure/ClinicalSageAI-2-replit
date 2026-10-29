@@ -21,7 +21,7 @@ const dossier = { state: { loading: true, data: null }, retry: () => {} } as nev
 
 describe('Author side column: what this page does not read', () => {
   it('Memory and Instructions say they are not read here, never that there is none', () => {
-    render(<ProjectSide pid={null} dossier={dossier} />);
+    render(<ProjectSide pid={null} dossier={dossier} copyFor={() => ({ kind: 'none' })} onOpenDoc={() => {}} />);
     for (const name of ['Memory', 'Instructions']) {
       const card = screen.getByRole('heading', { name }).closest('section') as HTMLElement;
       expect(within(card).getByText('Not read on this page yet')).toBeTruthy();

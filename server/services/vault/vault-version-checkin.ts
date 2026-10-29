@@ -24,6 +24,10 @@
  * @module server/services/vault/vault-version-checkin
  */
 import { isDeepStrictEqual } from 'node:util';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { closeReviewRoute } from '../review/review-route.js';
+import { routeStanding } from '../review/review-route-standing.js';
+import type { TaskEventNotice } from '../tasking/task-side-effects.js';
 
 /** A pg-style client: the pool, or the ingest's transaction client. */
 export interface CheckInQueryable {
@@ -295,4 +299,36 @@ export async function recheckUnderLock(
     message: `The document’s filing or metadata changed while the new version was being prepared. Review its current Vault record and try again. ${NOTHING}`,
   };
   return null;
+}
+
+/**
+ * A check-in makes its head no longer current, so an open review route on the
+ * head's lifecycle record is withdrawn on the check-in's own transaction, with
+ * the reason "Superseded by version N" (RR1a, §2.9: every exit from review
+ * closes the route). The record is locked first, then the route's rows; the
+ * notices go out after COMMIT. Nothing happens when the head has no record, or
+ * its record has no open route.
+ */
+export async function withdrawHeadReviewRoute(
+  client: CheckInQueryable,
+  p: { organizationId: number; headId: string; version: string; actorUserId: number },
+): Promise<TaskEventNotice[]> {
+  const { rows } = await client.query(
+    `SELECT canonical_id, title, stage FROM canonical_documents
+      WHERE organization_id = $1 AND source_refs ? 'vault_documents' AND source_refs -> 'vault_documents' ->> 'nativeId' = $2
+      ORDER BY created_at, canonical_id LIMIT 1 FOR UPDATE`,
+    [p.organizationId, p.headId],
+  );
+  const record = rows[0];
+  if (!record) return [];
+  const standing = await routeStanding(client, {
+    organizationId: p.organizationId, subjectType: 'canonical_document', subjectId: String(record.canonical_id),
+    inReview: record.stage === 'in_review', forUpdate: true,
+  });
+  if (standing.state !== 'live') return [];
+  const closed = await closeReviewRoute(drizzle(client as never) as never, {
+    organizationId: p.organizationId, standing, status: 'withdrawn', reason: `Superseded by version ${p.version}`,
+    actorUserId: p.actorUserId, subjectType: 'canonical_document', subjectId: String(record.canonical_id), subjectTitle: String(record.title),
+  });
+  return closed.notices;
 }

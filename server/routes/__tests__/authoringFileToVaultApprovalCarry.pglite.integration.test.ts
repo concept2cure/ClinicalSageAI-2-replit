@@ -101,6 +101,8 @@ beforeAll(async () => {
       // Current Vault release checks read the canonical company registry even
       // when this ordinary Authoring fixture registers no legal companions.
       'migrations/20261018_company_legal_registry.sql',
+      // The review route header (RR1a): the Vault lifecycle read lists each version's round.
+      'migrations/20261023_review_routes.sql',
     ],
   });
   h.db = jdb.db;

@@ -1,0 +1,14 @@
+# Mutation m6b-calendar-sentence-dropped-client, then restored from the fixed copy (sha256sum -c OK). REPORT_PDF_NOTO_CORE_DIR=<staged fonts> npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > states the catalog card’s note beside "Run report" 90ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > says nothing of the kind on a tile whose engine computes the project 26ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s 56ms
+ × client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body 284ms
+   → Unable to find an element with the text: Counts are the organisation's records of this kind; they are not limited to one program.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text m
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a run whose engine computed the project carries no organization note 44ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > an organization (account) run is already headed as the organization and adds nothing 28ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope 36ms
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body
+TestingLibraryElementError: Unable to find an element with the text: Counts are the organisation's records of this kind; they are not limited to one program.. This could be because the text is broken up by multiple elements. In this case, you can provide a fun
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)

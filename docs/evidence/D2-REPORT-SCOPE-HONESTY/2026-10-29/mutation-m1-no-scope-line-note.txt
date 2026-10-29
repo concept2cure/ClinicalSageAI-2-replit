@@ -1,0 +1,20 @@
+# Mutation m1-no-scope-line-note, then restored from the fixed copy (sha256sum -c OK). REPORT_PDF_NOTO_CORE_DIR=<staged fonts> npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > states the catalog card’s note beside "Run report" 85ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > says nothing of the kind on a tile whose engine computes the project 24ms
+ × client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s 56ms
+   → Unable to find an element with the text: Organization-wide records. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body 217ms
+   → Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexibl
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a run whose engine computed the project carries no organization note 41ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > an organization (account) run is already headed as the organization and adds nothing 31ms
+ × client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope 20ms
+   → Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexibl
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s
+TestingLibraryElementError: Unable to find an element with the text: Organization-wide records. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body
+TestingLibraryElementError: Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope
+TestingLibraryElementError: Unable to find an element with the text: Counts are not narrowed to the selected project.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)

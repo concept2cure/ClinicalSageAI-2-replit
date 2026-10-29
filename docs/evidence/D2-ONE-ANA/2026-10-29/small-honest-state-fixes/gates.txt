@@ -1,0 +1,9 @@
+# Gates, working tree with both fixes (the sql-interpolation list of 22 proved predicates is trimmed).
+$ npm run -s ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit 0
+
+$ npm run -s ci:sql-interpolation
+[ci:sql-interpolation] 22 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1066 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+exit 0

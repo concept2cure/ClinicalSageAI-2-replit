@@ -42,6 +42,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { HumanFactors } from '../surfaces/HumanFactors';
+import { clearShellProject, publishShellProject } from '../shellProject';
+
+/** The open project. The screen reads its file by project, and draws a file only when the route says it is this
+ *  project's (D2, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/device-features-human-factors/). */
+const PROJECT = '0b6f1c1e-4d2a-4c55-9a1e-3f7b2d9c8e10';
 
 /** Another project's file, as the route returns it today: no project key. */
 const FILE_DATA = {
@@ -59,7 +64,7 @@ const FILE_DATA = {
   ],
 };
 const TODAYS_READ = { data: FILE_DATA, meta: { count: 1, source: 'hf_engineering_files' } };
-const KEYED_READ = { data: FILE_DATA, meta: { count: 1, source: 'hf_engineering_files', scope: 'program' } };
+const KEYED_READ = { data: FILE_DATA, meta: { count: 1, source: 'hf_engineering_files', scope: 'program', programId: PROJECT } };
 
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
 const serve = (payload: unknown) =>
@@ -87,8 +92,8 @@ const bodyText = () => document.body.textContent || '';
 const NOT_KEYED = /Shown once this screen reads this project's records/;
 const ADD_SCENARIO = { name: /Add use scenario/ };
 
-afterEach(() => cleanup());
-beforeEach(() => { seen = null; apiRequest.mockReset(); });
+afterEach(() => { cleanup(); clearShellProject(); });
+beforeEach(() => { seen = null; apiRequest.mockReset(); publishShellProject({ id: PROJECT, title: 'Aurora' }); });
 
 describe("HumanFactors — the organization's first file is not shown as this project's (slice 0)", () => {
   it("shows none of the file's records when the read is not keyed to the project", async () => {
@@ -154,7 +159,7 @@ describe("HumanFactors — the organization's first file is not shown as this pr
      also offered "Create the HFE/UE file for this device", which no AnA tool
      and no control on this screen performs. */
   const EMPTY_READ = { data: null, meta: { count: 0, source: 'hf_engineering_files' } };
-  const EMPTY_KEYED_READ = { data: null, meta: { count: 0, source: 'hf_engineering_files', scope: 'program' } };
+  const EMPTY_KEYED_READ = { data: null, meta: { count: 0, source: 'hf_engineering_files', scope: 'program', programId: PROJECT } };
 
   it('does not promise that a recorded file appears here while the read is not keyed', async () => {
     serve(EMPTY_READ);

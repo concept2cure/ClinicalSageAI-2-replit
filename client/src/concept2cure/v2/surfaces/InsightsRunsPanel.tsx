@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
+import { ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote, countsAreOrganizationWide } from './InsightsCatalogPanel';
 import {
   RUN_STATUS_LABEL,
   confidenceText,
@@ -91,6 +92,20 @@ function RunFilters({
   );
 }
 
+/**
+ * What a run's counts cover, from its carried `computedScope` only
+ * (run-history.ts reads it from the stored summary). A run whose engine
+ * counted the organization says so in the catalog card's words
+ * (InsightsCatalogPanel.tsx). Under a project it also says the counts are not
+ * narrowed to it, as the report's scope line does (Insights.tsx); an account
+ * run is the organization's by its own scope, so it keeps the first line only
+ * (D2, 2026-10-29).
+ */
+function RunScopeNote({ run }: { run: Pick<ReportRunRow, 'computedScope' | 'scopeType'> }) {
+  if (countsAreOrganizationWide(run)) return <OrganizationCountsNote className="rl-cell-sub" />;
+  return run.computedScope === 'organization' ? <div className="rl-cell-sub">{ORGANIZATION_WIDE_RECORDS}</div> : null;
+}
+
 function RunRow({
   run,
   pickable,
@@ -121,7 +136,7 @@ function RunRow({
         {run.reportTypeLabel}
         {market ? <div className="rl-cell-sub">{market}</div> : null}
       </td>
-      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}{run.computedScope === 'organization' && <div className="rl-cell-sub">Organization-wide records</div>}</td>
+      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}<RunScopeNote run={run} /></td>
       <td><StatusTag status={run.status} /></td>
       <td>{confidenceText(run.confidence)}</td>
       <td>{whenText(run.completedAt ?? run.createdAt)}</td>

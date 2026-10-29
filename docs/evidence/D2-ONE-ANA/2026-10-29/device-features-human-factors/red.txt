@@ -1,0 +1,63 @@
+Red first: each new test file at head plus the test only, before the product change it pins. Trimmed to the case lines and the summary.
+
+## server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts (service, before listHfFiles/createHfFile took a project)
+✓ server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > records a file, reads it back, and normalizes the element presence map 8ms
+✓ server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > defaults an absent present to every element false 2ms
+✓ server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > rejects a missing device or a malformed presence map 2ms
+✓ server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > is strictly tenant-scoped and soft-delete aware 6ms
+× server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > records the project a file is created for, and reads it back only under that project 6ms
+× server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > keeps a file with no project out of every project read 2ms
+× server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts > hf-files-service > refuses, at the database, a file naming another organization's project 5ms
+Tests  3 failed | 4 passed (7)
+
+## server/routes/__tests__/human-factors-reads-the-project.test.ts (before the route change; the one green case is the unchanged unscoped scenario path)
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > refuses another organization's project (bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > refuses a project that does not exist (cccccccc-cccc-4ccc-8ccc-cccccccccccc)
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > refuses the organization's own deleted project (dddddddd-dddd-4ddd-8ddd-dddd
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > refuses a value that is not a project id (not-a-project) with 404, and reads
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > answers 503 when ownership cannot be checked, and reads no file 3ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > reads the caller's own project's file, by organization and project, and says
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > gives a project with no file of its own no file, never the organization's un
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > GET /api/human-factors?program_id=: the open project's file, and only it > leaves the read with no project as it was, and says the scope is the organiz
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > records the caller's own project on the new file 11ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses another organization's project (bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb) with 4
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses a project that does not exist (cccccccc-cccc-4ccc-8ccc-cccccccccccc) with 40
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses the organization's own deleted project (dddddddd-dddd-4ddd-8ddd-dddddddddddd
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > refuses a value that is not a project id (not-a-project) with 404, and creates no fi
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > answers 503 when ownership cannot be checked, and creates no file 3ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > POST /api/human-factors: a file created for a project records it > creates an unscoped file, as before, when no project is named 3ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > a use scenario for a project attaches to that project's file 5ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > a use scenario for a project with no file is refused (409), and lands in no 
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > an element tick for a project is written to that project's file 3ms
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > an element tick for a project with no file is refused (409), and changes no 
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > POST /scenarios refuses another organization's project with 404, and writes 
+× server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > PATCH /elements refuses another organization's project with 404, and writes 
+✓ server/routes/__tests__/human-factors-reads-the-project.test.ts > the writes into a file take the project's file, never the organization's > with no project named, a use scenario still attaches to the organization's 
+Tests  21 failed | 1 passed (22)
+
+## client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx (before the screen change; the three green cases are guards the head screen already met: it hid every unscoped file)
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > reads the open project's file by project, and shows it 5052ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > with no project open, reads nothing, says a project is needed, and offers the way to open one 15ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > with an open project it cannot read by project, reads nothing and says that 12ms
+✓ client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows the organization's unscoped file under the open project 14ms
+✓ client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows a file the route does not scope at all under the open project 8ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows another project's file under the open project 5007ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > carries the open project on every write into its file 5005ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never draws the previous project's file under the next project 5005ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > Start the usability file: a project with no file of its own > is offered on the project's empty file, and records the device's file for this
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > Start the usability file: a project with no file of its own > a refused start says so, and no file is shown 5018ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > Start the usability file: a project with no file of its own > a start the route does not record for this project is not taken as one 5012ms
+✓ client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > Start the usability file: a project with no file of its own > is not offered where the empty file is not the project's 6ms
+Tests  9 failed | 3 passed (12)
+
+## client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx (before the door; the green case is the drug guard)
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) device project opens the project's usability engineering file from human factors 174ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) samd project opens the project's usability engineering file from human factors 37ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) ivd project opens the project's usability engineering file from human factors 54ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) cdx project opens the project's usability engineering file from human factors 70ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a HDE cdx project opens the project's usability engineering file from human factors 19ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > when the feature is not available, the workstream keeps its Evidence door and never offers it 15
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > is on the human-factors workstream only 67ms
+✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > draws no device workflow for a drug, so no door 1ms
+Tests  26 failed | 1 passed (27)
+(… 20 more route x product cases, all ×)

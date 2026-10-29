@@ -1336,6 +1336,15 @@ function ProjectDocuments({ read, onRetry, onOpen, onNav, available, cmcComposes
   );
 }
 
+/* The editing copy of the filing a dossier row or the readiness card's market
+   line measures (F3): the document bound to it, by the binding the list
+   carries. Not known until the list is. */
+const filingCopyIn = (docs: ListRead) => (filingId: string): RowCopy => {
+  const rows = rowsOf(docs);
+  if (rows == null) return { kind: 'unread', failed: docs.state === 'error' };
+  return editingCopyOf(rows, filingId, (d) => d.filingDocumentId);
+};
+
 function AuthorWorkspace({
   pid, dossier, onNav, onAsk, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
 }: {
@@ -1355,13 +1364,7 @@ function AuthorWorkspace({
   cmcComposes?: boolean;
 }) {
   const available = useSurfaceAvailable();
-  /* The editing copy of the filing a dossier row measures (F3): the document
-     bound to it, by the binding the list carries. Not known until the list is. */
-  const copyFor = (filingId: string): RowCopy => {
-    const rows = rowsOf(docs);
-    if (rows == null) return { kind: 'unread', failed: docs.state === 'error' };
-    return editingCopyOf(rows, filingId, (d) => d.filingDocumentId);
-  };
+  const copyFor = filingCopyIn(docs);
   return (
     <>
         <ProjectDocuments read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
@@ -1921,7 +1924,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           <aside className="pj-side pj-step-side" aria-label="AnA and this project’s conversations">
             {pid && <StartConversation productName={productName} onNav={onNav} />}
             {pid && <ProjectConversations pid={pid} onNav={onNav} />}
-            {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} onAsk={onAsk} />}
+            {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
           </aside>
         </div>
       )}

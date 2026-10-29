@@ -1,0 +1,13 @@
+# item 3 red at head bbe7971e: tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Analytics: every button click is handler-safe 78ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe 22ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe 39ms
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe 38ms
+ × tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510) 5148ms
+ FAIL  tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510)
+TestingLibraryElementError: Unable to find an element with the text: /Test section/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+        data-testid="dossier-empty"
+          No dossier sections yet
+        data-testid="dossier-empty"

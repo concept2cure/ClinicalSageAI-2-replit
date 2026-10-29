@@ -26,6 +26,19 @@
  * A fourth governed write — the scenario INSERT in POST /scenarios — records no
  * §11.10(e) row at all. That is a different gap from #133 (nothing is discarded
  * there because nothing is written); see the note at that INSERT.
+ *
+ * D2, 2026-10-29 (docs/evidence/D2-ONE-ANA/2026-10-29/device-features-human-factors/):
+ * the reads and writes take the open project. hf_engineering_files records it
+ * (migrations/20261029_hf_engineering_files_program_key.sql). A request that
+ * names a project (`program_id` on the read, `programId` in a write's body) is
+ * admitted first, through admitProject (server/lib/admit-project.ts, over
+ * programInOrganization): 404 when the organization does not own the live
+ * project, 503 when the check cannot run, and nothing read or written either
+ * way. It then works on that project's file only, and its response says
+ * `meta.scope: 'program'` with the `programId`. A file recorded without a
+ * project is the organization's unscoped file: no project read returns it and
+ * no project write lands in it. A request that names no project behaves as
+ * before, and its response says `meta.scope: 'organization'`.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
@@ -44,6 +57,7 @@ import {
   HfFileValidationError,
 } from '../services/human-factors/hf-files-service';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { admitProject } from '../lib/admit-project';
 
 const logger = createScopedLogger('human-factors');
 const router = Router();
@@ -72,6 +86,49 @@ function getUserId(req: Request): number | null {
 }
 
 /**
+ * The project a request names, or null when it names none. Anything that is
+ * not a string is passed on as text, so the ownership check refuses it (404)
+ * instead of the request quietly becoming an organization-wide one.
+ */
+function namedProgram(raw: unknown): string | null {
+  if (raw === undefined || raw === null || raw === '') return null;
+  return typeof raw === 'string' ? raw : JSON.stringify(raw);
+}
+
+/** What a response covers: one project's file, or, with no project named, the organization's. */
+function scopeOf(programId: string | null): { scope: 'program'; programId: string } | { scope: 'organization' } {
+  return programId ? { scope: 'program', programId } : { scope: 'organization' };
+}
+
+/** Who a 409 NO_FILE is about. */
+const fileOwner = (programId: string | null) => (programId ? 'this project' : 'this organization');
+
+/**
+ * The file a request works on: with a project, the newest of that project's
+ * files, which is the one GET / shows for it; without one, the organization's
+ * newest, as before. Null when there is none.
+ */
+async function currentFile(orgId: number, programId: string | null) {
+  const files = programId ? await listHfFiles(orgId, { programId }) : await listHfFiles(orgId);
+  return files[0] ?? null;
+}
+
+/**
+ * The file a new use scenario attaches to. With a project, that project's file
+ * (currentFile), so a scenario added on a project's screen lands in the file
+ * the screen shows. Without one, the organization's OLDEST file, as before.
+ */
+async function scenarioFileId(orgId: number, programId: string | null): Promise<string | null> {
+  if (programId) return (await currentFile(orgId, programId))?.id ?? null;
+  const file = await pool.query(
+    `SELECT id FROM hf_engineering_files
+      WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY created_at LIMIT 1`,
+    [orgId],
+  );
+  return file.rows.length ? file.rows[0].id : null;
+}
+
+/**
  * GET / — the org's HFE/UE file (device + element presence map) with its
  * hazard-related use scenarios. The file is read from the REAL, org-scoped store
  * `hf_engineering_files` (hf-files-service.ts — a live write path, not the
@@ -81,17 +138,23 @@ function getUserId(req: Request): number | null {
  * deterministically from it. Org scoped; 403 without org. Fails CLOSED to an
  * honest empty envelope (never fabricated) when the store isn't provisioned
  * (42P01).
+ *
+ * With `?program_id=` (the project screen's read): that project's file only,
+ * after the ownership check, with `meta.scope: 'program'`. A project with no
+ * file of its own reads `data: null`, never the organization's unscoped file.
  */
 router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
+  const programId = namedProgram(req.query.program_id);
+  const scope = scopeOf(programId);
   try {
-    const files = await listHfFiles(orgId);
-    const file = files[0];
+    if (!(await admitProject(res, logger, programId, orgId))) return;
+    const file = await currentFile(orgId, programId);
     if (!file) {
-      return res.json({ data: null, meta: { count: 0, source: 'hf_engineering_files' } });
+      return res.json({ data: null, meta: { count: 0, source: 'hf_engineering_files', ...scope } });
     }
     // `id` travels with every scenario: a mitigation is a governed write against
     // ONE row, and a client that cannot name the row it is mitigating can only
@@ -105,11 +168,11 @@ router.get('/', async (req: Request, res: Response) => {
     );
     return res.json({
       data: { device: file.device, framework: file.framework, present: file.present, scenarios: scenarios.rows },
-      meta: { count: scenarios.rows.length, source: 'hf_engineering_files' },
+      meta: { count: scenarios.rows.length, source: 'hf_engineering_files', ...scope },
     });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ data: null, meta: { count: 0, pendingStore: true } });
+      return res.json({ data: null, meta: { count: 0, pendingStore: true, ...scope } });
     }
     logger.error('hf-file read failed', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read the HFE/UE file.' } });
@@ -121,6 +184,10 @@ router.get('/', async (req: Request, res: Response) => {
  * the demo seed) creates its IEC 62366-1 file here; GET / then reads it from the
  * real store. Org scoped; 403 without org; 400 on a missing device / malformed
  * element map; 201 with the created file's display shape. Audited HF_FILE_RECORDED.
+ *
+ * With `programId` in the body (the screen's "Start the usability file"): the
+ * file is recorded for that project, after the ownership check, and nothing is
+ * created when the check refuses it or cannot run.
  */
 router.post('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -129,12 +196,15 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const userId = getUserId(req);
   const b = (req.body ?? {}) as Record<string, unknown>;
+  const programId = namedProgram(b.programId);
   try {
+    if (!(await admitProject(res, logger, programId, orgId))) return;
     const file = await createHfFile(orgId, {
       device: String(b.device ?? ''),
       framework: b.framework != null ? String(b.framework) : null,
       present: b.present,
       createdBy: userId,
+      programId,
     });
     /* WO-16C #133. Was `await auditService.logAction({…})` at statement position,
        which discards what that call resolves. `createHfFile` above has already
@@ -148,12 +218,12 @@ router.post('/', async (req: Request, res: Response) => {
       action: 'HF_FILE_RECORDED',
       resourceType: 'hf_engineering_file',
       resourceId: file.id,
-      details: { device: file.device, framework: file.framework },
+      details: { device: file.device, framework: file.framework, programId },
     });
     return res.status(201).json({
       data: { device: file.device, framework: file.framework, present: file.present, scenarios: [] },
       id: file.id,
-      meta: { auditTrail },
+      meta: { auditTrail, ...scopeOf(programId) },
     });
   } catch (err) {
     if (err instanceof HfFileValidationError) {
@@ -232,6 +302,10 @@ router.post(
  * 400 on a missing task; 503 PENDING_STORE on 42P01 so the client degrades
  * gracefully. (The scenario rows themselves live in the existing c2c_hf_scenarios
  * store, which keeps its own writer — this contract is unchanged.)
+ *
+ * With `programId` in the body: attaches to that project's file (the one
+ * GET /?program_id= shows), after the ownership check; 409 NO_FILE when the
+ * project has none. Never to the organization's unscoped file.
  */
 const HF_SEVERITIES = ['negligible', 'minor', 'serious', 'critical'] as const;
 
@@ -252,19 +326,16 @@ router.post('/scenarios', async (req: Request, res: Response) => {
   const sevRaw = str(body.potentialHarmSeverity);
   const potentialHarmSeverity = (HF_SEVERITIES as readonly string[]).includes(sevRaw) ? sevRaw : 'minor';
   const mitigated = body.mitigated === true;
+  const programId = namedProgram(body.programId);
 
   try {
-    const file = await pool.query(
-      `SELECT id FROM hf_engineering_files
-        WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY created_at LIMIT 1`,
-      [orgId],
-    );
-    if (file.rows.length === 0) {
+    if (!(await admitProject(res, logger, programId, orgId))) return;
+    const fileId = await scenarioFileId(orgId, programId);
+    if (!fileId) {
       return res.status(409).json({
-        error: { code: 'NO_FILE', message: 'No HFE/UE file exists for this organization to attach a scenario to.' },
+        error: { code: 'NO_FILE', message: `No HFE/UE file exists for ${fileOwner(programId)} to attach a scenario to.` },
       });
     }
-    const fileId = file.rows[0].id;
     const id = 'hfs-' + Date.now();
     /* Census finding from the WO-16C #133 conversion of this file, recorded here
        rather than fixed: creating a hazard-related use scenario records no
@@ -433,6 +504,9 @@ router.patch('/scenarios/:id/mitigate', async (req: Request, res: Response) => {
  * Org scoped; 400 on an unknown element key or a non-boolean value; 409 NO_FILE
  * when the org has no HFE/UE file; 503 PENDING_STORE on 42P01.
  * Audited HF_FILE_ELEMENT_SET with both sides of the change.
+ *
+ * With `programId` in the body: that project's file, after the ownership
+ * check; 409 NO_FILE when the project has none.
  */
 router.patch('/elements', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -451,13 +525,14 @@ router.patch('/elements', async (req: Request, res: Response) => {
     return res.status(400).json({ error: { code: 'INVALID_BODY', message: 'present must be a boolean.' } });
   }
   const nextValue = b.present;
+  const programId = namedProgram(b.programId);
 
   try {
-    const files = await listHfFiles(orgId);
-    const file = files[0];
+    if (!(await admitProject(res, logger, programId, orgId))) return;
+    const file = await currentFile(orgId, programId);
     if (!file) {
       return res.status(409).json({
-        error: { code: 'NO_FILE', message: 'No HFE/UE file exists for this organization to record an element against.' },
+        error: { code: 'NO_FILE', message: `No HFE/UE file exists for ${fileOwner(programId)} to record an element against.` },
       });
     }
     const before = (file.present ?? {}) as Record<string, boolean>;
@@ -482,7 +557,7 @@ router.patch('/elements', async (req: Request, res: Response) => {
     });
     return res.json({
       data: { device: updated.device, framework: updated.framework, present: updated.present },
-      meta: { auditTrail },
+      meta: { auditTrail, ...scopeOf(programId) },
     });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {

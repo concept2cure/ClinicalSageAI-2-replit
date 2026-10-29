@@ -1,0 +1,9 @@
+# item 2 green
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies keep_data eligibility to both local and handed-off pins 664ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > DataRoom refresh applies remove_data eligibility to both local and handed-off pins 337ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > superseded data remains visible as history and cannot be pinned 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > selected Vault upload exposes the preview decision control 153ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained Vault data has no download promise for unavailable original bytes 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx > reachable project document lifecycle controls > retained search-only Vault selection preserves its unavailable original and lifecycle state 238ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

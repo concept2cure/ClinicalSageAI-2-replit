@@ -18,13 +18,15 @@ import { authService } from '@/services/portal/authService';
 import { queryClient } from '@/lib/queryClient';
 import { getSurface } from '../../../../../shared/constants/ui-surface-registry';
 const programId = 'd979e567-4622-46f1-8cb7-8bf434227f25';
+/** The persona read sends actor headers from the signed-in token's own claims (182c4b0e), so the fixture token carries them. */
+const accessToken = `fixture.${btoa(JSON.stringify({ userId: currentUser.id, organizationId: currentUser.organizationId }))}.synthetic`;
 const type = { typeId: LABEL_CURRENCY_TYPE, label: 'Label Currency Matrix', family: 'global_labeling', allowedScopes: ['account', 'program', 'project'], allowedClientSegments: ['pharma'], runnable: true, engine: 'domain', computedScope: 'organization', computedScopes: ['account', 'program', 'project'], entitled: true, truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true } };
 const matrix = calculateLabelCurrencyMatrix({ observed_at: '2026-10-14T00:00:00Z', products: [{ id: 1, organization_id: 7, product_name: 'Recorded product', status: 'active' }], registrations: [{ id: 1, product_id: 1, country: 'US', market_status: 'approved', registration_number: 'ACTUAL-US-77', approval_date: '2026-01-01', renewal_due_date: null }], labels: [{ id: 1, product_id: 1, country: null, label_type: 'core_data_sheet', version: 'Core-1', status: 'draft', approved_date: null }, { id: 2, product_id: 1, country: 'US', label_type: 'uspi', version: 'USPI-recorded-9', status: 'approved', approved_date: '2026-01-03' }], obligations: [{ id: 1, product_id: null, region: 'other', obligation_type: 'annual_report', classification: null, title: 'Unlinked recorded obligation', status: 'planned', due_date: null, submitted_date: null }] });
 const report = renderReport({ reportTypeId: LABEL_CURRENCY_TYPE, reportTypeLabel: type.label, scopeType: 'project', scopeId: '11', providers: [{ provider: 'rim_label_currency_matrix', status: 'partial', observedAt: matrix.observedAt }], blockers: [LABEL_CURRENCY_LIMIT], summary: { domain: { labelCurrencyMatrix: matrix }, computedScope: 'organization', scopeLabel: 'Selected project' }, status: 'partial', generatedAt: matrix.observedAt });
 afterEach(() => { cleanup(); authService.endSession(null); queryClient.clear(); apiRequest.mockReset(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; sessionStorage.clear(); localStorage.removeItem('currentOrganizationId'); });
 describe('existing Insights matrix run', () => {
   it('runs the catalog type and preserves nullable columns, recorded values and explicit unknown currency in the UI', async () => {
-    authService.setToken('signed-in-matrix-fixture', { id: String(currentUser.id), organizationId: String(currentUser.organizationId), permissions: currentUser.permissions }, 'fixture-refresh', 3600);
+    authService.setToken(accessToken, { id: String(currentUser.id), organizationId: String(currentUser.organizationId), permissions: currentUser.permissions }, 'fixture-refresh', 3600);
     localStorage.setItem('currentOrganizationId', String(currentUser.organizationId));
     (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: programId, title: 'Selected project', code: 'SEL' };
     apiRequest.mockImplementation(async (method: string, path: string) => {
@@ -38,7 +40,7 @@ describe('existing Insights matrix run', () => {
     render(<InsightsCanvas surface={getSurface('insights')!} segment="pharma" onNav={vi.fn()} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona', undefined, { Authorization: `Bearer ${accessToken}`, 'x-organization-id': String(currentUser.organizationId) });
     expect(await screen.findByText('USPI-recorded-9')).toBeTruthy();
     const matrixSection = screen.getByRole('heading', { name: 'Recorded label matrix' }).closest('section')!;
     const table = within(matrixSection).getByRole('table');

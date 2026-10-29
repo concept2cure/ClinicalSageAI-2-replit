@@ -20,7 +20,7 @@ const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records
+const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -68,7 +68,6 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records
   '/api/ectd/templates',
   '/api/ectd/v4',
   '/api/mdx/qms/readiness',
-  '/api/mdx/vault',
   '/api/project-sections',
   '/api/project-sections/dependencies',
   '/api/project-sections/initialize',
@@ -81,7 +80,6 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records
   '/api/regulatory/tasks/sync',
   '/api/submission-ops/approval-bottlenecks',
   '/api/submission-ops/automation',
-  '/api/submission-ops/blockers',
   '/api/submission-ops/command-center',
   '/api/submission-ops/digests',
   '/api/submission-ops/due-soon',
@@ -96,6 +94,9 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records
   '/api/workflow/proofs',
   '/api/workflow/status',
   '/api/workflow/tasks',
+  /* Found 2026-10-29 (trunk-red-sweep-2): device-510k claims the root and is a
+     Projects feature since 62a8d5e7, and no launch screen calls a route under it. */
+  '/api/programs',
 ];
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
@@ -132,6 +133,12 @@ const STILL_SERVED = [
   '/api/regulatory/tasks/unified',
   '/api/submission-ops/artifact-section-map',
   '/api/submission-ops/packages',
+  /* Upheld on 2026-10-15; the device features became Projects features in
+     62a8d5e7 (2026-10-23), and their screens call these: the device vault
+     (mdx/hooks/useVault.ts) and the validation and submission work queues
+     (mdx/hooks/useWorkbench.ts). */
+  '/api/mdx/vault',
+  '/api/submission-ops/blockers',
   '/api/task-management/assignees',
   '/api/task-management/board',
   '/api/task-management/filings',
@@ -145,7 +152,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted) are not served at launch', () => {
+describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted and the two device features call) are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.

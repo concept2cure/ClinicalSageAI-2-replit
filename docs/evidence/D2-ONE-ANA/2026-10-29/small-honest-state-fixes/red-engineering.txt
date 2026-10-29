@@ -1,0 +1,25 @@
+# Fix 2 red: the new tests against the committed route (inline programInOrganization).
+$ timeout 240 npx vitest run --config vitest.config.ts server/routes/__tests__/mdx-engineering.contract.test.ts
+ ✓ GET /api/mdx/engineering/:programId > 403 without org context 23ms
+ ✓ GET /api/mdx/engineering/:programId > 422 when programId is not a UUID 5ms
+ ✓ GET /api/mdx/engineering/:programId > 404 for a program outside the caller tenant 4ms
+ ✓ GET /api/mdx/engineering/:programId > returns every key the useEngineering hook destructures 6ms
+ ✓ GET /api/mdx/engineering/:programId > returns empty arrays, never fabricated rows, for an empty tenant 5ms
+ ✓ GET /api/mdx/engineering/:programId > maps ISO 14971 integer scales onto the surface heatmap keys 4ms
+ ✓ GET /api/mdx/engineering/:programId > falls back to initial severity when no control has moved residual risk 3ms
+ ✓ GET /api/mdx/engineering/:programId > clamps out-of-range scale values rather than dropping the hazard 5ms
+ ✓ GET /api/mdx/engineering/:programId > survives a missing optional table instead of blanking the surface 5ms
+ ✓ GET /api/mdx/engineering/:programId > does not call a design input verified while its validation is pending 4ms
+ ✓ GET /api/mdx/engineering/:programId > renders the design outputs, not [object Object] 3ms
+ ✓ GET /api/mdx/engineering/:programId > passes the store id through instead of re-prefixing a TEXT key 2ms
+ ✓ GET /api/mdx/engineering/:programId > reports a panel that FAILED as unavailable, not as zero rows 3ms
+ ✓ GET /api/mdx/engineering/:programId > marks the derived summary unavailable when a panel it counts failed 3ms
+ ✓ GET /api/mdx/engineering/:programId > marks documents unavailable when the software panel it splices in failed 3ms
+ ✓ GET /api/mdx/engineering/:programId > does not list a merely unmigrated table as unavailable 3ms
+ ✓ GET /api/mdx/engineering/:programId > computes DHF completion only over required sections 3ms
+ × GET /api/mdx/engineering/:programId — the project ownership refusal > answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing 8ms
+   → expected 500 to be 503 // Object.is equality
+ ✓ GET /api/mdx/engineering/:programId — the project ownership refusal > refuses a project the organization does not own with 404 "Project not found", and reads nothing 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 500 to be 503 // Object.is equality
+      Tests  1 failed | 18 passed (19)

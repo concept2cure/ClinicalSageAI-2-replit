@@ -155,20 +155,18 @@ describe('project MDX workflow — doors and headings', () => {
 /* Device features inside the project (D2, 2026-10-29;
    docs/evidence/D2-ONE-ANA/2026-10-29/device-features-in-project/). The founder made 21 MDX surfaces features of the
    client's project (MDX_PROJECT_FEATURE_SURFACE_IDS, 62a8d5e7). device-tasks has since folded into Tasks
-   (fold-device-tasks), so 20 remain. Plan's device workflow opens eleven of them. Each of the other nine has no door
+   (fold-device-tasks), so 20 remain. Plan's device workflow opens twelve of them. Each of the other eight has no door
    from inside the project, for the reason given below. Seven fold into a place the project already reaches, and one
-   is the old device home (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section 5 and convergences 3, 7, 8, 11).
-   The map places the last one in the project, but its screen does not read the open project yet. A door to it waits
-   until its read takes the project. When that lands, move the id to REACHED_FROM_PLAN in the same change. */
+   is the old device home (FUNCTION_PARITY.md; INFORMATION_ARCHITECTURE.md section 5 and convergences 3, 7, 8, 11). */
 const REACHED_FROM_PLAN = [
   'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
   'device-clinical-studies', 'device-software', 'device-engineering', 'device-postmarket',
   /* Their screens read the open project (device-features-reach-three, 2026-10-29). */
   'device-presub', 'device-udi', 'labeling',
+  /* Its screen reads the open project's file (device-features-human-factors, 2026-10-29). */
+  'human-factors',
 ];
 const NO_PROJECT_DOOR: Record<string, string> = {
-  /* (a) Placed in the project by the map; its screen does not read the open project yet. */
-  'human-factors': 'slice 19 maps human-factors-usability here, but GET /api/human-factors returns the organization\'s first file (hf_engineering_files has no program column)',
   /* (b) Folds into a place the project already reaches; a door would keep a duplicate. */
   'design-controls': 'folds into device-engineering, which Plan already opens',
   risk: 'folds into device-engineering, which Plan already opens',
@@ -213,7 +211,7 @@ describe('device features inside the project', () => {
     expect([...REACHED_FROM_PLAN, ...Object.keys(NO_PROJECT_DOOR)].sort()).toEqual([...MDX_PROJECT_FEATURE_SURFACE_IDS].sort());
   });
 
-  it('opens exactly those eleven features from a device project\'s Plan, over every recorded route and product type', () => {
+  it('opens exactly those twelve features from a device project\'s Plan, over every recorded route and product type', () => {
     expect([...surfacesPlanOpens()].sort()).toEqual([...REACHED_FROM_PLAN].sort());
   });
 

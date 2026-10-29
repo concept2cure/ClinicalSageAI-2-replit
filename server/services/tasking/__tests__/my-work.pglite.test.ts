@@ -25,6 +25,8 @@ const SQL_SOURCES = {
   'migrations/20260814_projects_regulatory_program_anchor.sql': new URL('../../../../migrations/20260814_projects_regulatory_program_anchor.sql', import.meta.url),
   'db/migrations/20260727_unified_tasks_mdx_metadata.sql': new URL('../../../../db/migrations/20260727_unified_tasks_mdx_metadata.sql', import.meta.url),
   'db/migrations/20260807_unified_tasks_soft_delete.sql': new URL('../../../../db/migrations/20260807_unified_tasks_soft_delete.sql', import.meta.url),
+  // The review route columns the Drizzle model names (RR1a).
+  'migrations/20261023_review_routes.sql': new URL('../../../../migrations/20261023_review_routes.sql', import.meta.url),
 } as const;
 const read = (rel: keyof typeof SQL_SOURCES) => readFileSync(SQL_SOURCES[rel], 'utf8');
 
@@ -39,6 +41,7 @@ beforeAll(async () => {
   await pg.exec(read('migrations/20260814_projects_regulatory_program_anchor.sql'));
   await pg.exec(read('db/migrations/20260727_unified_tasks_mdx_metadata.sql'));
   await pg.exec(read('db/migrations/20260807_unified_tasks_soft_delete.sql'));
+  await pg.exec(read('migrations/20261023_review_routes.sql'));
   await pg.exec(`
     INSERT INTO organizations (id, name, slug) VALUES (1, 'Sponsor', 'sponsor'), (2, 'Other', 'other');
     INSERT INTO users (id, email, name, password_hash) VALUES (3, 'lead@example.test', 'Lead', 'x'), (4, 'colleague@example.test', 'Colleague', 'x');
