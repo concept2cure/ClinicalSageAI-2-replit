@@ -44,7 +44,7 @@ function stubFeeds(feeds: { audit: Answer; correspondence: Answer; approvals: An
     vi.fn(async (input: RequestInfo | URL) => {
       const u = String(input);
       if (u.includes('/api/mdx/audit')) return feeds.audit();
-      if (u.includes('/api/regulatory-correspondence/correspondence')) return feeds.correspondence();
+      if (u.includes('/agency-communications')) return feeds.correspondence(); // the project inbox (P-39 step 3, S2)
       if (u.includes('/api/approval-workflows/pending')) return feeds.approvals();
       return json({ error: 'not found' }, 404);
     }),
