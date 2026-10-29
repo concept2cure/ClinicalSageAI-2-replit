@@ -1,0 +1,159 @@
+{
+ "attribution": "CDISC SDTM/ADaM Pilot Project, study CDISCPILOT01, Clinical Data Interchange Standards Consortium (CDISC), https://github.com/cdisc-org/sdtm-adam-pilot-project. Counts only; no pilot value.",
+ "pilotTablesDigest": {
+  "base": "4a09d0588e20fde49ce253dca63575021ac55883186a2826d8244f190a19d443",
+  "declared": "7670fc7c57aafeb234b05bddee88a85d37d75f71b635c763500a95254bd5b9bf",
+  "noefficacy": "e4504e2bc52b3bde3892d4d096597ae30c386763d452c5480b10a409c3a1524b"
+ },
+ "pilotTablesDigestBeforeChange": "4a09d0588e20fde49ce253dca63575021ac55883186a2826d8244f190a19d443",
+ "pilotShape": {
+  "declared": {
+   "disposition": {
+    "rows": 7,
+    "cells": 28
+   },
+   "analysisPopulations": {
+    "rows": 6,
+    "cells": 24
+   },
+   "demographics": {
+    "rows": 44,
+    "cells": 220
+   },
+   "primaryEfficacy": {
+    "rows": 7,
+    "cells": 49
+   },
+   "exposure": {
+    "rows": 3,
+    "cells": 12
+   },
+   "aeOverallSummary": {
+    "rows": 6,
+    "cells": 18
+   },
+   "aeBySOC": {
+    "rows": 23,
+    "cells": 69
+   },
+   "aeTopPT": {
+    "rows": 21,
+    "cells": 84
+   },
+   "deathsSAEsDiscontinuations": {
+    "rows": 4,
+    "cells": 12
+   },
+   "labShifts": {
+    "rows": 210,
+    "cells": 1260
+   },
+   "vitalSigns": {
+    "rows": 33,
+    "cells": 165
+   }
+  }
+ },
+ "engineVsOracleV3": {
+  "cells": 203,
+  "matched": 203,
+  "mismatched": 0,
+  "byTable": {
+   "analysisPopulations": {
+    "cells": 24,
+    "mismatched": 0
+   },
+   "demographics": {
+    "cells": 176,
+    "mismatched": 0
+   },
+   "primaryEfficacy": {
+    "cells": 3,
+    "mismatched": 0
+   }
+  },
+  "onlyInOracle": 0,
+  "onlyInEngine": 0
+ },
+ "engineVsOracleV3ShownFailing": {
+  "cells": 203,
+  "matched": 201,
+  "mismatched": 2,
+  "byTable": {
+   "analysisPopulations": {
+    "cells": 24,
+    "mismatched": 1
+   },
+   "demographics": {
+    "cells": 176,
+    "mismatched": 1
+   },
+   "primaryEfficacy": {
+    "cells": 3,
+    "mismatched": 0
+   }
+  },
+  "onlyInOracle": 0,
+  "onlyInEngine": 0
+ },
+ "engineVsOracleV2Base": {
+  "cells": 1436,
+  "matched": 1436,
+  "mismatched": 0
+ },
+ "engineVsOracleV2Declared": {
+  "cells": 1514,
+  "matched": 1421,
+  "mismatched": 93,
+  "onlyInOracle": 15,
+  "onlyInEngine": 78,
+  "mismatchedTables": {
+   "analysisPopulations": {
+    "cells": 24,
+    "mismatched": 8
+   },
+   "demographics": {
+    "cells": 85,
+    "mismatched": 85
+   }
+  }
+ },
+ "engineVsPublishedV3": {
+  "cells": 229,
+  "matched": 229,
+  "mismatched": 0,
+  "byTable": {
+   "14-1.01": {
+    "cells": 20,
+    "mismatched": 0
+   },
+   "14-2.01": {
+    "cells": 208,
+    "mismatched": 0
+   },
+   "14-3.01 dose response": {
+    "cells": 1,
+    "mismatched": 0
+   }
+  }
+ },
+ "engineVsPublishedV3ShownFailing": {
+  "cells": 229,
+  "matched": 228,
+  "mismatched": 1,
+  "byTable": {
+   "14-1.01": {
+    "cells": 20,
+    "mismatched": 0
+   },
+   "14-2.01": {
+    "cells": 208,
+    "mismatched": 1
+   },
+   "14-3.01 dose response": {
+    "cells": 1,
+    "mismatched": 0
+   }
+  }
+ }
+}

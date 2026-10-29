@@ -33,6 +33,7 @@ import {
   type AdamDatasets, type Participant, type Status, type StudyData, type Subject,
 } from './adam-rows.js';
 import { readAdslExposure, readConcomitantMedications, readExposure, readLabShifts, readVitalSigns } from './adam-safety-domains.js';
+import { baselineReader, declaredPopulations, descriptiveDeclarations, populationCounts } from './adam-baseline.js';
 
 export { AdamDerivationError, type AdamDatasets } from './adam-rows.js';
 
@@ -68,7 +69,7 @@ function demographicOf(ds: AdamDataset, row: AdamRow, i: number, subjectId: stri
   const optionalPositive = (v: string) => { const n = has(ds, v) ? numeric(row, v) : null; return n !== null && n > 0 ? n : undefined; };
   const record = { subjectId, armId, age, sex, race: optionalText('RACE'), ethnicity: optionalText('ETHNIC'),
     weight: optionalPositive('WEIGHTBL'), bmi: optionalPositive('BMIBL') };
-  return Object.fromEntries(Object.entries(record).filter(([, v]) => v !== undefined)) as Subject['demographic'];
+  return Object.fromEntries(Object.entries(record).filter(([, v]) => v !== undefined)) as unknown as Subject['demographic'];
 }
 
 function populationFlags(bundle: CsrAdamBundle, adsl: AdamDataset) {
@@ -77,7 +78,10 @@ function populationFlags(bundle: CsrAdamBundle, adsl: AdamDataset) {
   const disposition = bundle.conventions?.disposition ?? 'EOSSTT';
   const aeFlag = bundle.conventions?.aeDiscontinuationFlag;
   requireColumns(adsl, 'STUDYID', 'USUBJID', 'TRT01P', 'SAFFL', disposition, 'AGE', 'SEX', randomized, itt, ...(aeFlag ? [aeFlag] : []));
-  return { randomized, itt, perProtocol: has(adsl, 'PPROTFL') ? 'PPROTFL' : null, disposition, aeFlag };
+  const perProtocol = has(adsl, 'PPROTFL') ? 'PPROTFL' : null;
+  const reported = { [randomized]: 'randomized', SAFFL: 'safety', [itt]: 'ITT', ...(perProtocol ? { [perProtocol]: 'per-protocol' } : {}) };
+  return { randomized, itt, perProtocol, disposition, aeFlag,
+    populations: declaredPopulations(bundle, adsl, reported).map(p => p.flag), baseline: baselineReader(bundle, adsl) };
 }
 
 function subjectOf(bundle: CsrAdamBundle, adsl: AdamDataset, row: AdamRow, i: number, flags: ReturnType<typeof populationFlags>): Subject {
@@ -94,9 +98,10 @@ function subjectOf(bundle: CsrAdamBundle, adsl: AdamDataset, row: AdamRow, i: nu
   if (flags.aeFlag) disposition.discontinuedForAdverseEvent = flag(adsl, row, i, flags.aeFlag);
   const perProtocol = flags.perProtocol ? flag(adsl, row, i, flags.perProtocol) : undefined;
   const participant: Participant = { subjectId, armId: arm.armId, randomized, safety, itt: flag(adsl, row, i, flags.itt),
-    completed: disposition.status === 'completed', ...(perProtocol !== undefined ? { perProtocol } : {}) };
+    completed: disposition.status === 'completed', ...(perProtocol !== undefined ? { perProtocol } : {}),
+    ...(flags.populations.length ? { additionalPopulations: Object.fromEntries(flags.populations.map(f => [f, flag(adsl, row, i, f)])) } : {}) };
   return { participant, treatment, disposition, perProtocol,
-    demographic: randomized ? demographicOf(adsl, row, i, subjectId, arm.armId) : null };
+    demographic: randomized ? { ...demographicOf(adsl, row, i, subjectId, arm.armId)!, ...flags.baseline?.(row, i) } : null };
 }
 
 function readSubjects(bundle: CsrAdamBundle, adsl: AdamDataset): { studyId: string; subjects: Map<string, Subject> } {
@@ -226,12 +231,27 @@ function safetyDomains(bundle: CsrAdamBundle, datasets: AdamDatasets, byId: Map<
     concomitantMedications: datasets.ADCM ? readConcomitantMedications(datasets.ADCM, byId) : undefined };
 }
 
-/** The csr-source.v1 envelope these ADaM datasets and the SAP output establish. */
-export function deriveCsrSourceFromAdam(bundle: CsrAdamBundle, datasets: AdamDatasets, efficacy: CsrEfficacyResults): CsrSourceEnvelope {
-  for (const [name, ds] of Object.entries(datasets)) expectDataset(ds as AdamDataset | undefined, name);
-  if (efficacy.protocolNumber !== bundle.studyInfo.protocolNumber) {
+/** The csr-source.v1 envelope these ADaM datasets and the SAP output establish. A manifest that names no
+ * efficacy file derives a source that states efficacy was not supplied (D10, 2026-10-30); the file and the
+ * manifest must agree on whether there is one. */
+function checkEfficacyFile(bundle: CsrAdamBundle, efficacy: CsrEfficacyResults | undefined) {
+  if (bundle.efficacyResults && !efficacy) refuse('EFFICACY_MISSING', 'The manifest names an efficacy results file, and none was supplied.', 'efficacyResults');
+  if (!bundle.efficacyResults && efficacy) refuse('EFFICACY_UNDECLARED', 'An efficacy results file was supplied that the manifest does not name.', 'efficacyResults');
+  if (efficacy && efficacy.protocolNumber !== bundle.studyInfo.protocolNumber) {
     refuse('EFFICACY_PROTOCOL_MISMATCH', 'The efficacy results file names a different protocol from the manifest.', 'efficacyResults.protocolNumber');
   }
+}
+
+/** D10–D12 (2026-10-30): present only when the manifest declares them, so an undeclared manifest derives the same source as before. */
+function declaredStudyData(bundle: CsrAdamBundle, adsl: AdamDataset, subjects: Subject[], efficacy: CsrEfficacyResults | undefined) {
+  const additionalPopulations = populationCounts(bundle, subjects);
+  return { ...(efficacy ? {} : { efficacyStatus: 'not-supplied' as const }), ...(additionalPopulations ? { additionalPopulations } : {}),
+    ...descriptiveDeclarations(bundle, adsl, subjects.flatMap(s => (s.demographic ? [s.demographic] : []))) };
+}
+
+export function deriveCsrSourceFromAdam(bundle: CsrAdamBundle, datasets: AdamDatasets, efficacy?: CsrEfficacyResults): CsrSourceEnvelope {
+  for (const [name, ds] of Object.entries(datasets)) expectDataset(ds as AdamDataset | undefined, name);
+  checkEfficacyFile(bundle, efficacy);
   const { studyId, subjects: byId } = readSubjects(bundle, datasets.ADSL);
   for (const ds of Object.values(datasets)) checkStudy(ds as AdamDataset, studyId);
   const subjects = [...byId.values()];
@@ -243,10 +263,9 @@ export function deriveCsrSourceFromAdam(bundle: CsrAdamBundle, datasets: AdamDat
   return validated({
     format: CSR_SOURCE_FORMAT, dataCutDate: bundle.dataCutDate, studyInfo: bundle.studyInfo,
     participants: subjects.map(s => s.participant),
-    completeDomains: { disposition: true, demographics: true, efficacy: true, adverseEvents: true },
+    completeDomains: { disposition: true, demographics: true, efficacy: !!efficacy, adverseEvents: true },
     studyData: { studyId, protocolNumber: bundle.studyInfo.protocolNumber, treatmentArms: treatmentArms(bundle, subjects),
-      disposition, demographics: subjects.flatMap(s => (s.demographic ? [s.demographic] : [])),
-      efficacy: efficacy.results, adverseEvents,
+      disposition, demographics: subjects.flatMap(s => (s.demographic ? [s.demographic] : [])), efficacy: efficacy?.results ?? [], adverseEvents,
       ...(exposure ? { exposure } : {}), ...(labShifts ? { labShifts } : {}),
       // EOSSTT / DCSREAS (or the declared DCDECOD) classify every ADSL subject, so a category with no
       // subject is a recorded zero; screen failure is declared only when used,
@@ -256,6 +275,7 @@ export function deriveCsrSourceFromAdam(bundle: CsrAdamBundle, datasets: AdamDat
       dispositionBasis: 'end-of-study',
       ...(conventions?.aeDiscontinuationFlag ? { aeDiscontinuationBasis: 'subject' as const } : {}),
       ...(vitalSigns.length ? { vitalSigns } : {}),
-      ...(concomitantMedications?.length ? { concomitantMedications } : {}) },
+      ...(concomitantMedications?.length ? { concomitantMedications } : {}),
+      ...declaredStudyData(bundle, datasets.ADSL, subjects, efficacy) },
   });
 }

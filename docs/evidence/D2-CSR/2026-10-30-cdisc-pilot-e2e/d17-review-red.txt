@@ -1,0 +1,57 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: subject-level AE withdrawal facts > the bundle accepts a declared withdrawal date variable 4ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: subject-level AE withdrawal facts > reads the withdrawal date and study day, and the TEAEs with onset on or before it, each from its row 6ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > composes, states the withdrawal, lists every preceding TEAE, and attributes no cause 5ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > says so, as a QC item, when no TEAE precedes the withdrawal; still composed 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > names a TEAE whose onset is not recorded rather than placing it, and lists it for QC 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the composed narrative > refuses by name when no withdrawal date is declared or recorded: the preceding events cannot be identified 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > refuses "withdrawn due to <event>", "<event> led to withdrawal" and a pronoun attribution 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > keeps the template when a model rewrite attributes the withdrawal, and records the refusal 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > refuses a rewrite that drops a candidate event, states an event after withdrawal, or moves the withdrawal day 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > accepts a rewrite of the connective prose that keeps every fact and no cause 1ms
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17: the fact gate refuses an invented cause > applies the cause rule only to a subject-level withdrawal: an event-basis narrative is unaffected 1ms
+ × server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > refuses every attribution form, including "for <event>", sequence words and a cause stated in the next sentence 6ms
+   → The subject was withdrawn for Syncope.: expected [] to include 'NARRATIVE_CAUSE_UNSOURCED'
+ ✓ server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > does not refuse the template when an event term itself contains a withdrawal word 1ms
+ × server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > never guesses the withdrawal date: an undeclared ADSL EOSDT is not used, and the subject is refused by name 2ms
+   → expected '2030-01-20' to be undefined
+ × server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > states "seriousness not recorded", and lists it for QC, when AESER is blank; never "not serious" 2ms
+   → AESER must be Y or N on every ADAE row; a blank does not establish whether the event qualifies for a narrative.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > refuses every attribution form, including "for <event>", sequence words and a cause stated in the next sentence
+AssertionError: The subject was withdrawn for Syncope.: expected [] to include 'NARRATIVE_CAUSE_UNSOURCED'
+    196|       'Syncope required discontinuation of study drug.',
+    197|       'Before withdrawal, the subject experienced Syncope.',
+    198|     ]) expect(codes(`${text} ${attribution}`, f), attribution).toConta…
+       |                                                                ^
+    199|     expect(reconcileNarrative(text, f)).toEqual({ ok: true, issues: []…
+    200|   });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+ FAIL  server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > never guesses the withdrawal date: an undeclared ADSL EOSDT is not used, and the subject is refused by name
+AssertionError: expected '2030-01-20' to be undefined
+- Expected:
+undefined
++ Received:
+"2030-01-20"
+    212|     const bundle = d17Bundle({ disposition: 'DCDECOD', aeDiscontinuati…
+    213|     const f = facts(1, bundle, { ADSL: withEosdt, ADAE: adae() });
+    214|     expect(f.withdrawal?.date).toBeUndefined();
+       |                                ^
+    215|     const composed = await composeSubjectNarrative(f);
+    216|     expect(composed).toMatchObject({ status: 'refused' });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+ FAIL  server/services/csr/__tests__/narrative-subject-level-withdrawal.test.ts > D17 review: no implied cause, nothing guessed, blank is not N > states "seriousness not recorded", and lists it for QC, when AESER is blank; never "not serious"
+AdamDerivationError: AESER must be Y or N on every ADAE row; a blank does not establish whether the event qualifies for a narrative.
+     15|   }
+     16| }
+     17| export const refuse = (code: string, message: string, path?: string): …
+       |                                                                                        ^
+     18|
+     19| export interface AdamDatasets {
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 422, code: 'CSR_ADAM_VALUE_MISSING', issues: [ { path: 'ADAE[2].AESER', message: 'AESER must be Y or N on every ADAE row; a blank does not establish whether the event qualifies for a narrative.' } ] }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  20:45:27
+   Duration  598ms (transform 214ms, setup 77ms, import 197ms, tests 42ms, environment 0ms)
