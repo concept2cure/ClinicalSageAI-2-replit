@@ -1,0 +1,29 @@
+# RED at cbcd32f58b (pre-change code; database provisioned from blank by install-fresh + deploy-migrate at that commit, so no slice-1 table exists): tests/db/qms-job-roles.dbtest.ts. Real PostgreSQL 16, RLS_ENFORCE=on, app_service (2026-10-29T18:46:27Z)
+# Every route answers 404 (not mounted) and the three tables do not exist (42P01).
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > creates a role: one row, one ledger pair, committed together 107ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > renames a role, recording before and after; deletes it softly, so the name can be used again 17ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > adds and removes a member softly; the member can be added again and both history rows stay 10ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > lists the roles with their members, to every member, and says who may administer them 10ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a viewer is refused by the editor gate; a member, a manager and an approver by the administrator rule 2ms
+   → relation "qms_job_roles" does not exist
+ × tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a seven-character reason is 400 REASON_REQUIRED; an unknown field or a bad id is 422 6ms
+   → relation "qms_job_roles" does not exist
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a name already live, in any case, is 409 QMS_JOB_ROLE_EXISTS, on create and on rename 12ms
+   → expected 404 to be 201 // Object.is equality
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 8ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > another organization's role is not listed and every change to it is 404 9ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > an administrator does not remove themselves from a role: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 8ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a role a document is assigned to is not deleted: 409 QMS_JOB_ROLE_IN_USE naming the document 11ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the role was not created 4ms
+   → relation "qms_job_roles" does not exist
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  12 failed (12)

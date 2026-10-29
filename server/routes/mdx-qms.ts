@@ -11,9 +11,8 @@
  *   POST   /api/mdx/qms/documents/:id/revise            open a controlled revision (reason required) → draft, next major version
  *   POST   /api/mdx/qms/documents/:id/retire            retire = Part 11 e-signature (same ceremony as approve) → retired
  *   POST   /api/mdx/qms/documents/:id/training-ack      user acknowledges training
- *   GET    /api/mdx/qms/training                        list training records
- *   GET    /api/mdx/qms/training/expiring               periodic refresh due
  *
+ *   Training records, expiry, compliance, and job roles (P-49): mdx-qms-training.ts.
  *   Suppliers, internal audits and nonconforming products: mdx-qms-records.ts.
  *   Deviations: mdx-qms-deviations.ts.
  *
@@ -113,7 +112,7 @@ import type { CreateContext } from '../services/authoring/authoring-documents';
 import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
-  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance, readQmsTrainingExpiring,
+  acknowledgeQmsTraining, readQmsTrainingContext,
   QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
 } from '../services/qms/training';
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
@@ -135,6 +134,7 @@ import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-
 import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
+import qmsTrainingRouter from './mdx-qms-training';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -922,45 +922,8 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
   }
 });
 
-router.get('/qms/training', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_training_records WHERE organization_id = $1
-        ORDER BY acknowledged_at DESC LIMIT 500`,
-      [orgId],
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'training-list', err); }
-});
-
-router.get('/qms/training/expiring', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
-  /* G10 (2026-10-29). Each active member whose current training on a release in
-     force lapses within the window, read as coverage reads it. This listed every
-     record with an expiry inside the window: a superseded version, a receipt
-     its member had renewed, a departed member's. No client called it. */
-  try {
-    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
-    return ok(res, rows, { count: rows.length, withinDays });
-  } catch (err) { return serverError(res, log, 'training-expiring', err); }
-});
-
-/* Read-and-understood compliance per controlled procedure. The denominator is
-   the org roster (organization_users); the numerator is the distinct users with
-   a current (non-expired) acknowledgment. Only effective, trainable doc types
-   are counted — forms and specifications don't carry read-and-understood. */
-router.get('/qms/training/compliance', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId);
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'training-compliance', err); }
-});
-
+/* The training reads, and job roles and who holds them (mdx-qms-training.ts, P-49). */
+router.use(qmsTrainingRouter);
 /* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
 router.use(qmsRecordsRouter);
 /* The GMP deviation register (mdx-qms-deviations.ts, P-57). */

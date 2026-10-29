@@ -1,0 +1,11 @@
+# GREEN on the slice-1 working tree over cbcd32f58b: tests/schema-contract/qms-training-assignments-replay.pglite.test.ts, PGlite (2026-10-29T18:51:01Z)
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > the file is on the deploy path > is in C2C_MIGRATION_FILES after qms_documents and its same-org key, immediately before the tenant tail 3ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > replayed on every deploy > creates the three tables with their named rules, and two more replays over live rows change nothing 30ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > an assignment names exactly one job role or one person > refuses neither and both, and accepts each alone 7ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > a role name is trimmed, 1 to 80 characters, and its pairs are set together > refuses a blank, untrimmed or over-long name, an over-long description and a half-set pair 9ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > a role name, case-insensitively, until the role is deleted 6ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > a member, until removed 5ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > live rows are unique, and can be added again once soft-removed > an assignment of a role and of a person, until withdrawn 7ms
+ ✓ tests/schema-contract/qms-training-assignments-replay.pglite.test.ts > nothing names another organization's role or document > refuses a member of a foreign role, and an assignment of a foreign role or a foreign document 5ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

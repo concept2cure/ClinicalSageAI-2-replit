@@ -18,3 +18,9 @@ export { resolveOrgId as getOrgId, resolveUserId as getUserId } from '../types/a
 
 /** Use the authenticated request's actual pinned executor, never a global fallback. */
 export const qmsClient = (req: Request) => queryRowsClient(requestPgClient(req));
+
+/** A positive 32-bit integer id from a path parameter or a JSON body, else null. */
+export const positiveId = (v: unknown): number | null => {
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : NaN;
+  return Number.isSafeInteger(n) && n > 0 && n <= 2_147_483_647 ? n : null;
+};

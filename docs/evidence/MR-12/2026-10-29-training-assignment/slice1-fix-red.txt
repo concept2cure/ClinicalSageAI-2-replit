@@ -1,0 +1,62 @@
+# RED on the slice-1 code before the review fixes (working tree over cbcd32f58b): tests/db/qms-job-roles.dbtest.ts with the review's four new cases. Real PostgreSQL 16, RLS_ENFORCE=on, app_service, database c2c_mr12_trn_dbtest (2026-10-29T19:24:26Z)
+# Two fail on the code as it was: an organization pending deletion, whose posture the lifecycle guard still caches as allow, took a job role (201, one row written); and a departed member was labelled by a bare number (users RLS hides the account; memberLabels fell back to String(id)).
+# The race case and the deleted-document case pass here: they pin behaviour the code already had (their red is shown by mutations R1 and R6 in slice1-mutations.txt).
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > creates a role: one row, one ledger pair, committed together 151ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > renames a role, recording before and after; deletes it softly, so the name can be used again 113ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > adds and removes a member softly; the member can be added again and both history rows stay 89ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > lists the roles with their members, to every member, and says who may administer them 103ms
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number 137ms
+   → the rows stay; active says who still holds the role: expected [ [ 177, …(2) ], …(3) ] to deeply equal [ [ 177, …(2) ], …(3) ]
+ ✓ tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403 QMS_JOB_ROLE_AUTHORITY, nothing written 1514ms
+ × tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no change, though the lifecycle guard still holds it as active 43ms
+   → {"data":{"id":137,"name":"Pending deletion","description":null,"createdAt":"2026-10-29T19:24:15.942Z"}}: expected 201 to be 403 // Object.is equality
+ ✓ tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a viewer is refused by the editor gate; a member, a manager and an approver by the administrator rule 103ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a seven-character reason is 400 REASON_REQUIRED; an unknown field or a bad id is 422 36ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a name already live, in any case, is 409 QMS_JOB_ROLE_EXISTS, on create and on rename 77ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 85ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > another organization's role is not listed and every change to it is 404 88ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > an administrator does not remove themselves from a role: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 79ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a role a document is assigned to is not deleted: 409 QMS_JOB_ROLE_IN_USE naming the document 54ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > an assignment on a deleted document does not hold the role in use 49ms
+ ✓ tests/db/qms-job-roles.dbtest.ts > the refusals > a ledger that cannot be written is 500 AUDIT_WRITE_FAILED, and the role was not created 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+
+ FAIL  tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number
+AssertionError: the rows stay; active says who still holds the role: expected [ [ 177, …(2) ], …(3) ] to deeply equal [ [ 177, …(2) ], …(3) ]
+
+- Expected
++ Received
+
+@@ -4,16 +4,16 @@
+      "qms-jobrole-7abac937 invented lapsed",
+      false,
+    ],
+    [
+      178,
+-     "Account #178",
++     "178",
+      false,
+    ],
+    [
+      171,
+-     "qms-jobrole-7abac937 invented former",
++     "171",
+      false,
+    ],
+    [
+      172,
+      "qms-jobrole-7abac937 invented member",
+
+ ❯ tests/db/qms-job-roles.dbtest.ts:215:177
+ FAIL  tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no change, though the lifecycle guard still holds it as active
+AssertionError: {"data":{"id":137,"name":"Pending deletion","description":null,"createdAt":"2026-10-29T19:24:15.942Z"}}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ tests/db/qms-job-roles.dbtest.ts:255:50
