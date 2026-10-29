@@ -1,0 +1,14 @@
+# csr-scientific-release-order.test.ts with csr-scientific-review.ts at HEAD (stashed)
+ × server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > releases a document that is not a CSR without framing it, so a row the CSR snapshot refuses cannot fail its release 42ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still fails closed when what the document is cannot be read 3ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a CSR with no current scientific-review receipt 1347ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a document whose stored history makes it a CSR, whatever its label now says 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+
+# ... with this change
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > releases a document that is not a CSR without framing it, so a row the CSR snapshot refuses cannot fail its release 3ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still fails closed when what the document is cannot be read 1ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a CSR with no current scientific-review receipt 1371ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a document whose stored history makes it a CSR, whatever its label now says 2ms
+      Tests  4 passed (4)

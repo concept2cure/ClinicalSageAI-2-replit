@@ -1,0 +1,5 @@
+# workflow-import-governance.pglite.test.ts -t "scientific review", with requireCsrScientificRelease made a no-op (restored after)
+ × server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > a CSR import is also held for its scientific review > neither adopts nor releases a CSR that has no scientific-review receipt, even with an assigned approval 75ms
+ × server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > a CSR import is also held for its scientific review > holds a renamed copy by its stored CSR origin 23ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 28 skipped (30)
