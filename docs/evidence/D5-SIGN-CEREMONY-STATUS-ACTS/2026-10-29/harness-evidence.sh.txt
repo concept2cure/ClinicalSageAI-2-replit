@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Regenerates the D5 status-act evidence. Writes only under the evidence directory.
+set -u
+R=/home/user/ClinicalSageAI-2-replit
+S=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/sign-gate
+E=$R/docs/evidence/D5-SIGN-CEREMONY-STATUS-ACTS/2026-10-29
+cd $R
+HEAD=$(git rev-parse --short HEAD)
+stamp() { echo "# HEAD $HEAD, working tree, $(date -u +%FT%TZ). node $(node --version)."; }
+for h in redgreen product-mutations gate-mutations list-before head-baseline-red; do cp $S/$h.mjs $E/harness-$h.mjs.txt; done
+cp $S/evidence.sh $E/harness-evidence.sh.txt
+
+{ stamp
+  echo "# RED. 1: the cases this change exists for, against the gate as it is at HEAD (before this change)."
+  echo "\$ node harness-redgreen.mjs <HEAD's scripts/ci/check-sign-ceremony.mjs>"
+  node $S/redgreen.mjs $S/gate-before/check-sign-ceremony.mjs; echo "exit $?"
+  echo
+  echo "# RED. 2: the current gate over the real tree, scored against the baseline as it stands at HEAD."
+  echo "# Every new status act, and every pair a ceremony signs, fails until it is classified and recorded."
+  echo "\$ node harness-head-baseline-red.mjs"
+  node $S/head-baseline-red.mjs scripts/ci/check-sign-ceremony.mjs scripts/ci/check-sign-ceremony-status-acts.mjs $R; echo "exit $?"
+  echo
+  echo "# RED. 3: the gate at HEAD lists no site in the risk route, signed or not (list-before.txt):"
+  echo "\$ grep -c 'mdx-risk-management' list-before.txt"; grep -c 'mdx-risk-management' $E/list-before.txt
+} > $E/red.txt 2>&1
+
+{ stamp
+  echo "\$ npm run ci:sign-ceremony:selftest"; node scripts/ci/check-sign-ceremony.selftest.mjs; echo "exit $?"
+  echo; echo "\$ npm run ci:sign-ceremony"; node scripts/ci/check-sign-ceremony.mjs; echo "exit $?"
+  echo; echo "\$ node harness-redgreen.mjs scripts/ci/check-sign-ceremony.mjs"; node $S/redgreen.mjs scripts/ci/check-sign-ceremony.mjs; echo "exit $?"
+  echo; echo "\$ npx eslint --no-ignore <the gate's four files>   (HEAD's two files: 10 warnings, 0 errors)"
+  npx eslint --no-ignore scripts/ci/check-sign-ceremony.mjs scripts/ci/check-sign-ceremony-source.mjs scripts/ci/check-sign-ceremony-status-acts.mjs scripts/ci/check-sign-ceremony.selftest.mjs 2>&1 | sed "s#$R/##"; echo "exit ${PIPESTATUS[0]}"
+} > $E/green.txt 2>&1
+
+{ stamp
+  echo "# Gate mutations: each on a fresh copy of the gate's modules in a scratch directory; the copy's selftest is run."
+  sha256sum scripts/ci/check-sign-ceremony*.mjs scripts/ci/sign-ceremony-baseline.json > $S/gate.sha
+  node $S/gate-mutations.mjs $R $S; echo "exit $?"
+  echo "\$ sha256sum -c (the repository's gate files after the run)"; sha256sum -c $S/gate.sha
+  echo
+  echo "# Product mutations: in memory only (the map of sources the gate scans); no server file is written."
+  sha256sum server/routes/mdx-risk-management.ts server/services/labeling/labeling-pi-service.ts > $S/prod.sha
+  node $S/product-mutations.mjs $R $S/gate-before/check-sign-ceremony.mjs; echo "exit $?"
+  echo "\$ sha256sum -c (the mutated product files after the run)"; sha256sum -c $S/prod.sha
+  echo "\$ ls server/routes/zz-mutation-unsigned-approval.ts"; ls server/routes/zz-mutation-unsigned-approval.ts 2>&1
+} > $E/mutations.txt 2>&1
+
+{ stamp
+  echo "\$ npm run ci:sign-ceremony:list"; node scripts/ci/check-sign-ceremony.mjs --list; echo "exit $?"
+} > $E/list-after.txt 2>&1
+echo done

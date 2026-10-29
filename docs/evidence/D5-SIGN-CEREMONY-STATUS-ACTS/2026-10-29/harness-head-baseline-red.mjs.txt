@@ -1,0 +1,20 @@
+// The current gate scored against the baseline as it stands at HEAD (before this
+// change's entries): every new hit and every unrecorded signed pair fails. Reads only.
+import { execSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+const [gatePath, actsPath, root] = process.argv.slice(2);
+const gate = await import(pathToFileURL(gatePath).href);
+const acts = await import(pathToFileURL(actsPath).href);
+const baseline = JSON.parse(execSync('git show HEAD:scripts/ci/sign-ceremony-baseline.json', { cwd: root, encoding: 'utf8' }));
+const sources = gate.repoSources();
+const derived = gate.repoSignedPairs(sources);
+const scan = gate.scanRepo({ sources, signedPairs: new Set(derived.keys()) });
+const r = gate.evaluate(scan, baseline);
+for (const f of r.failures) {
+  for (const s of f.sites) console.log(`  ✗ ${f.file}:${s.line}  ${s.kind}${s.act ? `  ${s.act}` : ''}`);
+  if (f.allowed) console.log(`    ${f.file}: ${f.count} site(s), HEAD baseline allows ${f.allowed}.`);
+}
+for (const u of acts.evaluateSignedPairs(derived, baseline.signedPairs?.pairs).unrecorded) console.log(`  ✗ signed pair not recorded: ${u.pair}  (signed in ${u.file})`);
+const n = r.failures.reduce((k, f) => k + f.sites.filter((s) => s.kind === 'status-act').length, 0);
+console.log(`RED: ${r.failures.length} file(s) over their HEAD allowance; ${n} status-act site(s) among them.`);
+process.exit(r.failures.length ? 1 : 0);

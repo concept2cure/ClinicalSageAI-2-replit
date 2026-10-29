@@ -1,0 +1,63 @@
+# ci:sign-ceremony --list, the gate BEFORE this change (git show HEAD:scripts/ci/check-sign-ceremony.mjs, HEAD ca574ff80), over the working tree at 2026-10-29T10:51:48Z.
+# Run through the old gate's own scanSource/scanAuthority in its --list format (scratch harness list-before.mjs.txt), because its ROOT is its own location.
+server/api/cmc/batchRecordRoutes.ts:572  recordGovernedAction  ok
+server/api/cmc/module3OperatingSystemRoutes.ts:861  recordGovernedAction  ok
+server/api/cmc/routes.ts:1328  recordGovernedAction  ok
+server/api/cmc/specificationRoutes.ts:510  recordGovernedAction  ok
+server/routes/authoring.router.ts:5192  approval-stamp  ok
+server/routes/authoring.router.ts:7011  approval-stamp  no signature row
+server/routes/document-lifecycle.ts:318  recordGovernedAction  ok
+server/routes/financial-disclosures.ts:340  recordGovernedAction  ok
+server/routes/governed-signed-act.ts:283  recordGovernedAction  ok
+server/routes/ivdr-binder-routes.ts:552  approval-stamp  no signature row
+server/routes/mdx-imports.ts:460  approval-stamp  no signature row
+server/routes/mdx-imports.ts:461  approval-stamp  no signature row
+server/routes/mdx-labeling-approvals.ts:173  approval-stamp  ok
+server/routes/mdx-labeling-approvals.ts:182  approval-stamp  ok
+server/routes/mdx-labeling-approvals.ts:435  approval-stamp  ok
+server/services/ana-ri/governed-command-signature.ts:118  recordGovernedAction  no signer re-verification
+server/services/ana/authoring-plan-generator.ts:1175  approval-stamp  no signature row
+server/services/ana/authoring-plan-generator.ts:1176  approval-stamp  no signature row
+server/services/cognitive-ecosystem/global-dossier.service.ts:522  approval-stamp  no signature row
+server/services/cognitive-ecosystem/global-dossier.service.ts:996  approval-stamp  no signature row
+server/services/decision-record-service.ts:419  approval-stamp  no signature row
+server/services/ectd/filed-sequence-rejection.ts:277  recordGovernedAction  no signer re-verification
+server/services/grants/grants-service.ts:420  approval-stamp  no signature row
+server/services/part11/governed-signature-ceremony.ts:257  recordGovernedAction  ok
+server/services/pathway-engines/estar/estar-submission-service.ts:297  recordGovernedAction  no signer re-verification
+server/services/qms/change-approval-signature.ts:173  approval-stamp  ok
+server/services/qms/change-approval-signature.ts:174  approval-stamp  ok
+server/services/qms/document-approval-signature.ts:320  approval-stamp  no signature row
+server/services/qms/document-approval-signature.ts:321  approval-stamp  no signature row
+server/services/qms/document-approval-signature.ts:439  approval-stamp  ok
+server/services/rbm/rbm-actuator.ts:864  approval-stamp  no signature row
+server/services/rbm/rbm-actuator.ts:923  approval-stamp  no signature row
+server/services/submission-gateways/governed-transmit.ts:770  recordGovernedAction  no signer re-verification
+server/api/cmc/batchRecordRoutes.ts:495  re-authentication  ok
+server/api/cmc/module3OperatingSystemRoutes.ts:651  re-authentication  ok
+server/api/cmc/routes.ts:1267  re-authentication  ok
+server/api/cmc/specificationRoutes.ts:468  re-authentication  ok
+server/routes/510k-estar-routes.ts:2130  re-authentication  ok
+server/routes/ana-features.ts:2256  re-authentication  ok
+server/routes/ana-ri/governed-esignature.ts:98  re-authentication  ok
+server/routes/ana-ri/seal-verified.ts:126  re-authentication  ok
+server/routes/authoring.router.ts:815  re-authentication  no signing-authority check in its handler
+server/routes/c2c/actions.ts:306  re-authentication  no signing-authority check in its handler
+server/routes/c2c/actions.ts:652  re-authentication  ok
+server/routes/c2c/artifacts.ts:2673  re-authentication  ok
+server/routes/c2c/documents.ts:756  re-authentication  no signing-authority check in its handler
+server/routes/document-lifecycle.ts:133  re-authentication  ok
+server/routes/esignature.ts:287  re-authentication  ok
+server/routes/financial-disclosures.ts:326  re-authentication  ok
+server/routes/gateway-accounts.ts:121  re-authentication  no signing-authority check in its handler
+server/routes/governed-signed-act.ts:257  re-authentication  ok
+server/routes/mdx-qms.ts:683  re-authentication  ok
+server/routes/mdx-rbm.ts:1034  re-authentication  ok
+server/routes/mdx-rbm.ts:1155  re-authentication  ok
+server/routes/mdx-submission-gateway.ts:367  re-authentication  ok
+server/routes/mdx-submission-gateway.ts:605  re-authentication  ok
+server/routes/pccp.ts:272  re-authentication  ok
+server/routes/submission-sign-release.ts:232  re-authentication  ok
+server/services/part11/governed-signature-ceremony.ts:242  re-authentication  ok
+server/services/part11/governed-signature-ceremony.ts:243  re-authentication  ok
+server/services/tasking/task-signoff.ts:192  re-authentication  ok

@@ -1,0 +1,84 @@
+# HEAD 4d57a4164, working tree, 2026-10-29T11:09:39Z. node v22.22.0.
+$ npm run ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+  ✓ an approval stamped under a non-sign verb fails the gate (the QMS AnA tool before e1c224f69)
+  ✓ an approval stamp built up in a service fails the gate (transitionChange before 028a0c704)
+  ✓ an approval stamp written beside its signature row passes
+  ✓ an authoring approval stamp beside its authoring_signatures write passes
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ an approval stamp inside signGovernedAct passes (the labeling translation approval, 2026-10-29)
+  ✓ the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)
+  ✓ a status-only act signed through signGovernedAct is a site, and passes (the residual-risk acceptance)
+  ✓ the same write without the ceremony fails: in the same file as the signed one, or anywhere once the pair is governed
+  ✓ the governed flag alone, without the ceremony, fails too (acceptable = TRUE)
+  ✓ creating a hazard already accepted is a status act (INSERT … VALUES)
+  ✓ without a ceremony or a record, the pair is not governed: why the baseline records signed pairs
+  ✓ a non-governed status is not an act: draft, in_progress, open, mitigating
+  ✓ a declared signed status is governed on every table (an IRB approval written outside its ceremony fails)
+  ✓ a condition is not a write: WHERE, FILTER, a CASE test, a SELECT
+  ✓ a status the product signs only on some tables counts only there (superseded)
+  ✓ a `$n` whose value is a literal in the inline parameter array is read; a computed one is not
+  ✓ for a status act, writeMutation counts only as writeMutation('sign')
+  ✓ a statement that stamps an approval and sets a status is one site, the stamp
+  ✓ a status act is baselined like a stamp: a ceiling with a written reason
+  ✓ the declared statuses are read from the product, never copied: Set, object keys, and a missing declaration
+  ✓ the repository's declarations are where the gate reads them, and give the vocabulary it governs
+  ✓ clearing an approval (a revision) is not a stamp
+  ✓ the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule
+  ✓ the same transmit asking checkSigningAuthority first passes
+  ✓ reverifySigner is held to the rule too, and checkSigningAuthority satisfies it
+  ✓ an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule
+  ✓ the retired local wrappers no longer satisfy the rule
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 44 passed — the gate fails on what it exists to catch.
+exit 0
+
+$ npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0
+
+$ node harness-redgreen.mjs scripts/ci/check-sign-ceremony.mjs
+gate: scripts/ci/check-sign-ceremony.mjs
+  PASS  A. the signed status-only act is a site, and passes: expected "seen, ok", got "seen, ok"
+  PASS  B. the same write without the ceremony fails (same file as the signed one): expected "fails", got "fails"
+  PASS  C. a non-governed status (mitigating) is not an act: expected "no site", got "no site"
+  PASS  D. the plain PATCH alone, the acceptance pair recorded (M11: the ceremony removed): expected "fails", got "fails"
+  PASS  E. an IRB approval written outside its ceremony (a declared signed status): expected "fails", got "fails"
+GREEN: 5 of 5 cases as expected.
+exit 0
+
+$ npx eslint --no-ignore <the gate's four files>   (HEAD's two files: 10 warnings, 0 errors)
+
+scripts/ci/check-sign-ceremony.mjs
+  361:8   warning  Function 'evaluate' has a complexity of 17. Maximum allowed is 15                        complexity
+  399:28  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  402:28  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  425:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  444:1   warning  Function 'main' has a complexity of 23. Maximum allowed is 15                            complexity
+  506:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  507:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+scripts/ci/check-sign-ceremony.selftest.mjs
+   17:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   41:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  467:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 10 problems (0 errors, 10 warnings)
+
+exit 0
