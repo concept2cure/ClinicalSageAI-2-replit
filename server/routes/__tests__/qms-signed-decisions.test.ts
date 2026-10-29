@@ -15,25 +15,35 @@ const GOOD = 'correct horse battery staple';
 const REASON = 'Re-test after column replacement confirmed a lab error.';
 const H = vi.hoisted(() => ({ log: [] as string[], disposition: null as string | null, standing: 'pending' as string }));
 
+type Rows = { rows: Array<Record<string, unknown>>; rowCount: number };
+const none: Rows = { rows: [], rowCount: 0 };
+const one = (row: Record<string, unknown>): Rows => ({ rows: [row], rowCount: 1 });
+
+/* The domain SQL each signed decision sends, by statement. Each update logs
+   DOMAIN, so its order against the ledger and the signature is visible. */
+const DOMAIN: Array<[RegExp, (p: unknown[]) => Rows]> = [
+  [/^\s*UPDATE qms_nonconforming_products/, (p) => {
+    if (H.disposition && H.disposition !== 'pending') return none;
+    H.log.push(`DOMAIN:${String(p[2])}:${String(p[3])}`);
+    H.disposition = String(p[2]);
+    return one({ id: 4, nc_number: 'NC-2026-004', disposition: p[2], disposition_rationale: p[3] });
+  }],
+  [/SELECT disposition FROM qms_nonconforming_products/, () => one({ disposition: H.disposition })],
+  [/^\s*UPDATE qms_suppliers/, (p) => {
+    if (H.standing === p[2]) return none;
+    H.log.push(`DOMAIN:${String(p[2])}`);
+    H.standing = String(p[2]);
+    return one({ id: 12, supplier_name: 'Acme Resins', supplier_code: null, approval_status: p[2], next_audit_date: null, reapproval_date: null });
+  }],
+  [/SELECT approval_status FROM qms_suppliers/, () => one({ approval_status: H.standing })],
+];
+
 const client = {
-  query: vi.fn(async (sql: string, params?: unknown[]) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     const word = sql.trim().split(/\s+/)[0].toUpperCase();
     if (word === 'BEGIN' || word === 'COMMIT' || word === 'ROLLBACK') H.log.push(word);
-    if (/^\s*UPDATE qms_nonconforming_products/.test(sql)) {
-      if (H.disposition && H.disposition !== 'pending') return { rows: [], rowCount: 0 };
-      H.log.push(`DOMAIN:${String(params?.[2])}:${String(params?.[3])}`);
-      H.disposition = String(params?.[2]);
-      return { rows: [{ id: 4, nc_number: 'NC-2026-004', disposition: params?.[2], disposition_rationale: params?.[3] }], rowCount: 1 };
-    }
-    if (/SELECT disposition FROM qms_nonconforming_products/.test(sql)) return { rows: [{ disposition: H.disposition }], rowCount: 1 };
-    if (/^\s*UPDATE qms_suppliers/.test(sql)) {
-      if (H.standing === params?.[2]) return { rows: [], rowCount: 0 };
-      H.log.push(`DOMAIN:${String(params?.[2])}`);
-      H.standing = String(params?.[2]);
-      return { rows: [{ id: 12, supplier_name: 'Acme Resins', supplier_code: null, approval_status: params?.[2], next_audit_date: null, reapproval_date: null }], rowCount: 1 };
-    }
-    if (/SELECT approval_status FROM qms_suppliers/.test(sql)) return { rows: [{ approval_status: H.standing }], rowCount: 1 };
-    return { rows: [], rowCount: 0 };
+    const handler = DOMAIN.find(([pattern]) => pattern.test(sql))?.[1];
+    return handler ? handler(params) : none;
   }),
   release: vi.fn(),
 };
