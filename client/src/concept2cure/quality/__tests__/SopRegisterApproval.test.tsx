@@ -185,11 +185,11 @@ describe('SopRegister — a draft is sent for review before it can be approved',
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 
-  it('opens the e-signature dialog for Retire, offering the approval meaning only', () => {
+  it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
-    expect(dialog.getAttribute('data-meanings')).toBe('approval');
+    expect(dialog.getAttribute('data-meanings')).toBe('retirement');
   });
 
   it('posts the signature to the signed retire route and shows the server’s time', async () => {
@@ -210,10 +210,10 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
     expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/retire', {
       password: 'pw',
       mfaToken: '123456',
-      meaning: 'APPROVED',
+      meaning: 'retirement',
       reason: 'Reviewed against ISO 13485 §8.2.2',
     });
-    expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
+    expect(H.signed).toMatchObject({ meaning: 'retirement', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
     expect(H.refresh).toHaveBeenCalled();
   });
 

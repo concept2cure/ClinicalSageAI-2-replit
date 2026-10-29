@@ -180,7 +180,7 @@ describe('the migration', () => {
   });
 });
 
-const SUPERSEDE = { ...SIGNATURE, meaning: 'APPROVED' };
+const SUPERSEDE = { ...SIGNATURE, meaning: 'retirement' };
 const WITHDRAWAL_REASON = 'The German artwork changed after review; re-review it';
 const ledgerRows = () => h.signed.filter((s) => s.kind === 'ledger');
 const signatures = () => h.signed.filter((s) => s.kind === 'signature');
@@ -333,13 +333,13 @@ describe('2. the record\'s creator cannot approve it, and a record with none rec
 });
 
 describe('superseding a document is its retirement: signed, with the QMS meaning', () => {
-  it('signed APPROVED: superseded, the approval and effective date kept, no two-person rule', async () => {
+  it('signed as a retirement: superseded, the approval and effective date kept, no two-person rule', async () => {
     const id = await seedDoc({ status: 'effective', created_by: SIGNER, approved_by: COLLEAGUE, approved_at: APPROVED_EARLIER, effective_date: '2026-10-02' });
     const res = await patchDoc(id, { status: 'superseded', ...SUPERSEDE });
     expect(res.status).toBe(201);
     expect(await doc(id)).toMatchObject({ status: 'superseded', approved_by: COLLEAGUE, effective_date: '2026-10-02' });
     expect(h.signed.map((s) => `${s.kind}:${s.target}`)).toEqual([`ledger:labeling-document:${id}`, `signature:labeling-document:${id}`]);
-    expect(h.signed[1].payload).toMatchObject({ previousStatus: 'effective', status: 'superseded', meaning: 'APPROVED' });
+    expect(h.signed[1].payload).toMatchObject({ previousStatus: 'effective', status: 'superseded', meaning: 'retirement' });
     expect(h.signed[1].payload).not.toHaveProperty('twoPersonRule');
     expect(h.limited).toBe(1);
   });
