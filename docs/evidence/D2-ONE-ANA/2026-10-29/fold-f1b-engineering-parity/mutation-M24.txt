@@ -1,0 +1,12 @@
+M24: the registry lists no device-engineering matrix actions
+file: shared/navigation/surface-actions.ts
+replaced: '  ...riskMatrixActions(\'device-engineering\', "On Engineering\'s risk file"),\n'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  2 failed | 16 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell 35ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed 36ms
+sha256 before b517d72924581ddd08009f56739df2af73fd7848f07a3751f840c7b99dd30739
+sha256 after  b517d72924581ddd08009f56739df2af73fd7848f07a3751f840c7b99dd30739
+restored byte for byte: yes

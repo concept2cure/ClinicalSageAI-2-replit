@@ -1,0 +1,55 @@
+# Every call Project home's own files name (ProjectHome.tsx and the surface files it imports directly), asked of the gate production builds with enforcement on and the real canAccessModule, tiers from the packaging migration.
+# Organizations as in core-project-record-gating.test.ts: 301 free/no grant, 302 self-serve with Submission Center off, 303 standard with launch grants, 304 Projects and Submission Center off.
+# A one-off measurement (the scratch test is not in the tree).
+
+## At HEAD (before item 1):
+files: ProjectHome.tsx, ProjectRecords.tsx, ConversationFilesAdopt.tsx, DocumentDisposition.tsx, projectThreads.ts, reviewStanding.ts, Review.tsx, programSequence.ts, ProjectStages.tsx, ProjectComingLater.tsx, ProjectRespond.tsx, ProjectMarkets.tsx, ProjectDossier.tsx, ProjectTeamResponsibilities.tsx, ProjectSide.tsx, ProjectTeamSharing.tsx, ProjectMdxWorkflow.tsx, ProjectPlan.tsx, ProjectBiotechPlan.tsx, projectSources.ts
+calls: 21
+path | claimants | 301 | 302 | 303 | 304
+/api/ana-ri/runs | (none) | served | served | served | served
+/api/authoring/comments | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/docs | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/sections | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/templates | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/c2c/projects/:p | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/activity | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/adopt | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/conversation-files | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/document-dispositions | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/dossier | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/records | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/source-changes | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/sources | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/team | submission-center,ivd-completeness | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/chat/threads | conversation-thread | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED
+/api/concept2cure/projects/:p/unified-work | project-home,conversation-thread | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED
+/api/review/board | review | 403 MODULE_NOT_LICENSED | served | served | served
+/api/submissions | submission-center | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/submissions/:p/sequences | submission-center | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/submissions/sequences/:p/dispatch-readiness | dispatch-readiness,shadow-review | 403 MODULE_NOT_LICENSED | served | served | served
+
+## After this slice:
+files: ProjectHome.tsx, ProjectRecords.tsx, ConversationFilesAdopt.tsx, DocumentDisposition.tsx, projectThreads.ts, reviewStanding.ts, Review.tsx, programSequence.ts, ProjectStages.tsx, ProjectComingLater.tsx, ProjectRespond.tsx, ProjectMarkets.tsx, ProjectDossier.tsx, ProjectTeamResponsibilities.tsx, ProjectSide.tsx, ProjectTeamSharing.tsx, ProjectMdxWorkflow.tsx, ProjectPlan.tsx, ProjectBiotechPlan.tsx, projectSources.ts
+calls: 21
+path | claimants | 301 | 302 | 303 | 304
+/api/ana-ri/runs | (none) | served | served | served | served
+/api/authoring/comments | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/docs | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/sections | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/authoring/templates | document-authoring,authoring-engine,doc-journey | served | served | served | served
+/api/c2c/projects/:p | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/activity | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/adopt | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/conversation-files | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/document-dispositions | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/dossier | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/records | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/source-changes | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/sources | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/c2c/projects/:p/team | projects,submission-center,ivd-completeness | served | served | served | 403 MODULE_NOT_LICENSED
+/api/chat/threads | conversation-thread | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED
+/api/concept2cure/projects/:p/unified-work | project-home,conversation-thread | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED
+/api/review/board | review | 403 MODULE_NOT_LICENSED | served | served | served
+/api/submissions | submission-center | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/submissions/:p/sequences | submission-center | 403 MODULE_NOT_LICENSED | 403 MODULE_NOT_LICENSED | served | 403 MODULE_NOT_LICENSED
+/api/submissions/sequences/:p/dispatch-readiness | dispatch-readiness,shadow-review | 403 MODULE_NOT_LICENSED | served | served | served

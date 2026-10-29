@@ -1,0 +1,11 @@
+M11: the gap breakdown offers no "Close the first gap"
+file: client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx
+replaced: "        ? { label: 'Close the ' + firstGap.id + ' gap', onClick:"
+with: "        ? { label: 'Open ' + firstGap.id, onClick:"
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+exit: 1
+Tests  1 failed | 12 passed (13)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > breaks down the gaps, and "Close the first gap" asks AnA about it 397ms
+sha256 before 66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+sha256 after  66ed5a57ff2429b52a12cf6b1d4fd73c97c1751eddac58e715919cbe58274c7b
+restored byte for byte: yes

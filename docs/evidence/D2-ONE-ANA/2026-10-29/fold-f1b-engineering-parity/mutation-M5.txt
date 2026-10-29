@@ -1,0 +1,11 @@
+M5: the register metrics are not drawn
+file: client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+replaced: '          <RiskMetrics summary={r.summary} residualClear={r.residualClear} />\n'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  1 failed | 17 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > shows the metrics of the register 34ms
+sha256 before 18e51f5ad520b79670720473e82fea3ddd84befe0c41ebab77407def6317541f
+sha256 after  18e51f5ad520b79670720473e82fea3ddd84befe0c41ebab77407def6317541f
+restored byte for byte: yes

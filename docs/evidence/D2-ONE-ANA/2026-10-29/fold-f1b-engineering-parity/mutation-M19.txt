@@ -1,0 +1,11 @@
+M19: Engineering does not wait for its own route (reads a refused project)
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: '    waiting: program != null && !live.answered,\n    refusal: live.refusal,\n'
+with: '    waiting: false,\n    refusal: null,\n'
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  1 failed | 17 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads nothing for a project its own route refused 29ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

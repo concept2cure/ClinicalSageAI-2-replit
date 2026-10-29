@@ -1,0 +1,16 @@
+# I3-M1-no-new-claim: device-engineering's two new claims removed
+# file mutated: shared/constants/ui-surface-registry.ui-v2.ts
+# restored byte-for-byte (cmp)
+ × server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts > the risk register and design-control trace in device-engineering, under module enforcement > serves them to an organization entitled to device-engineering only 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+AssertionError: expected { …(4) } to deeply equal { …(4) }
+-   "/api/design-controls": "served",
+-   "/api/mdx/risk-items": "served",
+-   "/api/mdx/risk-items/7": "served",
+-   "/api/mdx/risk-items/7/controls": "served",
++   "/api/design-controls": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7": "403 MODULE_NOT_LICENSED",
++   "/api/mdx/risk-items/7/controls": "403 MODULE_NOT_LICENSED",

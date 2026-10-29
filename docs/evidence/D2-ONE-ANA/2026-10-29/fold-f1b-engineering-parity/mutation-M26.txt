@@ -1,0 +1,11 @@
+M26: a viewer is offered New design input on Design controls
+file: client/src/concept2cure/v2/surfaces/DesignControls.tsx
+replaced: '        {dc.canWrite && ('
+with: '        {(dc.canWrite || true) && ('
+test: client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+exit: 1
+Tests  1 failed | 4 passed (5)
+× client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx > a viewer, on the screens that still mount the panels > Design controls offers no New design input 42ms
+sha256 before 7daf20dfa5939a51e3945e24643c7ded1c0da541a3e6da0d7d1ab41ee0001726
+sha256 after  7daf20dfa5939a51e3945e24643c7ded1c0da541a3e6da0d7d1ab41ee0001726
+restored byte for byte: yes

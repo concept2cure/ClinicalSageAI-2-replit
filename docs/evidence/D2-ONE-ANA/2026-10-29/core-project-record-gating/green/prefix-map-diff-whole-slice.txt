@@ -1,0 +1,21 @@
+# The whole slice: the prefix map at HEAD 6184439b3 against the working tree with all three items.
+#  284 gated prefixes at HEAD;  283 gated prefixes after.
+
+1c1
+< # 284 gated prefixes
+---
+> # 283 gated prefixes
+31c31
+< /api/c2c/projects	ivd-completeness,submission-center
+---
+> /api/c2c/projects	ivd-completeness,projects,submission-center
+104c104
+< /api/design-controls	design-controls
+---
+> /api/design-controls	design-controls,device-engineering
+132d131
+< /api/ind-lifecycle/briefing-book	ind-checklist
+180c179
+< /api/mdx/risk-items	risk
+---
+> /api/mdx/risk-items	device-engineering,risk

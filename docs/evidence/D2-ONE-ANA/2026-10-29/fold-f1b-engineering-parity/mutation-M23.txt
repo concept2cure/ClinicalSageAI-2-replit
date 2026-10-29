@@ -1,0 +1,11 @@
+M23: Engineering's New hazard ignores the role
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: '            {risk.canWrite && (\n'
+with: '            {(risk.canWrite || true) && (\n'
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  1 failed | 17 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a viewer is offered no write control > no New hazard, Add risk control or Accept residual, and says the register is view only 45ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

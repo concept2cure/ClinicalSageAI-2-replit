@@ -1,0 +1,15 @@
+# Kept for the record: F2-M4 against engineeringAnaContext.test.tsx while it still held the settle case (under act()).
+# The loop is synchronous under act(), so no timer or test timeout fired; timeout 240 killed the run (exit 124).
+# This is why the settle case moved to engineeringAnaContextSettles.test.tsx, rendered outside act(); see mutation-F2-M4.txt.
+# F2-M4: Engineering reports the panels' context on every render, not on a change of content
+# file: client/src/concept2cure/mdx/surfaces/engineeringPanelsContext.ts
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# mutation (find -> replace):
+-      latest.current.report?.(latest.current.ctx);
+-    }, [key]);
++      latest.current.report?.(latest.current.ctx);
++    });
+   ---
+
+exit=124
+restored byte for byte: yes (sha256 e3db90d8e1905cd1)

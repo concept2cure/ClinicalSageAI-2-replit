@@ -1,0 +1,42 @@
+Red first. Both files were written before any product change and run one at a time
+against the slice A code (HEAD 1a6701ea6; none of these files changed since). The one test green there,
+"reads nothing for a project its own route refused", passes vacuously: Engineering
+read no risk file at all. Mutation M19 shows it red against the change.
+
+== EngineeringSurface.riskRegister.test.tsx
+× Engineering reads the open project's risk file > reads it by the project, and only after its own route has admitted the project
+✓ Engineering reads the open project's risk file > reads nothing for a project its own route refused
+× every function of the risk register, on Engineering > draws the whole register, not four rows: every hazard on the 5x5 matrix
+× every function of the risk register, on Engineering > switches the matrix between the initial and the residual assessment
+× every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context
+× every function of the risk register, on Engineering > shows the metrics of the register
+× every function of the risk register, on Engineering > adds a hazard to the project
+× every function of the risk register, on Engineering > adds a risk control to the selected hazard
+× every function of the risk register, on Engineering > accepts residual risk only through the signature dialog (the signed act)
+× AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell
+× AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed
+× a read that is not this project, or refused, says so > draws no hazard from an answer with the organization's scope
+× a read that is not this project, or refused, says so > draws no hazard from an answer with another project's scope
+× a read that is not this project, or refused, says so > draws no hazard from an answer with no scope at all
+× a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see
+× a read that is not this project, or refused, says so > a 503 says the project could not be checked, and the retry reads again
+× a viewer is offered no write control > no New hazard, Add risk control or Accept residual, and says the register is view only
+× a viewer is offered no write control > an editor, and a session that does not say, are offered them
+Tests  17 failed | 1 passed (18)
+
+== EngineeringSurface.designControls.test.tsx
+× Engineering reads the open project's design inputs > reads them by the project
+× every function of the design-controls trace, on Engineering > draws the traceability matrix: input, output, verification, validation
+× every function of the design-controls trace, on Engineering > breaks down the gaps, and "Close the first gap" asks AnA about it
+× every function of the design-controls trace, on Engineering > shows the ISO 13485 §7.3 checklist, with the elements no store evidences
+× every function of the design-controls trace, on Engineering > asks AnA from a row: the hazard an input controls
+× every function of the design-controls trace, on Engineering > adds a design input to the project
+× a read that is not this project, or refused, says so > draws no input from an answer with the organization's scope
+× a read that is not this project, or refused, says so > draws no input from an answer with another project's scope
+× a read that is not this project, or refused, says so > draws no input from an answer with no scope at all
+× a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see
+× a read that is not this project, or refused, says so > a 503 says the project could not be checked
+× a viewer is offered no write control > no New design input, and says the trace is view only
+× a viewer is offered no write control > an editor is offered it
+Tests  13 failed (13)
+

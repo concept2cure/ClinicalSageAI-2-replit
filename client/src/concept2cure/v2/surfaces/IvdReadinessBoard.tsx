@@ -127,12 +127,22 @@ export type IvdReadinessView =
   | { kind: 'refused' | 'failed' | 'unconfirmed'; message: string }
   | { kind: 'ready'; data: IvdReadinessData; tally: IvdTally };
 
+/* A 403 is one of three facts here, told apart by the server's code: the module
+   gate's two (server/middleware/moduleEntitlementGate.ts) and the route's own
+   IVD_NO_TENANT, the organization it could not confirm. The gate sends
+   MODULE_NOT_LICENSED for a subscription that lacks the feature and for one an
+   administrator switched off alike, so this names neither. */
+const REFUSED_403: ReadonlyMap<string, string> = new Map([
+  ['MODULE_NOT_LICENSED', 'This feature is not enabled for your organization, so the IVDR readiness was not read.'],
+  ['LAUNCH_SCOPE', 'This part of the product is not in this release, so the IVDR readiness was not read.'],
+]);
+
 /** What the board may draw from a read. Only a response that says it covers what was asked for is drawn. */
 export function ivdReadinessView({ programId, read }: Pick<IvdReadiness, 'programId' | 'read'>): IvdReadinessView {
   if (read.loading) return { kind: 'loading' };
   if (read.error || !read.data) {
     if (read.status === 404 && programId) return { kind: 'refused', message: 'This project was not found in your organization, so its IVDR readiness was not read.' };
-    if (read.status === 403) return { kind: 'refused', message: 'Your organization could not be confirmed, so the IVDR readiness was not read.' };
+    if (read.status === 403) return { kind: 'refused', message: REFUSED_403.get(read.code ?? '') ?? 'Your organization could not be confirmed, so the IVDR readiness was not read.' };
     if (read.status === 503) return { kind: 'refused', message: 'The project check or the IVD records were unavailable, so the IVDR readiness was not read. Retry shortly.' };
     return { kind: 'failed', message: 'The IVDR readiness could not be read. Nothing here is a finding about the technical file.' };
   }
