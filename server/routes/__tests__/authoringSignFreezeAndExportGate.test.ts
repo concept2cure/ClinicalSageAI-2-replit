@@ -84,6 +84,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-sign-freeze-
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
+import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 
 const PASSWORD = 'signer-password';
 
@@ -125,6 +126,8 @@ beforeEach(async () => {
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: h.clientRelease }));
 
   h.clientQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
     const s = String(sql);
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
     if (/COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s)) {
@@ -138,13 +141,15 @@ beforeEach(async () => {
     }
     // The auto-freeze SELECT * and section read both return a row so the snapshot
     // has content; every other client write returns a benign rowCount.
-    return { rowCount: 1, rows: [{ id: 'D1', doc_id: 'D1', code: '2.6.6', content: 'body' }] };
+    return { rowCount: 1, rows: [{ id: DOC_ID, doc_id: DOC_ID, code: '2.6.6', content: 'body' }] };
   });
 });
 
 describe('F2 — POST /docs/:id/sign auto-freezes when the final step approves the document', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       if (/FROM frozen_documents/i.test(sql)) {
         // No PRE-EXISTING snapshot — the whole point of the finding is that the
         // approval must CREATE one.
@@ -162,7 +167,7 @@ describe('F2 — POST /docs/:id/sign auto-freezes when the final step approves t
 
   it('writes a frozen_documents row on the transaction client, between BEGIN and COMMIT', async () => {
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/sign')
+      .post(`/api/authoring/docs/${DOC_ID}/sign`)
       .set('Authorization', await bearer(['REVIEWER']))
       .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
@@ -195,11 +200,13 @@ describe('F2 — POST /docs/:id/sign auto-freezes when the final step approves t
 describe('F3 — POST /docs/:id/export gates on the record being sealed', () => {
   function mockDoc(status: string, extra: Record<string, unknown> = {}) {
     h.poolQuery.mockImplementation(async (sql: string) => {
+    const governance = releaseGovernanceRead(sql);
+    if (governance) return governance;
       const s = String(sql);
       if (/FROM authoring_documents WHERE id = \$1/i.test(s)) {
         return {
           rowCount: 1,
-          rows: [{ id: 'D1', title: 'Tox Summary', module: 'M2', status, locked_at: null, created_at: new Date(), ...extra }],
+          rows: [{ id: DOC_ID, title: 'Tox Summary', module: 'M2', status, locked_at: null, created_at: new Date(), ...extra }],
         };
       }
       if (/SELECT code, content FROM authoring_sections/i.test(s)) {
@@ -233,7 +240,7 @@ describe('F3 — POST /docs/:id/export gates on the record being sealed', () => 
   it('REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest', async () => {
     mockDoc('draft');
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/export')
+      .post(`/api/authoring/docs/${DOC_ID}/export`)
       .set('Authorization', await bearer())
       .send({ format: 'xml' });
 
@@ -246,7 +253,7 @@ describe('F3 — POST /docs/:id/export gates on the record being sealed', () => 
   it('ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash', async () => {
     mockDoc('APPROVED');
     const res = await request(makeApp())
-      .post('/api/authoring/docs/D1/export')
+      .post(`/api/authoring/docs/${DOC_ID}/export`)
       .set('Authorization', await bearer())
       .send({ format: 'xml' });
 

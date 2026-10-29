@@ -1,0 +1,118 @@
+# GREEN at 499a17b82 + this change: real PostgreSQL 16 (16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)), RLS_ENFORCE=on, runtime role app_service (2026-10-29T03:40:24Z)
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > uses canonical auth, async tenant scope and a lazy pinned non-superuser request connection 116ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refreshes the exact retained record and separates its real integer project from its actual programme UUID 89ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > retains unattached, unanchored and deleted-programme records without guessing a programme 119ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership 190ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member 157ms
+ ✓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration 70ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > resolves actual task and saved-report notifications through both programme helper callers with fresh sharing 263ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > keeps the existing populated task board connected to the same canonical programme bridge 76ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration 428ms
+ ✓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record 58ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > creates an owned draft, Authoring sections and durable grants through the actual request client 204ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reads register/editor using real auth ALS and LazyRequestDbClient 35ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > distinguishes raw unscoped denial from working canonical ALS global and pinned reads 7ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS through authenticated native request scope > reviews then approves saved text with real password re-verification and one bound signature 160ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > reads retained versions and counts actual current-version training 168ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > refuses training when the exact immutable snapshot cannot be read and recovers without a mutable-text fallback 86ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS bound released training and retained private access > rolls back the personal receipt with its mandatory audit on failure and recovers on a fresh request 103ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > refuses exact foreign records, training acknowledgments and program claims without exposing prose 105ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > uses fresh membership to refuse an unshared member despite an admin token claim 67ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > fails closed on a missing request client even with synthetic ALS, without claiming an auth-production defect 5ms
+ ✓ tests/db/mdx-qms-request-rls.dbtest.ts > QMS native current access and signature recovery > recovers a genuinely committed legacy signature after lost COMMIT reply and discards its physical connection 55ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > scopes real active candidates by project and disambiguates duplicate names 111ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > atomically saves assignment, both ledger rows and exact human reason while preserving task history 101ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > can assign a genuinely unassigned saved task 82ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 8 103ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 12 95ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 10 without creating access or lineage 77ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 11 without creating access or lineage 78ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 12 without creating access or lineage 72ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 13 without creating access or lineage 79ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses another claimed client and a corrupt recorded task/client link 81ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal completed task and lets bulk auto report a genuine skip 103ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal cancelled task and lets bulk auto report a genuine skip 86ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rejects an old version even after A to B to A returns to the old assignee 147ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > retains a recorded client-wide task scope without inventing a project 64ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > does not stamp the selected client onto an organization-wide task 60ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > rolls the task and first ledger insert back when the second ledger insert fails 78ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > reports lost actual COMMIT acknowledgement as unknown, discards once and permits a safe reread 123ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > allows only one concurrent independent HTTP writer for the same observed version 119ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > verifies the real sequenced chain and HMAC seals after two native assignment transactions 121ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > runs as the runtime role, under RLS, in its own tenant 6ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to effective with no signature is refused, and the document stays draft 14ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct INSERT of an effective document is refused 13ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a direct UPDATE to retired with no retirement signature is refused 19ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > the table owner is refused too 13ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > a signature of the wrong kind, of another organisation, or already revoked does not count 66ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the database refuses an effective or retired controlled document without its signature > an approval written by an earlier transaction does not make a revised version effective 299ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > approve: the route makes the document effective with one approval signature from the same transaction 55ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > retire: the route retires the effective document with its retirement signature 91ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a revised document is approved again through the route 188ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > the service writes the status before the signature, so the check is deferred to COMMIT; checked per statement it refuses 25ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a fixture gives an effective document its signature on the same transaction, before or after the status 8ms
+ ✓ tests/db/qms-document-signature-required.dbtest.ts > P0-18: the governed path, and fixtures that sign, still commit > a document already effective is not re-checked: an edit that leaves its status alone commits 9ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > moves the next review out, leaves the effective row and its approval untouched, and says who reviewed it 167ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is one review signature bound to the release content, with the decision on its manifest 15ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a signed periodic review that finds the document current > is in the controlled document register report beside the date its approval signed 218ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review that finds a revision is required > is recorded, and the document stays due 70ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a next review date that has passed 17ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > "remains current" with no next date 14ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a viewer, who has no signing authority 16ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a wrong password 25ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review is refused, and nothing is signed > a version whose approval signature no longer stands 28ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a review counts only for the version it reviewed > is refused while a revision is open, and stops counting once the next version is approved 318ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > readiness counts what is overdue after the last standing review > stops counting a reviewed document, and counts it again once that review is voided 133ms
+ ✓ tests/db/qms-periodic-review-signed.dbtest.ts > a later review of the same version > records the due date the earlier review set, beside the date the approval signed, and supersedes it 51ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 8ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 220ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 193ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 68ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 93ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 91ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 59ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 55ms
+ ✓ tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 56ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is still the release a member reads for training: v1.0, eligible 24ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is counted in training coverage with its standing receipt 21ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > can still be acknowledged by a member who has not yet read it 57ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > an effective SOP while its next version is drafted > is named on the register beside the draft, and counted as effective by readiness 63ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > the controlled document register report while the revision is open > names the version in force and the signature that approved it, beside the draft 37ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > when the successor is signed > v2.0 is in force and v1.0 receipts no longer count 149ms
+ ✓ tests/db/qms-in-force-during-revision.dbtest.ts > a periodic review date set when the document is created > is stored, signed with the version, and lists the document as due once it is effective 231ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > runs as a role that RLS binds (the posture these results depend on) 4ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it 80ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card 33ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's 26ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store 28ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word 37ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > approval puts the next periodic review on the owner’s task list > writes one Quality task to the author, due on the next review, 30 days’ notice; approving the same date again writes nothing 171ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "remains current" completes the task and writes the next one, for the date the reviewer set 98ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > a signed periodic review moves the task on > "revision required" makes it a task to revise, due when the document is due 85ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > retirement cancels the open task 107ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the task ends with the version it was for > a new version’s approval completes the old task and writes one for the new version 261ms
+ ✓ tests/db/qms-periodic-review-reminders.dbtest.ts > the due-date sweep reads the lead the task carries > notifies a review task due in 20 days once, and not a task without a lead 123ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > returns every assignee under the bound, not the first ten 39ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > counts the assignees in SQL, so a truncated list is still reportable 18ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > reports unassigned work instead of dropping it, so the parts sum to the whole 15ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > measures an empty unassigned bucket rather than omitting it 17ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > orders tied assignees deterministically, so two identical reads agree 35ms
+ ✓ tests/db/task-analytics-whole-board.dbtest.ts > loadTaskAnalytics measures the whole board > stays inside the authenticated organization 18ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > A starts a task for its own program and reads it back 200ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, positive control (D3) > the route refuses B's task and B's program to A's token 31ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > reads none of B's drafting tasks, by id, by program, or by scanning the content 6ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot rewrite or delete B's draft 7ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > tenant A's scope cannot reach tenant B's drafts (D3) > cannot file a task under B's program, or under no program at all 6ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > A's scope reads and writes its own program's tasks 5ms
+ ✓ tests/db/drafting-tasks-tenant-scope.dbtest.ts > what still reaches the drafts (D3) > the platform scope reads every organization's tasks 2ms
+ ✓ tests/db/task-link-completion-lock-order.dbtest.ts > a link and a completion over the same two tasks > queue one behind the other — neither is aborted as a deadlock victim 165ms
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > a deploy does not sign out a session that was active a minute ago 1366ms
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > a session idle past its window is refused on every process 338ms
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > the concurrent-session limit counts every process's sign-ins, and a session it ends is ended everywhere 493ms
+ ✓ tests/db/session-activity-across-tasks.dbtest.ts > sessions across server processes > signing out on one process frees the slot for every process 392ms
+ ✓ tests/db/ai-action-leases-across-tasks.dbtest.ts > AnA action coordination across server processes > a write action holding a document's lock on one task blocks the same write on the other 1277ms
+ ✓ tests/db/ai-action-leases-across-tasks.dbtest.ts > AnA action coordination across server processes > one organisation's lock never blocks another organisation's target with the same id 367ms
+ ✓ tests/db/ai-action-leases-across-tasks.dbtest.ts > AnA action coordination across server processes > a lapsed lock is taken over 1557ms
+ ✓ tests/db/ai-action-leases-across-tasks.dbtest.ts > AnA action coordination across server processes > the per-organisation cap counts every task's running actions 478ms
+ Test Files  14 passed (14)
+      Tests  115 passed (115)
