@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat 3ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure 0ms
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names an n/N whose numerator coincides with another claimed cell's number 7ms
+   → expected { state: 'removed' } to deeply equal { state: 'changed', …(1) }
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check 0ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  16:06:32
+   Duration  490ms (transform 97ms, setup 99ms, import 23ms, tests 17ms, environment 0ms)
+

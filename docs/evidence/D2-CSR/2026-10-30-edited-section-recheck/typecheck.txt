@@ -1,0 +1,25 @@
+Full: NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .  -> Killed (exit 137, OOM) on this 15 GB container while other lanes ran.
+
+Scoped (root tsconfig, files = the 3 changed modules + 2 tests, imports pulled transitively). Errors in touched files: 0
+The remaining errors are ambient declarations a files-only config does not load (express Request augmentation, .js shims):
+server/db/requestDbLease.ts(51,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(51,42): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(61,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/db/requestDbLease.ts(82,39): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(220,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/ana/AnaToolExecutor.ts(58,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(180,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/authoring/authoring-permissions.ts(125,24): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/cmc/link-to-module3.ts(36,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

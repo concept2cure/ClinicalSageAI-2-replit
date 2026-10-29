@@ -1,0 +1,11 @@
+ci:launch-scope-api: 545 API paths named by launch and shell screens; none refused. {"launch":495,"infrastructure":2,"never-gated":48}
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:190:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1062 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+    L113  tables=[users]
+      const named = await client.query(`SELECT id, name FROM users WHERE id = ANY($1::int[])`, [[...new Set(out.map(r => r.userId))]]);
+
+Total: 1 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 0:
+  server/services/qms/training-compliance.ts#95906ea858e6:users

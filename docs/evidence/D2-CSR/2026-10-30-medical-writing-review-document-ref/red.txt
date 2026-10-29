@@ -1,0 +1,26 @@
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > returns the evidence finding for a saved CSR section whose figure differs from its retained cell 187ms
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > reconciles a section whose stated figure is its cell, as transcription agreement only 67ms
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > names a figure another section contradicts, by the section's id as well as its number 70ms
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > records an unreadable retained run as blocked, never as agreement 63ms
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > is not_assessed for a CSR that carries no claim receipts, and still lists the section's figures 50ms
+ × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > refuses rather than guesses: a non-CSR document, an unknown section, draft_text with a reference, no project 54ms
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > manuscriptHeadings is byte-identical to the trunk output 45ms
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > csrFreeText is byte-identical to the trunk output 46ms
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > csrPreDraft is byte-identical to the trunk output 47ms
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > unknownType is byte-identical to the trunk output 50ms
+ ✓ server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review without a document reference is unchanged > missingType is byte-identical to the trunk output 45ms
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > returns the evidence finding for a saved CSR section whose figure differs from its retained cell
+AssertionError: expected { …(14) } to match object { …(8) }
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > reconciles a section whose stated figure is its cell, as transcription agreement only
+AssertionError: expected undefined to match object { …(5) }
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > names a figure another section contradicts, by the section's id as well as its number
+TypeError: Cannot read properties of undefined (reading 'code')
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > records an unreadable retained run as blocked, never as agreement
+TypeError: Cannot read properties of undefined (reading 'status')
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > is not_assessed for a CSR that carries no claim receipts, and still lists the section's figures
+AssertionError: expected undefined to match object { status: 'not_assessed', …(2) }
+ FAIL  server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > refuses rather than guesses: a non-CSR document, an unknown section, draft_text with a reference, no project
+AssertionError: expected { …(14) } to match object { complete: false, …(1) }
++       "question": "Which validated analyses and TLFs support the claims, including failed endpoints, missing data, protocol deviations and sensitivity analyses?",
+ Test Files  1 failed (1)
+      Tests  6 failed | 5 passed (11)
