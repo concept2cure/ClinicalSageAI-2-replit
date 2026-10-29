@@ -1,0 +1,40 @@
+# item 4 applied, green (working tree)
+## launch-scope-device-features
+      Tests  3 passed (3)
+## launch-scope-api-gate
+      Tests  43 passed (43)
+## launch-reproof-narrowing
+      Tests  204 passed (204)
+## useRbqm
+      Tests  7 passed (7)
+## ci:launch-scope
+[ci:launch-scope] 7 apps · 53 surfaces · 13 modules · 34 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+## ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+## ci:launch-scope-api
+ci:launch-scope-api: 538 API paths named by launch and shell screens; none refused. {"launch":488,"infrastructure":2,"never-gated":48}
+## ci:launch-scope-api:selftest
+selftest PASSED — the gate flags a launch screen that production would refuse.
+## related suites, one file at a time
+server/middleware/__tests__/moduleEntitlementGate.test.ts exit=0  Tests 18 passed (18)
+server/services/entitlements/__tests__/launch-scope.test.ts exit=0  Tests 36 passed (36)
+server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts exit=0  Tests 7 passed (7)
+server/services/entitlements/__tests__/reporting-launch-claim.test.ts exit=0  Tests 19 passed (19)
+server/services/entitlements/__tests__/ind-launch-claim.test.ts exit=0  Tests 65 passed (65)
+server/services/entitlements/__tests__/company-documents-launch-claim.test.ts exit=0  Tests 10 passed (10)
+server/routes/__tests__/vault-legal-holds-launch-scope.test.ts exit=0  Tests 7 passed (7)
+server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts exit=0  Tests 15 passed (15)
+server/services/export/__tests__/recorded-downloads.contract.test.ts exit=0  Tests 36 passed (36)
+tests/ui-readiness/ui-surface-registry.test.ts exit=0  Tests 14 passed (14)
+tests/ui/surface-registry-coverage.test.ts exit=0  Tests 4 passed (4)
+client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts exit=0  Tests 7 passed (7)
+client/src/concept2cure/v2/__tests__/appsCatalogEntitlement.test.tsx exit=0  Tests 9 passed (9)
+client/src/concept2cure/v2/__tests__/workflowDiscovery.test.tsx exit=0  Tests 12 passed (12)
+client/src/concept2cure/v2/__tests__/appsLive.test.tsx exit=0  Tests 6 passed (6)
+client/src/concept2cure/v2/__tests__/appsLicenceLimitNotRecorded.test.tsx exit=0  Tests 1 passed (1)
+client/src/concept2cure/v2/__tests__/workflowAudit.test.tsx exit=0  Tests 120 passed (120)
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx exit=0  Tests 8 passed (8)
+client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx exit=0  Tests 253 passed (253)
+client/src/concept2cure/v2/__tests__/liveBranchRender.test.tsx exit=0  Tests 119 passed (119)

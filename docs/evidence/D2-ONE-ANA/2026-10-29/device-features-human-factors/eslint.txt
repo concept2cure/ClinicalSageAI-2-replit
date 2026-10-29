@@ -1,0 +1,21 @@
+server/routes/human-factors.ts | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+server/services/human-factors/hf-files-service.ts | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/surfaces/HumanFactors.tsx | head: 4 problems (0 errors, 4 warnings) | now: 4 problems (0 errors, 4 warnings)
+client/src/concept2cure/v2/projectDoors.ts | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx | head: 0 problems | now: 0 problems
+scripts/db/migration-set.mjs | head: 1 problem (0 errors, 1 warning) | now: 1 problem (0 errors, 1 warning)
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/__tests__/humanFactorsHonesty.test.tsx | head: 0 problems | now: 0 problems
+client/src/concept2cure/v2/__tests__/humanFactorsSummativeGate.test.tsx | head: 0 problems | now: 0 problems
+server/services/human-factors/__tests__/hf-files-service.pglite.integration.test.ts | head: 0 problems | now: 0 problems
+server/routes/__tests__/human-factors-read.test.ts | head: 0 problems | now: 0 problems
+server/routes/__tests__/human-factors-reads-the-project.test.ts | new | now: 0 problems
+client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx | new | now: 0 problems
+client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx | new | now: 0 problems
+tests/schema-contract/hf-engineering-files-program-key.pglite.test.ts | new | now: 0 problems
+
+Plain npx eslint <file> for now; git show HEAD:<file> | npx eslint --stdin --stdin-filename <file> for head.
+human-factors.ts: the one warning is the mitigate handler's complexity, at head and now (moved down by the new lines).
+HumanFactors.tsx: the same four warnings as head (function length, function complexity, two exhaustive-deps).
+migration-set.mjs: 'File ignored because of a matching ignore pattern', at head and now.

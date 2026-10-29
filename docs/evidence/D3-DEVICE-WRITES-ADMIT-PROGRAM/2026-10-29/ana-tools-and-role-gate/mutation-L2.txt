@@ -1,0 +1,13 @@
+Mutation L2: server/routes/mdx-labeling.ts, router.patch('/labeling/:id') without requireEditorAccess.
+Applied to the working-tree file, run, and restored from a copy of the fixed file.
+Diff (fixed -> mutant):
+  181c181
+  < router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Response) => {
+  ---
+  > router.patch('/labeling/:id', async (req: Request, res: Response) => {
+
+timeout 240 npx vitest run --config vitest.config.ts server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts
+Tests  2 failed | 22 passed (24)
+  × 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a viewer with the UDI write's 403, and sends nothing
+  × 'patch' '/api/mdx/labeling/1' takes an editing role > refuses a member with no role, and sends nothing
+Red confined to this route. Restored: sha256 ce7c3bfa9f5e662e… matched the fixed file.

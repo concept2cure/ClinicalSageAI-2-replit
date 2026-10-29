@@ -76,6 +76,8 @@ export const DEVICE_DOORS = {
   label: 'Write the label and IFU',
   /** Registration and UDI: each label's UDI against the device's UDI record, at check (section 6, slice 20). */
   udi: 'Check each label’s UDI',
+  /** Human factors and usability: the project's IEC 62366-1 HFE/UE file (section 5, slice 19). */
+  humanFactors: 'Build the usability engineering file',
   /** By the primary pathway: its regulatory strategy and its submission assembly, each in the pathway's feature. */
   pathway: {
     '510k': { strategy: 'Choose predicates and build the SE comparison', assembly: 'Assemble the eSTAR' },

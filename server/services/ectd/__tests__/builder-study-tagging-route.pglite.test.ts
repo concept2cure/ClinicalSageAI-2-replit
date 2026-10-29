@@ -20,6 +20,7 @@ import { expandRoleClaims } from '../../../middleware/auth';
 import { coreLeafFromSubmissionLeaf, mapCoreLeafToEctdLeaf, type SubmissionLeafRow } from '../core-to-packager';
 import { packageEctdSubmission } from '../../submission-gateways/regional-packager';
 import { ValidationError } from '../../submission-gateways/types';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
 let harness: IndPgliteDb;
 let sequenceId: number;
@@ -46,7 +47,7 @@ beforeAll(async () => {
   )).rows;
   sequenceId = sequence.id;
   work = await fs.mkdtemp(path.join(os.tmpdir(), 'builder-stf-route-'));
-  await fs.writeFile(path.join(work, 'report.pdf'), Buffer.from('%PDF-1.4\n% synthetic qualification only\ntrailer<< /Root 1 0 R >>\n%%EOF\n'));
+  await fs.writeFile(path.join(work, 'report.pdf'), minimalPdf('synthetic qualification only'));
 }, 60_000);
 
 afterAll(async () => {

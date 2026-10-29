@@ -12,6 +12,7 @@ import {
 } from '../stf-generator';
 import { FDA_STUDY_DATA_TRC } from '../../ind/ctd/regulatory-basis';
 import { packageEctdSubmission, type EctdLeaf } from '../../submission-gateways/regional-packager';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
 const leaf = (over: Partial<StfLeaf> & { studyId: string; fileTag: string }): StfLeaf => ({
   ctdSection: '5.3.5.1',
@@ -187,7 +188,7 @@ describe('STF XML shape: doc-content -> index.xml leaf ID, holding file-tag', ()
 });
 
 describe('regional packager writes the STF under its spec name and links it to index.xml leaf IDs', () => {
-  const pdf = (label: string) => Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+  const pdf = minimalPdf;
 
   it('ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml', async () => {
     const work = await fs.mkdtemp(path.join(os.tmpdir(), 'stf-shape-'));

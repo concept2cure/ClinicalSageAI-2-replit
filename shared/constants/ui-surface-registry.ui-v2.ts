@@ -367,7 +367,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/client-review', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -391,7 +393,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'shieldCheck',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/regulatory-programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/regulatory-programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -407,7 +411,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/study-design'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/clinical-studies', '/api/mdx/effective-context', '/api/mdx/rbm-attention', '/api/mdx/rbm-summary', '/api/mdx/study-archetypes', '/api/study-design'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -423,7 +429,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'code',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/software', '/api/mdx/software-summary'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -439,7 +447,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'wrench',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/engineering'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -455,7 +465,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'barcode',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/udi'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -471,7 +483,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'shieldAlert',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/capa-mdr'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/postmarket', '/api/capa-mdr'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -503,7 +517,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'vault',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/vault'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -519,7 +535,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'shieldAlert',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/submission-ops'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/submission-ops root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/submission-ops/blockers'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -535,7 +553,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'rocket',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/submission-ops'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/submission-ops root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/submission-ops/blockers'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -551,7 +571,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     group: 'device',
     icon: 'barChart3',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/analytics'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

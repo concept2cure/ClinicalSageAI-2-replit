@@ -1,0 +1,165 @@
+# Green, 2026-10-29, merged trunk d35b6bd59 plus this change and the compile-suite fixture fix (D7-ECTD-COMPILE-TRUNK-RED/2026-10-29).
+
+## Real PostgreSQL 16, RLS_ENFORCE=on, app_service: tests/db/ectd-filed-state-view.dbtest.ts
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+
+## Unit, PGlite and client: every suite under server/services/ectd, every compile-route suite, the filed-state card
+ ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts > lifecycle from the canonical spine (submission-id keyed) > sequence 0001 ships a delete (for the dropped 0000 leaf) + a new leaf
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replace under the same name keeps both acts, oldest first
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a document withdrawn and filed again says so
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > an append is its own document on file; the one it adds to keeps its own history
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > a replacement under a new name takes the history with it; the old name filed again starts its own
+ ✓ server/services/ectd/__tests__/filed-state-history.test.ts > the acts behind each document on file > the lifecycle read compile uses is the same fold, and carries no history
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared replace against the leaf its predecessor was filed as
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files a declared append against the leaf its predecessor was filed as
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > never files it beside the filed version: placed as new, it is the replace of its predecessor
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > binds a withdrawal naming the current version to the filed earlier version
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the withdrawal placed first: a version whose predecessor this sequence withdraws binds nothing
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > files the delete-and-new the author declared, the new version placed first: a version whose predecessor this sequence withdraws binds nothing
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what it binds to > leaves only the new version on file once the replace is filed
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses to choose when two filed leaves carry earlier versions of it
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses both when two versions of one document in a sequence supersede the same filed leaf, never picking one
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > refuses a version placed beside an act on its own filed predecessor
+ ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts > a later Vault version, on a filed one: what is never guessed > does not follow a link the database rules refuse
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > ships no bytes of its own, even when its row still names the document
+ ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared withdrawals > is recorded in the leaf manifest, so the sequence after it no longer holds the withdrawn leaf on file
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > folds the latest recorded compile of each earlier sequence, filed or not, and names the unfiled
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > the rehearsal prior state > the filed prior state never reads a rehearsal compile, even of a sequence that was sent
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > binds the declared replace and delete to the recorded, unfiled 0000, and says it is a rehearsal
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > the same sequence assembled for filing — as transmit assembles it — still refuses both acts
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > a prior recorded before leaf IDs cannot be acted on: both acts are left out, saying why — no pointer is guessed
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > assembling a follow-up sequence as a rehearsal > an original sequence has nothing to rehearse against, and says so
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > names the package a rehearsal and reports the unfiled sequences it was bound against
+ ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts > exporting a rehearsal > an export for filing keeps its name and binds only against filed sequences
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > folds every filed sequence up to the named one, each leaf pointing at the sequence that holds it
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > never reads another organisation’s filings of the same application number
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence that was compiled but never sent
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sent sequence whose only compile on record is a rehearsal
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence with no compile at all
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses when the application number is missing, without reading
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a declared act the assembly refused blocks, named with its reason — the package does not hold it
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a leaf document that is not approved blocks, as it does at transmit
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — what assembly left out, and what a withdrawal is > a withdrawal places nothing and renders nothing — it is neither coverage nor an unrenderable leaf
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > names the filed sequence it was diffed against, every act with its modified-file, and what was left out
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a follow-up sequence says what it does to the filed state > a follow-up with no filed sequence on record says so
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > a rehearsal of an original sequence is refused before anything is assembled
+ ✓ tests/routes/ectd-compile-lifecycle.test.ts > POST /:projectIdent/compile — a rehearsal is asked for, and says it is one > without the flag, a compile binds against filed sequences only
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2)
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it folds and the ones it does not, with the reason
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed"
+ ✓ server/services/ectd/qualification/__tests__/qualification-stf.test.ts > qualification reaches every generated STF > records original and lifecycle STF checks and explicit unvendored schema notes
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > refuses a follow-up sequence whose leaves carry no operation, rather than filing them all as new
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > carries a supplied operation and modified-file into the backbone
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > files a WITHDRAWAL with no bytes: a backbone delete, no file in the zip, no line in the md5 manifest
+ ✓ server/services/ectd/__tests__/package-leaf-bytes.test.ts > packageLeafBytes — lifecycle operations after sequence 0000 > REFUSES a leaf that carries no bytes and is not a withdrawal
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > reads a well-formed history oldest-first
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > DROPS an entry it cannot fully read, rather than reconstructing a partial prior state
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > readFiledSequences > is empty for a package that has filed nothing, or whose metadata is unreadable
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > is the fold of every sequence, not the last one: a later filing supersedes, an untouched leaf survives, and each carries the sequence that HOLDS it
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawn leaf drops out — it is no longer on file
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > a withdrawal filed WITHOUT the document's key still takes the keyed document off file
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > carries the pre-normalization digest into the prior state, and treats a malformed one as unreadable
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > foldFiledState > folds in sequence order however the history is ordered
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > 0000 is an original: every leaf is new, and no prior state is consulted
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a leaf on file but absent from this assembly stays on file — absence is not withdrawal
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence number already transmitted, for 0000 and for a follow-up alike
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a follow-up that does not say what it is filing — only 0000 is an original by definition
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > accepts what the region accepts, and names its terms when it asks for one
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a region with no vocabulary takes the operator at their word — the list is not invented
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > WITHDRAWS a named document, pointing the delete at the sequence that holds it
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawal names the identity of the document it withdraws, so the filed history records which one left
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a sequence that ONLY withdraws is a filing
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a withdrawal of something that is not on file, and one that contradicts what is being filed
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a withdrawn document leaves the prior state, so re-filing it later is NEW
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > follows a document through a change of FILE NAME, because the name is not its identity
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a renamed section whose CONTENT is unchanged still files nothing
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a history filed BEFORE leaf keys existed still matches on the path — the fallback is not optional
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > moving a document to a DIFFERENT CTD section is not a replace across sections — and the copy left on file is named
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > a new cover letter files as NEW, never as a replace of the one on file
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > the letter on file, unchanged, is not filed again as this sequence's letter
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > per-submission documents (FDA cover letters and forms) — sweep F13 > without the predicate (every region but FDA) a letter is diffed like any document
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > a document filed at TWO sections on purpose is not a move
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > names an empty-section placeholder still on file from before placeholders stopped being filed
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > planSequence > diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the reader skips a rejected entry; an entry with no state, or "transmitted", is on file
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > a "rejected" state that carries no recorded evidence does not un-file anything
+ ✓ server/services/ectd/__tests__/package-sequence-lifecycle.test.ts > a filing the agency rejected is not on file (sweep F19) > the rejected number is reused, diffed against the sequence before it, and the one after it is out of order
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a replace under a new name takes the leaf it names off file
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > an append leaves the leaf it adds to on file
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > the fold follows each act to the leaf it names > a pointer naming no leaf takes nothing off file, and no surviving leaf carries its own act
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a leaf absent from prior as new
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > marks a changed leaf (different checksum) as replace by default
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > honors appendOnChange to emit append instead of replace
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > omits an unchanged leaf (same checksum) by default
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > surfaces unchanged as a no-op append when includeUnchanged is set
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a prior leaf the new sequence does not mention is unchanged, NOT withdrawn
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a DECLARED withdrawal is a delete carrying the prior leaf's identity and checksum
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > refuses to withdraw a leaf that was never filed
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf)
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > a keyed leaf still matches an UNKEYED prior leaf by path — a history filed before keys existed is not re-filed whole
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > two DIFFERENTLY keyed leaves at one path are two documents — never a replace of one by the other
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > counts unchanged by what was MATCHED: a replaced leaf is not also reported as still on file
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > compares like with like: the desired md5 against the prior's PRE-normalization digest when it was recorded
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > handles a mixed sequence: new + replace + delete + unchanged together
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > throws on ambiguous duplicate identity in the desired set
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a new leaf carries NO modified-file
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a replace names the prior leaf by its backbone and ID, prefixed to the prior sequence
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > an append of a Module 1 leaf names the regional backbone, from the sequence root
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > a delete names the withdrawn prior leaf the same way
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > traverses to the sequence that last published the leaf, over the caller prefix
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > with no prefix and no sequence, names the backbone in the same root
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > never names a leaf by its file path: a prior leaf with only an href gets no modified-file
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > refuses to name a malformed ID or a backbone outside the sequence
+ ✓ server/services/ectd/__tests__/lifecycle-operator.test.ts > computeLifecycleOperations > modified-file pointer (ICH lifecycle requirement) > omits modified-file (rather than guessing) when the prior leaf is not identified at all
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error)
+ ✓ server/services/ectd/__tests__/release-signature-covers-sequence.test.ts > signedManifestCoversLeaves — does the signed manifest describe this sequence > treats the lifecycle operation as part of the leaf — a delete is not a new
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > maps lifecycle operations to RPS operation codes
+ ✓ server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts > JP_ECTD_V4_REQUIRED — a new Japanese application in v3.2.2 is blocked at dispatch > does not block a continuing sequence of a lifecycle begun in v3.2.2
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > a prior manifest drives a correct replace pointer on the next sequence
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > precise sub-sections keep distinct identity (no false replace across 3.2.S.1 vs 3.2.S.4.2)
+ ✓ server/services/ectd/__tests__/core-to-packager.test.ts > mapCoreLeafToEctdLeaf > refuses an unrecognised lifecycle op instead of filing it as new
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > returns the filed leaves as PriorLeaf[], each carrying the sequence that holds it
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > ALWAYS scopes both reads by organization_id (never cross-tenant)
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > refuses a named sequence that is not on file, instead of returning an empty prior
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > refuses without touching the DB when an identifier is missing
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > loadPriorSequenceManifest > refuses a garbage stored manifest, naming the sequence
+ ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts > a sequence's own withdrawals > loadPriorSequenceManifest leaves a withdrawn leaf out
+ ✓ server/services/ectd/controlled-vocab/__tests__/controlled-vocab.test.ts > v3.2.2 → v4.0 crosswalk (forward compatibility) > resolves FDA server path prefixes for grouped-submission lifecycle refs
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a compiled-but-never-transmitted sequence is not on file
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > and sequence 0002 therefore SHIPS the documents rather than calling them unchanged
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > an acknowledged sequence is on file just as a sent one is
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > a QUEUED sequence is not on file — pending is not sent
+ ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts > prior state counts only sequences that actually reached the agency > nothing transmitted yet means an empty prior state, not a fabricated one
+ Test Files  136 passed | 1 skipped (137)
+      Tests  1870 passed | 4 skipped (1874)

@@ -29,6 +29,7 @@ import { auditStudyIdTagging } from '../ectd-validator-hardening';
 import { stfCoverageFindings } from '../qualification/qualify';
 import { packageEctdSubmission, type EctdLeaf } from '../../submission-gateways/regional-packager';
 import { ValidationError } from '../../submission-gateways/types';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
 const ectdLeaf = (over: Partial<ECTDLeaf> & { sectionCode: string }): ECTDLeaf => ({
   title: 'Study report',
@@ -90,7 +91,7 @@ describe('auditStfCoverage — the one coverage check', () => {
 });
 
 function pdf(label: string): Buffer {
-  return Buffer.from(`%PDF-1.4\n% ${label}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+  return minimalPdf(label);
 }
 
 async function pack(region: 'fda' | 'ema', extra: Array<Partial<EctdLeaf> & { ctdSection: string; fileName: string }>) {

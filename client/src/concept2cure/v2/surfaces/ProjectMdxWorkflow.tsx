@@ -83,6 +83,9 @@ const WORK_DESTINATIONS: Record<string, WorkDestination> = {
      and slice 20 place them. Without the feature they keep the Author door they had. */
   labeling: { surface: 'labeling', label: DEVICE_DOORS.label, fallback: DOCUMENT_DESTINATION },
   'registration-udi': { surface: 'device-udi', label: DEVICE_DOORS.udi, fallback: DOCUMENT_DESTINATION },
+  /* The usability engineering file reads the open project's file (2026-10-29), so the package opens it, as section 5
+     and slice 19 place it. Without the feature it keeps the Evidence door it had. */
+  'human-factors-usability': { surface: 'human-factors', label: DEVICE_DOORS.humanFactors, fallback: EVIDENCE_DESTINATION },
   'authority-review': { stage: 'respond', label: DEVICE_DOORS.agencyResponses },
   postmarket: { surface: 'device-postmarket', label: DEVICE_DOORS.surveillance },
 };

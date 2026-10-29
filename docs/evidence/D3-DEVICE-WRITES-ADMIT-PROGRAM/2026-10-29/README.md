@@ -138,3 +138,7 @@ Writes that take no project id from the client, unchanged:
 ## One refusal helper (the lead, on commit)
 
 mdx-udi.ts and mdx-labeling.ts each had a byte-identical `admitProject`. It now lives once, in `server/lib/admit-project.ts`. Each route keeps a one-line delegate that passes its own logger, so the call sites are unchanged. After the move: the writes 39/39, the reads 20/20, `tests/mdx-beta-surfaces-routes` 27/27, and `ci:program-ownership-single-source` OK. mdx-udi.ts keeps head's two warnings; the other two files have none.
+
+## Correction (the same day)
+
+The hand-on above, that AnA's `create_udi_record` and `create_labeling_document` insert a model-supplied `program_id` with no ownership check, was wrong. It read only the handler bodies. Every AnA handler is registered through `registerToolHandler` (AnaToolExecutor.ts ~586-622), which runs `foreignProgramRefusal` (`programInOrganization`) and `writeRoleRefusal` before the handler. `ana-tools-and-role-gate/` pins this with a test: removing the wrapper's check sends both INSERTs under a foreign id. That folder also adds the missing role gate on the labeling writes.

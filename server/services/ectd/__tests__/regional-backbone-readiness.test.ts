@@ -24,8 +24,9 @@ import {
 import { packageLeafBytes } from '../package-leaf-bytes';
 import type { Region } from '../../submission-gateways/types';
 import { syntheticDtdStatus } from './_dtd-validation-fixture';
+import { minimalPdf } from './support/signed-pdf-fixture';
 
-const pdf = (l: string) => Buffer.from(`%PDF-1.4\n% ${l}\ntrailer<< /Root 1 0 R >>\n%%EOF\n`, 'utf8');
+const pdf = minimalPdf;
 
 /**
  * THE MODULE 1 FIXTURE — five leaves across FOUR distinct FDA headings.

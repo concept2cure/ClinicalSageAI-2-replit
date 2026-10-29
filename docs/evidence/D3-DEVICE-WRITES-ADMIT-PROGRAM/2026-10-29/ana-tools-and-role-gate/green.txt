@@ -1,0 +1,36 @@
+Green: working tree over ceea6843 with this slice's changes. Each file run alone:
+timeout 240 npx vitest run --config vitest.config.ts <file>
+
+server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts       Tests  24 passed (24)
+server/services/ana/__tests__/device-tools-admit-program.test.ts         Tests  16 passed (16)
+server/__tests__/routes/device-project-writes-admit-program.test.ts      Tests  39 passed (39)
+server/__tests__/routes/device-project-reads-admit-program.test.ts       Tests  20 passed (20)
+server/routes/__tests__/labeling-translations-shape.test.ts              Tests  3 passed (3)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts                   Tests  28 passed (28)
+server/services/ana/__tests__/tool-record-scope.test.ts                  Tests  18 passed (18)
+server/services/ana/__tests__/confirmed-write-role-gate.test.ts          Tests  9 passed (9)
+server/services/ana/__tests__/tool-selection.test.ts                     Tests  17 passed (17)
+
+tests/mdx-qms-labeling-search-analytics-routes.test.ts mocks requireEditorAccess to a pass-through, so its
+labeling posts are unchanged by the gate. device-project-writes-admit-program.test.ts posts as 'admin'.
+
+npm run -s ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+npm run -s ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+npm run -s ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1066 baselined interpolation(s) in 224 file(s); the baseline may only shrink.
+npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK (mdx-labeling.ts is baselined there at count 1; unchanged).
+npm run -s ci:tenant-resolvers
+OK: no new local tenant resolvers.
+
+Again at 90512f55, after the lead's push and a one-word fix to the route comment ("a dozen" -> "31"; sha256
+b56e532a…). Between ceea6843 and 90512f55 the push changed none of: the two routes, admit-project.ts, AnaToolExecutor.ts,
+tool-record-scope.ts, editor-role.ts, program-access.ts, orgMembership.ts, db.ts, api-response.ts, scripts/ci/, or any
+keep-green test (its 131 changed files are all elsewhere). These were re-run at the new head anyway:
+server/__tests__/routes/mdx-labeling-writes-require-editor.test.ts       Tests  24 passed (24)
+server/services/ana/__tests__/device-tools-admit-program.test.ts         Tests  16 passed (16)
+server/__tests__/routes/device-project-writes-admit-program.test.ts      Tests  39 passed (39)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts                   Tests  28 passed (28)
+ci:program-ownership-single-source OK; ci:sql-interpolation OK (1066, unchanged); npx eslint on the three files: 0 problems.

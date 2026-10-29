@@ -1,0 +1,26 @@
+# item 4 applied, red first: the new device check against the head registry (bbe7971e..ceea6843 claims, before any edit)
+# server/middleware/__tests__/launch-scope-device-features.test.ts
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > the walk reaches each device screen's own hooks, and each names a call 4ms
+ × server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > serves every call a device screen names, under the gate production builds 18ms
+ × server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+
+# what was refused or claimed at head:
++   "/api/mdx/rbm-attention (named as /api/mdx/rbm-attention:p)",
++   "/api/mdx/rbm-attention/1 (named as /api/mdx/rbm-attention:p)",
++   "/api/mdx/rbm-summary (named as /api/mdx/rbm-summary:p)",
++   "/api/mdx/rbm-summary/1 (named as /api/mdx/rbm-summary:p)",
++   "device-diagnostics /api/mdx",
++   "labeling /api/mdx",
++   "risk /api/mdx",
++   "device-workstream /api/mdx",
++   "device-clinical-studies /api/mdx",
++   "device-software /api/mdx",
++   "device-engineering /api/mdx",
++   "device-udi /api/mdx",
++   "device-postmarket /api/mdx",
++   "device-vault /api/mdx",
++   "device-validation /api/submission-ops",
++   "device-submission /api/submission-ops",
++   "device-analytics /api/mdx",

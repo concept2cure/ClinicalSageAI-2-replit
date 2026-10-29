@@ -18,6 +18,8 @@ import { authService } from '@/services/portal/authService';
 import { queryClient } from '@/lib/queryClient';
 import { getSurface } from '../../../../../shared/constants/ui-surface-registry';
 const programId = 'd979e567-4622-46f1-8cb7-8bf434227f25';
+/** The persona read sends actor headers from the signed-in token's own claims (182c4b0e), so the fixture token carries them. */
+const accessToken = `fixture.${btoa(JSON.stringify({ userId: currentUser.id, organizationId: currentUser.organizationId }))}.synthetic`;
 const type = { typeId: LIFECYCLE_CALENDAR_TYPE, label: 'Lifecycle Obligation Calendar', family: 'lifecycle', allowedScopes: ['account', 'program', 'project'], allowedClientSegments: ['pharma'], runnable: true, engine: 'domain', computedScope: 'organization', computedScopes: ['account', 'program', 'project'], entitled: true, truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true } };
 const calendar = calculateLifecycleCalendar({ observed_at: '2026-10-17T00:00:00Z', obligation_count: 2, event_count: 2,
   obligations: [
@@ -32,7 +34,7 @@ const report = renderReport({ reportTypeId: LIFECYCLE_CALENDAR_TYPE, reportTypeL
 afterEach(() => { cleanup(); authService.endSession(null); queryClient.clear(); apiRequest.mockReset(); delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT; sessionStorage.clear(); localStorage.removeItem('currentOrganizationId'); });
 describe('existing Insights lifecycle run', () => {
   it('runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer', async () => {
-    authService.setToken('signed-in-matrix-fixture', { id: String(currentUser.id), organizationId: String(currentUser.organizationId), permissions: currentUser.permissions }, 'fixture-refresh', 3600);
+    authService.setToken(accessToken, { id: String(currentUser.id), organizationId: String(currentUser.organizationId), permissions: currentUser.permissions }, 'fixture-refresh', 3600);
     localStorage.setItem('currentOrganizationId', String(currentUser.organizationId));
     (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: programId, title: 'Selected project', code: 'SEL' };
     apiRequest.mockImplementation(async (method: string, path: string) => {
@@ -46,7 +48,7 @@ describe('existing Insights lifecycle run', () => {
     render(<InsightsCanvas surface={getSurface('insights')!} segment="pharma" onNav={vi.fn()} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona', undefined, { Authorization: `Bearer ${accessToken}`, 'x-organization-id': String(currentUser.organizationId) });
     expect(await screen.findByText('Recorded private-source obligation')).toBeTruthy();
     const obligations = screen.getByRole('heading', { name: 'Recorded obligation calendar' }).closest('section')!;
     const obligationTable = within(obligations).getAllByRole('table')[1];

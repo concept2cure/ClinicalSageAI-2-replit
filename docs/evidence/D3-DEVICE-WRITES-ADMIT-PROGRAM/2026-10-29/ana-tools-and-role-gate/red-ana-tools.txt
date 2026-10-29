@@ -1,0 +1,49 @@
+AnA tools at head: no red in the tree, because the gap is closed at dispatch.
+
+1. The new test in the working tree. AnaToolExecutor.ts, tool-record-scope.ts and editor-role.ts are as at HEAD
+   (git diff empty). Nothing in this slice changed what the test exercises.
+   timeout 240 npx vitest run --config vitest.config.ts server/services/ana/__tests__/device-tools-admit-program.test.ts
+   Tests  16 passed (16)
+
+2. The handler bodies alone, which is what 8d37e8ad's README read: the same test with the wrapper's program check
+   removed (mutation A1). Both handlers send their INSERT under every id the model names.
+   How: tool-record-scope.ts and editor-role.ts are not this slice's to edit, even for a moment. A scratch vitest
+   config (mergeConfig over ./vitest.config.ts) aliases the executor's imports './tool-record-scope.js' and
+   '../part11/editor-role' to scratch copies with absolute imports. Each copy prints a load marker.
+   Control, unmutated copies: Tests  16 passed (16), markers:
+     [harness] control copy of editor-role.ts loaded
+     [harness] control copy of tool-record-scope.ts loaded
+   A1 diff against the control copy:
+     61a62,63
+     >   /* MUTANT A1: the program check is skipped. */
+     >   if (Date.now() > 0) return null;
+     179c181
+     < console.warn('[harness] control copy of tool-record-scope.ts loaded');
+     ---
+     > console.warn('[harness] a1 copy of tool-record-scope.ts loaded');
+   timeout 240 npx vitest run --config <scratch>/vitest.a1.config.ts server/services/ana/__tests__/device-tools-admit-program.test.ts
+   Tests  10 failed | 6 passed (16)
+  × 'create_udi_record' > refuses another organization's project, and writes no row
+      INSERT sent: udi_records program_id=bbbbbbbb…
+  × 'create_udi_record' > refuses a project that does not exist, and writes no row
+      INSERT sent: udi_records program_id=cccccccc…
+  × 'create_udi_record' > refuses the organization's own deleted project, and writes no row
+      INSERT sent: udi_records program_id=dddddddd…
+  × 'create_udi_record' > says so when ownership cannot be checked, and writes no row
+      INSERT sent: udi_records program_id=aaaaaaaa…
+  × 'create_udi_record' > files the record under the caller's own project, after asking
+      INSERT sent: udi_records program_id=aaaaaaaa…
+  × 'create_labeling_document' > refuses another organization's project, and writes no row
+      INSERT sent: labeling_documents program_id=bbbbbbbb…
+  × 'create_labeling_document' > refuses a project that does not exist, and writes no row
+      INSERT sent: labeling_documents program_id=cccccccc…
+  × 'create_labeling_document' > refuses the organization's own deleted project, and writes no row
+      INSERT sent: labeling_documents program_id=dddddddd…
+  × 'create_labeling_document' > says so when ownership cannot be checked, and writes no row
+      INSERT sent: labeling_documents program_id=aaaaaaaa…
+  × 'create_labeling_document' > files the record under the caller's own project, after asking
+      INSERT sent: labeling_documents program_id=aaaaaaaa…
+
+   aaaa… is the organization's own project; bbbb… another organization's; cccc… missing; dddd… the organization's
+   own, deleted. In the 'cannot be checked' case nothing was asked and the row went in under aaaa… anyway. In the
+   own-project case the row is right but was written without asking.

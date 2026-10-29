@@ -169,7 +169,9 @@ describe('the real registry, launch scope on', () => {
      note says its routes are /api/mdx/gateways), so every device-kit API
      answered as launch: risk items, clinical studies, IVD, labeling. Found by
      the AnA tool measurement (2026-09-26); the device kit is outside the launch
-     catalog. */
+     catalog. 2026-10-29: its features are Projects features since 62a8d5e7, so
+     what their screens call is served and the rest of the kit is not
+     (launch-scope-device-features.test.ts holds every call). */
   /* Express routes ignore letter case: app.use('/api/chat', …) serves
      /API/Chat/… too. The gate compared case-sensitively, so an upper-case
      /API/ skipped launch scope entirely (the gate judged only paths starting
@@ -178,28 +180,29 @@ describe('the real registry, launch scope on', () => {
      2026-10-22). The gate judges the path as Express routes it. */
   it('judges a path as Express routes it, whatever its letter case', async () => {
     for (const p of [
-      '/API/mdx/risk-items/1', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
-      '/api/mdx/qms/Suppliers', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
-      '/api/concept2cure/projects/ALL', '/api/mdx/Risk-Items/1',
+      '/API/mdx/imports', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
+      '/api/mdx/qms/Readiness', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
+      '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Rbm-Kris',
     ]) {
       expect(await refused(p), p).toBe(true);
     }
-    // And a launch path is still served in any case.
-    expect(await refused('/API/mdx/qms/Documents'), '/API/mdx/qms/Documents').toBe(false);
+    // And a launch path is still served in any case: suppliers are Quality's (P-48), the risk file a Projects feature (62a8d5e7).
+    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1']) expect(await refused(p), p).toBe(false);
   });
 
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
     /* /api/mdx/vault is the device kit's vault aggregator. It was passed here
        from 2026-09-26 on a walker misattribution (fixed in f9eee2670) and
        left the launch scope on 2026-10-22: the launch Vault reads
-       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/). */
-    for (const p of [
-      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris',
-      '/api/mdx/vault', '/api/mdx/vault/7/versions',
-    ]) {
+       /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/).
+       2026-10-29: the device vault, risk file, clinical studies and labeling are
+       Projects features (62a8d5e7) and their screens call these, so they are
+       served. The kit's other routes, which no launch screen calls, are not. */
+    for (const p of ['/api/mdx/rbm-kris', '/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages']) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
+      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/vault', '/api/mdx/vault/7/versions',
       '/api/mdx/gateways/transmittals',
       '/api/mdx/qms/documents',
       '/api/mdx/admin/users',
@@ -239,12 +242,13 @@ describe('the real registry, launch scope on', () => {
      /api/global-ri and /api/rim; project-home and program-journey claimed
      /api/rim; submission-center claimed all of /api/510k/estar. No launch
      screen calls any of them except the two eSTAR sub-paths Submission Center
-     uses. */
-  it('refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call', async () => {
-    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
+     uses. 2026-10-29: the 510(k), PMA and IVD features are Projects features
+     (62a8d5e7), and their official eSTAR panel calls official and build. */
+  it('refuses Global RI and RIM, and passes the eSTAR routes launch screens call', async () => {
+    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products']) {
       expect(await refused(p), p).toBe(true);
     }
-    for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+    for (const p of ['/api/510k/estar/submissions', '/api/510k/estar/assemble', '/api/510k/estar/official', '/api/510k/estar/build']) {
       expect(await refused(p), p).toBe(false);
     }
   });

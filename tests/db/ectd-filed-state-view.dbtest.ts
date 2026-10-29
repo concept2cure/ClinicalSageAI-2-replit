@@ -112,8 +112,11 @@ describe('the current view of what the agency holds', () => {
     expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(200);
     expect(res.body).toMatchObject({ submissionId, throughSequence: '0001' });
     expect(res.body.leaves).toEqual([
-      { ctdSection: '3.2.S.1', fileName: 'general-v2.pdf', title: 'general-v2.pdf (invented)', href: 'm3/general-v2.pdf', sequenceNumber: '0001', operation: 'replace', md5: 'c'.repeat(32) },
-      { ctdSection: '5.3.5.1', fileName: 'csr.pdf', title: 'csr.pdf (invented)', href: 'm3/csr.pdf', sequenceNumber: '0000', operation: 'new', md5: 'b'.repeat(32) },
+      { ctdSection: '3.2.S.1', fileName: 'general-v2.pdf', title: 'general-v2.pdf (invented)', href: 'm3/general-v2.pdf', sequenceNumber: '0001', operation: 'replace', md5: 'c'.repeat(32),
+        // The replacement under a new name carries the leaf it took off file (gap 6.2).
+        history: [{ sequenceNumber: '0000', operation: 'new', fileName: 'general.pdf' }, { sequenceNumber: '0001', operation: 'replace', fileName: 'general-v2.pdf' }] },
+      { ctdSection: '5.3.5.1', fileName: 'csr.pdf', title: 'csr.pdf (invented)', href: 'm3/csr.pdf', sequenceNumber: '0000', operation: 'new', md5: 'b'.repeat(32),
+        history: [{ sequenceNumber: '0000', operation: 'new', fileName: 'csr.pdf' }] },
     ]);
   });
 

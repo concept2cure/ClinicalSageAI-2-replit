@@ -1547,7 +1547,9 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
     }
     const leaves = state.leaves
       .map((l) => ({ ctdSection: l.ctdSection, fileName: l.fileName, title: l.title ?? null, href: l.href ?? null,
-        sequenceNumber: l.sequenceNumber ?? null, operation: l.operation ?? null, md5: l.md5 }))
+        sequenceNumber: l.sequenceNumber ?? null, operation: l.operation ?? null, md5: l.md5,
+        // The acts that put it there, oldest first (gap 6.2).
+        history: l.history.map((a) => ({ sequenceNumber: a.sequenceNumber, operation: a.operation, fileName: a.fileName })) }))
       .sort((a, b) => a.ctdSection.localeCompare(b.ctdSection, undefined, { numeric: true }) || a.fileName.localeCompare(b.fileName));
     return res.json({ projectIdent: ident, submissionId: spine.submissionId, applicationType: spine.applicationType,
       throughSequence: state.throughSequence, sequences: state.sequences, leaves });

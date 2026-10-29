@@ -1,0 +1,14 @@
+# Mutation m6-calendar-sentence-dropped, then restored from the fixed copy (sha256sum -c OK). REPORT_PDF_NOTO_CORE_DIR=<staged fonts> npx vitest run --config vitest.config.ts server/services/report-os/render/__tests__/render-organization-scope.test.ts
+
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > the register states it (the sentence the calendar reuses) 4ms
+ × server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > the lifecycle calendar under an open project states the register’s sentence above its obligations 6ms
+   → expected [ Array(1) ] to include 'Counts are the organisation\'s record…'
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > is read from the carried computedScope, not the type: a calendar computed over the project does not say it 1ms
+ × server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > reaches the exported PDF body 589ms
+   → expected 'Lifecycle Obligation Calendar Run #17…' to contain 'Counts are the organisation\'s record…'
+ FAIL  server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > the lifecycle calendar under an open project states the register’s sentence above its obligations
+AssertionError: expected [ Array(1) ] to include 'Counts are the organisation\'s record…'
+ FAIL  server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > reaches the exported PDF body
+AssertionError: expected 'Lifecycle Obligation Calendar Run #17…' to contain 'Counts are the organisation\'s record…'
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
