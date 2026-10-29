@@ -1,0 +1,316 @@
+# GREEN at ca574ff80 + this change (working tree)
+
+## The five new suites
+# npx vitest run <5 files>
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a project the organization does not own (404) is not-found 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an ownership check that could not run (503 VERIFICATION_UNAVAILABLE) is unchecked 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > the module gate (403 MODULE_NOT_LICENSED) is not-enabled 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > launch scope (403 LAUNCH_SCOPE) is out-of-release 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the route could not confirm (403 ORG_REQUIRED) is no-organization 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the IVD route could not confirm (403 IVD_NO_TENANT) is no-organization 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a role refusal (403, no code) is role 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a signature the act requires (428) is signature 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a server error (500) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a store that is not there (503 PENDING_STORE) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a 503 with no code is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a rejected request (400) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no response at all (0) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no status is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a genuine failure is no refusal 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names each refusal by what it is, and none of them as a failed read 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > only a genuine failure is "could not be read", and it can be tried again 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > offers a retry only where trying again can change the answer 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names the record that was not found when it is not the project 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 404 is not-found, with its status and code 64ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 59ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 is role, with its status and code 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 428 is signature, with its status and code 53ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 500 is failed, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a body that is not JSON is classified by its status alone 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > no response at all is a failure with status 0 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > an answer with data has no failure, and neither does an idle read 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a refetch clears the previous failure while it is in flight 106ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/IvdReadinessBoard.tsx classifies no refusal itself 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/Labeling.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/HumanFactors.tsx classifies no refusal itself 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/presub/PreSubManager.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/surfaces/UdiSurface.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/usePresub.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useUdi.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/projectScopedRead.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useEngineering.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 195ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > an ownership check that could not run (503) is said as itself, not as a failed read 56ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 45ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 34ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a role refusal (403) is said as itself, not as a failed read 34ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a signature the act requires (428) is said as itself, not as a failed read 29ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the check that could not run is tried again, and its answer is drawn 56ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a genuine failure (500) is still a failed read, with a retry 33ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > a Q-Sub not in this organization (404) is said as itself 16ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself 15ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > a genuine failure (500) is still a failed read 16ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 171ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 29ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 22ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 26ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 13ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 13ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the check that could not run is tried again, and its answer is drawn 49ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a genuine failure (500) is still a failed read 10ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a document not in this organization (404) is said as itself on both panels 37ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > the module gate (403 MODULE_NOT_LICENSED) on the translations is said as itself 24ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a genuine failure (500) of the translations is still a failed read 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a project the organization does not own (404) is said as itself, not as a failed read 230ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > an ownership check that could not run (503) is said as itself, not as a failed read 76ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a role refusal (403) is said as itself, not as a failed read 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the check that could not run is tried again, and its answer is drawn 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a genuine failure (500) is still a failed read on the panels 16ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 81ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 247ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 14ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 10ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an organization the route could not confirm (403 ORG_REQUIRED) is said as itself, to the reader and to AnA 8ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 6ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 6ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the check that could not run is tried again, and its answer is drawn 48ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a genuine failure (500) is still a failed read 7ms
+ Test Files  5 passed (5)
+      Tests  78 passed (78)
+
+## Keep-green: every suite of the touched modules (the four screens, the IVD board, useFetchJson's consumers under mdx/hooks and quality/, dataConnect, projectScopedRead's Risk / Design controls / Engineering mounts, queryClient)
+# npx vitest run --maxWorkers=4 <100 files>
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — 403 NOT_ENTITLED (the entitlement gate) > marks the outcome blockedByEntitlement with the server-named tier
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — 403 NOT_ENTITLED (the entitlement gate) > does NOT conflate a role 403 with the entitlement lock
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — existing outcomes unchanged > 422 surfaces the honest blockers (not an entitlement lock)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine (pure) > busy and idle states
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine (pure) > falls back honestly when the server named no tier
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > cleanRequestData (pure) — only typed keys travel > drops empty, whitespace and non-string entries and trims the rest
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > without opts sends useProgramData:false and an empty data map (today's behaviour)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — reset() > forgets the last outcome, and is stable across renders
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarEntitlement — the lock known before the first click > entitlementBlocksExport (pure): only an ENFORCED denial locks
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — formatting is not clean unless it was checked > a report without a verdict (an older server) cannot claim it checked everything
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > deviceProfileUrl (ident contract) > is null without an ident — no request for a deselected program
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > deviceProfileUrl (ident contract) > encodes the ident so a code with reserved characters cannot break the query
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — the five eSTAR device fields > exposes the five eSTAR device fields the profile carries (view mapping)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > passes available:false + unavailableReason through untouched — no fabricated hits
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > sends the same auth headers as the read path
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > returns null when the request itself fails — never a made-up classification
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > refuses an unusable query without issuing a request
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > builds and encodes multi-term queries
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > drops a sub-2-character deviceName rather than sending a query the server 400s
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > is null with no usable terms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > sends both terms so the server can prefer the typed code over the saved one
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > encodes the ident and accepts either term alone
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > is null with no usable terms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > keeps datasetLoaded distinct from an empty list
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > passes the unavailable envelope through untouched
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > sends the same auth headers as the read path
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > returns null when the request itself fails — never a made-up standard
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > refuses an unusable query without issuing a request
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > romanDeviceClass (openFDA numeric → profile Roman numerals) > maps 1/2/3 and passes Roman numerals through
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > romanDeviceClass (openFDA numeric → profile Roman numerals) > returns null — never a guess — for unclassified/unknown markers
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > accepts residual risk only through the signature dialog (the signed act)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > is null without an ident — the fetch stays idle
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > carries ident, type and variant, encoded
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > carries every marketing pathway the server accepts
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.product_name → Device profile · product name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.product_code → Device profile · product code
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.predicate_devices[0].kNumber → Device profile · first predicate · K-number
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.predicate_devices[0].name → Device profile · first predicate · name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.device_name → 510(k) project · device name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.regulation_number → 510(k) project · regulation number
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.product_code → 510(k) project · product code
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.name → Client workspace · name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.contact_email → Client workspace · contact email
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.contact_phone → Client workspace · contact phone
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > organizations.name → Organization · name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.common_name → Device profile · common name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.classification_name → Device profile · classification name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.regulation_number → Device profile · regulation number
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.associated_product_codes → Device profile · associated product codes
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.indications_for_use_citation → Device profile · indications for use citation
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_company_name → eSTAR registration · correspondent company name
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_contact_email → eSTAR registration · correspondent contact email
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_telephone → eSTAR registration · correspondent telephone
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.declaration_company_address → eSTAR registration · declaration company address
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > request → Entered for this export · not stored
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > names the absence of a source
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > never lets a store or column name through raw — including an unknown store
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > notSetWords (pure) — where the durable home is > names the declared home in the same words as a sourced value
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > notSetWords (pure) — where the durable home is > is null when the key has no declared home — the row stays export-only
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > no message ⇒ no error
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > 404 (the route refused the ident org-scoped) ⇒ not-found
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > 422 (field map not populated) ⇒ not-producible
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > reads the code token from a body cut at 200 characters — never JSON.parse
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > anything else — a 500, a proxy page, a network throw — ⇒ failed
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > every sentence survives ErrorState’s internals filter unchanged
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > 404 (not in this org) is a not-found sentence, never an empty field list
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > 422 (field map not populated) is a not-producible sentence, never an empty field list
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > builds and encodes the query with optional filters
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > omits the studyType filter for "any" and skips blank years
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > is null under 2 characters — the server would 400 it
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > articleToRecordEntry (record payload contract) > derives the year from the leading pubDate digits
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > articleToRecordEntry (record payload contract) > records no year when the pubDate has none — never an invented date
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screeningReadUrl (query contract) > reads the whole scope trail when nothing is narrowed
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screeningReadUrl (query contract) > carries the program scope and the on-screen pmids
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > accepts the well-formed payload (the guard did not gut the happy path)
+ ✓ client/src/concept2cure/v2/__tests__/dataConnectShapeGuard.test.tsx > liveGetOrNull shape guard — does not reject what is legitimate > is unchanged when no guard is passed (the 100+ existing call sites)
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > shows none of the file's records when the read is not keyed to the project
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > says why the file is not shown, in one spelling
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > offers no use-scenario write into a file it cannot tie to the project
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not hand AnA the hidden file as this screen’s
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > renders the file, and the add control, once the route reports it keyed to the project
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not promise that a recorded file appears here while the read is not keyed
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not offer AnA a file-creation action nothing performs
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > keeps the original empty hint once the route reports the read keyed to the project
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not say adding a use scenario is audit-logged, which the route does not record
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a 510(k) device project is offered it on regulatory strategy, and it opens the Pre-Sub manager
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a 510(k) samd project is offered it on regulatory strategy, and it opens the Pre-Sub manager
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a 510(k) ivd project is offered it on regulatory strategy, and it opens the Pre-Sub manager
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a 510(k) cdx project is offered it on regulatory strategy, and it opens the Pre-Sub manager
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > an EU filing added to a 510(k) keeps the door, and an EU filing added to an EU filing does not add it
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > a 510(k) device project opens the label and IFU, and the UDI check
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > a 510(k) samd project opens the label and IFU, and the UDI check
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > a 510(k) ivd project opens the label and IFU, and the UDI check
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the label and UDI doors: every device route > a 510(k) cdx project opens the label and IFU, and the UDI check
+ ✓ client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx > the signed approval > a password the ceremony did not accept (401) is said once, ending "Nothing was signed."
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) device project opens the project's usability engineering file from human factors
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) samd project opens the project's usability engineering file from human factors
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) ivd project opens the project's usability engineering file from human factors
+ ✓ client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > a 510(k) cdx project opens the project's usability engineering file from human factors
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a failed read (500) says so
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal outside the release (403 LAUNCH_SCOPE) says so
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an organization the route could not confirm (403 IVD_NO_TENANT) says so
+ ✓ client/src/concept2cure/v2/__tests__/riskAcceptResidualSigned.test.tsx > the signed acceptance > a password the ceremony did not accept (401) is said once, ending "Nothing was signed."
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows none of another project's DHF, trace, change-request or non-conformance rows
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says why each of the three panels is not shown
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not read for the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the all-clear when the risk file has records and all are verified
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > treats an unreported scope as not keyed (fail closed)
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > renders the panels again once the route reports them keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this project's
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > prints them once the route reports change requests and the DHF keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > lists and counts the documents once the route reports them keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say the records are organization-wide when the route did not report it
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not promise that records appear here while the read is not keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say an unreported read is organization-wide in its empty hint
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the original empty hints once the route reports the panels keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=true)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=false)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > marks satisfied prerequisites and leaves the rest missing
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > handles null/undefined as nothing satisfied
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > preserves the canonical prerequisite order and set
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > flips the toggled prerequisite and preserves the rest as booleans
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > toggles a held prerequisite off
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > emits all four camelCase boolean fields
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > carries the stored correspondent/declaration values so a toggle cannot blank them
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > reads the five fields and nothing else
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > is all-null for a missing row or a row without the columns — never a placeholder
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > keeps the field list in display order, the declaration name before its address
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentPatch (PUT /registration body for the text block) > sends every text field trimmed, an emptied one as null, and preserves the booleans
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > returns the bare endpoint when no filters are set
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > scopes to a project (the PM-spine view)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > combines status and project filters
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > ignores a non-positive or non-integer projectId rather than widening the query
+ ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx > an editor, and a session that does not say > a session with no permissions array is offered them: the server decides (canGovernedWrite)
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.detailOfSelectedRow.test.tsx > usePresubDetail — with an id, every render is pending, delivered or failed > never reports no detail, not loading and no error (the frame that read "Package in draft")
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > shows none of the organization’s first labeling document, and says why
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > makes no organization-wide labeling read
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > with the project, reads only that project’s labeling documents
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > gives the true reason on the screen: no project is open
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > gives AnA the same reason
+ ✓ client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx > Labeling — record panels wait for a project-keyed read (slice 0) > tells AnA the records are not shown, not another project’s document
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — real rows render > derives the 820.30 checklist from the real rows (no hardcoded have/have-not)
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — honest empty and error states > shows an honest empty state (no seed rows) when the org has no design inputs
+ ✓ client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx > DesignControls — honest empty and error states > shows an honest error (no cached sample) when the store fails
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not report hazards as controlled when no residual risk has been evaluated
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > never renders a benefit-risk determination, in any state
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not claim a hazard has no risk controls when it never read them
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk when the read failed
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk over an empty register
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > still reports a clean residual-risk picture when every hazard carries a recorded acceptance
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > joins catalog and mappings; missing or invalid applicability is honestly unmapped
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > keeps null-vs-empty distinct: null catalog → null, empty catalog → []
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > groups by chapter preserving catalog order
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > useCerGspr (fetch contract) > fans out to catalog + mappings + coverage and merges
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > useCerGspr (fetch contract) > with no program only the catalog loads — no per-program requests are issued
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx > EngineeringSurface — the trace is the project's > hides the trace again if its read stops reporting it keyed (fail closed)
+ ✓ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx > Labeling — warnings and precautions > claims no register and no warnings-to-risk-file trace (without the project)
+ ✓ client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx > Labeling — warnings and precautions > claims no register and no warnings-to-risk-file trace (with the project)
+ ✓ client/src/concept2cure/v2/__tests__/labelingMapping.test.ts > mapLabelTranslations — live labeling_translations adoption > passes an unresolvable language through as its own name (never blank)
+ ✓ client/src/concept2cure/v2/__tests__/labelingMapping.test.ts > mapLabelTranslations — live labeling_translations adoption > rejects the display fixture shape (has method/btv, not the DB columns)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > returns null for undefined payload
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > does not throw and returns null when data is null
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > returns null for an empty envelope object
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > maps an artifact row into the VaultFile view shape
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > maps status: lockedAt wins, review passes through, unknown → draft
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useVault.qa.test.ts > selectVaultFiles (envelope null-safety + row mapping) > falls back to family and system author when fields are null
+ ✓ client/src/concept2cure/v2/__tests__/riskMapping.test.ts > mapRiskItems — live risk_items adoption > rejects an empty list (nothing to adopt)
+ ✓ client/src/concept2cure/v2/__tests__/riskMapping.test.ts > mapRiskItems — live risk_items adoption > rejects the display fixture shape (string sev/prob, no numeric severity)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > matches by keyword, exact title, and normalized id
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > never counts unauthored rows — a blocker row is a gap even with a perfect title
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > never over-credits: an unrelated label matches nothing
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > returns [] for an empty section list
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > assessCerStructure (server contract) > POSTs presentSectionIds + equivalenceClaimed with auth headers
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > assessCerStructure (server contract) > returns null on failure — never a fabricated pass
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptEndpoint > keeps met as a tri-state (true / false / null)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > is null with no terms — the hook stays idle while the primary source is healthy
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > drops a sub-2-character deviceName rather than sending a query the server 400s
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > encodes both terms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the date due after the last signed review, not the date the approval signed
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the row date when the server sends no review
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > reads the canonical shape-2 row the mdx list returns
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > falls back to the deprecated shape-1 spellings for a not-yet-reconciled database
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > drops rows without a device name rather than rendering a nameless record
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (-1)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (1.5)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (not-a-count)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > does not coerce unknown or 510(k) programs into IVDR
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useAnalytics.qa.test.ts > selectAnalytics (double-deref null-safety) > returns all-null for undefined payload
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useAnalytics.qa.test.ts > selectAnalytics (double-deref null-safety) > does not throw and returns all-null when data is null
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useAnalytics.qa.test.ts > selectAnalytics (double-deref null-safety) > does not throw when data is an empty object
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useAnalytics.qa.test.ts > selectAnalytics (double-deref null-safety) > passes through populated fields
+ Test Files  100 passed (100)
+      Tests  950 passed (950)
+
+## Scoped typecheck (tsc over the changed files and everything they import; repo compiler options; scratch tsconfig lists them plus node_modules/vite/client.d.ts for the *.module.css declarations the file list otherwise lacks)
+NODE_OPTIONS=--max-old-space-size=8000 npx tsc -p tsconfig.rnfr.json -> exit 0, 0 errors
+
+## ESLint (npx eslint --no-ignore <file>): errors 0; warnings per file, HEAD vs now (the pre-push ratchet's count)
+client/src/lib/queryClient.ts  HEAD=3 now=3
+client/src/concept2cure/mdx/hooks/useFetchJson.ts  HEAD=2 now=2
+client/src/concept2cure/mdx/hooks/usePresub.ts  HEAD=0 now=0
+client/src/concept2cure/mdx/hooks/useUdi.ts  HEAD=1 now=1
+client/src/concept2cure/mdx/hooks/useEngineering.ts  HEAD=1 now=1
+client/src/concept2cure/mdx/presub/PreSubManager.tsx  HEAD=3 now=3
+client/src/concept2cure/mdx/surfaces/UdiSurface.tsx  HEAD=1 now=1
+client/src/concept2cure/v2/dataConnect.tsx  HEAD=0 now=0
+client/src/concept2cure/v2/projectScopedRead.tsx  HEAD=0 now=0
+client/src/concept2cure/v2/surfaces/Labeling.tsx  HEAD=2 now=2
+client/src/concept2cure/v2/surfaces/HumanFactors.tsx  HEAD=4 now=4
+client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx  HEAD=0 now=0
+client/src/lib/apiErrorCode.ts  (new) now=0
+client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts  (new) now=0
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx  (new) now=0
+client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx  (new) now=0
+client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx  (new) now=0
+client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx  (new) now=0

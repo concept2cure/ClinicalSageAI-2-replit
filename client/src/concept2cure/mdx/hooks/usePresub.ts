@@ -27,7 +27,7 @@ import type {
   Commitment,
   DossierLink,
 } from '../data/presub';
-import { useFetchJson } from './useFetchJson';
+import { useFetchJson, type ReadFailure } from './useFetchJson';
 import { isRecord, shapeMismatch } from '../lib/payloadShape';
 
 interface ServerQSubListRow {
@@ -171,6 +171,9 @@ export interface UsePresubListResult {
   kpis: PresubKpi[] | null;
   loading: boolean;
   error: string | null;
+  /** What the failed read was (readFailureFor). Null for a body it could not
+   *  read, which is a failed read with no status to classify. */
+  failure: ReadFailure | null;
   refresh: () => void;
 }
 
@@ -220,7 +223,7 @@ function deriveKpis(list: PresubListRow[]): PresubKpi[] {
  */
 export function usePresubList(programId: string | null): UsePresubListResult {
   const url = programId ? `/api/q-sub?program_id=${encodeURIComponent(programId)}` : null;
-  const { data, loading, error, refresh } = useFetchJson<ListPayload>(url);
+  const { data, loading, error, failure, refresh } = useFetchJson<ListPayload>(url);
   /* Server shape is structurally identical to PresubListRow — assert
      through a single typed bridge rather than copying field-by-field. */
   /*
@@ -262,6 +265,7 @@ export function usePresubList(programId: string | null): UsePresubListResult {
     kpis: list ? deriveKpis(list) : null,
     loading,
     error: failed,
+    failure: error ? failure : null,
     refresh,
   };
 }
@@ -272,6 +276,8 @@ export interface UsePresubDetailResult {
   detail: PresubDetail | null;
   loading: boolean;
   error: string | null;
+  /** What the failed read was (readFailureFor), once it has settled. */
+  failure: ReadFailure | null;
   /** Re-run the detail fetch. Its failure state had no way out without one. */
   refresh: () => void;
 }
@@ -296,7 +302,7 @@ export interface UsePresubDetailResult {
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
   /* Canonical envelope: server returns { data: ServerQSubDetail }. */
-  const { data, loading, error, refresh } = useFetchJson<{ data: ServerQSubDetail }>(url);
+  const { data, loading, error, failure, refresh } = useFetchJson<{ data: ServerQSubDetail }>(url);
   /* The URL whose fetch has started, and the body on hand when it did (the
      previous URL's). Set by an effect declared after useFetchJson's, so it
      lands in the same update as that fetch's `loading: true`: a render that
@@ -310,8 +316,8 @@ export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const current = started !== null && started.url === url;
   const fresh = current && data !== started.stale ? data : null;
   const detail = useMemo(() => (fresh ? adaptDetail(fresh.data) : null), [fresh]);
-  if (url === null) return { detail: null, loading: false, error: null, refresh };
+  if (url === null) return { detail: null, loading: false, error: null, failure: null, refresh };
   const settled = current && !loading;
   const failed = settled ? error ?? (detail === null ? shapeMismatch(url) : null) : null;
-  return { detail, loading: !settled, error: failed, refresh };
+  return { detail, loading: !settled, error: failed, failure: settled && error ? failure : null, refresh };
 }

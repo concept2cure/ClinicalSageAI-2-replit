@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, type DataState } from '../dataConnect';
+import { describeReadFailure, readRefusalOf } from '../../mdx/hooks/useFetchJson';
 
 /* ── The IVDR readiness board: the seven IVDR requirement families and the
    evidence filed against each, read from
@@ -14,8 +15,8 @@ import { useLiveData, EmptyState, type DataState } from '../dataConnect';
 
    With a project it asks for that project (`?program_id=`) and draws the
    answer only when the response says it covers that project. A refused read
-   (404 project not found, 403, 503 check unavailable) and a failed one each
-   say so; neither is an empty board. A family whose records could not be read
+   (readRefusalOf: 404 project not found, the 403s, 503 check unavailable) and a
+   failed one each say so; neither is an empty board. A family whose records could not be read
    is "Not read", and no overall figure is shown beside one.
 
    The IVDR requirement TAXONOMY (family id/label/annex-ref/blurb) comes from the
@@ -127,23 +128,21 @@ export type IvdReadinessView =
   | { kind: 'refused' | 'failed' | 'unconfirmed'; message: string }
   | { kind: 'ready'; data: IvdReadinessData; tally: IvdTally };
 
-/* A 403 is one of three facts here, told apart by the server's code: the module
-   gate's two (server/middleware/moduleEntitlementGate.ts) and the route's own
-   IVD_NO_TENANT, the organization it could not confirm. The gate sends
-   MODULE_NOT_LICENSED for a subscription that lacks the feature and for one an
-   administrator switched off alike, so this names neither. */
-const REFUSED_403: ReadonlyMap<string, string> = new Map([
-  ['MODULE_NOT_LICENSED', 'This feature is not enabled for your organization, so the IVDR readiness was not read.'],
-  ['LAUNCH_SCOPE', 'This part of the product is not in this release, so the IVDR readiness was not read.'],
-]);
-
-/** What the board may draw from a read. Only a response that says it covers what was asked for is drawn. */
+/** What the board may draw from a read. Only a response that says it covers what was asked for is drawn.
+ *
+ * A refusal is told apart from a failed read by the one read classifier
+ * (readRefusalOf, mdx/hooks/useFetchJson.ts), which holds the board's former
+ * local copy (a86ed04ed): the module gate's MODULE_NOT_LICENSED and
+ * LAUNCH_SCOPE, the route's IVD_NO_TENANT, a project not in the organization
+ * (404) and an ownership check that could not run (503 VERIFICATION_UNAVAILABLE).
+ * A 404 with no project open is not a project refusal, and stays a failed read. */
 export function ivdReadinessView({ programId, read }: Pick<IvdReadiness, 'programId' | 'read'>): IvdReadinessView {
   if (read.loading) return { kind: 'loading' };
   if (read.error || !read.data) {
-    if (read.status === 404 && programId) return { kind: 'refused', message: 'This project was not found in your organization, so its IVDR readiness was not read.' };
-    if (read.status === 403) return { kind: 'refused', message: REFUSED_403.get(read.code ?? '') ?? 'Your organization could not be confirmed, so the IVDR readiness was not read.' };
-    if (read.status === 503) return { kind: 'refused', message: 'The project check or the IVD records were unavailable, so the IVDR readiness was not read. Retry shortly.' };
+    const refusal = read.error ? readRefusalOf(read) : null;
+    if (refusal && (refusal !== 'not-found' || programId)) {
+      return { kind: 'refused', message: describeReadFailure(refusal, 'the IVDR readiness').message };
+    }
     return { kind: 'failed', message: 'The IVDR readiness could not be read. Nothing here is a finding about the technical file.' };
   }
   const d = read.data;

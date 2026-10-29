@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { readRefusalOf, type ReadRefusal } from '../../mdx/hooks/useFetchJson';
+import { ReadRefused, unreadContext } from '../projectScopedRead';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentState } from '../assessmentState';
@@ -105,14 +107,14 @@ function hfThrownReason(e: unknown): string {
    published as itself. Null when a file is drawn and the full context applies. */
 const HF_CTX = 'Human factors (IEC 62366-1): ';
 function hfNotReadyContext(s: {
-  programId: string | null; projectOpen: boolean; loading: boolean; error: boolean; noFile: boolean; keyed: boolean;
+  programId: string | null; projectOpen: boolean; loading: boolean; error: boolean; refusal: ReadRefusal | null; noFile: boolean; keyed: boolean;
 }): { summary: string; availableActions?: string[] } | null {
   if (!s.programId) {
     const why = s.projectOpen ? "the open project can't be read by project here" : 'No project is open';
     return { summary: `${HF_CTX}${why}, so no HFE/UE file is read or shown. Nothing is claimed here about any usability engineering file.`, availableActions: ['Open a project from Projects'] };
   }
   if (s.loading) return { summary: 'The HFE/UE file is still loading; nothing on screen is final yet.' };
-  if (s.error) return { summary: 'The human-factors store could not be read, so this screen is showing no HFE/UE file because of a failure, not because none exists.', availableActions: ['Retry the HFE/UE file read'] };
+  if (s.error) return unreadContext(s.refusal, 'the HFE/UE file', HF_CTX, 'Retry the HFE/UE file read', 'The human-factors store could not be read, so this screen is showing no HFE/UE file because of a failure, not because none exists.');
   /* Slice 0 audit 2: AnA is offered no action nothing performs. Keyed, the
      screen itself offers "Start the usability file" (slice 19). Unkeyed, a
      file recorded later would not be shown here either, and AnA is told so. */
@@ -151,6 +153,13 @@ export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
     [programId, reads],
   );
   const file = hf.data;
+  /* A refused read is said as what it is, not as a failed one (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/): the route
+     answers 403 ORG_REQUIRED, refuses a project the organization does not own
+     (404) or could not check (503), and sits behind the module gate (403), and
+     each was drawn as "Couldn't load the HFE/UE file". Null for a genuine
+     failure, which still is. */
+  const hfRefusal = hf.error ? readRefusalOf(hf) : null;
   /* Slice 0 (INFORMATION_ARCHITECTURE.md, `human-factors` row): the read
      returned the organization's FIRST file, which may be another project's.
      Its panels, and the writes into it, render only when the route reports the
@@ -423,7 +432,7 @@ export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
   const anaContext = useMemo(() => {
     const notReady = hfNotReadyContext({
       programId, projectOpen: openProject != null, loading: hf.loading, error: Boolean(hf.error),
-      noFile: hf.empty || !file, keyed,
+      refusal: hfRefusal, noFile: hf.empty || !file, keyed,
     });
     if (notReady) return notReady;
     return {
@@ -475,7 +484,7 @@ export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
         'Mark an HFE/UE file element present or absent (written to the HFE/UE record and audit-logged)',
       ],
     };
-  }, [programId, openProject, hf.loading, hf.error, hf.empty, file, keyed, device, compPct, hfe, risk, firstUnmit, scenarios]);
+  }, [programId, openProject, hf.loading, hf.error, hfRefusal, hf.empty, file, keyed, device, compPct, hfe, risk, firstUnmit, scenarios]);
   usePublishSurfaceContext('human-factors', anaContext);
 
   /* ── Honest states: no project / loading / error / empty (no fixture fallback) ── */
@@ -495,6 +504,13 @@ export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
         <EmptyState title="Loading the HFE/UE file…" />
+      </div>
+    );
+  }
+  if (hfRefusal) {
+    return (
+      <div className="hf" style={{ maxWidth: 1140 }}>
+        <ReadRefused refusal={hfRefusal} what="the HFE/UE file" retry={() => setReads((n) => n + 1)} testId="hf-refused" />
       </div>
     );
   }
