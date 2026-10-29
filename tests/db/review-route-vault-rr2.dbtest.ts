@@ -449,3 +449,45 @@ describe('adding a reviewer to an open route (RR2, §2.10)', () => {
     expect(byWho('r2').reviewer).toBeNull();
   });
 });
+
+/* ── RR2 records (2026-10-29) ─────────────────────────────────────────────────
+   Design issues 1 and 2 of docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR2/:
+   an earlier approver's signature was recorded exactly as the last one. */
+const signatureRows = async (id: string) => (await owner.query(
+  `SELECT id, signer_id, signer_name, signed_at, signature_type, upper(signature_meaning) AS meaning, signature_manifest
+     FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2 ORDER BY id`, [mine.orgId, `canonical_document:${id}`])).rows;
+async function trail(id: string): Promise<Array<{ event: string; signatureRef?: string | null }>> {
+  const { runWithTenantScope } = await import('../../server/db/tenantStore');
+  const { inTenantSnapshot } = await import('../../server/services/audit/compliance-reports/generate');
+  const { readRecordAuditHistory } = await import('../../server/routes/audit-trail-ledger.routes');
+  const { getPool } = await import('../../server/db/runtime');
+  const notWalked = async () => ({ ok: true, rowsChecked: 0, tenants: 1, legacyRows: 0, sequencedRows: 0 }) as never;
+  return runWithTenantScope({ tenantId: String(mine.orgId), orgUuid: mine.orgUuid, role: 'admin', source: 'request', caller: 'vault-rr2 records dbtest' } as never,
+    () => inTenantSnapshot(getPool() as never, mine.orgId, async (client) =>
+      (await readRecordAuditHistory(client as never, mine.orgId, { tableName: 'canonical_document', recordId: id }, notWalked)).data));
+}
+
+describe('an earlier Vault approval is its own record (RR2 records, Part 11 §11.50)', () => {
+  it('is its own signature type carrying k of n, and the audit trail never reads it as the approval', async () => {
+    const { id } = await sent('REC-APPROVALS', ['r1'], ['approver', 'approver2'], route(['r1'], ['approver', 'approver2']));
+    expect((await sign('r1', id, 'reviewed')).status).toBe(200);
+    expect((await sign('approver', id, 'approved')).body).toMatchObject({ approvalComplete: false, stage: 'in_review' });
+    const interim = (await signatureRows(id)).find((s) => s.meaning === 'APPROVED')!;
+    expect(interim.signature_type).toBe('regulated-document-lifecycle-interim-approval');
+    expect(interim.signature_manifest).toMatchObject({ approvalsRecorded: 1, approvalsRequired: 2, stage: 'in_review' });
+    const [signedLedger] = (await ledger(id, 'sign')).filter((r) => r.payload.meaning === 'APPROVED');
+    expect(signedLedger.payload).toMatchObject({ approvalsRecorded: 1, approvalsRequired: 2 });
+    expect.soft((await trail(id)).find((e) => e.signatureRef === `electronic_signatures:${interim.id}`)?.event)
+      .toBe('Version approval signed, 1 of 2 required; the version is not yet approved (e-signature)');
+
+    expect((await sign('approver2', id, 'approved')).body).toMatchObject({ approvalComplete: true, stage: 'approved' });
+    const final = (await signatureRows(id)).filter((s) => s.meaning === 'APPROVED')[1];
+    expect(final.signature_type).toBe('regulated-document-lifecycle');
+    expect(final.signature_manifest).toMatchObject({ approvalsRecorded: 2, approvalsRequired: 2 });
+    const events = await trail(id);
+    expect.soft(events.find((e) => e.signatureRef === `electronic_signatures:${interim.id}`)?.event)
+      .toBe('Version approval signed, 1 of 2 required; the version is not yet approved (e-signature)');
+    expect.soft(events.find((e) => e.signatureRef === `electronic_signatures:${final.id}`)?.event).not.toMatch(/required|not yet approved/);
+  });
+});
+

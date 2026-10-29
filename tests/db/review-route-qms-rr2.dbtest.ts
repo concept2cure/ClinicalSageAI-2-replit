@@ -11,8 +11,8 @@
  *     and they are told only then; until then their signature is refused
  *     before the credential;
  *   - two approvers: every named approver signs; the first approval is a
- *     signature (meaning APPROVED, the one approval recipe) that leaves the
- *     document in review, with no approval stamp and no periodic review
+ *     signature (meaning APPROVED, the one approval recipe, its own type since
+ *     RR2 records) that leaves the document in review, with no approval stamp and no periodic review
  *     scheduled; the last makes it effective on its own transaction (the
  *     20261001 guard holds), and the route completes; one digest throughout;
  *   - adding a reviewer re-blocks the approver, is refused once an approval is
@@ -149,6 +149,7 @@ beforeAll(async () => {
   app.use('/api', createAuthBoundary());
   app.use('/api/mdx', (await import('../../server/routes/mdx-qms')).default);
   app.use('/api/tenant-users', (await import('../../server/routes/tenant-users')).default);
+  app.use('/api/part11', (await import('../../server/routes/part11-compliance')).default);
 }, 120_000);
 
 afterAll(async () => {
@@ -221,9 +222,10 @@ describe('two QMS approvers (RR2, NEW-4: every named approver)', () => {
     expect(Number(done.approver_id)).toBe(actors.qa2.id);
     expect((await latestRoute(id)).status).toBe('complete');
     const sigs = await signatures(id);
-    const approvals = sigs.filter((s) => s.signature_type === 'qms-document-approval');
+    // RR2 records (2026-10-29): the first approval is its own type; only the last is the controlled-document approval.
+    const approvals = sigs.filter((s) => s.signature_meaning === 'APPROVED');
     expect(approvals.map((s) => Number(s.signer_id))).toEqual([actors.qa.id, actors.qa2.id]);
-    expect(approvals.every((s) => s.signature_meaning === 'APPROVED')).toBe(true);
+    expect(approvals.map((s) => s.signature_type)).toEqual(['qms-document-interim-approval', 'qms-document-approval']);
     expect(new Set(sigs.map((s) => s.bound_payload_digest)).size).toBe(1);
     expect(done.metadata.approval.contentDigest).toBe(approvals[1].bound_payload_digest);
   });
@@ -263,5 +265,154 @@ describe('adding a reviewer to an open QMS route (RR2, §2.10)', () => {
     expect(late.status, JSON.stringify(late.body)).toBe(409);
     expect(codeOf(late)).toBe('ROUTE_APPROVAL_STARTED');
     expect({ ledger: await ledgerCount(), members: await members(id) }).toEqual(before);
+  });
+});
+
+/* ── RR2 records (2026-10-29): an interim approval is its own record ─────────
+   Design issue 2 of docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR2/: an earlier
+   approver's signature carried the final approval's type, so the audit trail
+   read "Controlled document approved" and the compliance register could name
+   it as the approval of an SOP still in review. Each reader is read here as the
+   runtime role, on the rows the real approve route writes, and on a row stored
+   the way 37c17a3f0 wrote it (the final type, no share in its manifest). */
+const signatureRows = async (id: number) => (await owner.query(
+  `SELECT id, signer_id, signature_type, signature_meaning, signature_manifest FROM electronic_signatures
+    WHERE organization_id = $1 AND signed_target = $2 ORDER BY id`, [orgId, `qms-document:${id}`])).rows;
+const scope = () => ({ tenantId: String(orgId), orgUuid: null, role: 'admin', source: 'request', caller: 'qms-rr2 records dbtest' }) as const;
+const notWalked = async () => ({ ok: true, rowsChecked: 0, tenants: 1, legacyRows: 0, sequencedRows: 0 }) as never;
+async function trail(id: number): Promise<Array<{ event: string; signatureRef?: string | null }>> {
+  const { runWithTenantScope } = await import('../../server/db/tenantStore');
+  const { inTenantSnapshot } = await import('../../server/services/audit/compliance-reports/generate');
+  const { readRecordAuditHistory } = await import('../../server/routes/audit-trail-ledger.routes');
+  const { getPool } = await import('../../server/db/runtime');
+  return runWithTenantScope(scope() as never, () => inTenantSnapshot(getPool() as never, orgId, async (client) =>
+    (await readRecordAuditHistory(client as never, orgId, { tableName: 'qms-document', recordId: String(id) }, notWalked)).data));
+}
+async function reportRows(reportId: 'controlled-documents' | 'electronic-signatures', section: string): Promise<Array<Record<string, unknown>>> {
+  const { runWithTenantScope } = await import('../../server/db/tenantStore');
+  const { findReport } = await import('../../server/services/audit/compliance-reports/catalog');
+  const { runComplianceReport } = await import('../../server/services/audit/compliance-reports/generate');
+  const { platformIntegrityChecks } = await import('../../server/services/audit/compliance-reports/integrity-checks');
+  const { parseReportPeriod } = await import('../../server/services/audit/compliance-reports/period');
+  const { getPool } = await import('../../server/db/runtime');
+  const def = findReport(reportId)!;
+  const window = parseReportPeriod(def.period === 'range' ? { from: day(0), to: day(0) } : { to: day(0) }, def.period);
+  if (!window.ok) throw new Error(window.message);
+  const { data } = await runWithTenantScope(scope() as never, () => runComplianceReport(getPool() as never, def, orgId, window,
+    { walkChain: async () => ({ ok: null, reason: 'not walked by this probe' }) as never, checks: platformIntegrityChecks }));
+  return data.sections.find((s) => s.key === section)!.rows as Array<Record<string, unknown>>;
+}
+const documentRow = async (id: number) => (await reportRows('controlled-documents', 'documents')).find((r) => Number(r.id) === id)!;
+const signatureRow = async (sigId: number) => (await reportRows('electronic-signatures', 'signatures')).find((r) => Number(r.id) === sigId)!;
+/** The §11.50 manifestation read by target (GET /api/part11/signatures/by-target), as an inspector or the OQ reads it. */
+async function byTarget(id: number): Promise<Array<Record<string, unknown>>> {
+  const r = await http('admin', 'get', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${id}`)}`);
+  expect(r.status, JSON.stringify(r.body)).toBe(200);
+  return r.body.data;
+}
+const INTERIM_EVENT = 'Controlled document approval signed, 1 of 2 required; the document is not yet approved (e-signature)';
+const APPROVED_EVENT = 'Controlled document approved (e-signature)';
+
+/**
+ * An earlier approval stored as 37c17a3f0 wrote it: the governed ledger pair and
+ * one signature of the FINAL type, with no share in its manifest, stamped on the
+ * approver's route task. Written through the real writers, on the owner's
+ * transaction with the route writer's setting, since the code that wrote this
+ * shape is gone. Signatures are never rewritten, so a reader must read these.
+ */
+async function storedEarlierApproval(id: number, who: Who): Promise<number> {
+  const { recordGovernedAction } = await import('../../server/routes/c2c/actions');
+  const { persistGovernedActionSignature } = await import('../../server/services/part11/signature-persistence');
+  const header = await latestRoute(id);
+  const m = await memberOf(id, who);
+  const row = (await owner.query(`SELECT doc_number, version FROM qms_documents WHERE id = $1`, [id])).rows[0];
+  const client = await owner.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT set_config('c2c.review_route_writer', 'on', true)`);
+    const target = `qms-document:${id}`;
+    const reason = 'Approved as the designated QMS approver.';
+    const gov = await recordGovernedAction(client, { orgId, userId: actors[who].id, command: 'approve', target, reason, domain: 'qms', surface: 'api',
+      payload: { meaning: 'APPROVED', contentDigest: header.content_digest, bindingBasis: 'qms-document-version-content-sha256', docNumber: row.doc_number,
+        version: row.version, fromStatus: 'in_review', toStatus: 'in_review', approvalsRecorded: 1, approvalsRequired: 2 } });
+    const signed = await persistGovernedActionSignature(client, {
+      orgId, userId: actors[who].id, target, reason, payload: { meaning: 'APPROVED' }, actionId: gov.actionId, auditId: gov.auditId,
+      sha256Chain: gov.sha256Chain, authenticationMethod: 'password', secondFactorVerified: false, ipAddress: null, occurredAt: new Date(),
+      signatureType: 'qms-document-approval', command: 'approve',
+      binding: { digest: header.content_digest, basis: 'qms-document-version-content-sha256', note: 'as stored before 2026-10-29' },
+      extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule: 'enforced', originalAuthorId: actors.author.id, controlledTextAuthorUserIds: [] },
+    });
+    await client.query(`UPDATE unified_tasks SET route_signature_id = $1, status = 'completed', updated_at = now()
+      WHERE organization_id = $2 AND task_id = $3`, [signed.id, orgId, m.task_id]);
+    await client.query('COMMIT');
+    return signed.id;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+describe('an interim QMS approval is its own record (RR2 records, Part 11 §11.50)', () => {
+  it('the earlier approval is its own type, carrying k of n; only the last is the controlled-document approval', async () => {
+    const id = await draft('REC-TYPE');
+    expect((await send(id, [], ['qa', 'qa2'])).status).toBe(200);
+    expect((await approve('qa', id)).body.data.status).toBe('in_review');
+    const [interim] = await signatureRows(id);
+    expect(interim).toMatchObject({ signature_type: 'qms-document-interim-approval', signature_meaning: 'APPROVED' });
+    expect(interim.signature_manifest).toMatchObject({ approvalsRecorded: 1, approvalsRequired: 2, command: 'approve' });
+    expect((await approve('qa2', id)).body.data.status).toBe('effective');
+    const [, final] = await signatureRows(id);
+    expect(final).toMatchObject({ signature_type: 'qms-document-approval', signature_meaning: 'APPROVED' });
+    expect(final.signature_manifest).toMatchObject({ approvalsRecorded: 2, approvalsRequired: 2 });
+  });
+
+  it('the audit trail, the two compliance registers and the QMS register never call the earlier approval the approval', async () => {
+    const id = await draft('REC-READ');
+    expect((await send(id, [], ['qa', 'qa2'])).status).toBe(200);
+    expect((await approve('qa', id)).status).toBe(200);
+    const [interim] = await signatureRows(id);
+    expect.soft((await trail(id)).find((e) => e.signatureRef === `electronic_signatures:${interim.id}`)?.event).toBe(INTERIM_EVENT);
+    const mid = await documentRow(id);
+    expect.soft(mid).toMatchObject({ status: 'in_review', approval_signature_id: null, approval_signer_name: null, approval_meaning: null });
+    expect.soft(String(mid.interim_approvals)).toContain(actors.qa.name);
+    expect.soft(String(mid.interim_approvals)).toContain('1 of 2 required');
+    expect.soft(await signatureRow(Number(interim.id))).toMatchObject({ interim_approval: true, approval_share: '1 of 2' });
+    expect.soft((await qms('author', 'get', `/documents/${id}`)).body.data.approval_signature).toBeNull();
+
+    expect((await approve('qa2', id)).status).toBe(200);
+    const [, final] = await signatureRows(id);
+    const events = await trail(id);
+    expect.soft(events.find((e) => e.signatureRef === `electronic_signatures:${interim.id}`)?.event).toBe(INTERIM_EVENT);
+    expect.soft(events.find((e) => e.signatureRef === `electronic_signatures:${final.id}`)?.event).toBe(APPROVED_EVENT);
+    const done = await documentRow(id);
+    expect.soft(done).toMatchObject({ status: 'effective', approval_signature_id: Number(final.id), approval_signer_name: actors.qa2.name });
+    expect.soft(String(done.interim_approvals)).toContain(actors.qa.name);
+    expect.soft(String(done.interim_approvals)).not.toContain(actors.qa2.name);
+    expect.soft(await signatureRow(Number(final.id))).toMatchObject({ interim_approval: false, approval_share: '2 of 2' });
+    expect.soft((await byTarget(id)).map((r) => [Number(r.id), r.signature_type, r.interim_approval, r.approvals_recorded, r.approvals_required])).toEqual([
+      [Number(final.id), 'qms-document-approval', false, 2, 2], [Number(interim.id), 'qms-document-interim-approval', true, 1, 2],
+    ]);
+    expect.soft((await qms('author', 'get', `/documents/${id}`)).body.data.approval_signature).toMatchObject({ signatureId: Number(final.id), signerName: actors.qa2.name });
+  });
+
+  it('an earlier approval stored with the final type (before 2026-10-29) is read as interim from its route', async () => {
+    const id = await draft('REC-LEGACY');
+    expect((await send(id, [], ['qa', 'qa2'])).status).toBe(200);
+    const stored = await storedEarlierApproval(id, 'qa');
+    expect.soft((await trail(id)).find((e) => e.signatureRef === `electronic_signatures:${stored}`)?.event).toBe(INTERIM_EVENT);
+    expect.soft(await documentRow(id)).toMatchObject({ status: 'in_review', approval_signature_id: null, approval_signer_name: null });
+    expect.soft(await signatureRow(stored)).toMatchObject({ signature_type: 'qms-document-approval', interim_approval: true, approval_share: '1 of 2' });
+    expect.soft((await byTarget(id)).find((r) => Number(r.id) === stored)).toMatchObject({ interim_approval: true, approvals_recorded: 1, approvals_required: 2 });
+
+    // The route counts the stored signature: the second approval is the last one.
+    const last = await approve('qa2', id);
+    expect(last.status, JSON.stringify(last.body)).toBe(200);
+    expect(last.body.data.status).toBe('effective');
+    const final = (await signatureRows(id)).find((s) => Number(s.id) !== stored)!;
+    expect.soft((await trail(id)).find((e) => e.signatureRef === `electronic_signatures:${stored}`)?.event).toBe(INTERIM_EVENT);
+    expect.soft(await documentRow(id)).toMatchObject({ approval_signature_id: Number(final.id), approval_signer_name: actors.qa2.name });
+    expect.soft(await signatureRow(stored)).toMatchObject({ interim_approval: true, approval_share: '1 of 2' });
   });
 });

@@ -32,6 +32,7 @@ import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { approvalShareJoin } from '../services/review/approval-share';
 
 /**
  * The request-scoped, tenant-pinned SQL client.
@@ -361,6 +362,25 @@ const log = createScopedLogger('part11');
  * Registered BEFORE `/signatures/:documentId` — Express matches in order, and
  * the param route would otherwise swallow the literal path.
  */
+/*
+ * RR2 records (2026-10-29): each row also says, for an approval signed on a
+ * review route, which of the route's required approvals it was, and whether it
+ * was an interim one (not the last; its record stayed in review). The share is
+ * the signature's own, or its route's for one stored before 2026-10-29
+ * (services/review/approval-share.ts).
+ */
+const SIGNATURES_BY_TARGET_SQL = `
+      SELECT es.id, es.document_id, es.version_id, es.signed_target, es.signature_type,
+             es.signature_purpose, es.signer_id, es.signer_name, es.signer_title, es.signer_email,
+             es.signature_meaning, es.signature_hash, es.binding_basis,
+             es.second_factor_verified, es.is_valid, es.signed_at, es.ip_address,
+             share.approvals_recorded, share.approvals_required, share.interim_approval
+      FROM electronic_signatures es
+      ${approvalShareJoin('es', 'share')}
+      WHERE es.signed_target = $1 AND es.organization_id = $2
+      ORDER BY es.signed_at DESC, es.id DESC
+    `;
+
 router.get('/signatures/by-target', async (req: Request, res: Response) => {
   const orgId = requestOrgId(req);
   if (orgId == null) {
@@ -373,18 +393,7 @@ router.get('/signatures/by-target', async (req: Request, res: Response) => {
 
   const pool: SqlClient = requestSql(req);
   try {
-    const result = await pool.query(
-      `
-      SELECT id, document_id, version_id, signed_target, signature_type,
-             signature_purpose, signer_id, signer_name, signer_title, signer_email,
-             signature_meaning, signature_hash, binding_basis,
-             second_factor_verified, is_valid, signed_at, ip_address
-      FROM electronic_signatures
-      WHERE signed_target = $1 AND organization_id = $2
-      ORDER BY signed_at DESC, id DESC
-    `,
-      [target, orgId]
-    );
+    const result = await pool.query(SIGNATURES_BY_TARGET_SQL, [target, orgId]);
     res.json({ success: true, data: result.rows });
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
