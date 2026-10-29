@@ -34,11 +34,10 @@ app.use((req: any, _res, next) => {
 app.use('/api/submissions', submissionsRouter);
 
 const FINDINGS = [{ id: 1, status: 'conflict' }, { id: 2, status: 'match' }];
-const body = {
-  dimension: 'enrollment',
-  left: { ref: '2.7.3', text: '186' },
-  right: [{ ref: 'CSR-001', text: '120' }],
-};
+// Saved sections by id (slice G4): the engine reads their text, never the body's.
+const L = '50000000-0000-4000-8000-000000000001';
+const A = '50000000-0000-4000-8000-000000000002';
+const body = { dimension: 'enrollment', left: { sectionId: L }, right: [{ sectionId: A }] };
 
 beforeEach(() => {
   svc.impl = async () => ({ findings: FINDINGS, notCompared: [], auditTrail: { persisted: true, chained: true } });
@@ -73,5 +72,21 @@ describe('the consistency route reports its audit row', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
     expect(res.headers['x-consistency-not-compared']).toBe('2');
+  });
+
+  it('passes the engine section ids only, and says a supplied text was ignored', async () => {
+    let seen: unknown = null;
+    svc.impl = async (params: unknown) => { seen = params; return { findings: [], notCompared: [], auditTrail: { persisted: true, chained: true } }; };
+    const res = await request(app).post('/api/submissions/11/consistency')
+      .send({ dimension: 'enrollment', left: { sectionId: L, text: '100' }, right: [{ sectionId: A, text: '100' }] });
+    expect(res.status).toBe(200);
+    expect(seen).toEqual({ submissionId: 11, dimension: 'enrollment', left: { sectionId: L }, right: [{ sectionId: A }] });
+    expect(res.headers['x-consistency-supplied-text']).toBe('ignored');
+  });
+
+  it('refuses a body that names text instead of saved sections', async () => {
+    const res = await request(app).post('/api/submissions/11/consistency')
+      .send({ dimension: 'enrollment', left: { ref: '2.7.3', text: '186' }, right: [{ ref: 'CSR-001', text: '120' }] });
+    expect(res.status).toBe(400);
   });
 });

@@ -72,6 +72,28 @@ export interface ManagementReviewRow {
   closed_action_count: number | null;
 }
 
+/** A management review's action, as `outputs.actions` holds it (mdx-qms.ts). */
+export interface ReviewAction {
+  n: number;
+  description: string;
+  owner: string | null;
+  dueDate: string | null;
+  state: 'open' | 'closed';
+  closedAt?: string | null;
+  closureNote?: string | null;
+}
+
+export const reviewActions = (r: ManagementReviewRow): ReviewAction[] => {
+  const a = (r.outputs as { actions?: unknown } | null)?.actions;
+  return Array.isArray(a) ? (a as ReviewAction[]) : [];
+};
+
+export const addReviewAction = (id: number, v: { description: string; owner?: string; dueDate?: string }) =>
+  qmsWrite<ManagementReviewRow>('POST', `management-reviews/${id}/actions`, compact(v));
+
+export const closeReviewAction = (id: number, n: number, closureNote: string) =>
+  qmsWrite<ManagementReviewRow>('POST', `management-reviews/${id}/actions/${n}/close`, { closureNote });
+
 /** A CAPA as GET /api/capa-mdr/capa returns it (drizzle, camelCase). */
 export interface CapaRow {
   id: string;

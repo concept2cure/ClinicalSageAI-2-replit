@@ -1,0 +1,40 @@
+// @vitest-environment jsdom
+/**
+ * TEMPORARY red demonstration for the device-tasks fold (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Not kept: it is
+ * deleted with TasksSurface.
+ *
+ * GET /api/submission-ops/workload answers with one row per OWNER
+ * (operating-layer.ts readCanonicalDueSoonAndWorkload: `GROUP BY owner_id,
+ * owner_name`, columns owner_id, owner_name, open_tasks, overdue_tasks, raw
+ * snake_case from db.execute). useWorkbenchTasks adapts each row as if it were
+ * one work item in camelCase. These assertions state what an honest screen
+ * would do with that body; each one fails on TasksSurface as it is.
+ */
+import React from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+
+import { TasksSurface } from '../Workbench';
+
+const WORKLOAD_BODY = {
+  data: [
+    { owner_id: 5, owner_name: 'Dana Reyes', open_tasks: 3, overdue_tasks: 1 },
+    { owner_id: 9, owner_name: 'Sam Okafor', open_tasks: 2, overdue_tasks: 0 },
+  ],
+  source: 'c2c_project_work_items',
+};
+
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+describe('TasksSurface over the body /workload really returns', () => {
+  it('renders no untitled, unassigned card for an owner\'s workload row, and counts the work, not the rows', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => WORKLOAD_BODY }) as unknown as Response));
+    render(<TasksSurface onAskAna={() => {}} />);
+    await waitFor(() => expect(screen.queryByText('Loading…')).toBeNull());
+    expect.soft(screen.queryAllByText('(Untitled)'), 'a per-owner count rendered as an untitled task card').toHaveLength(0);
+    expect.soft(screen.queryAllByText('Unassigned'), 'an owner-named row rendered as unassigned').toHaveLength(0);
+    const openWork = screen.getByText('Open work').closest('.metric-card');
+    expect.soft(openWork?.querySelector('.metric-val')?.textContent, 'Open work counts owners, not tasks').toBe('5');
+  });
+});

@@ -64,12 +64,14 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // surfaces here; keep every feature's existing commercial verdict. This
     // list is pinned against MDX_PROJECT_FEATURE_SURFACE_IDS by the scope test.
     // Literal ids are required by ci:launch-scope's structural parser.
+    // 2026-10-29 (D2): the device task workbench folded into Tasks, which this
+    // app already holds; its old address resolves there (DEEP_LINK_ALIASES).
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
       'device-diagnostics', 'ivd-completeness', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-vault', 'device-tasks', 'device-validation', 'device-submission',
+      'device-vault', 'device-validation', 'device-submission',
       'device-analytics', 'design-controls', 'human-factors', 'risk', 'labeling',
     ],
     modules: ['projects', 'tasks'],

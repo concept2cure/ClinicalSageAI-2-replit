@@ -165,7 +165,10 @@ describe('Submit — one row per market, each with its own server verdict', () =
     expect(row.textContent).toContain(assessmentStatus === 'failed' ? 'External validation failed' : 'External validation report invalid');
     expect(row.textContent).toContain(assessmentNote);
     expect(row.textContent).not.toMatch(/not assessed|validator not run|Satisfied/);
-    expect(within(row).getByTestId('pj-market-validation-status')).toBeTruthy();
+    // With the server's gate breakdown the outcome is the external gate's own card, in the readiness detail
+    // under the row (F10); without one, the row's validation-status line.
+    if (breakdown) expect(row.querySelector('[data-gate="external"]')?.className).toContain('warn');
+    else expect(within(row).getByTestId('pj-market-validation-status')).toBeTruthy();
   });
   it('an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row', async () => {
     serve();

@@ -1,0 +1,10 @@
+# Red first: server/routes/__tests__/taskBoard-blocking.test.ts, before otherStoreCard carried `blocking`
+# (tail of the run; every case read `blocking` as undefined)
+
++ Received:
+undefined
+ FAIL  server/routes/__tests__/taskBoard-blocking.test.ts > task board: another store's blocking work > counts exactly what the cross-store summary counts as blocking
+AssertionError: expected +0 to be 3 // Object.is equality
++ Received
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

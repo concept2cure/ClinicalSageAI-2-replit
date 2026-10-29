@@ -1,0 +1,12 @@
+# Red: the new test, at a0e24f77 (my files equal to 7f9720d9), before any source change
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/submitHoldsReadiness.test.tsx
+# 3 fail on what they exist for. The fail-closed case passes: the row already said "No verdict" at head; mutation 3 turns it red.
+ × submitHoldsReadiness.test.tsx > no control on Submit opens the separate Submission Readiness canvas 309ms
+   → expected <button type="button" …(1)>…(1)</button> to be null
+ × submitHoldsReadiness.test.tsx > each row shows its own sequence’s gates and findings, and an act opens that row’s sequence, never the other market’s 5067ms
+   → Unable to find an element with the text: Required section 1.2 has no leaf in this sequence..
+ × submitHoldsReadiness.test.tsx > a cleared gate opens that sequence’s Dispatch tab from Submit 5117ms
+   → Unable to find role="button" and name "Open Dispatch for sequence 0000 of IND · FDA (US), ONC-221 IND"
+ ✓ submitHoldsReadiness.test.tsx > a failed readiness read says so on its row, with a retry, and draws no gate, no "Satisfied" and no Dispatch door 76ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

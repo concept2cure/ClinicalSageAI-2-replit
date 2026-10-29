@@ -1,0 +1,13 @@
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > resolves the old id to Tasks from a link, an in-app move and AnA, with or without a project open 6ms
+   → expected undefined to be 'tasks' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > lands on the Tasks board, which the shell can mount 1ms
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id 2ms
+   → expected { component: [Function Surface], …(1) } to be undefined
+ × client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > leaves no client code naming TasksSurface 67ms
+   → expected [ …(3) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts > device-tasks is folded into Tasks > is in neither project scope list nor the device rail, and the tour stops at Tasks 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'tasks' // Object.is equality
+AssertionError: expected { component: [Function Surface], …(1) } to be undefined
+AssertionError: expected [ …(3) ] to deeply equal []
+      Tests  3 failed | 2 passed (5)

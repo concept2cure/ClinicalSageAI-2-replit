@@ -1695,7 +1695,6 @@ Today's label, and the job name slice 1 gives it. A device door's name depends o
 | Plan | My work; Open My work | Your tasks; See your tasks in Tasks |
 | Plan, Review | Open task board | See all tasks in Tasks |
 | Review | Open the review board | Review documents on the review board |
-| Submit header | Open readiness | Check what stops sending |
 | Submit header | IND forms | Prepare Forms 1571, 1572 and 3674 in IND forms |
 | Submit header | Open Submission Center | See every sequence in Submission Center |
 | Submit market row | Open ("Open {market} in the Submission Center") | Build the {market} sequence in Submission Center |

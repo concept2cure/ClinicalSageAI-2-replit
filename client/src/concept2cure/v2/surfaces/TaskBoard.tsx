@@ -121,6 +121,11 @@ interface TaskItem {
    */
   phase: string | null;
   blocked?: boolean;
+  /** Another store records this work as holding the submission (a blocker type,
+   *  critical to quality, an agency hold): the cross-store view's own flag, sent
+   *  by the board read. Not the same as `blocked`, the status. Absent on the
+   *  board's own tasks. (D2, 2026-10-29, the device-tasks fold.) */
+  blocking?: boolean;
   blockedReason?: string;
   estimatedHours?: number | null;
   assignmentType?: string;
@@ -155,6 +160,10 @@ const STORE_LABEL: Record<string, string> = {
   c2c_project_work_items: 'agency correspondence',
   estar_submissions: 'tracked filings',
 };
+
+/** The blocking flag's words, shared by the card, the table row and the
+ *  Analytics count so the three cannot name it differently. */
+const BLOCKING_FLAG = 'Blocking the submission';
 
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
@@ -810,6 +819,11 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     return {
       total: list.length, open: open.length,
       blocked: list.filter(t => t.blocked).length,
+      /* Work holding the submission, by the cross-store summary's own rule
+         (unified-work-view.ts `blocking`): blocked, or recorded as blocking by
+         another store, or a board task on the critical path that is not done.
+         Replaces the device workbench's "· N blocking" (D2, 2026-10-29). */
+      blocking: list.filter(t => t.blocked || t.blocking || (t.criticalPath && t.status !== 'completed')).length,
       crit: list.filter(t => t.criticalPath).length,
       reg: list.filter(t => t.regulatoryImpact).length,
       appr: list.filter(t => t.approvalRequired && t.approvalStatus === 'pending').length,
@@ -872,7 +886,8 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     return {
       summary:
         `Tasks for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
-        `${stats.blocked} blocked, ${overdue.length} overdue, ${stats.appr} awaiting approval.` +
+        `${stats.blocked} blocked, ${stats.blocking} holding the submission, ` +
+        `${overdue.length} overdue, ${stats.appr} awaiting approval.` +
         (unreadStores.length
           ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
           : '') +
@@ -882,7 +897,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         mine,
         unreadStores,
         totals: {
-          all: stats.total, open: stats.open, blocked: stats.blocked,
+          all: stats.total, open: stats.open, blocked: stats.blocked, blocking: stats.blocking,
           overdue: overdue.length, criticalPath: stats.crit,
           regulatoryImpact: stats.reg, awaitingApproval: stats.appr,
         },
@@ -1126,6 +1141,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                         {t.moduleType && <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
                         {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
+                        {t.blocking && !t.blocked && <span className="tb-flag blk" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}
                       </div>
                       <div className="tb-card-title">{t.title}</div>
                       {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
@@ -1205,7 +1221,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             </div>
           )}
           <div className="metrics">
-            {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
+            {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], [BLOCKING_FLAG, stats.blocking, stats.blocking ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>
             ))}
           </div>
@@ -1237,7 +1253,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           {list.map(t => (
             <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
               <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
-              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}</div>
+              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}{t.blocking && !t.blocked && <span className="tb-flag blk inline" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}</div>
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>

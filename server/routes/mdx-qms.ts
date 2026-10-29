@@ -24,6 +24,8 @@
  *
  *   GET    /api/mdx/qms/management-reviews              list reviews
  *   POST   /api/mdx/qms/management-reviews              create
+ *   POST   /api/mdx/qms/management-reviews/:id/actions  record an action (P-48)
+ *   POST   /api/mdx/qms/management-reviews/:id/actions/:n/close  close it, with a note
  *
  *   GET    /api/mdx/qms/nonconforming                   list NC products
  *   POST   /api/mdx/qms/nonconforming                   create
@@ -1199,6 +1201,97 @@ router.post('/qms/management-reviews', requireEditorAccess, async (req: Request,
     }, requestConnectable(req));
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'mr-create', err); }
+});
+
+/* A management review's actions (ICH Q10 §2.6, ISO 13485 §5.6.3): the decisions
+   it took, each with an owner and a due date, kept in `outputs.actions` with no
+   new table. Each action is numbered from 1 within its review, and the stored
+   open/closed counts move with the array in the same UPDATE, so a count can
+   never disagree with the actions it counts. Under the row lock UPDATE takes, a
+   concurrent second action re-reads the array and takes the next number.
+   Decision P-48; slice G9 of docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md. */
+const mrActionBody = z.object({
+  description: z.string().trim().min(1).max(2000),
+  owner:       z.string().trim().max(200).optional().nullable(),
+  dueDate:     z.string().date().optional().nullable(),
+});
+const mrActionCloseBody = z.object({ closureNote: governedReason });
+/** The action as recorded: the same three fields go to the UPDATE and the audit row. */
+const mrActionFields = (p: z.infer<typeof mrActionBody>) =>
+  ({ description: p.description, owner: p.owner ?? null, dueDate: p.dueDate ?? null });
+/** The number the UPDATE gave the appended action, for the audit row. */
+const lastActionNumber = (row: { outputs?: unknown } | undefined): number | null =>
+  (row?.outputs as { actions?: Array<{ n?: number }> } | null)?.actions?.at(-1)?.n ?? null;
+
+router.post('/qms/management-reviews/:id/actions', requireEditorAccess, async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = mrActionBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const action = mrActionFields(parsed.data);
+  try {
+    const { rows } = await qmsClient(req).query(`UPDATE qms_management_reviews SET
+         outputs = jsonb_set(COALESCE(outputs, '{}'::jsonb), '{actions}',
+           COALESCE(outputs->'actions', '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
+             'n', COALESCE(jsonb_array_length(outputs->'actions'), 0) + 1,
+             'description', $3::text, 'owner', $4::text, 'dueDate', $5::text, 'state', 'open',
+             'recordedBy', $6::int, 'recordedAt', now()))),
+         open_action_count = COALESCE(open_action_count, 0) + 1,
+         updated_at = now()
+       WHERE id = $1 AND organization_id = $2
+       RETURNING *`,
+      [id, orgId, action.description, action.owner, action.dueDate, getUserId(req)],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Management review');
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.management_review.action.add',
+      resourceType: 'qms_management_review', resourceId: String(id),
+      details: { action: lastActionNumber(rows[0]), ...action },
+    }, requestConnectable(req));
+    return created(res, rows[0], { auditTrail });
+  } catch (err) { return serverError(res, log, 'mr-action-add', err); }
+});
+
+router.post('/qms/management-reviews/:id/actions/:n/close', requireEditorAccess, async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  const n = Number(req.params.n);
+  if (!Number.isInteger(id) || !Number.isInteger(n)) return clientError(res, 422, 'id and action number must be numeric');
+  const parsed = mrActionCloseBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, parsed.error.issues[0]?.message ?? 'Invalid body');
+  try {
+    /* Every reference is to the row being updated (m), never a second read of
+       it, so under a concurrent close the re-check sees the action already
+       closed and updates nothing. No open action numbered n, no update: closing
+       twice, or a number that does not exist, is a 404. */
+    const { rows } = await qmsClient(req).query(`UPDATE qms_management_reviews m SET
+         outputs = jsonb_set(m.outputs, '{actions}', (
+           SELECT jsonb_agg(CASE WHEN (e.a->>'n')::int = $3::int AND e.a->>'state' = 'open'
+             THEN e.a || jsonb_build_object('state', 'closed', 'closedBy', $5::int, 'closedAt', now(), 'closureNote', $4::text)
+             ELSE e.a END ORDER BY e.ord)
+             FROM jsonb_array_elements(m.outputs->'actions') WITH ORDINALITY AS e(a, ord))),
+         open_action_count = GREATEST(COALESCE(m.open_action_count, 0) - 1, 0),
+         closed_action_count = COALESCE(m.closed_action_count, 0) + 1,
+         updated_at = now()
+       WHERE m.id = $1 AND m.organization_id = $2
+         AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(m.outputs->'actions', '[]'::jsonb)) AS e(a)
+                      WHERE (e.a->>'n')::int = $3::int AND e.a->>'state' = 'open')
+       RETURNING m.*`,
+      [id, orgId, n, parsed.data.closureNote, getUserId(req)],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Open management-review action');
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.management_review.action.close',
+      resourceType: 'qms_management_review', resourceId: String(id),
+      details: { action: n, closureNote: parsed.data.closureNote },
+    }, requestConnectable(req));
+    return ok(res, rows[0], { auditTrail });
+  } catch (err) { return serverError(res, log, 'mr-action-close', err); }
 });
 
 /* ─── Nonconforming products ────────────────────────────────── */
