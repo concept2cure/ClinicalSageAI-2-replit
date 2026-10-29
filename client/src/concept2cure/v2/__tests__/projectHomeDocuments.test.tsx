@@ -28,7 +28,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -78,7 +78,7 @@ const source = (id: number, title: string, extractionStatus: string) => ({
   isCurrent: true, dataEligible: true, disposition: null, textAvailable: extractionStatus === 'extracted',
 });
 
-type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response };
+type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response; dossier?: unknown };
 function serve(opts: Opts = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
@@ -87,7 +87,7 @@ function serve(opts: Opts = {}) {
       return ok({ id: PID, name: 'BX-410', product_name: 'Torvanib', program_type: 'IND', status: 'active', ...opts.program });
     }
     if (url === DOCS_URL) return (opts.docs ?? (() => ok({ documents: DOCS })))();
-    if (url === `/api/c2c/projects/${PID}/dossier`) return ok(DOSSIER);
+    if (url === `/api/c2c/projects/${PID}/dossier`) return ok(opts.dossier ?? DOSSIER);
     if (url === `/api/c2c/projects/${PID}/sources`) {
       if (opts.sources) return opts.sources();
       return ok({ projectId: PID, sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
@@ -234,6 +234,69 @@ describe('Author — the project\'s documents', () => {
     expect(screen.queryByText(/organisation-wide|organization-wide/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /^Write the protocol in the protocol workspace/ }));
     expect(p.onNav).toHaveBeenCalledWith('protocol-dev');
+  });
+});
+
+/* F3 part C (2026-10-29): the readiness card names each added market on its
+   own line. The line opens the editing copy of the filing it measures
+   (DossierMarket.documentId), as that market's own rows do, or says why not in
+   the rows' words. It was words only, with nothing to click. */
+const market = (agency: string, docType: string, documentId: string, scope = 'market') => ({
+  scope, agency, docType, documentId, figure: { state: 'measured', pct: 0, counted: 4, complete: 0 }, notHeld: [],
+});
+const MARKETS_DOSSIER = {
+  ...DOSSIER, markets: [market('fda', 'ind', 'doc_home', 'home'), market('ema', 'maa', 'doc_ema'), market('pmda', 'jnda', 'doc_pmda')],
+};
+const PMDA_COPY = doc({ id: 'doc-pmda-copy', title: 'PMDA J-NDA editing copy', module: 'M1', updated_at: '2026-10-09T10:00:00Z', c2c_document_id: 'doc_pmda' });
+const marketLine = (name: string) =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-testid="pj-dossier-market"]')).find((li) => li.textContent?.startsWith(name));
+async function lineSays(name: string, words: string) {
+  await waitFor(() => expect(marketLine(name)?.textContent ?? '', `${name}'s line on the readiness card`).toContain(words));
+  return marketLine(name)!;
+}
+
+describe('Author — the readiness card\'s market line (F3 part C)', () => {
+  it('an added market\'s line opens that market\'s editing copy, whole, and each market its own', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, PMDA_COPY, ...DOCS, HOME_COPY] }) });
+    const p = props();
+    render(<ProjectHome {...p} />);
+    const ema = await lineSays('EMA · MAA', 'Open EMA MAA editing copy');
+    fireEvent.click(within(ema).getByRole('button', { name: 'Open EMA MAA editing copy, the editing copy for EMA · MAA' }));
+    expect(target(), 'the line opened nothing').toMatchObject({ docId: 'doc-ema-copy', programId: PID });
+    expect(target()?.sectionWithin, 'the line measures the whole filing, so no module rides along').toBeUndefined();
+    expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    fireEvent.click(within(marketLine('PMDA · JNDA')!).getByRole('button'));
+    expect(target(), 'PMDA\'s line opened another market\'s copy').toMatchObject({ docId: 'doc-pmda-copy' });
+  });
+
+  it('with no editing copy the line says where one is made, in the rows\' words, and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, ...DOCS, HOME_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    const pmda = await lineSays('PMDA · JNDA', 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.');
+    expect(within(pmda).queryByRole('button'), 'a dead button').toBeNull();
+  });
+
+  it('two documents bound to the market\'s filing: said, and neither is opened', async () => {
+    const second = doc({ id: 'doc-ema-copy-2', title: 'Second EMA copy', c2c_document_id: 'doc_ema' });
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, second, PMDA_COPY, ...DOCS, HOME_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', '2 documents are bound to this filing, so none is opened from here.');
+    expect(within(ema).queryByRole('button'), 'one of several opened').toBeNull();
+  });
+
+  it('when the documents could not be read, the line says its copy is not known, never that there is none', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: down });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', 'The project\'s documents could not be read, so its editing copy is not known.');
+    expect(within(ema).queryByRole('button'), 'a button over a failed read').toBeNull();
+    expect(ema.textContent).not.toContain('No editing copy');
+  });
+
+  it('while the documents are read, the line says so and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => new Promise<Response>(() => {}) as unknown as Response });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', 'Reading the project\'s documents…');
+    expect(within(ema).queryByRole('button')).toBeNull();
   });
 });
 
