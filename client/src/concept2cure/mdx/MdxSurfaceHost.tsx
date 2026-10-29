@@ -137,7 +137,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-udi': {
     title: 'UDI and labeling',
-    blurb: 'the UDI register.',
+    blurb: "the project's labels and UDI records, with the label symbols and translations still open.",
   },
   'device-postmarket': {
     title: 'Post-market vigilance',
@@ -145,7 +145,7 @@ const DEVICE_SCREEN_META: Record<MdxSurfaceId, { title: string; blurb: string }>
   },
   'device-presub': {
     title: 'Pre-Sub manager',
-    blurb: 'the pre-submission manager.',
+    blurb: "the project's FDA Q-Submissions, with their questions, FDA's feedback and the commitments.",
   },
   'device-vault': {
     title: 'Document vault',
@@ -179,8 +179,10 @@ const DEVICE_SCREEN_ACTIONS: string[] = [
   'Signatures, transmissions, uploads and profile changes are governed — AnA proposes them in conversation, never through screen controls',
 ];
 
+/* device-udi and device-presub left this list on 2026-10-29: each reads the
+   open project now (D2, device-features-reach-three). */
 const ORGANIZATION_VIEWS = new Set<MdxSurfaceId>([
-  'device-udi', 'device-presub', 'device-tasks', 'device-validation', 'device-submission', 'device-analytics',
+  'device-tasks', 'device-validation', 'device-submission', 'device-analytics',
 ]);
 
 function viewScopeNotice(nav: MdxSurfaceId): string | null {
@@ -385,13 +387,16 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <EngineeringSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-udi':
-      surface = <UdiSurface onAskAna={onAsk} />;
+      /* Keyed by the project, so a switch starts the read afresh and never
+         draws the previous project's labels while the next project's read is in flight. */
+      surface = <UdiSurface key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-postmarket':
       surface = <PostmarketSurface program={programForContext} onAskAna={onAsk} />;
       break;
     case 'device-presub':
-      surface = <PreSubManager onAskAna={onAsk} />;
+      /* Keyed by the project for the same reason as device-udi. */
+      surface = <PreSubManager key={programForContext?.id ?? 'none'} programId={programForContext ? String(programForContext.id) : null} onAskAna={onAsk} />;
       break;
     case 'device-vault':
       surface = <VaultSurface program={programForContext} onAskAna={onAsk} />;

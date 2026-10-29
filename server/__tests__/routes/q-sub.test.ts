@@ -55,6 +55,14 @@ vi.mock('../../services/q-sub/q-sub.service', () => ({
   TenantAccessError,
 }));
 
+/* A program_id is admitted only when the caller's organization owns it
+   (device-project-reads-admit-program.test.ts covers the refusals). Here the
+   organization owns the one project these cases filter by. */
+vi.mock('../../services/c2c/program-access', () => ({
+  programInOrganization: async (_db: unknown, id: unknown, org: unknown) =>
+    id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' && Number(org) === 7,
+}));
+
 let app: express.Express;
 
 beforeEach(async () => {

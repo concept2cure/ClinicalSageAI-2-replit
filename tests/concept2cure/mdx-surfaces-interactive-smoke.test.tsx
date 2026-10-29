@@ -243,7 +243,7 @@ describe('MDX rich-surface interactive smoke', () => {
   });
 
   it('UDI: every label-preview / format-picker click is handler-safe', async () => {
-    const { container, findAllByText } = wrap(<UdiSurface onAskAna={askAna} />);
+    const { container, findAllByText } = wrap(<UdiSurface programId="p-test" onAskAna={askAna} />);
     await findAllByText(/TST-1/);
     /* The controls this case is named for are per-document: the row-open button
        and the Ask-AnA chip inside "documents in flight". The panel frame draws

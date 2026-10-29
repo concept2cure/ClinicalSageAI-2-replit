@@ -11,6 +11,7 @@ import '../styles/project-home-v2.css';
 import { LABEL_ENUMS } from '../fixtures/labeling-data';
 import type { LabelTranslation } from '../fixtures/labeling-data';
 import { C2CToast, useToast } from '../toast';
+import { shellProgramId, useShellProject } from '../shellProject';
 
 /* ---- Labeling and IFU ---- */
 
@@ -127,17 +128,37 @@ function errText(json: unknown, status: number): string {
   return clause(extractApiError(json, status).message);
 }
 
+/* What AnA is told when no labeling record is read: no project is open, or the
+   open one has no project record id to read by. */
+function noProjectContext(projectOpen: boolean) {
+  return {
+    summary: projectOpen
+      ? "Labeling: the open project can't be read by project here, so no labeling record is read or shown. " +
+        'Nothing is claimed here about its label.'
+      : 'Labeling: No project is open, so no labeling record is read or shown. Nothing is claimed here about any label.',
+    availableActions: ['Open a project from Projects'],
+  };
+}
+
 /* Slice 0 (.design/client-journey/INFORMATION_ARCHITECTURE.md, the `labeling`
    row): GET /api/mdx/labeling was read with no project key. The route returns
    every labeling document in the organization ordered by device name
    (server/routes/mdx-labeling.ts:82-101), and the first row drove the header,
    symbols, UDI-DI, translations and the add-translation write, so they may be
    another project's. The route already filters on `program_id`, so the read is
-   made only with the project the screen is given, and there is no unscoped
-   read to fall back to. No shell caller passes `programId` yet (slice 20), so
-   until then no record is read or shown here. */
-export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: string }) {
+   made only with the open project, and there is no unscoped read to fall back
+   to.
+
+   Slice 20 (D2, 2026-10-29): the project is the shell's open project
+   (useShellProject), the read every project screen makes. It was a
+   `programId` prop that no caller passed, so the screen read nothing. With no
+   project open, or one with no project record id, nothing is read and the
+   screen says which. The route refuses a project the organization does not
+   own (404), which is shown as the failure it is. */
+export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   const EN = LABEL_ENUMS;
+  const openProject = useShellProject();
+  const programId = shellProgramId(openProject);
 
   // Root of this surface's real data: this project's labeling document(s).
   // REAL — GET /api/mdx/labeling?program_id= queries labeling_documents (org-
@@ -147,7 +168,10 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
     programId ? '/api/mdx/labeling?program_id=' + encodeURIComponent(programId) : null,
     [programId],
   );
-  const docRow = docsLive.rows.length ? docsLive.rows[0] : null;
+  /* Only a settled read names the document. While the next project's read is
+     in flight the list still holds the previous project's rows, and the
+     eyebrow would title the new project with the old project's label. */
+  const docRow = !docsLive.loading && !docsLive.error && docsLive.rows.length ? docsLive.rows[0] : null;
   const docId = docRow ? docRow.id : null;
 
   const kindLabel = docRow
@@ -276,17 +300,8 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
      Reported as an empty translation board it would read to AnA as a label with
      nothing left to translate, which is the opposite claim. */
   const anaContext = useMemo(() => {
-    // Slice 0: AnA is told why nothing is shown, not given another project's label.
-    // The reason is the screen's, not the service's: there is no unscoped read
-    // left, and the labeling route does filter by project.
-    if (!programId) {
-      return {
-        summary:
-          "Labeling: this project's labeling records are not shown on this screen yet. This screen is not " +
-          "given the open project yet, so it reads none of the organization's labeling documents. Nothing is " +
-          "claimed here about this project's label.",
-      };
-    }
+    // AnA is told why nothing is shown, not given another project's label.
+    if (!programId) return noProjectContext(openProject != null);
     if (docsLive.loading) {
       return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
     }
@@ -301,7 +316,7 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
     if (!docRow) {
       return {
         summary:
-          'Labeling: this organisation has no labeling document yet, so there are no symbols or ' +
+          'Labeling: this project has no labeling document yet, so there are no symbols or ' +
           'translations to show — the boards below are empty for that reason.',
         availableActions: ['Create a labeling document for a device'],
       };
@@ -358,7 +373,7 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
         'Read the symbol set and what each symbol is required by',
       ],
     };
-  }, [programId, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  }, [programId, openProject, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
@@ -465,17 +480,21 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
       </div>
 
       {!programId ? (
-        /* Slice 0: the record panels (coverage, symbols, UDI placement,
-           translations) wait for a project-keyed read, with a line saying why.
-           The line names them, so it is not read as describing the three
-           panels still shown beneath it. Its reason is the one the code has:
-           no project is passed in, so no labeling read is made at all. */
+        /* The record panels (coverage, symbols, UDI placement, translations)
+           are the open project's, so with none there are none, with a line
+           saying why. The line names them, so it is not read as describing the
+           three panels still shown beneath it. */
         <>
-          <p className="scaf-note" data-testid="labeling-not-keyed" style={{ padding: '18px 10px' }}>
-            Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are shown once this
-            screen reads this project&apos;s records. This screen is not given the open project yet, so it reads
-            none of the organization&apos;s labeling documents.
-          </p>
+          <div data-testid="labeling-no-project" style={{ padding: '18px 10px' }}>
+            <p className="scaf-note">
+              Translation coverage, ISO 15223-1 symbols, UDI placement and the translations table are the open
+              project&apos;s.{' '}
+              {openProject
+                ? <>The open project can&apos;t be read by project here, so this screen reads no labeling document.</>
+                : <>No project is open, so this screen reads no labeling document.</>}
+            </p>
+            <button type="button" className="btn ghost" onClick={() => onNav('projects')}>Open projects</button>
+          </div>
           <div className="split2">
             {warningsPanel}
             {complianceChecksPanel}
@@ -489,7 +508,7 @@ export function Labeling({ onAsk, programId }: SurfaceViewProps & { programId?: 
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the labeling document"
-          hint="The labeling service didn't respond. These are the organization's governed IFU / label documents — sign in and retry, or check the service is reachable."
+          hint="This project's governed IFU and label documents could not be read, so none is shown. Sign in and retry, or check the service is reachable."
         />
       ) : !docRow ? (
         <EmptyState

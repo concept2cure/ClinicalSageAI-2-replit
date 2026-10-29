@@ -36,7 +36,7 @@ beforeEach(() => {
     status: 200,
     text: async () => '',
     json: async () =>
-      url === '/api/q-sub'
+      url === '/api/q-sub?program_id=p-1'
         ? { data: { rows, count: rows.length } }
         : { data: { id: 'qs-1', summary: 'Two questions.', questions: [], timeline: [] } },
   })));
@@ -54,7 +54,7 @@ const card = (container: HTMLElement, label: string) =>
 describe('PreSubManager — no commitments recorded is neither integrated nor failed', () => {
   it('a Q-Sub with no commitments yet: no "All integrated", no green or red commitment card', async () => {
     rows = [row({ commitments: 0, rolledIn: 0 })];
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(card(container, 'Pending rollin')).toBeTruthy());
 
     const rolled = card(container, 'Commitments rolled')!;
@@ -71,7 +71,7 @@ describe('PreSubManager — no commitments recorded is neither integrated nor fa
 
   it('an empty portfolio says the same', async () => {
     rows = [];
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(screen.getByText('No Q-Subs yet')).toBeTruthy());
     expect(screen.queryByText('All integrated')).toBeNull();
     expect(card(container, 'Commitments rolled')!.getAttribute('data-tone')).toBe('');
@@ -79,7 +79,7 @@ describe('PreSubManager — no commitments recorded is neither integrated nor fa
 
   it('with commitments on record, the strip reads as before', async () => {
     rows = [row({ stage: 'feedback', commitments: 2, rolledIn: 1 })];
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(card(container, 'Pending rollin')).toBeTruthy());
     const rolled = card(container, 'Commitments rolled')!;
     const pending = card(container, 'Pending rollin')!;
@@ -91,7 +91,7 @@ describe('PreSubManager — no commitments recorded is neither integrated nor fa
 
   it('every commitment rolled in still reads "All integrated"', async () => {
     rows = [row({ stage: 'feedback', commitments: 2, rolledIn: 2 })];
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(card(container, 'Pending rollin')).toBeTruthy());
     expect(card(container, 'Pending rollin')!.textContent).toBe('Pending rollin0All integrated');
     expect(card(container, 'Pending rollin')!.getAttribute('data-tone')).toBe('ok');

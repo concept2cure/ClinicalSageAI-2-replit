@@ -163,12 +163,11 @@ describe('project MDX workflow — doors and headings', () => {
 const REACHED_FROM_PLAN = [
   'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
   'device-clinical-studies', 'device-software', 'device-engineering', 'device-postmarket',
+  /* Their screens read the open project (device-features-reach-three, 2026-10-29). */
+  'device-presub', 'device-udi', 'labeling',
 ];
 const NO_PROJECT_DOOR: Record<string, string> = {
   /* (a) Placed in the project by the map; its screen does not read the open project yet. */
-  'device-presub': 'slice 12 places it on Plan, but usePresubList reads /api/q-sub with no program_id and MdxSurfaceHost marks it an organization-wide view',
-  'device-udi': 'slice 20 points registration-udi here, but UdiSurface calls useUdi() with no program and MdxSurfaceHost marks it an organization-wide view',
-  labeling: 'slice 20 points the labeling package here, but no caller passes Labeling the open project, so it reads no record',
   'human-factors': 'slice 19 maps human-factors-usability here, but GET /api/human-factors returns the organization\'s first file (hf_engineering_files has no program column)',
   /* (b) Folds into a place the project already reaches; a door would keep a duplicate. */
   'design-controls': 'folds into device-engineering, which Plan already opens',

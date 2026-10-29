@@ -37,7 +37,7 @@ beforeEach(() => {
     ok: true,
     status: 200,
     text: async () => '',
-    json: async () => (url === '/api/q-sub' ? { data: { rows: [ROW], count: 1 } } : detailBody),
+    json: async () => (url === '/api/q-sub?program_id=p-1' ? { data: { rows: [ROW], count: 1 } } : detailBody),
   })));
 });
 afterEach(() => {
@@ -57,7 +57,7 @@ describe('PreSubManager — an unreadable Q-Sub detail is a failed read', () => 
   for (const [label, body] of UNREADABLE) {
     it(`reports ${label} as a failure with a retry, not as a draft or an empty Q-Sub`, async () => {
       detailBody = body;
-      const { container } = render(<PreSubManager onAskAna={() => {}} />);
+      const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
       await waitFor(() => expect(screen.getByTestId('presub-detail-error')).toBeTruthy());
       expect(screen.getByRole('button', { name: /try again|retry/i })).toBeTruthy();
       const text = container.textContent ?? '';
@@ -71,7 +71,7 @@ describe('PreSubManager — an unreadable Q-Sub detail is a failed read', () => 
 describe('PreSubManager — a Q-Sub with no questions on record says so', () => {
   it('draws the record with an empty question list that is named, not blank', async () => {
     detailBody = { data: { id: 'qs-1', summary: '', questions: [], timeline: [] } };
-    const { container } = render(<PreSubManager onAskAna={() => {}} />);
+    const { container } = render(<PreSubManager programId="p-1" onAskAna={() => {}} />);
     await waitFor(() => expect(container.querySelector('.ps-tabs')).toBeTruthy());
     expect(screen.queryByTestId('presub-detail-error')).toBeNull();
     expect(screen.getByText('No questions recorded')).toBeTruthy();

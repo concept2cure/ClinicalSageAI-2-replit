@@ -1,0 +1,12 @@
+Mutation M4-presub-on-mdr
+File: client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx
+- const FDA_ROUTES = new Set(['510k', 'de_novo', 'pma']);
++ const FDA_ROUTES = new Set(['510k', 'de_novo', 'pma', 'mdr']);
+Test: client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx
+
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a MDR device project is not offered it anywhere 107ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a MDR samd project is not offered it anywhere 110ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a MDR ivd project is not offered it anywhere 99ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > a MDR cdx project is not offered it anywhere 92ms
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowDeviceDoors.test.tsx > the Pre-Sub door: only for a recorded FDA route > an EU filing added to a 510(k) keeps the door, and an EU filing added to an EU filing does not add it 173ms
+Tests  5 failed | 48 passed (53)

@@ -1,0 +1,9 @@
+Mutation M3-labeling-read-drops-project
+File: client/src/concept2cure/v2/surfaces/Labeling.tsx
+- programId ? '/api/mdx/labeling?program_id=' + encodeURIComponent(programId) : null,
++ programId ? '/api/mdx/labeling' : null,
+Test: client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx
+
+× client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > reads the open project's labeling documents, with no prop from its caller 5041ms
+× client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx > Labeling reads the open project > never draws the previous project's label under the next project 5009ms
+Tests  2 failed | 2 passed (4)

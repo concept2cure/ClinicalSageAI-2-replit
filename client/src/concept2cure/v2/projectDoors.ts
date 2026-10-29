@@ -72,6 +72,12 @@ export const DEVICE_DOORS = {
   clinicalStudies: 'Record the clinical studies behind this filing',
   /** Analytical and clinical performance, and performance evaluation, for a filing with an IVDR section. */
   ivdrEvidence: 'Record analytical and clinical performance (IVDR)',
+  /** Regulatory strategy, for a recorded FDA route (510(k), De Novo, PMA): the project's Q-Submissions (slice 12). */
+  preSub: 'Prepare a Pre-Sub for FDA',
+  /** Labeling: the project's label and IFU, at draft (section 6, slice 20). */
+  label: 'Write the label and IFU',
+  /** Registration and UDI: each label's UDI against the device's UDI record, at check (section 6, slice 20). */
+  udi: 'Check each label’s UDI',
   /** By the primary pathway: its regulatory strategy and its submission assembly, each in the pathway's feature. */
   pathway: {
     '510k': { strategy: 'Choose predicates and build the SE comparison', assembly: 'Assemble the eSTAR' },

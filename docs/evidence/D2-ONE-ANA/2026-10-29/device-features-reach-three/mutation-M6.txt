@@ -1,0 +1,10 @@
+Mutation M6-labeling-route-skips-ownership
+File: server/routes/mdx-labeling.ts
+- if (pid && !(await programInOrganization(pool, pid, orgId))) {
++ if (false && pid && !(await programInOrganization(pool, pid, orgId))) {
+Test: server/__tests__/routes/device-project-reads-admit-program.test.ts
+
+× server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses another organization's project with 404, and reads none of its rows 8ms
+× server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > refuses a project that does not exist with 404, rather than an empty list 2ms
+× server/__tests__/routes/device-project-reads-admit-program.test.ts > 'labeling documents': the project it is given must be the caller organization's > answers 503 when ownership cannot be checked, and reads nothing 2ms
+Tests  3 failed | 17 passed (20)
