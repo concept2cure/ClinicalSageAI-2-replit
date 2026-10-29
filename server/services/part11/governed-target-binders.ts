@@ -261,6 +261,186 @@ const vaultDataRoomSealBinding: ContentBinder = async (client, rest, orgId, ledg
   };
 };
 
+/* ─── Device labeling and risk (D5, 2026-10-29) ───────────────────────────────
+   docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/README.md names every
+   field each recipe takes and every field it leaves out, and why. All three
+   are CONTENT ONLY, as the protocol binder is: nothing the signing act itself
+   writes (status, the approval stamp, the effective date, `acceptable`,
+   updated_at), so the digest the binder takes after the act's write is the
+   digest of the record as the signer reviewed it, and a signature still
+   re-derives after a later workflow step that changed nothing it attested.
+   Each act declares its basis (SignedAct.contentBasis), so a fallback below
+   refuses the act rather than signing over the chain hash. */
+
+/** Recipe tags inside the digested bytes, so a later recipe cannot collide with these. */
+export const LABELING_DOCUMENT_DIGEST_RECIPE = 'labeling-document/v1' as const;
+export const LABELING_TRANSLATION_DIGEST_RECIPE = 'labeling-translation/v1' as const;
+export const RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE = 'risk-residual-acceptance/v1' as const;
+
+/**
+ * The text a labeling row names (`artifact_id`, a concept2cure_artifacts id):
+ * its id and the sha256 of its content, by the AnA artifact binding's own
+ * hash (sha256OfContent). null when the row names none; undefined when it
+ * names one this organisation cannot read, which is not "no text". The hash
+ * module is loaded when a signature is taken: it imports signature-persistence,
+ * which imports this module (the QMS binder's reason too).
+ */
+async function namedText(client: SignatureDbClient, artifactId: unknown, orgId: number): Promise<{ id: number; contentSha256: string } | null | undefined> {
+  if (artifactId == null) return null;
+  const { rows } = await client.query(
+    `SELECT content FROM concept2cure_artifacts WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    [artifactId, orgId],
+  );
+  if (rows.length === 0) return undefined;
+  const { sha256OfContent } = await import('../ana-ri/governed-command-signature.js');
+  return { id: Number(artifactId), contentSha256: sha256OfContent(rows[0].content) };
+}
+
+const orNull = (v: unknown): unknown => (v === undefined ? null : v);
+const intOrNull = (v: unknown): number | null => (v == null ? null : Number(v));
+
+/**
+ * labeling-document:<id>: a device label as its approver attests it, for its
+ * approval, its move to effective and its supersession alike. Its translations
+ * are signed on their own targets, so none is digested here.
+ */
+const labelingDocumentBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed labeling document pointer');
+  const { rows } = await client.query(
+    `SELECT device_name, doc_kind, version, language, region, udi_di,
+            to_char(expires_at, 'YYYY-MM-DD') AS expires_at, artifact_id
+       FROM labeling_documents
+      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const d = rows[0];
+  if (!d) return ledgerFallback('labeling document not readable at signing time');
+  const text = await namedText(client, d.artifact_id, orgId);
+  if (text === undefined) return ledgerFallback(`the label text it names (artifact ${String(d.artifact_id)}) is not readable at signing time`);
+  const symbols = (await client.query(
+    `SELECT symbol_code, symbol_name, description, required_by
+       FROM labeling_symbols
+      WHERE labeling_document_id = $1::int AND organization_id = $2
+      ORDER BY symbol_code, id`,
+    [rest, orgId],
+  )).rows;
+  const content = {
+    recipe: LABELING_DOCUMENT_DIGEST_RECIPE,
+    labelingDocumentId: Number(rest),
+    deviceName: d.device_name,
+    docKind: d.doc_kind,
+    version: d.version,
+    language: d.language,
+    region: orNull(d.region),
+    udiDi: orNull(d.udi_di),
+    // Its own yyyy-mm-dd text: node-pg reads a DATE as a local midnight.
+    expiresAt: orNull(d.expires_at),
+    artifact: text,
+    symbols: symbols.map((s) => ({ symbolCode: s.symbol_code, symbolName: s.symbol_name, description: orNull(s.description), requiredBy: orNull(s.required_by) })),
+  };
+  return {
+    digest: sha256CanonicalJson(content),
+    basis: BINDING_BASIS.LABELING_DOCUMENT_CONTENT,
+    note: `sha256 (recipe ${LABELING_DOCUMENT_DIGEST_RECIPE}) over labeling document ${rest}: device, kind, version ${String(d.version)}, language, region, UDI-DI and expiry, ${symbols.length} ISO 15223-1 symbol(s), and ${text ? `the sha256 of the label text in artifact ${text.id}` : 'no label text artifact'}. No status, approval stamp, effective date or timestamp is bound.`,
+  };
+};
+
+/** labeling-translation:<id>: one translation as its approver attests it, on a live document of the organisation. */
+const labelingTranslationBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed labeling translation pointer');
+  const { rows } = await client.query(
+    `SELECT t.labeling_document_id, t.language, t.translator, t.translation_method,
+            t.back_translation_verified, t.artifact_id
+       FROM labeling_translations t
+       JOIN labeling_documents d
+         ON d.id = t.labeling_document_id AND d.organization_id = t.organization_id
+      WHERE t.id = $1::int AND t.organization_id = $2 AND d.deleted_at IS NULL
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const t = rows[0];
+  if (!t) return ledgerFallback('labeling translation not readable at signing time');
+  const text = await namedText(client, t.artifact_id, orgId);
+  if (text === undefined) return ledgerFallback(`the translated text it names (artifact ${String(t.artifact_id)}) is not readable at signing time`);
+  const content = {
+    recipe: LABELING_TRANSLATION_DIGEST_RECIPE,
+    translationId: Number(rest),
+    labelingDocumentId: Number(t.labeling_document_id),
+    language: t.language,
+    translator: orNull(t.translator),
+    translationMethod: orNull(t.translation_method),
+    backTranslationVerified: orNull(t.back_translation_verified),
+    artifact: text,
+  };
+  return {
+    digest: sha256CanonicalJson(content),
+    basis: BINDING_BASIS.LABELING_TRANSLATION_CONTENT,
+    note: `sha256 (recipe ${LABELING_TRANSLATION_DIGEST_RECIPE}) over translation ${rest} (${String(t.language)}) of labeling document ${String(t.labeling_document_id)}: translator, method, back-translation check, and ${text ? `the sha256 of the translated text in artifact ${text.id}` : 'no translated text artifact'}. No status, approval stamp or timestamp is bound.`,
+  };
+};
+
+/**
+ * risk-item:<id>: an ISO 14971 hazard as its residual risk is accepted, with
+ * every risk control the residual estimate rests on, in id order.
+ */
+const riskResidualAcceptanceBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d{1,10}$/.test(rest)) return ledgerFallback('malformed risk item pointer');
+  const { rows } = await client.query(
+    `SELECT ref_code, hazard, hazardous_situation, harm, sequence_of_events, severity, probability,
+            detectability, initial_risk, control_strategy, source, residual_severity,
+            residual_probability, residual_risk, benefit_risk_rationale
+       FROM risk_items
+      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const r = rows[0];
+  if (!r) return ledgerFallback('risk item not readable at signing time');
+  const controls = (await client.query(
+    `SELECT description, control_type, implementation_evidence, verification_evidence,
+            effectiveness_evidence, introduces_new_risk, new_risk_item_id, status
+       FROM risk_controls
+      WHERE risk_item_id = $1::int AND organization_id = $2
+      ORDER BY id`,
+    [rest, orgId],
+  )).rows;
+  const content = {
+    recipe: RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE,
+    riskItemId: Number(rest),
+    refCode: orNull(r.ref_code),
+    hazard: r.hazard,
+    hazardousSituation: orNull(r.hazardous_situation),
+    harm: r.harm,
+    sequenceOfEvents: orNull(r.sequence_of_events),
+    severity: intOrNull(r.severity),
+    probability: intOrNull(r.probability),
+    detectability: intOrNull(r.detectability),
+    initialRisk: intOrNull(r.initial_risk),
+    controlStrategy: orNull(r.control_strategy),
+    source: orNull(r.source),
+    residualSeverity: intOrNull(r.residual_severity),
+    residualProbability: intOrNull(r.residual_probability),
+    residualRisk: intOrNull(r.residual_risk),
+    benefitRiskRationale: orNull(r.benefit_risk_rationale),
+    controls: controls.map((c) => ({
+      description: c.description,
+      controlType: c.control_type,
+      implementationEvidence: orNull(c.implementation_evidence),
+      verificationEvidence: orNull(c.verification_evidence),
+      effectivenessEvidence: orNull(c.effectiveness_evidence),
+      introducesNewRisk: orNull(c.introduces_new_risk),
+      newRiskItemId: intOrNull(c.new_risk_item_id),
+      status: c.status,
+    })),
+  };
+  return {
+    digest: sha256CanonicalJson(content),
+    basis: BINDING_BASIS.RISK_RESIDUAL_ACCEPTANCE_CONTENT,
+    note: `sha256 (recipe ${RISK_RESIDUAL_ACCEPTANCE_DIGEST_RECIPE}) over risk item ${rest}: hazard, hazardous situation, harm, sequence of events, initial estimate (${String(r.severity)} x ${String(r.probability)}), residual estimate (${String(r.residual_severity)} x ${String(r.residual_probability)}), control strategy, source, benefit-risk rationale, and ${controls.length} risk control(s) with their evidence and status. No status, acceptability flag, project, assignee or timestamp is bound.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -273,4 +453,7 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'regulatory-commitment': commitmentFulfilmentBinding,
   'qms-document': qmsDocumentContentBinding,
   'vault-data-room-seal': vaultDataRoomSealBinding,
+  'labeling-document': labelingDocumentBinding,
+  'labeling-translation': labelingTranslationBinding,
+  'risk-item': riskResidualAcceptanceBinding,
 };

@@ -3,7 +3,8 @@
  *
  *   GET    /api/mdx/risk-items?program_id=<UUID>     hazard/harm/risk rows
  *   POST   /api/mdx/risk-items                       create a risk item
- *   GET    /api/mdx/risk-items/:id                   single row + controls
+ *   GET    /api/mdx/risk-items/:id                   single row + controls; the acceptance's
+ *                                                    content state (signedContent)
  *   PATCH  /api/mdx/risk-items/:id                   partial update;
  *                                                    to `accepted`, an e-signature
  *   POST   /api/mdx/risk-items/:id/controls          add a risk control
@@ -42,7 +43,9 @@ import { pool } from '../db';
 import { admitProject as admitProjectShared } from '../lib/admit-project';
 import { checkOrgMembership, requireEditorAccess } from '../middleware/orgMembership';
 import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
+import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { readSignedContentStates } from '../services/part11/signed-content-state';
 
 const router = Router();
 const log = createScopedLogger('mdx-risk');
@@ -258,7 +261,10 @@ router.get('/risk-items/:id', async (req: Request, res: Response) => {
       `SELECT * FROM risk_controls WHERE risk_item_id = $1 ORDER BY id`,
       [id],
     );
-    return ok(res, { ...rows[0], controls: controls.rows });
+    /* Whether the residual acceptance still binds the hazard and controls it
+       accepted (21 CFR 11.70; services/part11/signed-content-state.ts). */
+    const signed = await readSignedContentStates({ query: (sql, params) => pool.query(sql, params) }, orgId, [`risk-item:${id}`]);
+    return ok(res, { ...rows[0], controls: controls.rows, signedContent: signed.get(`risk-item:${id}`) });
   } catch (err) {
     return serverError(res, log, 'get-item', err);
   }
@@ -352,6 +358,8 @@ async function acceptResidualSigned(
     target,
     meanings: DECISION_ACT_MEANINGS,
     codeStatus: RESIDUAL_ACCEPTANCE_CODE_STATUS,
+    // The hazard and its controls as they stand are what is accepted (21 CFR 11.70).
+    contentBasis: BINDING_BASIS.RISK_RESIDUAL_ACCEPTANCE_CONTENT,
     run: async (client, orgId) => {
       /* On the signing transaction, under the ceremony's lock on this target
          (DP-65): a second acceptance waits here and then reads what the first

@@ -30,6 +30,7 @@ import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { recordGovernedAction } from './c2c/actions';
 import { requireGovernedReason } from './governed-reason';
 import { DECISION_ACT_MEANINGS, type GovernedSignMeaning } from '../services/part11/signature-meanings';
+import { BINDING_BASIS } from '../services/part11/signature-persistence';
 import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from '../services/governance/separation-of-duties';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { resolveUserId } from '../types/auth-request';
@@ -197,6 +198,8 @@ export async function signDocumentStatus(req: Request, res: Response, id: number
     target,
     meanings: to === 'superseded' ? SUPERSEDE_ACT_MEANINGS : DECISION_ACT_MEANINGS,
     codeStatus: SIGNED_ACT_CODE_STATUS,
+    // The label as it stands is what is signed (21 CFR 11.70; governed-target-binders.ts).
+    contentBasis: BINDING_BASIS.LABELING_DOCUMENT_CONTENT,
     run: async (client, orgId, userId) => {
       // Under the ceremony's lock on this target (DP-65); the day it takes effect is fixed here.
       const { rows } = await client.query<DocSigningRow>(
@@ -401,6 +404,8 @@ export async function approveTranslationSigned(
     target,
     meanings: DECISION_ACT_MEANINGS,
     codeStatus: SIGNED_ACT_CODE_STATUS,
+    // The translation as it stands is what is signed (21 CFR 11.70).
+    contentBasis: BINDING_BASIS.LABELING_TRANSLATION_CONTENT,
     run: async (client, orgId, userId) => {
       /* On the signing transaction, under the ceremony's lock on this target
          (DP-65): a second approval waits here and then reads what the first

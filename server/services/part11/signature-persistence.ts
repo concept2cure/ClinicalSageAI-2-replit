@@ -237,6 +237,32 @@ export const BINDING_BASIS = {
    */
   QMS_DOCUMENT_VERSION_CONTENT: 'qms-document-version-content-sha256',
   /**
+   * sha256 (recipe labeling-document/v1, governed-target-binders.ts) over a
+   * device labeling document as its approver attests it: the device, kind,
+   * version, language, region, UDI-DI and expiry, its ISO 15223-1 symbols, and
+   * the sha256 of the label text it names. No status, approval stamp,
+   * effective date or timestamp, so one digest serves its approval, its move to
+   * effective and its supersession. Added 2026-10-29
+   * (docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/).
+   */
+  LABELING_DOCUMENT_CONTENT: 'labeling-document-content-sha256',
+  /**
+   * sha256 (recipe labeling-translation/v1) over a labeling translation as its
+   * approver attests it: the document it translates, the language, the
+   * translator, the method, the back-translation check, and the sha256 of the
+   * translated text it names. No status, stamp or timestamp. Added 2026-10-29.
+   */
+  LABELING_TRANSLATION_CONTENT: 'labeling-translation-content-sha256',
+  /**
+   * sha256 (recipe risk-residual-acceptance/v1) over an ISO 14971 hazard as
+   * its residual risk is accepted: the hazard, situation, harm and sequence,
+   * the initial and residual estimates, the control strategy, the benefit-risk
+   * rationale, and every risk control with its evidence and status. Not the
+   * status or `acceptable` flag the acceptance writes, the project or the
+   * assignee. Added 2026-10-29.
+   */
+  RISK_RESIDUAL_ACCEPTANCE_CONTENT: 'risk-residual-acceptance-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -549,6 +575,8 @@ export interface GovernedBinding {
   recordedPackageIdentity?: RecordedPackageIdentitySnapshot;
   /** Original sequence/leaf digest, retained to distinguish stale identity from changed content. */
   sequenceContentDigest?: string;
+  /** On a ledger fallback only: why no content digest was derivable, in words. Not recorded on the manifest. */
+  fallbackReason?: string;
 }
 
 /**
@@ -580,6 +608,7 @@ export async function deriveGovernedTargetBinding(
     basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER,
     note: `No content digest derivable for target '${target}': ${why}. ` +
       'bound_payload_digest carries the governed action audit sha256 chain hash (target identity + payload hash + actor + time), not a content hash.',
+    fallbackReason: why,
   });
 
   try {
@@ -682,6 +711,29 @@ export interface GovernedSignParams {
    * (a reviewer's approve or reject), so the signature row states it itself.
    */
   extraManifest?: Record<string, unknown>;
+  /**
+   * The content basis this signature must bind (§11.70), for an act whose
+   * target has a content binder. A binding with any other basis, the ledger
+   * fallback included, refuses the signature (SignatureContentUnboundError)
+   * before anything is written, so the caller's transaction rolls back rather
+   * than signing over the chain hash instead. Unset, the binding is whatever
+   * deriveGovernedTargetBinding derives, the ledger basis named when it has
+   * none. Never recorded on the manifest.
+   */
+  requiredBasis?: BindingBasis;
+}
+
+/**
+ * A signature whose declared content basis could not be bound
+ * (GovernedSignParams.requiredBasis). Thrown before the signer lookup and the
+ * INSERT, so nothing of the signature was written when a caller sees it.
+ */
+export class SignatureContentUnboundError extends Error {
+  readonly code = 'SIGNATURE_CONTENT_UNBOUND';
+  constructor(why: string) {
+    super(`The content this signature covers could not be bound to it (21 CFR 11.70): ${why}. It is not signed over the ledger chain hash instead. Nothing was signed.`);
+    this.name = 'SignatureContentUnboundError';
+  }
 }
 
 /**
@@ -840,6 +892,10 @@ export async function persistGovernedSignSignature(
 ): Promise<{ id: number; signedAt: Date }> {
   // Honest content binding for the signed target, derived on the caller's client.
   const binding = await deriveGovernedTargetBinding(client, params.target, params.orgId);
+  // Fail closed on a declared basis: never the chain hash in its place.
+  if (params.requiredBasis && (binding.basis !== params.requiredBasis || !binding.digest)) {
+    throw new SignatureContentUnboundError(binding.fallbackReason ?? `the binding has basis '${binding.basis}', not '${params.requiredBasis}'`);
+  }
   return persistGovernedActionSignature(client, { ...params, binding });
 }
 
