@@ -88,6 +88,18 @@ vi.mock('../shared', async importOriginal => {
 vi.mock('../../../auth', () => ({
   authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
+// Project admission reads the membership and sharing policy on PostgreSQL; it
+// is proven there (project-write-gates.pglite.test.ts). This file is about the
+// predicates the handlers build after it and has no access stub of its own, so
+// admission grants every project; its one refusal (another organization's
+// project) is the handler's own organization-scoped read.
+vi.mock('../project-access', async importOriginal => {
+  const { admissionDecidedBy } = await import('./support/admission-double');
+  return {
+    ...(await importOriginal<typeof import('../project-access')>()),
+    projectAdmissionMiddleware: admissionDecidedBy(() => true),
+  };
+});
 vi.mock('../../../middleware/tenantContext', () => ({
   tenantContextMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
   requireOrganizationContext: (_req: unknown, _res: unknown, next: () => void) => next(),

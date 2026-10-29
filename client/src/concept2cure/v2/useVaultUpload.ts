@@ -93,7 +93,9 @@ export type VaultPlacement = 'confirmed' | 'suggested' | 'unfiled';
 /** Where one file of a batch stands, reported as each settles. */
 export type VaultUploadFileStatus =
   | { state: 'uploading' }
-  | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean }
+  | { state: 'stored'; version: string | null; folderLabel: string | null; placement: VaultPlacement; already: boolean;
+      /** Its text is still being read by the server (a scanned PDF's OCR is off the upload, MR-08 Stage 3). */
+      readingText?: true }
   | { state: 'refused'; reason: string };
 
 export interface VaultUploadOptions {
@@ -180,6 +182,7 @@ async function uploadOne(
       already: { title: string; differs: boolean; filingDiffers?: true } | null;
       version: string | null;
       documentId: string | null;
+      readingText: boolean;
     }
   | { ok: false; reason: string; code: string | null }
 > {
@@ -242,7 +245,7 @@ async function uploadOne(
     const body = (await res.json().catch(() => null)) as
       | {
           filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean; placementStatus?: string };
-          document?: { id?: unknown; documentTitle?: string; version?: string };
+          document?: { id?: unknown; documentTitle?: string; version?: string; extraction?: unknown };
           reupload?: { differs?: Array<{ field?: unknown }> };
         }
       | null;
@@ -257,6 +260,7 @@ async function uploadOne(
       already: body?.reupload ? alreadyRecordedOf(body.reupload.differs ?? [], body.document?.documentTitle || file.name) : null,
       version: body?.document?.version ?? null,
       documentId: typeof body?.document?.id === 'string' && body.document.id ? body.document.id : null,
+      readingText: body?.document?.extraction === 'pending',
     };
   }
 
@@ -363,7 +367,8 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             opts?.newVersionOf ? undefined : opts?.fields?.[index],
           );
           opts?.onFileStatus?.(index, r.ok
-            ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already) }
+            ? { state: 'stored', version: r.version, folderLabel: r.folderLabel, placement: r.placement, already: Boolean(r.already),
+              ...(r.readingText ? { readingText: true as const } : {}) }
             : { state: 'refused', reason: r.reason });
           if (r.ok && r.documentId) outcome.recorded.push(r.documentId);
           if (r.ok && r.already) {

@@ -75,7 +75,7 @@ import {
 } from '../services/artifact-registry-read.js';
 import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
-import { getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
+import { canAccessReportProject, getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
@@ -112,6 +112,31 @@ interface ArtifactCenterRow {
   author: string | null;
   /** The hash the writer recorded, not a SHA-256 of a rendered file. */
   contentHash: string | null;
+}
+
+/**
+ * The export's project admission: the artifact's project in read mode, by the
+ * policy the listing lists by (canAccessReportProject, for the current
+ * membership). Null admits; otherwise the answer to send. A project the caller
+ * cannot open is the not-found an id of no artifact gets; a check that could
+ * not run is not an answer, so it is its own 503.
+ */
+async function artifactProjectRefusal(
+  req: Request,
+  orgId: number,
+  projectId: unknown,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  try {
+    const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: authedUserId(req) ?? undefined });
+    const id = Number(projectId);
+    if (Number.isSafeInteger(id) && id > 0 && (await canAccessReportProject(orgId, actor, id, pool))) return null;
+    return { status: 404, body: { success: false, error: 'That artifact was not found in your organization.' } };
+  } catch (accessError) {
+    const failure = accessError instanceof ProgramReadAccessError
+      ? accessError
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so nothing was exported.');
+    return { status: failure.status, body: { success: false, error: failure.code, message: failure.message } };
+  }
 }
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
@@ -261,6 +286,16 @@ export default function createArtifactsCenterRoutes(): Router {
    * an id the client supplies to reach across tenants), renders the stored
    * content, and streams it back.
    *
+   * ── The artifact's project is admitted first ─────────────────────────────
+   * 2026-10-29 (D6, docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/): it read
+   * the artifact by id and organization alone, so any member of the
+   * organization took the DOCX of an artifact in a private project they are not
+   * on. The artifact's project is now admitted in read mode by the policy the
+   * listing above lists by and the project Vault admits a project by
+   * (canAccessReportProject, for the current membership), before anything about
+   * the artifact is answered. A project the caller cannot open is the same 404
+   * as an id of no artifact; a check that could not run is its 503.
+   *
    * ── The export-review gate is NOT skipped ──────────────────────────────────
    * Governed regulatory content must not leave the system without a persisted
    * decision covering its current version. A download route that trusted a
@@ -291,6 +326,7 @@ export default function createArtifactsCenterRoutes(): Router {
         `SELECT a.title,
                 a.content,
                 a.version,
+                a.project_id,
                 EXISTS (
                   SELECT 1
                     FROM concept2cure_signatures s
@@ -323,9 +359,14 @@ export default function createArtifactsCenterRoutes(): Router {
         title: string | null;
         content: string | null;
         version: number;
+        project_id: number | null;
         is_signed: boolean;
         is_reviewed: boolean;
       };
+
+      // Project access, read mode, before the content, the review gate or the file.
+      const refusal = await artifactProjectRefusal(req, orgId, row.project_id);
+      if (refusal) return res.status(refusal.status).json(refusal.body);
 
       const content = typeof row.content === 'string' ? row.content : '';
       if (!content.trim()) {

@@ -180,7 +180,7 @@ function catalogDate(value: unknown): string | null {
   return invalidDocumentRow();
 }
 
-const isCatalogStatus = (v: unknown): v is CatalogStatus => v === 'extracted' || v === 'extraction_failed' || v === 'cataloged';
+const isCatalogStatus = (v: unknown): v is CatalogStatus => v === 'extracted' || v === 'extraction_failed' || v === 'extraction_pending' || v === 'cataloged';
 
 /** A record for other bytes: its identity, so a reader can say the source
  * changed rather than "no record", and nothing it says about those bytes. */

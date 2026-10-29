@@ -1196,7 +1196,7 @@ router.patch('/projects/:id/ownership-preferences', projectRecordAdmission(true)
  * Returns current project collaborator permission assignments.
  * @deprecated Use GET /projects/:id/sharing for comprehensive sharing state
  */
-router.get('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/collaborators', projectRecordAdmission(false), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');

@@ -36,7 +36,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 
 const router = Router();
 
@@ -45,6 +45,11 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+/* The project is admitted before either route runs (D6, docs/evidence/
+   D6-PROJECT-WRITE-GATES/2026-10-29/). The PUT checked read access only, so a
+   viewer, a member without edit permission and any caller of an archived
+   project saved a HAQ session into it. The GET keeps read mode. */
+router.param('projectId', projectAdmissionMiddleware());
 
 /**
  * PUT /api/concept2cure/projects/:projectId/haq-session

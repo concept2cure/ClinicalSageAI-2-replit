@@ -132,9 +132,34 @@ Searches run:
 
 ## Owed
 
-- AnA's `register_supplier` writes `qms_suppliers` through the pool with no audit row: a second writer beside
-  `POST /qms/suppliers`. Converging it onto the route's writer is owed under zero duplication.
+- ~~AnA's `register_supplier` writes `qms_suppliers` through the pool with no audit row.~~ Done in the third change
+  below.
 - Re-approval due after an approval: the register's re-approval date is still set by Update, not by the approval.
 - **Correcting a signed disposition.** A correction would be a second signed act that names the first, never an
   overwrite. Not offered.
 - A Postgres dbtest of the route (no server here); the domain SQL is proven on PGlite.
+
+## Third change: AnA's QMS record tools write the routes' audited records
+
+- **What existed.** AnA's `register_supplier` and `log_nonconforming_product` (`server/services/ana/AnaToolExecutor.ts`)
+  inserted `qms_suppliers` and `qms_nonconforming_products` rows through the pool, with no §11.10(e) row. Beside them,
+  `POST /qms/suppliers` and `POST /qms/nonconforming` (`server/routes/mdx-qms-records.ts`) inserted the same rows with
+  one. That was two writers of each record, and one of them was unaudited. AnA's governed tools are expected to carry
+  `auditTrail` out of the service (`withAuditNote`, `AnaToolExecutor.ts`); these two did not.
+- **What changed.**
+  - One writer for each record, `recordNewSupplier` and `recordNewNonconformance`
+    (`server/services/qms/qms-record-create.ts`), with the routes' own audit actions (`mdx.qms.supplier.qualify`,
+    `mdx.qms.nonconforming.create`).
+  - Both routes and both tools call them. Each tool returns `auditTrail`, and its message says so when the row did not
+    land.
+  - Admission stays with each caller, before anything is written: `admitProject` and the quality agreement on the
+    routes, the registry's `foreignProgramRefusal` on the tool.
+- **Proof.**
+  - `server/services/ana/__tests__/qms-record-tools-audited.test.ts` passes 3 of 3: each tool's record carries its
+    audit row under the organisation and the user, and a row that did not land is said.
+  - **Shown failing first:** against the tools as they were, all three fail.
+  - The QMS route tests, the labeling and analytics routes and the 40 AnA test files that name these tools or the
+    tool register pass 227 and 521. `tsc --noEmit` reports no error.
+- **Owed.** The tools still run on the pool, not a request-pinned, tenant-scoped client, as they did before. Moving
+  AnA's writes onto a tenant-scoped client is a platform change for every tool, not this one.
+

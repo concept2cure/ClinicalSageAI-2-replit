@@ -55,6 +55,17 @@ Module 2.5 and 2.7 then write it up that way.
 | `studyPivotalDeclarations.test.tsx` (new): the panel lists, declares, shows the server's refusal and the read failure, and offers nothing without the permission | Removing the reason floor fails its case; removing the permission gate fails its case | 5/5 |
 | Every suite reaching Module 2, the loader, the purge list, the route and the board | — | `green.txt`: 683/683 across 53 files |
 
+## Follow-up: the project's own edit permission
+
+`1446214b8` (D6) found that, inside a project, a write must pass the project's
+own write admission (`requireProjectAdmission`, write mode in
+`c2c/project-access.ts`), not only an org role and read access. The
+declaration did not. A member whose project sharing gives use but not edit
+could declare (red: 201). The POST now passes that admission after the CSR
+scope: a writing role (re-read from the database, not the token), edit
+permission under the project's sharing, and a project that is not archived.
+10/10 (`red.txt` §5).
+
 ## Fixtures changed, and why
 
 **Phase 3 meant pivotal.** These suites' Phase 3 studies were pivotal only by
