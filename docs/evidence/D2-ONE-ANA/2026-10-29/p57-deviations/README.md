@@ -1,4 +1,4 @@
-# P-57: deviations are their own record in Quality (server half)
+# P-57: deviations are their own record in Quality
 
 Row: D2 (launch catalog: QMS). Decision: P-57 in `docs/LAUNCH_DEFINITION_OF_DONE.md`, under the founder's delegation
 of 2026-10-29. Slice G16 of `docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md`.
@@ -66,3 +66,54 @@ Searches run:
     column map;
   - the warning ratchet reports net -4, from the deleted storage code;
   - `tsc --noEmit` reports no error.
+
+## Client half: the Deviations tab
+
+- **What already existed.**
+  - The Quality register kit (`qmsRegisterKit.tsx`, `QmsRecords.tsx`) and its signing row action (`sign`, used by
+    disposition and supplier approval).
+  - `raiseCapaFrom` and the CAPA column (`capaSources.ts`).
+  - Change control's "deviation" link, which picked from the nonconformance register (`ChangeLinkForm.tsx`), because
+    there was no deviation register.
+  - `capa_records.capa_source_chk` (`migrations/20260504_capa_mdr.sql`) and `CAPA_SOURCES`
+    (`shared/schema/capa-mdr.ts`), with no `deviation`. AnA's CAPA tools kept their own copy of that list
+    (`server/services/ana/capaMdrTools.ts`).
+- **What changed.**
+  - **Quality has a Deviations tab** (`qmsDeviationRegister.tsx`):
+    - the register shows number, what happened, class, status, detected and target close;
+    - counts of open, critical open and past target close;
+    - "Record deviation";
+    - "Investigate": immediate action, impact, root cause, resolution, target close, and only the status moves in
+      `DEVIATION_TRANSITIONS`;
+    - "Close", only when pending approval, signed through the shared `EsignModal` with approval or responsibility;
+    - "Raise CAPA", as `source: 'deviation'`, with the deviation as its `sourceRefs` entry (`qc_deviation`);
+    - its CAPA column, and AnA's register context.
+  - **AnA's `quality.open-tab`** takes `deviations`.
+  - **Change control's "deviation" link** picks from the deviation register.
+  - **A CAPA may be raised from a deviation.** `migrations/20261029h_capa_source_deviation.sql` widens
+    `capa_source_chk`, replacing it only while its definition lacks `deviation`, so a replay changes nothing.
+    `CAPA_SOURCES` gains `deviation`, and AnA's CAPA tools import the shared list instead of a copy.
+- **Proof.**
+  - `QmsRecords.test.tsx`: under investigation, the only move offered is pending approval, and there is no Close. The
+    investigation sends `PATCH …/deviations/5` with the status, root cause and resolution. Once pending approval,
+    Close opens "Close deviation" with approval and responsibility, nothing is sent until the signature, and the
+    signature sends `POST …/deviations/5/close`.
+  - `ChangeLinkForm.test.tsx` passes 3 of 3: a deviation is picked from `/api/mdx/qms/deviations` with its number and
+    title, and a failed read says "deviation register could not be read".
+  - `server/services/capa-mdr/__tests__/capa-source-deviation.pglite.test.ts` passes 2 of 2: a deviation source is
+    refused before the migration, admitted after it, and an unknown source is still refused. A replay leaves the
+    constraint's definition and oid unchanged.
+  - **Shown failing first:** offering every status instead of the lifecycle's moves fails the screen case, and so
+    does offering Close before pending approval.
+  - The Quality client suite, the CAPA services, the QMS and CAPA route tests, and the navigation and CAPA-tool tests
+    pass 714 of 714 (65 files).
+  - `ci:migration-set-order`, `ci:migration-drop-safety` (444 migrations), the warning ratchet and
+    `ci:launch-scope-api` pass, and `tsc --noEmit` reports no error.
+
+## Owed
+
+- **Cancelling a deviation** opened in error, with a reason: not offered.
+- **The QA close is not separated from the investigator.** No authorship is modelled for deviations, so an
+  independence check would refuse every close (`governed-signed-act.ts` says the same of its other acts).
+- **A project key on a deviation**, as the nonconformance register gained in 20261029d: not added.
+

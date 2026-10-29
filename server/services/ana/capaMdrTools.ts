@@ -17,13 +17,14 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+// The one list the server and its CHECK hold (P-57 added 'deviation'); this file kept a copy.
+import { CAPA_SOURCES } from '../../../shared/schema/capa-mdr';
 
 const HARM_LEVELS = ['none', 'malfunction', 'injury', 'serious_injury', 'death'];
 const COMPLAINT_SOURCES = ['customer', 'distributor', 'clinical_trial', 'internal', 'regulator', 'literature', 'service', 'other'];
 const COMPLAINT_CHANNELS = ['phone', 'email', 'web_form', 'service_call', 'salesforce', 'servicenow', 'mail', 'in_person', 'other'];
 const SEVERITY_LEVELS = ['negligible', 'minor', 'serious', 'critical'];
 const CAPA_TYPES = ['corrective', 'preventive', 'both'];
-const CAPA_SOURCES = ['complaint', 'internal_audit', 'external_audit', 'mdr', 'nonconformance', 'management_review', 'supplier', 'inspection_finding', 'risk_review', 'trend_signal', 'other'];
 const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 const VIGILANCE_ENTITY_TYPES = ['complaint', 'mdr_event', 'capa_record', 'capa_action'];
 
@@ -119,7 +120,7 @@ export const OPEN_DEVICE_CAPA: AnaTool = {
       programId: { type: 'string', description: 'The regulatory program UUID.' },
       title: { type: 'string' },
       type: { type: 'string', enum: CAPA_TYPES },
-      source: { type: 'string', enum: CAPA_SOURCES },
+      source: { type: 'string', enum: [...CAPA_SOURCES] },
       summary: { type: 'string' },
       problemStatement: { type: 'string' },
       riskLevel: { type: 'string', enum: RISK_LEVELS },

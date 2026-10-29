@@ -38,6 +38,17 @@ const SIGNED_PATH: Record<QmsApprovalTarget['kind'], (id: number) => string> = {
   change: (id) => `changes/${id}/approve`,
 };
 
+/**
+ * The meaning each target kind is signed with, as the route stores it and as
+ * the dialog names it. A retirement withdraws the document from use; it is not
+ * an approval (P-51).
+ */
+const SIGNED_MEANING: Record<QmsApprovalTarget['kind'], { stored: string; id: 'approval' | 'retirement' }> = {
+  document: { stored: 'APPROVED', id: 'approval' },
+  'document-retire': { stored: 'retirement', id: 'retirement' },
+  change: { stored: 'APPROVED', id: 'approval' },
+};
+
 export async function postQmsApproval(
   target: QmsApprovalTarget,
   input: { reason: string; password: string; totp?: string },
@@ -45,7 +56,7 @@ export async function postQmsApproval(
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
     ...(input.totp ? { mfaToken: input.totp } : {}),
-    meaning: 'APPROVED',
+    meaning: SIGNED_MEANING[target.kind].stored,
     reason: input.reason,
   });
   const json = (await res.json().catch(() => null)) as {
@@ -61,7 +72,7 @@ export async function postQmsApproval(
     throw new Error('The server did not return the signature record. Reload the register to see whether the approval was recorded.');
   }
   return {
-    meaning: 'approval',
+    meaning: SIGNED_MEANING[target.kind].id,
     reason: input.reason,
     signedAt: sig.signedAt,
     ...(sig.boundPayloadDigest ? { hash: sig.boundPayloadDigest } : {}),
@@ -99,6 +110,15 @@ export function signNcDisposition(
   return sendSignedAct('PATCH', `/api/mdx/qms/nonconforming/${id}/disposition`, { disposition }, input, UNCONFIRMED_DISPOSITION);
 }
 const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Reload the register and check the nonconformance before you sign again.';
+
+/** Close a deviation with a signature (server/services/qms/deviations.ts, P-57). */
+export function signDeviationClose(
+  id: number,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/deviations/${id}/close`, {}, input, UNCONFIRMED_CLOSE);
+}
+const UNCONFIRMED_CLOSE = 'The server did not confirm the close. Reload the register and check the deviation before you sign again.';
 
 /** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
 export function signSupplierApproval(

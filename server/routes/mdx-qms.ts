@@ -90,6 +90,7 @@ import {
   retireQmsDocumentSigned,
   QmsApprovalRefusedError,
   QMS_DOCUMENT_APPROVAL_MEANING,
+  QMS_DOCUMENT_RETIREMENT_MEANING,
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
@@ -629,15 +630,21 @@ const approveBody = z.object({
    2026-09-24): the approve body without effectiveDate, which a retirement does
    not set. The reason keeps the floor the whole governed surface applies
    (`governedReason`, 8), which 6582e3a3 set for this route on 2026-09-25;
-   approve's own floor of 3 predates that rule and is left as it is here. */
-const retireBody = approveBody.omit({ effectiveDate: true }).extend({ reason: governedReason });
+   approve's own floor of 3 predates that rule and is left as it is here. The
+   meaning is retirement's own (P-51): 'APPROVED' is refused here. */
+const retireBody = approveBody.omit({ effectiveDate: true }).extend({
+  meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
+    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+  }),
+  reason: governedReason,
+});
 
 /** §11.200(a)(1): the first signing presents every component. Names the ones that did not arrive. */
 function esignatureComponentMissing(res: Response, act: 'Approval' | 'Retirement', fieldErrors: Record<string, unknown>): Response {
   return clientError(
     res,
     400,
-    `${act} is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+    `${act} is an electronic signature and requires a password, the signature meaning '${act === 'Retirement' ? QMS_DOCUMENT_RETIREMENT_MEANING : QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
     { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
   );
 }

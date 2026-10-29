@@ -72,7 +72,7 @@ import {
   type BindingBasis,
   type SignatureDbClient,
 } from '../part11/signature-persistence';
-import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
+import { TASK_SIGNATURE_MEANINGS, type GovernedSignMeaning } from '../part11/signature-meanings';
 import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
 import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
 import { filingAgreesWithEditing } from '../c2c/filing-section-target';
@@ -86,6 +86,14 @@ import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
  * the route accepts this value and no other.
  */
 export const QMS_DOCUMENT_APPROVAL_MEANING: (typeof TASK_SIGNATURE_MEANINGS)[number] = 'APPROVED';
+
+/**
+ * The §11.50(a)(3) meaning a retirement carries (P-51, 2026-10-29): the signer
+ * withdraws the document from use, which is not an approval of it. Until then a
+ * retirement was signed 'APPROVED'; those stored rows keep the meaning they were
+ * signed with. The route accepts this value and no other.
+ */
+export const QMS_DOCUMENT_RETIREMENT_MEANING = 'retirement' as const satisfies GovernedSignMeaning;
 
 /**
  * `electronic_signatures.binding_basis` for a QMS controlled-document approval,
@@ -495,8 +503,10 @@ export async function approveQmsDocumentSigned(
 
 /* ── Retirement ─────────────────────────────────────────────────────────────── */
 
-/** The retirement takes the approval's parameters less the effective date, which it does not set. */
-export type RetireQmsDocumentSignedParams = Omit<ApproveQmsDocumentSignedParams, 'effectiveDate'>;
+/** The retirement takes the approval's parameters less the effective date, which it does not set, and carries the retirement meaning. */
+export type RetireQmsDocumentSignedParams = Omit<ApproveQmsDocumentSignedParams, 'effectiveDate' | 'meaning'> & {
+  meaning: typeof QMS_DOCUMENT_RETIREMENT_MEANING;
+};
 
 export interface RetireQmsDocumentSignedResult {
   document: QmsDocumentRow;

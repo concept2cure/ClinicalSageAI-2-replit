@@ -17,7 +17,41 @@ import type { ActionState, CapaState } from '@shared/schema/capa-mdr';
 import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 import { capaWrite, qmsWrite } from './qmsWrites';
 
-export type QmsRecordTab = 'capa' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
+export type QmsRecordTab = 'capa' | 'deviations' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
+
+/** A GMP deviation (P-57; server/routes/mdx-qms-deviations.ts, table qc_deviations). */
+export interface DeviationRow {
+  id: number;
+  deviation_number: string;
+  title: string;
+  description: string;
+  deviation_type: string;
+  classification: string;
+  category: string | null;
+  detected_date: string;
+  location: string | null;
+  batch_number: string | null;
+  product_name: string | null;
+  impact_level: string | null;
+  investigation_status: string | null;
+  immediate_actions: string[] | null;
+  root_cause: string | null;
+  resolution_description: string | null;
+  status: string;
+  target_closure_date: string | null;
+  actual_closure_date: string | null;
+  qa_approved_by: string | null;
+}
+export const DEVIATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Open', under_investigation: 'Under investigation', pending_approval: 'Pending approval', closed: 'Closed',
+};
+export const DEVIATION_CLASS_LABEL: Record<string, string> = { minor: 'Minor', major: 'Major', critical: 'Critical' };
+export const DEVIATION_TYPE_LABEL: Record<string, string> = { unplanned: 'Unplanned', planned: 'Planned' };
+export const DEVIATION_CATEGORY_LABEL: Record<string, string> = {
+  process: 'Process', equipment: 'Equipment', documentation: 'Documentation', material: 'Material',
+  environmental: 'Environmental', human_error: 'Human error',
+};
+export const IMPACT_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 
 /** Server rows as the list routes return them (`SELECT *`, snake_case). */
 export interface NonconformanceRow {
@@ -138,7 +172,8 @@ export const CAPA_TYPE_LABEL: Record<string, string> = { corrective: 'Corrective
 export const CAPA_SOURCE_LABEL: Record<string, string> = {
   nonconformance: 'Nonconformance', internal_audit: 'Internal audit', external_audit: 'External audit',
   inspection_finding: 'Inspection finding', complaint: 'Complaint', supplier: 'Supplier',
-  management_review: 'Management review', risk_review: 'Risk review', trend_signal: 'Trend', mdr: 'MDR', other: 'Other',
+  management_review: 'Management review', risk_review: 'Risk review', trend_signal: 'Trend', mdr: 'MDR',
+  deviation: 'Deviation', other: 'Other',
 };
 export const RISK_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 export const CAPA_STATE_LABEL: Record<CapaState, string> = {
@@ -208,6 +243,14 @@ function compact(input: Record<string, unknown>): Record<string, unknown> {
   for (const [k, v] of Object.entries(input)) if (v !== undefined && v !== '') body[k] = v;
   return body;
 }
+
+export const createDeviation = (v: {
+  deviationNumber: string; detectedDate: string; title: string; description: string; deviationType: string; classification: string;
+  category?: string; location?: string; productName?: string; batchNumber?: string; targetClosureDate?: string;
+}) => qmsWrite<DeviationRow>('POST', 'deviations', compact(v));
+
+export const updateDeviation = (id: number, v: Record<string, string>) =>
+  qmsWrite<DeviationRow>('PATCH', `deviations/${id}`, compact(v));
 
 export const createNonconformance = (v: {
   ncNumber: string; description: string; deviceName?: string; lotOrSerial?: string; source?: string;

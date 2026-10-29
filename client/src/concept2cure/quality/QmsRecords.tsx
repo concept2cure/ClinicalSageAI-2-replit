@@ -36,6 +36,7 @@ import { type Column, type RecordRegisterContext, type RowAction, type RegisterC
 const MAX_FACT_ROWS = 100;
 type ReportContext = (ctx: Omit<RecordRegisterContext, 'tab'>) => void;
 import { CAPAS } from './qmsCapaRegister';
+import { DEVIATIONS } from './qmsDeviationRegister';
 import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegisters';
 
 function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
@@ -236,6 +237,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
 export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
   { id: 'capa', label: 'CAPA' },
+  { id: 'deviations', label: 'Deviations' },
   { id: 'nonconforming', label: 'Nonconformances' },
   { id: 'suppliers', label: 'Suppliers' },
   { id: 'audits', label: 'Internal audits' },
@@ -244,6 +246,7 @@ export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
 
 export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   capa: CAPAS.ask,
+  deviations: DEVIATIONS.ask,
   nonconforming: NONCONFORMANCES.ask,
   suppliers: SUPPLIERS.ask,
   audits: AUDITS.ask,
@@ -256,6 +259,7 @@ export function QmsRecords({ tab, onAsk, onContext }: {
   const report = React.useCallback<ReportContext>((ctx) => onContext?.({ ...ctx, tab }), [onContext, tab]);
   switch (tab) {
     case 'capa': return <RecordRegister key={tab} config={CAPAS} onAsk={onAsk} onContext={report} />;
+    case 'deviations': return <RecordRegister key={tab} config={DEVIATIONS} onAsk={onAsk} onContext={report} />;
     case 'nonconforming': return <RecordRegister key={tab} config={NONCONFORMANCES} onAsk={onAsk} onContext={report} />;
     case 'suppliers': return <RecordRegister key={tab} config={SUPPLIERS} onAsk={onAsk} onContext={report} />;
     case 'audits': return <RecordRegister key={tab} config={AUDITS} onAsk={onAsk} onContext={report} />;
