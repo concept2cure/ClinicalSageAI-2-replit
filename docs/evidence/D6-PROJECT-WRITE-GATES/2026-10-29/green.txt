@@ -1,0 +1,756 @@
+# green.txt — this change, on the working tree at 46db6c762
+#
+# npx vitest run server/routes/c2c/__tests__/project-write-gates.pglite.test.ts <the 43 suites that load a
+# changed router, stub project-access, or load the artifacts-center router>   (listed in mocked-suites.txt)
+#
+# The one failure, smoke.test.ts 'keeps concept2cure router tenant-scoped and envelope-based', fails the
+# same way at HEAD: it looks for router.post('/projects' in routes/concept2cure.ts, which A2.9 removed
+# (creation moved to POST /api/c2c/projects). It is not this change's.
+
+Test Files  1 failed | 43 passed (44)
+Tests  1 failed | 1129 passed (1130)
+
+## Per file (passed / failed)
+
+  691 / 0  server/routes/c2c/__tests__/project-write-gates.pglite.test.ts
+   17 / 1  server/__tests__/routes/smoke.test.ts
+    7 / 0  tests/artifact-status-project-scope.test.ts
+   24 / 0  server/routes/__tests__/authoringAgencyResponseWriteback.pglite.integration.test.ts
+   24 / 0  server/routes/c2c/__tests__/communication-center.test.ts
+   22 / 0  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+   30 / 0  server/routes/c2c/__tests__/program-twin-project-access.pglite.test.ts
+   14 / 0  server/routes/c2c/__tests__/c2c-router.parity.test.ts
+    8 / 0  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+    2 / 0  server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts
+   42 / 0  tests/artifact-routes-project-scope.test.ts
+   13 / 0  server/routes/__tests__/ana-skills-project-routes.test.ts
+    7 / 0  server/routes/__tests__/audit-services-figures-call-the-engine.test.ts
+    4 / 0  server/routes/__tests__/audit-services-keywords-call-the-engine.test.ts
+   15 / 0  tests/artifact-status-lock-covers-approval.test.ts
+   29 / 0  server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts
+    3 / 0  tests/routes/concept2cure-governed-upload.test.ts
+    5 / 0  server/routes/__tests__/audit-services-figure-failures-are-not-all-422.test.ts
+   15 / 0  server/routes/__tests__/ind-generation-fail-closed.test.ts
+    6 / 0  server/routes/c2c/__tests__/governed-decision-transition-refusal-and-failure-statuses.test.ts
+    8 / 0  tests/artifact-routes-invalidate-bundles.test.ts
+    8 / 0  server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+    8 / 0  server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+   11 / 0  server/routes/__tests__/safety-narrative-save.test.ts
+    5 / 0  server/routes/c2c/__tests__/reviews-my-queue-program.test.ts
+    9 / 0  server/routes/__tests__/artifacts-center-export-governance.test.ts
+    4 / 0  server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts
+    2 / 0  tests/artifact-status-audit-outcome.test.ts
+    4 / 0  server/routes/c2c/__tests__/exports-recorded.test.ts
+   20 / 0  tests/routes/cerv2-literature-screening.test.ts
+    7 / 0  server/routes/__tests__/artifacts-center-signature-staleness.test.ts
+   10 / 0  tests/routes/concept2cure.test.ts
+    5 / 0  server/routes/__tests__/safety-narrative-cases.test.ts
+    2 / 0  server/routes/c2c/__tests__/artifact-placement-says-whether-its-decision-was-recorded.test.ts
+    3 / 0  server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts
+    3 / 0  server/routes/c2c/__tests__/artifact-versions-name-their-author.test.ts
+    2 / 0  server/routes/__tests__/artifacts-center-manifest-fields.test.ts
+   11 / 0  tests/routes/estar-registration-correspondent.test.ts
+    2 / 0  tests/unit/concept2cure-artifact-source-evidence.test.ts
+   11 / 0  tests/routes/estar-submission-filing.test.ts
+    7 / 0  server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts
+    3 / 0  server/routes/c2c/__tests__/knowledge-upload-module3-map-uses-only-a-recorded-track.test.ts
+    4 / 0  server/routes/c2c/__tests__/knowledge-upload-client-track-is-recorded-or-not-stated.test.ts
+    2 / 0  tests/routes/concept2cure-project-collaborators.test.ts
+
+## Failing
+
+× server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps concept2cure router tenant-scoped and envelope-based 8ms
+
+## The new suite, 691 tests
+
+✓ the routers production mounts at /api/concept2cure > register exactly these writes under /projects, so a new one cannot arrive without a verdict
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits owner
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/submission-center/items/:itemId/status > admits owner
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/authority-profiles > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/advance > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:recordId/legal-documents > admits owner
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-center/items/:recordId/legal-documents > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/response > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/withdraw > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/no-response-required > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/approve > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/commitments > admits owner
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfill > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/owner > admits owner
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/agency-communications/:eventId/response-package > admits owner
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/publishops/services > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/publishops/services/:serviceId/status > admits owner
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/tasks/:taskId > admits owner
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/tasks/:taskId > admits owner
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/bulk > admits owner
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > admits viewer
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > admits archived
+✓ POST /api/concept2cure/projects/:projectId/tasks/assess > admits owner
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations > admits owner
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/conversations/:conversationId/messages > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/conversations/:conversationId > admits owner
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/conversations/:conversationId > admits owner
+✓ POST /api/concept2cure/projects/:projectId/submission-package > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-package > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/submission-package > admits viewer
+✓ POST /api/concept2cure/projects/:projectId/submission-package > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/submission-package > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/submission-package > admits archived
+✓ POST /api/concept2cure/projects/:projectId/submission-package > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report/export > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits use-member
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits reviewer-no-edit
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/ctd-section > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits use-member
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits reviewer-no-edit
+✓ PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits owner
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers/:assignmentId/remind > admits owner
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits use-member
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/haq-session > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/cmc > admits owner
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/linked > admits owner
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:projectId/knowledge > admits owner
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/transition > admits owner
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:projectId/apps > admits owner
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:projectId/apps/:appId > admits owner
+✓ PUT /api/concept2cure/projects/:id > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:id > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:id > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:id > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:id > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:id > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:id > admits owner
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/ownership-preferences > admits owner
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:id/sharing/members/:userId > admits owner
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:id/sharing/members/:userId > admits owner
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses viewer and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses use-member and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses reviewer-no-edit and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses not-on-private and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses archived and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > refuses other-org and writes nothing
+✓ PATCH /api/concept2cure/projects/:id/sharing/visibility > admits owner
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses viewer and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses use-member and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses reviewer-no-edit and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses not-on-private and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses archived and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > refuses other-org and writes nothing
+✓ PUT /api/concept2cure/projects/:projectId/collaborators > admits owner
+✓ DELETE /api/concept2cure/projects/:id > refuses viewer and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > refuses use-member and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > refuses reviewer-no-edit and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > refuses not-on-private and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > refuses archived and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > refuses other-org and writes nothing
+✓ DELETE /api/concept2cure/projects/:id > admits owner
+✓ POST /api/concept2cure/projects/:id/export > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/export > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/export > admits viewer
+✓ POST /api/concept2cure/projects/:id/export > admits use-member
+✓ POST /api/concept2cure/projects/:id/export > admits reviewer-no-edit
+✓ POST /api/concept2cure/projects/:id/export > admits archived
+✓ POST /api/concept2cure/projects/:id/export > admits owner
+✓ POST /api/concept2cure/projects/:id/transfer > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/transfer > admits owner
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/generate > admits owner
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/amend > admits owner
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/review > admits owner
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses viewer and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses use-member and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses reviewer-no-edit and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses not-on-private and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses archived and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > refuses other-org and writes nothing
+✓ POST /api/concept2cure/projects/:id/schedule-of-events/goals/reset > admits owner
+✓ the review acts > are exactly the thread, the review task, the status change, the comment, its resolution and the decision
+✓ the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+✓ the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+✓ the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+✓ the review acts > an assigned reviewer who is not an edit member of the private project completes PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+✓ the review acts > an assigned reviewer who is not an edit member of the private project completes POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+✓ the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads
+✓ the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks
+✓ the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/status
+✓ the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments
+✓ the review acts > a viewer is refused PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments/:commentId/resolve
+✓ the review acts > a viewer is refused POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/submit
+✓ the review acts > the same reviewer is refused a write that is not a review act (editing the artifact)
+✓ approving an artifact through PUT …/status > an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits
+✓ approving an artifact through PUT …/status > an archived project takes no approval, even from an approver who may sign: the gate answers before the ceremony
+✓ approving an artifact through PUT …/status > a viewer is refused by the gate, and nothing is signed
+✓ approving an artifact through PUT …/status > a member without signing authority is admitted by the gate and refused by the ceremony, and nothing is signed
+✓ the admitted project is the one the row belongs to > PUT /api/concept2cure/projects/:projectId/tasks/:taskId: the private project’s task, through the open project’s URL, is not found and not changed
+✓ the admitted project is the one the row belongs to > DELETE /api/concept2cure/projects/:projectId/tasks/:taskId: the private project’s task, through the open project’s URL, is not found and not changed
+✓ the admitted project is the one the row belongs to > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads: the private project’s artifact, through the open project’s URL, is not found
+✓ the admitted project is the one the row belongs to > POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks: the private project’s artifact, through the open project’s URL, is not found
+✓ the admitted project is the one the row belongs to > the review reads > GET …/review-threads: the private project’s review record, through the open project’s URL, is not readable
+✓ the admitted project is the one the row belongs to > the review reads > GET …/review-tasks: the private project’s review record, through the open project’s URL, is not readable
+✓ the admitted project is the one the row belongs to > the review reads > GET …/review-threads: through its own project’s URL, its owner reads it (the control)
+✓ the admitted project is the one the row belongs to > the review reads > GET …/review-tasks: through its own project’s URL, its owner reads it (the control)
+✓ the admitted project is the one the row belongs to > the review reads > GET …/review-record/export: another project’s artifact, through this project’s URL, is not found (an audit reader)
+✓ the admitted project is the one the row belongs to > the task writes carry the organization and the project in their predicate
+✓ GET /api/concept2cure/artifacts > lists only the projects the caller may use: a member not on the private project does not see its artifact
+✓ GET /api/concept2cure/artifacts > names each artifact’s project, and never another organization’s project
+✓ GET /api/concept2cure/artifacts > its projects join is held to the caller’s organization
+✓ GET /api/artifacts-center/:artifactId/export > a member who is not on the private project is not given its artifact’s file, and no export is recorded
+✓ GET /api/artifacts-center/:artifactId/export > the same member is given the open project’s artifact (read mode: the gate is project access, not edit permission)
+✓ GET /api/artifacts-center/:artifactId/export > the private project’s owner is given its artifact, and the download is recorded (the control)
+✓ GET /api/artifacts-center/:artifactId/export > another organization’s artifact is not found
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-threads > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-tasks > admits owner
+✓ GET /api/concept2cure/projects/:projectId/reviews/project-queue > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/reviews/project-queue > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/reviews/project-queue > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/reviews/project-queue > admits owner
+✓ GET /api/concept2cure/projects/:projectId/review-pulse > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/review-pulse > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/review-pulse > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/review-pulse > admits owner
+✓ GET /api/concept2cure/projects/:projectId/work-items > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/work-items > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/work-items > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/work-items > admits owner
+✓ GET /api/concept2cure/projects/:projectId/readiness-summary > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/readiness-summary > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/readiness-summary > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/readiness-summary > admits owner
+✓ GET /api/concept2cure/projects/:projectId/submission-center/items > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/submission-center/items > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/submission-center/items > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/submission-center/items > admits owner
+✓ GET /api/concept2cure/projects/:projectId/authority-profiles > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/authority-profiles > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/authority-profiles > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/authority-profiles > admits owner
+✓ GET /api/concept2cure/projects/:projectId/agency-communications > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/agency-communications > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/agency-communications > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/agency-communications > admits owner
+✓ GET /api/concept2cure/projects/:projectId/company-legal-documents > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/company-legal-documents > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/company-legal-documents > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/company-legal-documents > admits owner
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions/:questionId/editor-source > admits owner
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/agency-communications/:eventId/questions > admits owner
+✓ GET /api/concept2cure/projects/:projectId/commitments > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/commitments > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/commitments > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/commitments > admits owner
+✓ GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/commitments/:commitmentId/fulfilment-options > admits owner
+✓ GET /api/concept2cure/projects/:projectId/agency-questions > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/agency-questions > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/agency-questions > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/agency-questions > admits owner
+✓ GET /api/concept2cure/projects/:projectId/publishops/services > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/publishops/services > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/publishops/services > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/publishops/services > admits owner
+✓ GET /api/concept2cure/projects/:projectId/tasks > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/tasks > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/tasks > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/tasks > admits owner
+✓ GET /api/concept2cure/projects/:projectId/tasks/summary > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/tasks/summary > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/tasks/summary > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/tasks/summary > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts > admits owner
+✓ GET /api/concept2cure/projects/:projectId/dossier-metrics > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/dossier-metrics > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/dossier-metrics > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/dossier-metrics > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/snapshots > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/provenance > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/versions > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/audit-report > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verify-integrity > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/comments > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers > admits owner
+✓ GET /api/concept2cure/projects/:projectId/team > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/team > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/team > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/team > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviews/status > admits owner
+✓ GET /api/concept2cure/projects/:projectId/haq-session > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/haq-session > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/haq-session > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/haq-session > admits owner
+✓ GET /api/concept2cure/projects/:projectId/program-twin > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/program-twin > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/program-twin > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/program-twin > admits owner
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/verification > admits owner
+✓ GET /api/concept2cure/projects/:projectId/change-impact > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/change-impact > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/change-impact > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/change-impact > admits owner
+✓ GET /api/concept2cure/projects/:projectId/cmc > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/cmc > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/cmc > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/cmc > admits owner
+✓ GET /api/concept2cure/projects/:projectId/context > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/context > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/context > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/context > admits owner
+✓ GET /api/concept2cure/projects/:projectId/transform-context > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/transform-context > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/transform-context > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/transform-context > admits owner
+✓ GET /api/concept2cure/projects/:projectId/knowledge > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/knowledge > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/knowledge > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/knowledge > admits owner
+✓ GET /api/concept2cure/projects/:projectId/activity > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/activity > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/activity > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/activity > admits owner
+✓ GET /api/concept2cure/projects/:projectId/linked > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/linked > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/linked > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/linked > admits owner
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions > admits owner
+✓ GET /api/concept2cure/projects/:projectId/governance/summary > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/governance/summary > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/governance/summary > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/governance/summary > admits owner
+✓ GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/governance/artifacts/:artifactId/trace > admits owner
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/governance/decisions/:decisionId/history > admits owner
+✓ GET /api/concept2cure/projects/:projectId/governance/review-queue > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/governance/review-queue > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/governance/review-queue > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/governance/review-queue > admits owner
+✓ GET /api/concept2cure/projects/:projectId/apps > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/apps > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/apps > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/apps > admits owner
+✓ GET /api/concept2cure/projects/:id > refuses not-on-private
+✓ GET /api/concept2cure/projects/:id > refuses other-org
+✓ GET /api/concept2cure/projects/:id > admits viewer
+✓ GET /api/concept2cure/projects/:id > admits owner
+✓ GET /api/concept2cure/projects/:projectId/collaborators > refuses not-on-private
+✓ GET /api/concept2cure/projects/:projectId/collaborators > refuses other-org
+✓ GET /api/concept2cure/projects/:projectId/collaborators > admits viewer
+✓ GET /api/concept2cure/projects/:projectId/collaborators > admits owner
+✓ GET /api/concept2cure/projects/:id/sharing > refuses not-on-private
+✓ GET /api/concept2cure/projects/:id/sharing > refuses other-org
+✓ GET /api/concept2cure/projects/:id/sharing > admits viewer
+✓ GET /api/concept2cure/projects/:id/sharing > admits owner
+✓ GET /api/concept2cure/projects/:id/unified-work > refuses not-on-private
+✓ GET /api/concept2cure/projects/:id/unified-work > refuses other-org
+✓ GET /api/concept2cure/projects/:id/unified-work > admits viewer
+✓ GET /api/concept2cure/projects/:id/unified-work > admits owner
+✓ GET /api/concept2cure/projects/:id/schedule-of-events > refuses not-on-private
+✓ GET /api/concept2cure/projects/:id/schedule-of-events > refuses other-org
+✓ GET /api/concept2cure/projects/:id/schedule-of-events > admits viewer
+✓ GET /api/concept2cure/projects/:id/schedule-of-events > admits owner

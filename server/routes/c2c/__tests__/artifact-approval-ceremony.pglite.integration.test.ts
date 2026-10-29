@@ -84,10 +84,12 @@ vi.mock('../../../services/cmc/resolve-cmc-artifact-project', () => ({
       : { state: 'unaddressable', artifactProjectId: null, detail: 'not a project' },
   ),
 }));
-vi.mock('../project-access', () => ({
-  verifyProjectAccess: vi.fn(async () => true),
-  getActorRole: () => 'admin',
-}));
+vi.mock('../project-access', async () => {
+  const verifyProjectAccess = vi.fn(async () => true);
+  // The router's admission, decided by the same stub (c2c/__tests__/support/admission-double.ts).
+  const { admissionDecidedBy } = await import('./support/admission-double');
+  return { verifyProjectAccess, getActorRole: () => 'admin', projectAdmissionMiddleware: admissionDecidedBy(verifyProjectAccess) };
+});
 vi.mock('../../../services/concept2cure/governedDocumentContractService', () => ({
   resolveGovernedContext: () => ({
     validation: { valid: true, errors: [], warnings: [] },

@@ -13,6 +13,20 @@ vi.mock('../../services/docxGenerator.js', () => ({ generateDocxBuffer }));
 const logAction = vi.hoisted(() => vi.fn());
 vi.mock('../../services/auditService', () => ({ default: { logAction: (...a: unknown[]) => logAction(...a) } }));
 vi.mock('../../services/compute/artifactWriteback', () => ({ registerArtifactWithGovernance: vi.fn() }));
+/* The export admits the artifact's project before its review gate (D6). The
+   admission is pinned on PostgreSQL in
+   server/routes/c2c/__tests__/project-write-gates.pglite.test.ts; this suite is
+   about the gate and the recorded download after it and has no access stub of
+   its own, so its one caller is a current member who may open the project. */
+const canAccessReportProject = vi.hoisted(() => vi.fn(async () => true));
+vi.mock('../../services/c2c/current-program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  readCurrentProgramActor: vi.fn(async () => ({ userId: 5, role: 'member' })),
+}));
+vi.mock('../../services/report-os/project-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  canAccessReportProject,
+}));
 
 import createArtifactsCenterRoutes from '../artifacts-center-routes';
 
@@ -33,6 +47,7 @@ function artifact(overrides: Record<string, unknown> = {}) {
     content: 'Persisted customer-authored content.',
     metadata: { generationMethod: 'manual' },
     version: 2,
+    project_id: 33,
     is_signed: false,
     is_reviewed: false,
     ...overrides,
@@ -67,6 +82,8 @@ describe('Artifacts Center persisted-review export gate', () => {
     expect(query.mock.calls[0][0]).toContain('d.version_reviewed = a.version');
     expect(query.mock.calls[0][0]).toContain('v.version = a.version');
     expect(query.mock.calls[0][1]).toEqual(['artifact_1', 17]);
+    // The project the export admitted is the artifact's own.
+    expect(canAccessReportProject).toHaveBeenCalledWith(17, { userId: 5, role: 'member' }, 33, expect.anything());
   });
 
   it('fails closed by default in production', async () => {
