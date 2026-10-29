@@ -1,0 +1,2 @@
+CDISC_PILOT_INSIDE_REPOSITORY: the CDISC terms forbid copying this data into the repository. Choose a directory outside it.
+exit 2

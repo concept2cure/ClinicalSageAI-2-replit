@@ -1,0 +1,89 @@
+{
+ "adsl": {
+  "rows_product": 254,
+  "rows_pandas": 254,
+  "columns_equal": true,
+  "cells": 12192,
+  "match": 12192,
+  "mismatch": 0,
+  "pandas_zero_artifact": 344
+ },
+ "adae": {
+  "rows_product": 1191,
+  "rows_pandas": 1191,
+  "columns_equal": true,
+  "cells": 65505,
+  "match": 65505,
+  "mismatch": 0,
+  "pandas_zero_artifact": 301
+ },
+ "adlbc": {
+  "rows_product": 74264,
+  "rows_pandas": 74264,
+  "columns_equal": true,
+  "cells": 3416144,
+  "match": 3416144,
+  "mismatch": 0,
+  "pandas_zero_artifact": 76666
+ },
+ "adlbh": {
+  "rows_product": 49932,
+  "rows_pandas": 49932,
+  "columns_equal": true,
+  "cells": 2296872,
+  "match": 2296872,
+  "mismatch": 0,
+  "pandas_zero_artifact": 52366
+ },
+ "advs": {
+  "rows_product": 32139,
+  "rows_pandas": 32139,
+  "columns_equal": true,
+  "cells": 1092726,
+  "match": 1092726,
+  "mismatch": 0,
+  "pandas_zero_artifact": 38997
+ },
+ "adtte": {
+  "rows_product": 254,
+  "rows_pandas": 254,
+  "columns_equal": true,
+  "cells": 6604,
+  "match": 6604,
+  "mismatch": 0,
+  "pandas_zero_artifact": 238
+ },
+ "adqsadas": {
+  "rows_product": 12463,
+  "rows_pandas": 12463,
+  "columns_equal": true,
+  "cells": 498520,
+  "match": 498520,
+  "mismatch": 0,
+  "pandas_zero_artifact": 25480
+ },
+ "adqscibc": {
+  "rows_product": 730,
+  "rows_pandas": 730,
+  "columns_equal": true,
+  "cells": 26280,
+  "match": 26280,
+  "mismatch": 0,
+  "pandas_zero_artifact": 300
+ },
+ "adqsnpix": {
+  "rows_product": 31140,
+  "rows_pandas": 31140,
+  "columns_equal": true,
+  "cells": 1276740,
+  "match": 1276740,
+  "mismatch": 0,
+  "pandas_zero_artifact": 96961
+ },
+ "total": {
+  "cells": 8691583,
+  "match": 8691583,
+  "mismatch": 0,
+  "pandas_zero_artifact": 291653
+ }
+}

@@ -1,0 +1,157 @@
+{
+ "engineDefinitionExpectedCellCount": 625,
+ "narrativeSubjects": {
+  "deaths": 3,
+  "serious": 3,
+  "discontinuationForAe": 92,
+  "union": 95,
+  "unionByArm": {
+   "Placebo": 10,
+   "Xanomeline Low Dose": 45,
+   "Xanomeline High Dose": 40
+  },
+  "withDermatologicSpecialInterest(CQ01NAM)": 180
+ },
+ "latentEngineIssues": {
+  "advsMultipleBaselinesPerSubjectAndParam": 759,
+  "adlbMultipleLastInTreatmentRows": 0,
+  "labShiftCells": 388
+ },
+ "publishedComparison": {
+  "cells": 1837,
+  "matched": 1825,
+  "mismatched": 12,
+  "byTable": {
+   "14-1.01": {
+    "cells": 20,
+    "mismatched": 0
+   },
+   "14-1.02 (prior to Week 24; oracle: DCDECOD and COMP24FL = N)": {
+    "cells": 16,
+    "mismatched": 0
+   },
+   "14-1.02 vs end-of-study DCDECOD (engine definition)": {
+    "cells": 16,
+    "mismatched": 6
+   },
+   "14-2.01": {
+    "cells": 208,
+    "mismatched": 0
+   },
+   "14-2.01 race (published Caucasian / African Descent)": {
+    "cells": 8,
+    "mismatched": 4
+   },
+   "14-4.01": {
+    "cells": 15,
+    "mismatched": 0
+   },
+   "14-5.01 subjects": {
+    "cells": 762,
+    "mismatched": 0
+   },
+   "14-5.01 events": {
+    "cells": 762,
+    "mismatched": 0
+   },
+   "14-5.02": {
+    "cells": 3,
+    "mismatched": 0
+   },
+   "12.3.1 text": {
+    "cells": 3,
+    "mismatched": 0
+   },
+   "14-7.02 SYSBP end of treatment": {
+    "cells": 24,
+    "mismatched": 2
+   }
+  },
+  "mismatches": [
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Adverse Event|Xanomeline High Dose",
+    "published": 39,
+    "oracle": 40,
+    "match": false
+   },
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Adverse Event|Total",
+    "published": 91,
+    "oracle": 92,
+    "match": false
+   },
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Death|Placebo",
+    "published": 1,
+    "oracle": 2,
+    "match": false
+   },
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Death|Total",
+    "published": 2,
+    "oracle": 3,
+    "match": false
+   },
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Lost to Follow-up|Xanomeline Low Dose",
+    "published": 0,
+    "oracle": 1,
+    "match": false
+   },
+   {
+    "table": "14-1.02 vs end-of-study DCDECOD (engine definition)",
+    "cell": "Lost to Follow-up|Total",
+    "published": 1,
+    "oracle": 2,
+    "match": false
+   },
+   {
+    "table": "14-2.01 race (published Caucasian / African Descent)",
+    "cell": "RACE=WHITE|Placebo",
+    "published": 75,
+    "oracle": 78,
+    "match": false
+   },
+   {
+    "table": "14-2.01 race (published Caucasian / African Descent)",
+    "cell": "RACE=WHITE|Xanomeline Low Dose",
+    "published": 72,
+    "oracle": 78,
+    "match": false
+   },
+   {
+    "table": "14-2.01 race (published Caucasian / African Descent)",
+    "cell": "RACE=WHITE|Xanomeline High Dose",
+    "published": 71,
+    "oracle": 74,
+    "match": false
+   },
+   {
+    "table": "14-2.01 race (published Caucasian / African Descent)",
+    "cell": "RACE=WHITE|Total",
+    "published": 218,
+    "oracle": 230,
+    "match": false
+   },
+   {
+    "table": "14-7.02 SYSBP end of treatment",
+    "cell": "AFTER LYING DOWN FOR 5 MINUTES|Xanomeline High Dose|n",
+    "published": 82,
+    "oracle": 81,
+    "match": false
+   },
+   {
+    "table": "14-7.02 SYSBP end of treatment",
+    "cell": "AFTER LYING DOWN FOR 5 MINUTES|Xanomeline High Dose|SD",
+    "published": "14.48",
+    "oracle": "14.56",
+    "match": false
+   }
+  ]
+ }
+}

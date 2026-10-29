@@ -1,0 +1,2 @@
+CDISC_PILOT_HASH_MISMATCH: adsl.xpt has SHA-256 c5139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d, not the pinned 05139f873a93ef6add77bc4297beb6460a398bbdd036874382a9f39dfc92091d. Nothing was kept for it; the upstream file changed or the transfer was altered.
+exit 1

@@ -24,6 +24,8 @@
  */
 
 import type { GeneratedTable } from './module3Composer.js';
+import { roundHalfUp } from './csr-figure-format.js';
+export { roundHalfUp };
 
 // ── Input shape (study database extract) ────────────────────────────────────
 
@@ -50,6 +52,10 @@ export interface StudyData {
   /** What "completed" means in this source: study completion (ADSL EOSSTT) or
    * treatment completion (EOTSTT). Undeclared keeps the previous label. */
   dispositionBasis?: 'end-of-study' | 'end-of-treatment';
+  /** Where AE discontinuation is recorded: per event (ledToDiscontinuation, the
+   * default) or per subject (DispositionRecord.discontinuedForAdverseEvent),
+   * when the study did not collect the action taken per event (2026-10-30). */
+  aeDiscontinuationBasis?: 'event' | 'subject';
   /** §12.5 — one record per safety subject and vital-sign/ECG parameter */
   vitalSigns?: VitalSignRecord[];
   /** Concomitant medications, one record per subject and medication */
@@ -78,6 +84,8 @@ export interface DispositionRecord {
   /** Final status: completed | discontinued | screen-failed | other */
   status: 'completed' | 'discontinued' | 'screen-failed' | 'lost-to-followup' | 'death' | 'other';
   reason?: string;
+  /** Subject-level withdrawal for an AE (aeDiscontinuationBasis 'subject'). */
+  discontinuedForAdverseEvent?: boolean;
 }
 
 export interface DemographicRecord {
@@ -303,7 +311,7 @@ function meanSd(values: number[]): string {
   if (values.length === 0) return '—';
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   const sd = values.length > 1 ? Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / (values.length - 1)) : null;
-  return `${mean.toFixed(1)} (${sd === null ? '—' : sd.toFixed(1)})`;
+  return `${roundHalfUp(mean, 1)} (${sd === null ? '—' : roundHalfUp(sd, 1)})`;
 }
 
 export function buildDemographicsTable(study: StudyData): GeneratedTable {
@@ -323,7 +331,7 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
     const f = records.filter(r => r.sex === 'F').length;
     const other = records.filter(r => r.sex === 'Other').length;
     const total = records.length || 1;
-    return `${m} (${((m / total) * 100).toFixed(0)}%) M / ${f} (${((f / total) * 100).toFixed(0)}%) F / ${other} (${((other / total) * 100).toFixed(0)}%) Other`;
+    return `${m} (${roundHalfUp((m / total) * 100, 0)}%) M / ${f} (${roundHalfUp((f / total) * 100, 0)}%) F / ${other} (${roundHalfUp((other / total) * 100, 0)}%) Other`;
   };
 
   const rows: string[][] = [
@@ -417,8 +425,8 @@ export function buildExposureTable(study: StudyData): GeneratedTable {
         a.armName,
         String(a.populations.safety),
         e?.meanDailyDose || '—',
-        e?.meanExposureDays !== undefined ? e.meanExposureDays.toFixed(1) : '—',
-        e?.totalPersonYears !== undefined ? e.totalPersonYears.toFixed(2) : '—',
+        e?.meanExposureDays !== undefined ? roundHalfUp(e.meanExposureDays, 1) : '—',
+        e?.totalPersonYears !== undefined ? roundHalfUp(e.totalPersonYears, 2) : '—',
       ];
     }),
   };
@@ -429,8 +437,12 @@ export function buildExposureTable(study: StudyData): GeneratedTable {
 /** A recorded zero event count does not establish a percentage when no
  * subjects belong to that arm's denominator. */
 function incidence(subjects: number, denominator: number): string {
-  return `${subjects} (${denominator > 0 ? `${((subjects / denominator) * 100).toFixed(1)}%` : '—'})`;
+  return `${subjects} (${denominator > 0 ? `${roundHalfUp((subjects / denominator) * 100, 1)}%` : '—'})`;
 }
+
+/** Subjects recorded as withdrawn for an AE when the source records it per subject (the contract holds them to the safety population). */
+const aeDiscontinuedSubjects = (study: StudyData, armId: string) =>
+  new Set(study.disposition.filter(d => d.armId === armId && d.discontinuedForAdverseEvent).map(d => d.subjectId)).size;
 
 export function buildAEOverallSummary(study: StudyData): GeneratedTable {
   const arms = study.treatmentArms;
@@ -464,11 +476,10 @@ export function buildAEOverallSummary(study: StudyData): GeneratedTable {
         const subjects = subjectsWithAE(aes);
         return incidence(subjects, a.populations.safety);
       })],
-      ['AE Leading to Discontinuation, n (%)', ...arms.map(a => {
-        const aes = (aeByArm.get(a.armId) || []).filter(e => e.ledToDiscontinuation);
-        const subjects = subjectsWithAE(aes);
-        return incidence(subjects, a.populations.safety);
-      })],
+      study.aeDiscontinuationBasis === 'subject'
+        ? ['Discontinued for an AE (subject-level), n (%)', ...arms.map(a => incidence(aeDiscontinuedSubjects(study, a.armId), a.populations.safety))]
+        : ['AE Leading to Discontinuation, n (%)', ...arms.map(a =>
+          incidence(subjectsWithAE((aeByArm.get(a.armId) || []).filter(e => e.ledToDiscontinuation)), a.populations.safety))],
       ['Fatal AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.outcome === 'fatal');
         const subjects = subjectsWithAE(aes);
@@ -556,10 +567,12 @@ export function buildDeathsSAEsTable(study: StudyData): GeneratedTable {
         const rsaes = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.serious && ae.related === 'related');
         return String(new Set(rsaes.map(s => s.subjectId)).size);
       })],
-      ['Discontinuations Due to AE, n', ...arms.map(a => {
-        const dcs = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.ledToDiscontinuation);
-        return String(new Set(dcs.map(d => d.subjectId)).size);
-      })],
+      study.aeDiscontinuationBasis === 'subject'
+        ? ['Discontinuations Due to AE (subject-level), n', ...arms.map(a => String(aeDiscontinuedSubjects(study, a.armId)))]
+        : ['Discontinuations Due to AE, n', ...arms.map(a => {
+          const dcs = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.ledToDiscontinuation);
+          return String(new Set(dcs.map(d => d.subjectId)).size);
+        })],
     ],
   };
 }
@@ -581,7 +594,7 @@ export function buildLabShiftsTable(study: StudyData): GeneratedTable {
         const low = shifts.reduce((sum, s) => sum + s.shiftToLow, 0);
         const baselineNormal = shifts.reduce((sum, s) => sum + s.shiftFromNormal, 0);
         const stayed = baselineNormal - high - low;
-        const pct = (n: number) => baselineNormal > 0 ? `${n} (${((n / baselineNormal) * 100).toFixed(1)}%)` : `${n} (—)`;
+        const pct = (n: number) => baselineNormal > 0 ? `${n} (${roundHalfUp((n / baselineNormal) * 100, 1)}%)` : `${n} (—)`;
         return [param, a.armName, String(total), String(baselineNormal), pct(high), pct(low), pct(stayed)];
       })
     ),
