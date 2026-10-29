@@ -42,6 +42,8 @@ const SQL_SOURCES = {
   'migrations/20260524_program_workbench_schema.sql': new URL('../../../../migrations/20260524_program_workbench_schema.sql', import.meta.url),
   'db/migrations/20260727_unified_tasks_mdx_metadata.sql': new URL('../../../../db/migrations/20260727_unified_tasks_mdx_metadata.sql', import.meta.url),
   'db/migrations/20260807_unified_tasks_soft_delete.sql': new URL('../../../../db/migrations/20260807_unified_tasks_soft_delete.sql', import.meta.url),
+  // The review route columns the Drizzle model names (RR1a).
+  'migrations/20261023_review_routes.sql': new URL('../../../../migrations/20261023_review_routes.sql', import.meta.url),
 } as const;
 const read = (rel: keyof typeof SQL_SOURCES) => readFileSync(SQL_SOURCES[rel], 'utf8');
 
@@ -68,6 +70,7 @@ beforeAll(async () => {
   await pg.exec(read(ANCHOR));
   await pg.exec(read('db/migrations/20260727_unified_tasks_mdx_metadata.sql'));
   await pg.exec(read('db/migrations/20260807_unified_tasks_soft_delete.sql'));
+  await pg.exec(read('migrations/20261023_review_routes.sql'));
   // authoring_documents as the authoring subsystem and 20260727 leave it: the
   // columns this read needs.
   await pg.exec(`CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer NOT NULL, title text, client_program_id uuid);`);

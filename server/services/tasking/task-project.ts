@@ -34,11 +34,33 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The source kind whose project this module can tell. */
 export const AUTHORING_DOCUMENT_SOURCE = 'authoring_document';
 
+/**
+ * A Vault version's lifecycle record (canonical_documents), the subject of a
+ * review route (RR1a): its project is the one its program anchors
+ * (canonical_documents.project_id holds the regulatory program's id).
+ */
+export const CANONICAL_DOCUMENT_SOURCE = 'canonical_document';
+
+/** The source kinds whose project this module can tell. */
+export const PROJECT_TELLING_SOURCES: readonly string[] = [AUTHORING_DOCUMENT_SOURCE, CANONICAL_DOCUMENT_SOURCE];
+
 export async function projectForTaskSource(
   /** The request's RLS client — requestDb(req), never the shared pool. */
   db: RequestDb,
   params: { orgId: number; sourceEntityType?: string | null; sourceEntityId?: string | null },
 ): Promise<number | null> {
+  if (params.sourceEntityType === CANONICAL_DOCUMENT_SOURCE) {
+    const canonicalId = String(params.sourceEntityId ?? '').trim();
+    if (!UUID.test(canonicalId)) return null;
+    const result = await db.execute(sql`
+      SELECT project_id FROM canonical_documents
+       WHERE canonical_id = ${canonicalId} AND organization_id = ${params.orgId}
+       LIMIT 1`);
+    const programId = ((result as unknown as { rows?: Array<{ project_id: string | null }> }).rows ?? [])[0]?.project_id ?? null;
+    if (!programId || !UUID.test(programId)) return null;
+    const anchor = await readProgramAnchorRow(db, { programId, orgId: params.orgId, context: 'task-source-project' });
+    return anchor?.id ?? null;
+  }
   if (params.sourceEntityType !== AUTHORING_DOCUMENT_SOURCE) return null;
   const docId = String(params.sourceEntityId ?? '').trim();
   if (!UUID.test(docId)) return null;

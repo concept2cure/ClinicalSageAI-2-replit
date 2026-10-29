@@ -89,6 +89,8 @@ CREATE TABLE unified_tasks (
   approvers json,
   blocked_by text[],
   deleted_at timestamptz,
+  -- migrations/20261023_review_routes.sql (RR1a): the mirror read names it.
+  review_route_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
