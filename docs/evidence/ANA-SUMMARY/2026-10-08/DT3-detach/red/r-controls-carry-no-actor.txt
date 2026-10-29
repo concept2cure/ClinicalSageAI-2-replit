@@ -1,14 +1,14 @@
 # r-controls-carry-no-actor: exit 1 (non-zero = red)
 # tests: server/services/ana/__tests__/turn-summary-controls.test.ts server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts  -t attributeControls|who took each control
- × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the asker 83ms
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the asker 122ms
    → expected [ undefined, { kind: 'asker' } ] to deeply equal [ undefined, …(1) ]
- × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the admin 20ms
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the admin 36ms
    → expected [ { kind: 'asker' }, undefined ] to deeply equal [ { kind: 'asker' }, …(1) ]
- × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the colleague 26ms
+ × server/routes/ana-ri/__tests__/turn-summary.pglite.test.ts > who took each control, for the reader (DT3 review) > read by the colleague 35ms
    → expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]
- × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the asker reads their own steer as theirs and the admin's cancel by the admin's name 13ms
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the asker reads their own steer as theirs and the admin's cancel by the admin's name 11ms
    → expected { action: 'cancel', round: 2, …(3) } to match object { action: 'cancel', …(2) }
- × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the administrator reads their own cancel as theirs, as an administrator, and the steer as the asker's 1ms
+ × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > the administrator reads their own cancel as theirs, as an administrator, and the steer as the asker's 2ms
    → expected undefined to deeply equal { kind: 'you_as_administrator' }
  × server/services/ana/__tests__/turn-summary-controls.test.ts > attributeControls: who took each control, for this reader > a colleague reads neither as theirs, and the asker's id is never in the payload 2ms
    → expected [ Array(2) ] to deeply equal [ { kind: 'asker' }, …(1) ]

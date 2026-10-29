@@ -2184,6 +2184,9 @@ export async function recordApprovalDecision(
   const params: unknown[] = [runId, JSON.stringify(decision), decision.toolUseId, organizationId];
   // $5 is the decider, or NULL for the approval window closing (deny only, above).
   params.push(byPerson ? decision.byUserId : null);
+  // The window's deny never takes an approval its person has claimed (DT3
+  // review, 4.3): the governed-action route is carrying it out under their
+  // signature, and its decision is the one this run will record.
   const { rowCount } = await pool.query(
     `UPDATE ana_runs
      SET status = 'running',
@@ -2193,6 +2196,7 @@ export async function recordApprovalDecision(
      WHERE id = $1
        AND organization_id = $4
        AND ($5::integer IS NULL OR user_id = $5)
+       AND ($5::integer IS NOT NULL OR pending_approval ->> 'claimedAt' IS NULL)
        AND status = 'awaiting_approval'
        AND pending_approval ->> 'toolUseId' = $3`,
     params,

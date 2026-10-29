@@ -72,3 +72,37 @@ the 24-hour window of `07857e3e3` (2026-10-28 17:34 UTC). The edits:
 
 Also: every CI run on `concept2cure-v2` from 02:41 to 03:38 UTC on 2026-10-29
 reads "queued", so there is no CI verdict to cite. The proof here is local.
+
+## Follow-up: six more suites the same two checks reached (`followup.txt`)
+
+Of the files `affected-suites.txt` handed on, six were this lane's. They failed
+identically at HEAD, and now pass: 190/190 with the ordering test and the
+workflow-import suite.
+
+- **`authoring-section-commits-to-filing.contract`.** Its only member was the
+  author, so an APPROVER e-signature was the author approving: refused 403
+  since `265ea2c5b`, as it should be. It now has an independent approver.
+  Made to sign as the author, its two approval cases fail (shown in
+  `followup.txt`).
+- **Its refiling cases** materialise a real CSR source, so the CSR gate refuses
+  first. They now expect `CSR_SCIENTIFIC_REVIEW_REQUIRED`. The model and
+  adoption holds behind it are held on a protocol import in
+  `workflow-import-governance.pglite.test.ts`.
+- **Fixtures.**
+  - `authoring-governed-delete-signed-freeze`, `authoring-export-xml-figures`
+    and `correspondence-rendering` now give the shared governance reads.
+  - `saved-draft-source-export` and `authoringSavedSourcesExport` used
+    documents titled "CSR" for a Module 2.5 test, and are retitled.
+- **`workflow-import-governance.ts`.** An identity read that fails is no
+  longer reported as "No current scientific-review receipt covers the saved
+  CSR". It is 503, "Whether this document is a clinical study report could not
+  be checked". This was red against the old wrapper, 1 of 5.
+
+**Still handed on (not this lane):**
+- `authoringFromDraft`, `authoring-program-scope` and the IND authoring
+  journey: a per-request database context their apps do not supply, since
+  `cc1607c3a`.
+- `founder-path-lineage`: Vault ingest.
+- `one-signing-authority-policy`: a direct `isSigningAuthorized` call in
+  `authoring-document-read.ts`.
+

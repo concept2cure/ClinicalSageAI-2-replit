@@ -152,6 +152,8 @@ const subLine = (source: StepSource, preview: string | null | undefined) =>
 function stepRowStatus(s: StepState, live: boolean): RowStatus {
   const f = s.finished;
   if (!f) return live ? 'running' : 'unconfirmed';
+  // Never dispatched (D-7's refused screen action): not run, not failed.
+  if (f.status === 'not_run' && !f.heldBack) return 'not_run';
   return f.status === 'success' && !f.heldBack ? 'success' : 'error';
 }
 
@@ -405,7 +407,7 @@ export function mirrorLines(
 /** A traced step as a row: its label and source, never a duration (the trace keeps none). */
 function traceStepRow(c: AnaToolCall, seq: number): StepRow {
   const source = c.source ?? 'project';
-  const failed = c.status === 'error' || c.status === 'unconfirmed';
+  const failed = c.status === 'error' || c.status === 'unconfirmed' || c.status === 'not_run';
   return {
     kind: 'step',
     key: `tr-${seq}`,

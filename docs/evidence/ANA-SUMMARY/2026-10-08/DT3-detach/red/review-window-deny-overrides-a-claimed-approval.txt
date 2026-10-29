@@ -1,0 +1,22 @@
+# pre-fix red, 2026-10-29 on 8b58354af: the approval window's own deny overrides an approval its person claimed (DT3 review 4.3, continued)
+# tests: run-control-detach.pglite.test.ts -t 'approval window'; stream-detach-review.test.ts -t 'window closes'
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > the approval window closing does not deny an approval its person has claimed; the person's decision still lands 41ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > the approval window closing does not deny an approval its person has claimed; the person's decision still lands
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > the turn waits for the person's decision and takes its result; it never says nobody authorised it 290ms
+   → expected 'error' to be 'success' // Object.is equality
+ × server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > a claim whose decision never comes is said as approved and unconfirmed, never "nobody authorised", and the turn goes on 149ms
+   → expected 'Saving an AnA draft in the editor did…' to match /was ended because a person approved i…/
+ ✓ server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > an approval nobody claimed is still denied when the window closes 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > the turn waits for the person's decision and takes its result; it never says nobody authorised it
+AssertionError: expected 'error' to be 'success' // Object.is equality
+ FAIL  server/routes/ana-ri/__tests__/stream-detach-review.test.ts > the approval window closes on an approval its person has claimed (DT3 review) > a claim whose decision never comes is said as approved and unconfirmed, never "nobody authorised", and the turn goes on
+AssertionError: expected 'Saving an AnA draft in the editor did…' to match /was ended because a person approved i…/
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 16 skipped (19)

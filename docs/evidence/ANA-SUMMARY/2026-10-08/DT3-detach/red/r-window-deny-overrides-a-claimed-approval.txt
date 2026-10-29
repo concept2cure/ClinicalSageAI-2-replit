@@ -1,0 +1,10 @@
+# r-window-deny-overrides-a-claimed-approval: exit 1 (non-zero = red)
+# tests: server/services/ana/__tests__/run-control-detach.pglite.test.ts  -t approval window
+ ↓ server/services/ana/__tests__/run-control-detach.pglite.test.ts > DT3 test 9 (owner half): the owner's own finished never aborts it > endHeldRun writes paused → finished and wakes the turn without aborting its closing answer
+ × server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > the approval window closing does not deny an approval its person has claimed; the person's decision still lands 43ms
+   → expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-detach.pglite.test.ts > claimApproval: the held approval is claimed once, on a run still waiting (DT3 review) > the approval window closing does not deny an approval its person has claimed; the person's decision still lands
+AssertionError: expected true to be false // Object.is equality

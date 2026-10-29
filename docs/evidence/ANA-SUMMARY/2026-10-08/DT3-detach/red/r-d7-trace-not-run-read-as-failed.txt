@@ -1,0 +1,9 @@
+# r-d7-trace-not-run-read-as-failed: exit 1 (non-zero = red)
+# tests: client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx  -t reopened
+ × client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > a reopened conversation reads it as not run, with its line 18ms
+   → expected [ 'success', 'error', 'success' ] to deeply equal [ 'success', 'not_run', 'success' ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaScreenGoneStep.test.tsx > D-7: a screen step refused after the page closed did not run; it did not fail > a reopened conversation reads it as not run, with its line
+AssertionError: expected [ 'success', 'error', 'success' ] to deeply equal [ 'success', 'not_run', 'success' ]
