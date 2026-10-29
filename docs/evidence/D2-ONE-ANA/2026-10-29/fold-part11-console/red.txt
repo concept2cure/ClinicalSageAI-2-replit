@@ -1,0 +1,60 @@
+# RED — fold of part11-console into Audit trail (D2, 2026-10-29)
+
+## Part 1 — the second verdict, before Audit trail read the audit_events chain
+# npx vitest run client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx
+ × Audit trail — the audit_events chain verdict in the chain banner > reads the route the Part 11 console read 5045ms
+ × Audit trail — the audit_events chain verdict in the chain banner > an intact chain says intact, how many entries, and sits beside the ledger verdict 5008ms
+ × Audit trail — the audit_events chain verdict in the chain banner > the two chains are never merged: an intact ledger beside a broken audit-event chain says both 5007ms
+ × Audit trail — the audit_events chain verdict in the chain banner > finding 111: an empty chain is "nothing to verify", never intact, even when the route says true 5007ms
+ × Audit trail — the audit_events chain verdict in the chain banner > an unhashed chain reads "not verifiable", not the raw key, and is not intact 5008ms
+ × Audit trail — the audit_events chain verdict in the chain banner > "intact" needs the server's integrity verdict too: a status with no verdict is not intact 5007ms
+ × Audit trail — the audit_events chain verdict in the chain banner > an unrecognised status is "not verified", not intact 5007ms
+ × Audit trail — a verdict that could not be read is not intact > a 500 is a failed verification, with a way to try again — never an empty chain 5007ms
+ × Audit trail — a verdict that could not be read is not intact > a 200 that is not a verdict (a list body) is a failed verification, not an empty chain 5008ms
+ × Audit trail — a verdict that could not be read is not intact > a 200 with no payload is a failed verification, not an empty chain 5008ms
+ × Audit trail — a verdict that could not be read is not intact > a count that is not a number is a failed verification 5008ms
+ × Audit trail — a verdict that could not be read is not intact > a 403 is "not available to your role", not "couldn’t verify" 5006ms
+ × Audit trail — a verdict that could not be read is not intact > while the verification is in flight, nothing is called intact — on screen or to AnA 5006ms
+ × Audit trail — the audit-event verdict does not depend on the ledger read > a failed ledger read still states the audit-event verdict, on screen and to AnA 5012ms
+ × Audit trail — the audit-event verdict does not depend on the ledger read > an empty ledger still states the audit-event verdict 5010ms
+ × Audit trail — the audit-event verdict does not depend on the ledger read > a ledger the role cannot read still states what the server lets it read of the audit-event chain 5010ms
+ × Audit trail — the audit-event verdict does not depend on the ledger read > a ledger still loading publishes the audit-event verdict to AnA, not a blank 5010ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  17 failed (17)
+
+# failure reasons (count, message)
+      5    → Unable to find an element with the text: Audit-event chain intact.
+      1    → Unable to find an element with the text: Audit-event chain not verifiable.
+      2    → Unable to find an element with the text: Audit-event chain not verified.
+      1    → Unable to find an element with the text: Audit-event chain verification failed.
+      1    → Unable to find an element with the text: Audit-event chain: no entries yet.
+      4    → Unable to find an element with the text: Couldn’t verify the audit-event chain.
+      1    → Unable to find an element with the text: The audit-event chain is not available to your role.
+      1    → Unable to find an element with the text: Verifying the audit-event chain….
+      1    → expected undefined to match object { verdict: 'intact' }
+
+## Part 2 — the fold guard, before the retirement (Part 1 already in the tree)
+# npx vitest run client/src/concept2cure/v2/__tests__/foldPart11Console.test.ts
+ × part11-console is folded into Audit trail > resolves part11-console to Audit trail from a link, an in-app move and AnA, with or without a project open
+   → expected undefined to be 'audit-trail' // Object.is equality
+ ✓ part11-console is folded into Audit trail > lands on Audit trail, which reads the console's route under a registry claim that covers it
+ × part11-console is folded into Audit trail > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+   → expected { component: [Function] } to be undefined
+ × part11-console is folded into Audit trail > is in no launch scope list and no rail, and no tour stops on it; Audit trail stays never-switchable
+   → expected [ 'home', 'apps', …(13) ] to not include 'part11-console'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+# The landing case passes by design: Part 1 already reaches the route under audit-trail's claim.
+
+## Part 2 — the catalogue contract, before 20260810 was amended
+# npx vitest run tests/schema-contract/catalog-module-claims.contract.test.ts
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > fresh replay creates no part11-console row, and Audit trail stays uncatalogued
+ × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+   → catalog modules with no tier assigned: part11-console
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+# The fresh-replay case passes before and after: part11-console was never seeded. It pins that.

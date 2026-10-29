@@ -75,8 +75,8 @@ const CONTEXTUAL = {
   'conversation-thread': 'AnA rail destination, reached by asking a question',
   'ana-command': 'AnA rail surface, on the persistent rail',
   'ana-memory': 'AnA rail surface, on the persistent rail',
-  'audit-trail': 'governance surface, reached from Part 11 console and record views',
-  'part11-console': 'governance surface, reached from admin and compliance views',
+  // part11-console folded into audit-trail on 2026-10-29 (D2); its links land here.
+  'audit-trail': 'governance surface, reached from admin, compliance and record views',
   'compliance-reports': 'reporting surface, reached from Reporting & analytics and the audit trail',
   'task-board': 'on the persistent rail as Tasks',
   coverage: 'engineering diagnostic, not a customer capability',

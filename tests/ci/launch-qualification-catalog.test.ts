@@ -21,7 +21,9 @@ describe('release qualification consumes the complete current launch catalog',()
       expect(source).toMatch(/import.*QualificationSurfaces.*from ['"]\.\/launch-catalog['"]/);
       expect(source).not.toMatch(/const SURFACES:[^=]*= \[/);
     }
-    expect(accessQualificationSurfaces().map(surface=>surface.id)).toContain('part11-console');
+    expect(accessQualificationSurfaces().map(surface=>surface.id)).toContain('audit-trail');
+    // part11-console folded into audit-trail on 2026-10-29 (D2); it has no screen to qualify.
+    expect(accessQualificationSurfaces().map(surface=>surface.id)).not.toContain('part11-console');
   });
   it('required browser CI runs the whole catalog access and keyboard specs',()=>{
     const workflow=readFileSync(new URL('../../.github/workflows/tier5-browser-smoke.yml',import.meta.url),'utf8');

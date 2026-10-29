@@ -65,21 +65,24 @@ describe('part11 audit-trail routing', () => {
 });
 
 /**
- * The response keys Part11Console's shape guard requires.
+ * The response keys the client's shape guard requires.
  *
- * `Part11Console.tsx:85` is `hasKeys<ChainIntegrity>('chainStatus', 'totalEntries')`,
- * and `readData` REJECTS a body that fails the guard — the panel then renders
- * its honest error state. So renaming either key on the server does not break a
- * test or throw anywhere: the console silently stops showing chain integrity
- * and says it could not load, which is indistinguishable from the endpoint
- * being down. That is the same silent-failure shape this whole remediation has
- * been about, one layer up.
+ * The caller is Audit trail since the Part 11 console folded into it (D2,
+ * 2026-10-29): `isAuditEventChainIntegrity` in
+ * client/src/concept2cure/v2/surfaces/AuditEventChain.tsx requires a string
+ * `chainStatus` and a numeric `totalEntries`, and a body that fails it renders
+ * the honest "couldn't verify" state. (Part11Console.tsx's `hasKeys` guard on
+ * the same two keys was the caller before.) So renaming either key on the
+ * server does not break a test or throw anywhere: the banner silently stops
+ * showing the chain's verdict and says it could not verify, which is
+ * indistinguishable from the endpoint being down. That is the same
+ * silent-failure shape this whole remediation has been about, one layer up.
  *
  * This is the only route in the file with a live client caller, and it has been
  * answering 500 for as long as `req.pool` has been undefined, so the contract
  * has never actually been exercised end to end.
  */
-describe('chain-integrity answers the shape Part11Console guards on', () => {
+describe('chain-integrity answers the shape the Audit trail banner guards on', () => {
   beforeEach(() => { mockQuery.mockReset(); });
 
   const GUARDED_KEYS = ['chainStatus', 'totalEntries'] as const;
