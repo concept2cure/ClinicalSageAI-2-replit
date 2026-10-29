@@ -9,9 +9,8 @@
  *                   stop: there was no keyboard path to the selection at all,
  *                   on the step that decides what the submission argues from.
  *
- *   AnaDrafter      Activating a reviewer deficiency was a click handler on a
- *                   <div>, and which one was open was carried by a CSS class,
- *                   so assistive technology could neither reach it nor tell.
+ *   AnaDrafter      (deleted 2026-10-29, P-39 step 3 S2: a device letter is
+ *                   answered on its record in Communication.)
  *
  * ── Why this test serves candidates from the live endpoint ─────────────────
  * The first attempt rendered device-510k against the empty API response the

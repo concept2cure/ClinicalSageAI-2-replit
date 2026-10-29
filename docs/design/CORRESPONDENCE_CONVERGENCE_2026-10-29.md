@@ -63,8 +63,8 @@ and `c2c_secure_attachments`. Nothing writes the last one.
 
 | Slice | What | Ships |
 |---|---|---|
-| **S1** | The family's reads and its one governed write are scoped to a project the person may open or change. Not convergence, but an exposure that must not wait for it. | 2026-10-29 |
-| **S2** | The device Correspondence tab and the AnaDrafter read the project inbox (`GET /api/concept2cure/projects/:id/agency-communications` and `…/questions`), so a device project sees the letters Communication holds, and the questions with their responses. | next |
+| **S1** | The family's reads and its one governed write are scoped to a project the person may open or change. Not convergence, but an exposure that must not wait for it. | Done 2026-10-29 |
+| **S2** | The device Correspondence tab reads the project inbox, and each letter opens on its record in Communication (`openLetterInCommunication`, as CMC does). The AnaDrafter, a second response screen that could not send, is deleted. | Done 2026-10-29 |
 | **S3** | AnA's `correspondence.ingest` records the letter through the inbox's governed create. Its letter class goes to a vocabulary field on the inbox (S4). | after S2 |
 | **S4** | The response clock becomes the inbox's. The inbox records the letter's class from `AGENCY_LETTER_CLASSES` (`shared/regulatory/agency-interaction.ts`), and the inbox and the overdue verdict use `correspondenceResponseClock`: the stated date wins, else the class window, else undated. | after S3 |
 | **S5** | Submission-ops publish gate 4 and the command-center count read the inbox: a letter's questions not approved, by the server's own verdict. | after S4 |
