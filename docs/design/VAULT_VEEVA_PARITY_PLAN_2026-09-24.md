@@ -456,7 +456,11 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
 
 ### VR-20 — Closing archive: a sealed room's bytes, index and audit trail in one verifiable file  `[L]`
 
-**Part 1 done 2026-10-29** (`docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md`, `docs/evidence/D6/2026-10-29-closing-archive/`). The builder is `openVaultArchive` (`server/services/vault/vault-archive-builder.ts`). It is staged from the seal's own byte check, so each file is read once and the bytes that made the verdict are the bytes archived. An archive that cannot be built is refused as `SEAL_NOT_INTACT`, carrying the verdict, rather than `ARCHIVE_INCOMPLETE`. The 200 MB heap test is not done; the reason is recorded there. Part 2, the tenant data return through the same builder, is open.
+**Part 1 done 2026-10-29** (`docs/design/VAULT_CLOSING_ARCHIVE_2026-10-29.md`, `docs/evidence/D6/2026-10-29-closing-archive/`). The builder is `openVaultArchive` (`server/services/vault/vault-archive-builder.ts`). It is staged from the seal's own byte check, so each file is read once and the bytes that made the verdict are the bytes archived. An archive that cannot be built is refused as `SEAL_NOT_INTACT`, carrying the verdict, rather than `ARCHIVE_INCOMPLETE`. The 200 MB heap test is not done; the reason is recorded there. Part 2, the tenant data return through the same builder, is open. It waits on a founder decision, because two written decisions disagree:
+- FD10 (c) decides "download only, built from a staged, fully verified file". Its option (b), an expiring link through the audited reader, says "never a presigned URL".
+- `docs/work-orders/MR-16-commercial-readiness.md` Stage 6 specifies an off-request job that uploads the archive to storage and serves it through a pre-signed URL.
+
+A tenant-wide return can run to gigabytes, so it cannot be built inside one request. Whichever way it is decided, the bytes go through `openVaultArchive`; there is no second ZIP builder.
 
 - **Launch row:** D6-adjacent: the tenant data return carries no document bytes (open item on the D6 purge row of docs/work-orders/README.md: 'the data return's bytes (founder)'). It is also inspection readiness. It needs FD8 and FD10. Evidence: docs/evidence/D6/<date>-closing-archive/.
 - **Veeva capability:** Data room closing archive; Submissions Archive export.
