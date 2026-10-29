@@ -24,7 +24,7 @@ interface Envelope<T> { data?: T; rows?: T; count?: number; meta?: { pendingStor
  *  an object and `.map` threw during render. Null means "no list in this body" —
  *  distinct from `[]`, which is the real answer "the log is empty" and must stay
  *  renderable. */
-function listOf<T>(payload: unknown): T[] | null {
+export function listOf<T>(payload: unknown): T[] | null {
   const p = payload as Envelope<T[]> | null;
   const rows = Array.isArray(payload) ? payload : p?.data ?? p?.rows;
   if (!Array.isArray(rows)) return null;
