@@ -66,12 +66,14 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // Literal ids are required by ci:launch-scope's structural parser.
     // 2026-10-29 (D2): the device task workbench folded into Tasks, which this
     // app already holds; its old address resolves there (DEEP_LINK_ALIASES).
+    // 2026-10-29 (D2, fold F3): the device vault folded into the Vault app's
+    // Vault; its old address resolves there too.
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
       'device-workstream', 'device-510k', 'device-pma', 'device-cer',
       'device-diagnostics', 'ivd-completeness', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-vault', 'device-validation', 'device-submission',
+      'device-validation', 'device-submission',
       'device-analytics', 'design-controls', 'human-factors', 'risk', 'labeling',
     ],
     modules: ['projects', 'tasks'],
@@ -79,8 +81,14 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'vault',
     label: 'Vault',
-    surfaces: ['vault', 'artifacts-center'],
-    modules: ['vault', 'artifacts-center'],
+    // 2026-10-29 (D2, fold F3 slice C): the Artifacts center folded into the
+    // Vault as its organization view (DEEP_LINK_ALIASES). Its module is no
+    // longer granted to a new organisation, and an existing grant is kept: the
+    // catalogue row is deprecated, never deleted (CLAUDE.md Rule 1;
+    // db/migrations/20260810_reconcile_module_catalog.sql). The Vault is free at
+    // the same tier, so no organisation loses a function.
+    surfaces: ['vault'],
+    modules: ['vault'],
   },
   {
     id: 'authoring',

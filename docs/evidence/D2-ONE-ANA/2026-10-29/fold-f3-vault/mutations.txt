@@ -1,0 +1,131 @@
+Mutations of the product code. Each applied alone to the working tree, its suite run, the file restored byte for
+byte and its SHA-256 compared with the original; after the run every file of this change was hash-checked again
+against a snapshot taken before it (sha256sum -c: no mismatch). Tool: tools/mutate.py.txt, spec tools/mutation-spec.json.
+
+M1 RED (exit 1) — the organization read loses its project binding (every artifact of the organization is listed)
+    file: server/services/artifact-registry-read.ts  restored sha256 matches (c7629c654d43)
+    run: npx vitest run server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+    Tests  3 failed | 5 passed (8)
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot o
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not li
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of 
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cann
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did no
+M2 RED (exit 1) — archived artifacts kept in both scopes
+    file: server/services/artifact-registry-read.ts  restored sha256 matches (c7629c654d43)
+    run: npx vitest run server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts
+    Tests  4 failed | 16 passed (20)
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot o
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not li
+    × server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts > GET /api/c2c/project-vault/:id — origin, breakdown and binding of the governed artifacts > reads the registry bound to the orga
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of 
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cann
+M3 RED (exit 1) — an access check that could not run answered as an empty listing
+    file: server/routes/artifacts-center-routes.ts  restored sha256 matches (28dba9210fee)
+    run: npx vitest run server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+    Tests  2 failed | 6 passed (8)
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member is r
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is a 5
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member 
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is
+M4 RED (exit 1) — a full window not said (truncated always false)
+    file: server/routes/artifacts-center-routes.ts  restored sha256 matches (28dba9210fee)
+    run: npx vitest run server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts
+    Tests  1 failed | 7 passed (8)
+    × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not li
+    FAIL  server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did no
+M5 RED (exit 1) — the organization view renders a failed read as none
+    file: client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx  restored sha256 matches (baf32f098d50)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  2 failed | 17 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a failed read is an erro
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a refusal says what it i
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a failed read is an 
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a refusal says what 
+M6 RED (exit 1) — a stale signature shown as current in the organization view
+    file: client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx  restored sha256 matches (baf32f098d50)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  2 failed | 17 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says the signature on th
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero 68ms
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says the signature o
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero
+M7 RED (exit 1) — AnA told counts over a failed organization read
+    file: client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx  restored sha256 matches (baf32f098d50)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  1 failed | 18 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero 5083ms
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero
+M8 RED (exit 1) — vault.focus-document by id misses without the one re-read
+    file: client/src/concept2cure/v2/surfaces/Vault.tsx  restored sha256 matches (53dedd7ef239)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  2 failed | 17 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > an artifact saved after the tree was read is found on one re-read, the
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > one that is not in this project’s Vault after the re-read is an honest
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > an artifact saved after the tree was read is found on one re-read,
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > one that is not in this project’s Vault after the re-read is an ho
+M9 RED (exit 1) — a name matching several governed artifacts focuses the first, a guess
+    file: client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx  restored sha256 matches (baf32f098d50)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  1 failed | 18 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with no project open, focuses the row in the organization view, by id 
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with no project open, focuses the row in the organization view, by
+M10 RED (exit 1) — the organization listing read while a project is open and nobody opened it
+    file: client/src/concept2cure/v2/surfaces/Vault.tsx  restored sha256 matches (53dedd7ef239)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+    Tests  1 failed | 18 passed (19)
+    × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with a project open, the organization view is one click away and reads nothing until opened > reads the listing only when a
+    FAIL  client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with a project open, the organization view is one click away and reads nothing until opened > reads the listing only wh
+M11 RED (exit 1) — the Live Drive hand-off still goes to the Artifacts center
+    file: client/src/concept2cure/v2/V2App.tsx  restored sha256 matches (5ca68f20b745)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+    Tests  1 failed | 8 passed (9)
+    × client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > gives AnA the Vault’s focus in place of the gallery’s, and the L
+    FAIL  client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > gives AnA the Vault’s focus in place of the gallery’s, and t
+M12 RED (exit 1) — the device-vault alias removed
+    file: client/src/concept2cure/v2/registryModel.ts  restored sha256 matches (f72ebd6be57f)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+    Tests  1 failed | 8 passed (9)
+    × client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > resolves device-vault to the Vault from a link, an in-app move a
+    FAIL  client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > resolves device-vault to the Vault from a link, an in-app mo
+M13 RED (exit 1) — artifacts-center left in the Vault app (surfaces and modules)
+    file: shared/constants/launch-scope.ts  restored sha256 matches (97d72eee73a8)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts server/services/entitlements/__tests__/launch-scope.test.ts
+    Tests  3 failed | 43 passed (46)
+    × client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > is in no launch scope list and no rail, and no tour stops on eit
+    × server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29) 8ms
+    × server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was
+    FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)
+    FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it
+    FAIL  client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > is in no launch scope list and no rail, and no tour stops on
+M14 RED (exit 1) — the device-vault registry entry restored (⌘K would list it)
+    file: shared/constants/ui-surface-registry.ui-v2.ts  restored sha256 matches (15b95b18a488)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+    Tests  1 failed | 8 passed (9)
+    × client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > device-vault keeps no screen of its own: no view, no registry en
+    FAIL  client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > device-vault keeps no screen of its own: no view, no registr
+M15 RED (exit 1) — artifacts-center.focus-artifact left in AnA's registry
+    file: shared/navigation/surface-actions.ts  restored sha256 matches (db8359d04990)
+    run: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+    Tests  1 failed | 8 passed (9)
+    × client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > gives AnA the Vault’s focus in place of the gallery’s, and the L
+    FAIL  client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > gives AnA the Vault’s focus in place of the gallery’s, and t
+M16 RED (exit 1) — 20260810 keeps artifacts-center on its keep-list (replay stops deprecating it)
+    file: db/migrations/20260810_reconcile_module_catalog.sql  restored sha256 matches (1a3df972fc14)
+    run: npx vitest run tests/schema-contract/catalog-module-claims.contract.test.ts
+    Tests  1 failed | 16 passed (17)
+    × tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packaging re
+    FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packagin
+M17 RED (exit 1) — 20260823 keeps the device-vault packaging row (a fresh database fails the unknown-module guard)
+    file: db/migrations/20260823_module_catalog_commercial_packaging.sql  restored sha256 matches (7fe560b8f63d)
+    run: npx vitest run tests/schema-contract/catalog-module-claims.contract.test.ts
+    FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts [ tests/schema-contract/catalog-module-claims.contract.test.ts ]
+M18 RED (exit 1) — ID_BASELINE left at 112
+    file: scripts/ci/check-ana-surface-context.mjs  restored sha256 matches (b8dca57d9a38)
+    run: node scripts/ci/check-ana-surface-context.mjs
+    surface-id coverage FELL to 110, below the baseline of 112 — a routable surface id stopped publishing its screen state to AnA. Restore the publish call.
+    declare its ID in NO_CONTEXT_NEEDED with a reason.
+
+18 of 18 mutations red.

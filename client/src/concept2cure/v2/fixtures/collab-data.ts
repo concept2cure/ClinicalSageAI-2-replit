@@ -51,7 +51,6 @@ export interface SurfaceContextDef {
 
 export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   projects:                 { mod: 'Regulatory',      noun: 'portfolio',                et: 'portfolio' },
-  'artifacts-center':       { mod: 'Evidence',        noun: 'artifact',                 et: 'artifact' },
   'cro-portfolio':          { mod: 'Regulatory',      noun: 'sponsor portfolio',        et: 'sponsor' },
   'project-home':           { mod: 'Regulatory',      noun: 'project',                  et: 'project' },
   'conversation-thread':    { mod: 'Regulatory',      noun: 'conversation',             et: 'conversation' },

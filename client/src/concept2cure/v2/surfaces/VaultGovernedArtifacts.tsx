@@ -35,6 +35,9 @@
  *
  * A failed versions or audit read is an error, never an empty history; a
  * refused one says what the refusal is (readFailureFor / describeReadFailure).
+ *
+ * Slice C (2026-10-29) folds the Artifacts center's gallery into the Vault as
+ * its organization view: ./VaultOrganizationArtifacts.tsx.
  */
 import React, { useState } from 'react';
 
@@ -542,26 +545,30 @@ export function artifactDownloadRefusal(title: string, failure: { status?: numbe
   return `${lead}the server did not complete it. Try again.`;
 }
 
+export type GovernedDocx = { ok: true; name: string; blob: Blob } | { ok: false; text: string };
+
 /** The governed DOCX of the artifact's current version, or why it was not served. */
-export async function fetchGovernedArtifactDocx(
-  doc: VaultDoc,
-): Promise<{ ok: true; name: string; blob: Blob } | { ok: false; text: string }> {
-  const a = doc.artifact!;
+export async function fetchGovernedArtifactDocx(doc: VaultDoc): Promise<GovernedDocx> {
+  return fetchGovernedDocx(doc.artifact!.artifactId, doc.title);
+}
+
+/** The same export by id, for a row of the organization view, which has no tree leaf. */
+export async function fetchGovernedDocx(artifactId: string, title: string): Promise<GovernedDocx> {
   try {
-    const res = await apiRequest('GET', artifactExportPath(a.artifactId));
+    const res = await apiRequest('GET', artifactExportPath(artifactId));
     if (!res.ok) {
       // apiRequest returns a 401 rather than throwing it.
       const body = await res.json().catch(() => null);
-      return { ok: false, text: artifactDownloadRefusal(doc.title, { status: res.status, code: errorCodeOf(body) }) };
+      return { ok: false, text: artifactDownloadRefusal(title, { status: res.status, code: errorCodeOf(body) }) };
     }
     const blob = await res.blob();
     const name = res.headers?.get?.('Content-Disposition')?.match(/filename="?([^";]+)"?/)?.[1];
-    return { ok: true, name: name || `${safeFileName(doc.title, 'artifact').slice(0, 80)}.docx`, blob };
+    return { ok: true, name: name || `${safeFileName(title, 'artifact').slice(0, 80)}.docx`, blob };
   } catch (e) {
     if (e instanceof ApiRequestError) {
-      return { ok: false, text: artifactDownloadRefusal(doc.title, { status: e.status, code: e.code }) };
+      return { ok: false, text: artifactDownloadRefusal(title, { status: e.status, code: e.code }) };
     }
-    return { ok: false, text: `${doc.title} was not downloaded — the server did not answer. Try again.` };
+    return { ok: false, text: `${title} was not downloaded — the server did not answer. Try again.` };
   }
 }
 

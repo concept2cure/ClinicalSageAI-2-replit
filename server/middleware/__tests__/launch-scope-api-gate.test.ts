@@ -195,14 +195,16 @@ describe('the real registry, launch scope on', () => {
        from 2026-09-26 on a walker misattribution (fixed in f9eee2670) and
        left the launch scope on 2026-10-22: the launch Vault reads
        /api/c2c/project-vault (docs/evidence/D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-       2026-10-29: the device vault, risk file, clinical studies and labeling are
-       Projects features (62a8d5e7) and their screens call these, so they are
-       served. The kit's other routes, which no launch screen calls, are not. */
-    for (const p of ['/api/mdx/rbm-kris', '/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages']) {
+       2026-10-29: the risk file, clinical studies and labeling are Projects
+       features (62a8d5e7) and their screens call these, so they are served. The
+       device vault was one too until it folded into the Vault the same day (fold
+       F3): its router is gone and nothing claims its prefix, so it is refused
+       with the kit's other routes, which no launch screen calls. */
+    for (const p of ['/api/mdx/rbm-kris', '/api/mdx/imports', '/api/mdx/ldt', '/api/mdx/ivd', '/api/mdx/risk-summary', '/api/mdx/work-packages', '/api/mdx/vault', '/api/mdx/vault/7/versions']) {
       expect(await refused(p), p).toBe(true);
     }
     for (const p of [
-      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/vault', '/api/mdx/vault/7/versions',
+      '/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents',
       '/api/mdx/gateways/transmittals',
       '/api/mdx/qms/documents',
       '/api/mdx/admin/users',

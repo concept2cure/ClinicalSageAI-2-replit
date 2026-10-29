@@ -517,24 +517,9 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [PART11, A11Y, TONE],
     notes: 'Q-Sub meeting manager. Previously reachable only through a persisted localStorage value — no rail, tab or palette entry existed.',
   },
-  {
-    id: 'device-vault',
-    label: 'Device artifact vault',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'vault',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/vault'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Reads the mdx_vault store with per-artifact version history. Named separately from `vault` because the two read different document stores; converging the stores is a backend decision, and until it is made two names are honest and one is not.',
-  },
+  // No device-vault. The device kit's document vault folded into the Vault (D2,
+  // fold F3, 2026-10-29); 'device-vault' is a DEEP_LINK_ALIASES entry for 'vault'.
+  // Its claim, /api/mdx/vault, went with its router (server/routes/mdx-vault.ts).
   {
     id: 'device-validation',
     label: 'Submission blockers',

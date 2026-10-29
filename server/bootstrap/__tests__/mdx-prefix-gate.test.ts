@@ -1,9 +1,10 @@
 /**
- * The `/api/mdx` gate is bound to two sub-trees, not to the whole prefix.
+ * The `/api/mdx` gate is bound to sub-trees, not to the whole prefix.
  *
  * Twenty-plus routers are stacked on `/api/mdx`. Two of them — ana-drafts and
- * vault — query the global pool with no tenant scope of their own and must be
- * authenticated. They were gated with
+ * vault — queried the global pool with no tenant scope of their own and had to
+ * be authenticated. (The vault router left the tree when the device vault
+ * folded into the Vault, D2 fold F3, 2026-10-29; ana-drafts remains.) They were gated with
  * `app.use('/api/mdx', requireTenantContext, router)`, which reads as "gate this
  * router" and is not that: path-mounted middleware runs for every request
  * matching the prefix, whichever router ends up serving it. So the gate applied
@@ -54,7 +55,6 @@ describe('the shape that caused BP-02', () => {
 describe('the shape in use now', () => {
   const app = express();
   app.use('/api/mdx/ana-drafts', requireTenantContext);
-  app.use('/api/mdx/vault', requireTenantContext);
   app.use('/api/mdx', gatedRouter());
   app.use('/api/mdx', openRouter());
 
@@ -98,6 +98,5 @@ describe('the real bootstrap keeps the gate off the shared prefix', () => {
     expect(src).not.toMatch(/app\.use\(\s*['"]\/api\/mdx['"]\s*,\s*requireTenantContext/);
     // And the sub-tree gates are present.
     expect(src).toMatch(/app\.use\(\s*['"]\/api\/mdx\/ana-drafts['"]\s*,\s*requireTenantContext\s*\)/);
-    expect(src).toMatch(/app\.use\(\s*['"]\/api\/mdx\/vault['"]\s*,\s*requireTenantContext\s*\)/);
   });
 });

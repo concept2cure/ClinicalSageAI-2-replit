@@ -271,7 +271,6 @@ function lazyOwnedSurface(
 const CapabilityIndex = lazySurface(() => import('./intelligence/Intelligence').then((m) => ({ default: m.CapabilityIndex })));
 const Setup = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Setup })));
 const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Apps })));
-const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.ArtifactsCenter })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
 const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
@@ -390,7 +389,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },
   apps: { component: Apps },
-  'artifacts-center': { component: ArtifactsCenter },
   'audit-trail': { component: AuditTrail },
   'authoring-engine': { component: AuthoringEngine },
   'batch-draft': { component: BatchDraft, full: true },
@@ -450,7 +448,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-submission': { component: DeviceSurfaces['device-submission'], full: true },
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
   'device-validation': { component: DeviceSurfaces['device-validation'], full: true },
-  'device-vault': { component: DeviceSurfaces['device-vault'], full: true },
   'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
