@@ -1,0 +1,20 @@
+# M7: the stale baseline entry restored
+# file: scripts/ci/sign-ceremony-baseline.json  (sha256 before: 82a8c008a528aa7b4925499504ffcb8d5080febff76f24a89699dcd759630995)
+# mutation:
+#   -     "server/services/ana-ri/governed-command-signature.ts": {
+#   +     "server/routes/mdx-labeling.ts": {
+#           "count": 1,
+#           "reason": "Approval stamp (2026-10-01): MDX labeling approval. Outside the launch catalog (shared/constants/launch-scope.ts); RULE 2 gives it no session. Recorded so it cannot grow, not reviewed."
+#         },
+#         "server/services/ana-ri/governed-command-signature.ts": {
+
+$ git diff --stat HEAD -- scripts/ci/sign-ceremony-baseline.json; echo "(no diff against HEAD = the entry restored byte-for-byte)"
+(exit 0)
+(no diff against HEAD = the entry restored byte-for-byte)
+
+$ timeout 240 npm run -s ci:sign-ceremony 2>&1
+(exit 1)
+[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:
+  ✗ server/routes/mdx-labeling.ts: 0 now, baseline 1
+
+# restored: sha256 after = 82a8c008a528aa7b4925499504ffcb8d5080febff76f24a89699dcd759630995  (MATCH)

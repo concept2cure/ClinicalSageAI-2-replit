@@ -1,0 +1,50 @@
+# RED: the new route test in the tree, against server/routes/mdx-labeling.ts at HEAD 43fb57cc (sha256 b56e532a…).
+# npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts   (exit 1)
+# Trimmed: the case list, the summary, and the first failure in full (the statement an unsigned approval sent).
+
+ × approving a translation without a signature > is refused: no password, meaning or reason means 400 and nothing written 32ms
+ × approving a translation without a signature > names a missing password, and writes nothing 5ms
+ × approving a translation without a signature > names a missing meaning, and writes nothing 4ms
+ × approving a translation without a signature > names a missing reason, and writes nothing 7ms
+ × the ceremony refuses, and nothing is approved > a wrong password: 401, said as the ceremony says it, and no transaction opened 4ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (review): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (authorship): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > a meaning an approval cannot carry (release): 400 before the password is asked 3ms
+ × the ceremony refuses, and nothing is approved > an editor whose role carries no signing authority: 403 before the password is asked 5ms
+ × the ceremony refuses, and nothing is approved > signing authority that cannot be read: 503, and the password is not asked 3ms
+ ✓ the ceremony refuses, and nothing is approved > a viewer is refused by the editor gate first, signature or not 6ms
+ × the ceremony refuses, and nothing is approved > a translation already approved: 409, rolled back, no second signature 2ms
+ × the ceremony refuses, and nothing is approved > a translation the organization does not hold, or whose document is deleted: 404, rolled back 2ms
+ × the ceremony refuses, and nothing is approved > the signature row cannot be written: the approval rolls back with it 2ms
+ × the ceremony refuses, and nothing is approved > an approval that also edits the translation: 400, the signature covers the translation as it stands 3ms
+ × the signed approval > re-verifies the signer, then stamps, records the sign ledger pair and the signature row, then commits 2ms
+ × the signed approval > stamps the signer as the approver, on the organization's row only 3ms
+ × the signed approval > records what was approved, under the declared meaning, on the ledger and the signature row 2ms
+ × the signed approval > answers with the approved row and the signature 4ms
+ × the signed approval > goes through the per-signer signing-attempt limit; a plain status change does not 3ms
+ ✓ what is not an approval asks for no signature, as before > a status change short of approved updates the row and stamps nothing 2ms
+ ✓ what is not an approval asks for no signature, as before > a new translation is added as pending 2ms
+ × what is not an approval asks for no signature, as before > a new translation cannot be created already approved: 428, and nothing is inserted 2ms
+      Tests  20 failed | 3 passed (23)
+
+ FAIL  server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts > approving a translation without a signature > is refused: no password, meaning or reason means 400 and nothing written
+AssertionError: expected [ { via: 'pool', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "params": [
++       "approved",
++       5,
++       1,
++       7,
++     ],
++     "sql": "UPDATE labeling_translations SET status = $1, approved_by = $2, approved_at = NOW(), updated_at = NOW() WHERE id = $3 AND organization_id = $4 RETURNING *",
++     "via": "pool",
++   },
++ ]
+
+ ❯ server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts:188:109

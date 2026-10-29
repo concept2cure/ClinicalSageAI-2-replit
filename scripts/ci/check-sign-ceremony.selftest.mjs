@@ -219,6 +219,28 @@ test('the same authoring approval stamp with no signature write fails', () => {
   assert.equal(f[0].sites[0].kind, 'approval-stamp');
 });
 
+// The labeling translation approval (D5, 2026-10-29). Before: the PATCH stamped
+// approved_by and approved_at from a session alone. After: the stamp is the
+// domain write of signGovernedAct (routes/governed-signed-act.ts), which
+// re-verifies the signer and writes the signature row on that transaction.
+const LABELING_APPROVAL = (signed) => `router.patch('/labeling/translations/:transId', requireEditorAccess, whenApproving, async (req, res) => {
+  const parsed = transPatch.safeParse(req.body ?? {});
+  ${signed ? 'return signGovernedAct(req, res, { domain: \'labeling\', target, meanings: DECISION_ACT_MEANINGS, codeStatus, run: async (client, orgId, userId) => {' : '{'}
+    await ${signed ? 'client' : 'pool'}.query(\`UPDATE labeling_translations SET status = 'approved', approved_by = $3, approved_at = NOW() WHERE id = $1 AND organization_id = $2 RETURNING *\`, [transId, orgId, userId]);
+  }${signed ? ' });' : ''}
+});`;
+
+test('an approval stamp inside signGovernedAct passes (the labeling translation approval, 2026-10-29)', () => {
+  assert.equal(failsWith(LABELING_APPROVAL(true)).length, 0);
+  assert.equal(scanSource(LABELING_APPROVAL(true))[0].signatureRow, true);
+});
+
+test('the same approval stamp with no signGovernedAct fails (the labeling PATCH before 2026-10-29)', () => {
+  const f = failsWith(LABELING_APPROVAL(false));
+  assert.equal(f.length, 1);
+  assert.equal(f[0].sites[0].kind, 'approval-stamp');
+});
+
 test('clearing an approval (a revision) is not a stamp', () => {
   const src = "router.post('/x', async () => { await pool.query(`UPDATE qms_documents SET status = 'draft', approver_id = NULL, approved_at = NULL WHERE id = $1`, [id]); });";
   assert.deepEqual(scanSource(src), []);

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
+import { TranslationApprovalDialog } from './LabelingTranslationApproval';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -211,6 +212,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   }, [seedTrans]);
 
   const [tForm, setTForm] = useState(false);
+  /** The translation in review whose signed approval is open, if any. */
+  const [approving, setApproving] = useState<LabelTranslation | null>(null);
   const [toast, fire] = useToast();
 
   const cov = useMemo(() => {
@@ -264,10 +267,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   // "back-trans verified" chip can't appear from a client advance. On failure the
   // row is left untouched and the toast states nothing was persisted. (Rows carry
   // the real numeric id now, so the former TR-<lang> id.replace hack is gone.)
+  // It stops at review: approving is the signed act (TranslationApprovalDialog).
   const advTrans = async (id: string) => {
     const cur = trans.find(t => t.id === id);
     if (!cur) return;
-    const order = ['pending', 'in_progress', 'review', 'approved'];
+    const order = ['pending', 'in_progress', 'review'];
     const i = order.indexOf(cur.status);
     if (i < 0 || i >= order.length - 1) return;
     const nxt = order[i + 1];
@@ -369,7 +373,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Add a target-language translation (a real persisted write)',
-        'Advance a translation through pending, in progress, review, approved',
+        'Advance a translation through pending, in progress and review, then approve it with an electronic signature',
         'Read the symbol set and what each symbol is required by',
       ],
     };
@@ -650,7 +654,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
                       {t.btv && <span className="rd-chip tone-ok" style={{ marginLeft: 6, fontSize: 9 }}>back-trans verified</span>}
                     </div>
                     <div><span className={`rd-chip tone-${tTone[t.status] || 'idle'}`}>{(EN.transStatus.find(s => s[0] === t.status) || [])[1] || t.status}</span></div>
-                    <div style={{ textAlign: 'right' }}>{t.status !== 'approved' && <button className="btn ghost" style={{ height: 26 }} onClick={() => advTrans(t.id)}>{I.arrowRight} Advance</button>}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      {t.status === 'review'
+                        ? <button className="btn ghost" style={{ height: 26 }} onClick={() => setApproving(t)}>{I.penLine} Approve</button>
+                        : t.status !== 'approved' && <button className="btn ghost" style={{ height: 26 }} onClick={() => advTrans(t.id)}>{I.arrowRight} Advance</button>}
+                    </div>
                   </div>
                 ))
               )}
@@ -658,6 +666,18 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
           </div>
 
           {tForm && <C2CForm config={transFormConfig} onCancel={() => setTForm(false)} onSubmit={addTrans} />}
+          {approving && (
+            <TranslationApprovalDialog
+              translation={approving}
+              label={(docRow ? docRow.device_name + ' ' : '') + kindLabel}
+              onClose={() => setApproving(null)}
+              onSigned={(row) => {
+                const adopted = mapLabelTranslations([row])?.[0];
+                setTrans(ts => ts.map(t => (t.id === approving.id ? (adopted ?? { ...t, status: 'approved' }) : t)));
+                fire('Translation ' + approving.language + ' approved and signed');
+              }}
+            />
+          )}
         </>
       )}
 
