@@ -1,0 +1,48 @@
+# Red: the new suite and add-project-market against the committed submission-service.ts and filing-document-classes.ts (397982592)
+
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known 510k home pathway with an inconsistent medicinal product before any write 25ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known pma home pathway with an inconsistent medicinal product before any write 20ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known de_novo home pathway with an inconsistent medicinal product before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ide home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known mdr home pathway with an inconsistent medicinal product before any write 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ivdr home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known cer home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known device home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ivd home pathway with an inconsistent medicinal product before any write 16ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'hde' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'mdl' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ivd_licence' as a medicinal added market before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'shonin' as a medicinal added market before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ninsho' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'todokede' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ivd_approval' as a medicinal added market before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'jp_cdx' as a medicinal added market before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'hde' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'mdl' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ivd_licence' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'shonin' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ninsho' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'todokede' home class before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ivd_approval' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'jp_cdx' home class before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action 49ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to 31ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding 10ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document 21ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a project with no filing of its own is refused, so the market never becomes its only document 11ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written 25ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, says why, and writes nothing 9ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, says why, and writes nothing 10ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, says why, and writes nothing 7ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a supplement market on an NDA project with 422, says why, and writes nothing 8ms
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a clinical study report market on an NDA project with 422, says why, and writes nothing 11ms
+   → expected 'A clinical study report is authored a…' to match /^A clinical study report is authored …/
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an application market on a project that is a document class (a PAS) with 422, says why, and writes nothing 8ms
+ × document-class-not-an-application.pglite.test.ts > a document class is not an application > no submission is created in a clinical study report project, and the refusal says where to build it 12ms
+   → expected a refusal
+ × document-class-not-an-application.pglite.test.ts > a document class is not an application > a clinical study report is not created as an application, in any project 3ms
+   → expected a refusal
+ ✓ document-class-not-an-application.pglite.test.ts > a document class is not an application > the IND project takes its IND 3ms
+ × document-class-not-an-application.pglite.test.ts > a document class is not an application > the refusal is a 422 wherever a route surfaces it, never a 500 2ms
+   → expected undefined to be 422 // Object.is equality
+      Tests  4 failed | 37 passed (41)
