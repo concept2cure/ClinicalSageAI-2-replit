@@ -5,7 +5,7 @@
  * surfaces: the SOP register (controlled documents, periodic review, training),
  * Change control (the change-control log, lifecycle flowchart, and the links
  * to deviations, CAPAs and validation records), and the quality records
- * (QmsRecords.tsx: nonconformances, suppliers, internal audits, management
+ * (QmsRecords.tsx: CAPA, nonconformances, suppliers, internal audits, management
  * reviews; decision P-48). Mirrors the host-
  * integration contract of the other domain shells: AnA prompts hand off to the
  * host conversation surface via `onAskAna`; rail cross-links route through
@@ -52,6 +52,7 @@ export interface QualityAppProps {
 type QualityTab = 'sop' | 'change' | QmsRecordTab;
 
 const RECORD_ICON: Record<QmsRecordTab, React.ReactNode> = {
+  capa: I.target,
   nonconforming: I.alertTriangle,
   suppliers: I.building,
   audits: I.clipboardList,
@@ -277,7 +278,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         changeCount: changes.length,
       },
       availableActions: [
-        'Switch between the SOP register, change control, nonconformances, suppliers, internal audits and management reviews tabs',
+        'Switch between the SOP register, change control, CAPA, nonconformances, suppliers, internal audits and management reviews tabs',
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
