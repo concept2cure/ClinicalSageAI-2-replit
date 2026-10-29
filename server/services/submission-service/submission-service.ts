@@ -18,6 +18,7 @@ import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
 import { db, pool } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import {
   submissions,
   ectdSequences,
@@ -101,6 +102,8 @@ import {
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
+import { sequenceCreationRefusal } from './filed-sequence-baseline';
+import { readCurrentFiledBaseline } from './filed-sequence-baseline-content';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
 import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
@@ -656,6 +659,11 @@ export async function createSequence(
   // does not get one past. The reason is the market verdict's.
   const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
   if (refused) throw new SubmissionError('VALIDATION', refused);
+  // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
+  // their numbers are taken, and one of them opened the Original Application.
+  const baseline = await readCurrentFiledBaseline(queryableFromDrizzle(db), ctx.organizationId, input.submissionId);
+  const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
+  if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
   const [row] = await db
     .insert(ectdSequences)
     .values({
