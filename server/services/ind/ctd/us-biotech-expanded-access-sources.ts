@@ -33,129 +33,236 @@ const GUIDANCE_QA = 'FDA Guidance for Industry: Expanded Access to Investigation
 const NO_3926_MAP = 'FDAFormsRegistry.ts carries no FDA_3926 entry and no 3926 asset/field map is admitted: prepare from the current FDA-published form and its instructions, manually; no field is pre-filled.';
 const MANUAL = 'Original form or signed record: retained and prepared manually from controlled sources. AnA does not generate, fill or replace it.';
 
-function part(
-  code: string, title: string, required: boolean, contentType: LifecycleComponent['contentType'],
-  guidance: string, authoringGuidance: string, keyContentElements: string[], generationPrompt: string,
-): LifecycleComponent {
-  return { code, title, required, contentType, guidance, authoringGuidance, keyContentElements, generationPrompt };
+interface PartSpec {
+  code: string;
+  title: string;
+  required: boolean;
+  contentType: LifecycleComponent['contentType'];
+  guidance: string;
+  authoringGuidance: string;
+  keyContentElements: string[];
+  generationPrompt: string;
+}
+
+function part(spec: PartSpec): LifecycleComponent {
+  return { ...spec };
+}
+
+interface ManualPartSpec {
+  code: string;
+  title: string;
+  required: boolean;
+  contentType: 'form' | 'data' | 'table';
+  guidance: string;
+  how: string;
+  elements: string[];
 }
 
 /** A manual part: no generation prompt beyond a refusal to generate. */
-function manualPart(code: string, title: string, required: boolean, contentType: 'form' | 'data' | 'table', guidance: string, how: string, elements: string[]): LifecycleComponent {
-  return part(code, title, required, contentType, guidance, `${how} ${MANUAL}`, elements,
-    `Do not draft ${title} for {{PRODUCT_NAME}}. List the controlled source records {{SPONSOR}} must attach and any that are missing.`);
+function manualPart({ code, title, required, contentType, guidance, how, elements }: ManualPartSpec): LifecycleComponent {
+  return part({
+    code, title, required, contentType, guidance,
+    authoringGuidance: `${how} ${MANUAL}`,
+    keyContentElements: elements,
+    generationPrompt: `Do not draft ${title} for {{PRODUCT_NAME}}. List the controlled source records {{SPONSOR}} must attach and any that are missing.`,
+  });
 }
 
 // ── Parts shared by every expanded access submission (21 CFR 312.305) ───────
 
 function rationalePart(prefix: string): LifecycleComponent {
-  return part(`${prefix}-RATIONALE`, 'Rationale for the Intended Use and Available Alternatives', true, 'narrative',
-    '21 CFR 312.305(a)(1)-(3) (criteria for all expanded access uses); 21 CFR 312.305(b)(2)(ii) (rationale, available therapeutic options, why the investigational drug is preferable)',
-    'Show each 312.305(a) criterion from cited source: serious or immediately life-threatening disease; no comparable or satisfactory alternative therapy; benefit justifies risk and the risk is not unreasonable; access will not interfere with clinical investigations that could support approval. List the alternatives considered and why each is unsuitable.',
-    ['Disease or condition and its seriousness', 'Available therapeutic options and why each is unsuitable', 'Why the investigational drug is preferred', 'Why access will not interfere with ongoing development'],
-    'Draft the rationale for expanded access use of {{PRODUCT_NAME}} in {{INDICATION}} for {{SPONSOR}}, addressing each criterion of 21 CFR 312.305(a) from cited source records only. Use placeholders where a source is missing.');
+  return part({
+    code: `${prefix}-RATIONALE`,
+    title: 'Rationale for the Intended Use and Available Alternatives',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(a)(1)-(3) (criteria for all expanded access uses); 21 CFR 312.305(b)(2)(ii) (rationale, available therapeutic options, why the investigational drug is preferable)',
+    authoringGuidance: 'Show each 312.305(a) criterion from cited source: serious or immediately life-threatening disease; no comparable or satisfactory alternative therapy; benefit justifies risk and the risk is not unreasonable; access will not interfere with clinical investigations that could support approval. List the alternatives considered and why each is unsuitable.',
+    keyContentElements: ['Disease or condition and its seriousness', 'Available therapeutic options and why each is unsuitable', 'Why the investigational drug is preferred', 'Why access will not interfere with ongoing development'],
+    generationPrompt: 'Draft the rationale for expanded access use of {{PRODUCT_NAME}} in {{INDICATION}} for {{SPONSOR}}, addressing each criterion of 21 CFR 312.305(a) from cited source records only. Use placeholders where a source is missing.',
+  });
 }
 
 function treatmentPlanPart(prefix: string, scope: string): LifecycleComponent {
-  return part(`${prefix}-PLAN`, 'Treatment Plan and Monitoring', true, 'narrative',
-    '21 CFR 312.305(b)(2)(iv) (method of administration, dose, duration of therapy); 21 CFR 312.305(b)(2)(viii) (clinical procedures, laboratory tests or other monitoring)',
-    `State administration, dose and duration for ${scope}, and the monitoring needed to evaluate effects and minimize risk. Dose and duration come from the approved source (investigator brochure, protocol or manufacturer letter); never compute or propose a dose.`,
-    ['Route, dose and schedule (from source)', 'Planned duration of therapy', 'Clinical and laboratory monitoring', 'Stopping rules and safety follow-up'],
-    'Draft the treatment plan and monitoring narrative for expanded access use of {{PRODUCT_NAME}} in {{INDICATION}}, transcribing dose and schedule only from the cited source and leaving placeholders where none is provided.');
+  return part({
+    code: `${prefix}-PLAN`,
+    title: 'Treatment Plan and Monitoring',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(b)(2)(iv) (method of administration, dose, duration of therapy); 21 CFR 312.305(b)(2)(viii) (clinical procedures, laboratory tests or other monitoring)',
+    authoringGuidance: `State administration, dose and duration for ${scope}, and the monitoring needed to evaluate effects and minimize risk. Dose and duration come from the approved source (investigator brochure, protocol or manufacturer letter); never compute or propose a dose.`,
+    keyContentElements: ['Route, dose and schedule (from source)', 'Planned duration of therapy', 'Clinical and laboratory monitoring', 'Stopping rules and safety follow-up'],
+    generationPrompt: 'Draft the treatment plan and monitoring narrative for expanded access use of {{PRODUCT_NAME}} in {{INDICATION}}, transcribing dose and schedule only from the cited source and leaving placeholders where none is provided.',
+  });
 }
 
 function referencePart(prefix: string): LifecycleComponent {
-  return part(`${prefix}-CMC-PT`, 'Manufacturing, CMC and Pharmacology/Toxicology Information (or Cross-Reference)', true, 'narrative',
-    '21 CFR 312.305(b)(2)(v)-(vii) (manufacturing facility; CMC; pharmacology and toxicology); 21 CFR 312.305(b)(1) (information may be supplied by reference to an existing IND whose sponsor grants a right of reference); 21 CFR 312.23(b) (information previously submitted may be incorporated by reference)',
-    'Usually satisfied by reference to the manufacturer\'s IND or master file under a letter of authorization. State what is referenced, by application number and submission; the referenced data stay in the manufacturer\'s controlled filing and are not reproduced here.',
-    ['Referenced application or master file number', 'Manufacturing facility description or reference', 'CMC sufficiency statement (identity, quality, purity, strength)', 'Pharmacology/toxicology sufficiency statement for the dose and duration'],
-    'Draft the cross-reference statement for {{PRODUCT_NAME}} CMC and pharmacology/toxicology information, naming the referenced application and letter of authorization as placeholders. Do not summarize data that are not in a cited source.');
+  return part({
+    code: `${prefix}-CMC-PT`,
+    title: 'Manufacturing, CMC and Pharmacology/Toxicology Information (or Cross-Reference)',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(b)(2)(v)-(vii) (manufacturing facility; CMC; pharmacology and toxicology); 21 CFR 312.305(b)(1) (information may be supplied by reference to an existing IND whose sponsor grants a right of reference); 21 CFR 312.23(b) (information previously submitted may be incorporated by reference)',
+    authoringGuidance: 'Usually satisfied by reference to the manufacturer\'s IND or master file under a letter of authorization. State what is referenced, by application number and submission; the referenced data stay in the manufacturer\'s controlled filing and are not reproduced here.',
+    keyContentElements: ['Referenced application or master file number', 'Manufacturing facility description or reference', 'CMC sufficiency statement (identity, quality, purity, strength)', 'Pharmacology/toxicology sufficiency statement for the dose and duration'],
+    generationPrompt: 'Draft the cross-reference statement for {{PRODUCT_NAME}} CMC and pharmacology/toxicology information, naming the referenced application and letter of authorization as placeholders. Do not summarize data that are not in a cited source.',
+  });
 }
 
 function irbConsentPart(prefix: string): LifecycleComponent {
-  return manualPart(`${prefix}-IRB-CONSENT`, 'IRB Review and Informed Consent Records', true, 'form',
-    '21 CFR part 50 (informed consent); 21 CFR part 56 (IRB review); 21 CFR 312.66 (investigator assures IRB review); 21 CFR 312.305(c) (safeguards: licensed physician as investigator)',
-    'Attach the IRB approval and the approved consent form; both are signed or approved originals.',
-    ['IRB approval letter (or emergency-use report, see emergency path)', 'IRB-approved informed consent form', 'Signed consent record held at site (not submitted unless requested)']);
+  return manualPart({
+    code: `${prefix}-IRB-CONSENT`,
+    title: 'IRB Review and Informed Consent Records',
+    required: true,
+    contentType: 'form',
+    guidance: '21 CFR part 50 (informed consent); 21 CFR part 56 (IRB review); 21 CFR 312.66 (investigator assures IRB review); 21 CFR 312.305(c) (safeguards: licensed physician as investigator)',
+    how: 'Attach the IRB approval and the approved consent form; both are signed or approved originals.',
+    elements: ['IRB approval letter (or emergency-use report, see emergency path)', 'IRB-approved informed consent form', 'Signed consent record held at site (not submitted unless requested)'],
+  });
 }
 
 function chargingPart(prefix: string): LifecycleComponent {
-  return part(`${prefix}-CHARGING`, 'Request to Charge (Cost Recovery), if Sought', false, 'narrative',
-    '21 CFR 312.8 (charging for investigational drugs; expanded access at 312.8(c); recoverable costs at 312.8(d)); prior written FDA authorization required',
-    'Only when the sponsor intends to charge. Explain how the applicable 312.8 criteria are met and which costs are recovered; supporting cost documentation is a controlled source record, not narrated figures.',
-    ['Statement that charging is requested', 'How the 312.8 criteria for the expanded access type are met', 'Cost categories recovered (figures from cost records only)'],
-    'Draft a cost-recovery request narrative for {{PRODUCT_NAME}} expanded access by {{SPONSOR}} under 21 CFR 312.8, with every figure left as a placeholder for the cost record.');
+  return part({
+    code: `${prefix}-CHARGING`,
+    title: 'Request to Charge (Cost Recovery), if Sought',
+    required: false,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.8 (charging for investigational drugs; expanded access at 312.8(c); recoverable costs at 312.8(d)); prior written FDA authorization required',
+    authoringGuidance: 'Only when the sponsor intends to charge. Explain how the applicable 312.8 criteria are met and which costs are recovered; supporting cost documentation is a controlled source record, not narrated figures.',
+    keyContentElements: ['Statement that charging is requested', 'How the 312.8 criteria for the expanded access type are met', 'Cost categories recovered (figures from cost records only)'],
+    generationPrompt: 'Draft a cost-recovery request narrative for {{PRODUCT_NAME}} expanded access by {{SPONSOR}} under 21 CFR 312.8, with every figure left as a placeholder for the cost record.',
+  });
 }
 
 function form1571Part(prefix: string): LifecycleComponent {
-  return manualPart(`${prefix}-1571`, 'Form FDA 1571 (IND Cover Sheet)', true, 'form',
-    '21 CFR 312.305(b)(2)(i) (cover sheet meeting 21 CFR 312.23(a)(1)); FDAFormsRegistry.ts FDA_1571',
-    'A new expanded access IND or a protocol amendment to an existing IND carries Form FDA 1571, identified as an expanded access submission of this type. Use the existing FDA_1571 form engine and its original-asset/review gates.',
-    ['Form FDA 1571 marked for the expanded access submission type', 'Sponsor or sponsor-investigator signature']);
+  return manualPart({
+    code: `${prefix}-1571`,
+    title: 'Form FDA 1571 (IND Cover Sheet)',
+    required: true,
+    contentType: 'form',
+    guidance: '21 CFR 312.305(b)(2)(i) (cover sheet meeting 21 CFR 312.23(a)(1)); FDAFormsRegistry.ts FDA_1571',
+    how: 'A new expanded access IND or a protocol amendment to an existing IND carries Form FDA 1571, identified as an expanded access submission of this type. Use the existing FDA_1571 form engine and its original-asset/review gates.',
+    elements: ['Form FDA 1571 marked for the expanded access submission type', 'Sponsor or sponsor-investigator signature'],
+  });
 }
 
 function form1572Part(prefix: string): LifecycleComponent {
-  return manualPart(`${prefix}-1572`, 'Form FDA 1572 (Statement of Investigator) for Each Treating Physician', true, 'form',
-    '21 CFR 312.53(c) (statement of investigator); 21 CFR 312.305(c) (a treating licensed physician is an investigator); FDAFormsRegistry.ts FDA_1572',
-    'Each licensed physician administering the drug under the protocol signs a Form FDA 1572. Use the existing FDA_1572 form engine.',
-    ['Signed Form FDA 1572 per treating physician', 'Investigator CV or qualification record']);
+  return manualPart({
+    code: `${prefix}-1572`,
+    title: 'Form FDA 1572 (Statement of Investigator) for Each Treating Physician',
+    required: true,
+    contentType: 'form',
+    guidance: '21 CFR 312.53(c) (statement of investigator); 21 CFR 312.305(c) (a treating licensed physician is an investigator); FDAFormsRegistry.ts FDA_1572',
+    how: 'Each licensed physician administering the drug under the protocol signs a Form FDA 1572. Use the existing FDA_1572 form engine.',
+    elements: ['Signed Form FDA 1572 per treating physician', 'Investigator CV or qualification record'],
+  });
 }
 
 function coverPart(prefix: string, type: string, section: string): LifecycleComponent {
-  return part(`${prefix}-COVER`, 'Cover Letter', true, 'narrative',
-    `21 CFR 312.305(b)(1) (expanded access submission required for each type); 21 CFR 312.305(b)(3) (submission and mailing cover plainly marked "EXPANDED ACCESS SUBMISSION"; for a treatment IND or treatment protocol the applicable Form FDA 1571 box is checked); 21 CFR ${section}`,
-    `State that the submission is for ${type} expanded access under 21 CFR ${section}, whether it is a new IND or a protocol amendment to an existing IND (give the IND number), and who the sponsor is.`,
-    ['Expanded access type and CFR section', 'New IND or protocol amendment (existing IND number)', 'Sponsor and contact', 'Contents list'],
-    `Draft a cover letter for {{SPONSOR}}'s ${type} expanded access submission for {{PRODUCT_NAME}} in {{INDICATION}} under 21 CFR ${section}. Leave IND numbers and dates as placeholders.`);
+  return part({
+    code: `${prefix}-COVER`,
+    title: 'Cover Letter',
+    required: true,
+    contentType: 'narrative',
+    guidance: `21 CFR 312.305(b)(1) (expanded access submission required for each type); 21 CFR 312.305(b)(3) (submission and mailing cover plainly marked "EXPANDED ACCESS SUBMISSION"; for a treatment IND or treatment protocol the applicable Form FDA 1571 box is checked); 21 CFR ${section}`,
+    authoringGuidance: `State that the submission is for ${type} expanded access under 21 CFR ${section}, whether it is a new IND or a protocol amendment to an existing IND (give the IND number), and who the sponsor is.`,
+    keyContentElements: ['Expanded access type and CFR section', 'New IND or protocol amendment (existing IND number)', 'Sponsor and contact', 'Contents list'],
+    generationPrompt: `Draft a cover letter for {{SPONSOR}}'s ${type} expanded access submission for {{PRODUCT_NAME}} in {{INDICATION}} under 21 CFR ${section}. Leave IND numbers and dates as placeholders.`,
+  });
 }
 
 // ── Individual patient (312.310), emergency and non-emergency ───────────────
 
 const INDIVIDUAL_COMPONENTS: LifecycleComponent[] = [
-  part('EAI-ROLE', 'Submitter Role and Access Path', true, 'narrative',
-    '21 CFR 312.310(b) (submission by a licensed physician or by a sponsor); 21 CFR 312.305(b) (new IND or protocol amendment to an existing IND); 21 CFR 312.310(d) (emergency use)',
-    'State who submits: the treating licensed physician as sponsor-investigator (new individual-patient IND, typically Form FDA 3926) or a sponsor (protocol amendment to its existing IND, Form FDA 1571). State whether the emergency path (312.310(d)) or the non-emergency path applies.',
-    ['Physician (sponsor-investigator) or sponsor submission', 'New IND or amendment to IND (number)', 'Emergency or non-emergency path', 'Manufacturer agreement to supply'],
-    'Draft the submitter-role and access-path statement for individual patient expanded access to {{PRODUCT_NAME}} in {{INDICATION}}, leaving the physician, sponsor and IND number as placeholders.'),
-  manualPart('EAI-3926', 'Form FDA 3926 (Individual Patient Expanded Access IND), Physician Submission', false, 'form',
-    `${GUIDANCE_3926}; 21 CFR 312.305(b)(2)(i); individual patients only (21 CFR 312.310), not intermediate-size or treatment use`,
-    `Conditional: the licensed physician submits a new individual-patient IND. Per the FDA 3926 guidance (recall), the physician may request that Form FDA 3926 be accepted in place of Forms FDA 1571 and 1572. ${NO_3926_MAP}`,
-    ['Current FDA-published Form FDA 3926', 'Physician signature', 'Attachments the form instructions name']),
-  manualPart('EAI-1571', 'Form FDA 1571 (Sponsor Protocol Amendment or Non-3926 IND)', false, 'form',
-    '21 CFR 312.305(b)(2)(i) (cover sheet meeting 21 CFR 312.23(a)(1)); 21 CFR 312.305(b)(3); FDAFormsRegistry.ts FDA_1571',
-    'Conditional: a sponsor submits an individual-patient protocol amendment to its existing IND, or the physician does not use Form FDA 3926. Use the existing FDA_1571 form engine.',
-    ['Form FDA 1571 identifying individual patient expanded access', 'Form FDA 1572 for the treating physician (21 CFR 312.53(c))']),
-  manualPart('EAI-LOA', 'Letter of Authorization from the Manufacturer or IND Holder', false, 'form',
-    '21 CFR 312.310(b)(3) (a licensed physician obtains the sponsor\'s permission for FDA to refer to its IND); 21 CFR 312.305(b)(1) (right of reference to an existing IND); 21 CFR 312.23(b) (incorporation by reference with written authorization); 21 CFR 312.305(b)(2)(v)-(vii)',
-    'Signed letter permitting FDA to refer to the manufacturer\'s IND or master file for CMC and pharmacology/toxicology information.',
-    ['Signed letter of authorization', 'Referenced application number']),
-  part('EAI-PATIENT', 'Patient History and Current Condition', true, 'narrative',
-    '21 CFR 312.305(b)(2)(iii) (for an individual patient: the disease or condition, recent medical history and previous treatments)',
-    'Summarize from the cited medical record only: diagnosis, recent history and prior treatments with response. De-identify as the submission route requires.',
-    ['Diagnosis and current status', 'Recent medical history', 'Previous treatments and responses'],
-    'Draft the patient history for individual patient expanded access to {{PRODUCT_NAME}} in {{INDICATION}} from the cited medical-record extracts only; leave anything not in a source as a placeholder.'),
-  part('EAI-RISK', 'Physician Risk Determination and Unavailability Under Another IND', true, 'narrative',
-    '21 CFR 312.310(a)(1) (physician determines probable risk from the drug is not greater than probable risk from the disease); 21 CFR 312.310(a)(2) (FDA determines the patient cannot obtain the drug under another IND or protocol)',
-    'The treating physician\'s own determination, in their words, supported by the cited history; and why the patient cannot enroll in a trial or an existing access protocol. The physician signs and owns this statement.',
-    ['Physician\'s probable-risk comparison', 'Why trial or existing protocol access is unavailable'],
-    'Draft, for the treating physician to review and adopt, the 21 CFR 312.310(a) risk determination for {{PRODUCT_NAME}} in {{INDICATION}}, citing only the provided history.'),
+  part({
+    code: 'EAI-ROLE',
+    title: 'Submitter Role and Access Path',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.310(b) (submission by a licensed physician or by a sponsor); 21 CFR 312.305(b) (new IND or protocol amendment to an existing IND); 21 CFR 312.310(d) (emergency use)',
+    authoringGuidance: 'State who submits: the treating licensed physician as sponsor-investigator (new individual-patient IND, typically Form FDA 3926) or a sponsor (protocol amendment to its existing IND, Form FDA 1571). State whether the emergency path (312.310(d)) or the non-emergency path applies.',
+    keyContentElements: ['Physician (sponsor-investigator) or sponsor submission', 'New IND or amendment to IND (number)', 'Emergency or non-emergency path', 'Manufacturer agreement to supply'],
+    generationPrompt: 'Draft the submitter-role and access-path statement for individual patient expanded access to {{PRODUCT_NAME}} in {{INDICATION}}, leaving the physician, sponsor and IND number as placeholders.',
+  }),
+  manualPart({
+    code: 'EAI-3926',
+    title: 'Form FDA 3926 (Individual Patient Expanded Access IND), Physician Submission',
+    required: false,
+    contentType: 'form',
+    guidance: `${GUIDANCE_3926}; 21 CFR 312.305(b)(2)(i); individual patients only (21 CFR 312.310), not intermediate-size or treatment use`,
+    how: `Conditional: the licensed physician submits a new individual-patient IND. Per the FDA 3926 guidance (recall), the physician may request that Form FDA 3926 be accepted in place of Forms FDA 1571 and 1572. ${NO_3926_MAP}`,
+    elements: ['Current FDA-published Form FDA 3926', 'Physician signature', 'Attachments the form instructions name'],
+  }),
+  manualPart({
+    code: 'EAI-1571',
+    title: 'Form FDA 1571 (Sponsor Protocol Amendment or Non-3926 IND)',
+    required: false,
+    contentType: 'form',
+    guidance: '21 CFR 312.305(b)(2)(i) (cover sheet meeting 21 CFR 312.23(a)(1)); 21 CFR 312.305(b)(3); FDAFormsRegistry.ts FDA_1571',
+    how: 'Conditional: a sponsor submits an individual-patient protocol amendment to its existing IND, or the physician does not use Form FDA 3926. Use the existing FDA_1571 form engine.',
+    elements: ['Form FDA 1571 identifying individual patient expanded access', 'Form FDA 1572 for the treating physician (21 CFR 312.53(c))'],
+  }),
+  manualPart({
+    code: 'EAI-LOA',
+    title: 'Letter of Authorization from the Manufacturer or IND Holder',
+    required: false,
+    contentType: 'form',
+    guidance: '21 CFR 312.310(b)(3) (a licensed physician obtains the sponsor\'s permission for FDA to refer to its IND); 21 CFR 312.305(b)(1) (right of reference to an existing IND); 21 CFR 312.23(b) (incorporation by reference with written authorization); 21 CFR 312.305(b)(2)(v)-(vii)',
+    how: 'Signed letter permitting FDA to refer to the manufacturer\'s IND or master file for CMC and pharmacology/toxicology information.',
+    elements: ['Signed letter of authorization', 'Referenced application number'],
+  }),
+  part({
+    code: 'EAI-PATIENT',
+    title: 'Patient History and Current Condition',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(b)(2)(iii) (for an individual patient: the disease or condition, recent medical history and previous treatments)',
+    authoringGuidance: 'Summarize from the cited medical record only: diagnosis, recent history and prior treatments with response. De-identify as the submission route requires.',
+    keyContentElements: ['Diagnosis and current status', 'Recent medical history', 'Previous treatments and responses'],
+    generationPrompt: 'Draft the patient history for individual patient expanded access to {{PRODUCT_NAME}} in {{INDICATION}} from the cited medical-record extracts only; leave anything not in a source as a placeholder.',
+  }),
+  part({
+    code: 'EAI-RISK',
+    title: 'Physician Risk Determination and Unavailability Under Another IND',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.310(a)(1) (physician determines probable risk from the drug is not greater than probable risk from the disease); 21 CFR 312.310(a)(2) (FDA determines the patient cannot obtain the drug under another IND or protocol)',
+    authoringGuidance: 'The treating physician\'s own determination, in their words, supported by the cited history; and why the patient cannot enroll in a trial or an existing access protocol. The physician signs and owns this statement.',
+    keyContentElements: ['Physician\'s probable-risk comparison', 'Why trial or existing protocol access is unavailable'],
+    generationPrompt: 'Draft, for the treating physician to review and adopt, the 21 CFR 312.310(a) risk determination for {{PRODUCT_NAME}} in {{INDICATION}}, citing only the provided history.',
+  }),
   rationalePart('EAI'),
   treatmentPlanPart('EAI', 'a single course of therapy for a specified duration unless FDA authorizes multiple courses or chronic therapy (21 CFR 312.310(c)(1))'),
   referencePart('EAI'),
   irbConsentPart('EAI'),
-  manualPart('EAI-EMERG-AUTH', 'Emergency Authorization Record (Emergency Path Only)', false, 'data',
-    '21 CFR 312.310(d)(1) (FDA may authorize emergency use to begin without a written submission, by telephone; the physician or sponsor agrees to submit the written expanded access submission within 15 working days of FDA\'s authorization); 21 CFR 312.310(d)(2) (emergency request by telephone, facsimile or other electronic communication)',
-    'Conditional: emergency path. Record the date and time of FDA\'s authorization, the FDA contact and the assigned IND number as received; the written submission follows within 15 working days of authorization.',
-    ['Authorization date and time', 'FDA contact', 'Assigned IND number', 'Written-submission due date computed from the recorded authorization date']),
-  manualPart('EAI-EMERG-IRB', 'Emergency-Use IRB Report and Consent Record (Emergency Path Only)', false, 'form',
-    '21 CFR 56.104(c) (emergency use exempt from prospective IRB review; reported to the IRB within 5 working days); 21 CFR 50.23 (exception from informed consent, with its certification)',
-    'Conditional: emergency path when treatment began before IRB review. The report to the IRB and any 50.23 certification are signed originals.',
-    ['Report to the IRB (within 5 working days of use)', 'Consent record or 50.23 certification']),
-  part('EAI-SUMMARY', 'Written Summary of Results at Conclusion of Treatment', false, 'narrative',
-    '21 CFR 312.310(c)(2) (physician or sponsor provides FDA a written summary of the results, including adverse effects); 21 CFR 312.32 (IND safety reporting during treatment)',
-    'Follow-up submission after treatment ends. Narrate outcomes and adverse effects from the cited medical record and safety reports; no inferred efficacy conclusion.',
-    ['Treatment given and duration', 'Clinical outcome as recorded', 'Adverse effects', 'Safety reports already filed'],
-    'Draft the 21 CFR 312.310(c)(2) end-of-treatment summary for {{PRODUCT_NAME}} in {{INDICATION}} from the cited records only.'),
+  manualPart({
+    code: 'EAI-EMERG-AUTH',
+    title: 'Emergency Authorization Record (Emergency Path Only)',
+    required: false,
+    contentType: 'data',
+    guidance: '21 CFR 312.310(d)(1) (FDA may authorize emergency use to begin without a written submission, by telephone; the physician or sponsor agrees to submit the written expanded access submission within 15 working days of FDA\'s authorization); 21 CFR 312.310(d)(2) (emergency request by telephone, facsimile or other electronic communication)',
+    how: 'Conditional: emergency path. Record the date and time of FDA\'s authorization, the FDA contact and the assigned IND number as received; the written submission follows within 15 working days of authorization.',
+    elements: ['Authorization date and time', 'FDA contact', 'Assigned IND number', 'Written-submission due date computed from the recorded authorization date'],
+  }),
+  manualPart({
+    code: 'EAI-EMERG-IRB',
+    title: 'Emergency-Use IRB Report and Consent Record (Emergency Path Only)',
+    required: false,
+    contentType: 'form',
+    guidance: '21 CFR 56.104(c) (emergency use exempt from prospective IRB review; reported to the IRB within 5 working days); 21 CFR 50.23 (exception from informed consent, with its certification)',
+    how: 'Conditional: emergency path when treatment began before IRB review. The report to the IRB and any 50.23 certification are signed originals.',
+    elements: ['Report to the IRB (within 5 working days of use)', 'Consent record or 50.23 certification'],
+  }),
+  part({
+    code: 'EAI-SUMMARY',
+    title: 'Written Summary of Results at Conclusion of Treatment',
+    required: false,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.310(c)(2) (physician or sponsor provides FDA a written summary of the results, including adverse effects); 21 CFR 312.32 (IND safety reporting during treatment)',
+    authoringGuidance: 'Follow-up submission after treatment ends. Narrate outcomes and adverse effects from the cited medical record and safety reports; no inferred efficacy conclusion.',
+    keyContentElements: ['Treatment given and duration', 'Clinical outcome as recorded', 'Adverse effects', 'Safety reports already filed'],
+    generationPrompt: 'Draft the 21 CFR 312.310(c)(2) end-of-treatment summary for {{PRODUCT_NAME}} in {{INDICATION}} from the cited records only.',
+  }),
 ];
 
 // ── Intermediate-size population (312.315) ──────────────────────────────────
@@ -164,21 +271,36 @@ const INTERMEDIATE_COMPONENTS: LifecycleComponent[] = [
   coverPart('EAM', 'intermediate-size patient population', '312.315'),
   form1571Part('EAM'),
   form1572Part('EAM'),
-  part('EAM-NEED', 'Need for Intermediate-Size Expanded Access and Development Status', true, 'narrative',
-    '21 CFR 312.315(a) (need: drug not being developed, patients cannot enroll in a trial, or approved drug unavailable); 21 CFR 312.315(c) (state whether the drug is being developed; explain why it cannot be, or why patients cannot enroll)',
-    'Identify which 312.315(a) circumstance applies and give the explanation 312.315(c) requires, from cited development and enrollment records.',
-    ['Applicable 312.315(a) circumstance', 'Development status', 'Why patients cannot enroll or the drug cannot be developed', 'Intended population description'],
-    'Draft the 21 CFR 312.315(a)/(c) need and development-status narrative for intermediate-size expanded access to {{PRODUCT_NAME}} in {{INDICATION}} by {{SPONSOR}}.'),
-  part('EAM-EVIDENCE', 'Evidence of Safety and Effectiveness', true, 'narrative',
-    '21 CFR 312.315(b) (evidence that the drug is safe at the dose and duration proposed to justify a trial of about that size, and at least preliminary clinical evidence of effectiveness or of a plausible pharmacologic effect)',
-    'Summarize the evidence from cited reports; numbers are transcribed from the source study reports, never derived.',
-    ['Safety evidence for the proposed dose and duration', 'Preliminary effectiveness or pharmacologic-effect evidence', 'Source reports cited'],
-    'Summarize, from the cited study reports only, the 21 CFR 312.315(b) safety and effectiveness evidence for {{PRODUCT_NAME}} in {{INDICATION}}.'),
-  part('EAM-SELECTION', 'Patient Selection Criteria', true, 'narrative',
-    '21 CFR 312.305(b)(2)(iii) (criteria for patient selection)',
-    'Inclusion and exclusion criteria defining the intermediate-size population.',
-    ['Inclusion criteria', 'Exclusion criteria', 'Expected number of patients'],
-    'Draft patient selection criteria for the {{PRODUCT_NAME}} intermediate-size expanded access protocol in {{INDICATION}}.'),
+  part({
+    code: 'EAM-NEED',
+    title: 'Need for Intermediate-Size Expanded Access and Development Status',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.315(a) (need: drug not being developed, patients cannot enroll in a trial, or approved drug unavailable); 21 CFR 312.315(c) (state whether the drug is being developed; explain why it cannot be, or why patients cannot enroll)',
+    authoringGuidance: 'Identify which 312.315(a) circumstance applies and give the explanation 312.315(c) requires, from cited development and enrollment records.',
+    keyContentElements: ['Applicable 312.315(a) circumstance', 'Development status', 'Why patients cannot enroll or the drug cannot be developed', 'Intended population description'],
+    generationPrompt: 'Draft the 21 CFR 312.315(a)/(c) need and development-status narrative for intermediate-size expanded access to {{PRODUCT_NAME}} in {{INDICATION}} by {{SPONSOR}}.',
+  }),
+  part({
+    code: 'EAM-EVIDENCE',
+    title: 'Evidence of Safety and Effectiveness',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.315(b) (evidence that the drug is safe at the dose and duration proposed to justify a trial of about that size, and at least preliminary clinical evidence of effectiveness or of a plausible pharmacologic effect)',
+    authoringGuidance: 'Summarize the evidence from cited reports; numbers are transcribed from the source study reports, never derived.',
+    keyContentElements: ['Safety evidence for the proposed dose and duration', 'Preliminary effectiveness or pharmacologic-effect evidence', 'Source reports cited'],
+    generationPrompt: 'Summarize, from the cited study reports only, the 21 CFR 312.315(b) safety and effectiveness evidence for {{PRODUCT_NAME}} in {{INDICATION}}.',
+  }),
+  part({
+    code: 'EAM-SELECTION',
+    title: 'Patient Selection Criteria',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(b)(2)(iii) (criteria for patient selection)',
+    authoringGuidance: 'Inclusion and exclusion criteria defining the intermediate-size population.',
+    keyContentElements: ['Inclusion criteria', 'Exclusion criteria', 'Expected number of patients'],
+    generationPrompt: 'Draft patient selection criteria for the {{PRODUCT_NAME}} intermediate-size expanded access protocol in {{INDICATION}}.',
+  }),
   rationalePart('EAM'),
   treatmentPlanPart('EAM', 'the protocol population'),
   referencePart('EAM'),
@@ -192,28 +314,48 @@ const TREATMENT_COMPONENTS: LifecycleComponent[] = [
   coverPart('EAT', 'treatment IND or treatment protocol (widespread)', '312.320'),
   form1571Part('EAT'),
   form1572Part('EAT'),
-  part('EAT-STATUS', 'Trial Status and Marketing Diligence', true, 'narrative',
-    '21 CFR 312.320(a)(1) (drug under a controlled trial designed to support a marketing application, or all trials complete); 21 CFR 312.320(a)(2) (sponsor actively pursuing marketing approval with due diligence)',
-    'State the controlled trial (IND and protocol) or the completion of all trials, and the marketing-application status, from cited program records.',
-    ['Supporting controlled trial or completion of all trials', 'Marketing application status and plan', 'Evidence of due diligence'],
-    'Draft the 21 CFR 312.320(a)(1)-(2) trial-status and diligence narrative for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}} by {{SPONSOR}}.'),
-  part('EAT-EVIDENCE', 'Evidence Standard (Serious vs Immediately Life-Threatening)', true, 'narrative',
-    '21 CFR 312.320(a)(3)(i) (serious: sufficient clinical evidence of safety and effectiveness, ordinarily phase 3, or compelling phase 2); 21 CFR 312.320(a)(3)(ii) (immediately life-threatening: available evidence taken as a whole gives a reasonable basis to conclude the drug may be effective without unreasonable and significant risk)',
-    'Name which standard applies and summarize the evidence from cited study reports; figures transcribed only.',
-    ['Applicable evidence standard', 'Phase 3 / phase 2 evidence summary', 'Source study reports cited'],
-    'Summarize, from cited study reports only, the 21 CFR 312.320(a)(3) evidence for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}}.'),
-  part('EAT-SELECTION', 'Patient Selection Criteria', true, 'narrative',
-    '21 CFR 312.305(b)(2)(iii) (criteria for patient selection)',
-    'Inclusion and exclusion criteria for widespread treatment use.',
-    ['Inclusion criteria', 'Exclusion criteria'],
-    'Draft patient selection criteria for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}}.'),
+  part({
+    code: 'EAT-STATUS',
+    title: 'Trial Status and Marketing Diligence',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.320(a)(1) (drug under a controlled trial designed to support a marketing application, or all trials complete); 21 CFR 312.320(a)(2) (sponsor actively pursuing marketing approval with due diligence)',
+    authoringGuidance: 'State the controlled trial (IND and protocol) or the completion of all trials, and the marketing-application status, from cited program records.',
+    keyContentElements: ['Supporting controlled trial or completion of all trials', 'Marketing application status and plan', 'Evidence of due diligence'],
+    generationPrompt: 'Draft the 21 CFR 312.320(a)(1)-(2) trial-status and diligence narrative for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}} by {{SPONSOR}}.',
+  }),
+  part({
+    code: 'EAT-EVIDENCE',
+    title: 'Evidence Standard (Serious vs Immediately Life-Threatening)',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.320(a)(3)(i) (serious: sufficient clinical evidence of safety and effectiveness, ordinarily phase 3, or compelling phase 2); 21 CFR 312.320(a)(3)(ii) (immediately life-threatening: available evidence taken as a whole gives a reasonable basis to conclude the drug may be effective without unreasonable and significant risk)',
+    authoringGuidance: 'Name which standard applies and summarize the evidence from cited study reports; figures transcribed only.',
+    keyContentElements: ['Applicable evidence standard', 'Phase 3 / phase 2 evidence summary', 'Source study reports cited'],
+    generationPrompt: 'Summarize, from cited study reports only, the 21 CFR 312.320(a)(3) evidence for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}}.',
+  }),
+  part({
+    code: 'EAT-SELECTION',
+    title: 'Patient Selection Criteria',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.305(b)(2)(iii) (criteria for patient selection)',
+    authoringGuidance: 'Inclusion and exclusion criteria for widespread treatment use.',
+    keyContentElements: ['Inclusion criteria', 'Exclusion criteria'],
+    generationPrompt: 'Draft patient selection criteria for the {{PRODUCT_NAME}} treatment protocol in {{INDICATION}}.',
+  }),
   rationalePart('EAT'),
   treatmentPlanPart('EAT', 'the treatment population'),
-  part('EAT-OVERSIGHT', 'Sponsor Monitoring and Physician Compliance', true, 'narrative',
-    '21 CFR 312.320(b) (sponsor monitors the protocol and ensures licensed physicians comply with it); 21 CFR 312.305(c) (licensed physician responsibilities as investigator); 21 CFR 312.32 and 312.33 (safety and annual reports)',
-    'Describe how the sponsor monitors the treatment protocol, oversees treating physicians and handles safety reporting.',
-    ['Monitoring plan', 'Physician oversight and compliance', 'Safety reporting and annual reporting'],
-    'Draft the 21 CFR 312.320(b) sponsor monitoring and physician-compliance plan for the {{PRODUCT_NAME}} treatment protocol.'),
+  part({
+    code: 'EAT-OVERSIGHT',
+    title: 'Sponsor Monitoring and Physician Compliance',
+    required: true,
+    contentType: 'narrative',
+    guidance: '21 CFR 312.320(b) (sponsor monitors the protocol and ensures licensed physicians comply with it); 21 CFR 312.305(c) (licensed physician responsibilities as investigator); 21 CFR 312.32 and 312.33 (safety and annual reports)',
+    authoringGuidance: 'Describe how the sponsor monitors the treatment protocol, oversees treating physicians and handles safety reporting.',
+    keyContentElements: ['Monitoring plan', 'Physician oversight and compliance', 'Safety reporting and annual reporting'],
+    generationPrompt: 'Draft the 21 CFR 312.320(b) sponsor monitoring and physician-compliance plan for the {{PRODUCT_NAME}} treatment protocol.',
+  }),
   referencePart('EAT'),
   irbConsentPart('EAT'),
   chargingPart('EAT'),

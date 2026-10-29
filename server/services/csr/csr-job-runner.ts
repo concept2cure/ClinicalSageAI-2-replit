@@ -640,6 +640,30 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 }
 
 /**
+ * Counts the verifiable, non-placeholder saved sections of a job, and says
+ * whether a job recorded as complete fails its saved-output integrity check.
+ */
+function savedSectionsVerdict(
+  row: { status: string; sectionsToGenerate: string[] | null },
+  sectionRows: Array<{ sectionNumber: string; content: string; contentHash: string | null }>,
+): { sectionsComplete: number; integrityFailure: boolean } {
+  const resolvedTargets = retainedDraftTargets(row.sectionsToGenerate ?? null);
+  const targetCodes = resolvedTargets?.map(section => section.number) ?? row.sectionsToGenerate ?? [];
+  const validTargets = !!resolvedTargets && targetCodes.length > 0;
+  const integrity = validTargets
+    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
+    : { covered: [], missing: targetCodes, mismatched: [] };
+  const verified = new Set(integrity.covered);
+  const sectionsComplete = sectionRows.filter(section =>
+    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
+  ).length;
+  const integrityFailure = row.status === 'complete' &&
+    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
+      sectionsComplete !== targetCodes.length);
+  return { sectionsComplete, integrityFailure };
+}
+
+/**
  * Org-scoped read of a job's current state. Returns null when the job
  * either does not exist OR belongs to a different organization — the two
  * cases are deliberately collapsed to avoid leaking job existence across
@@ -684,19 +708,7 @@ export async function getCSRBuildJobStatus(
         eq(csrSectionOutputs.organizationId, organizationId)
       )
     );
-  const resolvedTargets = retainedDraftTargets(row.sectionsToGenerate ?? null);
-  const targetCodes = resolvedTargets?.map(section => section.number) ?? row.sectionsToGenerate ?? [];
-  const validTargets = !!resolvedTargets && targetCodes.length > 0;
-  const integrity = validTargets
-    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
-    : { covered: [], missing: targetCodes, mismatched: [] };
-  const verified = new Set(integrity.covered);
-  const sectionsComplete = sectionRows.filter(section =>
-    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
-  ).length;
-  const integrityFailure = row.status === 'complete' &&
-    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
-      sectionsComplete !== targetCodes.length);
+  const { sectionsComplete, integrityFailure } = savedSectionsVerdict(row, sectionRows);
 
   return {
     status: integrityFailure ? 'failed' : row.status,

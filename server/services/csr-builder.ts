@@ -514,7 +514,7 @@ function acceptSectionReply(
   let content = reply.content;
   if (usableEvidence(evidence)) {
     const split = splitCsrClaims(content);
-    if (!acceptEvidenceBoundDraft(number, split.prose, split.claims, evidence, info, lineage)) return null;
+    if (!acceptEvidenceBoundDraft({ sectionNumber: number, prose: split.prose, claims: split.claims }, evidence, info, lineage)) return null;
     content = split.prose;
   } else if (!acceptModelDraft(number, content, info, lineage)) {
     return null;

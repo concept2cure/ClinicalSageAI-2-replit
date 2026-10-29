@@ -157,10 +157,15 @@ export function findUnclaimedNumbers(prose: string, supplied: unknown): Unsuppli
  * the reason goes to `lineage.rejectedModelDraft`; on acceptance the claim
  * receipts go to `lineage.reconciliation`.
  */
+/** A model's draft of one section: its prose and the claims it made about it. */
+export interface EvidenceBoundDraft {
+  sectionNumber: string;
+  prose: string;
+  claims: unknown;
+}
+
 export function acceptEvidenceBoundDraft(
-  sectionNumber: string,
-  prose: string,
-  claims: unknown,
+  { sectionNumber, prose, claims }: EvidenceBoundDraft,
   evidence: CsrAuthoringEvidence,
   supplied: unknown,
   lineage: Record<string, unknown>,
