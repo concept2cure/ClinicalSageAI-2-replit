@@ -157,7 +157,10 @@ deleted.
     - A second cancel, a close, an edit, and a PATCH to `cancelled` are each refused.
   - Mutation: deleting the `detected_by` guard fails that case, and only that case. Restoring it makes it pass.
 
-## Owed
+## Not built: a project key on a deviation
 
-- **A project key on a deviation**, as the nonconformance register gained in 20261029d: not added.
+Nonconformances gained a project key in 20261029d because the project's Engineering screen reads them by project. No
+project surface reads deviations: a GMP deviation belongs to a site, process or batch, and the record carries the
+batch and product. A key that nothing reads is not added. It is added with the first project surface that lists a
+project's deviations.
 
