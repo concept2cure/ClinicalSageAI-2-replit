@@ -1,0 +1,12 @@
+M25: the AnA wrapper stops asking program ownership
+file: server/services/ana/AnaToolExecutor.ts
+test: server/services/ana/__tests__/risk-tool-admits-program.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/services/ana/__tests__/risk-tool-admits-program.test.ts > 'create_risk_item': the project a record is filed under must be the caller organization's > refuses another organization's project, and writes no row 14
+ × server/services/ana/__tests__/risk-tool-admits-program.test.ts > 'create_risk_item': the project a record is filed under must be the caller organization's > refuses a project that does not exist, and writes no row 2ms
+ × server/services/ana/__tests__/risk-tool-admits-program.test.ts > 'create_risk_item': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project, and writes n
+ × server/services/ana/__tests__/risk-tool-admits-program.test.ts > 'create_risk_item': the project a record is filed under must be the caller organization's > says so when ownership cannot be checked, and writes no row 
+ × server/services/ana/__tests__/risk-tool-admits-program.test.ts > 'create_risk_item': the project a record is filed under must be the caller organization's > files the record under the caller's own project, after askin
+      Tests  5 failed | 4 passed (9)

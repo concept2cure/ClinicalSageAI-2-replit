@@ -1,0 +1,22 @@
+M1: Engineering does not mount the risk register
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: '          <RiskRegister register={risk} onAsk={(text) => onAskAna(text)} />\n'
+with: ''
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  17 failed | 1 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads it by the project, and only after its own route has admitted the project 5054ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > draws the whole register, not four rows: every hazard on the 5x5 matrix 5017ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > switches the matrix between the initial and the residual assessment 5020ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context 5020ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > shows the metrics of the register 5015ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a hazard to the project 5014ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a risk control to the selected hazard 5012ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > accepts residual risk only through the signature dialog (the signed act) 5017ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell 5017ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed 5010ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with the organization's scope 5012ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with another project's scope 5011ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

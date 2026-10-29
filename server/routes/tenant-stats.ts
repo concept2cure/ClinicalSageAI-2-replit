@@ -4,12 +4,11 @@
  * Provides organization usage statistics and metrics
  */
 import { Router } from 'express';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, desc, ne } from 'drizzle-orm';
 import {
   organizations,
   organizationUsers,
-  cerProjects,
-  projectDocuments,
+  projects,
 } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import {
@@ -53,47 +52,39 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
 
     const userCount = userCountResult[0]?.count || 0;
 
-    // Count projects in the tenant
+    // Count projects in the tenant. `projects` is the store the canonical
+    // creator (POST /api/c2c/projects → program-project-anchor) writes, counted
+    // as client-journey counts it: archived projects excluded. This read
+    // `cer_projects` until 2026-10-29; fb73f05f8 retired the last writer there,
+    // so it answered 0 projects for every tenant (ci:writerless-stores).
     const projectCountResult = await db
       .select({ count: count() })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, tenantId));
+      .from(projects)
+      .where(and(eq(projects.organizationId, tenantId), ne(projects.status, 'archived')));
 
     const projectCount = projectCountResult[0]?.count || 0;
 
-    // Calculate storage used
-    // This is a simplified calculation - in a real system, you would sum the file sizes
-    const storageResult = await db
-      .select({
-        count: count(),
-        // You would typically sum file sizes here
-      })
-      .from(projectDocuments)
-      .where(eq(projectDocuments.organizationId, tenantId));
-
-    // Assuming average file size of 5MB for this example
-    const avgFileSizeMB = 5;
-    const documentCount = storageResult[0]?.count || 0;
-    const storageUsedMB = documentCount * avgFileSizeMB;
+    // Storage is not measured here: no store this route reads records byte
+    // sizes, and the figure used to be documents x an assumed 5 MB. It is
+    // reported as null (not measured), never as an estimate.
 
     // Get recent projects
     const recentProjects = await db
       .select({
-        id: cerProjects.id,
-        name: cerProjects.name,
-        createdAt: cerProjects.createdAt,
-        // Typically you would have an 'updatedAt' field to track last activity
+        id: projects.id,
+        name: projects.name,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
       })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, tenantId))
-      .orderBy(cerProjects.createdAt)
+      .from(projects)
+      .where(and(eq(projects.organizationId, tenantId), ne(projects.status, 'archived')))
+      .orderBy(desc(projects.createdAt))
       .limit(5);
 
     // Calculate quota percentages
     const maxUsers = tenant.maxUsers || 5; // Default if not specified
     const maxProjects = tenant.maxProjects || 10; // Default if not specified
     const maxStorageGB = tenant.maxStorage || 5; // Default if not specified
-    const storageUsedGB = storageUsedMB / 1024;
 
     const quotaInfo = {
       users: {
@@ -107,42 +98,29 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
         percentage: Math.round((projectCount / maxProjects) * 100),
       },
       storage: {
-        used: Number(storageUsedGB.toFixed(2)),
+        used: null,
         total: maxStorageGB,
-        percentage: Math.round((storageUsedGB / maxStorageGB) * 100),
+        percentage: null,
+        measured: false,
       },
     };
 
-    // Format recent projects
-    const formattedProjects = await Promise.all(
-      recentProjects.map(async project => {
-        // Count documents for this project
-        const docsCountResult = await db
-          .select({ count: count() })
-          .from(projectDocuments)
-          .where(
-            and(
-              eq(projectDocuments.organizationId, tenantId),
-              eq(projectDocuments.projectId, project.id)
-            )
-          );
-
-        return {
-          id: project.id,
-          name: project.name,
-          createdAt: project.createdAt?.toISOString(),
-          // In a real system, you would track and return lastActivity date
-          lastActivity: project.createdAt?.toISOString(), // Using createdAt as placeholder
-          docsCount: docsCountResult[0]?.count || 0,
-        };
-      })
-    );
+    // Format recent projects. No per-project document count: project_documents
+    // .project_id references cer_projects, not projects, so matching it against
+    // a project id would count another project's documents.
+    const formattedProjects = recentProjects.map(project => ({
+      id: project.id,
+      name: project.name,
+      createdAt: project.createdAt?.toISOString(),
+      lastActivity: project.updatedAt?.toISOString() ?? null,
+    }));
 
     res.json({
       userCount,
       projectCount,
-      storageUsed: storageUsedMB,
-      activeUsers: userCount, // In a real system, you would count users active in last 30 days
+      storageUsed: null,
+      // Activity is not recorded per user here; null, not the member count.
+      activeUsers: null,
       recentProjects: formattedProjects,
       quotaInfo,
     });

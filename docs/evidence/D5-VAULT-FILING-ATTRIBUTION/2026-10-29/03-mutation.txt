@@ -1,0 +1,29 @@
+# Mutations, 2026-10-29T06:35:55Z. Each is applied alone, run, and reverted.
+
+## MUTATION 1: the read does not resolve the filer's name (the actor_name join's value dropped)
+ × tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > a document its uploader filed into a folder names them and the time
+   → expected { folderId: 'module-3', …(9) } to match object { placementStatus: 'confirmed', …(2) }
+ × tests/db/vault-filing-attribution.dbtest.ts > the Vault read names who filed a document, and when (Part 11 review F4) > the person who files it afterwards is the one named
+   → expected { folderId: 'module-1', …(9) } to match object { placementStatus: 'confirmed', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)
+
+## MUTATION 2: a recorded person whose name cannot be read is reported as nobody
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf says who made the filing decision, and when (Part 11 review F4) > keeps a recorded person whose name this organisation cannot read as recorded
+   → expected { folderId: 'module-3', …(9) } to match object { placedBy: null, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)
+
+## MUTATION 3: the detail shows no filer
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > names the person whose filing it is, and when, in UTC
+   → Unable to find an element by: [data-testid="vault-filing-decided"]
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one
+   → Unable to find an element by: [data-testid="vault-filing-decided"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed | 20 skipped (23)
+
+## MUTATION 4: a filing with no person recorded shows nothing, leaving the reader to assume one
+ × client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — who filed it, and when (Part 11 review F4) > says so when a filing records no person, rather than implying one
+   → Unable to find an element by: [data-testid="vault-filing-decided"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed | 20 skipped (23)

@@ -51,7 +51,7 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-510k', 'mdx/hooks/useK510.ts'], ['device-510k', 'mdx/hooks/useDossier.ts'],
     ['device-510k', 'mdx/hooks/useEstarExport.ts'], ['device-510k', 'services/programTabsService.ts'],
     ['device-cer', 'mdx/hooks/useCerLiterature.ts'], ['device-presub', 'mdx/hooks/usePresub.ts'],
-    ['device-udi', 'mdx/hooks/useUdi.ts'], ['labeling', 'v2/surfaces/Labeling.tsx'], ['risk', 'v2/surfaces/Risk.tsx'],
+    ['device-udi', 'mdx/hooks/useUdi.ts'], ['labeling', 'v2/surfaces/Labeling.tsx'],
     ['device-vault', 'mdx/hooks/useVault.ts'], ['device-clinical-studies', 'mdx/hooks/useClinicalStudies.ts'],
     ['device-clinical-studies', 'mdx/hooks/useRbqm.ts'], ['device-clinical-studies', 'mdx/hooks/useStudyArchetypes.ts'],
     ['device-diagnostics', 'mdx/hooks/useIvd.ts'], ['device-diagnostics', 'mdx/hooks/useCdxClia.ts'],
@@ -59,7 +59,12 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-postmarket', 'mdx/hooks/usePostmarket.ts'], ['device-analytics', 'mdx/hooks/useAnalytics.ts'],
     ['device-workstream', 'mdx/hooks/useClientReview.ts'], ['device-submission', 'mdx/hooks/useSubmissions.ts'],
     ['device-validation', 'mdx/hooks/useWorkbench.ts'], ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
-    ['design-controls', 'v2/surfaces/DesignControls.tsx'], ['ivd-completeness', 'v2/surfaces/IvdCompleteness.tsx'],
+    // The IVDR family board names its read; both screens mount it (F2, 2026-10-29), and the workbench beside it.
+    ['ivd-completeness', 'v2/surfaces/IvdReadinessBoard.tsx'],
+    ['device-diagnostics', 'v2/surfaces/IvdReadinessBoard.tsx'], ['device-diagnostics', 'v2/surfaces/IvdAssessmentWorkbench.tsx'],
+    // The risk register and the design-controls trace name their reads; Risk, Design controls and Engineering mount them (F1 slice B, 2026-10-29).
+    ['risk', 'v2/surfaces/RiskRegister.tsx'], ['device-engineering', 'v2/surfaces/RiskRegister.tsx'],
+    ['design-controls', 'v2/surfaces/DesignControlsTrace.tsx'], ['device-engineering', 'v2/surfaces/DesignControlsTrace.tsx'],
   ];
   const file = (f: string) => path.join(REAL.root, 'client/src/concept2cure', f);
   const named = (f: string) => [...fs.readFileSync(file(f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')

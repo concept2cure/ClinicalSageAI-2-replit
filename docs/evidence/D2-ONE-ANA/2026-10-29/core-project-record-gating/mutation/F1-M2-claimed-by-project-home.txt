@@ -1,0 +1,28 @@
+# F1-M2-claimed-by-project-home: the claim put on project-home (the screen that calls it) instead of projects: project-home has no catalog row, so canAccessModule answers 'does not exist' and the claim admits no one
+# file mutated: shared/constants/ui-surface-registry.ts
+# restored byte-for-byte (cmp)
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > reads the calls from the screens and the routes from the routers 2ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a free-tier organization that holds Projects by tier and has no grant 21ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a self-serve organization whose administrator switched Submission Center off 8ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a paying organization with the launch grants, as before 7ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it, as before, to an organization that holds Submission Center and not Projects 5ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > refuses it to an organization that holds no claimant: Projects and Submission Center switched off, free tier 7ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > is claimed by projects beside the claims it already had 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed (7)
+AssertionError: expected { …(18) } to deeply equal { Object (/api/c2c/projects, /api/c2c/projects/prog-1, ...) }
+-   "/api/c2c/projects": "served",
+-   "/api/c2c/projects/prog-1": "served",
+-   "/api/c2c/projects/prog-1/activity": "served",
+-   "/api/c2c/projects/prog-1/adopt": "served",
+-   "/api/c2c/projects/prog-1/archive": "served",
+-   "/api/c2c/projects/prog-1/conversation-files": "served",
+-   "/api/c2c/projects/prog-1/document-dispositions": "served",
+-   "/api/c2c/projects/prog-1/document-dispositions/preview": "served",
+-   "/api/c2c/projects/prog-1/dossier": "served",
+-   "/api/c2c/projects/prog-1/drafts": "served",
+-   "/api/c2c/projects/prog-1/evidence": "served",
+
+# the gate's reason for the project-home claimant, from its log:
+      "project-home: Module 'project-home' does not exist",

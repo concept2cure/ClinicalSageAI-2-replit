@@ -1,0 +1,84 @@
+/**
+ * TEMPORARY (F2 grant finding, 2026-10-29). Removed after the run; the output is
+ * docs/evidence/D2-ONE-ANA/2026-10-29/fold-f2-ivd-completeness/fold/grant-finding.txt.
+ *
+ * An organisation entitled to ivd-completeness and not to device-diagnostics:
+ * what the fold would do to it. Asked of the real gate, the real registry and
+ * the real verdict function. The folded registry is the real one with the
+ * ivd-completeness entry removed and its three IVD claims added to
+ * device-diagnostics, which is what the fold does.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../services/license-manager.js', () => ({
+  canAccessModule: vi.fn(async (_org: number, moduleId: string) =>
+    moduleId === 'device-diagnostics'
+      ? { allowed: false, reason: `Module '${moduleId}' has been turned off for this organization by an administrator` }
+      : { allowed: true }),
+}));
+vi.mock('../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })) } }));
+vi.mock('../../services/entitlements/master-admin', () => ({ resolveMasterAdmin: vi.fn(async () => false) }));
+
+import { invalidateEnforcementModeCache } from '../../services/entitlements/enforcement-mode';
+import { decideNavEntitlement } from '../../services/entitlements/navigation-entitlements';
+import { UI_SURFACES } from '../../../shared/constants/ui-surface-registry';
+import { buildPrefixMap, modulesForPath, moduleEntitlementGate } from '../moduleEntitlementGate';
+
+async function run(gate: ReturnType<typeof moduleEntitlementGate>, p: string) {
+  const res = { statusCode: 0, body: null as unknown, status(c: number) { this.statusCode = c; return this; }, json(b: unknown) { this.body = b; return this; } };
+  const next = vi.fn();
+  await gate({ path: p, originalUrl: p, tenantContext: { organizationId: 42 } } as never, res as never, next);
+  return next.mock.calls.length === 1 ? 'served' : `${res.statusCode} ${(res.body as { code?: string })?.code}`;
+}
+
+const MOVED = ['/api/ivd-completeness', '/api/ivd-assessments', '/api/ivd-lifecycle'];
+const folded = UI_SURFACES.filter((s) => s.id !== 'ivd-completeness').map((s) =>
+  s.id === 'device-diagnostics' ? { ...s, apiPrefixes: [...s.apiPrefixes, ...MOVED] } : s);
+const CALLS = ['/api/ivd-completeness/completeness', '/api/ivd-assessments', '/api/ivd-assessments/documents', '/api/ivd-assessments/classification'];
+
+beforeEach(() => {
+  invalidateEnforcementModeCache();
+  vi.unstubAllEnvs();
+  vi.stubEnv('MODULE_ENFORCEMENT', 'enforce');
+});
+
+describe('F2 grant finding: entitled to ivd-completeness, not to device-diagnostics', () => {
+  it('today the readiness calls are claimed by ivd-completeness and served; folded, device-diagnostics alone claims them and they are refused', async () => {
+    const today = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+    const after = moduleEntitlementGate(buildPrefixMap(folded), { launchScope: 'on', unattributed: 'enforce' });
+    const rows: string[] = [];
+    for (const c of CALLS) {
+      rows.push(`${c}  today: claimed by ${[...(modulesForPath(c, buildPrefixMap()) ?? [])].join(',')} -> ${await run(today, c)}  |  folded: claimed by ${[...(modulesForPath(c, buildPrefixMap(folded)) ?? [])].join(',')} -> ${await run(after, c)}`);
+    }
+    console.log(rows.join('\n'));
+    for (const c of CALLS) {
+      expect(await run(today, c)).toBe('served');
+      expect(await run(after, c)).toBe('403 MODULE_NOT_LICENSED');
+    }
+  });
+
+  it('the navigation verdict: identical packaging gives identical verdicts; only a per-module subscription decision splits them', () => {
+    const entry = (moduleId: string, subscriptionState: 'enabled' | 'disabled' | null, isAvailable: boolean) => ({
+      moduleId, name: moduleId, description: null, category: null, icon: null, path: null,
+      isEnabled: subscriptionState === 'enabled', subscriptionState, isAvailable, requiredTier: 'standard',
+      launchScope: 'launch' as const, sortOrder: 0, expiresAt: null,
+    }) as unknown as Parameters<typeof decideNavEntitlement>[0];
+    const cases: Array<[string, string, Parameters<typeof decideNavEntitlement>[0], Parameters<typeof decideNavEntitlement>[0]]> = [
+      ['standard plan, provisioned rows', 'standard', entry('ivd-completeness', 'enabled', true), entry('device-diagnostics', 'enabled', true)],
+      ['standard plan, no rows', 'standard', entry('ivd-completeness', null, true), entry('device-diagnostics', null, true)],
+      ['standard plan, device-diagnostics switched off', 'standard', entry('ivd-completeness', 'enabled', true), entry('device-diagnostics', 'disabled', true)],
+      ['free plan, explicit ivd-completeness grant only', 'free', entry('ivd-completeness', 'enabled', false), entry('device-diagnostics', null, false)],
+    ];
+    const out: string[] = [];
+    for (const [label, tier, ivd, diag] of cases) {
+      const a = decideNavEntitlement(ivd, { masterAdmin: false, tier });
+      const b = decideNavEntitlement(diag, { masterAdmin: false, tier });
+      out.push(`${label}: ivd-completeness ${a.entitled ? 'entitled' : 'locked'} (${a.source}); device-diagnostics ${b.entitled ? 'entitled' : 'locked'} (${b.source})`);
+    }
+    console.log(out.join('\n'));
+    expect(out[0]).toMatch(/device-diagnostics entitled/);
+    expect(out[1]).toMatch(/device-diagnostics entitled/);
+    expect(out[2]).toMatch(/ivd-completeness entitled .* device-diagnostics locked \(disabled\)/);
+    expect(out[3]).toMatch(/ivd-completeness entitled .* device-diagnostics locked \(tier\)/);
+  });
+});

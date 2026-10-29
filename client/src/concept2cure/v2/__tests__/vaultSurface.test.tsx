@@ -232,6 +232,43 @@ describe('Vault — a suggestion is attributed to whoever made it', () => {
   });
 });
 
+/* Part 11 review F4 (2026-10-22): who filed a document, and when, was stored
+   (placed_by, placed_at) since 20260823 and never shown. The filing block said
+   where a document is filed and not who decided it. */
+describe('Vault — who filed it, and when (Part 11 review F4)', () => {
+  const filed = (over: Record<string, unknown>) => uploadDoc({
+    status: 'confirmed',
+    filing: {
+      folderId: 'module-3', folderLabel: 'Module 3 · Quality', evidenceKind: 'report', ctdSection: '3.2.P.8',
+      placementStatus: 'confirmed', confidence: null, rationale: 'Filed by the uploader at ingest.', ...over,
+    },
+  });
+
+  it('names the person whose filing it is, and when, in UTC', async () => {
+    const doc = filed({ placedBy: 'Fern Filer', placedByRecorded: true, placedAt: '2026-10-29T05:04:09.000Z' });
+    mockApi(() => ok(vaultPayload({ tree: cabinetTree([doc]) })));
+    render(<Vault {...props()} />);
+    const line = await screen.findByTestId('vault-filing-decided');
+    expect(line.textContent).toBe('Filed byFern Filer, 2026-10-29 05:04 UTC');
+  });
+
+  it('gives a suggestion no filer: nobody decided it yet', async () => {
+    const suggested = filed({ placementStatus: 'suggested', confidence: 'high', rationale: 'CTD pattern "Stability".',
+      placedBy: null, placedByRecorded: false, placedAt: null });
+    mockApi(() => ok(vaultPayload({ tree: cabinetTree([{ ...suggested, status: 'suggested' }]) })));
+    render(<Vault {...props()} />);
+    await screen.findByTestId('vault-filing-block');
+    expect(screen.queryByTestId('vault-filing-decided')).toBeNull();
+  });
+
+  it('says so when a filing records no person, rather than implying one', async () => {
+    const doc = filed({ placedBy: null, placedByRecorded: false, placedAt: null });
+    mockApi(() => ok(vaultPayload({ tree: cabinetTree([doc]) })));
+    render(<Vault {...props()} />);
+    expect((await screen.findByTestId('vault-filing-decided')).textContent).toBe('Filed byNot recorded');
+  });
+});
+
 describe('Vault — filing decisions are governed commits, not local patches', () => {
   it('confirming a suggested filing POSTs to /file and re-reads the tree', async () => {
     let reads = 0;
@@ -345,6 +382,8 @@ describe('Vault — search', () => {
       if (url.endsWith('/relationships')) return ok({ success: true, data: { relationships: [] } });
       // And for review annotations, whose failed read is an alert too.
       if (url.endsWith('/annotations')) return ok({ success: true, data: { annotations: [], openByVersion: [] } });
+      // And for the Vault's seals (VR-19), whose failed read is an alert too.
+      if (url.endsWith('/seals')) return ok({ success: true, data: { seals: [] } });
       return ok({});
     });
   }
@@ -374,6 +413,9 @@ describe('Vault — search', () => {
               folderId: 'module-3',
               ctdSection: '3.2.P.8',
               placementStatus: 'confirmed',
+              // Every hit says whether it is the current version; the read
+              // refuses a hit that does not (isVaultSearchShape, 8c87144fd).
+              current: true,
               // A body match: this phrase is in no title anywhere in the tree,
               // so a client-side substring filter could never have found it.
               snippet: 'the <b>shelf life</b> was established at 24 months',
@@ -423,7 +465,7 @@ describe('Vault — search', () => {
           results: [
             {
               id: DOC_ID, title: 'One of many', fileName: 'a.pdf', documentType: 'REPORT',
-              size: null, folderId: null, ctdSection: null, placementStatus: 'confirmed', snippet: null,
+              size: null, folderId: null, ctdSection: null, placementStatus: 'confirmed', snippet: null, current: true,
             },
           ],
         },

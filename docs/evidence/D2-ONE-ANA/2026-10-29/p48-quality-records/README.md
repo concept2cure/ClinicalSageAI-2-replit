@@ -50,6 +50,24 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   cancelled need a reason. A close now records the effectiveness check in the documented shape (`{ outcome, narrative }`)
   instead of `{ summary }`.
 
+- Change control links to real records, the fifth change. "Link a record" (`ChangeLinkForm.tsx`, extracted from `ChangeControl.tsx`) lists the organisation's own records for three types:
+  - for a deviation, the nonconformance register;
+  - for a CAPA, the CAPA register;
+  - for a supplier, the supplier register.
+
+  The reference and description are taken from the pick, shown read-only, and sent. Until now a link was free text, so a change's deviation or CAPA link named nothing the platform could resolve. A register that could not be read says so, and the typed reference stays available. The other link types keep the typed reference. `listOf` moves to the pure `qmsList.ts`, so the registers and the picker share it without the change hooks.
+
+- A record shows its CAPAs, the sixth change. The nonconformance, supplier, internal audit and management review registers gain a CAPA column (`capaSources.ts`).
+  - The column lists the CAPAs whose `sourceRefs` name the row. It is read from the CAPA register, the one place the link is recorded.
+  - An unread or failed CAPA read shows as such, never as "—".
+  - The source kinds are one constant (`CAPA_SOURCE_KIND`), used by Raise CAPA and by the column.
+  - This replaces the owed `capa_linked` flag, which nothing wrote. The link is not stored twice.
+
+- AnA reads the register on screen, the seventh change. The new tabs' "Ask AnA" read-outs had nothing to read: AnA has no tool for these registers. Each register now reports to the Quality shell what it read: its rows' recorded values (`facts`, per configuration), its counts, and whether it is loading or failed. The shell publishes that as the tab's surface context (`recordTabContext`, `App.tsx`).
+  - A failed read is published as a failure, never as an empty register.
+  - Another tab's rows are never published under the current one.
+  - At most 100 rows are passed, and the summary says when there are more.
+
 ## Proof
 
 - `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 6 of 6 pass.
@@ -69,11 +87,23 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - With the evidence requirement removed from the Done drawer, the action case fails (1 failed, 5 passed). Restored,
     all six pass.
 - `npx vitest run server/services/capa-mdr`: 42 of 42 pass with the moved lifecycle map.
+- `QmsRecords.test.tsx` adds a case and passes 8 of 8:
+  - NC-2026-004 shows CAPA-008, the CAPA raised from it, and NC-2026-005 shows none;
+  - with the CAPA read failed, the column says "not read".
+  - **Shown failing first:** rendering "—" for an unread register fails the case.
+- `recordTabContext.test.tsx` passes 2 of 2:
+  - the summary names the rows and counts read;
+  - a failed read is a failure;
+  - another tab's context is not borrowed.
+  - **Shown failing first:** with the tab match removed, the second case fails.
+- `QmsRecords.test.tsx` passes 9 of 9. The register reports its rows' facts (NC-2026-004, awaiting disposition), and a failed read reports `failed` with no records.
+- `ChangeLinkForm.test.tsx` passes 2 of 2:
+  - a CAPA picked from the register is sent with its own number and title;
+  - a failed register read is said, and the typed reference is kept.
+  - **Shown failing first:** with the reference's `derive` removed, the first case fails.
 - `npm run ci:launch-scope-api` reports 538 API paths named by launch and shell screens, none refused.
 
 ## Owed
 
-- A nonconformance's `capa_linked` flag is not set when a CAPA is raised from it (no route writes it). The CAPA's
-  `sourceRefs` carries the link.
 - A management review's actions: the table counts open and closed actions, but no route records an action yet.
 - Staging screenshots with D1.

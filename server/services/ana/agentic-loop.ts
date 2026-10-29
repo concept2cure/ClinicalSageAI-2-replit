@@ -551,16 +551,8 @@ export async function runAgenticToolLoop(
   return ended('no_more_tools');
 }
 
-/**
- * The most one windowed read may weigh, serialized as its handler returns it
- * (JSON.stringify, escapes counted). P-24 / ANA-SUMMARY S1: the one read window
- * for every windowed read (read_project_document, the authoring reads, the
- * knowledge lookups). A handler shrinks its window to fit rather than let
- * capToolResultForModel cut it: a cut loses text from the middle with nothing
- * to say so, and the offset it carries then skips what was cut. Four such
- * results (20,000) pass a round's budget below untouched.
- */
-export const RESULT_BUDGET = 5000;
+/** The one read window (P-24); defined in result-budget.ts, re-exported for its importers. */
+export { RESULT_BUDGET } from './result-budget.js';
 
 /**
  * Cap an oversized tool result before it is fed back to the model.

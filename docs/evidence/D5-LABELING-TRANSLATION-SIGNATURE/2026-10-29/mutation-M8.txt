@@ -1,0 +1,37 @@
+# M8: the gate no longer counts signGovernedAct as a signature-row write
+# file: scripts/ci/check-sign-ceremony.mjs  (sha256 before: ced51d03828be10c8fd48c10a5140daf1deeb6833bc6d745f124c0a5d95e2880)
+# mutation:
+#   - |insertAuthoringSignature|signGovernedAct)\s*\(/;
+#   + |insertAuthoringSignature)\s*\(/;
+
+$ timeout 240 npm run -s ci:sign-ceremony 2>&1
+(exit 1)
+[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:
+  ✗ server/routes/mdx-labeling.ts:376  (approval stamp with no signature-row write in its handler)
+
+  A `sign` row is read as an electronic signature. Route the act through the
+  canonical ceremony (POST /api/c2c/actions/sign, or verifyReauth + the ledger
+  pair + persistGovernedSignSignature on one transaction, as
+  server/services/protocol-development/protocol-signature.ts does), or record
+  it under a command that does not claim a signature.
+
+$ timeout 240 npm run -s ci:sign-ceremony:selftest 2>&1 | grep -vE "^  ✓"
+(exit 0)
+[ci:sign-ceremony:selftest]
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 0
+
+    at test (file:///home/user/ClinicalSageAI-2-replit/scripts/ci/check-sign-ceremony.selftest.mjs:14:3)
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.0
+
+# restored: sha256 after = ced51d03828be10c8fd48c10a5140daf1deeb6833bc6d745f124c0a5d95e2880  (MATCH)

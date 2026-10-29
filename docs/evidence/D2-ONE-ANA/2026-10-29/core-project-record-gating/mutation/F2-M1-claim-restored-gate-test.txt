@@ -1,0 +1,22 @@
+# F2-M1-claim-restored-gate-test: ind-checklist claims /api/ind-lifecycle/briefing-book again (launch-scope-api-gate.test.ts)
+# file mutated: shared/constants/ui-surface-registry.ts
+# restored byte-for-byte (cmp)
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 8ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 4ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 39 passed (43)
+AssertionError: expected [ Array(1) ] to deeply equal []
++   "out-of-scope /api/csr/jobs ← ectd-compile",
+AssertionError: expected { …(4) } to deeply equal { …(4) }
+-   "code": "LAUNCH_SCOPE",
++   "code": undefined,
+-   "passed": false,
+-   "status": 403,
++   "passed": true,
++   "status": 0,
+AssertionError: expected [ Array(1) ] to deeply equal []
++   "out-of-scope /api/csr/jobs ← ectd-compile",
+AssertionError: ind-checklist apiPrefixes no screen of it calls:

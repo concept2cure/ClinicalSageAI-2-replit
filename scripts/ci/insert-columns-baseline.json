@@ -36,7 +36,6 @@
     "lumen_atom_versions.content_hash",
     "lumen_atom_versions.previous_version_id",
     "lumen_atom_versions.tags",
-    "projects.submission_type",
     "workflow_runs.context",
     "workflow_runs.created_by",
     "workflow_runs.current_step_id",

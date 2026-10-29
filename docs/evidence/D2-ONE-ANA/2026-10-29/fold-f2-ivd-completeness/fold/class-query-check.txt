@@ -1,0 +1,31 @@
+# class-query.sql on PGlite, 2026-10-29. Seed (organization, tier, rows):
+#  1 standard: ivd-completeness on, device-diagnostics on          -> not in the class
+#  2 standard: no rows                                              -> not in the class
+#  3 standard: ivd-completeness on, device-diagnostics off          -> IN (switched off)
+#  4 free:     ivd-completeness on, no device-diagnostics row       -> IN (granted above the plan)
+#  5 free:     both on                                              -> not in the class
+#  6 free:     ivd-completeness on but expired                      -> not in the class (neither)
+#  7 null:     device-diagnostics off, ivd-completeness by the plan -> IN (switched off)
+#  8 professional: both off                                       -> not in the class
+# Result:
+[{"organization_id":3,"why":"device-diagnostics switched off"},{"organization_id":4,"why":"ivd-completeness granted above the plan"},{"organization_id":7,"why":"device-diagnostics switched off"}]
+
+# Harness:
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+const require = createRequire('/home/user/ClinicalSageAI-2-replit/package.json');
+const { PGlite } = await import(require.resolve('@electric-sql/pglite'));
+const pg = new PGlite();
+await pg.exec(`CREATE TABLE organizations (id int primary key, tier text);
+CREATE TABLE module_subscriptions (organization_id int, module_id text, enabled boolean, expires_at timestamptz, primary key (organization_id, module_id));
+INSERT INTO organizations VALUES (1,'standard'),(2,'standard'),(3,'standard'),(4,'free'),(5,'free'),(6,'free'),(7,null),(8,'professional');
+INSERT INTO module_subscriptions VALUES
+ (1,'ivd-completeness',true,null),(1,'device-diagnostics',true,null),   -- provisioned: both
+ (3,'ivd-completeness',true,null),(3,'device-diagnostics',false,null),  -- dd switched off: IN
+ (4,'ivd-completeness',true,null),                                      -- free, explicit ic only: IN
+ (5,'ivd-completeness',true,null),(5,'device-diagnostics',true,null),   -- free, both granted
+ (6,'ivd-completeness',true,now() - interval '1 day'),                  -- free, ic lapsed: neither
+ (7,'device-diagnostics',false,null),                                   -- null tier, dd off, ic by plan: IN
+ (8,'ivd-completeness',false,null),(8,'device-diagnostics',false,null); -- both off`);
+const r = await pg.query(fs.readFileSync(process.argv[2], 'utf8'));
+console.log(JSON.stringify(r.rows));

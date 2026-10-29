@@ -19,7 +19,7 @@
  * the underlying tables do not:
  *
  *   risks   risk_items            org + program   → program-scoped
- *   trace   c2c_design_controls   org only        → organization-scoped
+ *   trace   c2c_design_controls   org + program   → program-scoped
  *   dhf     cerv2_510k_sections   org only        → organization-scoped
  *   ecrs    change_requests       org only        → organization-scoped
  *   issues  qms_nonconforming_…   org only        → organization-scoped
@@ -27,10 +27,12 @@
  * Rather than quietly presenting org-wide rows as though they belonged
  * to the selected program, every panel reports its own `scope` in
  * `meta.scopes`. The surface labels anything organization-scoped so the
- * user knows what they are reading. Narrowing the remaining four to
+ * user knows what they are reading. Narrowing the remaining three to
  * program granularity needs a `program_id` column on each table and is
  * tracked separately — but mislabelling them is not acceptable in the
- * meantime.
+ * meantime. The trace was narrowed on 2026-10-29 (D2, fold F1 slice A):
+ * c2c_design_controls.program_id comes from
+ * migrations/20261029c_design_controls_and_risk_items_program_keys.sql.
  *
  * Every panel degrades independently: a missing table (42P01, pre-
  * migration tenants) yields an empty array for that panel, never a 500
@@ -39,11 +41,11 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
-import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
+import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import type { QueryResultRow } from 'pg';
 import { pool } from '../db';
 import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
-import { programInOrganization } from '../services/c2c/program-access';
+import { admitProject } from '../lib/admit-project';
 
 const router = Router();
 const log = createScopedLogger('mdx-engineering');
@@ -152,9 +154,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
   }
 
   try {
-    /* Verify tenancy before reading anything. A valid UUID from another
-       org and a non-existent UUID both 404, so neither leaks. */
-    if (!(await programInOrganization(pool, programId, orgId))) return notFoundInTenant(res, 'Project');
+    /* Verify tenancy before reading anything, through the shared refusal
+       (server/lib/admit-project.ts), as q-sub, mdx-udi, mdx-labeling and
+       human-factors do. A valid UUID from another org and a non-existent UUID
+       both 404, so neither leaks. A check that could not run is 503
+       VERIFICATION_UNAVAILABLE: it reached the catch below as a 500 before
+       (D2, 2026-10-29). Either way nothing is read. */
+    if (!(await admitProject(res, log, programId, orgId))) return;
 
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the
@@ -226,7 +232,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       };
     });
 
-    /* ── Design-controls traceability — organization-scoped ──────────── */
+    /* ── Design-controls traceability — program-scoped ────────────────
+       The project's own design inputs only, after the admitProject check
+       above (D2, fold F1 slice A, 2026-10-29). An input recorded with no
+       project is the organization's unscoped input, and another project's is
+       that project's: neither is read here. On a database without
+       c2c_design_controls.program_id (20261029c not applied) the read fails
+       and the panel is named in meta.unavailable, never shown as empty. */
     const traceRows = await panel<{
       id: string;
       cat: string | null;
@@ -241,9 +253,9 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       'trace',
       `SELECT id, cat, req, risk_ref, outputs, ver, ver_ref, val, val_ref
          FROM c2c_design_controls
-        WHERE organization_id = $1
+        WHERE organization_id = $1 AND program_id = $2
         ORDER BY id`,
-      [orgId],
+      [orgId, programId],
       unavailable,
     );
 
@@ -522,7 +534,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
 
     const scopes: Record<string, Scope> = {
       risks: 'program',
-      trace: 'organization',
+      trace: 'program',
       dhf: 'organization',
       ecrs: 'organization',
       issues: 'organization',

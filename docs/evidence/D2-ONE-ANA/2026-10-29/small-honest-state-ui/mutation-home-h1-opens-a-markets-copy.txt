@@ -1,0 +1,16 @@
+# H1: the home line opens an added market's copy
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '    const homeRows = d.rows.filter((r) => r.agency === null);'
+# with:     '    const homeRows = d.rows.filter((r) => r.agency !== null);'
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 5031ms
+ × Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 5028ms
+ × Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 5028ms
+ × Author — the readiness card's home line > a figure over two home documents opens neither, and says why 5025ms
+      Tests  4 failed | 28 passed (32)
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'Open IND editing copy'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'No editing copy of this filing yet.'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain '2 documents are bound to this filing,…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.No…' to contain 'This figure counts 2 home documents, …'
+# restored: sha256 matches (ed20cd2989f0b397)

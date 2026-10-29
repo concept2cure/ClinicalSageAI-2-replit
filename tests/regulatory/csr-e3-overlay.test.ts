@@ -28,7 +28,7 @@ import { e3SectionSummary } from '../../server/services/ind/ctd/csr-e3-guidance'
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { compareSectionCode } from '../../shared/regulatory/section-code';
-import { ICH_E3_STRUCTURE } from '../../server/services/csr-builder';
+import { flattenICHE3Sections, getICHE3Structure } from '../../server/services/csr-builder';
 import { getClinicalTemplate } from '../../server/services/templates/clinical-csr-templates';
 import { DOCUMENT_TEMPLATES } from '../../server/services/ana-ri/document-templates';
 import { composeMedicalWritingGuidance } from '../../server/services/ana/medical-writing';
@@ -49,8 +49,6 @@ const E3_NUMBERS = [
   '16', '16.1', ...range('16.1', 12), '16.2', ...range('16.2', 8), '16.3', ...range('16.3', 2), '16.4',
 ];
 
-/** Platform decomposition E3 does not number: csr-builder's synopsis and objectives children. */
-const PLATFORM_ONLY = (n: string) => /^(2|8)\.\d+$/.test(n);
 
 describe('the overlay is ICH E3’s tree', () => {
   it('carries exactly the headings E3 numbers, in report order', () => {
@@ -107,13 +105,12 @@ describe('the overlay is ICH E3’s tree', () => {
 });
 
 describe('every CSR outline on the platform is read from the overlay', () => {
-  it("csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings", () => {
-    const nodes = ICH_E3_STRUCTURE.flatMap((s) => [s, ...(s.childSections ?? [])]);
-    for (const n of nodes.filter((x) => !PLATFORM_ONLY(x.number))) {
-      const e3 = getE3Section(n.number);
-      expect(e3, `ICH_E3_STRUCTURE ${n.number} is not an E3 heading`).toBeDefined();
-      expect(n.title, `ICH_E3_STRUCTURE ${n.number}`).toBe(e3!.title);
-    }
+  // 2026-10-29 (CSR slice 2): the builder's own ICH_E3_STRUCTURE copy was
+  // deleted; its tree is derived from the overlay, every heading of it.
+  it("csr-builder's outline is the overlay's tree, every heading and title", () => {
+    const nodes = flattenICHE3Sections(getICHE3Structure());
+    expect(nodes.map((n) => n.number)).toEqual(ICH_E3_GUIDANCE.map((s) => s.number));
+    for (const n of nodes) expect(n.title, `builder §${n.number}`).toBe(getE3Section(n.number)!.title);
   });
 
   it('the CSR scaffold behind get_csr_template carries every E3 heading', () => {
@@ -218,5 +215,88 @@ describe("the market-specs Investigator's Brochure cites ICH E6(R3) Appendix A, 
     expect(ib.regulatoryBasis).not.toMatch(/E6\(R2\)|§7/);
     expect(ib.basis?.ref).toMatch(/ICH E6\(R3\).*Appendix A/);
     if (ib.basis?.confidence !== 'regulator-text') expect(ib.regulatoryBasis).toMatch(/recall/i);
+  });
+});
+
+// ── CSR slice 4 (2026-10-29): the E3 knowledge to senior-writer depth ───────
+// docs/design/CSR_END_TO_END_2026-10-29.md slice 4; evidence under
+// docs/evidence/D2-CSR/2026-10-29-e3-knowledge/. Before this, 34 headings
+// carried only a title (no purpose, no contents), no heading said how to
+// write it, and E3's display annexes were absent.
+import * as e3Guidance from '../../server/services/ind/ctd/csr-e3-guidance';
+import { e3SectionDraftingMode } from '../../server/services/ind/ctd/csr-e3-guidance';
+import { basisProblems } from '../../shared/regulatory/regulatory-basis';
+
+type Annex = { id: string; title: string; for: string[]; elements: string[]; basis: { ref: string; confidence: string }[] };
+const annexes = (): Annex[] => ((e3Guidance as Record<string, unknown>).E3_ANNEXES as Annex[] | undefined) ?? [];
+const writingOf = (s: unknown): string[] => ((s as { writing?: string[] }).writing ?? []);
+
+describe('E3 knowledge census — no heading is title-only', () => {
+  it('every heading says what it is for or what it carries', () => {
+    const titleOnly = ICH_E3_GUIDANCE.filter((s) => !s.purpose && !s.contains?.length).map((s) => s.number);
+    expect(titleOnly).toEqual([]);
+  });
+
+  it('every heading AnA drafts carries its writing rules, and its brief renders them', () => {
+    const narrative = ICH_E3_GUIDANCE.filter((s) => e3SectionDraftingMode(s.number) === 'narrative');
+    expect(narrative.filter((s) => writingOf(s).length === 0).map((s) => s.number)).toEqual([]);
+    for (const s of narrative) expect(renderE3Brief(s.number), s.number).toContain('### How to write it');
+  });
+
+  it('every §14–§16 heading says how its outputs are displayed or compiled', () => {
+    const manual = ICH_E3_GUIDANCE.filter((s) => /^(14|15|16)(\.|$)/.test(s.number));
+    expect(manual.filter((s) => !s.presentation?.length).map((s) => s.number)).toEqual([]);
+  });
+
+  it('writing rules hold slots, never figures (Rule 2: the engine supplies every number)', () => {
+    for (const s of ICH_E3_GUIDANCE) {
+      for (const w of writingOf(s)) {
+        expect(w, s.number).not.toMatch(/\d+(\.\d+)?\s?%|\b\d+\s?\/\s?\d+\b|p\s?[<=]\s?0?\.\d/);
+      }
+    }
+  });
+
+  it('no brief is clipped, so its basis always reaches the reader', () => {
+    for (const s of ICH_E3_GUIDANCE) {
+      const brief = renderE3Brief(s.number, 4200)!;
+      expect(brief.endsWith('…'), `§${s.number} brief is ${brief.length} chars`).toBe(false);
+      expect(brief, s.number).toContain('### Basis');
+    }
+  });
+});
+
+describe('E3 knowledge census — estimands, annexes and basis', () => {
+  it('§9.7.1, §11.4 and §11.4.1 carry the ICH E9(R1) estimand attributes and cite E9(R1)', () => {
+    for (const n of ['9.7.1', '11.4', '11.4.1']) {
+      const brief = renderE3Brief(n, 4200)!;
+      expect(brief, n).toMatch(/intercurrent event/i);
+      expect(brief, n).toMatch(/population-level summary/i);
+      expect(brief, n).toContain('ICH E9(R1)');
+    }
+  });
+
+  it('E3 Annexes I–IVb are display models, each tied to the heading it serves', () => {
+    expect(annexes().map((a) => a.id)).toEqual(['I', 'II', 'IIIa', 'IIIb', 'IVa', 'IVb']);
+    for (const a of annexes()) {
+      expect(a.elements.length, a.id).toBeGreaterThan(2);
+      expect(a.basis.length, a.id).toBeGreaterThan(0);
+      for (const n of a.for) {
+        expect(getE3Section(n), `Annex ${a.id} → §${n}`).toBeDefined();
+        expect(renderE3Brief(n, 4200), `§${n} names Annex ${a.id}`).toContain(`Annex ${a.id}`);
+      }
+    }
+  });
+
+  it('every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is', () => {
+    for (const s of ICH_E3_GUIDANCE) {
+      for (const b of e3BasisFor(s)) {
+        expect(basisProblems(b), `${s.number}: ${b.ref}`).toEqual([]);
+        const quote = (b as { quote?: string }).quote;
+        if (b.confidence === 'regulator-text') expect(quote?.trim().length, `${s.number}: ${b.ref}`).toBeGreaterThan(0);
+        if (quote && b.confidence !== 'regulator-text') {
+          expect(renderE3Brief(s.number, 4200), `${s.number}: ${b.ref}`).toMatch(/recalled wording/);
+        }
+      }
+    }
   });
 });

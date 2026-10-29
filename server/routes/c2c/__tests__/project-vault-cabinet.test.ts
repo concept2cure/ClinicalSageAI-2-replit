@@ -112,6 +112,23 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
   });
 });
 
+describe('uploadLeaf says who made the filing decision, and when (Part 11 review F4)', () => {
+  it("carries the person's name and the time as ISO, for a person's filing", () => {
+    const leaf = uploadLeaf('pharma', row({ placement_status: 'confirmed', placed_by: 42, placed_by_name: 'Fern Filer',
+      placed_at: new Date('2026-10-29T05:04:09Z') }));
+    expect(leaf.filing).toMatchObject({ placedBy: 'Fern Filer', placedByRecorded: true, placedAt: '2026-10-29T05:04:09.000Z' });
+  });
+
+  it('names nobody for a suggestion', () => {
+    expect(uploadLeaf('pharma', row({})).filing).toMatchObject({ placedBy: null, placedByRecorded: false, placedAt: null });
+  });
+
+  it('keeps a recorded person whose name this organisation cannot read as recorded', () => {
+    const leaf = uploadLeaf('pharma', row({ placement_status: 'confirmed', placed_by: 42, placed_by_name: null, placed_at: '2026-10-29T05:04:09Z' }));
+    expect(leaf.filing).toMatchObject({ placedBy: null, placedByRecorded: true, placedAt: '2026-10-29T05:04:09.000Z' });
+  });
+});
+
 describe('uploadLeaf carries the file type the filing action decides on', () => {
   // The surface offers "Place into submission" by this field, and the dialog
   // refuses anything but a PDF before a request is made: the packager's vault

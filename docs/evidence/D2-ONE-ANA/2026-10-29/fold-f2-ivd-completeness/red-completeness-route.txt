@@ -1,0 +1,24 @@
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > every family comes from the open project's records only 51ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > GSPR is this project's checklist, matched as text whatever its case, not the organization's newest 19ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > a project with no IVD records reads seven empty families, never the organization's 15ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > another organization's project: 404, and no IVD table is read 12ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a missing project: 404, and no IVD table is read 12ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a deleted project: 404, and no IVD table is read 15ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a malformed project: 404, and no IVD table is read 12ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > two project ids are no project: 404 11ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > when the ownership check cannot run: 503, and no IVD table is read 15ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > with no project named, the organization scope is stated > reads the organization as before and says so 12ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > an unread store says so; it is never a family not started > a GSPR read that fails leaves GSPR unread, with no percentage and no overall figure 13ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > an unread store says so; it is never a family not started > a missing PER store leaves scientific validity, the PER and PMPF unread 8ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { program: 'Sibling assay', …(7) } to match object { scope: 'program', …(3) }
+AssertionError: expected { id: 'gspr', …(5) } to match object { pct: 50, items: [ { …(2) } ] }
+AssertionError: expected { program: 'Sibling assay', …(7) } to match object { scope: 'program', …(5) }
+AssertionError: {"success":true,"data":{"program":"Sibling assay","spine":"EU IVDR 2017/746 · Annex II/III · Annex XIII","standard":"IVDR","overall":92,"summary":{"total":7,"evidenced":4,"inProgress":3,"notStarted":0,"flags":0},"families":[{"id":"gspr","label":"General Safety & Performance Requirements","ref":"IVDR A
+AssertionError: expected 200 to be 404 // Object.is equality
+AssertionError: {"success":true,"data":{"program":"Sibling assay","spine":"EU IVDR 2017/746 · Annex II/III · Annex XIII","standard":"IVDR","overall":92,"summary":{"total":7,"evidenced":4,"inProgress":3,"notStarted":0,"flags":0},"families":[{"id":"gspr","label":"General Safety & Performance Requirements","ref":"IVDR A
+AssertionError: expected undefined to be 'organization' // Object.is equality
+AssertionError: expected undefined to deeply equal [ 'gspr' ]
+AssertionError: {"success":false,"error":"Failed to compute IVD completeness"}: expected 500 to be 200 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  12 failed (12)

@@ -459,14 +459,17 @@ describe('review: the signed path with no answer, focus, the picker and the row'
     expect(document.activeElement).toBe(opener);
   });
 
-  it("reads a project's search with the Vault find view's own guard: a hit sent without `current` is listed, as the find view lists it", async () => {
+  /* The picker reads with the find view's own guard, so the two agree on what a
+     readable search is. Since 8c87144fd that guard refuses a hit that does not
+     say whether it is the current version (the server always sends it), so the
+     picker refuses it too: the search is unreadable, never a list to sign from. */
+  it("reads a project's search with the Vault find view's own guard: a hit sent without `current` is refused, as the find view refuses it", async () => {
     searchHits = [{ id: DOC, title: 'Final CSR', version: '2.0', snippet: null, contentHash: HASH, fileName: null, documentType: null, size: null, folderId: null, ctdSection: null, placementStatus: null }];
     await openCommitments();
     const dialog = await openDialogFor('Pediatric study under PREA');
     await search(dialog, /Search this project's Vault/);
-    const select = await within(dialog).findByRole('button', { name: 'Select document' });
-    expect((select as HTMLButtonElement).disabled).toBe(false);
-    expect(within(dialog).queryByText(/The Vault search could not be read/)).toBeNull();
+    expect(await within(dialog).findByText(/The Vault search could not be read/)).toBeTruthy();
+    expect(within(dialog).queryByRole('button', { name: 'Select document' })).toBeNull();
   });
 
   it('says how many matched when the search lists fewer than match', async () => {

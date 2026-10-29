@@ -1,0 +1,10 @@
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > 20260610_ivd_assessments.sql is on the deploy set > is an entry of C2C_MIGRATION_FILES, before the final sweep pair 2ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > 20260610_ivd_assessments.sql is on the deploy set > is no longer in the deploy-path baseline 1ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the file is replay-safe (CLAUDE.md Rule 1) > creates only IF NOT EXISTS, and drops, alters or adds no constraint 1ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the file is replay-safe (CLAUDE.md Rule 1) > no other migration, in either root, creates or changes these tables 24ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the file is replay-safe (CLAUDE.md Rule 1) > both tables are in public with organization_id INTEGER NOT NULL 4ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the file is replay-safe (CLAUDE.md Rule 1) > a third replay leaves the shape as it was 15ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the file is replay-safe (CLAUDE.md Rule 1) > a record saved after the first deploy survives every replay 2ms
+ ✓ tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts > the sweep polices the store > each table has RLS enabled and forced, under one tenant_isolation_policy 3ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

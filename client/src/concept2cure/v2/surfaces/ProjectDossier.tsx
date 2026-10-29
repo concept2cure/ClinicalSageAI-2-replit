@@ -124,8 +124,45 @@ const SECTION_STATUS_LABELS = new Map([
 ]);
 const sectionStatus = (status: string) => SECTION_STATUS_LABELS.get(status) ?? (status || 'Status not recorded');
 
-/** The aside card: the home filing's figure, and each added market's line. */
-export function DossierReadinessCard({ read }: { read: DossierState }) {
+/** A card line's door: the editing copy of the filing the line measures,
+ *  opened whole (the line counts the whole filing, so no module rides along),
+ *  or why there is none, in the rows' words. Never a dead button (F3 part C).
+ *  `forMarket`: an added market's line, or the home line. */
+function MarketCopy({ name, forMarket, copy, onOpen }: {
+  name: string; forMarket: boolean; copy: RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
+  const testId = forMarket ? 'pj-dossier-market-copy' : 'pj-dossier-home-copy';
+  if (copy.kind !== 'one') return <div data-testid={testId}>{noCopyWords(forMarket, copy)}</div>;
+  return (
+    <div data-testid={testId}>
+      <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(copy.doc, null)}
+        aria-label={`Open ${copy.doc.title}, the editing copy for ${name}`}>Open {copy.doc.title}</button>
+    </div>
+  );
+}
+
+/** The home line's door. One home document: its editing copy, as a market's
+ *  line opens its own. Several: no one copy is the figure's, so none opens.
+ *  None (nothing to count, or the store unread): the figure line says why. */
+function HomeCopy({ documents, copyFor, onOpen }: {
+  documents: string[]; copyFor: (filingId: string) => RowCopy; onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
+  if (documents.length === 1) return <MarketCopy name="the home filing" forMarket={false} copy={copyFor(documents[0])} onOpen={onOpen} />;
+  if (documents.length === 0) return null;
+  return <div data-testid="pj-dossier-home-copy">This figure counts {documents.length} home documents, so none is opened from here.</div>;
+}
+
+/** The aside card: the home filing's figure, and each added market's line.
+ *  Each line opens the editing copy of the filing it measures, as that
+ *  filing's rows in Module completion do: a market's line its
+ *  `DossierMarket.documentId`, the home line the one home document. Both were
+ *  words only until 2026-10-29. */
+export function DossierReadinessCard({ read, copyFor, onOpen }: {
+  read: DossierState;
+  /** The editing copy of a filing, the lookup Module completion's rows use. */
+  copyFor: (filingId: string) => RowCopy;
+  onOpen: (doc: BuiltDocument, within: string | null) => void;
+}) {
   const { state, retry } = read;
   const d = state.data;
   let body: React.ReactNode;
@@ -140,7 +177,11 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
     body = <p role="status" aria-busy="true" className="pj-card-note">Reading…</p>;
   } else {
     const added = d.markets.filter((m) => m.scope === 'market');
-    const homeCounts = d.rows.filter((r) => r.agency === null).reduce(
+    /* The home filing's rows. dossier-read's homeFigure counts the sections of
+       every document that is not an added market's, and each of those has rows
+       with no agency, so their documents are the ones the home line measures. */
+    const homeRows = d.rows.filter((r) => r.agency === null);
+    const homeCounts = homeRows.reduce(
       (total, r) => ({ inReview: total.inReview + r.inReview, drafted: total.drafted + r.drafted }),
       { inReview: 0, drafted: 0 },
     );
@@ -151,7 +192,10 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
             <div className="pj-map-ring"><Ring value={d.home.pct} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
           </div>
         )}
-        <p className="pj-card-note" data-testid="pj-dossier-home">{figureLine(d.home)}</p>
+        <div data-testid="pj-dossier-home">
+          <p className="pj-card-note">{figureLine(d.home)}</p>
+          <HomeCopy documents={[...new Set(homeRows.map((r) => r.documentId))]} copyFor={copyFor} onOpen={onOpen} />
+        </div>
         {d.home.state === 'measured' && (
           <p className="pj-card-note">{homeCounts.inReview} in review · {homeCounts.drafted} drafted</p>
         )}
@@ -164,6 +208,7 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
                   <> {m.notHeld.length} required section{m.notHeld.length === 1 ? ' is' : 's are'} not in this project&apos;s dossier.</>
                 )}
                 {m.notHeld === null && <> Whether its required sections are all held could not be read.</>}
+                <MarketCopy name={marketName(m)} forMarket copy={copyFor(m.documentId)} onOpen={onOpen} />
               </li>
             ))}
           </ul>
@@ -187,13 +232,14 @@ export function DossierReadinessCard({ read }: { read: DossierState }) {
 /** The editing copy of the filing a row measures, or why it is not known. */
 export type RowCopy = EditingCopy<BuiltDocument> | { kind: 'unread'; failed: boolean };
 
-/** What a row says when it has no copy to open (F3: never a dead end, never a guess). */
-function noCopyWords(r: DossierRow, copy: Exclude<RowCopy, { kind: 'one' }>): string {
+/** What a row or a market line says when it has no copy to open (F3: never a
+ *  dead end, never a guess). `forMarket`: the filing is an added market's. */
+function noCopyWords(forMarket: boolean, copy: Exclude<RowCopy, { kind: 'one' }>): string {
   if (copy.kind === 'several') return `${copy.docs.length} documents are bound to this filing, so none is opened from here.`;
   if (copy.kind === 'unread') {
     return copy.failed ? 'The project\'s documents could not be read, so its editing copy is not known.' : 'Reading the project\'s documents…';
   }
-  return r.agency
+  return forMarket
     ? 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.'
     : 'No editing copy of this filing yet.';
 }
@@ -234,7 +280,7 @@ function ModuleRow({ r, copy, onOpen }: {
       ) : (
         <>
           <div className="pj-lmod" data-none data-risk={risk} data-testid="pj-lmod">{body}</div>
-          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(r, copy)}</span>
+          <span className="pj-lmod-doc" data-testid="pj-lmod-doc">{noCopyWords(Boolean(r.agency), copy)}</span>
         </>
       )}
       <span className="pj-lmod-doc">{hasUpdated ? <>Updated <time dateTime={r.lastUpdated!}>{updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time></> : 'Update time not recorded.'}</span>

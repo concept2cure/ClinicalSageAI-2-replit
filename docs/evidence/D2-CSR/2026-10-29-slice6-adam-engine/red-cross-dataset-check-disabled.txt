@@ -1,0 +1,4 @@
+ × server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent ADAE row whose subject is outside the ADSL safety population 22ms
+   → expected CsrSourceInputError: The source derived f… { …(3) } to match object { …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 19 skipped (20)

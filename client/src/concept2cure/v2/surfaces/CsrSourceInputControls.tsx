@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
+import { CsrBuildDraftControl } from './CsrBuildProgress';
 
 const FORMAT = 'concept2cure.csr-source.v1';
 const SOURCES = '/api/submission-orchestrator/csr/sources';
@@ -156,7 +157,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
   if (!programId) return null;
   return <section aria-label="Clinical source tables">
     <strong>Clinical source tables</strong>
-    <p>Choose a supporting JSON document from this project’s Vault. Preview its tables, then explicitly include an approved source in the next package run.</p>
+    <p>Choose a supporting JSON document from this project’s Vault, or an ADaM bundle manifest that names the study’s ADaM datasets and approved efficacy output. Preview its tables, then explicitly include an approved source in the next package run.</p>
     <p>Review clinical accuracy before use. Structural checks and platform approval do not establish clinical verification or CDISC/FDA qualification. AI narrative generation remains unavailable.</p>
     <p>These tables are saved with the run for review. They are not automatically placed into an eCTD package.</p>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -169,7 +170,7 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     <ClinicalSourcePicker activeSources={activeSources} blocked={blocked} documentId={documentId} choose={choose} choice={choice} prepare={prepare} previewBusy={previewBusy} />
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
-    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} />
+    <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
   </section>;
 }
 
@@ -201,8 +202,8 @@ function ClinicalSourcePreview({ activePreview, blocked, included, setIncluded, 
       }} /> Include these source tables in the next package run</label>
     </div>}
   </>; }
-function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
-  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void;
+function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry, onNav }: {
+  runId: string | null; activeSaved: SavedState | null; blocked: boolean; onRetry: () => void; onNav?: (surface: string) => void;
 }) { return <>
     {runId && <div aria-label="Frozen run clinical tables">
       <h4>Frozen clinical tables for {runId}</h4>
@@ -212,6 +213,7 @@ function FrozenClinicalTables({ runId, activeSaved, blocked, onRetry }: {
         <p>Historical source versions are retained with this run. They can differ from the current Vault version.</p>
         {activeSaved.data.studies.length === 0 && <p>This run has no linked clinical source tables.</p>}
         {activeSaved.data.studies.map(study => <SourceTables key={`${study.source.documentId}:${study.source.sha256}`} source={study.source} tables={study.tables} />)}
+        <CsrBuildDraftControl programId={activeSaved.programId} runId={activeSaved.runId} studies={activeSaved.data.studies} blocked={blocked} onNav={onNav} />
       </>}
     </div>}
   </>; }

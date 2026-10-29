@@ -209,6 +209,14 @@ export const BINDING_BASIS = {
    */
   REPORT_RUN_SEAL: 'report-run-seal-sha256',
   /**
+   * sha256 (stableStringify) over a Vault seal's manifest: every current
+   * document's identity, version, content hash, filing and lifecycle stage as
+   * sealed (VR-19, server/services/vault/vault-seal.service.ts). The seal row is
+   * written on the signing transaction just before the signature, which binds
+   * its recorded manifest_sha256. Free TEXT, as above.
+   */
+  VAULT_DATA_ROOM_SEAL_MANIFEST: 'vault-data-room-seal-manifest-sha256',
+  /**
    * sha256 of a Vault version's bytes that are a RENDERING of Authoring content
    * a signature covers (FD5 (c), 2026-10-01). The Authoring signature covers the
    * sections digest; the filing rendered exactly those sections (digest

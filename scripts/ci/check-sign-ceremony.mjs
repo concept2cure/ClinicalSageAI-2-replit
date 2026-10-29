@@ -105,7 +105,17 @@ const REAUTH = /\b(?:verifyReauth|reverifySigner)\s*\(/;
 // row the baseline's authoring.router.ts reason already names as the ceremony's.
 // Added 2026-10-08 when the e-sign handler began stamping approved_at beside it
 // (QA j4); the selftest shows the same stamp failing without it.
-const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature)\s*\(/;
+// signGovernedAct is the composed ceremony, in both of its places
+// (server/routes/governed-signed-act.ts and
+// server/services/part11/governed-signature-ceremony.ts). Each re-verifies the
+// signer and writes persistGovernedSignSignature on the transaction that runs
+// the caller's domain write, so a stamp made inside that write is signed. Added
+// 2026-10-29 when the labeling translation approval moved its approved_by stamp
+// into one (D5). No other file's count changed. The selftest shows the same stamp
+// failing without it. Limit: the scanner measures a handler, not a callback, so a
+// handler that calls signGovernedAct for one act and stamps another outside it
+// would pass.
+const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation|insertAuthoringSignature|signGovernedAct)\s*\(/;
 
 /** Top-level statement starts: the unit a "handler" is measured over. */
 const HANDLER_START = /^(?:router\s*\.\s*\w+\s*\(|registerToolHandler\s*\(|(?:export\s+)?(?:default\s+)?(?:async\s+)?function\b|(?:export\s+)?const\s+[\w$]+\s*=\s*(?:async\b|\()|app\s*\.\s*\w+\s*\()/;

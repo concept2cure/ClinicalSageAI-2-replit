@@ -1,0 +1,118 @@
+# Red: each new test file against the code before this slice (working tree at be1181958, migration applied)
+
+## design-controls-program-scope
+      Tests  17 failed | 1 passed (18)
+GET /api/design-controls?program_id= > reads only that project's inputs, after the ownership check, and says so 19ms
+GET /api/design-controls?program_id= > refuses another organization's project with 404 and reads nothing 4ms
+GET /api/design-controls?program_id= > refuses a missing project with 404 and reads nothing 3ms
+GET /api/design-controls?program_id= > refuses a deleted project with 404 and reads nothing 3ms
+GET /api/design-controls?program_id= > refuses a malformed id with 404 and reads nothing 3ms
+GET /api/design-controls?program_id= > answers 503 when the ownership check cannot run, and reads nothing 3ms
+GET /api/design-controls?program_id= > a project read never returns the organization's unscoped inputs 2ms
+GET /api/design-controls?program_id= > without a project, reads the organization's inputs as before, and says the scope is the organization 3ms
+
+## mdx-risk-program-scope
+      Tests  26 failed | 9 passed (35)
+GET /api/mdx/risk-items?program_id= > reads that project's register after the ownership check, and says so 19ms
+GET /api/mdx/risk-items?program_id= > refuses another organization's project with 404 and reads nothing 5ms
+GET /api/mdx/risk-items?program_id= > refuses a missing project with 404 and reads nothing 3ms
+GET /api/mdx/risk-items?program_id= > refuses a deleted project with 404 and reads nothing 3ms
+GET /api/mdx/risk-items?program_id= > answers 503 when the ownership check cannot run, and reads nothing 3ms
+GET /api/mdx/risk-items?program_id= > without a project, reads the organization's register as before and says so 3ms
+GET /api/mdx/risk-summary/:programId > summarizes the project after the ownership check 3ms
+GET /api/mdx/risk-summary/:programId > refuses another organization's project with 404 and reads nothing 4ms
+
+## mdx-risk-accept-residual-signature
+      Tests  26 failed | 7 passed (33)
+accepting residual risk without a signature > is refused: no password, meaning or reason means 400 and nothing written 28ms
+accepting residual risk without a signature > names a missing password, and writes nothing 5ms
+accepting residual risk without a signature > names a missing meaning, and writes nothing 4ms
+accepting residual risk without a signature > names a missing reason, and writes nothing 3ms
+the ceremony refuses, and nothing is accepted > a wrong password: 401, said as the ceremony says it, and no transaction opened 4ms
+the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (review): 400 before the password is asked 3ms
+the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (authorship): 400 before the password is asked 3ms
+the ceremony refuses, and nothing is accepted > a meaning an acceptance cannot carry (release): 400 before the password is asked 3ms
+
+## mdx-engineering-trace-by-project
+      Tests  4 failed | 2 passed (6)
+GET /api/mdx/engineering/:programId — the design-controls trace > reads the project's own design inputs, after the ownership check, and reports the panel keye
+GET /api/mdx/engineering/:programId — the design-controls trace > never shows another project's inputs or the organization's unscoped ones 5ms
+GET /api/mdx/engineering/:programId — the design-controls trace > a project with no design inputs of its own reads an empty trace, still keyed to it 5ms
+GET /api/mdx/engineering/:programId — the design-controls trace > the other three organization-wide panels are still reported as the organization's 4ms
+
+## risk-tool-admits-program
+      Tests  9 passed (9)
+
+## riskAcceptResidualSigned
+      Tests  8 failed (8)
+Accept residual opens the signature dialog > opens the dialog for what is signed, with the acceptance meanings, and sends nothing yet 456ms
+Accept residual opens the signature dialog > closing the dialog sends nothing and leaves the hazard unaccepted 245ms
+the signed acceptance > sends the acceptance and the signature components to the signed route 224ms
+the signed acceptance > shows the hazard accepted once the server confirms it 216ms
+the signed acceptance > a refusal keeps the dialog open with the server's sentence, and the hazard stays unaccepted 217ms
+the signed acceptance > a password the ceremony did not accept (401) is said once, ending "Nothing was signed." 221ms
+the signed acceptance > a dropped connection says the outcome is unconfirmed, not that nothing was signed 220ms
+the signed acceptance > an answer that carries no signature is not shown as accepted 219ms
+
+## designControlsReadsOpenProject
+      Tests  5 failed | 2 passed (7)
+with a project open > reads that project's design inputs, by its id 48ms
+with a project open > draws no input from an answer with the organization's scope, and says the read was not this project's 20ms
+with a project open > draws no input from an answer with another project's scope, and says the read was not this project's 21ms
+with a project open > draws no input from an answer with no scope at all, and says the read was not this project's 18ms
+with a project open > a new design input names the project 225ms
+
+## EngineeringSurface.traceKeyed
+      Tests  3 passed (3)
+
+## The unsigned acceptance the route sent (mdx-risk-accept-residual-signature, red)
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > accepting residual risk without a signature > is refused: no password, meaning or reason means 400 and nothing written
+AssertionError: expected [ { via: 'pool', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "params": [
++       "accepted",
++       1,
++       7,
++     ],
++     "sql": "UPDATE risk_items SET status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL RETURNING *",
++     "via": "pool",
++   },
++ ]
+
+ ❯ server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts:190:114
+    188|     const res = await accept({ status: 'accepted' });
+    189|     // First, so a failure shows what the unsigned acceptance sent.
+    190|     expect(acceptances().map((s) => ({ via: s.via, sql: s.sql.replace(…
+       |                                                                                                                  ^
+    191|     nothingWritten();
+
+## The unsigned acceptability the route sent (red)
+ FAIL  server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > recording the residual risk as acceptable is the same judgment > a plain PATCH setting acceptable true answers 428, and nothing is written or limited
+AssertionError: expected [ { via: 'pool', …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "params": [
++       true,
++       1,
++       7,
++     ],
++     "sql": "UPDATE risk_items SET acceptable = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL RETURNING *",
++     "via": "pool",
++   },
++ ]
+
+## The migration test before its set entry
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected -1 to be greater than -1
+      Tests  1 failed | 11 passed (12)

@@ -1,0 +1,346 @@
+{
+  "10.1": {
+    "evidence": {
+      "run_id": "00000000-0000-4000-8000-0000000c5d01",
+      "study_id": "2017-01",
+      "section": "10.1",
+      "source": {
+        "documentId": "00000000-0000-4000-8000-00000000d0c1",
+        "version": "transcription-2026-10-29",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+        "dataCutDate": "unknown",
+        "protocolNumber": "2017-01"
+      },
+      "evidence_digest": "cd0ca36fec7e6dd44197adaf1a00745e1ba68c62bb0257122f2919099ba4c227",
+      "evidence_status": "available",
+      "release_eligibility_verified": false,
+      "clinical_verification": "not-established",
+      "approval_required": true
+    },
+    "tables": [
+      {
+        "key": "disposition",
+        "title": "§10.1 — Patient Disposition",
+        "sha256": "8a7c4ea797b0cebc1defdf32fab6bfba120dda1cb414a485c4529d8e378ace29",
+        "headers": [
+          "Status",
+          "RBX2660 (n=193)",
+          "Placebo (n=96)",
+          "Total"
+        ],
+        "row_count": 7,
+        "rows": [
+          [
+            "Randomized",
+            "193",
+            "96",
+            "289"
+          ],
+          [
+            "Completed treatment",
+            "159",
+            "75",
+            "234"
+          ],
+          [
+            "Discontinued (any reason)",
+            "21",
+            "12",
+            "33"
+          ],
+          [
+            "Screen failure",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "Lost to follow-up",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "Death",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "Other",
+            "13",
+            "9",
+            "22"
+          ]
+        ]
+      }
+    ],
+    "missing_tables": [],
+    "reconciliation": "matches",
+    "counts": {
+      "matches": 7,
+      "mismatch": 0,
+      "unsupported": 0
+    },
+    "claims": [
+      {
+        "fda_reported": "193",
+        "fda_source": "Clinical Review Table 22",
+        "table": "disposition",
+        "row": 0,
+        "column": 1,
+        "engine_cell": "193",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "96",
+        "fda_source": "Clinical Review Table 22",
+        "table": "disposition",
+        "row": 0,
+        "column": 2,
+        "engine_cell": "96",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "21",
+        "fda_source": "Clinical Review §6.2.10.1.3",
+        "table": "disposition",
+        "row": 2,
+        "column": 1,
+        "engine_cell": "21",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "12",
+        "fda_source": "Clinical Review §6.2.10.1.3",
+        "table": "disposition",
+        "row": 2,
+        "column": 2,
+        "engine_cell": "12",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "13",
+        "fda_source": "Statistical Review Table 11 (not treated)",
+        "table": "disposition",
+        "row": 6,
+        "column": 1,
+        "engine_cell": "13",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "9",
+        "fda_source": "Statistical Review Table 11 (not treated)",
+        "table": "disposition",
+        "row": 6,
+        "column": 2,
+        "engine_cell": "9",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "289",
+        "fda_source": "Clinical Review Table 22",
+        "table": "disposition",
+        "row": 0,
+        "column": 3,
+        "engine_cell": "289",
+        "result": "matches"
+      }
+    ]
+  },
+  "11.4.1": {
+    "evidence": {
+      "run_id": "00000000-0000-4000-8000-0000000c5d01",
+      "study_id": "2017-01",
+      "section": "11.4.1",
+      "source": {
+        "documentId": "00000000-0000-4000-8000-00000000d0c1",
+        "version": "transcription-2026-10-29",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+        "dataCutDate": "unknown",
+        "protocolNumber": "2017-01"
+      },
+      "evidence_digest": "ae9b1a7f981d04e83398bb3e479cb40f86f2734111ff92bc65e13fe15d4bf691",
+      "evidence_status": "partial",
+      "release_eligibility_verified": false,
+      "clinical_verification": "not-established",
+      "approval_required": true
+    },
+    "tables": [
+      {
+        "key": "analysisPopulations",
+        "title": "§11.1 — Analysis Populations",
+        "sha256": "7b27055c0ca5bd0abda89d49ff8c5e200c1b9bcf4ce261d644a567d9168c7098",
+        "headers": [
+          "Population",
+          "RBX2660",
+          "Placebo",
+          "Total"
+        ],
+        "row_count": 6,
+        "rows": [
+          [
+            "Randomized",
+            "193",
+            "96",
+            "289"
+          ],
+          [
+            "Safety",
+            "180",
+            "87",
+            "267"
+          ],
+          [
+            "ITT",
+            "193",
+            "96",
+            "289"
+          ],
+          [
+            "mITT",
+            "177",
+            "85",
+            "262"
+          ],
+          [
+            "Per-Protocol",
+            "167",
+            "78",
+            "245"
+          ],
+          [
+            "Completed",
+            "159",
+            "75",
+            "234"
+          ]
+        ]
+      },
+      {
+        "key": "primaryEfficacy",
+        "title": "§11.4 — Primary Efficacy Endpoint Results",
+        "sha256": "d0e6361b502ed0ee4872e0e35aff9986beef7f10896e29e6b9eb52b3b21e87f4",
+        "headers": [
+          "Endpoint",
+          "Arm",
+          "Result",
+          "CI",
+          "p-value",
+          "vs Comparator"
+        ],
+        "row_count": 2,
+        "rows": [
+          [
+            "Treatment success within 8 weeks (mITT)",
+            "RBX2660",
+            "126 (0.71)",
+            "—",
+            "—",
+            "Placebo"
+          ],
+          [
+            "Treatment success within 8 weeks (mITT)",
+            "Placebo",
+            "53 (0.62)",
+            "—",
+            "—",
+            "—"
+          ]
+        ]
+      }
+    ],
+    "missing_tables": [
+      "secondaryEfficacy"
+    ],
+    "reconciliation": "needs_review",
+    "counts": {
+      "matches": 8,
+      "mismatch": 1,
+      "unsupported": 0
+    },
+    "claims": [
+      {
+        "fda_reported": "180",
+        "fda_source": "Clinical Review Table 22",
+        "table": "analysisPopulations",
+        "row": 1,
+        "column": 1,
+        "engine_cell": "180",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "87",
+        "fda_source": "Clinical Review Table 22",
+        "table": "analysisPopulations",
+        "row": 1,
+        "column": 2,
+        "engine_cell": "87",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "177",
+        "fda_source": "Clinical Review Table 22; Statistical Review Table 11",
+        "table": "analysisPopulations",
+        "row": 3,
+        "column": 1,
+        "engine_cell": "177",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "85",
+        "fda_source": "Clinical Review Table 22; Statistical Review Table 11",
+        "table": "analysisPopulations",
+        "row": 3,
+        "column": 2,
+        "engine_cell": "85",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "167",
+        "fda_source": "Clinical Review Table 22",
+        "table": "analysisPopulations",
+        "row": 4,
+        "column": 1,
+        "engine_cell": "167",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "78",
+        "fda_source": "Clinical Review Table 22",
+        "table": "analysisPopulations",
+        "row": 4,
+        "column": 2,
+        "engine_cell": "78",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "126 (0.71)",
+        "fda_source": "Statistical Review Table 11 (mITT)",
+        "table": "primaryEfficacy",
+        "row": 0,
+        "column": 2,
+        "engine_cell": "126 (0.71)",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "53 (0.62)",
+        "fda_source": "Statistical Review Table 11 (mITT)",
+        "table": "primaryEfficacy",
+        "row": 1,
+        "column": 2,
+        "engine_cell": "53 (0.62)",
+        "result": "matches"
+      },
+      {
+        "fda_reported": "127 (0.71)",
+        "fda_source": "DELIBERATE ERROR (FDA: 126 (0.71))",
+        "table": "primaryEfficacy",
+        "row": 0,
+        "column": 2,
+        "engine_cell": "126 (0.71)",
+        "result": "mismatch"
+      }
+    ]
+  }
+}

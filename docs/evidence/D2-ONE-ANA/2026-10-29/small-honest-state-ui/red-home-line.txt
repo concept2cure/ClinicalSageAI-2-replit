@@ -1,0 +1,29 @@
+# Fix 2, red: head 96537cfe plus the new home-line cases (and the three row counts scoped to the rows).
+# timeout 240 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+ × Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 5033ms
+ × Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 5026ms
+ × Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 5027ms
+ × Author — the readiness card's home line > when the documents could not be read, it says its copy is not known, never that there is none 5028ms
+ × Author — the readiness card's home line > while the documents are read, it says so and has nothing to click 5022ms
+ × Author — the readiness card's home line > a figure over two home documents opens neither, and says why 5028ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain 'Open IND editing copy'
+Expected: "Open IND editing copy"
+Received: "0 of 6 sections approved or locked."
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain 'No editing copy of this filing yet.'
+Expected: "No editing copy of this filing yet."
+Received: "0 of 6 sections approved or locked."
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain '2 documents are bound to this filing,…'
+Expected: "2 documents are bound to this filing, so none is opened from here."
+Received: "0 of 6 sections approved or locked."
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain 'The project\'s documents could not be…'
+Expected: "The project's documents could not be read, so its editing copy is not known."
+Received: "0 of 6 sections approved or locked."
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain 'Reading the project\'s documents…'
+Expected: "Reading the project's documents…"
+Received: "0 of 6 sections approved or locked."
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.' to contain 'This figure counts 2 home documents, …'
+Expected: "This figure counts 2 home documents, so none is opened from here."
+Received: "0 of 6 sections approved or locked."
+      Tests  6 failed | 26 passed (32)
+# (the 26 existing cases pass)

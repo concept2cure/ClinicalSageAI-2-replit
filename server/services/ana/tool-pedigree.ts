@@ -192,6 +192,9 @@ export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
   // The database-lock-to-submission chain evaluated against the open project's
   // Vault (regulatory-knowledge-tools.ts): a pure function of the filed documents.
   'plan_submission_from_database_lock',
+  // The retained CSR evidence pack of a sealed Submission Center run, and exact-cell
+  // reconciliation against it (csr-section-evidence-tool.ts): a pure read of engine tables.
+  'get_csr_section_evidence',
   'code_meddra',
   'code_whodrug',
   'generate_spl_xml',

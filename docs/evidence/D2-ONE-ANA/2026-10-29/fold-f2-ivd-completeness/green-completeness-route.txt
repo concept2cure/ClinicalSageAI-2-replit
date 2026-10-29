@@ -1,0 +1,14 @@
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > every family comes from the open project's records only 58ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > GSPR is this project's checklist, matched as text whatever its case, not the organization's newest 21ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > a project with no IVD records reads seven empty families, never the organization's 16ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > another organization's project: 404, and no IVD table is read 7ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a missing project: 404, and no IVD table is read 4ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a deleted project: 404, and no IVD table is read 3ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a malformed project: 404, and no IVD table is read 2ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > two project ids are no project: 404 4ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > when the ownership check cannot run: 503, and no IVD table is read 5ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > with no project named, the organization scope is stated > reads the organization as before and says so 21ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > an unread store says so; it is never a family not started > a GSPR read that fails leaves GSPR unread, with no percentage and no overall figure 13ms
+ ✓ server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > an unread store says so; it is never a family not started > a missing PER store leaves scientific validity, the PER and PMPF unread 16ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

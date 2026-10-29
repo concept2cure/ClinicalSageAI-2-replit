@@ -1,0 +1,18 @@
+# F2-M8: Engineering reports only when the project changes, not when the panels' content does
+# file: client/src/concept2cure/mdx/surfaces/engineeringPanelsContext.ts
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# mutation (find -> replace):
+-    const key = ctx ? JSON.stringify(ctx) : '';
++    const key = ctx ? ctx.programId : '';
+   ---
+
+ × device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 5134ms
+   → expected undefined to be 6 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 5037ms
+   → expected undefined to be 6 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 5031ms
+   → expected undefined to be 6 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+exit=1
+restored byte for byte: yes (sha256 e3db90d8e1905cd1)

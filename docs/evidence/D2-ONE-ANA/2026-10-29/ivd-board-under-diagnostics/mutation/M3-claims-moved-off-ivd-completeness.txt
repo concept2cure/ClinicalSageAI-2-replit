@@ -1,0 +1,31 @@
+# mutation M3-claims-moved-off-ivd-completeness: in shared/constants/ui-surface-registry.ui-v2.ts (diff below: restored copy, then mutated)
+# npx vitest run server/middleware/__tests__/ivd-board-under-diagnostics.test.ts
+
+192c192
+<     apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness'],
+---
+>     apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-lifecycle'],
+
+ ✓ reads the panel's calls from both screens that mount it 2ms
+ ✓ serves them to an organization entitled to device-diagnostics only 5ms
+ × serves them to an organization entitled to ivd-completeness only, as before 10ms
+   → expected { …(5) } to deeply equal { …(5) }
+ ✓ refuses them to an organization entitled to neither 4ms
+ × leaves the ivd-completeness claim whole: moving it is founder decision 4 2ms
+   → expected [ '/api/validate-completeness', …(2) ] to deeply equal [ '/api/validate-completeness', …(4) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+-   "/api/ivd-assessments": "served",
+-   "/api/ivd-assessments/classification": "served",
+-   "/api/ivd-assessments/documents": "served",
+-   "/api/ivd-assessments/documents/fsn": "served",
+-   "/api/ivd-completeness/completeness": "served",
++   "/api/ivd-assessments": "403 MODULE_NOT_LICENSED",
++   "/api/ivd-assessments/classification": "403 MODULE_NOT_LICENSED",
++   "/api/ivd-assessments/documents": "403 MODULE_NOT_LICENSED",
++   "/api/ivd-assessments/documents/fsn": "403 MODULE_NOT_LICENSED",
++   "/api/ivd-completeness/completeness": "403 MODULE_NOT_LICENSED",
+-   "/api/ivd-assessments",
+-   "/api/ivd-completeness",
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+vitest exit 1

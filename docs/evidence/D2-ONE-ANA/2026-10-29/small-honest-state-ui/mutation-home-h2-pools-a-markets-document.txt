@@ -1,0 +1,20 @@
+# H2: the home line counts an added market's document as home
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '          <HomeCopy documents={[...new Set(homeRows.map((r) => r.documentId))]}'
+# with:     '          <HomeCopy documents={[...new Set(d.rows.map((r) => r.documentId))]}'
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 5028ms
+ × Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 5029ms
+ × Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 5026ms
+ × Author — the readiness card's home line > when the documents could not be read, it says its copy is not known, never that there is none 5026ms
+ × Author — the readiness card's home line > while the documents are read, it says so and has nothing to click 5025ms
+ × Author — the readiness card's home line > a figure over two home documents opens neither, and says why 5023ms
+      Tests  6 failed | 26 passed (32)
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain 'Open IND editing copy'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain 'No editing copy of this filing yet.'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain '2 documents are bound to this filing,…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain 'The project\'s documents could not be…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain 'Reading the project\'s documents…'
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Th…' to contain 'This figure counts 2 home documents, …'
+# restored: sha256 matches (ed20cd2989f0b397)

@@ -1,0 +1,8 @@
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 6ms
+   → ind-checklist apiPrefixes no screen of it calls:
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  /api/ind-lifecycle/briefing-book: expected [ '/api/ind-lifecycle/briefing-book' ] to deeply equal []
++   "/api/ind-lifecycle/briefing-book",
+ Test Files  1 failed (1)
+      Tests  1 failed | 42 passed (43)

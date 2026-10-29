@@ -21,6 +21,7 @@ import { getApplicationType } from '../../../shared/regulatory/global-document-r
 import { compareSectionCode } from '../../../shared/regulatory/section-code';
 import {
   FDA_FORMAL_MEETINGS_GUIDANCE, FDA_MEETING_PACKAGE_CORE, LIFECYCLE_DOCUMENT_TYPES,
+  US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID,
 } from '../ind/ctd/lifecycle-document-types';
 import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
 
@@ -44,7 +45,7 @@ function postApprovalAnnualOutline(): DocumentTemplateStructure {
       'Advisory post-approval annual-report outline. Confirm the application-specific NDA or BLA obligations and current regional instructions.',
       'Retain the original Form FDA 2252, approved labeling, distribution and manufacturing records, and postmarketing study records; this outline does not replace them.',
       'This annual report is distinct from an IND annual report and from expedited or periodic adverse-experience reporting.',
-      'Its parts follow the NDA annual report (21 CFR 314.81(b)(2)). Part 314 does not govern a licensed biologic: a BLA reports minor changes annually under 601.12(d), postmarketing study status under 601.70, pediatric information under 601.28 and distribution under 600.81, and this outline does not model those reports part by part.',
+      'Its parts follow the NDA annual report (21 CFR 314.81(b)(2)). Part 314 does not govern a licensed biologic: a BLA reports minor changes annually under 601.12(d) (US_BLA_ANNUAL), postmarketing study status under 601.70 (US_BLA_PMR_ANNUAL), pediatric information under 601.28 (US_BLA_PEDIATRIC_ANNUAL) and distribution under 600.81 (US_BLA_DISTRIBUTION), each its own filing with its own record. Start those for a BLA, not this outline.',
     ],
     sections: source.components.map(component => ({
       number: component.code, heading: component.title, purpose: component.authoringGuidance, required: component.required,
@@ -62,17 +63,23 @@ function postApprovalAnnualOutline(): DocumentTemplateStructure {
  * cover letter, the 356h, the change and its justification, the environmental
  * claim — and the CTD sections the change updates.
  *
- * US_BLA_SUPP reads the PAS record: 21 CFR 601.12(b) is the biologics
- * prior-approval category, and the parts are the same. US_CBE is ONE registry
+ * US_BLA_SUPP read the NDA PAS record until 2026-10-29; it now reads its own
+ * 21 CFR 601.12(b) record (us_bla_pas). US_CBE is ONE registry
  * filing for two records (CBE-30, CBE-0): their shared parts are listed once and
  * required, and each variant's own parts are listed under its name and not
  * required, because which applies is the filer's classification of the change.
  */
 const LIFECYCLE_RECORD_OUTLINES: Readonly<Record<string, readonly string[]>> = {
   US_NDA_SUPP: ['nda_pas'],
-  US_BLA_SUPP: ['nda_pas'],
   US_CBE: ['cbe_30', 'cbe_0'],
   US_IND_ANNUAL: ['ind_annual_report'],
+  // 2026-10-29 (US biotech filing completion): each identity reads its own
+  // source record, keyed by the record's own registry id, so a new record and its
+  // outline cannot disagree. US_BLA_SUPP now reads the 601.12(b) BLA PAS record
+  // (us_bla_pas), no longer the NDA PAS record it borrowed under 314.70(b).
+  // Type D and INTERACT carry their own parts (MTG-D-SCOPE, MTG-INTERACT-NOVEL),
+  // so they are not MEETING_REGISTRY_IDS' generic core-plus-support outline.
+  ...Object.fromEntries(Object.entries(US_BIOTECH_LIFECYCLE_RECORD_BY_REGISTRY_ID).map(([registryId, id]) => [registryId, [id]])),
 };
 
 /** "Changes Being Effected in 30 Days Supplement (CBE-30)" → "CBE-30". */
@@ -141,9 +148,6 @@ function lifecycleRecordOutline(registryId: string, recordIds: readonly string[]
     outlineSource: { kind: 'lifecycle-record', registryId, record: records.map((r) => `LIFECYCLE_DOCUMENT_TYPES:${r.id}`).join('+') },
     outlineLimitations: [
       'Advisory outline from the platform\'s lifecycle record. Confirm the application-specific obligations and current FDA instructions before filing.',
-      ...(registryId === 'US_BLA_SUPP'
-        ? ['A BLA supplement is governed by 21 CFR 601.12 (601.12(b) for a manufacturing change, 601.12(f)(1) for a labeling change); this outline is the NDA Prior Approval Supplement record (21 CFR 314.70(b)), whose parts the biologics prior-approval supplement shares.']
-        : []),
       ...(variants ? ['Which variant applies is the filer\'s classification of the change; its own parts are named with it and are not marked required.'] : []),
     ],
     sections,

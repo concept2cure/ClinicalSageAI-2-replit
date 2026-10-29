@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all
+[csr-job-runner] Job 42 has unresolved placeholders in section(s) 12.2.1; marking failed instead of complete
+
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_SOURCE_RECEIPT_REVOKED
+
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 46ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 5ms
+ × server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator 32ms
+   → expected { organizationId: 1, …(9) } to match object { aiGenerated: false, model: null }
+(10 matching properties omitted from actual)
+ × server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign 7ms
+   → expected { organizationId: 1, …(9) } to match object { aiGenerated: false, model: null }
+(10 matching properties omitted from actual)
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 6ms
+stderr | server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol
+[csr-job-runner] Job 42 failed on section '12.2.1': CSR_EVIDENCE_STUDY_MISMATCH
+
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 3ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 11ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator
+ FAIL  server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign
+AssertionError: expected { organizationId: 1, …(9) } to match object { aiGenerated: false, model: null }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "aiGenerated": false,
+-   "model": null,
++   "aiGenerated": true,
++   "model": "claude-opus-5-5-20261001",
+  }
+
+ ❯ server/services/csr/__tests__/csr-job-runner.evidence.test.ts:167:27
+    165|     modelWriting(rate, [CLAIM, { table: 'analysisPopulations', row: 0,…
+    166|     await runCSRBuildJob(42);
+    167|     expect(row('12.2.1')).toMatchObject({ aiGenerated: false, model: n…
+       |                           ^
+    168|     expect(row('12.2.1').lineage?.rejectedModelDraft?.reason).toBe('un…
+    169|     expect(fake.job).toMatchObject({ status: 'failed', error: { reason…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  04:58:00
+   Duration  4.93s (transform 2.91s, setup 180ms, import 3.86s, tests 123ms, environment 0ms)
+

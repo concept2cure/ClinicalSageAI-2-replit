@@ -1,0 +1,14 @@
+M2: design-controls POST drops admitProject
+file: server/routes/design-controls.routes.ts
+test: server/routes/__tests__/design-controls-program-scope.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > records the project, after the ownership check 11ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses another organization's project with 404 and inserts nothing 5ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses a missing project with 404 and inserts nothing 4ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses a deleted project with 404 and inserts nothing 3ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses a malformed id with 404 and inserts nothing 3ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > refuses a non-string id with 404 and inserts nothing 3ms
+ × server/routes/__tests__/design-controls-program-scope.test.ts > POST /api/design-controls > answers 503 when the ownership check cannot run, and inserts nothing 3ms
+      Tests  7 failed | 11 passed (18)

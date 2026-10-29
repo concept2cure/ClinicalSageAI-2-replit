@@ -1,0 +1,21 @@
+=== MUTATION: a figure typed into the §12.4.2.2 writing rule
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > writing rules hold slots, never figures (Rule 2: the engine supplies every number) 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 12.4.2.2: expected 'Use the lab-shift sentence (for examp…' not to match /\d+(\.\d+)?…/\s?\d+\b|p\s?[<=]\s?0?\.\d
+      Tests  1 failed | 7 passed | 27 skipped (35)
+=== MUTATION: ICH_E9_R1 graded regulator-text with no quoted span
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed | 27 skipped (35)
+=== MUTATION: a recalled quote rendered as if read
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 2: ICH E3 §2: expected '## ICH E3 §2 Synopsis\n\nExpected in …' to match /recalled wording/
+      Tests  1 failed | 7 passed | 27 skipped (35)
+=== MUTATION: §2 writing rules long enough to clip its brief
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — no heading is title-only > no brief is clipped, so its basis always reaches the reader 10ms
+ × tests/regulatory/csr-e3-overlay.test.ts > E3 knowledge census — estimands, annexes and basis > every basis is well formed; a regulator-text basis carries a quoted span; a quote is never shown as checked unless it is 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: §2 brief is 4179 chars: expected true to be false // Object.is equality
+AssertionError: 2: ICH E3 §2: expected '## ICH E3 §2 Synopsis\n\nExpected in …' to match /recalled wording/
+      Tests  2 failed | 6 passed | 27 skipped (35)

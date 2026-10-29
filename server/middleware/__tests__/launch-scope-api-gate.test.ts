@@ -553,12 +553,14 @@ describe('the real registry with the IND tools in Submission Center, agency ques
     '/api/ind-lifecycle/portfolio',
     '/api/ind-lifecycle/readiness',
     '/api/ind-master-data',
+    // 2026-10-29: the briefing book is a project document in the editor since
+    // 5894e1aaa; no launch screen calls the form assembler or its /pdf.
+    '/api/ind-lifecycle/briefing-book', '/api/ind-lifecycle/briefing-book/pdf',
   ];
   const CALLED = [
     '/api/ind-checklist',
     '/api/ind-lifecycle/clock',
     '/api/ind-lifecycle/cover-letter',
-    '/api/ind-lifecycle/briefing-book/pdf',
     '/api/ind-lifecycle/loa',
     '/api/ind-lifecycle/right-of-reference/pdf',
     '/api/ind-lifecycle/annual-report/file',

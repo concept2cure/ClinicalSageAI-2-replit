@@ -52,7 +52,9 @@ function TemplateCreationActions({ creation, ready, start }: {
     {I.plus} {state?.phase === 'pending' ? 'Creating working copy…' : 'Create from template'}</button>;
 }
 
-function TemplateStart({ template, programId, docs, ready, refresh, onOpenDocument, onAsk, assignmentOf, assignAction }: {
+/** One template's start: open a working copy the project holds, create one, or
+ *  work with AnA. Also the IND screen's briefing-book start (IndBriefingBookStart.tsx). */
+export function TemplateStart({ template, programId, docs, ready, refresh, onOpenDocument, onAsk, assignmentOf, assignAction }: {
   template: AuthoringTemplate; programId: string; docs: AuthDoc[]; ready: boolean; refresh: () => Promise<boolean>;
 } & Pick<PlanProps, 'onOpenDocument' | 'onAsk' | 'assignmentOf' | 'assignAction'>) {
   const [notice, setNotice] = React.useState('');

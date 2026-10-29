@@ -1,0 +1,25 @@
+# F1-M3-claim-moved-off-submission-center: the claim MOVED to projects (submission-center's own claim dropped) instead of shared
+# file mutated: shared/constants/ui-surface-registry.ts
+# restored byte-for-byte (cmp)
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > reads the calls from the screens and the routes from the routers 2ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a free-tier organization that holds Projects by tier and has no grant 12ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a self-serve organization whose administrator switched Submission Center off 6ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a paying organization with the launch grants, as before 7ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it, as before, to an organization that holds Submission Center and not Projects 17ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > refuses it to an organization that holds no claimant: Projects and Submission Center switched off, free tier 8ms
+ × server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > is claimed by projects beside the claims it already had 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+AssertionError: expected { …(18) } to deeply equal { Object (/api/c2c/projects, /api/c2c/projects/prog-1, ...) }
+-   "/api/c2c/projects": "served",
+-   "/api/c2c/projects/prog-1": "served",
+-   "/api/c2c/projects/prog-1/activity": "served",
+-   "/api/c2c/projects/prog-1/adopt": "served",
+-   "/api/c2c/projects/prog-1/archive": "served",
+-   "/api/c2c/projects/prog-1/conversation-files": "served",
+-   "/api/c2c/projects/prog-1/document-dispositions": "served",
+-   "/api/c2c/projects/prog-1/document-dispositions/preview": "served",
+-   "/api/c2c/projects/prog-1/dossier": "served",
+-   "/api/c2c/projects/prog-1/drafts": "served",
+-   "/api/c2c/projects/prog-1/evidence": "served",

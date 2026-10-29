@@ -28,7 +28,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -78,7 +78,7 @@ const source = (id: number, title: string, extractionStatus: string) => ({
   isCurrent: true, dataEligible: true, disposition: null, textAvailable: extractionStatus === 'extracted',
 });
 
-type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response };
+type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response; dossier?: unknown };
 function serve(opts: Opts = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
@@ -87,7 +87,7 @@ function serve(opts: Opts = {}) {
       return ok({ id: PID, name: 'BX-410', product_name: 'Torvanib', program_type: 'IND', status: 'active', ...opts.program });
     }
     if (url === DOCS_URL) return (opts.docs ?? (() => ok({ documents: DOCS })))();
-    if (url === `/api/c2c/projects/${PID}/dossier`) return ok(DOSSIER);
+    if (url === `/api/c2c/projects/${PID}/dossier`) return ok(opts.dossier ?? DOSSIER);
     if (url === `/api/c2c/projects/${PID}/sources`) {
       if (opts.sources) return opts.sources();
       return ok({ projectId: PID, sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
@@ -111,6 +111,10 @@ async function open(label: string) {
 const target = () => (window as unknown as { C2C_EDITOR_TARGET?: Record<string, unknown> }).C2C_EDITOR_TARGET;
 const moduleRow = (startsWith: string) =>
   Array.from(document.querySelectorAll<HTMLElement>('.pj-lmod')).find((r) => r.textContent?.startsWith(startsWith));
+/* How many module rows say these words of their copy. The readiness card's
+   home line says the same words of the same filing; its own cases are below. */
+const rowsSaying = (words: string) =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-testid="pj-lmod-doc"]')).filter((d) => d.textContent === words).length;
 
 beforeEach(() => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-410' };
@@ -199,7 +203,7 @@ describe('Author — the project\'s documents', () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(moduleRow('Module 2 · Summaries')).toBeTruthy());
     expect(moduleRow('Module 2 · Summaries')?.tagName, 'a filing with no copy is not a button').toBe('DIV');
-    expect(screen.getAllByText('No editing copy of this filing yet.').length).toBe(4);
+    expect(rowsSaying('No editing copy of this filing yet.')).toBe(4);
     expect(screen.getByText(/No editing copy of this market.s documents yet\. Create one from the filing list in the editor\./)).toBeTruthy();
   });
 
@@ -207,14 +211,14 @@ describe('Author — the project\'s documents', () => {
     const second = doc({ id: 'doc-copy-2', title: 'Second copy', c2c_document_id: 'doc_home' });
     serve({ docs: () => ok({ documents: [...DOCS, HOME_COPY, second] }) });
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(screen.getAllByText('2 documents are bound to this filing, so none is opened from here.').length).toBe(4));
+    await waitFor(() => expect(rowsSaying('2 documents are bound to this filing, so none is opened from here.')).toBe(4));
     expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('DIV');
   });
 
   it('when the documents could not be read, the row says its copy is not known, never that there is none', async () => {
     serve({ docs: down });
     render(<ProjectHome {...props()} />);
-    await waitFor(() => expect(screen.getAllByText('The project\'s documents could not be read, so its editing copy is not known.').length).toBe(5));
+    await waitFor(() => expect(rowsSaying('The project\'s documents could not be read, so its editing copy is not known.')).toBe(5));
     expect(screen.queryByText('No editing copy of this filing yet.')).toBeNull();
     expect(moduleRow('Module 2 · Summaries')?.tagName).toBe('DIV');
   });
@@ -234,6 +238,134 @@ describe('Author — the project\'s documents', () => {
     expect(screen.queryByText(/organisation-wide|organization-wide/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /^Write the protocol in the protocol workspace/ }));
     expect(p.onNav).toHaveBeenCalledWith('protocol-dev');
+  });
+});
+
+/* F3 part C (2026-10-29): the readiness card names each added market on its
+   own line. The line opens the editing copy of the filing it measures
+   (DossierMarket.documentId), as that market's own rows do, or says why not in
+   the rows' words. It was words only, with nothing to click. */
+const market = (agency: string, docType: string, documentId: string, scope = 'market') => ({
+  scope, agency, docType, documentId, figure: { state: 'measured', pct: 0, counted: 4, complete: 0 }, notHeld: [],
+});
+const MARKETS_DOSSIER = {
+  ...DOSSIER, markets: [market('fda', 'ind', 'doc_home', 'home'), market('ema', 'maa', 'doc_ema'), market('pmda', 'jnda', 'doc_pmda')],
+};
+const PMDA_COPY = doc({ id: 'doc-pmda-copy', title: 'PMDA J-NDA editing copy', module: 'M1', updated_at: '2026-10-09T10:00:00Z', c2c_document_id: 'doc_pmda' });
+const marketLine = (name: string) =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-testid="pj-dossier-market"]')).find((li) => li.textContent?.startsWith(name));
+async function lineSays(name: string, words: string) {
+  await waitFor(() => expect(marketLine(name)?.textContent ?? '', `${name}'s line on the readiness card`).toContain(words));
+  return marketLine(name)!;
+}
+
+describe('Author — the readiness card\'s market line (F3 part C)', () => {
+  it('an added market\'s line opens that market\'s editing copy, whole, and each market its own', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, PMDA_COPY, ...DOCS, HOME_COPY] }) });
+    const p = props();
+    render(<ProjectHome {...p} />);
+    const ema = await lineSays('EMA · MAA', 'Open EMA MAA editing copy');
+    fireEvent.click(within(ema).getByRole('button', { name: 'Open EMA MAA editing copy, the editing copy for EMA · MAA' }));
+    expect(target(), 'the line opened nothing').toMatchObject({ docId: 'doc-ema-copy', programId: PID });
+    expect(target()?.sectionWithin, 'the line measures the whole filing, so no module rides along').toBeUndefined();
+    expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    fireEvent.click(within(marketLine('PMDA · JNDA')!).getByRole('button'));
+    expect(target(), 'PMDA\'s line opened another market\'s copy').toMatchObject({ docId: 'doc-pmda-copy' });
+  });
+
+  it('with no editing copy the line says where one is made, in the rows\' words, and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, ...DOCS, HOME_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    const pmda = await lineSays('PMDA · JNDA', 'No editing copy of this market\'s documents yet. Create one from the filing list in the editor.');
+    expect(within(pmda).queryByRole('button'), 'a dead button').toBeNull();
+  });
+
+  it('two documents bound to the market\'s filing: said, and neither is opened', async () => {
+    const second = doc({ id: 'doc-ema-copy-2', title: 'Second EMA copy', c2c_document_id: 'doc_ema' });
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, second, PMDA_COPY, ...DOCS, HOME_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', '2 documents are bound to this filing, so none is opened from here.');
+    expect(within(ema).queryByRole('button'), 'one of several opened').toBeNull();
+  });
+
+  it('when the documents could not be read, the line says its copy is not known, never that there is none', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: down });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', 'The project\'s documents could not be read, so its editing copy is not known.');
+    expect(within(ema).queryByRole('button'), 'a button over a failed read').toBeNull();
+    expect(ema.textContent).not.toContain('No editing copy');
+  });
+
+  it('while the documents are read, the line says so and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => new Promise<Response>(() => {}) as unknown as Response });
+    render(<ProjectHome {...props()} />);
+    const ema = await lineSays('EMA · MAA', 'Reading the project\'s documents…');
+    expect(within(ema).queryByRole('button')).toBeNull();
+  });
+});
+
+/* The card's home line (`pj-dossier-home`) measures the home filing: every
+   section of the project's home documents (dossier-read homeFigure). With one
+   home document it opens that document's editing copy whole, through the same
+   door as a market's line, in the home rows' words. With several, no one copy
+   is the figure's, so it says so. It opened nothing until 2026-10-29. */
+const homeLine = () => document.querySelector<HTMLElement>('[data-testid="pj-dossier-home"]');
+async function homeLineSays(words: string) {
+  await waitFor(() => expect(homeLine()?.textContent ?? '', 'the readiness card\'s home line').toContain(words));
+  return homeLine()!;
+}
+
+describe('Author — the readiness card\'s home line', () => {
+  it('opens the home filing\'s editing copy, whole, never an added market\'s', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, PMDA_COPY, ...DOCS, HOME_COPY] }) });
+    const p = props();
+    render(<ProjectHome {...p} />);
+    const home = await homeLineSays('Open IND editing copy');
+    expect(home.textContent).toContain('0 of 6 sections approved or locked.');
+    fireEvent.click(within(home).getByRole('button', { name: 'Open IND editing copy, the editing copy for the home filing' }));
+    expect(target(), 'the home line opened another filing\'s copy').toMatchObject({ docId: 'doc-copy', programId: PID });
+    expect(target()?.sectionWithin, 'the line measures the whole filing, so no module rides along').toBeUndefined();
+    expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+  });
+
+  it('with no editing copy it says so in the home rows\' words, and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, ...DOCS] }) });
+    render(<ProjectHome {...props()} />);
+    const home = await homeLineSays('No editing copy of this filing yet.');
+    expect(within(home).queryByRole('button'), 'a dead button').toBeNull();
+    expect(home.textContent, 'a market\'s words on the home line').not.toContain('market');
+  });
+
+  it('two documents bound to the home filing: said, and neither is opened', async () => {
+    const second = doc({ id: 'doc-copy-2', title: 'Second copy', c2c_document_id: 'doc_home' });
+    serve({ dossier: MARKETS_DOSSIER, docs: () => ok({ documents: [EMA_COPY, ...DOCS, HOME_COPY, second] }) });
+    render(<ProjectHome {...props()} />);
+    const home = await homeLineSays('2 documents are bound to this filing, so none is opened from here.');
+    expect(within(home).queryByRole('button'), 'one of several opened').toBeNull();
+  });
+
+  it('when the documents could not be read, it says its copy is not known, never that there is none', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: down });
+    render(<ProjectHome {...props()} />);
+    const home = await homeLineSays('The project\'s documents could not be read, so its editing copy is not known.');
+    expect(within(home).queryByRole('button'), 'a button over a failed read').toBeNull();
+    expect(home.textContent).not.toContain('No editing copy');
+  });
+
+  it('while the documents are read, it says so and has nothing to click', async () => {
+    serve({ dossier: MARKETS_DOSSIER, docs: () => new Promise<Response>(() => {}) as unknown as Response });
+    render(<ProjectHome {...props()} />);
+    const home = await homeLineSays('Reading the project\'s documents…');
+    expect(within(home).queryByRole('button')).toBeNull();
+  });
+
+  it('a figure over two home documents opens neither, and says why', async () => {
+    const safety = { ...dossierRow('1', 'IND safety report', 2, 'doc_safety'), group: 'document', module: null };
+    const SAFETY_COPY = doc({ id: 'doc-safety-copy', title: 'Safety report editing copy', c2c_document_id: 'doc_safety' });
+    serve({ dossier: { ...MARKETS_DOSSIER, rows: [...MARKETS_DOSSIER.rows, safety] }, docs: () => ok({ documents: [...DOCS, HOME_COPY, SAFETY_COPY] }) });
+    render(<ProjectHome {...props()} />);
+    const home = await homeLineSays('This figure counts 2 home documents, so none is opened from here.');
+    expect(within(home).queryByRole('button'), 'one document\'s copy opened for a figure over two').toBeNull();
   });
 });
 

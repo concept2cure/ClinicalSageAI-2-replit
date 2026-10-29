@@ -1,0 +1,19 @@
+# Mutations, 2026-10-29T07:35:07Z. Each is applied alone, run, and reverted.
+
+## MUTATION 1: the re-upload does not compare the folder
+ × tests/db/vault-reupload.dbtest.ts > a same-bytes re-upload to the Vault (VR-05, D5) > a retry asking to file it elsewhere changes nothing, and says its filing differs (Part 11 review F3)
+   → expected [ …(2) ] to deeply equal ArrayContaining{…}
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+
+## MUTATION 2: the upload note reads a filing difference as a details difference
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+   → expected [ { name: 'protocol.pdf', …(2) } ] to deeply equal [ { name: 'protocol.pdf', …(3) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+
+## MUTATION 3: the note names no way to change the filing
+ × client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+   → expected 'Already in the Vault, nothing changed…' to match /folder, kind or CTD section is change…/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)

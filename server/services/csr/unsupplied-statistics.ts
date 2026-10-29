@@ -15,6 +15,8 @@
  * placeholders say what is missing, and the lineage records why.
  */
 
+import { reconcileCsrTableClaims, type CsrAuthoringEvidence } from './cortex-authoring-context.js';
+
 /** ICH E3 sections whose content is statistical methods or results. */
 const STATISTICAL_SECTION = /^(2|9\.7|10|11|12|13|14)(\.|$)/;
 
@@ -113,4 +115,83 @@ export function acceptModelDraft(
     lineage.rejectedModelDraft = { reason: 'unsupplied_statistics', statistics: unsupplied.slice(0, 20) };
   }
   return false;
+}
+
+// A cross-reference to a report part, not a figure: "section 14", "§12.2.1",
+// "Table 14.3.1", "Listing 16.2.7", "ICH E3". Never followed by a percent sign.
+const REFERENCE = /(?:\b(?:sections?|tables?|figures?|listings?|appendi(?:x|ces)|ICH\s+E)|§)\s*\d+(?:\.\d+)*(?![\d.]*\s*%)/gi;
+
+/**
+ * Every number in an evidence-bound draft that neither a reconciled claim nor
+ * the study information carries. The statistic patterns above recognise how a
+ * figure is usually written; a section drafted over retained tables is held to
+ * more: any number at all ("13 of 114", "11.5 percent") must be a claimed
+ * cell's. Cross-references to report parts are not figures.
+ */
+export function findUnclaimedNumbers(prose: string, supplied: unknown): UnsuppliedStatistic[] {
+  const known = suppliedNumbers(supplied);
+  const found: UnsuppliedStatistic[] = [];
+  const text = prose.replace(REFERENCE, ' ').replace(/(\d),(?=\d{3}\b)/g, '$1');
+  for (const m of text.matchAll(/\d+(?:\.\d+)?/g)) {
+    if (known.has(String(Number(m[0]))) || found.some((f) => f.text === m[0])) continue;
+    found.push({ kind: 'number', text: m[0] });
+  }
+  return found;
+}
+
+/**
+ * Whether a model draft of an evidence-bound results section may be stored
+ * (docs/design/CSR_END_TO_END_2026-10-29.md, slice 2). The section was given
+ * its retained engine tables (cortex-authoring-context), and the model listed
+ * the cell behind every figure it wrote. Two checks, both deterministic:
+ *
+ *   1. reconcileCsrTableClaims: every claimed value is the exact text of the
+ *      cell it names. A mismatched, unsupported or malformed claim refuses.
+ *   2. findUnsuppliedStatistics, then findUnclaimedNumbers: every statistic,
+ *      and every other number, in the prose is one that a reconciled claim (or
+ *      the study information) carries. A figure without a matching claim — an
+ *      AE percentage off by one, a numerator in "13 of 114" — refuses.
+ *
+ * The supplied set is the claimed cells, not every cell of the pack, so an
+ * invented figure cannot pass by coinciding with an unrelated cell. On refusal
+ * the reason goes to `lineage.rejectedModelDraft`; on acceptance the claim
+ * receipts go to `lineage.reconciliation`.
+ */
+/** A model's draft of one section: its prose and the claims it made about it. */
+export interface EvidenceBoundDraft {
+  sectionNumber: string;
+  prose: string;
+  claims: unknown;
+}
+
+export function acceptEvidenceBoundDraft(
+  { sectionNumber, prose, claims }: EvidenceBoundDraft,
+  evidence: CsrAuthoringEvidence,
+  supplied: unknown,
+  lineage: Record<string, unknown>,
+): boolean {
+  if (!prose.trim()) return false;
+  let reconciliation: ReturnType<typeof reconcileCsrTableClaims>;
+  try {
+    reconciliation = reconcileCsrTableClaims(evidence, claims);
+  } catch {
+    lineage.rejectedModelDraft = { reason: 'claims_invalid', evidenceDigest: evidence.evidenceDigest };
+    return false;
+  }
+  const unreconciled = reconciliation.findings.filter((f) => f.status !== 'matches');
+  if (unreconciled.length > 0) {
+    lineage.rejectedModelDraft = { reason: 'unreconciled_claims', evidenceDigest: evidence.evidenceDigest, findings: unreconciled.slice(0, 20) };
+    return false;
+  }
+  const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
+  const known = { supplied, claimed };
+  const statistics = isStatisticalSection(sectionNumber) ? findUnsuppliedStatistics(prose, known) : [];
+  const unsupplied = statistics.length > 0 ? statistics : findUnclaimedNumbers(prose, known);
+  if (unsupplied.length > 0) {
+    lineage.rejectedModelDraft = { reason: 'unreconciled_figures', evidenceDigest: evidence.evidenceDigest, statistics: unsupplied.slice(0, 20) };
+    return false;
+  }
+  lineage.reconciliation = { basis: reconciliation.basis, status: reconciliation.status, evidenceDigest: evidence.evidenceDigest,
+    clinicalVerification: reconciliation.clinicalVerification, findings: reconciliation.findings };
+  return true;
 }

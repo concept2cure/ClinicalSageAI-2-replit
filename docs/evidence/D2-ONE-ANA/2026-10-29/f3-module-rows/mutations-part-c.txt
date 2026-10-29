@@ -1,0 +1,35 @@
+# Part C. Each mutation applied alone, the file restored and its sha256 checked after each (mutate_c.py).
+# Test: projectHomeDocuments.test.tsx (26 cases). 8 mutations, 8 red.
+# The 'several bound' mutation first drew its button without the line's accessible name, so case 1 went red for that, not the defect. It was rewritten to keep the real markup; it is red on the several case alone now.
+# After the run, git diff of the six changed files is byte-identical to the diff before it (cmp).
+RED  another market's copy: every line opens the first added market's: 2 failed | 24 passed (26)
+       x Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own
+       x Author — the readiness card's market line (F3 part C) > with no editing copy the line says where one is made, in the rows' words, and has nothing to click
+       -> AssertionError: PMDA's line opened another market's copy: expected { docType: null, …(7) } to match object { docId: 'doc-pmda-copy' }
+RED  several bound: the line opens the newest of them: 1 failed | 25 passed (26)
+       x Author — the readiness card's market line (F3 part C) > two documents bound to the market's filing: said, and neither is opened
+       -> AssertionError: EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain '2 documents are bound to this filing,…'
+RED  a failed list read: a button is drawn anyway (disabled): 1 failed | 25 passed (26)
+       x Author — the readiness card's market line (F3 part C) > when the documents could not be read, the line says its copy is not known, never that there is none
+       -> AssertionError: a button over a failed read: expected <button type="button" disabled></button> to be null
+RED  the market line says the home filing's words: 1 failed | 25 passed (26)
+       x Author — the readiness card's market line (F3 part C) > with no editing copy the line says where one is made, in the rows' words, and has nothing to click
+       -> AssertionError: PMDA · JNDA's line on the readiness card: expected 'PMDA · JNDA: 0% · 0 of 4 sections app…' to contain 'No editing copy of this market\'s doc…'
+RED  the line opens its copy at a module (M1): 1 failed | 25 passed (26)
+       x Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own
+       -> AssertionError: the line measures the whole filing, so no module rides along: expected 'M1' to be undefined
+RED  Project home passes no lookup to the card: 4 failed | 22 passed (26)
+       x Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own
+       x Author — the readiness card's market line (F3 part C) > two documents bound to the market's filing: said, and neither is opened
+       x Author — the readiness card's market line (F3 part C) > when the documents could not be read, the line says its copy is not known, never that there is none
+       x Author — the readiness card's market line (F3 part C) > while the documents are read, the line says so and has nothing to click
+       -> AssertionError: EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain 'Open EMA MAA editing copy'
+RED  Project home passes no open to the card: 1 failed | 25 passed (26)
+       x Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own
+       -> AssertionError: the line opened nothing: expected undefined to match object { docId: 'doc-ema-copy', …(1) }
+RED  a market's Module completion row says the home words (the noCopyWords change): 2 failed | 24 passed (26)
+       x Author — the project's documents > with no editing copy the row says so and has nothing to click; a market's says where one is made
+       x Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words
+       -> AssertionError: expected 5 to be 4 // Object.is equality
+
+Restored: sha256 of each mutated file equal to before the run: ProjectDossier.tsx e38a6f47afd7, ProjectHome.tsx c4e05775fb27

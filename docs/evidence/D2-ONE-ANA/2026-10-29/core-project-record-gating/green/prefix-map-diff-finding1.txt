@@ -1,0 +1,10 @@
+# The whole prefix map the gate builds (buildPrefixMap()), before and after finding 1's registry change.
+# before: HEAD (registry unchanged a86ed04ed..6184439b3). after: projects also claims /api/c2c/projects.
+#  284 gated prefixes before;  284 gated prefixes after.
+
+31c31
+< /api/c2c/projects	ivd-completeness,submission-center
+---
+> /api/c2c/projects	ivd-completeness,projects,submission-center
+
+# diff exit: rows changed = 1

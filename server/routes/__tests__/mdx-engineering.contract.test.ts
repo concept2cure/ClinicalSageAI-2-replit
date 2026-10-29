@@ -326,3 +326,38 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.data.summary.dhfCompletion).toBe(50);
   });
 });
+
+/* ── The project ownership refusal is the shared one (D2, 2026-10-29;
+      docs/evidence/D2-ONE-ANA/2026-10-29/small-honest-state-fixes/).
+      q-sub, mdx-udi, mdx-labeling and human-factors refuse through
+      server/lib/admit-project.ts: 404 "Project not found" when the
+      organization does not own the project, 503 VERIFICATION_UNAVAILABLE when
+      the check could not run. This route asked programInOrganization inline,
+      so a lookup that could not run fell to its catch and answered 500, as if
+      the route had crashed rather than a check not having run. Either refusal
+      reads nothing. ───────────────────────────────────────────────────────── */
+describe('GET /api/mdx/engineering/:programId — the project ownership refusal', () => {
+  /** Every query after the ownership check: the panels a refusal must not read. */
+  const panelReads = () => query.mock.calls.filter(([sql]) => !/FROM regulatory_programs/.test(String(sql)));
+
+  it('answers 503 VERIFICATION_UNAVAILABLE when the ownership check cannot run, and reads nothing', async () => {
+    query.mockRejectedValueOnce(Object.assign(new Error('connection terminated'), { code: '57P01' })); // ownership
+    query.mockResolvedValue({ rows: [] });
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ success: false, error: 'VERIFICATION_UNAVAILABLE' });
+    expect(res.body.message).toMatch(/^The project ownership check could not be run\. This is not a verdict/);
+    // The store's own words go to the log, never to the client.
+    expect(JSON.stringify(res.body)).not.toMatch(/connection terminated|57P01/);
+    expect(panelReads()).toHaveLength(0);
+  });
+
+  it('refuses a project the organization does not own with 404 "Project not found", and reads nothing', async () => {
+    query.mockResolvedValueOnce({ rows: [] }); // ownership: not this organization's
+    query.mockResolvedValue({ rows: [] });
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Project not found');
+    expect(panelReads()).toHaveLength(0);
+  });
+});

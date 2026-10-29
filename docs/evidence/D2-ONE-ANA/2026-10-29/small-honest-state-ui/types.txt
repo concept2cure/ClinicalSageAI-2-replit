@@ -1,0 +1,18 @@
+# npx tsc -p <scratch tsconfig> extending the repo tsconfig.json (tsc 5.6.3), include limited to the repo's .d.ts files
+# (client/src, shared, server/types) and the files below. Their imports are checked transitively.
+
+## Fix 1: useEngineering.ts, EngineeringSurface.tsx, EngineeringSurface.refusal.test.tsx
+error TS lines: 0
+exit 0
+
+## Fix 2: ProjectDossier.tsx, projectHomeDocuments.test.tsx, projectDossierDetails.test.tsx
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+exit 2
+# The same three lines at head, before any Fix 2 change (same config, v2 tree unchanged):
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+# They are CSS-module imports in components/ana/*, reached transitively through Project home. The scoped
+# config has no CSS-module declaration; none is in these files.

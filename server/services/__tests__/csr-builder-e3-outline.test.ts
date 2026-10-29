@@ -1,88 +1,88 @@
 /**
- * ICH E3 outline contract for the CSR builder.
+ * ICH E3 outline contract for the CSR builder and job runner.
  *
  * ── Why this file exists ──────────────────────────────────────────────────────
- * `ICH_E3_STRUCTURE` is the one definition of what a Clinical Study Report
- * contains on this platform: the CSR job runner drafts from a copy of it, the
- * Module 5 assembly QC derives its required-section list from it, and the
- * workflow routes serve it as the section catalog. A section missing from it is
- * missing from every CSR the platform produces — and nothing said so, because
- * the existing structure test checks for a "backbone" (efficacy, safety, study
- * population, appendices) rather than for the guideline's own numbered outline.
+ * Until 2026-10-29 the builder drafted from its own outline, ICH_E3_STRUCTURE:
+ * 46–50 nodes, an invented §2.1–2.10 synopsis decomposition and §8.1–8.2, and
+ * no §11.4.x, §12.2.x, §12.3.x, §12.4.x, §14.x or §16.x children. The platform's
+ * one model of a CSR is ICH_E3_GUIDANCE (server/services/ind/ctd/
+ * csr-e3-guidance.ts, 119 headings), and the job runner, the csr-workflow
+ * board, workflow-source-import and the M5 clinical QC all read the copy. A
+ * heading missing from the copy was missing from every CSR the platform built.
  *
- * Two sections of ICH E3 were absent: §9.8 (changes in the conduct of the
- * study or planned analyses — protocol amendments and SAP changes, which a
- * reviewer reads first when the analysis differs from the plan) and §12.6
- * (safety conclusions). A CSR drafted from the structure had no place for
- * either, reported every required section drafted, and passed the M5 gate.
- *
- * ── What is pinned, and what deliberately is not ──────────────────────────────
- * The guideline's numbering IS the contract, so it is asserted by number:
- * sixteen top-level sections in order, and the second-level sections E3 itself
- * enumerates for §9–§12. The synopsis (§2) and objectives (§8) children are the
- * platform's own decomposition — E3 does not number them — so their presence is
- * not pinned here. Whether §14–§16 are mandatory depends on what a given study
- * produced; that policy belongs to the M5 QC, not to this outline, so only the
- * flags E3 leaves no room on (§1–§13 required) are asserted.
+ * Slice 2 of docs/design/CSR_END_TO_END_2026-10-29.md converged the builder
+ * onto ICH_E3_GUIDANCE and deleted the copy. This file holds it there: every
+ * E3 number in the builder's tree, E3's titles, nothing the guidance does not
+ * number, and e3SectionDraftingMode honoured — §3 and §14–16 are 'manual' and
+ * are never a model drafting target.
  */
 
 import { describe, it, expect } from 'vitest';
-import { ICH_E3_STRUCTURE, type CSRSection } from '../csr-builder';
+import * as builder from '../csr-builder';
+import { flattenICHE3Sections, getICHE3Structure, resolveCSRDraftTargets, csrSectionSelectionRefusal } from '../csr-builder';
+import { ICH_E3_GUIDANCE, e3Children, e3SectionDraftingMode } from '../ind/ctd/csr-e3-guidance';
 
-const E3_TOP_LEVEL = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'];
+const E3_NUMBERS = ICH_E3_GUIDANCE.map((s) => s.number);
+const flat = () => flattenICHE3Sections(getICHE3Structure());
 
-/** The second-level sections ICH E3 numbers itself. */
-const E3_NUMBERED_SUBSECTIONS: Readonly<Record<string, readonly string[]>> = {
-  '9': ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7', '9.8'],
-  '10': ['10.1', '10.2'],
-  '11': ['11.1', '11.2', '11.3', '11.4'],
-  '12': ['12.1', '12.2', '12.3', '12.4', '12.5', '12.6'],
-};
-
-const byNumber = (n: string): CSRSection | undefined => ICH_E3_STRUCTURE.find((s) => s.number === n);
-
-describe('ICH_E3_STRUCTURE follows the ICH E3 numbered outline', () => {
-  it('carries the sixteen top-level sections, in order', () => {
-    expect(ICH_E3_STRUCTURE.map((s) => s.number)).toEqual(E3_TOP_LEVEL);
+describe('the CSR builder outline is ICH_E3_GUIDANCE', () => {
+  it('carries every ICH_E3_GUIDANCE heading, in report order, and nothing else', () => {
+    expect(E3_NUMBERS.length).toBeGreaterThanOrEqual(119);
+    expect(flat().map((s) => s.number)).toEqual(E3_NUMBERS);
   });
 
-  it.each(Object.entries(E3_NUMBERED_SUBSECTIONS))(
-    'section %s carries exactly the subsections E3 numbers under it',
-    (parent, expected) => {
-      const section = byNumber(parent);
-      expect(section, `top-level section ${parent} missing`).toBeDefined();
-      expect(
-        (section!.childSections ?? []).map((c) => c.number),
-        `E3 §${parent} subsections`,
-      ).toEqual(expected);
-    },
-  );
-
-  it('names the two sections a CSR reviewer opens when the analysis differs from the plan', () => {
-    const changes = byNumber('9')!.childSections!.find((c) => c.number === '9.8');
-    const safetyConclusions = byNumber('12')!.childSections!.find((c) => c.number === '12.6');
-    expect(changes?.title).toMatch(/changes in the conduct/i);
-    expect(safetyConclusions?.title).toMatch(/safety conclusions/i);
-    expect(changes?.required).toBe(true);
-    expect(safetyConclusions?.required).toBe(true);
-  });
-
-  it('marks §1–§13 required — E3 leaves no discretion on the body of the report', () => {
-    for (const n of E3_TOP_LEVEL.slice(0, 13)) {
-      expect(byNumber(n)?.required, `§${n} must be required`).toBe(true);
+  it("uses E3's titles and nests each heading under its E3 parent", () => {
+    const byNumber = new Map(ICH_E3_GUIDANCE.map((s) => [s.number, s]));
+    for (const node of flat()) {
+      expect(node.title, `§${node.number}`).toBe(byNumber.get(node.number)!.title);
+      expect((node.childSections ?? []).map((c) => c.number), `§${node.number} children`)
+        .toEqual(e3Children(node.number).map((c) => c.number));
     }
   });
 
-  it('every child number extends its parent, and no number repeats anywhere in the tree', () => {
-    const seen = new Set<string>();
-    for (const s of ICH_E3_STRUCTURE) {
-      expect(seen.has(s.number), `duplicate section ${s.number}`).toBe(false);
-      seen.add(s.number);
-      for (const c of s.childSections ?? []) {
-        expect(c.number.startsWith(`${s.number}.`), `${c.number} is filed under §${s.number}`).toBe(true);
-        expect(seen.has(c.number), `duplicate section ${c.number}`).toBe(false);
-        seen.add(c.number);
-      }
+  it('has no builder-invented synopsis or objectives children', () => {
+    const numbers = new Set(flat().map((s) => s.number));
+    for (const invented of ['2.1', '2.8', '2.10', '8.1', '8.2']) expect(numbers.has(invented)).toBe(false);
+  });
+
+  it('records the E3 drafting mode on every heading', () => {
+    for (const node of flat()) expect(node.draftingMode, `§${node.number}`).toBe(e3SectionDraftingMode(node.number));
+  });
+
+  it('marks §1–§13 required', () => {
+    for (const n of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']) {
+      expect(getICHE3Structure().find((s) => s.number === n)?.required, `§${n}`).toBe(true);
     }
+  });
+
+  it('no longer exports the duplicate outline or a second section-number list', () => {
+    expect('ICH_E3_STRUCTURE' in builder).toBe(false);
+    expect('ICH_E3_STRUCTURE' in (builder.default as Record<string, unknown>)).toBe(false);
+  });
+});
+
+describe('drafting targets honour e3SectionDraftingMode', () => {
+  it('a full build drafts every narrative heading that carries content, and no manual heading', () => {
+    const targets = resolveCSRDraftTargets().map((s) => s.number);
+    const expected = ICH_E3_GUIDANCE.filter((s) => e3SectionDraftingMode(s.number) === 'narrative' &&
+      (e3Children(s.number).length === 0 || (s.contains?.length ?? 0) > 0)).map((s) => s.number);
+    expect(targets).toEqual(expected);
+    expect(targets).toContain('12.2.1');
+    expect(targets).toContain('11.4.1');
+    expect(targets.some((n) => n === '3' || /^(14|15|16)(\.|$)/.test(n))).toBe(false);
+  });
+
+  it('a selected heading drafts its narrative subtree', () => {
+    expect(resolveCSRDraftTargets(['12.2']).map((s) => s.number)).toEqual(['12.2.1', '12.2.2', '12.2.3', '12.2.4']);
+    expect(resolveCSRDraftTargets(['12.2.1']).map((s) => s.number)).toEqual(['12.2.1']);
+  });
+
+  it.each(['3', '14', '14.3.1', '15', '16', '16.2.7'])('refuses manual §%s by name', (n) => {
+    expect(csrSectionSelectionRefusal([n])?.code).toBe('CSR_SECTION_MANUAL');
+    expect(() => resolveCSRDraftTargets([n])).toThrow('CSR_SECTION_MANUAL');
+  });
+
+  it.each([[['99']], [['2.1']], [['5', '5']], [[]]])('refuses an invalid selection %j', (sel) => {
+    expect(csrSectionSelectionRefusal(sel as string[])?.code).toBe('CSR_SECTION_SELECTION_INVALID');
   });
 });

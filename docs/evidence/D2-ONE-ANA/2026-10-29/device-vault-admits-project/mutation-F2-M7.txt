@@ -1,0 +1,16 @@
+# F2-M7: the merge drops the register's actions
+# file: client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# mutation (find -> replace):
+-  ...(risk.availableActions ?? []), 
++  
+   ---
+
+ × device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 122ms
+   → expected [ …(5) ] to include 'Switch the matrix between initial and…'
+ ✓ device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 154ms
+ ✓ device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 95ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+exit=1
+restored byte for byte: yes (sha256 54ff51fca4efd579)

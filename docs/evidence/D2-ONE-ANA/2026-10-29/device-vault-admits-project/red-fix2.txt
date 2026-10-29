@@ -1,0 +1,13 @@
+# Fix 2 red: client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx against head (host and EngineeringSurface unchanged)
+# timeout 240 npx vitest run client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+# In the first case the register (Hazards identified 6, HZ-01) and the trace (DI-03) are already on screen; the failure is AnA's context.
+ × device-engineering: AnA sees the open project's risk register and design-control trace > carries the register's and the trace's facts, summaries and actions in the one context 5168ms
+   → expected undefined to be 6 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > never carries the previous project's register or trace under the next project 5033ms
+   → expected undefined to be 6 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > after leaving Engineering and coming back, carries nothing from the earlier visit while it reads again 5028ms
+   → expected undefined to be 6 // Object.is equality
+ × device-engineering: AnA sees the open project's risk register and design-control trace > settles: handing the panels' context up does not re-render the host endlessly 5021ms
+   → expected undefined to be 3 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

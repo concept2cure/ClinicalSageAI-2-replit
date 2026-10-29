@@ -1,0 +1,24 @@
+# RED: the new client test in the tree, against client/src/concept2cure/v2/surfaces/Labeling.tsx at HEAD (swapped in for one run, restored from a copy).
+# npx vitest run client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx   (exit 1)
+
+ × approving a translation opens the signature dialog > a translation in review offers Approve, not Advance; one still pending offers Advance 232ms
+ × approving a translation opens the signature dialog > opens the dialog for what is signed, with the approval meanings, and sends nothing yet 72ms
+ × approving a translation opens the signature dialog > closing the dialog sends nothing and leaves the translation in review 58ms
+ × the signed approval > sends the approval and the signature components to the signed route 52ms
+ × the signed approval > shows the translation approved once the server confirms it 50ms
+ × the signed approval > a refusal keeps the dialog open with the server's sentence, and the translation stays in review 57ms
+ × the signed approval > a password the ceremony did not accept (401) is said once, ending "Nothing was signed." 47ms
+ × the signed approval > a dropped connection says the outcome is unconfirmed, not that nothing was signed 46ms
+ × the signed approval > an answer that carries no signature is not shown as approved 48ms
+ ✓ the other steps need no signature, as before > Advance moves a pending translation to in progress, and no step sends approved unsigned 63ms
+      Tests  9 failed | 1 passed (10)
+
+ FAIL  client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx > approving a translation opens the signature dialog > a translation in review offers Approve, not Advance; one still pending offers Advance
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Approve/`
+
+Here are the accessible roles:
+
+  button:
+
+
+restored: MATCH b0fe30baff1029fa9b8329d2685a207eea690c030e71c467bb9755fe01787c38

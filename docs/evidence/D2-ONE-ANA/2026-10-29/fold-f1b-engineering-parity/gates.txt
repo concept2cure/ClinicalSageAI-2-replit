@@ -1,0 +1,7 @@
+ci:undefined-css-classes exit 0 :: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+ci:class-vocabulary exit 0 :: [ci:class-vocabulary] OK — 5669 file(s) scanned, no restated class vocabulary.
+ci:fixture-fallback exit 0 :: ✅ no new ungated fixture fallback. 0 baselined.
+ci:unauthenticated-fetch exit 0 :: ✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+ci:launch-scope-api exit 0 :: ci:launch-scope-api: 537 API paths named by launch and shell screens; none refused. {"launch":487,"infrastructure":2,"never-gated":48}
+check-ana-surface-context exit 0 :: [ci:ana-surface-context] OK — 112 of 117 routable surface ids publish screen state (baseline 112 exact), 5 exempt, 0 still blind.
+ci:launch-scope-api:selftest exit 0 :: selftest PASSED — the gate flags a launch screen that production would refuse.

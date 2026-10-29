@@ -1,0 +1,22 @@
+# Part C red at 43fb57cc, with the new cases only (ProjectDossier.tsx, ProjectSide.tsx and ProjectHome.tsx as at head).
+# npx vitest run client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx -t "readiness card's market line"
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own
+   → EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain 'Open EMA MAA editing copy'
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > with no editing copy the line says where one is made, in the rows' words, and has nothing to click
+   → PMDA · JNDA's line on the readiness card: expected 'PMDA · JNDA: 0% · 0 of 4 sections app…' to contain 'No editing copy of this market\'s doc…'
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > two documents bound to the market's filing: said, and neither is opened
+   → EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain '2 documents are bound to this filing,…'
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > when the documents could not be read, the line says its copy is not known, never that there is none
+   → EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain 'The project\'s documents could not be…'
+ × client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > while the documents are read, the line says so and has nothing to click
+   → EMA · MAA's line on the readiness card: expected 'EMA · MAA: 0% · 0 of 4 sections appro…' to contain 'Reading the project\'s documents…'
+
+# What each line read, in full (the card's words only, nothing to click):
+Received: "EMA · MAA: 0% · 0 of 4 sections approved or locked."
+Received: "PMDA · JNDA: 0% · 0 of 4 sections approved or locked."
+Received: "EMA · MAA: 0% · 0 of 4 sections approved or locked."
+Received: "EMA · MAA: 0% · 0 of 4 sections approved or locked."
+Received: "EMA · MAA: 0% · 0 of 4 sections approved or locked."
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 21 skipped (26)

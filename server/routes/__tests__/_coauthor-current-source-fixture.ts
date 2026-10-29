@@ -36,6 +36,7 @@ export async function installCurrentSnapshotActor(pg:PGlite,args:{organizationId
     ALTER TABLE authoring_documents ADD COLUMN IF NOT EXISTS created_by text;
   `);
   await pg.query("INSERT INTO organizations(id,name,status) VALUES($1,$2,'active') ON CONFLICT(id) DO UPDATE SET status='active'",[args.organizationId,'Synthetic source writer tenant']);
+  // tenant-isolation-safe: seeds a global identity row in this fixture's own in-memory PGlite; never runs against a shared database
   await pg.query("INSERT INTO users(id,name,email,status) VALUES($1,$2,$3,'active') ON CONFLICT(id) DO UPDATE SET email=EXCLUDED.email,status='active'",[args.userId,'Synthetic filing author',args.email]);
   await pg.query('UPDATE organization_users SET role=$3 WHERE organization_id=$1 AND user_id=$2',[args.organizationId,args.userId,args.role]);
   await pg.query('INSERT INTO organization_users(organization_id,user_id,role) SELECT $1,$2,$3 WHERE NOT EXISTS(SELECT 1 FROM organization_users WHERE organization_id=$1 AND user_id=$2)',[args.organizationId,args.userId,args.role]);

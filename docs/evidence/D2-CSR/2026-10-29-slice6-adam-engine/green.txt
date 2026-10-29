@@ -1,0 +1,174 @@
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a run whose source receipt was revoked, typed, never as an empty pack
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses when the person has no access to the open project
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses a section no retained table supports (12.5 vital signs) instead of borrowing safety tables
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > refuses without an open project or an identified member, and on a malformed selection
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence fails closed > says a failed read failed, without driver text
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > returns the §12.2 tables, their digest and limitations, within the result budget
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence returns engine tables bound to their digest > pages a large table by whole rows instead of cutting it
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reports an AE count one off from aeBySOC as not reconciling, with the cell value
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > reconciles figures that match and flags a figure no table holds
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses to reconcile against evidence other than the digest the draft was written from
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence reconciles drafted figures to the cells > refuses malformed claims rather than reporting them reconciled
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is offered, handled, classed read, in launch scope, engine-presented and deterministic
+ ✓ server/services/ana/__tests__/csr-section-evidence-tool.test.ts > get_csr_section_evidence is wired > is the first thing the clinical.study-report skill does for a results section
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over the FDA 10 GB gateway limit
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > does not flag a 5 GiB FDA package (inside the 10 GB ESG range)
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required)
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a NDA target, and says why on the step
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes no Module 3 for a MAA target, and says why on the step
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > composes Module 3 for its US IND target, with the IND’s regional section, not the marketing one
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis
+ ✓ server/services/csr/__tests__/lmn201-synthetic-tables.integration.test.ts > LMN-201-like 500-subject synthetic CSR table journey > generates and reconciles source-backed ICH E3 tables with no invented statistical inference
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a treatment-emergent ADAE row whose subject is outside the ADSL safety population
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE subject that ADSL does not list, and never adds it as a participant
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unmapped planned treatment
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a reassigned actual treatment
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a subject still ongoing at the data cut
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an unknown sex
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a severity outside MILD/MODERATE/SEVERE
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an uncoded treatment-emergent event
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a dataset in the wrong slot
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a different STUDYID
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a safety subject without exposure
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a missing variable by name, and an efficacy file for another protocol
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses an ADAE that cannot establish fatal outcomes or AE discontinuations, rather than counting them 0
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > cross-dataset consistency is refused, typed > refuses a last on-treatment value it cannot order, and two baselines
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > lists every ADSL subject once and no other, with populations from the flags
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > the derived source is exactly what the datasets record > derives the same source from SAS transport as from Dataset-JSON
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §10.1 reports the death and the loss to follow-up, and "not recorded" for what ADSL cannot establish
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.2 / §12.3 count TEAE subjects, the SAE and the fatal event against the safety population
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.1 exposure, §12.4 lab shifts and the Bayesian primary result come through
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §12.5 finally has evidence: change from baseline to the last on-treatment value
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: synthetic LMN-201-shaped ADaM → engine tables > §11.2 concomitant medications count subjects, and say when a class was not coded
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.5 is available from the vital-sign table, and its figures reconcile to their cells
+ ✓ server/services/csr/__tests__/adam-source-derivation.test.ts > end to end: §12.2 and §12.5 evidence packs reconcile every drafted figure > §12.2 reconciles the TEAE, SAE and fatal-event figures
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an unclaimed numerator beside a claimed denominator
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a rate written in words rather than with a percent sign
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > previews engine tables derived from the datasets, bound to the manifest digest, with no subject identifier
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a run while any named file is unapproved, and previews it as not approved
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > refuses a dataset whose current bytes are not the version the manifest pins
+ ✓ server/services/csr/__tests__/vault-adam-bundle.test.ts > an approved ADaM bundle in Vault tabulates through the governed source path > carries the derivation’s typed refusal out of the Vault path
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews actual deterministic aggregate tables with exact receipt and no participant rows
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > holds exact source locks until durable inputs are captured, then releases before unrelated composers
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > rolls back and performs no downstream work when input capture fails
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > previews unapproved source honestly but refuses to include it in a new run
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a review lifecycle for new runs
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a superseded lifecycle for new runs
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses a withdrawn lifecycle for new runs
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses an approval for different bytes
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses private before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses revoked before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses foreign before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses withdrawn before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses superseded before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses stale-digest before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses corrupt-bytes before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-json before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses invalid-observations before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > refuses oversized before publishing tables
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > allows a read-only member to preview an accessible source but not start a source-bound run
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not turn store errors into an empty candidate list
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > lists metadata only and requires the exact approval hash
+ ✓ server/services/csr/__tests__/vault-source-input.test.ts > exact canonical Vault supporting source > does not echo participant cell values or unknown uploaded keys in schema validation issues
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns aggregate tables and exact provenance without exposing frozen participant rows
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > requires current project access before reading the private receipt
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses a missing/foreign run rather than reporting a successful empty history
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained observations
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained digest
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained seal
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained program
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses altered retained organization
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > honors explicit data withdrawal without erasing the original receipt or returning fake empty tables
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > does not require an old historical source to remain the current Vault version or retain original bytes
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > returns an honest empty source-receipt history for an intact run that never selected a source
+ ✓ server/services/csr/__tests__/saved-clinical-tables.test.ts > verified retained CSR aggregate reconstruction > refuses an ambiguous study identity even in a correctly sealed input receipt
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a §11.4 model draft that states results nobody supplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a model draft of a statistical section that states nothing unsupplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not apply the guard to a non-statistical section
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders statuses no record uses, and the source did not declare, as "not recorded"
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a recorded zero as 0: a status used in one arm is a recorded classification in every arm
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > keeps a declared category with no subject as a recorded 0
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > renders a source that records every status byte-identically to the previous builder
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > labels completion by the basis the source declares, and keeps the previous label when it declares none
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > §10.1 disposition distinguishes an unrecorded status from a recorded zero > leaves every other table unchanged by the declarations
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > accepts declared categories and a basis
+ ✓ server/services/csr/__tests__/csr-disposition-recorded.test.ts > the csr-source.v1 contract carries the disposition declarations > refuses a disposition record whose status the declared categories omit, and a repeated category
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > uses sample SD and represents one-subject variability as unknown
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > includes Other in sex counts and screen failure in disposition
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > counts unique AE subjects, preserves recorded efficacy, and does not label fatal AEs as all study deaths
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > does not count baseline-abnormal lab subjects as staying normal
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps optional population totals unknown when an arm denominator is unrecorded
+ ✓ server/services/__tests__/csr-tabulation-source-correctness.test.ts > CSR descriptive tabulation correctness > keeps AE percentages unknown for an arm with no safety participants
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > IBM floating point > decodes the published constants 1.0, 0.1 and -118.625, and SAS missing values
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads Dataset-JSON v1.1 rows by column name, numeric strings left for the derivation
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > reads NDJSON and v1.0 item-group files
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a row whose length differs from the columns, a non-dataset JSON, and a two-dataset file
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > decodes SAS transport v5 observations: text, IBM numerics and missing values
+ ✓ server/services/csr/__tests__/adam-dataset-reader.test.ts > readAdamDataset > refuses a malformed transport file instead of reading past it
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-json-structure.test.ts > readDatasetJsonStructure > reads a v1.1 dataset: name, label, columns with their types, records
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-json-structure.test.ts > readDatasetJsonStructure > reads the NDJSON form: metadata first, one row per line
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-json-structure.test.ts > readDatasetJsonStructure > reads every item group of a v1.0 file
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-json-structure.test.ts > readDatasetJsonStructure > declines a JSON that is not a dataset, and a malformed one, by name
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > reads a dataset's name, label, variables and row count from the headers
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > does not count the blank padding of the last record as an observation
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > reads every member of a library, each with its own row count
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > a dataset with no observations has zero rows
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > declines what it does not read, by name
+ ✓ server/services/clinical-regulatory-evidence/__tests__/xpt-structure.test.ts > readXptStructure > recognises a transport file by its first record
+ Test Files  15 passed (15)
+      Tests  172 passed (172)

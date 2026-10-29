@@ -45,7 +45,7 @@
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import { pool } from '../../db.js';
 import type { PoolClient } from 'pg';
@@ -82,6 +82,8 @@ import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql, wantsFacets } from '../../services/vault/vault-document-filter.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
+import { signedActAttempts, signGovernedAct } from '../governed-signed-act.js';
+import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 import { StorageIntegrityError } from '../../services/storage/storage-provider.js';
 /* The one translation from a CMC TEXT project id to the integer the
@@ -145,6 +147,15 @@ interface UploadFiling {
   placementStatus: string;
   confidence: string | null;
   rationale: string | null;
+  /**
+   * The person whose filing decision this is, and when (placed_by, placed_at;
+   * Part 11 review F4). Null for a suggestion, which names nobody. `placedBy`
+   * is null with `placedByRecorded` true when a person is recorded but their
+   * name cannot be read in this organisation.
+   */
+  placedBy: string | null;
+  placedByRecorded: boolean;
+  placedAt: string | null;
 }
 
 interface VaultFolder {
@@ -468,6 +479,10 @@ export interface UploadRow {
   placement_rationale: string | null;
   updated_at: string | Date | null;
   owner_name: string | null;
+  /** Who made the filing decision and when; NULL for a suggestion (F4). */
+  placed_by?: number | string | null;
+  placed_by_name?: string | null;
+  placed_at?: string | Date | null;
   /** Versions back through valid predecessors, this one included (VR-09). */
   version_count?: number | null;
   /** This version's lifecycle stage; null when it has no record: not reviewed (VR-13). */
@@ -497,6 +512,16 @@ function uploadTypeLabel(row: UploadRow): string {
   }
   if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   return 'File';
+}
+
+/** Who decided the filing, and when (Part 11 review F4); a suggestion names nobody. */
+function filingDecision(row: UploadRow): Pick<UploadFiling, 'placedBy' | 'placedByRecorded' | 'placedAt'> {
+  const at = row.placed_at ? new Date(row.placed_at) : null;
+  return {
+    placedBy: row.placed_by_name ?? null,
+    placedByRecorded: row.placed_by != null,
+    placedAt: at && !Number.isNaN(at.getTime()) ? at.toISOString() : null,
+  };
 }
 
 /** Where the leaf sits among its document's versions (VR-09) and in review (VR-13). */
@@ -549,6 +574,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       placementStatus,
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
+      ...filingDecision(row),
     },
     details: {
       documentTitle: row.document_title,
@@ -1351,6 +1377,7 @@ export default function createProjectVaultRoutes(): Router {
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
+                  d.placed_by, d.placed_at, COALESCE(pb.name, pb.email) AS placed_by_name,
                   d.updated_at,
                   ${vaultBinaryAvailableSql('d')} AS original_file_available,
                   ${vaultDispositionChoiceSql('d')} AS disposition,
@@ -1359,6 +1386,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${vaultLifecycleStageSql('d')} AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
+             LEFT JOIN LATERAL public.actor_name(d.placed_by) pb ON TRUE
              ${versionCountLateral('d')}
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
@@ -2425,6 +2453,95 @@ export default function createProjectVaultRoutes(): Router {
       }));
     } catch (err) {
       return annotationFailure(res, err, 'write');
+    }
+  });
+
+  /* ── Seals (VR-19, docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md) ──────────
+     A seal is an e-signed record of every current document as it stood. It is
+     sealed through the one signing ceremony (signGovernedAct), whose signature
+     binds the seal's manifest hash (the `vault-data-room-seal` binder), and is
+     read and verified by anyone the project admits. */
+
+  /** The index number the tree gives each document (VR-15), by version id. */
+  const cabinetNumbers = (view: VaultViewId, rows: Array<Record<string, unknown>>): Map<string, string | null> => {
+    const numbers = new Map<string, string | null>();
+    const walk = (nodes: Array<VaultFolder | VaultDoc>) => {
+      for (const n of nodes) {
+        if ('children' in n) walk(n.children);
+        else if (n.docId) numbers.set(n.docId, n.num && n.num !== '—' ? n.num : null);
+      }
+    };
+    walk([filingCabinet(view, rows as unknown as UploadRow[])]);
+    return numbers;
+  };
+
+  router.get('/:id/seals', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    try {
+      const { listSeals } = await import('../../services/vault/vault-seal.service.js');
+      return res.json({ success: true, data: { seals: await listSeals(pool, orgId, id) } });
+    } catch (err) {
+      logger.error('vault seal list failed', { programId: id, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'SEALS_UNAVAILABLE', message: 'The seals could not be read. This is not an empty list.' });
+    }
+  });
+
+  router.post('/:id/seals', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const { readSealDocumentRows, sealManifest, recordSeal } = await import('../../services/vault/vault-seal.service.js');
+    const sealId = randomUUID();
+    const target = `vault-data-room-seal:${sealId}`;
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason : '';
+    await signGovernedAct(req, res, {
+      domain: 'vault',
+      target,
+      // A seal is a decision on the record, as a freeze is: the signer approves
+      // it as the Vault's state, or answers for it (DECISION_ACT_MEANINGS).
+      meanings: DECISION_ACT_MEANINGS,
+      codeStatus: { SEAL_PROGRAM_NOT_FOUND: 404, SEAL_REASON_REQUIRED: 400 },
+      run: async (client, signingOrg, userId) => {
+        const rows = await readSealDocumentRows(client, signingOrg, id);
+        const numbers = cabinetNumbers(await resolveVaultView(id, signingOrg), rows);
+        const manifest = sealManifest(id, rows, (docId) => numbers.get(docId) ?? null);
+        const seal = await recordSeal(client, { id: sealId, organizationId: signingOrg, programId: id, userId, reason, manifest });
+        return { target, payload: { sealId, programId: id, manifestSha256: seal.manifestSha256, documentCount: seal.documentCount },
+          body: { data: { seal } } };
+      },
+    });
+  });
+
+  router.get('/:id/seals/:sealId/verify', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const sealId = String(req.params.sealId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(sealId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const { verifySeal, VaultSealError } = await import('../../services/vault/vault-seal.service.js');
+    try {
+      // With ?bytes=1 each sealed file is re-read through the one verified reader.
+      const checkBytes = req.query.bytes === '1'
+        ? async (doc: { id: string }, row: Record<string, unknown>) => {
+          const read = await readVerifiedVaultBytes({
+            storageVersionId: typeof row.storage_version_id === 'string' ? row.storage_version_id : null,
+            storageKey: typeof row.s3_key === 'string' ? row.s3_key : null,
+            storageProvider: typeof row.storage_provider === 'string' ? row.storage_provider : null,
+            organizationId: orgId,
+          }, typeof row.content_hash === 'string' ? row.content_hash : null, doc.id);
+          return read.ok ? null : (read.message ?? 'The stored file could not be read.');
+        }
+        : undefined;
+      const { seal, verification } = await verifySeal(pool, { organizationId: orgId, programId: id, sealId, checkBytes });
+      return res.json({ success: true, data: { seal, verification } });
+    } catch (err) {
+      if (err instanceof VaultSealError) return res.status(404).json({ success: false, error: err.code, message: err.message });
+      logger.error('vault seal verify failed', { sealId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'SEAL_VERIFY_UNAVAILABLE', message: 'The seal could not be verified. This is not a verdict.' });
     }
   });
 

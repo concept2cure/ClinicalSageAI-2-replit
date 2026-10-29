@@ -1,0 +1,12 @@
+# H7: the card's door opens the copy at Module 1, not whole
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: 'onClick={() => onOpen(copy.doc, null)}'
+# with:     "onClick={() => onOpen(copy.doc, 'M1')}"
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own 44ms
+ × Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 42ms
+      Tests  2 failed | 30 passed (32)
+AssertionError: the line measures the whole filing, so no module rides along: expected 'M1' to be undefined
+AssertionError: the line measures the whole filing, so no module rides along: expected 'M1' to be undefined
+# restored: sha256 matches (ed20cd2989f0b397)

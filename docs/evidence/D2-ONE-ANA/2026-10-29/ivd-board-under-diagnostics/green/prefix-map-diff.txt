@@ -1,0 +1,10 @@
+# The whole prefix -> modules map the gate builds (buildPrefixMap() over the real registry), before and after.
+# Before: working tree at 1746fa6a8 with no change of this slice. After: with it.
+# Prefixes: 284 before, 284 after. diff before after:
+
+146,147c146,147
+< /api/ivd-assessments	ivd-completeness
+< /api/ivd-completeness	ivd-completeness
+---
+> /api/ivd-assessments	device-diagnostics,ivd-completeness
+> /api/ivd-completeness	device-diagnostics,ivd-completeness

@@ -183,4 +183,26 @@ describe('a same-bytes re-upload to the Vault (VR-05, D5)', () => {
     ]);
     expect(res.body.document.documentTitle).toBe('Protocol');
   });
+
+  it('a retry asking to file it elsewhere changes nothing, and says its filing differs (Part 11 review F3)', async () => {
+    // The filing changes through Confirm or Move (placeVaultDocument), as a
+    // person's decision with its own audit row. A retry that named another
+    // folder was told "nothing changed" with no word that the folder was ignored.
+    const filingOf = async () => (await owner.query(
+      `SELECT folder_id, evidence_kind, ctd_section, placement_status FROM vault.documents WHERE document_code = $1`, [CODE])).rows[0];
+    const before = await filingOf();
+    const elsewhere = before.folder_id === 'qms' ? 'eng' : 'qms';
+    // The recorded title and type, so that only the filing differs.
+    const res = await upload({ documentTitle: 'Protocol', documentType: 'OTHER', folderId: elsewhere, evidenceKind: 'qms', ctdSection: '4.1' });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await filingOf()).toEqual(before);
+    expect(res.body.reupload).toMatchObject({ unchanged: true, changes: [] });
+    expect(res.body.reupload.differs).toEqual(expect.arrayContaining([
+      { field: 'folder_id', recorded: before.folder_id, requested: elsewhere },
+    ]));
+    for (const d of res.body.reupload.differs as Array<{ field: string; recorded: string | null; requested: string }>) {
+      expect(d.requested).not.toBe(d.recorded);
+    }
+  });
 });

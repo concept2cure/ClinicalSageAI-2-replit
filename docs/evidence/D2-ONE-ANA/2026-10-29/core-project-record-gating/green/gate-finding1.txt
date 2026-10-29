@@ -1,0 +1,10 @@
+# core-project-record-gating.test.ts with projects claiming /api/c2c/projects. Trimmed to the verdict lines.
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > reads the calls from the screens and the routes from the routers 2ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a free-tier organization that holds Projects by tier and has no grant 12ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a self-serve organization whose administrator switched Submission Center off 7ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it to a paying organization with the launch grants, as before 8ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > serves it, as before, to an organization that holds Submission Center and not Projects 7ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > refuses it to an organization that holds no claimant: Projects and Submission Center switched off, free tier 10ms
+ ✓ server/middleware/__tests__/core-project-record-gating.test.ts > the project record under module enforcement > is claimed by projects beside the claims it already had 1ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)

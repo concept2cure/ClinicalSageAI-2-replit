@@ -1,0 +1,12 @@
+M9: AnA's matrix actions register under risk on Engineering
+file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+replaced: "useRiskRegister({ ...scoped, surfaceId: 'device-engineering' })"
+with: "useRiskRegister({ ...scoped, surfaceId: 'risk' })"
+test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+exit: 1
+Tests  2 failed | 16 passed (18)
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell 5040ms
+× client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed 5042ms
+sha256 before aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+sha256 after  aec554290b6b09fd88ec5e02602f7f7a30374733648a9e6ee4bd769113a8c870
+restored byte for byte: yes

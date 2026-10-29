@@ -1,0 +1,25 @@
+# Plain eslint, --no-ignore (the mdx files are ignored by default), on every changed and new file.
+# Head: the three product files at head gave 0 errors, 10 warnings (MdxSurfaceHost 4, EngineeringSurface 5, mdx-vault 1). The new files did not exist.
+# Now: 0 errors, 10 warnings, the same ten; the new module and the three new test files carry none.
+# EngineeringSurface.tsx was at exactly 500 counted lines at head (max-lines, skipBlankLines and skipComments); it is at 498 now.
+
+timeout 240 npx eslint --no-ignore <files>
+
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx
+  217:8   warning  Function 'MdxSurfaceHost' has too many lines (200). Maximum allowed is 100                                                                                                                        max-lines-per-function
+  217:8   warning  Function 'MdxSurfaceHost' has a complexity of 54. Maximum allowed is 15                                                                                                                           complexity
+  219:9   warning  The 'programs' logical expression could make the dependencies of useMemo Hook (at line 234) change on every render. To fix this, wrap the initialization of 'programs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  282:34  warning  Arrow function has a complexity of 16. Maximum allowed is 15                                                                                                                                      complexity
+
+client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+  116:8  warning  Function 'EngineeringSurface' has too many lines (440). Maximum allowed is 100                                                                                                         max-lines-per-function
+  116:8  warning  Function 'EngineeringSurface' has a complexity of 35. Maximum allowed is 15                                                                                                            complexity
+  145:9  warning  The 'dhf' conditional could make the dependencies of useMemo Hook (at line 207) change on every render. To fix this, wrap the initialization of 'dhf' in its own useMemo() Hook        react-hooks/exhaustive-deps
+  147:9  warning  The 'ecrs' conditional could make the dependencies of useMemo Hook (at line 207) change on every render. To fix this, wrap the initialization of 'ecrs' in its own useMemo() Hook      react-hooks/exhaustive-deps
+  148:9  warning  The 'issues' conditional could make the dependencies of useMemo Hook (at line 207) change on every render. To fix this, wrap the initialization of 'issues' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+server/routes/mdx-vault.ts
+  119:58  warning  Async arrow function has too many lines (144). Maximum allowed is 100  max-lines-per-function
+
+✖ 10 problems (0 errors, 10 warnings)
+

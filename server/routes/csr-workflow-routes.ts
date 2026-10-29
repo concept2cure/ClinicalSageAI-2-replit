@@ -24,19 +24,25 @@
  *                           provenance). Presence of a row == the section has
  *                           been drafted. Read via the existing org-scoped
  *                           getCSRSectionOutputs(jobId, orgId).
- *   - ICH_E3_STRUCTURE    — the canonical ICH E3 section catalog (labels +
- *                           required flags) via getICHE3Structure().
+ *   - ICH_E3_GUIDANCE     — the canonical ICH E3 tree (server/services/ind/
+ *                           ctd/csr-e3-guidance.ts), labels + required flags,
+ *                           via getICHE3Structure(). Since 2026-10-29 the
+ *                           builder has no outline of its own.
  *
  * HONESTY (regulated product — see the surface's SampleTag contract):
  *   - `program.code` is the constant 'ICH E3'. The CSR build pipeline conforms
- *     to ICH E3 by construction (ICH_E3_STRUCTURE); this is a guideline label,
+ *     to ICH E3 by construction (ICH_E3_GUIDANCE); this is a guideline label,
  *     not a per-record DB value.
  *   - Section `status` is derived strictly from what is persisted:
- *       drafted (a csr_section_outputs row exists for the section or one of its
- *       children) → 'draft'; otherwise → 'idle' (not started).
- *     The values 'review'/'complete'/'approved' are DELIBERATELY never emitted:
- *     csr_section_outputs has no review/approval status column, so those
- *     workflow states cannot be sourced honestly. See caveats.
+ *       drafted (a csr_section_outputs row exists for the section or any
+ *       heading beneath it, at any depth) → 'draft'; otherwise → 'idle'.
+ *     The values 'review'/'complete'/'approved' are DELIBERATELY never emitted
+ *     on these top-level rows. Since 2026-10-29 (CSR slice 3) per-heading
+ *     review state is recorded (csr_section_outputs.review_status, written
+ *     only by csr-section-review.ts) and is published in `headings`: every
+ *     heading of the canonical tree (all depths) with 'not_drafted' when no
+ *     output exists, else its effective review state (draft | in_review |
+ *     approved; an approval of since-redrafted text reads as draft).
  *   - `blocker` is true only for a REQUIRED section with no drafted content
  *     (a required section with no draft blocks CSR completion). Omitted (not
  *     false) otherwise, matching the fixture's optional shape.
@@ -59,8 +65,9 @@ import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '../db.js';
 import { csrBuildJobs } from '@shared/schema';
-import { getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
+import { flattenICHE3Sections, getICHE3Structure, type CSRSection } from '../services/csr-builder.js';
 import { getCSRSectionOutputs } from '../services/csr/csr-job-runner.js';
+import { effectiveReviewState, type CsrSectionReviewState } from '../services/csr/csr-section-review';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, readCsrProjectActor, resolveCsrScope } from '../services/csr/project-scope';
 import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
@@ -89,9 +96,25 @@ interface CsrWorkflowSection {
   blocker?: boolean;
 }
 
+/** One heading of the canonical ICH E3 tree, with the job's output state for it. */
+interface CsrWorkflowHeading {
+  num: string;
+  label: string;
+  depth: number;
+  /** 'manual' headings (§3, §14–16) are prepared from records, never drafted by a job. */
+  manual: boolean;
+  state: 'not_drafted' | CsrSectionReviewState;
+  staleApproval?: true;
+  contentHash?: string;
+  reviewerId?: number | null;
+  decidedAt?: string | null;
+  reason?: string | null;
+}
+
 interface CsrWorkflowBoard {
   program: CsrWorkflowProgram | null;
   sections: CsrWorkflowSection[];
+  headings: CsrWorkflowHeading[];
   meta: Record<string, unknown>;
   generatedAt: string;
 }
@@ -159,17 +182,16 @@ function resolveStudyTitle(rawSnapshot: unknown, studyId: string): string {
 
 /**
  * Map the canonical ICH-E3 top-level structure to the surface's section rows.
- * A top-level section counts as drafted when it (or any of its child sections)
- * has a persisted csr_section_outputs row. `draftedSet` empty ⇒ all-not-started.
+ * A top-level section counts as drafted when it, or any heading beneath it at
+ * any depth (job outputs are keyed by the draftable leaves, e.g. 12.2.1), has a
+ * persisted csr_section_outputs row. `draftedSet` empty ⇒ all-not-started.
  */
 function buildSections(
   structure: CSRSection[],
   draftedSet: Set<string>,
 ): CsrWorkflowSection[] {
   return structure.map((section) => {
-    const drafted =
-      draftedSet.has(section.number) ||
-      (section.childSections?.some((c) => draftedSet.has(c.number)) ?? false);
+    const drafted = flattenICHE3Sections([section]).some((node) => draftedSet.has(node.number));
 
     const row: CsrWorkflowSection = {
       num: section.number,
@@ -182,6 +204,40 @@ function buildSections(
     }
     return row;
   });
+}
+
+type SectionOutputRow = Awaited<ReturnType<typeof getCSRSectionOutputs>>[number];
+
+function iso(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString();
+  return typeof value === 'string' && value ? value : null;
+}
+
+/** Every heading of the canonical tree, with the job's output and review state. */
+function buildHeadings(structure: CSRSection[], outputs: readonly Partial<SectionOutputRow>[]): CsrWorkflowHeading[] {
+  const bySection = new Map(outputs.map((o) => [String(o.sectionNumber), o]));
+  return flattenICHE3Sections(structure).map((node) => {
+    const heading: CsrWorkflowHeading = {
+      num: node.number, label: node.title, depth: node.number.split('.').length,
+      manual: node.draftingMode === 'manual', state: 'not_drafted',
+    };
+    const output = bySection.get(node.number);
+    if (!output) return heading;
+    const { state, staleApproval } = effectiveReviewState(output);
+    return {
+      ...heading, state, ...(staleApproval ? { staleApproval: true as const } : {}),
+      contentHash: typeof output.contentHash === 'string' ? output.contentHash : undefined,
+      reviewerId: output.reviewerId ?? null, decidedAt: iso(output.reviewDecidedAt), reason: output.reviewReason ?? null,
+    };
+  });
+}
+
+/** The retained run the job is bound to, from its snapshot; null when none. */
+function boundSourceRunId(rawSnapshot: unknown): string | null {
+  const snapshot = rawSnapshot && typeof rawSnapshot === 'object' ? rawSnapshot as Record<string, unknown> : {};
+  const source = snapshot.evidenceSource && typeof snapshot.evidenceSource === 'object'
+    ? snapshot.evidenceSource as Record<string, unknown> : {};
+  return typeof source.runId === 'string' && source.runId ? source.runId : null;
 }
 
 // ─── Router Factory ─────────────────────────────────────────────────────────────
@@ -246,6 +302,7 @@ export default function createCsrWorkflowRoutes(): Router {
         const board: CsrWorkflowBoard = {
           program: null,
           sections: buildSections(getICHE3Structure(), new Set<string>()),
+          headings: buildHeadings(getICHE3Structure(), []),
           meta: {
             hasProgram: false,
             projectId: projectId ?? null,
@@ -273,9 +330,11 @@ export default function createCsrWorkflowRoutes(): Router {
       const board: CsrWorkflowBoard = {
         program,
         sections,
+        headings: buildHeadings(getICHE3Structure(), outputs),
         meta: {
           hasProgram: true,
           jobId: job.id,
+          sourceRunId: boundSourceRunId(job.studyInfoSnapshot),
           studyId: job.studyId,
           jobStatus: job.status,
           projectId: job.projectId,

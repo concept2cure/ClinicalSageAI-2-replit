@@ -1,0 +1,42 @@
+Type check.
+
+npm run -s typecheck:fast (the whole tree, NODE_OPTIONS --max-old-space-size=24576) was killed (exit 137):
+this container has 15 GB of memory and no swap.
+
+So the 17 files this slice changes or adds were checked with everything they import, under the
+repo's own compiler options: a scratch tsconfig that extends tsconfig.json, lists those files, and
+adds the ambient declarations a file list leaves out (every *.d.ts under client/src, server and
+shared; the Express Request augmentations in server/types/auth-request.ts, server/auth.ts,
+server/auth/index.ts, server/middleware/auth.ts, server/middleware/tenantContext.ts and
+server/routes/tenant-traceability.ts; and one file carrying the vite/client reference).
+
+NODE_OPTIONS=--max-old-space-size=9000 npx tsc -p tsconfig.f1b.json
+0 errors; exit 0
+
+Files:
+  client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+  client/src/concept2cure/mdx/hooks/useEngineering.ts
+  client/src/concept2cure/v2/surfaces/Risk.tsx
+  client/src/concept2cure/v2/surfaces/RiskRegister.tsx
+  client/src/concept2cure/v2/surfaces/DesignControls.tsx
+  client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx
+  client/src/concept2cure/v2/projectScopedRead.tsx
+  shared/navigation/surface-actions.ts
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.traceKeyed.test.tsx
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.unreadable.test.tsx
+  client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+  client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+  client/src/concept2cure/v2/__tests__/designControlsNoFixtures.test.tsx
+  server/middleware/__tests__/launch-scope-device-features.test.ts
+  server/types/auth-request.ts
+  server/auth/index.ts
+  server/middleware/auth.ts
+  server/middleware/tenantContext.ts
+  server/auth.ts
+  server/routes/tenant-traceability.ts
+  client/src/concept2cure/components/concept2cure-auth/Concept2CureLogin.tsx
+
+The whole-tree typecheck:fast has not been run on this slice. It is the lead's pre-push gate.

@@ -1,0 +1,16 @@
+# F2-M4: Engineering reports the panels' context on every render, not on a change of content
+# file: client/src/concept2cure/mdx/surfaces/engineeringPanelsContext.ts
+# test: client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx
+# mutation (find -> replace):
+-      latest.current.report?.(latest.current.ctx);
+-    }, [key]);
++      latest.current.report?.(latest.current.ctx);
++    });
+   ---
+
+ × device-engineering: the panels' context hand-off settles > stops re-rendering the host once the register and the trace have reported 663ms
+   → expected 189 to be +0 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+exit=1
+restored byte for byte: yes (sha256 e3db90d8e1905cd1)

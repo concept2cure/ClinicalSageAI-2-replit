@@ -64,7 +64,8 @@ import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
-import type { ChangeType, Classification, LinkType, Relationship } from './changeData';
+import { ChangeLinkForm } from './ChangeLinkForm';
+import type { ChangeType, Classification, Relationship } from './changeData';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -585,31 +586,15 @@ function ChangeControlSession({
         );
       })()}
       {drawer?.kind === 'link' && (
-        <C2CForm
-          config={{
-            eyebrow: 'Change control',
-            title: `Link a record to ${drawer.change.changeNumber}`,
-            governed: 'The link is written to the audit trail under your name.',
-            submitLabel: 'Link record',
-            ...(refusal ? { notice: refusal } : {}),
-            fields: [
-              { key: 'linkType', label: 'Record type', type: 'select', required: true, half: true, options: optionsOf(LINK_TYPE_LABEL) },
-              { key: 'relationship', label: 'How it relates', type: 'select', half: true, options: optionsOf(RELATIONSHIP_LABEL) },
-              { key: 'linkedRef', label: 'Reference', type: 'text', required: true, placeholder: 'DEV-2026-041', desc: 'The record’s number as it appears in its own register.' },
-              { key: 'linkedLabel', label: 'Short description', type: 'text' },
-            ],
-          }}
+        <ChangeLinkForm
+          changeNumber={drawer.change.changeNumber}
+          refusal={refusal}
           onCancel={() => setDrawer(null)}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
-              await linkQmsChange(c.id, {
-                linkType: v.linkType as LinkType,
-                linkedRef: v.linkedRef.trim(),
-                linkedLabel: v.linkedLabel.trim() || undefined,
-                relationship: (v.relationship || undefined) as Relationship | undefined,
-              });
-              return `${v.linkedRef.trim()} was linked to ${c.changeNumber}.`;
+              await linkQmsChange(c.id, { ...v, relationship: v.relationship as Relationship | undefined });
+              return `${v.linkedRef} was linked to ${c.changeNumber}.`;
             });
           }}
         />

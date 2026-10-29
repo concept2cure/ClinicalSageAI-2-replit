@@ -1,0 +1,35 @@
+# Mutation probes. Each was a temporary edit to the test file only (no migration file
+# was touched), run once, then restored from a byte copy. The sha256 of the test file
+# before and after both probes: 83d339fc0914111a1e53842bd268d2bbe5251226208d5a5b70a4e0a831897247
+
+## Probe 1: admit the seed's table to the sweep allowlist (the wrong decision).
+## In the batch loop, the sweep SQL as read was given 'cre_evidence_sources' after 'api_keys':
+##   await pg.exec(rel === SWEEP ? readMig(rel).replace("    'api_keys'\n", "    'api_keys',\n    'cre_evidence_sources'\n") : readMig(rel));
+
+ × tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 29ms
+   → unpoliced tenant tables: expected [ 'cre_evidence_sources' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced
+AssertionError: unpoliced tenant tables: expected [ 'cre_evidence_sources' ] to deeply equal []
++   "cre_evidence_sources",
+      Tests  1 failed | 19 passed (20)
+
+## Probe 2: a new integer-keyed tenant table appears after the set ran, sweep not re-run.
+##   await pg.exec(`CREATE TABLE probe_new_tenant_rows (id serial primary key, organization_id integer, title text);`);
+
+ × tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 28ms
+   → unpoliced tenant tables: expected [ 'probe_new_tenant_rows' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced
+AssertionError: unpoliced tenant tables: expected [ 'probe_new_tenant_rows' ] to deeply equal []
++   "probe_new_tenant_rows",
+      Tests  1 failed | 19 passed (20)
+
+## Restore
+$ sha256sum tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+83d339fc0914111a1e53842bd268d2bbe5251226208d5a5b70a4e0a831897247  tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+$ grep -c PROBE- tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+0
+$ git diff --stat   (the fixture change only)
+ .../schema-contract/tenant-isolation-sweep.contract.test.ts | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)

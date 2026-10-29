@@ -194,4 +194,34 @@ describe('Quality records', () => {
     }));
     await waitFor(() => expect(screen.getByText('Action 1 was closed.')).toBeTruthy());
   });
+
+  it('shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register', () => {
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC, { ...NC, id: 5, nc_number: 'NC-2026-005' }] }, loading: false, error: null };
+    H.reads['/api/capa-mdr/capa'] = { data: { rows: [{ ...CAPA, capaCode: 'CAPA-008', sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }] }] }, loading: false, error: null };
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+    const row = (nc: string) => screen.getByText(nc).closest('.qms-row') as HTMLElement;
+    expect(within(row('NC-2026-004')).getByText('CAPA-008')).toBeTruthy();
+    expect(within(row('NC-2026-005')).queryByText(/CAPA-/)).toBeNull();
+    cleanup();
+
+    H.reads['/api/capa-mdr/capa'] = { data: null, loading: false, error: 'HTTP 500' };
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+    expect(within(screen.getByText('NC-2026-004').closest('.qms-row') as HTMLElement).getByText('not read')).toBeTruthy();
+  });
+
+  it('tells the shell for AnA what the register read, and that a failed read is a failure', async () => {
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    const onContext = vi.fn();
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} onContext={onContext} />);
+    await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ tab: 'nonconforming', state: 'ready', count: 1 })));
+    const ctx = onContext.mock.calls.at(-1)![0];
+    expect(ctx.records).toEqual([expect.objectContaining({ nonconformance: 'NC-2026-004', disposition: 'awaiting disposition', lot: 'B-1021' })]);
+    expect(ctx.counts).toContainEqual({ label: 'Awaiting disposition', val: '1' });
+    cleanup();
+
+    H.reads['/api/mdx/qms/nonconforming'] = { data: null, loading: false, error: 'HTTP 500' };
+    const failed = vi.fn();
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} onContext={failed} />);
+    await waitFor(() => expect(failed).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'failed', count: null, records: [] })));
+  });
 });

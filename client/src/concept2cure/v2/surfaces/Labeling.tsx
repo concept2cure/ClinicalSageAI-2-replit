@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
+import { TranslationApprovalDialog, TranslationStepControl, translationStepActions } from './LabelingTranslationApproval';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -12,6 +13,8 @@ import { LABEL_ENUMS } from '../fixtures/labeling-data';
 import type { LabelTranslation } from '../fixtures/labeling-data';
 import { C2CToast, useToast } from '../toast';
 import { shellProgramId, useShellProject } from '../shellProject';
+import { canGovernedWrite } from '@shared/constants/permissions';
+import { useAuthUser } from '@/services/portal/authService';
 
 /* ---- Labeling and IFU ---- */
 
@@ -159,6 +162,12 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   const EN = LABEL_ENUMS;
   const openProject = useShellProject();
   const programId = shellProgramId(openProject);
+  /* Every labeling write takes an editing role (requireEditorAccess), and the
+     session derives GOVERNED_WRITE_PERMISSION from the same roles. A viewer was
+     offered Add translation, Advance and Approve, and refused after the click.
+     The controls are offered as the task board and the Vault panels offer
+     theirs (D5, 2026-10-29). */
+  const canWrite = canGovernedWrite(useAuthUser());
 
   // Root of this surface's real data: this project's labeling document(s).
   // REAL — GET /api/mdx/labeling?program_id= queries labeling_documents (org-
@@ -211,6 +220,8 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   }, [seedTrans]);
 
   const [tForm, setTForm] = useState(false);
+  /** The translation in review whose signed approval is open, if any. */
+  const [approving, setApproving] = useState<LabelTranslation | null>(null);
   const [toast, fire] = useToast();
 
   const cov = useMemo(() => {
@@ -264,10 +275,11 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   // "back-trans verified" chip can't appear from a client advance. On failure the
   // row is left untouched and the toast states nothing was persisted. (Rows carry
   // the real numeric id now, so the former TR-<lang> id.replace hack is gone.)
+  // It stops at review: approving is the signed act (TranslationApprovalDialog).
   const advTrans = async (id: string) => {
     const cur = trans.find(t => t.id === id);
     if (!cur) return;
-    const order = ['pending', 'in_progress', 'review', 'approved'];
+    const order = ['pending', 'in_progress', 'review'];
     const i = order.indexOf(cur.status);
     if (i < 0 || i >= order.length - 1) return;
     const nxt = order[i + 1];
@@ -367,13 +379,9 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
             })),
         symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
       },
-      availableActions: [
-        'Add a target-language translation (a real persisted write)',
-        'Advance a translation through pending, in progress, review, approved',
-        'Read the symbol set and what each symbol is required by',
-      ],
+      availableActions: [...translationStepActions(canWrite), 'Read the symbol set and what each symbol is required by'],
     };
-  }, [programId, openProject, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  }, [programId, openProject, docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows, canWrite]);
   usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
@@ -549,7 +557,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
               ? <>Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage.</>
               : <>Translation coverage is <b>{cov.approved}/{cov.total}</b> approved ({cov.pct}%), <b>{cov.btv}</b> back-translation verified. Each warning should trace to the ISO 14971 hazard it controls.</>}
             reassure="I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one."
-            action={{ label: 'Add a translation', onClick: () => setTForm(true) }}
+            action={canWrite ? { label: 'Add a translation', onClick: () => setTForm(true) } : undefined}
             secondary="Or work the symbols and translations below."
           />
 
@@ -622,8 +630,9 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
                   pending or failed read, directly above a table that said
                   "Loading…" / "Couldn't load". Figures only from a settled read. */}
               <div className="sec-sub">{transState.loading ? 'Reading translations…' : transState.error ? 'Coverage not read' : `${cov.approved}/${cov.total} approved / ${cov.btv} back-translation verified`}</div>
-              <button className="btn ghost" style={{ marginLeft: 'auto' }} onClick={() => setTForm(true)}>{I.plus} Add translation</button>
+              {canWrite && <button className="btn ghost" style={{ marginLeft: 'auto' }} onClick={() => setTForm(true)}>{I.plus} Add translation</button>}
             </div>
+            {!canWrite && <p className="scaf-note" role="note" data-testid="labeling-view-only">View only. Your role can read these translations but cannot add, advance or approve them.</p>}
             <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: (transState.loading || transState.error ? 0 : cov.pct) + '%' }} /></div>
             <div className="ctable" style={{ marginTop: 10 }}>
               {transState.loading && trans.length === 0 ? (
@@ -650,7 +659,9 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
                       {t.btv && <span className="rd-chip tone-ok" style={{ marginLeft: 6, fontSize: 9 }}>back-trans verified</span>}
                     </div>
                     <div><span className={`rd-chip tone-${tTone[t.status] || 'idle'}`}>{(EN.transStatus.find(s => s[0] === t.status) || [])[1] || t.status}</span></div>
-                    <div style={{ textAlign: 'right' }}>{t.status !== 'approved' && <button className="btn ghost" style={{ height: 26 }} onClick={() => advTrans(t.id)}>{I.arrowRight} Advance</button>}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      <TranslationStepControl status={t.status} canWrite={canWrite} onApprove={() => setApproving(t)} onAdvance={() => advTrans(t.id)} />
+                    </div>
                   </div>
                 ))
               )}
@@ -658,6 +669,18 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
           </div>
 
           {tForm && <C2CForm config={transFormConfig} onCancel={() => setTForm(false)} onSubmit={addTrans} />}
+          {approving && (
+            <TranslationApprovalDialog
+              translation={approving}
+              label={(docRow ? docRow.device_name + ' ' : '') + kindLabel}
+              onClose={() => setApproving(null)}
+              onSigned={(row) => {
+                const adopted = mapLabelTranslations([row])?.[0];
+                setTrans(ts => ts.map(t => (t.id === approving.id ? (adopted ?? { ...t, status: 'approved' }) : t)));
+                fire('Translation ' + approving.language + ' approved and signed');
+              }}
+            />
+          )}
         </>
       )}
 

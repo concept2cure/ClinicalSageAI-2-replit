@@ -1,5 +1,5 @@
 import type { RequestSqlClient } from '../../db/requestDb.js';
-import { authorizeCsrSourceProgram, CsrSourceInputError, type CsrSourceScope } from './vault-source-input.js';
+import { authorizeCsrSourceProgram, CsrSourceInputError, type CsrSourceScope } from './source-access.js';
 import { verifyOrchestratorReceipt } from '../submission-orchestrator-inputs.js';
 import { buildCSRTables, type CSRTables } from '../csr-tabulation-builders.js';
 import type { OrchestratorInputs } from '../submission-package-orchestrator.js';

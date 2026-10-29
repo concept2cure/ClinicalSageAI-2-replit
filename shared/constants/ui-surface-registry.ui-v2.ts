@@ -449,7 +449,15 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     uiKit: 'mdx',
     // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
     // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/engineering'],
+    // 2026-10-29: '/api/mdx/risk-items' and '/api/design-controls' added. Since
+    // 79d00b348 this screen mounts the risk register (RiskRegister.tsx) and the
+    // design-control trace (DesignControlsTrace.tsx). Only `risk` and
+    // `design-controls` claimed their families, so under MODULE_ENFORCEMENT=enforce
+    // an organization entitled to device-engineering alone was refused both.
+    // risk and design-controls keep their claims until the fold (founder decision 4);
+    // the gate serves a holder of any claimant, so nobody loses access
+    // (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/, item 3).
+    apiPrefixes: ['/api/mdx/engineering', '/api/mdx/risk-items', '/api/design-controls'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

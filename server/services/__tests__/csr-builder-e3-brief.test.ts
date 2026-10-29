@@ -11,11 +11,11 @@
  * (server/services/ind/ctd/requirements-resolver.ts). D2 finding 74(c),
  * 2026-10-05.
  *
- * The builder's synopsis (§2.x) and objectives (§8.x) children are its own
- * decomposition, which E3 does not number, so the resolver has nothing for
- * them; they are briefed with their parent heading and told so. A number with
- * no E3 heading at any level is said to be unindexed, never briefed from
- * recall.
+ * Since 2026-10-29 every heading the builder drafts is an ICH_E3_GUIDANCE
+ * heading (its own §2.x/§8.x decomposition was deleted with ICH_E3_STRUCTURE),
+ * so each is briefed with exactly its own E3 record. A number that is not a
+ * drafting target — no E3 heading, a bare parent, or a manual §3/§14–16 — is
+ * refused before any model call.
  *
  * The AI client is mocked (same pattern as csr-builder-completeness.test.ts),
  * so the assertions read the exact messages the model would have received.
@@ -26,9 +26,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const { completeMock } = vi.hoisted(() => ({
   completeMock: vi.fn(async (_messages: unknown, _options?: unknown) => 'DRAFTED BODY'),
 }));
+// The provenance drafter reads the gateway's full reply (content + served model).
+const chat = async (messages: unknown, options?: unknown) => ({ content: await completeMock(messages, options), model: 'test-model' });
 vi.mock('../../lib/unified-ai-client.js', () => ({
-  ai: { complete: completeMock },
-  default: { complete: completeMock },
+  ai: { complete: completeMock, chat },
+  default: { complete: completeMock, chat },
 }));
 vi.mock('../usage-metering.js', () => ({
   checkQuota: vi.fn(async () => ({ allowed: true, remaining: 10, limit: 10 })),
@@ -40,7 +42,8 @@ import {
   draftCSRSection,
   draftCSRSectionWithProvenance,
   flattenICHE3Sections,
-  ICH_E3_STRUCTURE,
+  getICHE3Structure,
+  resolveCSRDraftTargets,
   type CSRSection,
   type CSRBuildRequest,
 } from '../csr-builder';
@@ -62,7 +65,7 @@ const REQUEST: CSRBuildRequest = { organizationId: 1, userId: 1, studyInfo: STUD
 const RECALL_SENTENCE = 'per ICH E3 guidelines';
 
 function section(number: string): CSRSection {
-  const found = flattenICHE3Sections(ICH_E3_STRUCTURE).find((s) => s.number === number);
+  const found = flattenICHE3Sections(getICHE3Structure()).find((s) => s.number === number);
   if (!found) throw new Error(`builder has no section ${number}`);
   return found;
 }
@@ -93,30 +96,29 @@ beforeEach(() => {
 });
 
 describe.each(PATHS)('%s', (_label, draft) => {
-  it('§12 is drafted against the E3 record, not "per ICH E3 guidelines"', async () => {
-    const msg = await draft(section('12'));
-    const firstLine = renderE3Brief('12')!.split('\n')[0];
-    expect(firstLine).toBe('## ICH E3 §12 Safety Evaluation');
+  it('§12.6 is drafted against the E3 record, not "per ICH E3 guidelines"', async () => {
+    const msg = await draft(section('12.6'));
+    const firstLine = renderE3Brief('12.6')!.split('\n')[0];
+    expect(firstLine).toBe('## ICH E3 §12.6 Safety Conclusions');
     expect(msg).toContain(firstLine);
     // A bullet from the body of the brief, so a heading alone does not pass.
-    const bullet = renderE3Brief('12')!.split('\n').find((l) => l.startsWith('- '));
+    const bullet = renderE3Brief('12.6')!.split('\n').find((l) => l.startsWith('- '));
     expect(bullet).toBeTruthy();
     expect(msg).toContain(bullet);
     expect(msg).not.toContain(RECALL_SENTENCE);
     expect(msg).toMatch(/do not add requirements from memory/i);
   });
 
-  it('§2.3, the builder\'s own synopsis child, is briefed with E3 §2 and told so', async () => {
-    const msg = await draft(section('2.3'));
+  it('§2, the synopsis, is briefed with E3 §2 itself — E3 numbers no synopsis children', async () => {
+    const msg = await draft(section('2'));
     expect(msg).toContain('## ICH E3 §2 Synopsis');
-    expect(msg).toMatch(/ICH E3 does not number §2\.3/);
+    expect(msg).not.toMatch(/does not number/);
     expect(msg).not.toContain(RECALL_SENTENCE);
   });
 
-  it('§8.1 is briefed with E3 §8', async () => {
-    const msg = await draft(section('8.1'));
-    expect(msg).toContain('## ICH E3 §8 Study Objectives');
-    expect(msg).not.toContain(RECALL_SENTENCE);
+  it('§12.2.1, a heading the old outline did not have, is briefed with its own E3 record', async () => {
+    const msg = await draft(section('12.2.1'));
+    expect(msg).toContain(renderE3Brief('12.2.1')!.split('\n')[0]);
   });
 });
 
@@ -130,13 +132,13 @@ describe('e3RequirementsFor', () => {
     });
   });
 
-  it('falls back to the parent heading for the builder\'s §2.x and §8.x', () => {
-    expect(builder.e3RequirementsFor('2.10')?.heading).toBe('2');
-    expect(builder.e3RequirementsFor('8.2')?.heading).toBe('8');
+  it('has no parent fallback: the deleted §2.x and §8.x children resolve to nothing', () => {
+    expect(builder.e3RequirementsFor('2.10')).toBeNull();
+    expect(builder.e3RequirementsFor('8.2')).toBeNull();
   });
 
-  it('every section the builder drafts resolves to an E3 brief', () => {
-    const missing = flattenICHE3Sections(ICH_E3_STRUCTURE)
+  it('every section the builder drafts resolves to its own E3 brief', () => {
+    const missing = resolveCSRDraftTargets()
       .map((s) => s.number)
       .filter((n) => builder.e3RequirementsFor(n) === null);
     expect(missing).toEqual([]);
@@ -148,14 +150,12 @@ describe('e3RequirementsFor', () => {
   });
 });
 
-describe('a section with no E3 heading at any level', () => {
-  it('is drafted with an honest "not indexed" line, never a recall instruction', async () => {
-    const orphan: CSRSection = { number: '99', title: 'Unknown', required: false, status: 'empty', description: 'none' };
-    await draftCSRSectionWithProvenance(orphan, REQUEST);
-    const msg = userMessage();
-    expect(msg).toMatch(/no ICH E3 requirements indexed for §99/);
-    expect(msg).toMatch(/do not supply them from memory/i);
-    expect(msg).not.toContain(RECALL_SENTENCE);
-    expect(msg).not.toContain('## ICH E3');
+describe('a number that is not a drafting target', () => {
+  it.each(['99', '12', '3', '16.2.7'])('§%s is refused before any model call', async (n) => {
+    const node: CSRSection = { number: n, title: 'X', required: false, status: 'empty', description: 'none', draftingMode: 'narrative' };
+    await expect(draftCSRSectionWithProvenance(node, REQUEST)).rejects.toThrow('CSR_SECTION_NOT_DRAFTABLE');
+    const onDemand = await draftCSRSection(n, STUDY);
+    expect(onDemand).toEqual({ content: '', isAI: false });
+    expect(completeMock).not.toHaveBeenCalled();
   });
 });

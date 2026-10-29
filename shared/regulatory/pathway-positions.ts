@@ -174,6 +174,36 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
     authority: '21 CFR 814 Subpart H; FD&C Act 520(m)',
     marketingRoute: true,
   },
+  /* 2026-10-29: the US biotech filing completion identities that are routes
+     a programme can be at (docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md).
+     Annotated so they never reach a person as a bare label, and offered in
+     ORDER below: an annotated position must be offered, or the caution rules
+     derived from the annotations name a position no flow can reach. Recall:
+     eCFR not re-read. */
+  US_EXPANDED_ACCESS_INDIVIDUAL: {
+    commits:
+      'Treatment of one patient outside a clinical trial, not development: the physician or sponsor takes on IND obligations for that use, and an emergency authorization is followed by the written submission.',
+    authority: '21 CFR 312.310; FD&C Act 561(b)',
+    marketingRoute: false,
+  },
+  US_EXPANDED_ACCESS_INTERMEDIATE: {
+    commits:
+      'Treatment of a group too large for single-patient access and smaller than widespread use, under an IND or protocol with its own safeguards; it does not support marketing.',
+    authority: '21 CFR 312.315',
+    marketingRoute: false,
+  },
+  US_EXPANDED_ACCESS_TREATMENT: {
+    commits:
+      'Widespread treatment use while development continues, which requires that the product be under active development toward approval with due diligence.',
+    authority: '21 CFR 312.320; FD&C Act 561(c)',
+    marketingRoute: false,
+  },
+  US_EUA_THERAPEUTIC: {
+    commits:
+      'Authorisation of a drug or biologic only while a declared emergency lasts, on known and potential benefits outweighing risks. It is not an approval or a licence, and it ends with the declaration.',
+    authority: 'FD&C Act 564',
+    marketingRoute: true,
+  },
   US_EUA: {
     commits:
       'Authorisation only while a declared emergency lasts, on known and potential benefits outweighing risks. It is not a clearance or an approval, and it ends with the declaration.',
@@ -418,7 +448,25 @@ export function positionFor(registryId: string): PathwayPosition | null {
  * a marketing application still has to be able to say what it IS filing.
  */
 const ORDER: Readonly<Record<string, string[]>> = {
-  'pharma_biotech:US': ['US_NDA', 'US_505B2', 'US_BLA', 'US_351K', 'US_ANDA', 'US_ACCEL_APPROVAL', 'US_IND'],
+  /* 2026-10-29: the drug/biologic EUA (a route to market while a declaration
+     lasts) and the three expanded-access positions (not routes to market) are
+     offered, because an annotated position nobody is offered is a rule that
+     can never run (pathway-availability "what every rule must satisfy"). */
+  'pharma_biotech:US': [
+    'US_NDA',
+    'US_505B2',
+    'US_BLA',
+    'US_351K',
+    'US_ANDA',
+    'US_ACCEL_APPROVAL',
+    'US_EUA_THERAPEUTIC',
+    /* Not routes to market. The IND stays last: a person reads the routes
+       first and the investigational filing after them. */
+    'US_EXPANDED_ACCESS_INDIVIDUAL',
+    'US_EXPANDED_ACCESS_INTERMEDIATE',
+    'US_EXPANDED_ACCESS_TREATMENT',
+    'US_IND',
+  ],
   'medical_devices:US': ['US_510K', 'US_DE_NOVO', 'US_PMA', 'US_HDE', 'US_EUA', 'US_IDE', 'US_513G', 'US_QSUB'],
   'pharma_biotech:EU': ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP', 'EU_CTA'],
   'medical_devices:EU': [

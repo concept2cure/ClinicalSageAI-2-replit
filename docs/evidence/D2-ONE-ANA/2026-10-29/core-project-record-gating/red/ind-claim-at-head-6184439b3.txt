@@ -1,0 +1,15 @@
+# At HEAD 6184439b3 (registry and both tests as committed; this slice's edits set aside and restored after). Trimmed.
+== server/middleware/__tests__/launch-scope-api-gate.test.ts
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 7ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+   → ind-checklist apiPrefixes no screen of it calls:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
++   "out-of-scope /api/csr/jobs ← ectd-compile",
++   "out-of-scope /api/csr/jobs ← ectd-compile",
++   "/api/ind-lifecycle/briefing-book",
+      Tests  3 failed | 40 passed (43)
+== server/services/entitlements/__tests__/ind-launch-claim.test.ts
+      Tests  65 passed (65)

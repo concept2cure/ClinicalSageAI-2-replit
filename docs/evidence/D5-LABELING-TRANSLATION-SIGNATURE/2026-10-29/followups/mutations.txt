@@ -1,0 +1,426 @@
+Mutations, second round. N1-N13 are the five QMS-pattern rules; M1-M16 are the first round's, re-pointed at the
+rewritten module (M9 of the first round, the document's separation of duties, is M7 now: one check serves both).
+Each was applied to the working tree by a scratch script (not committed): replace one exact text, which must occur
+once in the file, run the named commands, then write the file back from the bytes read before the change. Each block
+shows the change, the failing test names (trimmed), and the sha256 after restoring compared with before.
+
+# N1: Rule 1. A record with no recorded creator is refused again (the QMS not-applicable branch removed).
+# file: server/routes/mdx-labeling-approvals.ts
+  - if (ids.createdBy === null) return 'not_applicable_no_author_recorded';
+  + (removed)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a translation that records no creator is approved, and the ledger and signature say the rule did not apply
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed approved, recorded as not applicable
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed effective, recorded as not applicable
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N2: Rule 1. The two-person-rule outcome is not recorded on the translation approval.
+# file: server/routes/mdx-labeling-approvals.ts
+  - twoPersonRule: rule,
+  + (removed)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a colleague of the creator approves it, and the two-person rule is recorded as enforced
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a translation that records no creator is approved, and the ledger and signature say the rule did not apply
+      Tests  2 failed | 52 passed (54)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+exit 1
+ × the signed approval > records what was approved, under the declared meaning, on the ledger and the signature row
+      Tests  1 failed | 23 passed (24)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N3: Rule 2. AnA create_labeling_document stores no creator.
+# file: server/services/ana/AnaToolExecutor.ts
+  - typeof input.udi_di === 'string' ? input.udi_di : null,
+  - createdBy,
+  + typeof input.udi_di === 'string' ? input.udi_di : null,
+  + null,
+$ timeout 240 npx vitest run server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+exit 1
+ × 'create_labeling_document' records who added the row > writes created_by as the acting user, as the HTTP create does
+      Tests  1 failed | 3 passed (4)
+# restored; sha256 after: 1dcf780737d1ab0066ab0928f199d69149bdbb24db4d82082a5a0900f046571e (match)
+
+# N4: Rule 2. AnA add_labeling_translation stores no creator.
+# file: server/services/ana/AnaToolExecutor.ts
+  - input.back_translation_verified === true,
+  - createdBy,
+  + input.back_translation_verified === true,
+  + null,
+$ timeout 240 npx vitest run server/services/ana/__tests__/labeling-tools-record-creator.test.ts
+exit 1
+ × 'add_labeling_translation' records who added the row > writes created_by as the acting user, as the HTTP create does
+      Tests  1 failed | 3 passed (4)
+# restored; sha256 after: 1dcf780737d1ab0066ab0928f199d69149bdbb24db4d82082a5a0900f046571e (match)
+
+# N5: Rule 3. A translation is approved from any status but approved.
+# file: server/routes/mdx-labeling-approvals.ts
+  - if (current.status !== 'review') {
+  - throw signedActRefused('TRANSLATION_NOT_IN_REVIEW',
+  + if (current.status === 'never') {
+  + throw signedActRefused('TRANSLATION_NOT_IN_REVIEW',
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × the order of the steps, as QMS orders them > a translation pending cannot be approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a translation in_progress cannot be approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a translation rejected cannot be approved: 409, in words, and nothing is signed
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N6: Rule 3. A document is approved from any status.
+# file: server/routes/mdx-labeling-approvals.ts
+  - if (to === 'approved' && status !== 'review') {
+  + if (to === 'approved' && status === 'never') {
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from superseded: 409, in words, and nothing is signed
+      Tests  4 failed | 50 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N7: Rule 3. A document is made effective from any status.
+# file: server/routes/mdx-labeling-approvals.ts
+  - if (to === 'effective' && status !== 'approved') {
+  + if (to === 'effective' && status === 'never') {
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from review: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from effective: 409, in words, and nothing is signed
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N8: Rule 4. Withdrawing an approval needs no reason.
+# file: server/routes/mdx-labeling-approvals.ts
+  - if (!reason.ok) {
+  - await client.query('ROLLBACK');
+  + if (false as boolean) {
+  + await client.query('ROLLBACK');
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > moving an approved translation back with no reason: 400, it stays approved, and no ledger row is written
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with no reason: 400, and it stays as signed
+      Tests  4 failed | 50 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N9: Rule 4. Withdrawing an approval writes no ledger row.
+# file: server/routes/mdx-labeling-approvals.ts
+  - const gov = await recordGovernedAction(client, {
+  + const gov = { actionId: 'none' } ?? await recordGovernedAction(client, {
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > moving it back with a reason withdraws the approval: no stamp is left, and a transition ledger row records why
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a approved document back to review with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to review with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+      Tests  6 failed | 48 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N10: Rule 4. A document move out of approved, effective or superseded is a plain update again (no withdrawal).
+# file: server/routes/mdx-labeling-approvals.ts
+  - AND status NOT IN ('approved', 'effective', 'superseded')
+  - RETURNING *`,
+  - [status, id, orgId],
+  + RETURNING *`,
+  + [status, id, orgId],
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a approved document back to review with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to review with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+      Tests  8 failed | 46 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N11: Rule 5. Superseding is not a signed move (superseded taken out of DOC_SIGNED_STATUS).
+# file: server/routes/mdx-labeling-approvals.ts
+  - new Set(['approved', 'effective', 'superseded'])
+  + new Set(['approved', 'effective'])
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to superseded with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a create as superseded: 428, and nothing is inserted
+ × the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning review: 400 before the password, and nothing changes
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with no reason: 400, and it stays as signed
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+      Tests  9 failed | 45 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N12: Rule 5. Superseding takes the approval meanings, not the QMS retirement's.
+# file: server/routes/mdx-labeling-approvals.ts
+  - meanings: to === 'superseded' ? SUPERSEDE_ACT_MEANINGS : DECISION_ACT_MEANINGS,
+  + meanings: DECISION_ACT_MEANINGS,
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes
+      Tests  4 failed | 50 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# N13: Rule 5. Superseding applies the two-person rule, which a QMS retirement does not.
+# file: server/routes/mdx-labeling-approvals.ts
+  - const rule = to === 'superseded'
+  - ? null
+  + const rule = to === 'never'
+  + ? null
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+      Tests  1 failed | 53 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M1: Gap 1. A document PATCH to a signed status skips the signed path.
+# file: server/routes/mdx-labeling.ts
+  - if (DOC_SIGNED_STATUS.has(String(parsed.data.status))) return signDocumentStatus(req, res, id, parsed.data);
+  + if (false as boolean) return signDocumentStatus(req, res, id, parsed.data);
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to approved with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to effective with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to superseded with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed approval of a document in review records the signer as approver, with the ledger pair and the signature row
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a document approved before its approver was recorded, made effective today: the signer is recorded
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move that also edits the document: 400, the signature covers the document as it stands
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from superseded: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from review: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it approved: 403, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it effective: 403, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed approved, recorded as not applicable
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed effective, recorded as not applicable
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning review: 400 before the password, and nothing changes
+      Tests  23 failed | 31 passed (54)
+# restored; sha256 after: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 (match)
+
+# M2: Gap 1. A document can be created as approved, effective or superseded again.
+# file: server/routes/mdx-labeling.ts
+  - if (DOC_SIGNED_STATUS.has(String(p.status))) {
+  + if (false as boolean) {
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a create as approved: 428, and nothing is inserted
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a create as effective: 428, and nothing is inserted
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a create as superseded: 428, and nothing is inserted
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 (match)
+
+# M3: Gap 1. The signed approval records no approver.
+# file: server/routes/mdx-labeling-approvals.ts
+  - SET status = 'approved', approved_by = $3, approved_at = NOW(), updated_at = NOW()
+  - WHERE id = $1 AND organization_id = $2
+  - RETURNING *`,
+  - [id, orgId, userId],
+  + SET status = 'approved', updated_at = NOW()
+  + WHERE id = $1 AND organization_id = $2
+  + RETURNING *`,
+  + [id, orgId],
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed approval of a document in review records the signer as approver, with the ledger pair and the signature row
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a document with no recorded creator is signed approved, recorded as not applicable
+      Tests  2 failed | 52 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M4: Gap 1. The move to effective overwrites the approval the document carries.
+# file: server/routes/mdx-labeling-approvals.ts
+  - approved_by = COALESCE(approved_by, $3), approved_at = COALESCE(approved_at, NOW()),
+  + approved_by = $3, approved_at = NOW(),
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect
+      Tests  1 failed | 53 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M5: Gap 1 and the gate. The document stamps are written without the ceremony.
+# file: server/routes/mdx-labeling-approvals.ts
+  - await signGovernedAct(req, res, {
+  - domain: 'labeling',
+  - target,
+  - meanings: to === 'superseded'
+  + const unsigned = async (_q: Request, r: Response, act: { run: (c: RequestDbClient, o: number, u: number) => Promise<{ body: Record<string, unknown> }> } & Recor
+  + await unsigned(req, res, {
+  + domain: 'labeling',
+  + target,
+  + …
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to approved with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to effective with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a PATCH to superseded with no signature: 400, and the document is unchanged
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed approval of a document in review records the signer as approver, with the ledger pair and the signature row
+ × 1. a labeling document moves to approved, effective or superseded only by a signature > a signed move to effective keeps the approval it carries, and stamps the date it takes effect
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from approved: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed approved from superseded: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from draft: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from review: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed effective from effective: 409, in words, and nothing is signed
+ × the order of the steps, as QMS orders them > a document cannot be signed superseded from superseded: 409, in words, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it approved: 403, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it effective: 403, and nothing is signed
+ × superseding a document is its retirement: signed, with the QMS meaning > signed APPROVED: superseded, the approval and effective date kept, no two-person rule
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning approval: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning responsibility: 400 before the password, and nothing changes
+ × superseding a document is its retirement: signed, with the QMS meaning > signed with the meaning review: 400 before the password, and nothing changes
+      Tests  19 failed | 35 passed (54)
+$ timeout 240 npm run -s ci:sign-ceremony
+exit 1
+  ✗ server/routes/mdx-labeling-approvals.ts:172  (approval stamp with no signature-row write in its handler)
+  ✗ server/routes/mdx-labeling-approvals.ts:181  (approval stamp with no signature-row write in its handler)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M6: Gap 2. The HTTP translation create stores no creator.
+# file: server/routes/mdx-labeling.ts
+  - p.status ?? null, p.artifactId ?? null, userId,
+  + p.status ?? null, p.artifactId ?? null, null,
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a create records who added the document and the translation
+      Tests  1 failed | 53 passed (54)
+# restored; sha256 after: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 (match)
+
+# M7: Gap 2. A recorded creator is not checked (separation of duties skipped).
+# file: server/routes/mdx-labeling-approvals.ts
+  - await assertSignerIsNotAuthor(target, ids.orgId, ids.userId, { command: 'sign', meaning, client });
+  + (removed)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the translation's creator signing its approval: 403, and it stays in review
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it approved: 403, and nothing is signed
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the document's creator signing it effective: 403, and nothing is signed
+      Tests  3 failed | 51 passed (54)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-translation-approval-signature.test.ts
+exit 1
+ × the ceremony refuses, and nothing is approved > the person who added the translation: 403 separation of duties, read on the signing transaction, before any stamp
+ × the signed approval > re-verifies the signer, then stamps, records the sign ledger pair and the signature row, then commits
+      Tests  2 failed | 22 passed (24)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M8: Gap 2. resolveTargetAuthors has no 'labeling-translation' entry.
+# file: server/services/governance/separation-of-duties.ts
+  - 'labeling-translation': {
+  + 'labeling-translation-unmodelled': {
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > the translation's creator signing its approval: 403, and it stays in review
+ × 2. the record's creator cannot approve it, and a record with none recorded is signed as QMS signs it > a colleague of the creator approves it, and the two-person rule is recorded as enforced
+      Tests  2 failed | 52 passed (54)
+# restored; sha256 after: f6b7507c3f9abe393c35b810e73f4a5d7b393674c1c995e99d2987df3bbedb5c (match)
+
+# M10: Gap 3. An approved translation can be edited.
+# file: server/routes/mdx-labeling.ts
+  - AND organization_id = $${args.length} AND status <> 'approved'
+  + AND organization_id = $${args.length}
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > editing an approved translation (language): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing an approved translation (translator): 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing an approved translation (method): 409, and it stays as signed
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 (match)
+
+# M11: Gap 3. Withdrawing a translation approval leaves its stamp.
+# file: server/routes/mdx-labeling-approvals.ts
+  - SET status = $1, approved_by = NULL, approved_at = NULL, updated_at = NOW()
+  - WHERE id = $2
+  + SET status = $1, updated_at = NOW()
+  + WHERE id = $2
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > moving it back with a reason withdraws the approval: no stamp is left, and a transition ledger row records why
+      Tests  1 failed | 53 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M12: Gap 3. An approved, effective or superseded document can be edited.
+# file: server/routes/mdx-labeling.ts
+  - AND status NOT IN ('approved', 'effective', 'superseded')
+  + (removed)
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > editing a approved document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing a effective document: 409, and it stays as signed
+ × 3. an approval never outlives what it signed > editing a superseded document: 409, and it stays as signed
+      Tests  3 failed | 51 passed (54)
+# restored; sha256 after: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 (match)
+
+# M13: Gap 3. Withdrawing a document approval leaves its stamp and its effective date.
+# file: server/routes/mdx-labeling-approvals.ts
+  - SET status = $1, approved_by = NULL, approved_at = NULL,
+  - effective_date = CASE WHEN status IN ('effective', 'superseded') THEN NULL ELSE effective_date END,
+  + SET status = $1,
+$ timeout 240 npx vitest run server/__tests__/routes/mdx-labeling-approval-controls.pglite.test.ts
+exit 1
+ × 3. an approval never outlives what it signed > moving a approved document back to draft with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a approved document back to review with a reason withdraws its approval (effective date kept: 2026-10-02), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a effective document back to review with a reason withdraws its approval (effective date kept: null), with a ledger row
+ × 3. an approval never outlives what it signed > moving a superseded document back to draft with a reason withdraws its approval (effective date kept: null), with a ledger row
+      Tests  5 failed | 49 passed (54)
+# restored; sha256 after: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 (match)
+
+# M14: Gap 4. The screen offers the write controls to every role.
+# file: client/src/concept2cure/v2/surfaces/Labeling.tsx
+  - const canWrite = canGovernedWrite(useAuthUser());
+  + const canWrite = canGovernedWrite(useAuthUser()) || true;
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+exit 1
+ × a viewer > is offered no write control: no Approve, no Advance, no Add translation
+ × a viewer > is told the screen is view only, and the translations are still shown
+      Tests  2 failed | 2 passed (4)
+# restored; sha256 after: 101a257da97afd1b88927eda6b497383cdaf151bb9450594a7c130e931b7b4aa (match)
+
+# M15: Gap 4. The row step control ignores the role.
+# file: client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx
+  - if (!canWrite || status === 'approved') return null;
+  + if (status === 'approved') return null;
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+exit 1
+ × a viewer > is offered no write control: no Approve, no Advance, no Add translation
+      Tests  1 failed | 3 passed (4)
+# restored; sha256 after: 3873d5f8f206dc7e8202b46b72347e102dca5965e54f172714ef547becddf7d8 (match)
+
+# M16: Client. "Nothing was signed." appended again to a sentence that already says it.
+# file: client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx
+  - message.includes(NOTHING_SIGNED) ? message
+  + message.trimEnd().endsWith(NOTHING_SIGNED) ? message
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx
+exit 1
+ × the signed approval > a separation-of-duties refusal that already says "Nothing was signed." is said once
+      Tests  1 failed | 10 passed (11)
+# restored; sha256 after: 3873d5f8f206dc7e8202b46b72347e102dca5965e54f172714ef547becddf7d8 (match)
+
+After all of them: each mutated file's sha256 now, against the sha256 read before its first mutation.
+  server/routes/mdx-labeling-approvals.ts: 039f116c1ed0305a678c4abb570726933c2f5f5bae695c3699234abf45f82b23 = before
+  server/services/ana/AnaToolExecutor.ts: 1dcf780737d1ab0066ab0928f199d69149bdbb24db4d82082a5a0900f046571e = before
+  server/routes/mdx-labeling.ts: c77cce6850443f412d3cf84aec7234b414b702d7ffd5c701cab79119b29cb5a5 = before
+  server/services/governance/separation-of-duties.ts: f6b7507c3f9abe393c35b810e73f4a5d7b393674c1c995e99d2987df3bbedb5c = before
+  client/src/concept2cure/v2/surfaces/Labeling.tsx: 101a257da97afd1b88927eda6b497383cdaf151bb9450594a7c130e931b7b4aa = before
+  client/src/concept2cure/v2/surfaces/LabelingTranslationApproval.tsx: 3873d5f8f206dc7e8202b46b72347e102dca5965e54f172714ef547becddf7d8 = before

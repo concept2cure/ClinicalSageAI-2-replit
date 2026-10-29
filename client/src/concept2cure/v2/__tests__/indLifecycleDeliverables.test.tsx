@@ -3,7 +3,10 @@
  * IndLifecycle — the deliverable cards wired end-to-end, mirroring the
  * cover-letter exemplar (see indLifecycleTargetDate.test.tsx):
  *
- *   briefing-book / loa / right-of-reference  → real POST with the loaded
+ *   briefing-book → an editor document (slice G14, 2026-10-29): the card starts
+ *     or opens the project's meeting package from the built-in template
+ *     (IndBriefingBookStart) and assembles nothing itself.
+ *   loa / right-of-reference  → real POST with the loaded
  *     checklist's identity + card particulars; the SERVER's model and gap
  *     verdict render in place; failures render the server's words.
  *   annual-report / amendment → the same, PLUS the "File into sequence"
@@ -36,6 +39,10 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
+}));
+
+vi.mock('../surfaces/IndBriefingBookStart', () => ({
+  IndBriefingBookStart: (p: { programId: string }) => <div data-testid="briefing-book-start" data-program={p.programId} />,
 }));
 
 import fs from 'node:fs';
@@ -93,36 +100,21 @@ afterEach(cleanup);
 beforeEach(() => apiRequest.mockReset());
 
 describe('IndLifecycle — briefing-book / LOA / right-of-reference cards', () => {
-  it('briefing-book POSTs the real route with the checklist identity and renders the server model + gaps', async () => {
-    mockApi({
-      '/api/ind-lifecycle/briefing-book': {
-        ok: true,
-        status: 200,
-        body: {
-          reportType: 'FDA_BRIEFING_BOOK',
-          sections: [{ key: 'background', heading: '2. Product Background', body: 'REAL SERVER BRIEFING BODY', complete: true, required: true }],
-          gaps: [{ sectionKey: 'plan', heading: '6. Proposed Clinical Development Plan', message: 'Required section "6. Proposed Clinical Development Plan" has no content.' }],
-          questionCount: 1,
-        },
-      },
-    });
+  it('briefing-book starts the project\'s meeting package in the editor and assembles nothing here', async () => {
+    const PROGRAM = '40000000-0000-4000-8000-000000000031';
+    mockApi({}, { ...CHECKLIST, programId: PROGRAM });
     const card = await renderAndFindCard('Pre-IND Briefing Book');
+    expect(within(card).getByTestId('briefing-book-start').getAttribute('data-program')).toBe(PROGRAM);
+    expect(within(card).queryByText('Assemble now')).toBeNull();
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/ind-lifecycle/briefing-book'))).toBe(false);
+  });
 
-    fireEvent.change(within(card).getByLabelText('Meeting type'), { target: { value: 'pre_ind' } });
-    fireEvent.change(within(card).getByLabelText('Indication'), { target: { value: 'Relapsed myeloma' } });
-    fireEvent.change(within(card).getByLabelText(/Questions for FDA/), { target: { value: 'Nonclinical | Is the tox package adequate?' } });
-    fireEvent.click(within(card).getByText('Assemble now'));
-
-    expect(await screen.findByText(/REAL SERVER BRIEFING BODY/)).toBeTruthy();
-    expect(document.body.textContent).toContain('Required section "6. Proposed Clinical Development Plan" has no content.');
-    // Identity from the loaded checklist; particulars only as entered — the
-    // question topic/text are the user's words, numbered in entry order.
-    expect(postBody('/api/ind-lifecycle/briefing-book')).toMatchObject({
-      productName: 'ZX-9 First-in-Human',
-      indication: 'Relapsed myeloma',
-      meetingType: 'pre_ind',
-      questions: [{ number: 1, topic: 'Nonclinical', question: 'Is the tox package adequate?' }],
-    });
+  it('briefing-book on an IND linked to no project says so, and starts nothing', async () => {
+    mockApi({});
+    const card = await renderAndFindCard('Pre-IND Briefing Book');
+    expect(within(card).getByText(/not linked to a project/)).toBeTruthy();
+    expect(within(card).queryByTestId('briefing-book-start')).toBeNull();
+    expect(within(card).queryByText('Assemble now')).toBeNull();
   });
 
   it('LOA carries the checklist sponsor as the authorized party and renders the model + gap verdict', async () => {
@@ -205,16 +197,14 @@ describe('IndLifecycle — regulated choices on the File cards start unstated (P
   /* P-21 (product decision 2026-10-08): regulated choices start unstated. The
      meeting type and the referenced file type showed (and sent) their first
      options — "Pre-IND" and "DMF" — for selects nobody touched. */
-  it('the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen', async () => {
+  it('the referenced file types start on "Not stated — choose" and send nothing until chosen', async () => {
     mockApi({
-      '/api/ind-lifecycle/briefing-book': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'productName, indication, meetingType and questions[] are required.' } } },
       '/api/ind-lifecycle/loa': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'referencedFileType, referencedFileNumber, holderName and authorizedPartyName are required.' } } },
       '/api/ind-lifecycle/right-of-reference': { ok: false, status: 400, body: { error: { code: 'VALIDATION', message: 'sponsorName, referencedFileType and referencedFileNumber are required.' } } },
     });
     render(<IndLifecycle {...props()} />);
     await screen.findByText('Pre-IND Briefing Book');
     const cards = [
-      ['Pre-IND Briefing Book', 'Meeting type', '/api/ind-lifecycle/briefing-book', 'meetingType'],
       ['Letter of Authorization', 'Referenced file type', '/api/ind-lifecycle/loa', 'referencedFileType'],
       ['Statement of Right of Reference', 'Referenced file type', '/api/ind-lifecycle/right-of-reference', 'referencedFileType'],
     ] as const;

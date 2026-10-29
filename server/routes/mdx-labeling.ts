@@ -5,11 +5,13 @@
  *   GET    /api/mdx/labeling                                   list docs
  *   POST   /api/mdx/labeling                                   create doc
  *   GET    /api/mdx/labeling/:id                               single + nested
- *   PATCH  /api/mdx/labeling/:id                               partial update
+ *   PATCH  /api/mdx/labeling/:id                               partial update;
+ *                                                              to `approved` or `effective`, an e-signature
  *
  *   GET    /api/mdx/labeling/:id/translations                  list
  *   POST   /api/mdx/labeling/:id/translations                  add translation
- *   PATCH  /api/mdx/labeling/translations/:transId             update translation
+ *   PATCH  /api/mdx/labeling/translations/:transId             update translation;
+ *                                                              to `approved`, an e-signature
  *
  *   GET    /api/mdx/labeling/:id/symbols                       list symbols
  *   POST   /api/mdx/labeling/:id/symbols                       add symbol
@@ -36,18 +38,24 @@ import { admitProject as admitProjectShared } from '../lib/admit-project';
  * stay open to every member (D3, 2026-10-29).
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { resolveUserId } from '../types/auth-request';
+/* The approval controls (D5, 2026-10-29), on the QMS controlled document's
+   lifecycle: a document's approval, its move to effective and its
+   supersession, and a translation's approval, are electronic signatures, each
+   from the step before it; the record's creator may not approve it; and a
+   record that carries an approval is not edited until it is moved back, with
+   a reason, which withdraws the approval. */
+import {
+  DOC_SIGNED_STATUS, signingLimit, editsBesides,
+  signDocumentStatus, moveDocumentStatus, refuseControlledDocumentEdit,
+  approveTranslationSigned, moveTranslationStatus, refuseApprovedTranslationEdit,
+} from './mdx-labeling-approvals';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
-  if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
-  return Number.isFinite(n) ? n : null;
-}
-function getUserId(req: Request): number | null {
-  const raw = (req as any).user?.id;
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
@@ -124,12 +132,37 @@ router.get('/labeling', async (req: Request, res: Response) => {
   }
 });
 
+/** The create's values, in its INSERT's order ($1..$13). */
+function docInsertParams(p: z.infer<typeof docCreate>, orgId: number, userId: number): unknown[] {
+  return [
+    orgId, p.programId ?? null, p.deviceName, p.docKind,
+    p.version ?? null, p.status ?? null, p.language ?? null,
+    p.region ?? null, p.udiDi ?? null, p.effectiveDate ?? null,
+    p.expiresAt ?? null, p.artifactId ?? null, userId,
+  ];
+}
+
 router.post('/labeling', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // The creator is recorded: separation of duties refuses their approval.
+  const userId = resolveUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const parsed = docCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A document is created unapproved. Approving it, making it effective and
+     superseding it are the signed acts on the PATCH below; a create with any
+     of those statuses was one with no signature and no approver (D5,
+     2026-10-29). */
+  if (DOC_SIGNED_STATUS.has(String(p.status))) {
+    return clientError(
+      res,
+      428,
+      'Approving a labeling document, making it effective or superseding it is an electronic signature: create it, then sign that step with your password, what the signature means and a reason. Nothing was saved.',
+      { code: 'LABELING_DOCUMENT_APPROVAL_REQUIRES_SIGNATURE' },
+    );
+  }
   try {
     /* The create and the PATCH below stored the client's `programId` without
        asking. The same-organization key (20261013b) refused another
@@ -142,18 +175,13 @@ router.post('/labeling', requireEditorAccess, async (req: Request, res: Response
     const { rows } = await pool.query(
       `INSERT INTO labeling_documents (
          organization_id, program_id, device_name, doc_kind, version, status,
-         language, region, udi_di, effective_date, expires_at, artifact_id
+         language, region, udi_di, effective_date, expires_at, artifact_id, created_by
        ) VALUES (
          $1,$2,$3,$4,COALESCE($5,'1.0'),COALESCE($6,'draft'),
-         COALESCE($7,'en'),$8,$9,$10,$11,$12
+         COALESCE($7,'en'),$8,$9,$10,$11,$12,$13
        )
        RETURNING *`,
-      [
-        orgId, p.programId ?? null, p.deviceName, p.docKind,
-        p.version ?? null, p.status ?? null, p.language ?? null,
-        p.region ?? null, p.udiDi ?? null, p.effectiveDate ?? null,
-        p.expiresAt ?? null, p.artifactId ?? null,
-      ],
+      docInsertParams(p, orgId, userId),
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create', err); }
@@ -178,13 +206,16 @@ router.get('/labeling/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'get', err); }
 });
 
-router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Response) => {
+router.patch('/labeling/:id', requireEditorAccess, signingLimit(DOC_SIGNED_STATUS), async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = docPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  if (DOC_SIGNED_STATUS.has(String(parsed.data.status))) return signDocumentStatus(req, res, id, parsed.data);
+  const { status, ...fields } = parsed.data;
+  if (status !== undefined && editsBesides(fields, []).length === 0) return moveDocumentStatus(req, res, id, orgId, status);
   const COL: Record<string, string> = {
     programId: 'program_id', deviceName: 'device_name', docKind: 'doc_kind',
     version: 'version', status: 'status', language: 'language', region: 'region',
@@ -202,14 +233,16 @@ router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Res
   args.push(id, orgId);
   try {
     if (!(await admitProject(res, parsed.data.programId, orgId))) return;
+    // A document that carries an approval is not edited (mdx-labeling-approvals.ts says why).
     const { rows } = await pool.query(
       `UPDATE labeling_documents SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+          AND status NOT IN ('approved', 'effective', 'superseded')
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Labeling document');
-    return ok(res, rows[0]);
+    if (rows.length > 0) return ok(res, rows[0]);
+    return refuseControlledDocumentEdit(res, id, orgId);
   } catch (err) { return serverError(res, log, 'patch', err); }
 });
 
@@ -257,23 +290,37 @@ router.get('/labeling/:id/translations', async (req: Request, res: Response) => 
 router.post('/labeling/:id/translations', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // The creator is recorded: separation of duties refuses their approval.
+  const userId = resolveUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   if (!(await requireDocInOrg(orgId, id))) return notFoundInTenant(res, 'Labeling document');
   const parsed = transCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A translation is added unapproved. Approving it is the signed act on the
+     PATCH below; a create with status `approved` was an approval with no
+     signature and no approver (D5, 2026-10-29). */
+  if (p.status === 'approved') {
+    return clientError(
+      res,
+      428,
+      'Approving a translation is an electronic signature: add it, then approve it with your password, what the signature means and a reason. Nothing was saved.',
+      { code: 'TRANSLATION_APPROVAL_REQUIRES_SIGNATURE' },
+    );
+  }
   try {
     const { rows } = await pool.query(
       `INSERT INTO labeling_translations (
          labeling_document_id, organization_id, language, translator,
-         translation_method, back_translation_verified, status, artifact_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),COALESCE($7,'pending'),$8)
+         translation_method, back_translation_verified, status, artifact_id, created_by
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),COALESCE($7,'pending'),$8,$9)
        RETURNING *`,
       [
         id, orgId, p.language, p.translator ?? null,
         p.translationMethod ?? null, p.backTranslationVerified ?? null,
-        p.status ?? null, p.artifactId ?? null,
+        p.status ?? null, p.artifactId ?? null, userId,
       ],
     );
     return created(res, rows[0]);
@@ -284,13 +331,16 @@ router.post('/labeling/:id/translations', requireEditorAccess, async (req: Reque
   }
 });
 
-router.patch('/labeling/translations/:transId', requireEditorAccess, async (req: Request, res: Response) => {
+router.patch('/labeling/translations/:transId', requireEditorAccess, signingLimit(new Set(['approved'])), async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const transId = Number(req.params.transId);
   if (!Number.isFinite(transId)) return clientError(res, 422, 'transId must be numeric');
   const parsed = transPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  if (parsed.data.status === 'approved') return approveTranslationSigned(req, res, transId, parsed.data);
+  const { status, ...fields } = parsed.data;
+  if (status !== undefined && editsBesides(fields, []).length === 0) return moveTranslationStatus(req, res, transId, orgId, status);
   const COL: Record<string, string> = {
     language: 'language', translator: 'translator', translationMethod: 'translation_method',
     backTranslationVerified: 'back_translation_verified', status: 'status',
@@ -302,24 +352,19 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, async (req:
     const col = COL[k]; if (!col) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  /* Auto-stamp approved_at + approved_by when status flips to approved. */
-  if (parsed.data.status === 'approved') {
-    args.push(getUserId(req));
-    setFrags.push(`approved_by = $${args.length}`);
-    setFrags.push(`approved_at = NOW()`);
-  }
   if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
   setFrags.push(`updated_at = NOW()`);
   args.push(transId, orgId);
   try {
+    // An approved translation is not edited (mdx-labeling-approvals.ts says why).
     const { rows } = await pool.query(
       `UPDATE labeling_translations SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length}
+        WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND status <> 'approved'
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Translation');
-    return ok(res, rows[0]);
+    if (rows.length > 0) return ok(res, rows[0]);
+    return refuseApprovedTranslationEdit(res, transId, orgId);
   } catch (err) { return serverError(res, log, 'trans-patch', err); }
 });
 

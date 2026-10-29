@@ -6,6 +6,13 @@
  * K510Surface: three+ live fetches that fall back to the data/ivd.ts fixtures
  * during load and on error, all wrapped in PathwayPanes so the IVD dossier gets
  * the same audit / notified-body correspondence / approvals / files tabs.
+ *
+ * D2, 2026-10-29 (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f2-ivd-completeness/):
+ * the IVDR readiness panel is the family board (GSPR, analytical and clinical
+ * performance, scientific validity, the PER, classification, PMPF) from
+ * v2/surfaces/IvdReadinessBoard.tsx, read for this project; and the IVD
+ * assessment workbench (v2/surfaces/IvdAssessmentWorkbench.tsx) is mounted for
+ * the same project. Both were reachable only from the ivd-completeness screen.
  */
 
 import * as React from 'react';
@@ -28,12 +35,17 @@ import { readyRows, toDataState } from '../lib/dataState';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
+import { IvdAssessmentWorkbench } from '../../v2/surfaces/IvdAssessmentWorkbench';
+import { IvdReadinessBoard, useIvdReadiness } from '../../v2/surfaces/IvdReadinessBoard';
 
 export interface IvdSurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
   /** Open the one document editor; a section ref deep-links to that section. */
   onOpenEditor?: (section?: EditorSectionRef) => void;
+  /** Shell navigation. The assessment workbench opens a saved record's working
+   *  copy in Authoring through it; without it that control is disabled. */
+  onNav?: (id: string) => void;
 }
 
 const PARAM_PILL: Record<IvdParamStatus, string> = {
@@ -66,8 +78,11 @@ export function IvdSurface(props: IvdSurfaceProps) {
   return <IvdProjectSurface {...props} program={props.program} />;
 }
 
-function IvdProjectSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps & { program: Program }) {
+function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav }: IvdSurfaceProps & { program: Program }) {
   const programId = program?.id ?? null;
+  /* The IVDR readiness board, read for this project only (`?program_id=`); it
+     draws a response only when the response says it covers this project. */
+  const readiness = useIvdReadiness(String(program.id));
   /* Slice 0, the same row: the project's recorded phase, read from its own row.
      The strip used to re-label the kit stageIdx useMdxPrograms derives (from
      progress bands when no phase is recorded) as an IVDR stage and tick every
@@ -189,6 +204,20 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps 
         The IVDR pathway's {IVD_STAGES.length} stages. None is marked: a project records its project phase, stated
         above, not an IVDR stage.
       </div>
+
+      {/* IVDR readiness: the seven requirement families and the evidence filed
+          against each, for this project. */}
+      <div className="panel" data-testid="ivd-readiness-panel">
+        <div className="panel-hdr">
+          <div>
+            <div className="t">IVDR readiness · technical file</div>
+            <div className="s">GSPR · analytical and clinical performance · scientific validity · PER · classification · PMPF</div>
+          </div>
+        </div>
+        <IvdReadinessBoard readiness={readiness} onAsk={onAskAna} />
+      </div>
+
+      <IvdAssessmentWorkbench programId={String(program.id)} onNav={onNav} />
 
       <div className="col2">
         <div>
