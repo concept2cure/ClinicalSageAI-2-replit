@@ -1216,6 +1216,12 @@ const mrActionBody = z.object({
   dueDate:     z.string().date().optional().nullable(),
 });
 const mrActionCloseBody = z.object({ closureNote: governedReason });
+/** The action as recorded: the same three fields go to the UPDATE and the audit row. */
+const mrActionFields = (p: z.infer<typeof mrActionBody>) =>
+  ({ description: p.description, owner: p.owner ?? null, dueDate: p.dueDate ?? null });
+/** The number the UPDATE gave the appended action, for the audit row. */
+const lastActionNumber = (row: { outputs?: unknown } | undefined): number | null =>
+  (row?.outputs as { actions?: Array<{ n?: number }> } | null)?.actions?.at(-1)?.n ?? null;
 
 router.post('/qms/management-reviews/:id/actions', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -1224,7 +1230,7 @@ router.post('/qms/management-reviews/:id/actions', requireEditorAccess, async (r
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = mrActionBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
+  const action = mrActionFields(parsed.data);
   try {
     const { rows } = await qmsClient(req).query(`UPDATE qms_management_reviews SET
          outputs = jsonb_set(COALESCE(outputs, '{}'::jsonb), '{actions}',
@@ -1236,15 +1242,14 @@ router.post('/qms/management-reviews/:id/actions', requireEditorAccess, async (r
          updated_at = now()
        WHERE id = $1 AND organization_id = $2
        RETURNING *`,
-      [id, orgId, p.description, p.owner ?? null, p.dueDate ?? null, getUserId(req)],
+      [id, orgId, action.description, action.owner, action.dueDate, getUserId(req)],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Management review');
-    const actions = (rows[0]?.outputs as { actions?: Array<{ n?: number }> } | null)?.actions ?? [];
     const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.management_review.action.add',
       resourceType: 'qms_management_review', resourceId: String(id),
-      details: { action: actions.at(-1)?.n ?? null, description: p.description, owner: p.owner ?? null, dueDate: p.dueDate ?? null },
+      details: { action: lastActionNumber(rows[0]), ...action },
     }, requestConnectable(req));
     return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'mr-action-add', err); }
