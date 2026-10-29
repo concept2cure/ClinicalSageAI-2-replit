@@ -15,7 +15,7 @@ const planned: CSRSummaryInput = {
   studyId: 'X-301', protocolNumber: 'X-301', phase: '3',
   studyDesign: 'randomized, double-blind, placebo-controlled',
   primaryEndpoint: 'global cure at week 8', primaryResult: 'See §11.4 (Efficacy Results) of the CSR for tabulated results.',
-  sampleSize: null, plannedSampleSize: 600,
+  sampleSize: null, plannedSampleSize: 600, pivotal: true,
 };
 const ctx = { indication: 'recurrent C. difficile infection', investigationalProduct: 'Drug X' };
 

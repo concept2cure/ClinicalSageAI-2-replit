@@ -34,6 +34,7 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => H.me }));
 vi.mock('@/lib/queryClient', () => {

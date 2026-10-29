@@ -11,7 +11,7 @@ import {
   extractTableDdl,
   type JourneyDb,
 } from '../../../../tests/golden-journeys/harness';
-import { readQmsTrainingCompliance } from '../training-compliance';
+import { readQmsTrainingCompliance, readQmsTrainingExpiring } from '../training-compliance';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../document-approval-signature';
 import { QMS_APPROVAL_FIXTURE_DDL, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { QMS_TRAINING_DECLARATION } from '../../../../shared/qms/training';
@@ -72,7 +72,7 @@ async function release(id: number): Promise<void> {
   await seedQmsApprovalFixture(jdb.pglite, signed);
 }
 async function acknowledge(doc: number, user: number, version: string, options: {
-  org?: number; expires?: 'future' | 'past' | 'never'; acknowledgedAt?: string;
+  org?: number; expires?: 'future' | 'past' | 'never'; expiresInDays?: number; acknowledgedAt?: string;
 } = {}): Promise<void> {
   const row = (await jdb.pglite.query<QmsDocumentRow>('SELECT * FROM qms_documents WHERE id=$1',[doc])).rows[0];
   const snapshot = { ...row, version };
@@ -82,9 +82,13 @@ async function acknowledge(doc: number, user: number, version: string, options: 
     INSERT INTO qms_training_records (organization_id, user_id, document_id, document_version, expires_at, acknowledged_at, metadata, acknowledgment_method)
     VALUES ($1, $2, $3, $4, $5, $6, $7, 'attestation')`,
   [options.org ?? 1, user, doc, version,
-    options.expires === 'never' ? null : new Date(NOW.getTime() + (options.expires === 'past' ? -1 : 1) * 86400000),
+    options.expires === 'never' ? null
+      : new Date(NOW.getTime() + (options.expiresInDays ?? (options.expires === 'past' ? -1 : 1)) * 86400000),
     options.acknowledgedAt ?? '2026-10-02T00:00:00Z',
     JSON.stringify({ declaration: QMS_TRAINING_DECLARATION, bindingBasis: 'qms-document-version-content-sha256', contentDigest: digest, documentSnapshot: snapshot })]);
+}
+async function expiring(withinDays: number, org = 1) {
+  return readQmsTrainingExpiring({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, withinDays, NOW);
 }
 async function compliance(org = 1) {
   return readQmsTrainingCompliance({ query: (sql, params) => jdb.pglite.query<Record<string, unknown>>(sql, params) }, org, NOW);
@@ -171,5 +175,31 @@ describe('current-version controlled-procedure training', () => {
     const rows = await compliance();
     expect(rows.map(row => row.doc_number)).toEqual(['A-curriculum', 'A-manual', 'A-policy', 'A-protocol', 'A-sop', 'A-wi']);
     expect(rows.every(row => row.current === 0 && row.of === 3 && row.last_cycle === null)).toBe(true);
+  });
+});
+
+describe('per-person training expiry (G10)', () => {
+  it('lists each active member whose current training lapses within the window, and by when', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 10 });
+    // Renewed: the later receipt runs past the window, so the earlier one's expiry is not a lapse.
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 10, acknowledgedAt: '2026-10-01T00:00:00Z' });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 300, acknowledgedAt: '2026-10-05T00:00:00Z' });
+    // A superseded version, a suspended member and a foreign organization never count.
+    await acknowledge(doc, 12, '0.9', { expiresInDays: 3 });
+    await acknowledge(doc, 13, '1.0', { expiresInDays: 3 });
+    await acknowledge(doc, 16, '1.0', { org: 2, expiresInDays: 3 });
+
+    expect(await expiring(60)).toEqual([expect.objectContaining({
+      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10,
+    })]);
+    expect(await expiring(5)).toEqual([]);
+  });
+
+  it('never lists a member whose current receipt has no expiry', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: 10, acknowledgedAt: '2026-10-01T00:00:00Z' });
+    await acknowledge(doc, 10, '1.0', { expires: 'never', acknowledgedAt: '2026-10-03T00:00:00Z' });
+    expect(await expiring(60)).toEqual([]);
   });
 });

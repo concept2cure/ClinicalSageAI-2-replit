@@ -97,17 +97,20 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // demonstration can end where a regulator would start: at the record of
   // every governed act. Read-only screens; nothing here signs or changes.
   { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
-  { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
+  /* The Part 11 console folded into the audit trail (D2, 2026-10-29): this
+     handle is kept so an old conversation's move still lands, and
+     DEEP_LINK_ALIASES takes it to audit-trail. */
+  { id: 'part11-console', label: 'Part 11 console', description: 'The audit trail, whose banner states both audit hash chains\' verdicts as the server re-computes them (the Part 11 console folded into it).', scope: 'global', group: 'global' },
   // Reporting & analytics, a launch app since 2026-09-30 (founder decision of 2026-09-26).
   { id: 'insights', label: 'Reporting & analytics', description: 'The Reporting canvas: governed reports over the project records, each with its confidence, gaps and blockers stated.', scope: 'global', group: 'global' },
   { id: 'compliance-reports', label: 'Audit & compliance reports', description: 'Reports an auditor or inspector asks for — user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, controlled documents — each sealed and recorded on the audit trail when run.', scope: 'global', group: 'global' },
   {
-    id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
-    // Declared because it is already CONSUMED (the surface focuses/scrolls to
-    // this artifact on mount) and PRODUCED (the shell's follow-the-work stash
-    // on artifact_version_saved) — an undeclared param the channel carries is
-    // a contract gap, not a feature.
-    params: [{ name: 'artifactId', required: false, description: 'Artifact to focus and scroll into view on arrival.' }],
+    /* The Artifacts center folded into the Vault (D2, fold F3 slice C,
+       2026-10-29): this handle is kept so an old conversation's move still
+       lands, and DEEP_LINK_ALIASES takes it to the Vault. Its artifactId param
+       went with the gallery that read it; the follow-the-work hand-off and AnA
+       focus an artifact with vault.focus-document now, which takes the id. */
+    id: 'artifacts-center', label: 'Governed artifacts', description: 'The Vault, which lists the governed artifacts of every project the user can open when no project is open (the Artifacts center folded into it). To select one artifact, use vault.focus-document.', scope: 'global', group: 'global',
   },
 
   // ── Project-scoped tabs (require an active project) ──
@@ -201,7 +204,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'device-udi', label: 'UDI and labeling', description: 'The device UDI register.', scope: 'global', group: 'module' },
   { id: 'device-postmarket', label: 'Post-market surveillance and CAPA', description: 'Postmarket surveillance with its triage queue.', scope: 'global', group: 'module' },
   { id: 'device-presub', label: 'Pre-Sub manager', description: 'The device pre-submission manager.', scope: 'global', group: 'module' },
-  { id: 'device-vault', label: 'Device vault', description: 'Device vault artifacts with versions and audit.', scope: 'global', group: 'module' },
+  /* The device vault folded into the Vault (D2, fold F3, 2026-10-29); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-vault', label: 'Device vault', description: 'The Vault: the open project\'s governed artifacts with versions and audit (the device vault folded into it).', scope: 'global', group: 'module' },
   { id: 'device-tasks', label: 'Device tasks', description: 'The device task workbench.', scope: 'global', group: 'module' },
   { id: 'device-validation', label: 'Validation center', description: 'The device validation workbench.', scope: 'global', group: 'module' },
   { id: 'device-submission', label: 'Device submissions', description: 'The device submission-packages workbench.', scope: 'global', group: 'module' },

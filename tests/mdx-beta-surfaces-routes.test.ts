@@ -42,7 +42,6 @@ vi.mock('../shared/constants/mdx', () => ({
 }));
 
 import anaDraftsRouter from '../server/routes/mdx-ana-drafts';
-import vaultRouter from '../server/routes/mdx-vault';
 import udiRouter from '../server/routes/mdx-udi';
 import riskRouter from '../server/routes/mdx-risk-management';
 import softwareRouter from '../server/routes/mdx-software';
@@ -62,7 +61,6 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
     });
   }
   app.use('/api/mdx', anaDraftsRouter);
-  app.use('/api/mdx', vaultRouter);
   app.use('/api/mdx', udiRouter);
   app.use('/api/mdx', riskRouter);
   app.use('/api/mdx', softwareRouter);
@@ -152,46 +150,10 @@ describe('GET /api/mdx/ana-drafts', () => {
   });
 });
 
-/* ─── Vault aggregator ───────────────────────────────────────────── */
-
-describe('GET /api/mdx/vault', () => {
-  // The route returns the merged list most-recently-updated first, so the two
-  // rows need distinct, ordered timestamps. With a bare `new Date()` on each
-  // they tie only while both land in the same millisecond; on a loaded runner
-  // the second lands later and sorts ahead, which is why this passed in the
-  // Test job and failed in Integration Tests on the same commit.
-  it('lists artifacts and groups by family', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 1, artifact_id: 'artifact_aaa', title: 'Cover letter', type: 'markdown',
-          category: 'document', ctd_section: '1.1', status: 'draft', version: 1,
-          content_hash: null, created_by_id: null,
-          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T10:00:00Z'), locked_at: null,
-          metadata: null,
-        },
-        {
-          id: 2, artifact_id: 'artifact_bbb', title: 'Device description', type: 'markdown',
-          category: 'document', ctd_section: '3.2.P', status: 'approved', version: 2,
-          content_hash: 'abc123', created_by_id: 7,
-          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T09:30:00Z'), locked_at: null,
-          metadata: { eSig: true },
-        },
-      ],
-    });
-    const res = await request(makeApp()).get('/api/mdx/vault');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(2);
-    expect(res.body.data[0].family).toBe('Module 1');
-    expect(res.body.data[1].family).toBe('Module 3');
-    expect(res.body.data[1].eSig).toBe(true);
-  });
-
-  it('rejects an invalid program_id UUID', async () => {
-    const res = await request(makeApp()).get('/api/mdx/vault?program_id=not-a-uuid');
-    expect(res.status).toBe(422);
-  });
-});
+/* No vault aggregator: GET /api/mdx/vault left with the device vault, which
+   folded into the Vault (D2, fold F3, 2026-10-29). The Vault's reads are
+   tested in server/routes/c2c/__tests__/project-vault-governed-artifacts*.test.ts
+   and server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
 
 /* ─── UDI CRUD ───────────────────────────────────────────────────── */
 

@@ -49,14 +49,12 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 import { DeepResearch } from '../surfaces/DeepResearch';
 import { EctdCoauthor } from '../surfaces/EctdCoauthor';
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
-import { ArtifactsCenter } from '../surfaces/AdminSurfaces';
 import { clearEditorTarget } from '../editorTarget';
 import { clearNavParams } from '../navParams';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
   registeredSurfaceId,
-  useSurfaceActionHandlers,
 } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 
@@ -281,59 +279,11 @@ describe('DocumentAuthoring — authoring.find opens the real find bar', () => {
   });
 });
 
-/* ── ArtifactsCenter → authoring: the Open button rides the same bus ─────── */
-
-const ARTIFACTS = {
-  data: [
-    { id: 'a-1', name: 'SAP v2 draft', kind: 'document', fmt: 'docx', size: '48 KB', model: 'AnA', when: '2h ago', ver: 'v2', sig: 'unsigned', prog: 'BX-204' },
-  ],
-};
-
-/** The receiving end a real navigation would mount — a probe registration
- *  under the editor's id, so the relay is proven without mounting the whole
- *  editor twice in one file. */
-function AuthoringProbe({ spy }: { spy: (params: Record<string, string>) => void }) {
-  useSurfaceActionHandlers('document-authoring', {
-    'authoring.open-document': (params) => {
-      spy(params as Record<string, string>);
-      return { ok: true, detail: 'probe' };
-    },
-  });
-  return null;
-}
-
-describe('ArtifactsCenter — Open carries the artifact to the editor', () => {
-  beforeEach(() => {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (_m: string, path: string) => {
-      if (path === '/api/artifacts-center') return ok(ARTIFACTS);
-      return ok({ data: [] });
-    });
-  });
-
-  it('a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it', async () => {
-    const onNav = vi.fn();
-    const { unmount } = render(
-      <ArtifactsCenter
-        surface={{ id: 'x', label: 'X' } as never}
-        onAsk={vi.fn()}
-        onNav={onNav}
-        segment="medtech"
-      />,
-    );
-    await screen.findByText('SAP v2 draft');
-
-    fireEvent.click(screen.getByText('Open to edit', { exact: false }));
-    expect(onNav).toHaveBeenCalledWith('authoring');
-
-    // The navigation happens for real in the app; here the artifacts surface
-    // unmounts and the editor's registration consumes the held directive.
-    unmount();
-    const spy = vi.fn();
-    render(<AuthoringProbe spy={spy} />);
-    await waitFor(() => expect(spy).toHaveBeenCalledWith({ title: 'SAP v2 draft' }));
-  });
-});
+/* ── ArtifactsCenter → authoring: retired ─────────────────────────────────
+   The gallery folded into the Vault (D2, fold F3 slice C, 2026-10-29). Its
+   Open rides the same authoring.open-document directive, by title, proven
+   against the real Vault in vaultOrganizationArtifacts.test.tsx and, for a
+   project's artifact leaf, vaultArtifactLeaf.test.tsx. */
 
 /* ── Quality — the lifted state, driven from one slot across both tabs ───── */
 

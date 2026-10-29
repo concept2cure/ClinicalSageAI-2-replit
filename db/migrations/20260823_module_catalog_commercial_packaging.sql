@@ -1,3 +1,10 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts artifacts-center or device-vault; its replay
+-- deprecates the existing rows. Remove their packaging references too, so the
+-- unknown-module guard below still passes on a fresh database that never held
+-- the rows. Replayed databases keep the deprecated rows, their subscriptions and
+-- every other module's tier unchanged (vault stays 'free').
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 device-tasks fold into Tasks (CLAUDE.md Rule 1).
 -- 20260810 no longer upserts device-tasks; its replay deprecates the existing row.
 -- Remove its packaging reference too, so the unknown-module guard below still
@@ -144,7 +151,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- fetch in AuthoringEngine.tsx and a static tool
   -- registry). They are reference and wayfinding pages. Selling a static page
   -- is not something to do at any tier.
-  ('artifacts-center', 'free'),
   ('authoring-engine', 'free'),
   ('crl-library', 'free'),
   ('deep-research', 'free'),
@@ -220,7 +226,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('device-submission', 'standard'),
   ('device-udi', 'standard'),
   ('device-validation', 'standard'),
-  ('device-vault', 'standard'),
   ('device-workstream', 'standard'),
   ('dispatch-readiness', 'standard'),
   ('doc-journey', 'standard'),

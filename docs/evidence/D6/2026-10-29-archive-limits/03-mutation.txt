@@ -1,0 +1,50 @@
+# Mutations: each applied alone, server/services/archive run, the source restored
+
+## M1 declared sizes are trusted: the measured step is skipped
+ × server/services/archive/__tests__/safe-zip.test.ts > what each entry actually expands to > refuses an entry that inflates past the size its header declares 26ms
+   → Cannot read properties of null (reading 'reason')
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M2 a name that climbs out is admitted
+ × server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses a name that is absolute, names a drive or climbs out 6ms
+   → Cannot read properties of null (reading 'reason')
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M3 the ratio rule is removed
+ × server/services/archive/__tests__/safe-zip.test.ts > what the directory declares > refuses an entry above the size floor that claims more than the ratio 31ms
+   → Cannot read properties of null (reading 'reason')
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED 179ms
+   → promise resolved "undefined" instead of rejecting
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > refuses a bomb DOCX before it inflates 3062ms
+   → promise resolved "{ spec: { specVersion: 1, …(6) }, …(3) }" instead of rejecting
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > reads no text from a bomb DOCX, and never hands it to the DOCX reader 709ms
+   → expected { …(2) } to deeply equal { text: '', method: 'none' }
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > refuses a caller-supplied bomb package 1014ms
+   → promise resolved "{ valid: false, …(2) }" instead of rejecting
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > legacy import detection (detectArchive) > reports a bomb archive as refused, reading none of its files 545ms
+   → expected [ { …(11) }, { …(11) }, { …(11) } ] to deeply equal []
+      Tests  6 failed | 15 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+## M4 the ZIP64 extra field is not read (first run: survived; the ZIP64 test read only the end record. The extra-field case was added, and this is the rerun)
+ × server/services/archive/__tests__/safe-zip.test.ts > the ZIP64 extra field > reads an entry's sizes from it when the directory marks them 0xFFFFFFFF 7ms
+   → This file is a compressed archive the server will not open: it expands to more than 536870912 bytes. Nothing in it was read.
+      Tests  1 failed | 21 passed (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+## M5 the upload guard skips the archive limit
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED 144ms
+   → promise resolved "undefined" instead of rejecting
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a "Word container" whose directory cannot be read, rather than handin
+   → promise resolved "undefined" instead of rejecting
+      Tests  2 failed | 19 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+## M6 a package this server assembled is held to the upload limit
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > still validates an ordinary package, and a package this server assembled is not bounded by an upload
+   → promise rejected "ArchiveLimitError: This file is a compres… { …(2) }" instead of resolving
+      Tests  1 failed | 20 passed (21)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+

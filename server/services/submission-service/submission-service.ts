@@ -2895,7 +2895,8 @@ async function transmitDispatchedSequence(
     throw err;
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the
-    // staged temp package is no longer needed.
+    // staged temp package is no longer needed. A sent package's bytes were kept
+    // by the guard before the wire (result.sentPackage).
     await assembled.cleanup();
   }
 
@@ -2937,6 +2938,9 @@ async function transmitDispatchedSequence(
         // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
         preTransmitFailedChecks: preTransmit.failedChecks,
         preTransmitWarnings: preTransmit.warnings,
+        // Where the exact bytes sent are kept: the staged package is deleted
+        // below, and a re-assembly gives a different zip (2026-10-29, W5/D7).
+        sentPackage: result.sentPackage ?? null,
         // P-34: the waiver the send went forward on, when no review had completed.
         ...withWaiverReliedOn(assessment),
       },

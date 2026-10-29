@@ -9,6 +9,7 @@ import { getProtocolExport } from '../../protocol-export/protocol-export-service
 import { savedImportSource, verifySavedWorkflowImport } from '../import-source-references';
 import { removeVisitTx, removeSoaAssessmentTx } from '../../protocol-development/protocol-development-service';
 import { renderProtocolSoaMarkdown } from '../../protocol-export/protocol-export-logic';
+import { workflowCopySectionContent } from '../workflow-copy-content';
 
 const PROGRAM='11111111-1111-4111-8111-111111111111';
 const OTHER='22222222-2222-4222-8222-222222222222';
@@ -188,6 +189,21 @@ describe('stored CSR materialization',()=>{
     expect(result.origin.selection).toEqual({kind:'csr',jobId:1,sectionNumbers:['13']});
     expect(result.origin.sourceScope).toEqual({level:'project',programId:null,projectId:11});
     expect(result.origin.version).toBeNull();
+  });
+  // CSR slice 5 (2026-10-30): a section's claim receipts travel into the import, bound to the stored copy.
+  it('carries a section\'s claim receipts bound to the copy it stores, and drops receipts made for other text',async()=>{
+    const prose='Global cure occurred in 16/305 (5.2%) subjects in the Recorded CSR study 1 arm.';
+    const receipts={schema:'c2c.csr-claim-receipts.v1',programId:PROGRAM,runId:'33333333-3333-4333-8333-333333333333',studyId:'study-1',sectionNumber:'11.4',
+      evidenceDigest:'c'.repeat(64),sourceSha256:'d'.repeat(64),outputSha256:hash(prose),
+      claims:[{table:'primaryEfficacy',row:0,column:2,value:'16/305 (5.2%)',endpoint:'Global cure',population:'Result'}]};
+    await database.query("INSERT INTO csr_section_outputs VALUES(705,7,11,1,'11.4',$1,$2,true,'m',$3,'2026-10-02T00:00:00Z')",[prose,hash(prose),JSON.stringify({claimReceipts:receipts})]);
+    const result=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11.4']}),q);
+    expect(result.origin.sectionOrigins[0].csrEvidence).toEqual({...receipts,sectionSha256:hash(workflowCopySectionContent(prose)),studyInformationNumbers:[]});
+    // "1" is in neither a claim nor the job's study information, so it is not whitelisted: the gate will report it.
+    await database.query('UPDATE csr_section_outputs SET lineage=$1 WHERE id=705',[JSON.stringify({claimReceipts:{...receipts,outputSha256:hash('other text')}})]);
+    const forged=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['11.4']}),q);
+    expect(forged.origin.sectionOrigins[0]).not.toHaveProperty('csrEvidence');
+    expect(forged.fingerprint).not.toBe(result.fingerprint);
   });
   it('preserves partial gaps and organization source scope with explicit association, rather than completing missing output',async()=>{
     const result=await materializeWorkflowSource(input({kind:'csr',jobId:2}),q);

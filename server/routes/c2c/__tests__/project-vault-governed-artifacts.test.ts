@@ -254,7 +254,8 @@ describe('GET /api/c2c/project-vault/:id — origin, breakdown and binding of th
     await request(app()).get(`/api/c2c/project-vault/${PROJECT}`);
     const call = registryCall();
     expect(call, 'the registry was read').toBeTruthy();
-    expect(call![1]).toEqual([7, PROJECT, 2001]);
+    // Organization, program, no project list (that is the organization view's scope, slice C), the window.
+    expect(call![1]).toEqual([7, PROJECT, null, 2001]);
     const sql = String(call![0]);
     expect(sql).toContain('a.organization_id = $1');
     expect(sql).toContain('p.regulatory_program_id = $2::uuid');

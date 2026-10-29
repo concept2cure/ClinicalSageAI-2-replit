@@ -1,0 +1,208 @@
+# Mutations, 2026-10-29
+
+Each mutation is applied alone to the finished tree, the check that should
+catch it is run, and each file is restored only if it still holds the mutated
+bytes, then sha256-checked against the original (mutate.py in the session
+scratchpad). Every section says "restored byte for byte (sha256): True".
+The tests are the finished ones. Product mutants M2-M8 run against the
+database built from blank with this change; migration mutants M9-M11 run the
+child-RLS suite, which applies the (mutated) file itself, on the database built
+at HEAD, which is what CI builds from a mutated file.
+
+| | Mutation | Check | Result |
+|---|---|---|---|
+| M1 | The policies not deployed: this change's code on the database built at HEAD | tenant-purge-blocking-keys | red: A's rows of the three CSR/CTD tables missing from A's export in A's scope |
+| M2 | ctd_documents' predicate widened past its parent's tenant | tenant-purge-blocking-keys | red: B's row in A's export (owner) |
+| M3 | csr_endpoint_results' predicate widened | tenant-purge-blocking-keys | red: B's row in A's export (owner) |
+| M4 | vault.evidence_citations through either key (source OR evidence) | tenant-purge-blocking-keys | red: B's citation of A's document in A's export |
+| M5 | vault.document_catalog widened | tenant-purge-blocking-keys | red: B's row in A's export (owner) |
+| M6 | vault.document_read_receipts dropped from the map | tenant-purge-blocking-keys | red: not read by the export; A's row missing |
+| M7 | ctd_module_sections through the wrong key (its own id against the submission's) | tenant-purge-blocking-keys | red (first survived, see below): A's rows missing, scoped and owner |
+| M8 | VAULT_TENANT_DOCUMENT_IDS loses its tenancy | tenant-purge-blocking-keys; ci:tenant-isolation:no-regression | red: B's rows of all three Vault tables in A's export; the gate names vault-tenancy.ts |
+| M9 | The three chained rows removed from 20260813 | child-table-parent-scoped-rls; ci:unkeyed-request-tables | red: no tenant_isolation_policy, A cannot see its own CTD document; the gate names ctd_module_sections, the one of the three a predicate reads in a FROM (the other two are only map keys) |
+| M10 | ctd_documents listed before ctd_module_sections | child-table-parent-scoped-rls | red: ctd_documents skipped, left deny-all (fail closed, not open) |
+| M11 | The chained policy ignores its key | child-table-parent-scoped-rls | red: tenant B reads tenant A's CTD document |
+| M12 | csr_narrative_outputs unlisted | ci:purge-coverage | red: NEW residue csr_narrative_outputs |
+| M13 | The csr_endpoints baseline entry removed | ci:unkeyed-request-tables | red: names csr_endpoints, read by purge-parent-scope.ts |
+
+**M7 survived the first version of the dbtest.** On a fresh database every
+sequence is in step, so A's CTD section and A's submission were both id 1 and
+the wrong key still found A's row, and only A's. The dbtest now starts each
+seeded table's ids at its own offset (staggerSequences). M7 is red after. That
+run is kept below.
+
+## Raw output
+
+```
+### M1-the-policies-not-deployed: this change's code on the database built at HEAD (tenant-purge-blocking-keys.dbtest)
+files: 
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ Array(3) ] to deeply equal []
++   "scoped: csr_endpoint_results",
++   "scoped: ctd_module_sections",
++   "scoped: ctd_documents",
+
+### M2-ctd_documents-widened (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: ctd_documents' ] to deeply equal []
++   "owner: ctd_documents",
+
+### M3-csr_endpoint_results-widened (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: csr_endpoint_results' ] to deeply equal []
++   "owner: csr_endpoint_results",
+
+### M4-citations-either-key (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: vault.evidence_citations' ] to deeply equal []
++   "owner: vault.evidence_citations",
+
+### M5-catalog-widened (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ 'owner: vault.document_catalog' ] to deeply equal []
++   "owner: vault.document_catalog",
+
+### M6-read-receipts-dropped (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  2 failed | 4 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+AssertionError: tables the purge erases that the export does not read: expected [ 'vault.document_read_receipts' ] to deeply equal []
++   "vault.document_read_receipts",
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ Array(1) ] to deeply equal []
++   "owner: vault.document_read_receipts",
+
+### M7-ctd_module_sections-wrong-parent-key (tenant-purge-blocking-keys.dbtest, FIRST version of the test: sequences in step, SURVIVED)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 0
+restored byte for byte (sha256): True
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+### M7-ctd_module_sections-wrong-parent-key (tenant-purge-blocking-keys.dbtest, finished test with staggerSequences)
+files: server/services/tenant/purge-parent-scope.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: A's rows the purge erases, missing from A's export: expected [ 'scoped: ctd_module_sections', …(1) ] to deeply equal []
++   "scoped: ctd_module_sections",
++   "owner: ctd_module_sections",
+
+### M8-vault-ids-lose-tenancy (tenant-purge-blocking-keys.dbtest)
+files: server/services/tenant/vault-tenancy.ts
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+AssertionError: B's rows in A's export: expected [ …(4) ] to deeply equal []
++   "owner: vault.document_catalog",
++   "owner: vault.document_read_receipts",
++   "owner: vault.evidence_citations",
++   "owner: vault.evidence_citations",
+
+### M8-vault-ids-lose-tenancy (ci:tenant-isolation:no-regression)
+files: server/services/tenant/vault-tenancy.ts
+command exit: 1
+restored byte for byte (sha256): True
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 0:
+  server/services/tenant/vault-tenancy.ts#d17b48496c9a:documents
+
+### M9-chained-rows-removed (child-table-parent-scoped-rls.dbtest, on the database built at HEAD: what CI builds from the mutated file)
+files: db/migrations/20260813_child_table_parent_scoped_rls.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+      Tests  2 failed | 14 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+AssertionError: csr_endpoint_results has no tenant_isolation_policy: expected false to be true // Object.is equality
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+AssertionError: ctd_documents: tenant A cannot see its OWN row: expected +0 to be 1 // Object.is equality
+
+### M10-chained-order-swapped (child-table-parent-scoped-rls.dbtest, on the database built at HEAD: what CI builds from the mutated file)
+files: db/migrations/20260813_child_table_parent_scoped_rls.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+      Tests  2 failed | 14 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+AssertionError: ctd_documents has no tenant_isolation_policy: expected false to be true // Object.is equality
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+AssertionError: ctd_documents: tenant A cannot see its OWN row: expected +0 to be 1 // Object.is equality
+
+### M11-chained-policy-ignores-key (child-table-parent-scoped-rls.dbtest, on the database built at HEAD: what CI builds from the mutated file)
+files: db/migrations/20260813_child_table_parent_scoped_rls.sql
+command exit: 1
+restored byte for byte (sha256): True
+ × tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+      Tests  1 failed | 15 passed (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+AssertionError: ctd_documents: tenant B can read tenant A's row: expected 1 to be +0 // Object.is equality
+
+### M9-chained-rows-removed (ci:unkeyed-request-tables)
+files: db/migrations/20260813_child_table_parent_scoped_rls.sql
+command exit: 1
+restored byte for byte (sha256): True
+🚫 Table(s) a per-request path reads with NO tenant column:
+  ctd_module_sections
+
+
+### M12-csr_narrative_outputs-unlisted (ci:purge-coverage)
+files: server/services/tenant/purge-referrers.ts
+command exit: 1
+restored byte for byte (sha256): True
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - csr_narrative_outputs
+
+### M13-csr_endpoints-baseline-entry-removed (ci:unkeyed-request-tables)
+files: scripts/ci/unkeyed-request-tables-baseline.json
+command exit: 1
+restored byte for byte (sha256): True
+🚫 Table(s) a per-request path reads with NO tenant column:
+  csr_endpoints
+
+
+```

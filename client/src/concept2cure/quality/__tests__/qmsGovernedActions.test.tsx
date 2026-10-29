@@ -61,6 +61,7 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: TEMPLATES, loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');

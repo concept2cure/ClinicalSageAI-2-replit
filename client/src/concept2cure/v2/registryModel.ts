@@ -664,17 +664,15 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: [
         'vault',
-        'device-vault',
         'device-clinical-studies',
         'device-engineering',
         'device-software',
         'evidence-search',
-        'artifacts-center',
         'decision-lineage',
       ],
     },
     { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: the device segment had no biostatistics surface either,
@@ -704,10 +702,10 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
+      items: ['vault', 'evidence-search', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       // 2026-10-11: this segment had no biostatistics surface at all, and the
@@ -745,7 +743,7 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage', 'insights'],
+      items: ['vault', 'evidence-search', 'decision-lineage', 'insights'],
     },
     {
       label: 'Applications & filing',
@@ -812,7 +810,7 @@ export const SEGMENT_MODULES = {
     { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage', 'insights'],
+      items: ['vault', 'evidence-search', 'decision-lineage', 'insights'],
     },
     {
       label: 'Submit & file',
@@ -838,7 +836,7 @@ export const SEGMENT_MODULES = {
     { label: 'Research administration', items: ['research-admin', 'agency-meetings'] },
     {
       label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
+      items: ['vault', 'evidence-search', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['ind-checklist', 'submission-center'] },
     {
@@ -982,6 +980,20 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      what another store records as blocking. Old links, ⌘K hits and AnA's
      `device-tasks` target land there. */
   'device-tasks': 'tasks',
+  /* The Artifacts center and the device kit's vault folded into the Vault (D2,
+     fold F3, 2026-10-29; docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/).
+     Each project's Governed artifacts branch lists every artifact of the
+     project with its versions, audit report and governed DOCX, and with no
+     project open the Vault lists the governed artifacts of every project the
+     person can open. Old links, ⌘K hits and AnA's targets land there. */
+  'artifacts-center': 'vault',
+  'device-vault': 'vault',
+  /* The Part 11 console folded into Audit trail (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/). Audit trail's
+     chain banner states both audit chains' verdicts, the ledger's (audit_logs)
+     and the audit_events chain's from the console's own route, and AnA reads
+     both in its facts. Old links, ⌘K hits and AnA's target land there. */
+  'part11-console': 'audit-trail',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate

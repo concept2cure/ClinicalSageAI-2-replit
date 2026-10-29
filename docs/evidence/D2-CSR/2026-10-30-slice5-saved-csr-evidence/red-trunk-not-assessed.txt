@@ -1,0 +1,41 @@
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 264ms
+   → expected { status: 'not_assessed', …(2) } to match object { …(6) }
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 96ms
+   → expected 'not_assessed' to be 'blocked' // Object.is equality
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 86ms
+   → expected 'not_assessed' to be 'blocked' // Object.is equality
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 88ms
+   → expected 'not_assessed' to be 'blocked' // Object.is equality
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 86ms
+   → expected { status: 'not_assessed', …(2) } to match object { status: 'blocked', …(1) }
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 80ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { status: 'not_assessed', …(2) } to match object { …(6) }
+- Expected
++ Received
+-   "status": "reconciled_pending_human_review",
++   "status": "not_assessed",
+     77|     expect(v.csrEvidence).toMatchObject({ status: 'reconciled_pending_…
+AssertionError: expected 'not_assessed' to be 'blocked' // Object.is equality
+Expected: "blocked"
+Received: "not_assessed"
+     85|     expect(v.csrEvidence.status).toBe('blocked');
+AssertionError: expected 'not_assessed' to be 'blocked' // Object.is equality
+Expected: "blocked"
+Received: "not_assessed"
+    102|     expect(v.csrEvidence.status).toBe('blocked');
+AssertionError: expected 'not_assessed' to be 'blocked' // Object.is equality
+Expected: "blocked"
+Received: "not_assessed"
+    112|     expect(v.csrEvidence.status).toBe('blocked');
+AssertionError: expected { status: 'not_assessed', …(2) } to match object { status: 'blocked', …(1) }
+- Expected
++ Received
+-   "status": "blocked",
++   "status": "not_assessed",
+    124|     expect(v.csrEvidence).toMatchObject({ status: 'blocked', runs: [{ …
+AssertionError: expected [ { …(2) }, …(8) ] to deeply equal ArrayContaining{…}
+- Expected
++ Received
++       "message": "Expected heading(s) not detected for a Clinical Study Report (CSR): 1. Title Page, 3. Table of Contents for the Individual Clinical Study Report, 4. List of Abbreviations and Definitions of Terms, 5. Ethics, 6. Investigators and Study Administrative Structure, 7. Introduction, 8. Study Objectives, 9. Investigational Plan, 10. Study Patients, 11. Efficacy Evaluation, 12. Safety Evaluation, 13. Discussion and Overall Conclusions, 14. Tables, Figures and Graphs Referred to But Not Included in the Text, 15. Reference List, 16. Appendices. Confirm applicability and the current template; undetected…",
+      Tests  6 failed (6)

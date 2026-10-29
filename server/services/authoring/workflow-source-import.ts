@@ -17,6 +17,8 @@ import { validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { listLiveMachineSpans, hashSpanText } from '../clinical-regulatory-evidence/span-lineage.service';
 import { WORKFLOW_IMPORT_AUTHOR_ID } from './revision-ledger';
 import { verifyRetainedProtocolMatrixEndpoints } from './protocol-import-matrix';
+import { workflowCopySectionContent } from './workflow-copy-content';
+import { importedCsrSectionEvidence } from '../csr/csr-claim-receipts';
 
 export class WorkflowSourceImportError extends Error {
   constructor(readonly status: 400 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
@@ -168,7 +170,7 @@ function csrSelection(source: Extract<WorkflowImportSource,{kind:'csr'}>): strin
   return [...new Set(source.sectionNumbers)].sort((a,b) => CSR_CODES.get(a)!.index - CSR_CODES.get(b)!.index);
 }
 
-function csrSections(rows: Record<string, unknown>[], selection: string[] | undefined): Pick<Composition,'sections'|'sectionOrigins'> {
+function csrSections(rows: Record<string, unknown>[], selection: string[] | undefined, studyInfo: unknown): Pick<Composition,'sections'|'sectionOrigins'> {
   const selected = rows.filter(row => typeof row.section_number === 'string' && (!selection || selectedBy(row.section_number, selection)));
   if (!selected.length) return fail(409, 'WORKFLOW_CSR_OUTPUT_MISSING', 'No saved output exists for the selected CSR section.');
   for (const code of selection ?? []) if (!selected.some(row => selectedBy(String(row.section_number), [code]))) return fail(409, 'WORKFLOW_CSR_OUTPUT_MISSING', `No saved output exists for selected CSR section ${code}.`);
@@ -176,7 +178,7 @@ function csrSections(rows: Record<string, unknown>[], selection: string[] | unde
   const sections: Composition['sections'] = [];
   const sectionOrigins: WorkflowSectionOrigin[] = [];
   for (const row of selected) {
-    const verified = verifiedCsrSection(row);
+    const verified = verifiedCsrSection(row, studyInfo);
     sections.push(verified.section);
     sectionOrigins.push(verified.origin);
   }
@@ -189,13 +191,18 @@ function csrAuthorship(row: Record<string,unknown>): Pick<WorkflowSectionOrigin,
   return {originalAuthorship:row.ai_generated ? 'machine' : lineage.source === 'template' ? 'template' : 'unknown',model:typeof row.model === 'string' && row.model.trim() ? row.model.trim() : null};
 }
 
-function verifiedCsrSection(row: Record<string,unknown>) {
+function verifiedCsrSection(row: Record<string,unknown>, studyInfo: unknown) {
   const code = row.section_number;
   const catalog = typeof code === 'string' ? CSR_CODES.get(code) : null;
   if (!positive(row.id) || !catalog || typeof row.content !== 'string' || !row.content.trim()) return fail(409, 'WORKFLOW_CSR_OUTPUT_INVALID', 'The selected CSR contains an invalid or empty saved section.');
   if (typeof row.content_hash !== 'string' || !HASH.test(row.content_hash) || sha(row.content) !== row.content_hash) return fail(409, 'WORKFLOW_CSR_HASH_MISMATCH', `Saved CSR section ${code} does not match its recorded content hash.`);
   const {originalAuthorship,model} = csrAuthorship(row);
-  return {section:{code:String(code),title:catalog.section.title,content:row.content},origin:sourceOrigin(String(code),`csr_section_outputs:${row.id}`,row.content,originalAuthorship,model)};
+  const origin = sourceOrigin(String(code),`csr_section_outputs:${row.id}`,row.content,originalAuthorship,model);
+  // CSR slice 5: the section's claim receipts travel into the Authoring document,
+  // bound to the copy this import stores, so a saved CSR can be re-checked.
+  const csrEvidence = importedCsrSectionEvidence({sectionNumber:String(code),content:row.content,contentHash:row.content_hash,lineage:row.lineage},
+    workflowCopySectionContent(row.content), studyInfo);
+  return {section:{code:String(code),title:catalog.section.title,content:row.content},origin:csrEvidence ? {...origin,csrEvidence:{...csrEvidence}} : origin};
 }
 
 type CsrJob = {id:number;project_id:number|null;study_id:string;status:string;sections_to_generate:string[]|null;study_info_snapshot:unknown};
@@ -218,9 +225,13 @@ function csrGaps(job: CsrJob, sections: Composition['sections'], selection: stri
   return gaps;
 }
 
-function csrTitle(job: CsrJob): string {
+function csrStudyInfo(job: CsrJob): Record<string,unknown> {
   const snapshot = job.study_info_snapshot && typeof job.study_info_snapshot === 'object' ? job.study_info_snapshot as Record<string,unknown> : {};
-  const study = snapshot.studyInfo && typeof snapshot.studyInfo === 'object' ? snapshot.studyInfo as Record<string,unknown> : snapshot;
+  return snapshot.studyInfo && typeof snapshot.studyInfo === 'object' ? snapshot.studyInfo as Record<string,unknown> : snapshot;
+}
+
+function csrTitle(job: CsrJob): string {
+  const study = csrStudyInfo(job);
   return typeof study.title === 'string' && study.title.trim() ? study.title : `Clinical study report for ${job.study_id}`;
 }
 
@@ -235,7 +246,7 @@ async function composeCsr(input: WorkflowMaterializationInput & { source: Extrac
   if (!identities.rows.every((row: Record<string,unknown>) => row.project_id === job.project_id)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'Saved CSR output does not match its job project scope.');
   const output = await q.query(`SELECT id, section_number, content, content_hash, ai_generated, model, lineage, generated_at
     FROM csr_section_outputs WHERE job_id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $3 ORDER BY section_number, id`, [input.source.jobId,input.organizationId,job.project_id]);
-  const composed = csrSections(output.rows, selection);
+  const composed = csrSections(output.rows, selection, csrStudyInfo(job));
   const present = new Set(composed.sections.map(s => s.code));
   const gaps = csrGaps(job,composed.sections,selection);
   const title = csrTitle(job);

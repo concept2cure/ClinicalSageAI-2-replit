@@ -20,6 +20,24 @@ What a QMS controlled document now does:
 | `3f46aa2a0` | OQ-006 v0.8: the protocol revised for the route and for the controlled create it had not followed since 2026-10-14 (red first, below). |
 | this commit | Evidence, and OQ-006 §4 brought to the execution at `3f46aa2a0`. |
 
+## After the merge with origin (2026-10-29)
+
+RR4 was merged with `origin/concept2cure-v2`. Upstream brought QMS changes: the quality-record routes moved to `mdx-qms-records.ts`, supplier and nonconformance signatures were added, and training lapses arrived. The coordinator resolved three textual conflicts:
+- `mdx-qms.ts`: both import sets kept;
+- `migration-set.mjs`: upstream's `20261029e` before RR4's `20261029f`;
+- `qmsApproval.ts`: RR4's side kept. `sendQmsDocumentForReview` was the pre-RR4 unrouted send, which the server now refuses and which has no caller. A duplicated `UNCONFIRMED_REVIEW` was dropped.
+
+RR4 then fixed two tests:
+- **`qmsReviewRoute.test.tsx`.** Upstream's register now renders `<TrainingExpiry />`, which reads `useTrainingExpiring`. The test's `../hooks` mock gained it, exactly as upstream's own SopRegister tests did. The route form remains the only send for review, and upstream added no other send.
+- **`ControlledDocumentWorkbench.integration.test.tsx`, "authors an empty template section…".** It fails on origin alone, and passed at `4e054413d`. The cause is timing. The first test pays for the cold `React.lazy` import of the real workbench's module graph, and on the merged tree that outlasts the 5 s test budget: the DOM is still "Loading the document editor…". With a longer timeout all 3 pass. The module is now loaded once in `beforeAll`; every test still renders through the lazy boundary, and no assertion changed.
+
+On the merged tree, with the fixture database and the instance database brought to the merged set by `scripts/db/deploy-migrate.mjs` (`green/merged/`, `gates-merge.txt`):
+- DB: **14 files, 162 passed**.
+- Client: **32 files, 316 passed**.
+- Server unit (now also every `server/services/qms/__tests__` and QMS route test): **88 files, 1713 passed, 6 failed**, the same 6 pre-existing failures.
+- Every gate and the full typecheck: exit 0.
+- **OQ-006 v0.8: 22 pass, 0 fail, 0 deviation, 0 not-executed** (`oq/green-merged/`). Its record names `4e054413d`, because it ran on the staged merge before the merge commit.
+
 ## What already exists
 
 Everything below was found first, then extended or reached. Nothing was rebuilt beside it.

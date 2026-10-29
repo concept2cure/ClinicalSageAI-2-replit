@@ -44,4 +44,20 @@
  * bug this predicate exists to fix.
  */
 export const VAULT_DOCUMENT_TENANCY =
-  '(organization_id = $1 OR program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1))';
+  `(organization_id = $1 OR program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1))`;
+
+/**
+ * The ids of a tenant's vault documents: the parent every Vault child table is
+ * scoped by, read by the purge and the export through ./purge-parent-scope.
+ *
+ * Each child names its document through the key its own row-level-security
+ * policies join vault.documents on: document_chunks, document_catalog and
+ * document_read_receipts by document_id, evidence_citations by
+ * source_document_id. The purge deletes exactly these documents (through the
+ * purge_tenant_vault_records door) and the children go with them by cascade,
+ * so this set, through each child's key, is what an erasure destroys and what
+ * the export must return.
+ */
+/* A template literal above, not a quoted string, so ci:tenant-isolation expands
+   it into the statement here and sees its organization_id predicate. */
+export const VAULT_TENANT_DOCUMENT_IDS = `SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY}`;

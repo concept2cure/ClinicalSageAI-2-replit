@@ -198,30 +198,10 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE],
     notes: 'What the organization’s subscription includes and why any feature is unavailable; administrators turn features on and off. A locked feature says why, and what opens it.',
   },
-  {
-    id: 'artifacts-center',
-    label: 'Artifacts center',
-    navTier: 'global',
-    layoutMode: 'artifacts-center',
-    icon: 'sparkles',
-    group: 'evidence',
-    uiKit: null,
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx ArtifactsCenter reads and exports the gallery.
-    // 2026-09-29: '/api/biotech-artifacts' removed. It generates ICSRs, PSURs,
-    // CIOMS forms, expedited safety reports, clinical-operations reports and
-    // eCTD cover letters from the request body and records none of them (no
-    // vault document, version or audit row). No screen calls it, and PV and
-    // clinical operations are outside the release. A regulated document is
-    // produced only through a path that records it (Authoring → Vault).
-    // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/atoms', '/api/artifacts-center'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE, PART11],
-    notes: 'Cross-project artifact library, version chain, provenance, signature status.',
-  },
+  // No artifacts-center. The Artifacts center folded into the Vault as its
+  // organization view (D2, fold F3 slice C, 2026-10-29); 'artifacts-center' is a
+  // DEEP_LINK_ALIASES entry for 'vault', and /api/artifacts-center is the Vault's
+  // claim alone. Its other claim, /api/atoms, had no route and no caller.
 
   // ─── Tier: project ───────────────────────────────────────────────────────────
   {
@@ -319,11 +299,14 @@ export const UI_SURFACES: UiSurface[] = [
     // one document lifecycle (VR-13).
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     // 2026-10-29 (D2, fold F3 slice B): a governed artifact's leaf downloads the governed DOCX
-    // (/api/artifacts-center/:id/export). A shared claim, as a86ed04ed: the Artifacts center keeps
+    // (/api/artifacts-center/:id/export). A shared claim, as a86ed04ed: the Artifacts center kept
     // its own. It opens two reads to a Vault-only organization, both organization-scoped
     // (docs/evidence/D2-ONE-ANA/2026-10-29/vault-artifact-leaf/README.md). The leaf's versions and
     // audit report (/api/concept2cure/projects/...) are NOT claimed here: that prefix holds 97
     // routes, 49 of them writes, and its claim is a decision of its own (same README).
+    // 2026-10-29 (fold F3 slice C): the Artifacts center folded in, so /api/artifacts-center is
+    // this claim alone. Its listing is the Vault's organization view, bound to the projects the
+    // caller can open (docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/README.md).
     apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops/artifact-section-map', '/api/submission-ops/packages', '/api/vault/legal-holds', '/api/regulatory/documents', '/api/artifacts-center'],
     anaToolFamilies: [],
     sharedContract: null,
@@ -1076,23 +1059,8 @@ export const UI_SURFACES: UiSurface[] = [
     notes: deferredSurfaceDescription('qmp'),
     engineering: 'Routes: /api/quality.',
   },
-  {
-    id: 'part11-console',
-    label: '21 CFR Part 11 console',
-    navTier: 'admin',
-    layoutMode: 'audit',
-    icon: 'lock',
-    group: 'admin',
-    uiKit: null,
-    apiPrefixes: ['/api/part11'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Read-only compliance console: audit hash-chain integrity, §11.10 control status, SOC 2 control grid.',
-    engineering: 'Routes: /api/part11.',
-  },
+  // part11-console folded into audit-trail (D2, 2026-10-29): Audit trail states both
+  // audit chains' verdicts, and its entry above already claims /api/part11.
   {
     id: 'identity-console',
     label: 'Enterprise identity (SSO / SCIM)',

@@ -23,6 +23,17 @@ import {
   governedArtifactsFacts,
   type GovernedArtifactsBlock,
 } from './VaultGovernedArtifacts';
+import {
+  OrganizationGovernedArtifacts,
+  fetchOrganizationArtifactDocx,
+  findOrganizationArtifact,
+  organizationArtifactAskPrompt,
+  organizationArtifactsFacts,
+  organizationManifestRows,
+  organizationViewContext,
+  useOrganizationArtifacts,
+  type OrganizationArtifactRow,
+} from './VaultOrganizationArtifacts';
 import { downloadArtifactManifest } from '../artifactManifest';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
@@ -778,6 +789,33 @@ function VaultFindFilterRow({ value, onChange, onClear, facets }: {
 
 /** The Vault shows one program's documents; with none open there is no vault
  *  to operate, and "no documents" or "no such folder" would misstate why. */
+/**
+ * The governed-artifact leaf of the tree whose registry id is `artifactId`, for
+ * vault.focus-document by id (the Live Drive hand-off). One id is one leaf.
+ */
+export function findVaultArtifactLeaf(
+  nodes: readonly (VaultFolder | VaultDoc)[],
+  artifactId: string,
+): { kind: 'one'; doc: VaultDoc; folder: VaultFolder; ancestors: string[] } | { kind: 'none' } {
+  const walk = (folder: VaultFolder, ancestors: string[]): { doc: VaultDoc; folder: VaultFolder; ancestors: string[] } | null => {
+    for (const child of folder.children) {
+      if (isVaultDoc(child)) {
+        if (child.artifact?.artifactId === artifactId) return { doc: child, folder, ancestors };
+      } else {
+        const hit = walk(child as VaultFolder, [...ancestors, folder.id]);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  };
+  for (const n of nodes) {
+    if (isVaultDoc(n)) continue;
+    const hit = walk(n as VaultFolder, []);
+    if (hit) return { kind: 'one', ...hit };
+  }
+  return { kind: 'none' };
+}
+
 const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
 /** Keep the recorded refusal with the action rather than only in a hover hint. */
@@ -998,6 +1036,34 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* The governed artifacts across the projects the caller can open (fold F3
+     slice C): the Artifacts center's gallery, folded in. Shown with no project
+     open; read only when a person opens it while a project is. */
+  const [orgOpen, setOrgOpen] = useState(false);
+  const orgActive = !projectId || orgOpen;
+  const orgRead = useOrganizationArtifacts(orgActive);
+  const [orgFocusId, setOrgFocusId] = useState<string | null>(null);
+  const downloadOrganizationArtifact = async (row: OrganizationArtifactRow) => {
+    if (downloading) return;
+    setDownloading(row.id);
+    setDownloadNote(null);
+    try {
+      const out = await fetchOrganizationArtifactDocx(row);
+      if (!out.ok) {
+        setDownloadNote({ text: out.text, tone: 'error' });
+        return;
+      }
+      const saved = downloadBlob(out.name, out.blob);
+      setDownloadNote(saved ? null : { text: `${row.name} was fetched but the browser refused the download.`, tone: 'error' });
+    } finally {
+      setDownloading('');
+    }
+  };
+  const exportOrganizationManifest = () => {
+    const saved = downloadArtifactManifest('governed-artifacts-across-projects.csv', organizationManifestRows(orgRead.rows));
+    if (!saved) setDownloadNote({ text: 'The manifest was built but the browser refused the download.', tone: 'error' });
+  };
+
   const fileDocument = async (
     docId: string,
     body: { confirm?: boolean; folderId?: string | null; ctdSection?: string; note?: string },
@@ -1192,6 +1258,34 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     return null;
   };
 
+  /* Artifact ids given one re-read by vault.focus-document, while it waits for it. */
+  const rereadFor = React.useRef(new Set<string>());
+  /* vault.focus-document with no project open: the organization view's row,
+     by id or by name, as the Artifacts center's focus-artifact did. */
+  const focusOrganizationArtifact = (wantedId: string, wanted: string) => {
+    if (orgRead.loading)
+      return { ok: false as const, reason: 'The governed artifacts across your projects are still loading.', retry: true };
+    if (orgRead.error)
+      return { ok: false as const, reason: 'The governed artifacts across your projects could not be read.' };
+    const found = findOrganizationArtifact(orgRead.rows, wantedId ? { artifactId: wantedId } : { name: wanted });
+    if (found.kind === 'none' && wantedId) {
+      if (!rereadFor.current.has(wantedId)) {
+        rereadFor.current.add(wantedId);
+        orgRead.reload();
+        return { ok: false as const, reason: 'Reading the governed artifacts again for that artifact.', retry: true };
+      }
+      rereadFor.current.delete(wantedId);
+      return { ok: false as const, reason: `No governed artifact ${wantedId} in the projects you can open.` };
+    }
+    if (wantedId) rereadFor.current.delete(wantedId);
+    if (found.kind === 'none') return { ok: false as const, reason: `No governed artifact named "${wanted}" in the projects you can open.` };
+    if (found.kind === 'many') {
+      return { ok: false as const, reason: `"${wanted}" matches ${found.count} governed artifacts across your projects — name one exactly.` };
+    }
+    setOrgFocusId(found.row.id);
+    return { ok: true as const, detail: `Focused “${found.row.name}” (${found.row.prog}) in governed artifacts across your projects` };
+  };
+
   /* AnA's hands on this screen — the surface-action bus (shared registry:
      vault.*). Both handlers drive the SAME state the human's own controls
      drive (setQ / setActiveFolder / setExpanded); a folder AnA names is
@@ -1260,16 +1354,32 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       });
       return { ok: true, detail: `Opened ${target.folder.label}` };
     },
-    /* Selects a named document, the state a person's click on its row drives
-       (slice B: the Vault's counterpart of artifacts-center.focus-artifact). */
+    /* Selects a document, the state a person's click on its row drives (slice
+       B: the Vault's counterpart of artifacts-center.focus-artifact). By title
+       or section code, or, since slice C, by a governed artifact's id: the Live
+       Drive hand-off (V2App followWork) names the artifact AnA just saved.
+       With no project open it focuses the row in the organization view. An id
+       the tree does not hold yet (saved after the tree was read) gets one
+       re-read before it is a miss. */
     'vault.focus-document': (params) => {
+      const wantedId = (params.artifactId ?? '').trim();
       const wanted = (params.document ?? '').trim();
-      if (!wanted) return { ok: false, reason: 'No document named.' };
-      if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
+      if (!wantedId && !wanted) return { ok: false, reason: 'No document named.' };
+      if (!projectId) return focusOrganizationArtifact(wantedId, wanted);
       if (vaultState.loading)
         return { ok: false, reason: 'The vault is still loading.', retry: true };
       if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
-      const found = findNamedVaultDocument(tree, wanted);
+      const found = wantedId ? findVaultArtifactLeaf(tree, wantedId) : findNamedVaultDocument(tree, wanted);
+      if (found.kind === 'none' && wantedId) {
+        if (!rereadFor.current.has(wantedId)) {
+          rereadFor.current.add(wantedId);
+          setVaultEpoch((n) => n + 1);
+          return { ok: false, reason: 'Reading the vault again for that artifact.', retry: true };
+        }
+        rereadFor.current.delete(wantedId);
+        return { ok: false, reason: `The artifact ${wantedId} is not in this project’s Vault: it belongs to another project, or it is archived.` };
+      }
+      if (wantedId) rereadFor.current.delete(wantedId);
       if (found.kind === 'none') return { ok: false, reason: `No document named "${params.document}" in this vault.` };
       if (found.kind === 'many') {
         return { ok: false, reason: `"${params.document}" matches ${found.count} documents — name one exactly.` };
@@ -1289,8 +1399,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* The ready signal for the retry contract above: when the read settles, a
      held not-ready directive gets its one re-attempt. */
   React.useEffect(() => {
-    if (!vaultState.loading) notifySurfaceActionReady('vault');
-  }, [vaultState.loading]);
+    if (!vaultState.loading && !orgRead.loading) notifySurfaceActionReady('vault');
+  }, [vaultState.loading, orgRead.loading]);
 
   // No live selection yet → fall back to the first folder / first doc so the
   // surface shows something without seeding local state from the async tree.
@@ -1368,7 +1478,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      when the vault is genuinely empty and when the read threw, and a summary
      saying "0 documents" over an outage would make AnA confidently wrong about
      a customer's repository. Loading says loading for the same reason. */
+  // Memoized on the read's own fields (the wrapper is new each render), so the context below changes only when they do.
+  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta } = orgRead;
+  const organizationArtifacts = useMemo(
+    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta }, orgActive),
+    [orgRows, orgLoading, orgError, orgMeta, orgActive],
+  );
+  const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
   const anaContext = useMemo(() => {
+    /* No project open: no tree, and the organization view is what is on screen
+       (fold F3 slice C). Its failure is published as a failure, never as zero. */
+    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError }, organizationArtifacts, orgFocused);
     if (vaultState.loading) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
@@ -1431,6 +1551,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             : null,
         // The project's governed artifacts (fold F3 slice A), or that they could not be read.
         governedArtifacts: governedArtifactsFacts(vault?.artifacts, vault?.unavailable),
+        // Across the projects the caller can open, when a person opened that view (slice C).
+        organizationArtifacts,
         unavailableBranches: vault?.unavailable?.map((u) => u.branch) ?? [],
         shownInList: shown,
         searchQuery: trimmedQ || null,
@@ -1465,7 +1587,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -1528,11 +1650,25 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      one (slice B): the authoring.open-document directive, by title. The editor
      resolves the title against its own list with honest misses; a title the
      registry cannot address still lands on the editor, never on a guess. */
-  const openArtifactInEditor = (doc: VaultDoc) => {
+  const openArtifactInEditor = (doc: Pick<VaultDoc, 'title'>) => {
     const res = resolveSurfaceAction('authoring.open-document', { title: doc.title });
     if (res.ok) applySurfaceAction(res.directive, (t) => onNav && onNav(t));
     else onNav && onNav('document-authoring');
   };
+
+  const organizationView = (
+    <OrganizationGovernedArtifacts
+      read={orgRead}
+      open={orgActive}
+      onToggle={projectId ? () => setOrgOpen((o) => !o) : undefined}
+      focusId={orgFocusId}
+      downloadingId={downloading}
+      onDownload={(row) => void downloadOrganizationArtifact(row)}
+      onOpenInEditor={(row) => openArtifactInEditor({ title: row.name })}
+      onAsk={(row) => onAsk(organizationArtifactAskPrompt(row))}
+      onExportManifest={exportOrganizationManifest}
+    />
+  );
 
   return (
     <div className="vd-wrap">
@@ -1768,14 +1904,17 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           `.vd-wrap` they ran edge to edge, flush against the nav rail and out
           of line with everything above them. */}
       {!projectId ? (
-        <div style={{ padding: '16px 24px' }}>
-          <EmptyState
-            icon={I.folder}
-            title="Open a project to see its vault"
-            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine."
-            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
-          />
-        </div>
+        <>
+          <div style={{ padding: '16px 24px' }}>
+            <EmptyState
+              icon={I.folder}
+              title="Open a project to see its vault"
+              hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
+              action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
+            />
+          </div>
+          {organizationView}
+        </>
       ) : vaultState.loading && !vault ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
           Loading the project vault…
@@ -1838,6 +1977,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               onExportManifest={exportArtifactManifest}
             />
           )}
+          {!searching && organizationView}
           {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
           {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (

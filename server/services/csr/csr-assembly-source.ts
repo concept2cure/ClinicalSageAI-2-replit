@@ -19,14 +19,19 @@ import type { RequestSqlClient } from '../../db/requestDb.js';
 import { readRetainedStudyForAssembly } from './saved-clinical-tables.js';
 import { assembleCsr, CsrAssemblyError, type CsrAssemblyInput, type CsrAssemblyResult } from './csr-assembly.js';
 import type { CsrListingSource } from './csr-listings.js';
+import { hasUnresolvedPlaceholders } from './csr-placeholders.js';
 
-export interface AssembleCsrJobInput extends Pick<CsrAssemblyInput, 'supplied' | 'notApplicable' | 'ctdSection' | 'outDir'> {
+export interface AssembleCsrJobInput extends Pick<CsrAssemblyInput, 'supplied' | 'notApplicable' | 'ctdSection' | 'outDir' | 'onStage' | 'shipAs'> {
   organizationId: number; userId: number; programId: string; projectId: number; jobId: number;
   participants?: CsrListingSource['participants'];
   protocolDeviations?: CsrListingSource['protocolDeviations'];
   laboratory?: CsrListingSource['laboratory'];
 }
-export interface AssembledCsrJob extends CsrAssemblyResult { jobId: number; jobFingerprint: string; runId: string; sourceSha256: string }
+export interface AssembledCsrJob extends CsrAssemblyResult {
+  jobId: number; jobFingerprint: string; runId: string; sourceSha256: string;
+  /** Sections whose drafted text still holds a data placeholder (csr-placeholders.ts): drawn into the body as written, so the body is not fit to file. */
+  placeholderSections: string[];
+}
 
 /** The retained study, held to subject level: a record without its subject cannot be listed. */
 function subjectLevel(study: Awaited<ReturnType<typeof readRetainedStudyForAssembly>>['study']): CsrListingSource['study'] {
@@ -47,8 +52,9 @@ export async function assembleCsrJob(q: Queryable & RequestSqlClient, input: Ass
   const stamp = source.lastGeneratedAt && source.lastGeneratedAt > cut ? source.lastGeneratedAt : cut;
   const result = await assembleCsr({
     studyId: source.studyId, title: source.title, ctdSection: input.ctdSection, sections: source.sections, gaps: source.gaps.filter(g => !ASSEMBLED_HERE.test(g)),
-    tables: retained.tables, outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable,
+    tables: retained.tables, outDir: input.outDir, contentModifiedAt: stamp, supplied: input.supplied, notApplicable: input.notApplicable, onStage: input.onStage, shipAs: input.shipAs,
     listingSource: { study: subjectLevel(retained.study), participants: input.participants, protocolDeviations: input.protocolDeviations, laboratory: input.laboratory },
   });
-  return { ...result, jobId: input.jobId, jobFingerprint: source.fingerprint, runId: retained.runId, sourceSha256: retained.source.sha256 };
+  const placeholderSections = source.sections.filter(s => hasUnresolvedPlaceholders(s.content)).map(s => s.code);
+  return { ...result, jobId: input.jobId, jobFingerprint: source.fingerprint, runId: retained.runId, sourceSha256: retained.source.sha256, placeholderSections };
 }

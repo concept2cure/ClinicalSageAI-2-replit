@@ -690,9 +690,13 @@ export function V2App() {
      The point of Live Drive is WATCHING AnA work — and her biggest work
      product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
      fired by EVERY chat instance: the shell's and each owned dock's via the
-     bridge). When a driven turn lands one, take the subscriber to the
-     Artifacts Center with that artifact focused, so the document appears in
-     front of them instead of behind a nav item. */
+     bridge). When a driven turn lands one, take the subscriber to the Vault
+     with that artifact selected, so the document appears in front of them
+     instead of behind a nav item. It rides vault.focus-document by the
+     artifact's id: the project's leaf when a project is open (read again once
+     if the tree predates the save), else its row in the organization view.
+     It was the Artifacts center's, which folded into the Vault (D2, fold F3
+     slice C, 2026-10-29). */
   const followedArtifactsRef = React.useRef<Set<string>>(new Set());
   const followWork = React.useCallback(
     (artifactId: string) => {
@@ -704,8 +708,8 @@ export function V2App() {
       if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
       if (followedArtifactsRef.current.has(artifactId)) return;
       followedArtifactsRef.current.add(artifactId);
-      stashNavParamsForTarget('artifacts-center', { artifactId });
-      nav('artifacts-center');
+      const focus = resolveSurfaceAction('vault.focus-document', { artifactId });
+      if (focus.ok) applySurfaceAction(focus.directive, nav);
     },
     [nav, prefs.liveDrive]
   );

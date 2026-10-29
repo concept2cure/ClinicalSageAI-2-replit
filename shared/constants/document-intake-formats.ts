@@ -29,6 +29,11 @@ export const DOCUMENT_INTAKE_FORMATS: readonly DocumentIntakeFormat[] = [
   })),
   { extension: '.xpt', textExtraction: 'dataset-structure', byteCheckSupported: true, chat: true, vault: true,
     limitation: 'SAS transport v5 read for structure only: datasets, variables, labels, types and record counts. No observation is read, and this is not a conformance or FDA validator check.' },
+  // The define.xml stylesheet FDA expects beside define.xml (MR-08 Stage 3 step 3).
+  { extension: '.xsl', textExtraction: 'utf8', byteCheckSupported: true, chat: false, vault: true,
+    limitation: 'The define.xml stylesheet, stored and read as raw text. It is not applied or validated.' },
+  { extension: '.pptx', textExtraction: 'none', byteCheckSupported: true, chat: false, vault: true,
+    limitation: 'Stored and hashed within the archive limit; slide text is not read.' },
   { extension: '.zip', textExtraction: 'archive', byteCheckSupported: false, chat: true, vault: false,
     limitation: 'Opened in the browser: each file inside is uploaded, checked and read on its own, within bounds on size, count and compression. The archive itself is not stored.' },
   { extension: '.doc', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Legacy admission retained; no canonical DOC text parser.' },

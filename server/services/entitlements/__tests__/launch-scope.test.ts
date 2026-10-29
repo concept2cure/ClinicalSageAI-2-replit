@@ -142,9 +142,9 @@ describe('the scope list itself', () => {
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
   });
-  it('keeps the two Part 11 surfaces the catalog may never gate', () => {
+  it('keeps the Part 11 surface the catalog may never gate', () => {
+    // part11-console folded into audit-trail on 2026-10-29 (see 'the folded Part 11 console').
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
-    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);
   });
   // docs/SURFACE_DECISIONS_2026-10-08.md: each was assessed and checked by a
   // skeptic, and none does what its place promises for a real organisation.
@@ -191,6 +191,40 @@ describe('the folded device task workbench', () => {
     expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-tasks');
     expect(isLaunchSurface('device-tasks')).toBe(false);
     expect(projects.surfaces).toContain('tasks');
+  });
+});
+
+describe('the folded Artifacts center and device vault', () => {
+  it('are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/. The subset pin in
+       'the scope list itself' would pass with either id left in a list, so this
+       names them. A new organisation is granted the Vault and not the retired
+       module; an existing grant is kept, deprecated, by the catalogue. */
+    const vault = LAUNCH_APPS.find((app) => app.id === 'vault')!;
+    const projects = LAUNCH_APPS.find((app) => app.id === 'projects')!;
+    expect(vault.surfaces).toEqual(['vault']);
+    expect(vault.modules).toEqual(['vault']);
+    expect(projects.surfaces).not.toContain('device-vault');
+    expect(MDX_PROJECT_FEATURE_SURFACE_IDS as readonly string[]).not.toContain('device-vault');
+    for (const id of ['artifacts-center', 'device-vault']) {
+      expect(isLaunchSurface(id), id).toBe(false);
+      expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain(id);
+    }
+    expect(LAUNCH_MODULE_IDS).toContain('vault');
+  });
+});
+
+describe('the folded Part 11 console', () => {
+  it('is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/. It was a shell
+       surface, never a catalogue module (21 CFR §11.10(e)); its two functions,
+       the audit_events chain's live verdict and AnA reading it, are Audit
+       trail's now. Audit trail stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(false);
+    expect(isLaunchSurface('part11-console')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('part11-console');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('audit-trail');
+    expect(isLaunchSurface('audit-trail')).toBe(true);
   });
 });
 
@@ -283,7 +317,8 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
   it('grants a new organisation exactly the modules it was granted before the fold', () => {
     expect([...LAUNCH_MODULE_IDS].sort()).toEqual(
       [
-        'projects', 'tasks', 'vault', 'artifacts-center', 'document-authoring', 'review', 'protocol-dev',
+        // artifacts-center left on 2026-10-29: it folded into the Vault (fold F3), which every new organisation is granted.
+        'projects', 'tasks', 'vault', 'document-authoring', 'review', 'protocol-dev',
         'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
       ].sort(),
     );

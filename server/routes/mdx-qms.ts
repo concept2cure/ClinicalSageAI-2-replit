@@ -14,22 +14,12 @@
  *   GET    /api/mdx/qms/training                        list training records
  *   GET    /api/mdx/qms/training/expiring               periodic refresh due
  *
- *   GET    /api/mdx/qms/suppliers                       list
- *   POST   /api/mdx/qms/suppliers                       create
- *   PATCH  /api/mdx/qms/suppliers/:id                   update
- *
- *   GET    /api/mdx/qms/internal-audits                 list audits
- *   POST   /api/mdx/qms/internal-audits                 create
- *   PATCH  /api/mdx/qms/internal-audits/:id             update
+ *   Suppliers, internal audits and nonconforming products: mdx-qms-records.ts.
  *
  *   GET    /api/mdx/qms/management-reviews              list reviews
  *   POST   /api/mdx/qms/management-reviews              create
  *   POST   /api/mdx/qms/management-reviews/:id/actions  record an action (P-48)
  *   POST   /api/mdx/qms/management-reviews/:id/actions/:n/close  close it, with a note
- *
- *   GET    /api/mdx/qms/nonconforming                   list NC products
- *   POST   /api/mdx/qms/nonconforming                   create
- *   PATCH  /api/mdx/qms/nonconforming/:id/disposition   set disposition
  *
  *   GET    /api/mdx/qms/changes                         change-control register
  *   POST   /api/mdx/qms/changes                          create change request
@@ -50,7 +40,6 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { requestPgClient, requestConnectable, type RequestSqlClient } from '../db/requestDb';
-import { queryRowsClient } from '../db/queryRowsClient';
 /*
  * WO-16C #133. The thirteen writes in this router that RECORD a 21 CFR Part 11
  * §11.10(e) row each did so with `void auditService.logAction({…})`, which
@@ -121,7 +110,7 @@ import type { CreateContext } from '../services/authoring/authoring-documents';
 import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
-  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance,
+  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance, readQmsTrainingExpiring,
   QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
 } from '../services/qms/training';
 import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
@@ -135,11 +124,12 @@ import {
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
-import { admitProject } from '../lib/admit-project';
 import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
 import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
+import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
+import qmsRecordsRouter from './mdx-qms-records';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -152,21 +142,6 @@ function trainingRefusalResponse(res: Response, error: QmsTrainingRefused) {
   return clientError(res, error.status, error.message, { code: error.code });
 }
 
-function getOrgId(req: Request): number | null {
-  const raw = (req as any).user?.organizationId;
-  if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
-  return Number.isFinite(n) ? n : null;
-}
-function getUserId(req: Request): number | null {
-  const raw = (req as any).user?.id;
-  if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
-  return Number.isFinite(n) ? n : null;
-}
-
-/** Use the authenticated request's actual pinned executor, never a global fallback. */
-const qmsClient = (req: Request) => queryRowsClient(requestPgClient(req));
 
 const DOC_TYPE = ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] as const;
 const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] as const;
@@ -175,10 +150,6 @@ const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] 
    route (P1-29 / DP-32), 'superseded' only by the revise route. The schemas
    admitted all five, so a create or a PATCH could make an SOP effective with no
    signature (new-code audit 2026-09-24, finding 1). */
-const CRITICALITY = ['critical', 'major', 'minor'] as const;
-const SUPPLIER_STATUS = ['pending', 'approved', 'conditional', 'revoked'] as const;
-const AUDIT_STATUS = ['planned', 'in_progress', 'closed', 'cancelled'] as const;
-const DISPOSITION = ['use_as_is', 'rework', 'regrade', 'scrap', 'return_to_supplier', 'pending'] as const;
 
 /* ─── Documents ─────────────────────────────────────────────── */
 
@@ -942,16 +913,12 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const withinDays = Math.max(1, Math.min(365, Number(req.query.within) || 60));
+  /* G10 (2026-10-29). Each active member whose current training on a release in
+     force lapses within the window, read as coverage reads it. This listed every
+     record with an expiry inside the window: a superseded version, a receipt
+     its member had renewed, a departed member's. No client called it. */
   try {
-    const { rows } = await qmsClient(req).query(`SELECT t.*, d.title AS document_title, d.doc_number
-         FROM qms_training_records t
-         JOIN qms_documents d ON d.id = t.document_id
-        WHERE t.organization_id = $1
-          AND t.expires_at IS NOT NULL
-          AND t.expires_at < NOW() + ($2 || ' days')::interval
-        ORDER BY t.expires_at ASC LIMIT 500`,
-      [orgId, withinDays],
-    );
+    const rows = await readQmsTrainingExpiring(requestPgClient(req), orgId, withinDays);
     return ok(res, rows, { count: rows.length, withinDays });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
@@ -969,249 +936,8 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'training-compliance', err); }
 });
 
-/* ─── Suppliers ─────────────────────────────────────────────── */
-
-/* P1-31 / DP-34 (2026-10-01). The supplier, internal-audit, management-review
-   and nonconforming-product writes below carry `requireEditorAccess`, as the
-   document writes above have since 6582e3a3. They carried no role gate, so a
-   viewer could qualify, requalify or revoke a supplier and disposition
-   nonconforming product here; the deleted second QMS API (/api/qms) let it do
-   the same with no audit row. Training acknowledgment stays open to every
-   member: it records the caller's own read-and-understood, not a governed
-   change. Pinned by qms-legacy-api-retired.test.ts. */
-
-const supplierCreate = z.object({
-  supplierName:        z.string().min(1).max(300),
-  supplierCode:        z.string().max(60).optional().nullable(),
-  scope:               z.string().max(1000).optional().nullable(),
-  criticality:         z.enum(CRITICALITY),
-  approvalStatus:      z.enum(SUPPLIER_STATUS).optional(),
-  approvalDate:        z.string().date().optional().nullable(),
-  reapprovalDate:      z.string().date().optional().nullable(),
-  qualityAgreementId:  z.number().int().positive().optional().nullable(),
-  lastAuditDate:       z.string().date().optional().nullable(),
-  nextAuditDate:       z.string().date().optional().nullable(),
-  isoCertifications:   z.array(z.string()).optional().nullable(),
-});
-const supplierPatch = supplierCreate.partial();
-
-/* A supplier's quality agreement names a controlled document. Until 2026-10-29
-   any integer was stored, including another organisation's document id; it is
-   now admitted only for a live document of this organisation. Null clears it. */
-async function qualityAgreementRefusal(req: Request, orgId: number, documentId: number | null | undefined): Promise<string | null> {
-  if (documentId == null) return null;
-  const { rows } = await qmsClient(req).query(
-    `SELECT id FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [documentId, orgId]);
-  return rows.length === 1 ? null : 'qualityAgreementId must name a controlled document of this organization.';
-}
-
-router.get('/qms/suppliers', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const status = typeof req.query.status === 'string' && SUPPLIER_STATUS.includes(req.query.status as (typeof SUPPLIER_STATUS)[number])
-    ? req.query.status : null;
-  const filters: string[] = [`organization_id = $1`, `deleted_at IS NULL`];
-  const args: unknown[] = [orgId];
-  if (status) { args.push(status); filters.push(`approval_status = $${args.length}`); }
-  try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_suppliers WHERE ${filters.join(' AND ')}
-        ORDER BY supplier_name`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'supp-list', err); }
-});
-
-function supplierInsertArgs(orgId: number, supplier: z.infer<typeof supplierCreate>): unknown[] {
-  return [orgId, supplier.supplierName, supplier.supplierCode ?? null, supplier.scope ?? null, supplier.criticality,
-    supplier.approvalStatus ?? null, supplier.approvalDate ?? null, supplier.reapprovalDate ?? null,
-    supplier.qualityAgreementId ?? null, supplier.lastAuditDate ?? null, supplier.nextAuditDate ?? null,
-    supplier.isoCertifications ?? null];
-}
-
-router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = supplierCreate.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  try {
-    const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
-    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_suppliers (
-         organization_id, supplier_name, supplier_code, scope, criticality,
-         approval_status, approval_date, reapproval_date, quality_agreement_id,
-         last_audit_date, next_audit_date, iso_certifications
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'pending'),$7,$8,$9,$10,$11,$12)
-       RETURNING *`,
-      supplierInsertArgs(orgId, p),
-    );
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The supplier row is
-       inserted by the query above, so the qualification record stands; what the
-       caller could not tell is whether the §11.10(e) entry naming who qualified
-       a critical supplier landed with it. Now in `meta.auditTrail`. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.supplier.qualify',
-      resourceType: 'qms_supplier', resourceId: rows[0]?.id,
-      details: { supplierName: p.supplierName, criticality: p.criticality },
-    }, requestConnectable(req));
-    return created(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'supp-create', err); }
-});
-
-router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const parsed = supplierPatch.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const COL: Record<string, string> = {
-    supplierName: 'supplier_name', supplierCode: 'supplier_code', scope: 'scope',
-    criticality: 'criticality', approvalStatus: 'approval_status',
-    approvalDate: 'approval_date', reapprovalDate: 'reapproval_date',
-    qualityAgreementId: 'quality_agreement_id', lastAuditDate: 'last_audit_date',
-    nextAuditDate: 'next_audit_date', isoCertifications: 'iso_certifications',
-  };
-  const setFrags: string[] = []; const args: unknown[] = [];
-  for (const [k, v] of Object.entries(parsed.data)) {
-    if (v === undefined) continue;
-    const col = COL[k]; if (!col) continue;
-    args.push(v); setFrags.push(`${col} = $${args.length}`);
-  }
-  if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
-  setFrags.push(`updated_at = NOW()`);
-  args.push(id, orgId);
-  try {
-    const agreementRefusal = await qualityAgreementRefusal(req, orgId, parsed.data.qualityAgreementId);
-    if (agreementRefusal) return clientError(res, 422, agreementRefusal);
-    const { rows } = await qmsClient(req).query(`UPDATE qms_suppliers SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
-        RETURNING *`,
-      args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Supplier');
-    /* A supplier's approval standing is a controlled QMS record, and changing it
-       recorded no §11.10(e) row — while CREATING the same supplier, sixty lines
-       above, has always recorded one. Found by the review of the #133 conversion
-       of this file. The row is already committed, so this is a log beside it;
-       `meta.auditTrail` says whether the log exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.supplier.update',
-      resourceType: 'qms_supplier', resourceId: String(id),
-      details: { changedFields: Object.keys(parsed.data) },
-    }, requestConnectable(req));
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'supp-patch', err); }
-});
-
-/* ─── Internal audits ───────────────────────────────────────── */
-
-const auditCreate = z.object({
-  auditNumber:    z.string().min(1).max(60),
-  scope:          z.string().min(1).max(2000),
-  auditStandard:  z.string().max(200).optional().nullable(),
-  auditorTeam:    z.array(z.number().int().positive()).optional().nullable(),
-  plannedDate:    z.string().date().optional().nullable(),
-  status:         z.enum(AUDIT_STATUS).optional(),
-});
-const auditPatch = auditCreate.partial().extend({
-  startedAt:      z.string().date().optional().nullable(),
-  completedAt:    z.string().date().optional().nullable(),
-  findingCount:   z.number().int().nonnegative().optional(),
-  majorFindings:  z.number().int().nonnegative().optional(),
-  minorFindings:  z.number().int().nonnegative().optional(),
-  observations:   z.number().int().nonnegative().optional(),
-});
-
-router.get('/qms/internal-audits', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_internal_audits WHERE organization_id = $1
-        ORDER BY planned_date DESC NULLS LAST, id DESC`,
-      [orgId],
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'audit-list', err); }
-});
-
-router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = auditCreate.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  try {
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_internal_audits (
-         organization_id, audit_number, scope, audit_standard,
-         auditor_lead_id, auditor_team, planned_date, status
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'planned'))
-       RETURNING *`,
-      [
-        orgId, p.auditNumber, p.scope, p.auditStandard ?? null,
-        getUserId(req), p.auditorTeam ?? null, p.plannedDate ?? null, p.status ?? null,
-      ],
-    );
-    /* An internal audit is ISO 13485 §8.2.4 evidence and its creation recorded no
-       §11.10(e) row. Found by the review of the #133 conversion of this file. The
-       audit row is already committed, so this is a log beside it;
-       `meta.auditTrail` says whether the log exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.internal_audit.create',
-      resourceType: 'qms_internal_audit', resourceId: String(rows[0].id),
-      details: { auditNumber: p.auditNumber, auditStandard: p.auditStandard ?? null, scope: p.scope },
-    }, requestConnectable(req));
-    return created(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'audit-create', err); }
-});
-
-router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const parsed = auditPatch.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const COL: Record<string, string> = {
-    auditNumber: 'audit_number', scope: 'scope', auditStandard: 'audit_standard',
-    auditorTeam: 'auditor_team', plannedDate: 'planned_date', startedAt: 'started_at',
-    completedAt: 'completed_at', status: 'status', findingCount: 'finding_count',
-    majorFindings: 'major_findings', minorFindings: 'minor_findings',
-    observations: 'observations',
-  };
-  const setFrags: string[] = []; const args: unknown[] = [];
-  for (const [k, v] of Object.entries(parsed.data)) {
-    if (v === undefined) continue;
-    const col = COL[k]; if (!col) continue;
-    args.push(v); setFrags.push(`${col} = $${args.length}`);
-  }
-  if (setFrags.length === 0) return clientError(res, 422, 'No updatable fields in body');
-  setFrags.push(`updated_at = NOW()`);
-  args.push(id, orgId);
-  try {
-    const { rows } = await qmsClient(req).query(`UPDATE qms_internal_audits SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length}
-        RETURNING *`,
-      args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Audit');
-    /* Changing an internal audit's findings or closure recorded no §11.10(e) row.
-       Found by the review of the #133 conversion of this file. The row is already
-       committed, so this is a log beside it; `meta.auditTrail` says whether it
-       exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.internal_audit.update',
-      resourceType: 'qms_internal_audit', resourceId: String(id),
-      details: { changedFields: Object.keys(parsed.data) },
-    }, requestConnectable(req));
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'audit-patch', err); }
-});
+/* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
+router.use(qmsRecordsRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 
@@ -1359,108 +1085,6 @@ router.post('/qms/management-reviews/:id/actions/:n/close', requireEditorAccess,
     }, requestConnectable(req));
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'mr-action-close', err); }
-});
-
-/* ─── Nonconforming products ────────────────────────────────── */
-
-const ncCreate = z.object({
-  ncNumber:       z.string().min(1).max(60),
-  deviceName:     z.string().max(300).optional().nullable(),
-  lotOrSerial:    z.string().max(120).optional().nullable(),
-  source:         z.string().max(60).optional().nullable(),
-  description:    z.string().min(1).max(4000),
-  /* The project the record is filed under (D2 / D6, 2026-10-29; 20261029d).
-     Admitted through admitProject before anything is written, so any string
-     that is not this organization's live project is 404 "Project not found".
-     Absent or null: the organization's unscoped record, as before. */
-  programId:      z.string().max(64).optional().nullable(),
-});
-const ncDispoBody = z.object({
-  disposition:           z.enum(DISPOSITION),
-  dispositionRationale:  z.string().max(4000).optional().nullable(),
-});
-
-router.get('/qms/nonconforming', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  try {
-    const { rows } = await qmsClient(req).query(`SELECT * FROM qms_nonconforming_products WHERE organization_id = $1
-        ORDER BY detected_at DESC LIMIT 500`,
-      [orgId],
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'nc-list', err); }
-});
-
-router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = ncCreate.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  const programId = p.programId || null;
-  try {
-    /* A named project must be this organization's before the record is filed
-       under it (server/lib/admit-project.ts): 404 or 503, and nothing is
-       written. The program key (20261029d) holds every other writer to the
-       same rule. Engineering reads a project's records by this column. */
-    if (!(await admitProject(res, log, programId, orgId))) return;
-    const { rows } = await qmsClient(req).query(`INSERT INTO qms_nonconforming_products (
-         organization_id, nc_number, device_name, lot_or_serial, source, description,
-         detected_by, disposition, program_id
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8)
-       RETURNING *`,
-      [
-        orgId, p.ncNumber, p.deviceName ?? null, p.lotOrSerial ?? null,
-        p.source ?? null, p.description, getUserId(req), programId,
-      ],
-    );
-    /* Recording a nonconforming product is §8.3 / 21 CFR 820.90 evidence, and it
-       recorded no 21 CFR Part 11 §11.10(e) row at all — while the DISPOSITION of
-       the same NCR, forty lines below, has always recorded one. Found by the
-       review of the #133 conversion of this file, which had nothing to convert
-       here because nothing was written. The NCR row is already committed, so this
-       is a log beside it; `meta.auditTrail` says whether the log exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.nonconforming.create',
-      resourceType: 'qms_nonconforming_product', resourceId: String(rows[0].id),
-      details: { ncNumber: p.ncNumber, lotOrSerial: p.lotOrSerial ?? null, source: p.source ?? null, programId },
-    }, requestConnectable(req));
-    return created(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'nc-create', err); }
-});
-
-router.patch('/qms/nonconforming/:id/disposition', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const parsed = ncDispoBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  try {
-    const { rows } = await qmsClient(req).query(`UPDATE qms_nonconforming_products
-          SET disposition = $3,
-              disposition_rationale = $4,
-              disposition_at = NOW(),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-        RETURNING *`,
-      [id, orgId, parsed.data.disposition, parsed.data.dispositionRationale ?? null],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'NC record');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The disposition —
-       scrap, rework, use-as-is — is already stamped on the NC row by the UPDATE
-       above, so it is not reverted; `meta.auditTrail` reports whether the
-       §11.10(e) record of who dispositioned the product exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.nonconforming.disposition',
-      resourceType: 'qms_nonconforming_product', resourceId: id,
-      details: { disposition: parsed.data.disposition },
-    }, requestConnectable(req));
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'nc-disposition', err); }
 });
 
 /* ─── Change control (ICH Q10 §3.2.3 / EU GMP Annex 15 / 21 CFR 820.30·820.70) ──

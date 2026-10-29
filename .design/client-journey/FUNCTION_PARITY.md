@@ -287,8 +287,13 @@ The Submission Twin readiness score belongs in the same convergence.
 #### From `part11-console`
 Remove the id from LAUNCH_SHELL_SURFACES, the segment lists and the demo script.
 
-- [ ] Live verdict for the second chain (audit_events). From `Part11Console.tsx:133,229-243`. Goes to: a second verdict in Audit trail's chain banner, from GET /api/part11/audit-trail/chain-integrity. Real today.
-- [ ] AnA reads both chain verdicts. From `Part11Console.tsx:153-203`. Goes to: the audit_events verdict in Audit trail's AnA facts. Real today.
+Folded 2026-10-29 (D2): `part11-console` is an alias of `audit-trail`, and
+`Part11Console.tsx` is deleted. Evidence and the fold guard:
+`docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/`,
+`foldPart11Console.test.ts`.
+
+- [x] Live verdict for the second chain (audit_events): `AuditEventChainBanner` in `surfaces/AuditEventChain.tsx`, the second verdict in Audit trail's chain banner, read from GET /api/part11/audit-trail/chain-integrity. It shows in every state of the ledger read. "Intact" needs both the status and the integrity verdict, and a failed read offers Try again.
+- [x] AnA reads both chain verdicts: Audit trail's `facts.auditEventChain` / `facts.auditEventChainUnavailable` beside the ledger's `facts.hashChain`, never merged, in every state of the ledger read (`auditTrailEventChainVerdict.test.tsx`).
 
 ### Into Projects (`projects`: Projects.tsx, the New project wizard and Project home)
 

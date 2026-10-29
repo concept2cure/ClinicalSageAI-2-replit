@@ -24,6 +24,7 @@
  * than stubbing auth (as authoring-atomic-mutations.test.ts does).
  */
 import express from 'express';
+import JSZip from 'jszip';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { readFileSync } from 'node:fs';
@@ -440,7 +441,11 @@ describe('IAM-14 — POST /images and POST /import/docx run assertUploadSafe', (
 
   it('a Word container that the scanner flags is refused before it is parsed', async () => {
     h.scanBuffer.mockImplementation(async () => ({ scanned: true, clean: false, signature: 'Eicar-Test' }));
-    const zip = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(32, 2)]);
+    // A readable container, so it passes the archive limit (SEC-17) and reaches the
+    // scanner; the ZIP magic followed by junk is now refused as unreadable first.
+    const word = new JSZip();
+    word.file('word/document.xml', '<w:document/>', { createFolders: false });
+    const zip = await word.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
     const res = await upload(
       'import/docx',
       'notes.docx',

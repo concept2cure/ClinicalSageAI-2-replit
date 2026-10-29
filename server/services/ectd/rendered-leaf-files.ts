@@ -45,7 +45,13 @@ export type RenderedLeafSourceKind =
    * recorded here is the only thing that ties the filed leaf to the file the
    * sponsor actually approved.
    */
-  | 'ind_form_sponsor_upload';
+  | 'ind_form_sponsor_upload'
+  /**
+   * A leaf of an assembled clinical study report (csr-assembly-run.ts): the
+   * body, §14, a §16.2 listing, or a §16.1/16.3 document the sponsor supplied
+   * from the Vault by exact digest. Filed under Module 5.3.5.x.
+   */
+  | 'csr_assembly';
 
 export interface StoreRenderedLeafFileInput {
   organizationId: number;

@@ -1,8 +1,9 @@
 /**
- * The Artifacts Center never shows another organization's project (PF-03).
+ * The governed-artifacts listing never shows another organization's project (PF-03).
  *
- * GET /api/artifacts-center lists the caller's artifacts with their project's
- * code. Its join was `projects p ON p.id = a.project_id`, so an artifact
+ * GET /api/artifacts-center (the Artifacts center's gallery until fold F3
+ * slice C; the Vault's organization view since) lists the caller's artifacts
+ * with their project's code. Its join was `projects p ON p.id = a.project_id`, so an artifact
  * written under another organization's project id (a writer that took the
  * number as given) showed that organization's project code and name. Which
  * row a join admits is the database's to decide, so this runs the real route
@@ -16,6 +17,17 @@ import { PGlite } from '@electric-sql/pglite';
 const h = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite }));
 vi.mock('../../db.js', () => ({
   pool: { query: async (sql: string, params?: unknown[]) => h.pg.query(sql, params as unknown[]) },
+}));
+/* The listing is bound to the projects the caller can open (fold F3 slice C,
+   2026-10-29). The sharing policy is stubbed here to open project 10, the
+   fixture's own; artifacts-center-accessible-projects.pglite.test.ts proves the binding. */
+vi.mock('../../services/c2c/current-program-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 5, role: 'author' }),
+}));
+vi.mock('../../services/report-os/project-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [10],
 }));
 
 import createArtifactsCenterRoutes from '../artifacts-center-routes';
@@ -67,8 +79,10 @@ describe('GET /api/artifacts-center — the project shown is the artifact’s ow
 
   it("an artifact under another organization's project id never shows that project's code or name", async () => {
     const res = await request(app()).get('/api/artifacts-center');
+    // Since slice C the row is not listed at all: it is in no project of the
+    // caller's organization, so in none the caller can open.
     const foreign = (res.body.data as Array<{ id: string; prog: string }>).find((r) => r.id === 'a-foreign');
-    expect(foreign?.prog).toBe('proj_20');
+    expect(foreign).toBeUndefined();
     expect(JSON.stringify(res.body)).not.toMatch(/THEIRS-9|Their secret program/);
   });
 });

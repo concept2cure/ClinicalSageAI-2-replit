@@ -30,8 +30,8 @@
  *      without a subscription row: a customer's rail must not go dark because
  *      provisioning has not written rows yet.
  *   4. NOT LICENSABLE — a destination with no catalog row is unconditionally
- *      available. That is deliberate and load-bearing: `audit-trail` and
- *      `part11-console` are excluded from the catalog on purpose (21 CFR
+ *      available. That is deliberate and load-bearing: `audit-trail` (which the
+ *      Part 11 console folded into on 2026-10-29) is excluded from the catalog on purpose (21 CFR
  *      §11.10(e) — the audit record may not be something an organization can
  *      be sold or an admin can switch off), and so are shell destinations that
  *      are not modules at all (AnA Command, the Apps catalog itself).

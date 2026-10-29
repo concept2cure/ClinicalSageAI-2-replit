@@ -153,6 +153,23 @@ Every file that enters the Vault is scanned for malware before it is stored, on 
 
 ### Stage 3 — Admit IND content, bound archives and take OCR off the request (Phase 1 · M · engineering) — closes SEC-17; advances CAT1-05 (file types and extraction)
 
+**Steps 1(c), 1(d) and 2 done 2026-10-29: SEC-17 is closed** (`docs/evidence/D6/2026-10-29-archive-limits/`). `server/services/archive/safeZip.ts` is called from:
+- `assertUploadSafe` (422);
+- `extractTemplateFromFile` (422 on both template routes);
+- `extractDocumentText`, before mammoth and exceljs;
+- `validateEctdPackage` (422; a package this server assembled passes `origin: 'platform-generated'`);
+- the legacy import detector (an error finding).
+
+The bounded reader is replaced by one measured inflate before any reader, which also covers mammoth and exceljs. The reason is recorded there.
+
+**Step 3 and step 1(a) done 2026-10-29** (`docs/evidence/D2-VAULT-DEFINE-STYLESHEET/2026-10-29/`):
+- `.xsl` and `.pptx` are Vault formats.
+- `.xsl` binds `application/xslt+xml` for its own name only, is checked as text and is read as raw text.
+- A version is stored under the type its name binds: an `.xpt` sent as octet-stream is stored as `application/x-sas-xport`.
+- A test holds every Vault format to a byte check and a name binding.
+
+Steps 1(b) and 4 to 6 (OCR off the request, the sweep, the pending state) are open.
+
 1. **Red tests first**, each run on HEAD and captured:
    - (a) a valid SAS V5 `.xpt` to `/api/vault/ingest` returns 400 `FILE_TYPE_NOT_ALLOWED`;
    - (b) a 300-page image-only PDF holds the response open until OCR finishes;

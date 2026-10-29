@@ -2,7 +2,9 @@
  * The tables a tenant purge deletes because each names a project, a workspace,
  * a document or a program with no delete action, in the order it deletes them;
  * and the tables it does NOT erase although they name such a row (D6,
- * 2026-10-29; docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/).
+ * 2026-10-29; docs/evidence/D6-TENANT-PURGE-BLOCKING-KEYS/2026-10-29/). One
+ * entry names no such row: csr_narrative_outputs, which nothing else reached
+ * (docs/evidence/D6-TENANT-EXPORT-GAPS/2026-10-29/).
  *
  * PURGE_REFERRER_TABLES is spread into PURGE_CHILD_TABLES
  * (./tenant-offboarding.ts) just before `projects`. It lives here only so that
@@ -140,6 +142,15 @@ export const PURGE_REFERRER_TABLES: readonly string[] = Object.freeze([
   'ctd_cross_references',
   'csr_studies',
   'ctd_programs',
+  // A CSR build's patient safety narratives (3b576cab9, CSR slice 7;
+  // migrations/20260628_csr_job_state.sql, Table 3): each selected subject's
+  // composed narrative text and its hashes, or the reason it was refused.
+  // Tenant content, and no signature or signed act. It names no purged row;
+  // it is here because nothing reached it: its organization_id key has no
+  // cascade, and its job (csr_build_jobs, from which it cascades) is not
+  // purged. So a purged tenant kept every narrative (ci:purge-coverage, NEW
+  // residue; docs/evidence/D6-TENANT-EXPORT-GAPS/2026-10-29/).
+  'csr_narrative_outputs',
   // 510(k) v1: a project's documents, stage progress and packages, then the project.
   'fda_510k_documents',
   'fda_510k_stage_progress',
