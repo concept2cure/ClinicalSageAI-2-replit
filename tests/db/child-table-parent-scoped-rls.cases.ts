@@ -30,6 +30,8 @@
  * longer pass vacuously. `seed` returns the child ids it actually wrote, and
  * the test checks them.
  */
+import { CTD_DOCUMENTS_CASE, ensureCsrCtdChains } from './child-table-parent-scoped-rls.chains';
+
 export interface Case {
   child: string;
   parent: string;
@@ -364,6 +366,8 @@ export const CASES: Case[] = [
     },
     countOwn: `SELECT count(*)::int AS n FROM public.q_sub_questions WHERE q_submission_id = $1::uuid`,
   },
+  // Added 2026-10-29 (D6): the CTD chain, three hops (./child-table-parent-scoped-rls.chains).
+  CTD_DOCUMENTS_CASE,
 ];
 
 /** Named by the migration; asserted as a set so a dropped entry is caught. */
@@ -425,6 +429,11 @@ export const ALL_CHILD_TABLES = [
   // own policy by the migration's chained list.
   'ai_claims', 'ai_claim_citations', 'c2c_document_section_evidence',
   'c2c_document_section_versions', 'section_propagations',
+  // Added 2026-10-29 (D6): the three chains the migration held deny-all until
+  // the tenant export had to return them (it reads them as the runtime role,
+  // and deny-all returned nothing). STILL_DENY_ALL, which pinned the deny-all,
+  // is gone with them: no table is left on it.
+  'csr_endpoint_results', 'ctd_module_sections', 'ctd_documents',
 ];
 
 /**
@@ -442,28 +451,6 @@ export const NON_PUBLIC_CHILD_TABLES = [
   'manufacturing.rtrt_predictions', 'precedent.csr_precedent_links',
   'regulatory_harmonization.export_job_audit_log',
 ];
-
-/**
- * Deliberately NOT covered by the migration's spec lists, so they must still
- * have no policy. Each needs a nested predicate through a second parent, and
- * none is referenced by server code. Asserted explicitly rather than left
- * implicit: if a later change policies them, this list is where the decision
- * gets revisited.
- *
- * ── Why the assertion changed on 2026-10-13 (D3) ────────────────────────────
- * It was `policied === false` alone. That is equally true of three states: a
- * table with row security on and FORCEd, which denies every row to every role;
- * one with row security on and not FORCEd, which denies to the runtime role and
- * lets the OWNER read every tenant's rows; and one with row security off
- * altogether, which denies nothing to anybody. Only the first is the deny-all
- * the migration claims for these three, and the assertion could not tell them
- * apart — so it passed while all three sat in the second state, which is what
- * migrations/0005_csr_knowledge_database.sql's ENABLE-without-FORCE loop leaves
- * behind. The suite now asserts row security ON and FORCEd as well; the
- * migration's last block sets both. Against a database provisioned before that
- * block existed this fails, naming the table.
- */
-export const STILL_DENY_ALL = ['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];
 
 /**
  * Create the parent/child pairs the suite exercises when they are absent.
@@ -645,6 +632,7 @@ export async function ensureAddedTables(pool: { query: (sql: string) => Promise<
     );
   `);
   await ensureQSubAndCapaChildren(pool);
+  await ensureCsrCtdChains(pool);
 }
 
 /**

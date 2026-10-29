@@ -24,6 +24,13 @@
  * A wrong PURGE_PARENT_SCOPED predicate fails the last two either way: too
  * narrow keeps A's row (and the export misses it), too wide takes B's.
  *
+ * Every table the purge erases is seeded too when it has no tenant column, and
+ * the export must read each table the purge erases, by a tenant column or
+ * through its parent (2026-10-29, docs/evidence/D6-TENANT-EXPORT-GAPS/2026-10-29/).
+ * Until then six were erased by cascade and never returned: three CSR/CTD
+ * grandchildren that row-level security denied to every application role, and
+ * the Vault's catalog, read receipts and evidence citations.
+ *
  * The tables the purge does not erase (PURGE_REFERRERS_NOT_ERASED,
  * PURGE_RETAINED_RECORDS) are seeded one at a time for tenant C instead: the
  * purge of C is refused or aborts, rolls back, and C's project is still there.
@@ -36,6 +43,7 @@ import * as offboarding from '../../server/services/tenant/tenant-offboarding';
 import { exportTenantFull } from '../../server/services/tenant-export/tenant-full-export.service';
 import { companyExportSnapshot } from '../../server/services/tenant-export/company-export-snapshot';
 import { EXPORT_DERIVED_TABLES } from '../../server/services/tenant/purge-parent-scope';
+import { discoverTenantTables, EXPORT_EXCLUDED_TABLES } from '../../server/services/tenant-export/tenant-full-export.service';
 import { TenantRowSeeder, qualified, removeSeeded, stillThere, type SeededRow } from './tenant-purge-row-seeder';
 
 const { purgeTenant, PURGE_CHILD_TABLES, PURGE_PARENT_SCOPED, PURGE_RETAINED_RECORDS } = offboarding;
@@ -47,8 +55,7 @@ const B = 90862;
 const C = 90863;
 const TAG = `pbk_${process.pid}_${Date.now().toString(36)}`;
 const CALLER = 'tests/db/tenant-purge-blocking-keys.dbtest.ts';
-/** RLS enabled, no policy: deny-all to every application role (see the export case). */
-const DENY_ALL = ['public.csr_endpoint_results', 'public.ctd_module_sections', 'public.ctd_documents'];
+const DERIVED = EXPORT_DERIVED_TABLES.map(qualified);
 
 /** Every table the purge deletes: each listed table, and what ON DELETE CASCADE reaches from it. */
 const PURGED_SQL = `
@@ -60,6 +67,14 @@ WITH RECURSIVE purged(oid) AS (
 )
 SELECT n.nspname || '.' || c.relname AS t
   FROM purged JOIN pg_class c ON c.oid = purged.oid JOIN pg_namespace n ON n.oid = c.relnamespace`;
+
+/** Of the tables named, those with no tenant column of their own. */
+const UNKEYED_SQL = `
+SELECT t FROM unnest($1::text[]) t
+ WHERE NOT EXISTS (SELECT 1 FROM information_schema.columns k
+                    WHERE k.table_schema || '.' || k.table_name = t
+                      AND k.column_name IN ('organization_id', 'org_id', 'tenant_id'))
+ ORDER BY 1`;
 
 /** Every table holding a key with no delete action (or SET NULL on NOT NULL) into one of them. */
 const REFERRERS_SQL = `
@@ -79,6 +94,8 @@ let owner: Pool;
 let purged: Set<string>;
 let referrers: string[];
 let held: string[];
+/** The tables the purge erases that the export does not read (none, since 2026-10-29). */
+let erasedNotExported: string[];
 const users = new Map<number, number>();
 const seeders = new Map<number, TenantRowSeeder>();
 const reference = new Map<string, Record<string, unknown>>();
@@ -110,6 +127,64 @@ async function purge(org: number) {
   return runWithSystemTenantScope(CALLER, () => purgeTenant(runtime, {
     organizationId: org, purgedByUserId: users.get(org)!, preconditions: { finalExportDigest: `${TAG}-${org}` },
   }));
+}
+
+/**
+ * A citation of B's claim that names A's document as its evidence. It is B's:
+ * the citation's policies, and the export's predicate, follow its SOURCE
+ * document. So A's export must not hold it, whichever key a wrong predicate
+ * followed. Removed again before the purge (see the README on what the purge
+ * of A does to it). Null where this database has no Vault.
+ */
+async function crossTenantCitation(): Promise<SeededRow | null> {
+  const doc = (org: number) => seeders.get(org)!.rows.find((r) => r.table === 'vault.documents')?.key.id;
+  if (!doc(A) || !doc(B)) return null;
+  const { rows } = await owner.query(
+    `INSERT INTO vault.evidence_citations (source_document_id, evidence_document_id, claim_text)
+     VALUES ($1, $2, $3) RETURNING id::text AS id`,
+    [doc(B), doc(A), `${TAG}: a claim of tenant B, citing a document of tenant A`]);
+  return { table: 'vault.evidence_citations', organizationId: B, key: { id: rows[0].id } };
+}
+
+/**
+ * Start each table's ids at its own offset. On a fresh database every sequence
+ * is in step, so A's section and A's submission were both id 1 and a predicate
+ * through the wrong key (a section's id against its submission's) still found
+ * A's row and only A's. Staggered, it finds the wrong row or none.
+ */
+async function staggerSequences(tables: readonly string[]): Promise<void> {
+  const { rows } = await owner.query<{ s: string }>(
+    `SELECT DISTINCT pg_get_serial_sequence(quote_ident(n.nspname) || '.' || quote_ident(c.relname), a.attname) AS s
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+      WHERE n.nspname || '.' || c.relname = ANY ($1::text[]) ORDER BY 1`, [tables]);
+  let k = 0;
+  for (const { s } of rows) {
+    if (s) await owner.query('SELECT setval($1::regclass, nextval($1::regclass) + $2)', [s, (k += 1) * 1009]);
+  }
+}
+
+/** Each of A's rows the purge erases that an export lacks, and each of B's rows an export holds. */
+function compareExport(rows: readonly SeededRow[], keyCols: Map<string, string[]>, exports: Record<string, Map<string, Set<string>>>) {
+  const missing: string[] = [];
+  const leaked: string[] = [];
+  for (const r of rows) {
+    const k = JSON.stringify(keyCols.get(r.table)!.map((c) => r.key[c]));
+    for (const [how, keys] of Object.entries(exports)) {
+      const has = keys.get(r.table)?.has(k) ?? false;
+      // Checked for leaks only: vault.* in a tenant scope, read only by a
+      // member of the project (core.can_access_program), and this scope has
+      // no user; and a derived table (a citation's chunk), returned as the
+      // text it was cut from. csr_endpoint_results, ctd_module_sections and
+      // ctd_documents are checked both ways since 2026-10-29: they were
+      // deny-all to every application role until their parent's policy
+      // reached them.
+      const notReturned = (how === 'scoped' && r.table.startsWith('vault.')) || DERIVED.includes(r.table);
+      if (r.organizationId === A && purged.has(r.table) && !has && !notReturned) missing.push(`${how}: ${label(r.table)}`);
+      if (r.organizationId === B && has) leaked.push(`${how}: ${label(r.table)}`);
+    }
+  }
+  return { missing, leaked };
 }
 
 /** label → keys of the exported rows, for the tables whose seeded rows have a primary key. */
@@ -144,7 +219,15 @@ beforeAll(async () => {
     `SELECT t FROM unnest($1::text[]) t WHERE to_regclass(t) IS NOT NULL`,
     [Object.keys(PURGE_PARENT_SCOPED).filter((t) => !EXPORT_DERIVED_TABLES.includes(t)).map(qualified)],
   )).rows.map((r) => r.t);
-  referrers = [...new Set([...all, ...scopedHere])].filter((t) => !isHeld(t)).sort();
+  // And every table the purge erases that has no tenant column, so each one's
+  // rows are checked against the export, whether or not the map names it.
+  const unkeyedErased = (await owner.query<{ t: string }>(UNKEYED_SQL, [[...purged]])).rows
+    .map((r) => r.t).filter((t) => !DERIVED.includes(t));
+  const exported = new Set((await discoverTenantTables(owner)).map((d) => `${d.schema}.${d.table}`));
+  erasedNotExported = [...purged].filter((t) => !exported.has(t)
+    && !DERIVED.includes(t) && !EXPORT_EXCLUDED_TABLES.map(qualified).includes(t)).sort();
+  referrers = [...new Set([...all, ...scopedHere, ...unkeyedErased])].filter((t) => !isHeld(t)).sort();
+  await staggerSequences([...new Set([...purged, ...referrers])]);
   for (const org of [A, B, C]) {
     seeders.set(org, new TenantRowSeeder({ db: owner, organizationId: org, userId: users.get(org)!, exercised: purged, reference, tag: TAG }));
   }
@@ -195,32 +278,22 @@ describe('a tenant with a row in every table that names a purged row with no del
     }
   });
 
+  it('is exported from every table the purge erases: by its tenant column, or through its parent', () => {
+    expect(purged.size).toBeGreaterThan(100);
+    expect(erasedNotExported, 'tables the purge erases that the export does not read').toEqual([]);
+  });
+
   it("A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner", async () => {
     const keyCols = new Map<string, string[]>();
     for (const r of allRows) if (!keyCols.has(r.table)) keyCols.set(r.table, Object.keys(r.key));
     const { pool: runtime } = await import('../../server/db');
     const { runWithOrgJobScope } = await import('../../server/db/tenantStore');
+    const cross = await crossTenantCitation();
     const scoped = await exportedKeys(
       () => runWithOrgJobScope(A, CALLER, () => companyExportSnapshot(runtime, A, (c) => exportTenantFull(c, A))), keyCols);
     const unscoped = await exportedKeys(() => exportTenantFull(owner, A), keyCols);
-    const missing: string[] = [];
-    const leaked: string[] = [];
-    for (const r of allRows) {
-      const cols = keyCols.get(r.table)!;
-      const k = JSON.stringify(cols.map((c) => r.key[c]));
-      for (const [how, keys] of [['scoped', scoped], ['owner', unscoped]] as const) {
-        const has = keys.get(r.table)?.has(k) ?? false;
-        // Checked for leaks only:
-        //   - vault.* in a tenant scope: read only by a member of the project
-        //     (core.can_access_program), and this scope has no user;
-        //   - DENY_ALL: row-level security on with no policy, so no application
-        //     role reads or writes a row, and the export has no predicate for
-        //     them (purge-parent-scope.ts says why).
-        const notReturned = (how === 'scoped' && r.table.startsWith('vault.')) || DENY_ALL.includes(r.table);
-        if (r.organizationId === A && purged.has(r.table) && !has && !notReturned) missing.push(`${how}: ${label(r.table)}`);
-        if (r.organizationId === B && has) leaked.push(`${how}: ${label(r.table)}`);
-      }
-    }
+    if (cross) await removeSeeded(owner, [cross]);
+    const { missing, leaked } = compareExport(cross ? [...allRows, cross] : allRows, keyCols, { scoped, owner: unscoped });
     expect(leaked, "B's rows in A's export").toEqual([]);
     expect(missing, "A's rows the purge erases, missing from A's export").toEqual([]);
   }, 300_000);

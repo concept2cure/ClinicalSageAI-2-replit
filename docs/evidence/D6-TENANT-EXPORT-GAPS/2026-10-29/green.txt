@@ -1,0 +1,129 @@
+# Green: HEAD (e2cf417ba) + this change, 2026-10-29
+
+The same PostgreSQL, built again from blank (install-fresh + deploy-migrate, 439/439) with the amended 20260813. §6 also deploys the change onto the database built at HEAD.
+
+## §1 What the purge erases that the export does not read (purged-closure.mts)
+```
+public.csr_endpoint_results                rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_documents                       rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+public.ctd_module_sections                 rls=on force=on policies=1  exported (PURGE_PARENT_SCOPED)
+vault.document_catalog                     rls=on force=off policies=4  exported (PURGE_PARENT_SCOPED)
+vault.document_chunks                      rls=on force=off policies=4  derived (not exported as rows)
+vault.document_read_receipts               rls=on force=off policies=4  exported (PURGE_PARENT_SCOPED)
+vault.evidence_citations                   rls=on force=off policies=4  exported (PURGE_PARENT_SCOPED)
+60 erased tables without a tenant column; 0 erased and not exported
+```
+
+## §2 ci:purge-coverage, and the narrative probe
+```
+✅ purge-coverage: no foreign key stops the purge part-way (27 from tables it does not erase, each named).
+✅ purge-coverage: 464 org-keyed tables outside the purge reach (baseline 469, new 0, 5 now covered).
+```
+```
+listed in PURGE_CHILD_TABLES: true
+purge of A: purged; csr_narrative_outputs rows deleted: 1
+  A's narrative row {"id":"1"} still there: false
+  B's narrative row {"id":"2"} still there: true
+```
+
+## §3 The two suites this change extends
+```
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] 183 tables seeded for each of A and B (404 rows with their parents); 18 held tables for C
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > capa_records: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_submissions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_sub_questions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+vitest exit 0
+```
+
+## §4 The related real-database suites (vitest.db.config.ts, RLS_ENFORCE=on), a fresh copy of the database
+tenant-purge-blocking-keys, child-table-parent-scoped-rls, tenant-export-withheld-columns, tenant-purge, tenant-purge-audit, tenant-purge-artifact-records, vault-catalog-tenant-isolation, security-definer-functions, tenant-source-read-receipt-retention, turn-record-purge-door
+```
+[tests/db/tenant-purge-blocking-keys.dbtest.ts] 183 tables seeded for each of A and B (404 rows with their parents); 18 held tables for C
+ Test Files  10 passed (10)
+      Tests  70 passed (70)
+```
+The Vault-fixture suites (org-retention-period, vault-record-immutability, vault-data-room-seal), on a copy named platform_ci_vault_fixture_*:
+```
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+```
+
+## §5 Unit and PGlite suites
+server/services/tenant/__tests__/ (with tenant-purge-vault-scope.pglite.integration and tenant-purge-referrers), server/services/tenant-export/__tests__/, tenant-export-covers-purge.contract, tenant-data-return-authority.pglite, tenant-export-5xx-containment, tenants-simple-purge-audit
+```
+ Test Files  25 passed (25)
+      Tests  284 passed (284)
+```
+
+## §6 Rule 1: the amended file deployed onto the database built at HEAD, then deployed again
+```
+## The HEAD database (install-fresh + deploy-migrate at e2cf417ba), before this change's deploy
+       relname        | rls | force |  pols  
+----------------------+-----+-------+--------
+ csr_endpoint_results | t   | t     | (none)
+ ctd_documents        | t   | t     | (none)
+ ctd_module_sections  | t   | t     | (none)
+(3 rows)
+
+deploy-migrate with the amended file: exit 0
+      [NOTICE] [child-rls] public.csr_endpoint_results scoped through public.csr_endpoints (chained)
+      [NOTICE] [child-rls] public.ctd_module_sections scoped through public.ctd_submissions (chained)
+      [NOTICE] [child-rls] public.ctd_documents scoped through public.ctd_module_sections (chained)
+      [NOTICE] [child-rls] chained: 3 policied, 29 skipped
+      [NOTICE] [child-rls] csr_endpoint_results is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_module_sections is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_documents is policied — leaving deny-all alone
+      [NOTICE] [child-rls] deny-all: 0 enforced, 3 skipped
+       relname        | rls | force |          pols           
+----------------------+-----+-------+-------------------------
+ csr_endpoint_results | t   | t     | tenant_isolation_policy
+ ctd_documents        | t   | t     | tenant_isolation_policy
+ ctd_module_sections  | t   | t     | tenant_isolation_policy
+(3 rows)
+
+csr_endpoint_results: ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1 FROM csr_endpoints p WHERE (p.id = csr_endpoint_results.endpoint_id))))
+ctd_documents: ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1 FROM ctd_module_sections p WHERE (p.id = ctd_documents.section_id))))
+ctd_module_sections: ((NULLIF(current_setting('app.rls_enforce'::text, true), ''::text) IS DISTINCT FROM 'on'::text) OR (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text) OR (EXISTS ( SELECT 1 FROM ctd_submissions p WHERE (p.id = ctd_module_sections.submission_id))))
+deploy-migrate again (replay): exit 0
+      [NOTICE] [child-rls] public.csr_endpoint_results already policied — leaving it alone
+      [NOTICE] [child-rls] public.ctd_module_sections already policied — leaving it alone
+      [NOTICE] [child-rls] public.ctd_documents already policied — leaving it alone
+      [NOTICE] [child-rls] chained: 0 policied, 32 skipped
+      [NOTICE] [child-rls] csr_endpoint_results is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_module_sections is policied — leaving deny-all alone
+      [NOTICE] [child-rls] ctd_documents is policied — leaving deny-all alone
+      [NOTICE] [child-rls] deny-all: 0 enforced, 3 skipped
+       relname        | rls | force |          pols           
+----------------------+-----+-------+-------------------------
+ csr_endpoint_results | t   | t     | tenant_isolation_policy
+ ctd_documents        | t   | t     | tenant_isolation_policy
+ ctd_module_sections  | t   | t     | tenant_isolation_policy
+(3 rows)
+
+```
+And the child-RLS suite on the HEAD-built database, the suite applying this change's file (the deploy-onto-existing path):
+```
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+```

@@ -25,17 +25,16 @@
  *
  * @module server/services/tenant/purge-parent-scope
  */
-import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
+import { VAULT_DOCUMENT_TENANCY, VAULT_TENANT_DOCUMENT_IDS } from './vault-tenancy';
 
 export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
   'vault.documents': VAULT_DOCUMENT_TENANCY,
   'vault.document_chunks':
-    // tenant-isolation-safe: the inner SELECT is filtered by
-    // VAULT_DOCUMENT_TENANCY (./vault-tenancy) — `organization_id = $1 OR program_id IN
-    // (… WHERE organization_id = $1)`. The org predicate IS in the statement;
-    // it arrives through the interpolated constant, which a same-statement
-    // text match cannot follow.
-    `document_id IN (SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY})`,
+    // The inner SELECT is VAULT_TENANT_DOCUMENT_IDS (./vault-tenancy), filtered by
+    // VAULT_DOCUMENT_TENANCY — `organization_id = $1 OR program_id IN (… WHERE
+    // organization_id = $1)`. ci:tenant-isolation checks that statement there,
+    // where both constants are in one file.
+    `document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
   // The canonical document store keys its tenant as org_id.
   'c2c_documents': 'org_id = $1',
   // The legacy documents, by their document.
@@ -83,7 +82,7 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
      The purge deletes these with their parent, so it needs no predicate for
      them; the export does, or it returns less than the purge destroys. The
      first three groups are cascades of tables the purge erases since
-     2026-10-29; the last two were erased without being returned before it. */
+     2026-10-29; the rest were erased without being returned before it. */
   // The canonical documents' sections, and each section's versions and evidence.
   'c2c_document_sections': 'document_id IN (SELECT id FROM c2c_documents WHERE org_id = $1)',
   'c2c_document_section_versions':
@@ -104,16 +103,24 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
   'csr_statistical_analyses': 'study_id IN (SELECT id FROM csr_studies WHERE organization_id = $1)',
   'csr_tables_and_figures': 'study_id IN (SELECT id FROM csr_studies WHERE organization_id = $1)',
   'csr_treatment_arms': 'study_id IN (SELECT id FROM csr_studies WHERE organization_id = $1)',
+  // A grandchild of its study: each endpoint's results, by the endpoint.
+  'csr_endpoint_results':
+    'endpoint_id IN (SELECT id FROM csr_endpoints WHERE study_id IN (SELECT id FROM csr_studies WHERE organization_id = $1))',
   // A CTD program's submissions, nonclinical studies and quality data.
   'ctd_submissions': 'program_id IN (SELECT id FROM ctd_programs WHERE organization_id = $1)',
   'ctd_nonclinical_studies': 'program_id IN (SELECT id FROM ctd_programs WHERE organization_id = $1)',
   'ctd_quality_data': 'program_id IN (SELECT id FROM ctd_programs WHERE organization_id = $1)',
-  // Not here: csr_endpoint_results, ctd_module_sections and ctd_documents, a
-  // grandchild of their study or program. Row-level security is on for them
-  // with no policy, so no application role reads or writes a row
-  // (db/migrations/20260813_child_table_parent_scoped_rls.sql names the nested
-  // predicate they need); they cascade with their parents and hold nothing a
-  // tenant could have written.
+  // A submission's module sections, by the submission; a section's documents,
+  // by the section. These and csr_endpoint_results were deny-all (row-level
+  // security on, no policy), so the export, reading as the runtime role in the
+  // tenant's scope, could return none of the rows the purge erases with their
+  // study or program. Since 2026-10-29 each is policied through the same parent
+  // and key (the chained list of
+  // db/migrations/20260813_child_table_parent_scoped_rls.sql).
+  'ctd_module_sections':
+    'submission_id IN (SELECT id FROM ctd_submissions WHERE program_id IN (SELECT id FROM ctd_programs WHERE organization_id = $1))',
+  'ctd_documents':
+    'section_id IN (SELECT id FROM ctd_module_sections WHERE submission_id IN (SELECT id FROM ctd_submissions WHERE program_id IN (SELECT id FROM ctd_programs WHERE organization_id = $1)))',
   // A program's milestones, activities and readiness snapshots, and a PCCP's modifications.
   'program_milestones': 'program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1)',
   'pdev_program_activities': 'program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1)',
@@ -121,6 +128,17 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
   'ai_ml_modifications': 'plan_id IN (SELECT id FROM ai_ml_pccp_plans WHERE organization_id = $1)',
   // A submission milestone's sections, by the milestone.
   'c2c_milestone_sections': 'milestone_db_id IN (SELECT id FROM c2c_milestones WHERE org_id = $1)',
+  // The Vault's catalog records, read receipts and evidence citations, by their
+  // document: each through the key its row-level-security policies join
+  // vault.documents on (migrations/20260905_document_catalog.sql,
+  // migrations/20260911_vault_evidence_citations.sql). A citation belongs to its
+  // SOURCE document, the claim it is evidence for, so one whose source is
+  // another tenant's is that tenant's even where it cites this tenant's
+  // document as evidence. Each inner SELECT is VAULT_TENANT_DOCUMENT_IDS, as for
+  // vault.document_chunks above.
+  'vault.document_catalog': `document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
+  'vault.document_read_receipts': `document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
+  'vault.evidence_citations': `source_document_id IN (${VAULT_TENANT_DOCUMENT_IDS})`,
 });
 
 /**
