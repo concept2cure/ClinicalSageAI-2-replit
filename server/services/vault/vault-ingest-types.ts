@@ -92,6 +92,8 @@ export type VaultIngestResult =
         contentHash: string;
         processingStatus: string;
         hasExtractedText: boolean;
+        /** Whether the text was read, is still being read (MR-08 Stage 3), or could not be. */
+        extraction: 'extracted' | 'pending' | 'failed';
         wordCount: number | null;
         createdAt: string;
         updatedAt: string;

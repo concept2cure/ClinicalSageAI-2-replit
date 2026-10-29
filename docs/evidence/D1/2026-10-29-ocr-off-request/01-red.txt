@@ -1,0 +1,18 @@
+# Red on HEAD, real PostgreSQL 16 (RLS_ENFORCE=on, app_service), through POST /api/vault/ingest and the project Vault search. OCR is stubbed to take 30 s: the upload took 36.5 s because OCR ran inside the request.
+
+ × tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > returns a scanned PDF without running OCR, and records it as still being read
+   → expected 36483 to be less than 5000
+ × tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > still reads a born-digital file in the request
+   → expected undefined to be 'extracted' // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the upload request reads a text layer only > search says how many versions are not searched yet
+   → expected undefined to be 1 // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > reads the pending version through the verified reader with OCR, records it, audits it once and indexes it
+   → Cannot find module '/server/jobs/vaultProcessingSweep' imported from /home/user/ClinicalSageAI-2-replit/tests/db/vault-processing-sweep.dbtest.ts
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > does nothing more on the next run
+   → Cannot find module '/server/jobs/vaultProcessingSweep' imported from /home/user/ClinicalSageAI-2-replit/tests/db/vault-processing-sweep.dbtest.ts
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > two sweeps at once read a pending version once
+   → expected undefined to be 'pending' // Object.is equality
+ × tests/db/vault-processing-sweep.dbtest.ts > the processing sweep > records a pending version whose stored file cannot be read as failed, with the reason
+   → Cannot find module '/server/jobs/vaultProcessingSweep' imported from /home/user/ClinicalSageAI-2-replit/tests/db/vault-processing-sweep.dbtest.ts
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed (7)

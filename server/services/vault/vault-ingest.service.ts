@@ -47,6 +47,15 @@ import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety.js';
 import { signatureTypeFor } from '../../utils/fileSignature.js';
+import { extractInline } from './vault-inline-extraction.js';
+import { pendingExtractionOutcome } from './document-catalog-core.js';
+import { nudgeVaultProcessing } from '../../jobs/vaultProcessingSweep.js';
+
+/** The ingest response's word for a catalog status. */
+function extractionStateOf(status: string): 'extracted' | 'pending' | 'failed' {
+  if (status === 'extraction_pending') return 'pending';
+  return status === 'extraction_failed' ? 'failed' : 'extracted';
+}
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
@@ -342,9 +351,18 @@ async function admitVaultDocument(
     const { pdfPageCount } = await import('../ocr/pdfInspector.js');
     pageCount = await pdfPageCount(args.fileBuffer);
   }
-  try {
-    const { extractDocumentText } = await import('../ocr/index.js');
-    const extracted = await extractDocumentText(args.fileBuffer, mimeType, fileName);
+  /* A text layer only, within the request's size and time budget (MR-08
+     Stage 3): what needs OCR, or more, is recorded as pending and read by the
+     processing sweep, so a long scanned PDF no longer holds the response open. */
+  const inline = await extractInline(args.fileBuffer, mimeType, fileName);
+  const extractionPending = inline.kind === 'pending';
+  if (inline.kind === 'failed') {
+    extractionError = inline.error;
+    logger.warn('Vault ingest text extraction failed (non-fatal)', { err: inline.error });
+  } else if (inline.kind === 'pending') {
+    logger.info('Vault ingest text left for the processing sweep', { reason: inline.reason, size: fileSize });
+  } else {
+    const extracted = inline.extracted;
     extractionMethod = extracted.method;
     extractionConfidence = extracted.confidence;
     if (extracted.text && extracted.text.trim().length > 0) {
@@ -357,9 +375,6 @@ async function admitVaultDocument(
         pagesMapped: pageSpans?.length ?? 0,
       });
     }
-  } catch (extractErr: any) {
-    extractionError = extractErr?.message ?? 'unknown extraction error';
-    logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
   }
 
   /* The catalog's extraction tier and the passage index are deterministic and
@@ -522,9 +537,11 @@ async function admitVaultDocument(
         retention_until = COALESCE(vault.documents.retention_until, EXCLUDED.retention_until),
         parent_document_id = COALESCE(vault.documents.parent_document_id, EXCLUDED.parent_document_id),
         supersedes_id = COALESCE(vault.documents.supersedes_id, EXCLUDED.supersedes_id),
-        extracted_text = EXCLUDED.extracted_text,
-        page_count = EXCLUDED.page_count,
-        word_count = EXCLUDED.word_count,
+        -- A same-bytes retry the request could not read keeps the text the
+        -- processing sweep already read (MR-08 Stage 3).
+        extracted_text = COALESCE(EXCLUDED.extracted_text, vault.documents.extracted_text),
+        page_count = COALESCE(EXCLUDED.page_count, vault.documents.page_count),
+        word_count = COALESCE(EXCLUDED.word_count, vault.documents.word_count),
         processing_status = 'PENDING',
         -- Repairs a row that predates the tenant key without ever moving one:
         -- the ownership guard above proved this program belongs to $27.
@@ -611,15 +628,17 @@ async function admitVaultDocument(
        a failure with its reason — the state this catalog exists to make
        visible — and a re-upload with new bytes voids any prior comprehension
        (the service handles that in its upsert). */
-    await recordExtractionOutcome(client, {
+    const catalogStatus = await recordExtractionOutcome(client, {
       documentId: String(doc.id),
       contentHash,
-      outcome: buildExtractionOutcome({
-        text: extractedText,
-        method: extractionMethod,
-        confidence: extractionConfidence,
-        error: extractionError,
-      }),
+      outcome: extractionPending
+        ? pendingExtractionOutcome()
+        : buildExtractionOutcome({
+          text: extractedText,
+          method: extractionMethod,
+          confidence: extractionConfidence,
+          error: extractionError,
+        }),
       pageCount,
     });
 
@@ -685,6 +704,7 @@ async function admitVaultDocument(
     stored.committed = true;
     await client.query('COMMIT');
     for (const notice of routeNotices) notifyTaskEvent(notice);
+    if (catalogStatus === 'extraction_pending') nudgeVaultProcessing();
     // Committed means a committed record holds THIS copy. A retry's record
     // keeps the copy it already names, and the wrapper removes this one.
     stored.committed = doc.storage_version_id === storageVersionId;
@@ -725,6 +745,8 @@ async function admitVaultDocument(
         contentHash,
         processingStatus: doc.processing_status,
         hasExtractedText: !!extractedText,
+        // Whether this version's text was read, is still being read, or could not be.
+        extraction: extractionStateOf(catalogStatus),
         wordCount,
         createdAt: doc.created_at,
         updatedAt: doc.updated_at,

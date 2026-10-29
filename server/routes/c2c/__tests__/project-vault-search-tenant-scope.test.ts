@@ -59,6 +59,8 @@ beforeAll(async () => {
       deleted_at timestamptz, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
     CREATE TABLE canonical_documents (canonical_id text PRIMARY KEY, organization_id integer, stage text,
       source_refs jsonb, created_at timestamptz DEFAULT now());
+    -- The catalog's extraction state: the search counts versions still being read (MR-08 Stage 3).
+    CREATE TABLE vault.document_catalog (document_id uuid PRIMARY KEY, catalog_status text);
     CREATE TABLE document_data_dispositions (id integer, organization_id integer, program_id uuid,
       vault_document_id uuid, source_sha256 text, linked_ids jsonb, choice text,
       disposition_sequence integer, created_at timestamptz);

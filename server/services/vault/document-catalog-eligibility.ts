@@ -25,6 +25,11 @@ export function catalogableDocument(doc: CatalogDocumentRow | null):
   };
   const versionRefusal = catalogVersionRefusal(doc);
   if (versionRefusal) return { ok: false, refusal: versionRefusal };
+  // Still being read (MR-08 Stage 3: a scan's OCR is off the upload request).
+  if (doc.catalog.status === 'extraction_pending') return {
+    ok: false,
+    refusal: 'The text of this version is still being read, so there is nothing to catalog yet. Ask again once it has been read.',
+  };
   if (doc.catalog.status === 'extraction_failed') return {
     ok: false,
     refusal: `Extraction failed for this document (${doc.catalog.extractionError ?? 'no reason recorded'}), ` +

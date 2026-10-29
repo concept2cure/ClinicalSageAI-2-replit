@@ -26,6 +26,10 @@ const VAULT_FILTER_FROM_ROUTES = new Map([
 ]);
 const VAULT_FILTER_FROM_VAULT = new Map([
   ['vaultLifecycleStageSql', './vault-document-filter.js'],
+  // The search's pending count (MR-08 Stage 3, 2026-10-29) asks the read model's
+  // own eligibility and current-version questions, with a literal alias.
+  ['vaultDataEligibleSql', '../document-data-disposition/eligibility.js'],
+  ['supersededSql', './vault-version-family.js'],
 ]);
 // The Vault seal (VR-19, 2026-10-29): a seal records the documents the tree
 // shows, by the tree's own predicates (data eligibility, the current version,

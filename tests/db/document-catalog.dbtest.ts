@@ -236,13 +236,19 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
       .attach('file', OPAQUE_PDF, 'opaque-scan.pdf');
     expect(res.status).toBe(201); // the document is still admitted…
     pdfDocId = res.body.document.id;
-
-    const { rows } = await owner.query(
+    // …with no text layer, so the request leaves it for the processing sweep
+    // (MR-08 Stage 3: OCR is off the upload request), and says so.
+    expect(res.body.document.extraction).toBe('pending');
+    const read = async () => (await owner.query(
       `SELECT catalog_status, extraction_error, char_count
          FROM vault.document_catalog WHERE document_id = $1`,
       [pdfDocId],
-    );
-    // …but the catalog says the truth: nothing was extracted, and why.
+    )).rows;
+    expect((await read())[0]?.catalog_status).toBe('extraction_pending');
+    await (await import('../../server/jobs/vaultProcessingSweep')).runVaultProcessingOnce();
+
+    // …and once read, the catalog says the truth: nothing was extracted, and why.
+    const rows = await read();
     expect(rows).toHaveLength(1);
     expect(rows[0].catalog_status).toBe('extraction_failed');
     expect(rows[0].extraction_error).toBeTruthy();
