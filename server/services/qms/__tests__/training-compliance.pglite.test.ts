@@ -191,9 +191,25 @@ describe('per-person training expiry (G10)', () => {
     await acknowledge(doc, 16, '1.0', { org: 2, expiresInDays: 3 });
 
     expect(await expiring(60)).toEqual([expect.objectContaining({
-      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10,
+      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', documentVersion: '1.0', daysLeft: 10, lapsed: false,
     })]);
     expect(await expiring(5)).toEqual([]);
+  });
+
+  it('names a member whose training on the release in force lapsed, and never one who renewed it', async () => {
+    const doc = await document();
+    await acknowledge(doc, 10, '1.0', { expiresInDays: -5 });
+    // Renewed after the lapse: current again, not lapsed.
+    await acknowledge(doc, 11, '1.0', { expiresInDays: -5 });
+    await acknowledge(doc, 11, '1.0', { expiresInDays: 200, acknowledgedAt: '2026-10-05T00:00:00Z' });
+    // A superseded version is training not yet done on this one, which coverage counts; a suspended member is off the roster.
+    await acknowledge(doc, 12, '0.9', { expiresInDays: -5 });
+    await acknowledge(doc, 13, '1.0', { expiresInDays: -5 });
+
+    expect(await expiring(60)).toEqual([expect.objectContaining({
+      userId: 10, userName: 'Member 1', documentId: doc, docNumber: 'SOP-001', lapsed: true, daysLeft: -5,
+    })]);
+    expect(await compliance()).toEqual([expect.objectContaining({ id: doc, current: 1, of: 3 })]);
   });
 
   it('never lists a member whose current receipt has no expiry', async () => {

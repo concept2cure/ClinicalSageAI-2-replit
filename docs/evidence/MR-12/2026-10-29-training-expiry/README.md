@@ -54,8 +54,32 @@ Searches run:
 
 ## Owed
 
-- Lapsed members (training expired, not renewed) are counted by coverage but not named anywhere. Naming them needs the
-  receipt rule evaluated at the receipt's own expiry. Not done here.
+- ~~Lapsed members are counted by coverage but not named anywhere.~~ Named since the second change below.
 - A reminder to the person before the lapse, through the task store as the CAPA and supplier dates do
   (`docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-reminders/`). The acknowledgment is the act that would write it.
 - Staging screenshot with D1.
+
+## Second change: whose training has lapsed
+
+- **What existed.** The expiry read above listed only members with a current receipt. A member whose receipt expired
+  and was not renewed had no current receipt, so coverage counted them as not trained, but no screen named them.
+- **What changed.**
+  - `readQmsTrainingExpiring` also reads the expired attested receipts on the documents in force, each verified with
+    `verifiedTrainingReceipt` as it stood one millisecond before it expired. This is coverage's own rule, applied at
+    the receipt's time.
+  - A member with no current receipt, whose last receipt on the exact release in force expired, is listed as lapsed:
+    `lapsed: true`, with negative days left.
+  - Training on a superseded version is not a lapse. It is training not yet done on the new version, which coverage
+    counts.
+  - Coverage's own query is unchanged.
+- **Screen.** The section is now "Training lapsed or lapsing soon". A lapsed row reads "lapsed {date}". The hook
+  requires the `lapsed` flag, so a body without it is a failed read.
+- **Proof.**
+  - `training-compliance.pglite.test.ts` passes 9 of 9. The new case: Member 1, lapsed 5 days ago, is named with
+    `lapsed: true` and days left -5. A member who renewed after the lapse, a superseded version and a suspended member
+    are not. Coverage still counts one current member, the renewed one.
+  - `TrainingExpiry.test.tsx` passes 2 of 2: one lapsing row and one lapsed row, each in its own words.
+  - `SopRegisterIdentity.test.tsx` passes with the flag in its payload.
+  - **Shown failing first:** with a renewed member treated as lapsed, the PGlite case fails; with the flag ignored on
+    screen, the screen case fails.
+
