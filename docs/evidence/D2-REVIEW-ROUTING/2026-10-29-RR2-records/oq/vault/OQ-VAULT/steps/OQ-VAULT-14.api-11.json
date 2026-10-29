@@ -1,0 +1,301 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/fbc8a9c2-460f-4e78-805b-ec92c97628b7/documents/31cf7b75-d4a3-49de-8981-9cba9469b8d2/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 245,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "31cf7b75-d4a3-49de-8981-9cba9469b8d2",
+            "version": "2.0",
+            "contentHash": "b27d62d18363c12f69f01f6754343b40f9236de8ef7769535e0d46c55a4113c4",
+            "fileSize": 629,
+            "fileName": "approval-v2.pdf",
+            "uploader": "Oona Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T20:22:32.235Z",
+            "current": true,
+            "link": "verified",
+            "lifecycle": {
+              "canonicalId": "bbedba2c-4b1b-4bf4-b689-b5be9c082101",
+              "stage": "approved",
+              "creatorId": 1,
+              "review": {
+                "printedName": "Sid Signer",
+                "meaning": "REVIEWED",
+                "signedAt": "2026-10-29T20:23:00.837Z",
+                "signatureRef": "esig:4",
+                "signerId": 2
+              },
+              "approval": {
+                "printedName": "Abe Approver",
+                "meaning": "APPROVED",
+                "signedAt": "2026-10-29T20:23:01.608Z",
+                "signatureRef": "esig:5",
+                "signerId": 3
+              },
+              "reviewSignOffs": [
+                {
+                  "printedName": "Sid Signer",
+                  "meaning": "REVIEWED",
+                  "signedAt": "2026-10-29T20:23:00.837Z",
+                  "signatureRef": "esig:4",
+                  "signerId": 2
+                }
+              ],
+              "approvalSignOffs": [
+                {
+                  "printedName": "Abe Approver",
+                  "meaning": "APPROVED",
+                  "signedAt": "2026-10-29T20:23:01.608Z",
+                  "signatureRef": "esig:5",
+                  "signerId": 3
+                }
+              ],
+              "round": {
+                "route": {
+                  "id": "1eb70982-0faf-47b8-a4ec-8895e2016528",
+                  "round": 1,
+                  "senderId": 1,
+                  "senderName": "Oona Runner",
+                  "order": "parallel",
+                  "status": "complete",
+                  "statusReason": "OQ-002 step 14: approved for validation",
+                  "statusBy": 3,
+                  "statusAt": "2026-10-29T20:23:01.156Z",
+                  "contentDigest": "b27d62d18363c12f69f01f6754343b40f9236de8ef7769535e0d46c55a4113c4",
+                  "reviewDueAt": "2026-11-05T23:59:59.999Z",
+                  "approvalDueAt": "2026-11-12T23:59:59.999Z",
+                  "createdAt": "2026-10-29T20:22:32.841Z"
+                },
+                "members": [
+                  {
+                    "taskId": "ROUTE-1eb70982-2",
+                    "userId": 2,
+                    "role": "reviewer",
+                    "step": 1,
+                    "printedName": "Sid Signer",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-05T23:59:59.999Z",
+                    "signature": {
+                      "id": 4,
+                      "printedName": "Sid Signer",
+                      "meaning": "REVIEWED",
+                      "signedAt": "2026-10-29T20:23:00.837Z"
+                    },
+                    "actId": null
+                  },
+                  {
+                    "taskId": "ROUTE-1eb70982-3",
+                    "userId": 3,
+                    "role": "approver",
+                    "step": 2,
+                    "printedName": "Abe Approver",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-12T23:59:59.999Z",
+                    "signature": {
+                      "id": 5,
+                      "printedName": "Abe Approver",
+                      "meaning": "APPROVED",
+                      "signedAt": "2026-10-29T20:23:01.608Z"
+                    },
+                    "actId": null
+                  }
+                ],
+                "reviewComplete": true,
+                "approvalComplete": true,
+                "history": [
+                  {
+                    "action": "send",
+                    "at": "2026-10-29T20:22:32.918Z",
+                    "actorId": 1,
+                    "actorName": "Oona Runner",
+                    "reason": "OQ-002 step 14: sent for review for validation",
+                    "members": [
+                      {
+                        "userId": 2,
+                        "role": "reviewer",
+                        "printedName": "Sid Signer"
+                      },
+                      {
+                        "userId": 3,
+                        "role": "approver",
+                        "printedName": "Abe Approver"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "roundUnread": false
+            },
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": null
+          },
+          {
+            "id": "9a8d6eb2-b663-406e-b9df-a4fe482db273",
+            "version": "1.0",
+            "contentHash": "fbafd0bf6d127abbd8228a554576eaff731216579d513d58e46f698b6e59a755",
+            "fileSize": 618,
+            "fileName": "OQ-002-Approval-family-20261029202031.pdf",
+            "uploader": "Oona Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T20:22:01.599Z",
+            "current": false,
+            "link": "none",
+            "lifecycle": {
+              "canonicalId": "dadbb09b-ebe1-45cf-af91-4781f4853e16",
+              "stage": "superseded",
+              "creatorId": 1,
+              "review": {
+                "printedName": "Sid Signer",
+                "meaning": "REVIEWED",
+                "signedAt": "2026-10-29T20:22:30.815Z",
+                "signatureRef": "esig:2",
+                "signerId": 2
+              },
+              "approval": {
+                "printedName": "Abe Approver",
+                "meaning": "APPROVED",
+                "signedAt": "2026-10-29T20:22:31.633Z",
+                "signatureRef": "esig:3",
+                "signerId": 3
+              },
+              "reviewSignOffs": [
+                {
+                  "printedName": "Sid Signer",
+                  "meaning": "REVIEWED",
+                  "signedAt": "2026-10-29T20:22:30.815Z",
+                  "signatureRef": "esig:2",
+                  "signerId": 2
+                }
+              ],
+              "approvalSignOffs": [
+                {
+                  "printedName": "Abe Approver",
+                  "meaning": "APPROVED",
+                  "signedAt": "2026-10-29T20:22:31.633Z",
+                  "signatureRef": "esig:3",
+                  "signerId": 3
+                }
+              ],
+              "round": {
+                "route": {
+                  "id": "348ec376-67ee-4c09-8cd2-7cc2cd9fe125",
+                  "round": 1,
+                  "senderId": 1,
+                  "senderName": "Oona Runner",
+                  "order": "parallel",
+                  "status": "complete",
+                  "statusReason": "OQ-002 step 14: approved for validation",
+                  "statusBy": 3,
+                  "statusAt": "2026-10-29T20:22:31.148Z",
+                  "contentDigest": "fbafd0bf6d127abbd8228a554576eaff731216579d513d58e46f698b6e59a755",
+                  "reviewDueAt": "2026-11-05T23:59:59.999Z",
+                  "approvalDueAt": "2026-11-12T23:59:59.999Z",
+                  "createdAt": "2026-10-29T20:22:02.312Z"
+                },
+                "members": [
+                  {
+                    "taskId": "ROUTE-348ec376-2",
+                    "userId": 2,
+                    "role": "reviewer",
+                    "step": 1,
+                    "printedName": "Sid Signer",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-05T23:59:59.999Z",
+                    "signature": {
+                      "id": 2,
+                      "printedName": "Sid Signer",
+                      "meaning": "REVIEWED",
+                      "signedAt": "2026-10-29T20:22:30.815Z"
+                    },
+                    "actId": null
+                  },
+                  {
+                    "taskId": "ROUTE-348ec376-3",
+                    "userId": 3,
+                    "role": "approver",
+                    "step": 2,
+                    "printedName": "Abe Approver",
+                    "outcome": "signed",
+                    "stepOpen": true,
+                    "dueDate": "2026-11-12T23:59:59.999Z",
+                    "signature": {
+                      "id": 3,
+                      "printedName": "Abe Approver",
+                      "meaning": "APPROVED",
+                      "signedAt": "2026-10-29T20:22:31.633Z"
+                    },
+                    "actId": null
+                  }
+                ],
+                "reviewComplete": true,
+                "approvalComplete": true,
+                "history": [
+                  {
+                    "action": "send",
+                    "at": "2026-10-29T20:22:02.386Z",
+                    "actorId": 1,
+                    "actorName": "Oona Runner",
+                    "reason": "OQ-002 step 14: sent for review for validation",
+                    "members": [
+                      {
+                        "userId": 2,
+                        "role": "reviewer",
+                        "printedName": "Sid Signer"
+                      },
+                      {
+                        "userId": 3,
+                        "role": "approver",
+                        "printedName": "Abe Approver"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "roundUnread": false
+            },
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "superseded by a later version"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "Abe Approver"
+            },
+            {
+              "id": 1,
+              "name": "Oona Runner"
+            },
+            {
+              "id": 2,
+              "name": "Sid Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

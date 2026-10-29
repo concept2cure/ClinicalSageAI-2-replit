@@ -67,6 +67,19 @@ export interface LinkedSubmission {
   primaryRegion: string | null;
 }
 
+/**
+ * What the inbox shows of a letter's response clock
+ * (server/services/regulatory-correspondence/response-clock.ts):
+ *   dated     the due date, and whether the agency stated it or it is derived from the class's codified window;
+ *   undated   a response is owed and neither a stated date nor a codified window exists;
+ *   untracked no clock: the letter needs no response, is closed, or its class asks for nothing or was not recorded.
+ */
+export type InboxResponseClock =
+  | { state: 'dated'; dueDate: string; dueDateSource: 'agency_stated' | 'derived_from_window'; daysUntilDue: number;
+      bucket: 'overdue' | 'due_soon' | 'upcoming'; windowDays: number | null; citation: string | null; consequence: string | null }
+  | { state: 'undated'; daysSinceReceived: number; consequence: string | null }
+  | { state: 'untracked'; reason: string };
+
 export interface AgencyCommunicationEventRecord {
   id: string;
   organizationId: number;
@@ -100,6 +113,10 @@ export interface AgencyCommunicationEventRecord {
   extractedIssues: string[];
   humanReviewStatus: 'pending_review' | 'triaged' | 'actioned';
   closureStatus: 'open' | 'in_progress' | 'closed';
+  /** The letter's class (AGENCY_LETTER_CLASSES), which its response clock reads; null when none was recorded. */
+  letterClass?: string | null;
+  /** The response clock on the letter, read by the server (P-39 step 3, S4). */
+  responseClock?: InboxResponseClock;
   auditMetadata: {
     capturedBy: string;
     capturedAt: string;

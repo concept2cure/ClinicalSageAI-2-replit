@@ -1,0 +1,57 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5211/api/c2c/project-vault/f55563b3-2215-421c-9a9a-95e063aee8cc/documents/e06b22c8-d30d-4255-a49b-19a93c5d652e/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 159,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "versions": [
+          {
+            "id": "e06b22c8-d30d-4255-a49b-19a93c5d652e",
+            "version": "1.0",
+            "contentHash": "12d84fbbca7769e79db8ba0839e3fc9c6942c8b36ec952db18c137d94dbe9483",
+            "fileSize": 620,
+            "fileName": "OQ-002-unplaced-overview-20261029202031.pdf",
+            "uploader": "Oona Runner",
+            "uploaderId": 1,
+            "createdAt": "2026-10-29T20:23:15.394Z",
+            "current": true,
+            "link": "none",
+            "lifecycle": null,
+            "placements": [],
+            "estarUses": [],
+            "cmcEvidence": [],
+            "sectionCitations": [],
+            "transmitRefusal": "not reviewed"
+          }
+        ],
+        "signing": {
+          "canSign": true,
+          "signers": [
+            {
+              "id": 3,
+              "name": "Abe Approver"
+            },
+            {
+              "id": 1,
+              "name": "Oona Runner"
+            },
+            {
+              "id": 2,
+              "name": "Sid Signer"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -13,10 +13,17 @@
  * `superseded_by` and `verification_status = 'revoked'`); electronic_signatures
  * has no column of either name.
  *
+ * `interim_approval` and `approval_share` (RR2 records, 2026-10-29): an
+ * approval signed on a review route is the k-th of the n approvals the route
+ * requires. One with k < n left its record in review, so it is never read as
+ * the record's approval (services/review/approval-share.ts reads the share from
+ * the signature, or from its route for one stored before 2026-10-29).
+ *
  * @module server/services/audit/compliance-reports/queries/electronic-signatures
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
 import { cappedSection, columns, isoNaiveUtc, naiveUtcNote, utcWallClock } from './section';
+import { approvalShareJoin } from '../../../review/approval-share';
 
 /* $1 organisation, $2 period start, $3 period end (exclusive). */
 const SIGNATURES_SQL = `
@@ -47,10 +54,14 @@ SELECT s.id,
        (s.verification_status IS NOT DISTINCT FROM 'revoked') AS revoked,
        s.superseded_by,
        sup.signature_type AS superseded_by_type,
-       ${isoNaiveUtc('sup.signed_at')} AS superseded_at
+       ${isoNaiveUtc('sup.signed_at')} AS superseded_at,
+       share.interim_approval,
+       CASE WHEN share.approvals_required IS NOT NULL
+            THEN share.approvals_recorded || ' of ' || share.approvals_required END AS approval_share
   FROM electronic_signatures s
   LEFT JOIN electronic_signatures sup
     ON sup.id = s.superseded_by AND sup.organization_id = $1
+  ${approvalShareJoin('s', 'share')}
  WHERE s.organization_id = $1
    AND COALESCE(s.signed_at, s.created_at) >= ${utcWallClock(2)}
    AND COALESCE(s.signed_at, s.created_at) < ${utcWallClock(3)}
@@ -62,6 +73,7 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
       ...(await cappedSection(ctx.client, SIGNATURES_SQL, [ctx.orgId, ctx.bounds.start, ctx.bounds.end])),
       notes: [
         'The meaning is the one the signer declared, as stored; a signature that declared none shows none.',
+        'Approval share is, for a signature made on a review route as one of its approvers, which of the approvals the route required it was (k of n). Interim approval is true when it was not the last one: the record stayed in review after it, so it is not the record\'s approval.',
         naiveUtcNote('Signing times'),
       ],
     },
@@ -101,6 +113,8 @@ export const electronicSignatures: ReportDefinition = {
         ['superseded_by', 'Superseded by signature'],
         ['superseded_by_type', 'Superseding signature type'],
         ['superseded_at', 'Superseded'],
+        ['approval_share', 'Approval share (k of n)'],
+        ['interim_approval', 'Interim approval'],
       ]),
     },
   ],

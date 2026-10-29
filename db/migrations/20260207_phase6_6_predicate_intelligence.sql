@@ -7,6 +7,13 @@
 --   predicate.defense_previews     — Shadow 510(k) reviewer results
 --
 -- Depends on: core.programs, pgvector extension
+--
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): the three program-isolation policies no longer admit a session
+-- that sets app.bypass_rls, a custom setting any role can set. Each is created
+-- only when absent, so the RLS section also removes the term from a stored
+-- policy that still reads it (ALTER POLICY, only then; a replay changes
+-- nothing). No DROP. Nothing replaces the term.
 
 BEGIN;
 
@@ -161,7 +168,6 @@ DO $$ BEGIN
     CREATE POLICY candidates_program_isolation ON predicate.candidates
         USING (
             program_id::TEXT = current_setting('app.current_program_id', TRUE)
-            OR current_setting('app.bypass_rls', TRUE) = 'true'
         );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -171,7 +177,6 @@ DO $$ BEGIN
     CREATE POLICY se_matrix_program_isolation ON predicate.se_matrix_rows
         USING (
             program_id::TEXT = current_setting('app.current_program_id', TRUE)
-            OR current_setting('app.bypass_rls', TRUE) = 'true'
         );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -181,9 +186,29 @@ DO $$ BEGIN
     CREATE POLICY defense_preview_program_isolation ON predicate.defense_previews
         USING (
             program_id::TEXT = current_setting('app.current_program_id', TRUE)
-            OR current_setting('app.bypass_rls', TRUE) = 'true'
         );
 EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- A database created before 2026-10-29 holds these with the app.bypass_rls
+-- term (P-70, see the header): remove it, only where the stored expression
+-- still reads it.
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN
+        SELECT pol.polname, pol.polrelid::regclass AS tbl
+          FROM pg_policy pol
+         WHERE (pol.polrelid, pol.polname) IN (
+                 SELECT to_regclass(t), p FROM (VALUES
+                   ('predicate.candidates', 'candidates_program_isolation'),
+                   ('predicate.se_matrix_rows', 'se_matrix_program_isolation'),
+                   ('predicate.defense_previews', 'defense_preview_program_isolation')) v(t, p))
+           AND coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') LIKE '%app.bypass_rls%'
+    LOOP
+        EXECUTE format('ALTER POLICY %I ON %s USING (program_id::TEXT = current_setting(%L, TRUE))',
+                       r.polname, r.tbl, 'app.current_program_id');
+    END LOOP;
 END $$;
 
 -- fda_enforcement is global (no program_id) — no RLS needed

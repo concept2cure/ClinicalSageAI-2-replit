@@ -1,0 +1,36 @@
+# at 37c17a3f0 + the new cases only (server code unchanged); RLS_ENFORCE=off npx vitest run server/routes/__tests__/audit-trail-ledger.routes.test.ts
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source 73ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT) 28ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values 25ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores 27ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation 6ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything 9ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing 2459ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe) 32ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name 25ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system 14ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row 28ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only 29ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned 25ms
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an interim QMS approval, written as its own type, reads k of n and never "approved" 42ms
+   → expected { …(18) } to match object { Object (sig, meaning, ...) }
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an approval stored before 2026-10-29 with the final type is read from its route: the earlier one is interim, the last one approved 33ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a stored earlier approval stays interim when the other approver never signed 24ms
+   → expected 'Controlled document approved (e-signa…' to be 'Controlled document approval signed, …' // Object.is equality
+ × server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a Vault version: an earlier approver’s signature reads k of n, written as its own type or stored before 40ms
+   → expected 'C2c Work Sign' to be 'Version approval signed, 1 of 3 requi…' // Object.is equality
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger names nothing of another organisation's in a break 2ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history names nothing of another organisation's in a break 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger still names this organisation's own broken row 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history still names this organisation's own broken row 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger states a walk over no chained rows as not verified, never ok 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history states a walk over no chained rows as not verified, never ok 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > a record's history across record kinds > reads the submission and its leaves, newest first, and nothing else 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an interim QMS approval, written as its own type, reads k of n and never "approved"
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an approval stored before 2026-10-29 with the final type is read from its route: the earlier one is interim, the last one approved
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a stored earlier approval stays interim when the other approver never signed
+ FAIL  server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a Vault version: an earlier approver’s signature reads k of n, written as its own type or stored before
+ Test Files  1 failed (1)
+      Tests  4 failed | 20 passed (24)

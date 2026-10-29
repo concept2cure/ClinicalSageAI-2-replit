@@ -9,6 +9,13 @@
 --   - Schema changes must not undermine deterministic evidence pointers.
 --   - Any change impacting canonical schemas requires spec version bump.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): the six organization policies no longer admit a session that
+-- sets app.bypass_rls, a custom setting any role can set; the runtime role
+-- could read and write every organization's rows from inside its own
+-- connection. They are dropped and re-created on every run (as before), so the
+-- next deploy carries the change to every database. Nothing replaces the term.
+-- =============================================================================
 -- AMENDED IN PLACE 2026-10-15 (D2) — two defects, no DROP.
 --
 -- 1. The global rule seed minted 11 more rows on every deploy. Its guard was
@@ -373,7 +380,6 @@ CREATE POLICY source_docs_org_policy ON intelligent_docs.source_documents
   FOR ALL
   USING (
     organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- Traceability Links Policy
@@ -382,7 +388,6 @@ CREATE POLICY trace_links_org_policy ON intelligent_docs.traceability_links
   FOR ALL
   USING (
     organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- Change Propagation Policy
@@ -391,7 +396,6 @@ CREATE POLICY propagation_org_policy ON intelligent_docs.change_propagation_even
   FOR ALL
   USING (
     organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- Compliance Scores Policy
@@ -400,7 +404,6 @@ CREATE POLICY compliance_scores_org_policy ON intelligent_docs.compliance_scores
   FOR ALL
   USING (
     organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- Compliance Rules Policy (includes global rules)
@@ -410,7 +413,6 @@ CREATE POLICY compliance_rules_org_policy ON intelligent_docs.compliance_rules
   USING (
     organization_id IS NULL  -- Global rules visible to all
     OR organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- Auto Generated Tables Policy
@@ -419,7 +421,6 @@ CREATE POLICY auto_tables_org_policy ON intelligent_docs.auto_generated_tables
   FOR ALL
   USING (
     organization_id::text = current_setting('app.current_organization_id', true)
-    OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 -- ============================================================================

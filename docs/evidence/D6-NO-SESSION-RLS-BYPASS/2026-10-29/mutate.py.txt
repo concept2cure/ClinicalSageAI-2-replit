@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Apply one mutation to a file of the scratch mutation tree, run the command that
+should catch it, restore the file and check it byte for byte (sha256).
+
+usage: mutate.py <name> <file relative to mut-src> <old-file> <new-file> -- <command...>
+  old-file / new-file hold the exact text to replace (must occur exactly once).
+Prints the command's tail and whether the mutation was KILLED (command failed).
+"""
+import hashlib, pathlib, subprocess, sys
+
+P = pathlib.Path('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass')
+ROOT = P / 'mut-src'
+
+name, rel, old_f, new_f = sys.argv[1:5]
+assert sys.argv[5] == '--'
+cmd = sys.argv[6:]
+target = ROOT / rel
+original = target.read_bytes()
+before = hashlib.sha256(original).hexdigest()
+old = pathlib.Path(old_f).read_text()
+new = pathlib.Path(new_f).read_text()
+text = original.decode()
+# Several regions: separate the pairs with a line holding only =====.
+for o, n in zip(old.split('\n=====\n'), new.split('\n=====\n')):
+    assert text.count(o) == 1, f'{name}: the text to mutate occurs {text.count(o)} times in {rel}'
+    text = text.replace(o, n, 1)
+target.write_text(text)
+try:
+    res = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=1500)
+    out = (res.stdout + res.stderr).strip().splitlines()
+finally:
+    if hashlib.sha256(target.read_bytes()).hexdigest() != before:
+        target.write_bytes(original)
+after = hashlib.sha256(target.read_bytes()).hexdigest()
+print(f'### {name}')
+print(f'file: {rel}')
+print(f'command: {" ".join(cmd)}')
+print(f'exit: {res.returncode} -> {"KILLED" if res.returncode != 0 else "SURVIVED"}')
+keep = [l for l in out if any(k in l for k in ('×', '✗', 'FAIL', 'Tests ', 'Test Files', '❌', '•', 'ERROR', 'P-70', 'passed', 'exit'))]
+print('\n'.join(keep[-25:]))
+print(f'restored byte for byte (sha256 {before[:16]}…): {after == before}')
+print()

@@ -1202,6 +1202,11 @@ granted only to that path, with its reason on the definer allowlist. Why: P-59's
 Vault: a control any session can switch off is not a control, and a regulated customer's isolation cannot rest on
 every line of server code never issuing one `SET`.
 
+*Amended 2026-10-29, same day, on implementation (`08619d5cc`):* the "platform scope the reviewed purge doors
+already require" is not a role. It is two more session settings (`app.rls_enforce` not `'on'`, or `app_super_admin`).
+Converging onto it would have moved the switch, not removed it, so the bypass and admin terms were deleted with no
+replacement, and the deploy now fails if any policy or function reads either. The platform scope itself is P-72.
+
 ### P-71 — The product ships no customer's analysis
 
 `server/data/public-csr-reference/` carries `lmn-target-profile.json` and `comparator-fit-matrix.json`: one
@@ -1210,6 +1215,26 @@ product; the evidence of the 2026-10-27 work keeps its copies as history. Public
 reference set when they are genuinely public and in scope for it, chosen by the therapeutic area, not by one
 customer's programme. A customer's own targets and fits are that customer's project data, in their tenant. Why: a
 sponsor's competitors use the same product, and what the product ships is visible to all of them.
+
+### P-72 — Platform scope is a role, not a session setting
+
+`app.rls_enforce` (read by about 1020 policies) and the `app_super_admin` arm (about 973) are custom settings the
+runtime role can set, as `app.bypass_rls` was (P-70's inventory,
+`docs/evidence/D6-NO-SESSION-RLS-BYPASS/2026-10-29/`). Today, only these stand in the way: the session pins in
+`server/db/sessionScope.ts`, the gates and the SQL-interpolation freeze. No caller-controlled `SET` reaches the
+database, but one injected or careless `SET` would lift tenant isolation for every table at once.
+
+Platform scope moves onto a NOLOGIN role that the runtime role cannot become: not granted, or granted `WITH SET
+FALSE` (PostgreSQL 16). It is entered only through reviewed SECURITY DEFINER doors on the definer allowlist. The
+policies' setting arms are amended in place to role checks (Rule 1), and the deploy fails if any policy or function
+still reads either setting.
+
+Design comes first. It is an inventory of every path that sets either setting today, and the door each one moves
+to, before any policy changes. The tenant selector itself (`app.current_org_id` and its kin) stays a session value
+that the server pins per request; binding it cryptographically is not in scope.
+
+Why: the reason given for P-59 and P-70. A control any session can switch off is not a control, and a regulated
+customer's isolation is the product's first promise.
 
 ## How sessions run under this file
 

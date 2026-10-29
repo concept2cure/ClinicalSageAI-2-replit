@@ -42,6 +42,7 @@
 
 import { createHash } from 'node:crypto';
 import { utcDay } from '../../../shared/utils/utc-day';
+import { correspondenceResponseClock } from '../regulatory-correspondence/response-clock';
 
 /** Recipe tag inside the digested bytes, so a later recipe cannot collide with this one. */
 export const AGENCY_RESPONSE_DIGEST_RECIPE = 'agency-response/v1' as const;
@@ -258,6 +259,25 @@ export interface DueLetter {
   responseRequired: boolean;
   closureStatus: string;
   dueDate: string | null;
+  /** When it arrived, and its class (AGENCY_LETTER_CLASSES): the response clock derives a due date from them. */
+  receivedDate?: string | null;
+  letterClass?: string | null;
+}
+
+/**
+ * When a response to the letter is due (P-39 step 3, S4): the date the agency
+ * stated, else the date the response clock derives from the letter's class and
+ * receipt (its codified window, response-clock.ts), else null. A letter with no
+ * class has only its stated date.
+ */
+export function responseDueDate(letter: DueLetter): string | null {
+  if (letter.dueDate) return letter.dueDate;
+  if (!letter.letterClass) return null;
+  const clock = correspondenceResponseClock({
+    direction: 'inbound', communicationType: letter.letterClass, responseRequired: letter.responseRequired,
+    status: null, receivedAt: letter.receivedDate ?? null, dueDate: null, submissionType: null,
+  }, new Date());
+  return clock.state === 'dated' ? clock.dueDate : null;
 }
 
 /**
@@ -275,7 +295,7 @@ export function letterOverdue(
   today: string,
 ): boolean {
   if (!letter.responseRequired || letter.closureStatus === 'closed') return false;
-  const due = utcDay(letter.dueDate);
+  const due = utcDay(responseDueDate(letter));
   if (due === null || due >= today) return false;
   return closeRefusal(questions, true) !== null;
 }

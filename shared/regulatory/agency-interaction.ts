@@ -389,6 +389,22 @@ export const AGENCY_LETTER_CLASSES = [
 
 export type AgencyLetterClass = (typeof AGENCY_LETTER_CLASSES)[number];
 
+/** Each letter class in words, for the inbox's log form and its cards (P-39 step 3, S4). */
+export const AGENCY_LETTER_CLASS_LABEL: Readonly<Record<AgencyLetterClass, string>> = {
+  acknowledgment_letter: 'Acknowledgment letter',
+  filing_communication: 'Filing communication',
+  refuse_to_file_letter: 'Refuse-to-file letter',
+  information_request: 'Information request (IR)',
+  discipline_review_question: 'Discipline review question',
+  hold_letter: 'Hold letter',
+  deficiency_letter: 'Deficiency letter',
+  major_objection: 'Major objection',
+  complete_response_letter: 'Complete response letter (CRL)',
+  approval_letter: 'Approval letter',
+  postmarketing_commitment_letter: 'Postmarketing requirement or commitment letter',
+  meeting_minutes: 'Meeting minutes',
+};
+
 /** Is this correspondence class a letter FROM an agency (so a clock can apply)? */
 export function isAgencyLetterClass(value: string): value is AgencyLetterClass {
   return (AGENCY_LETTER_CLASSES as readonly string[]).includes(value);

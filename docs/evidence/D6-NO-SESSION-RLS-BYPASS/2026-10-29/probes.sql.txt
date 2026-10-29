@@ -1,0 +1,95 @@
+-- ===== probe/seed.sql
+-- Two tenants, each with one program, one Vault version, one row in each direct-bypass table. Run as the owner.
+\set ON_ERROR_STOP on
+BEGIN;
+INSERT INTO organizations (name, slug, status) VALUES ('p70 a','p70-a','active'),('p70 b','p70-b','active') ON CONFLICT (slug) DO NOTHING;
+INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+SELECT 'p70 '||t||' program', 'P70-'||upper(t), (SELECT id FROM organizations WHERE slug='p70-'||t), 'IND','drug','FDA', t||' 5mg' FROM unnest(array['a','b']) t
+ON CONFLICT DO NOTHING;
+INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, file_name, content_hash, status, source_type)
+SELECT rp.id, rp.organization_id, 'p70-'||t||'-doc', 'Sponsor '||t||' doc', t||'.txt', rpad(t,64,'0'), 'completed','txt'
+FROM unnest(array['a','b']) t JOIN regulatory_programs rp ON rp.code='P70-'||upper(t);
+COMMIT;
+SELECT o.slug, o.id, o.uuid, rp.id AS program_id, (SELECT org_id FROM core.programs WHERE id = rp.id) core_org FROM organizations o JOIN regulatory_programs rp ON rp.organization_id=o.id WHERE o.slug LIKE 'p70-%' ORDER BY 1;
+
+-- ===== probe/red-vault.sql
+-- As the runtime role, in tenant A's scope (what the pool applies per statement), read tenant B's Vault row.
+\set ON_ERROR_STOP on
+SELECT current_user, r.rolsuper, r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user;
+BEGIN;
+SELECT set_config('app.rls_enforce','on',true), set_config('app.current_tenant_id', (SELECT id::text FROM organizations WHERE slug='p70-a'), true),
+       set_config('app.current_org_id', (SELECT uuid::text FROM organizations WHERE slug='p70-a'), true), set_config('app.current_user_role','admin',true) \gset
+\echo '-- tenant A scope, no switch:'
+SELECT document_code FROM vault.documents WHERE document_code LIKE 'p70-%' ORDER BY 1;
+\echo '-- tenant A scope + SET LOCAL app.bypass_rls = true:'
+SET LOCAL app.bypass_rls = 'true';
+SELECT document_code FROM vault.documents WHERE document_code LIKE 'p70-%' ORDER BY 1;
+ROLLBACK;
+\echo '-- the same, session-level SET (no transaction):'
+SELECT set_config('app.rls_enforce','on',false), set_config('app.current_org_id', (SELECT uuid::text FROM organizations WHERE slug='p70-a'), false), set_config('app.current_user_role','admin',false) \gset
+SET app.bypass_rls = 'true';
+SELECT document_code FROM vault.documents WHERE document_code LIKE 'p70-%' ORDER BY 1;
+\echo '-- and writes: tenant A updates tenant B''s title under the bypass'
+UPDATE vault.documents SET document_title = document_title WHERE document_code = 'p70-b-doc';
+RESET app.bypass_rls;
+\echo '-- reset, A again:'
+SELECT document_code FROM vault.documents WHERE document_code LIKE 'p70-%' ORDER BY 1;
+
+-- ===== snapshot.sql
+-- Catalog snapshot: every policy (oid, table, name, text) and every helper body, plus the reader count.
+SELECT 'readers', count(*) FROM (
+  SELECT 1 FROM pg_policy pol WHERE coalesce(pg_get_expr(pol.polqual, pol.polrelid),'')||' '||coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') ~ 'app\.(bypass_rls|is_admin)'
+  UNION ALL SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND p.prosrc ~ 'app\.(bypass_rls|is_admin)') r;
+SELECT 'policies', count(*), md5(string_agg(pol.oid::text||pol.polrelid::regclass::text||pol.polname||coalesce(pg_get_expr(pol.polqual, pol.polrelid),'')||coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), '|' ORDER BY pol.oid)) FROM pg_policy pol;
+SELECT 'helpers', md5(string_agg(p.oid::text||p.prosrc||coalesce(array_to_string(p.proconfig,','),'')||p.prosecdef::text||coalesce(p.proacl::text,'')||':'||p.xmin::text, '|' ORDER BY p.oid)) FROM pg_proc p WHERE p.oid IN ('identity.can_access_org(uuid)'::regprocedure,'identity.can_write_org(uuid)'::regprocedure,'identity.can_access_program(uuid)'::regprocedure,'identity.can_write_program(uuid)'::regprocedure);
+SELECT 'changed-policy oids+row versions', md5(string_agg(pol.oid::text||':'||pol.xmin::text, ',' ORDER BY pol.oid)) FROM pg_policy pol WHERE pol.polrelid::regclass::text ~ '^(evidence|predicate|innovation\.(guidance_documents|workspace_analytics)|cortex\.federated_learning_state)';
+
+-- ===== inventory.sql
+\echo '## The live catalog of a database built at the base commit by install-fresh + deploy-migrate (PostgreSQL 16.15)'
+\echo '== policies in the catalog'
+SELECT count(*) FROM pg_policy;
+\echo '== custom settings read directly in policy expressions: setting | policies'
+WITH p AS (SELECT coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') AS e FROM pg_policy)
+SELECT s, count(*) FROM p, LATERAL (SELECT DISTINCT (regexp_matches(e, 'current_setting\(''([a-z0-9_]+\.[a-z0-9_]+)''', 'g'))[1] s) m GROUP BY s ORDER BY 2 DESC, 1;
+\echo '== values app.current_user_role is compared to in policies'
+SELECT DISTINCT m[1] FROM pg_policy pol, LATERAL regexp_matches(coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), 'app\.current_user_role''::text, true\)\)? = ''([a-z_]+)''', 'g') m;
+\echo '== policies whose rls_enforce arm admits every row when enforcement is not on'
+SELECT count(*) FROM pg_policy pol WHERE coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') ~ 'rls_enforce.*IS DISTINCT FROM ''on''';
+\echo '== functions (outside pg_catalog) whose body reads a custom setting: function | definer | settings'
+SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')', p.prosecdef, string_agg(DISTINCT m[1], ',')
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace,
+       LATERAL regexp_matches(p.prosrc, 'current_setting\(\s*''([a-z0-9_]+\.[a-z0-9_]+)''', 'g') m
+ WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') GROUP BY 1, 2 ORDER BY 1;
+\echo '== functions that reach app.bypass_rls / app.is_admin, transitively: function | depth'
+WITH RECURSIVE f(oid, name, depth) AS (
+  SELECT p.oid, n.nspname || '.' || p.proname, 0 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE p.prosrc ~ 'app\.(bypass_rls|is_admin)' AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+  UNION
+  SELECT p.oid, n.nspname || '.' || p.proname, f.depth + 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace, f
+   WHERE f.depth < 4 AND p.oid <> f.oid AND p.prosrc ~ ('\m' || replace(f.name, '.', '\.') || '\s*\(') AND n.nspname NOT IN ('pg_catalog', 'information_schema'))
+SELECT name, min(depth) FROM f GROUP BY name ORDER BY 2, 1;
+\echo '== policies deciding through those helpers, by schema: schema | tables | policies'
+WITH p AS (SELECT n.nspname, c.relname, coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || ' ' || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') e
+             FROM pg_policy pol JOIN pg_class c ON c.oid = pol.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace)
+SELECT nspname, count(DISTINCT relname), count(*) FROM p WHERE e ~ '(identity|core)\.can_(access|write)_(org|program)\(' GROUP BY ROLLUP(nspname) ORDER BY 1 NULLS LAST;
+\echo '== of those, how many also have an rls_enforce arm, an app_super_admin arm, or read any setting directly'
+WITH p AS (SELECT coalesce(pg_get_expr(polqual, polrelid),'') || ' ' || coalesce(pg_get_expr(polwithcheck, polrelid),'') e FROM pg_policy)
+SELECT count(*) FILTER (WHERE e ~ 'rls_enforce') AS rls_enforce_arm, count(*) FILTER (WHERE e ~ 'app_super_admin') AS super_admin_arm,
+       count(*) FILTER (WHERE e ~ 'current_setting') AS any_setting FROM p WHERE e ~ '(identity|core)\.can_(access|write)_(org|program)\(';
+\echo '== (the 4 that read a setting directly: an own-user arm, app.current_user_id)'
+WITH p AS (SELECT pol.polrelid::regclass t, pol.polname, coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') e FROM pg_policy pol)
+SELECT t, polname FROM p WHERE e ~ '(identity|core)\.can_(access|write)_(org|program)\(' AND e ~ 'current_setting' ORDER BY 1;
+\echo '== policies reading app.bypass_rls or app.is_admin directly: table | policy | cmd | expression'
+SELECT pol.polrelid::regclass, pol.polname, pol.polcmd,
+       regexp_replace(coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || ' | ' || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), '\s+', ' ', 'g')
+  FROM pg_policy pol
+ WHERE coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') ~ 'app\.(bypass_rls|is_admin)'
+ ORDER BY 1, 2;
+\echo '== the Vault policies (none has a platform arm)'
+SELECT pol.polrelid::regclass, pol.polname, pol.polcmd, regexp_replace(coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || ' | ' || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), '\s+', ' ', 'g')
+  FROM pg_policy pol JOIN pg_class c ON c.oid = pol.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'vault' ORDER BY 1, 2;
+\echo '== the purge doors: owner and their platform-scope check'
+SELECT p.oid::regprocedure, pg_get_userbyid(p.proowner), p.prosecdef,
+       (regexp_match(p.prosrc, 'IF NULLIF\(current_setting\(''app\.rls_enforce''[^;]*?THEN'))[1] IS NOT NULL OR p.prosrc ~ 'app_super_admin' AS reads_platform_settings
+  FROM pg_proc p WHERE p.proname LIKE 'purge\_tenant\_%' ORDER BY 1;
+

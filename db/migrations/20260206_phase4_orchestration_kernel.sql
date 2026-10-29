@@ -18,6 +18,13 @@
 --   - RLS policies enforce program_id isolation via app.current_program_id GUC.
 --   - Migration is idempotent (IF NOT EXISTS on schema, tables, indexes).
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): the three admin_bypass_* policies are no longer created. Each
+-- admitted every row to a session that set app.bypass_rls, a custom setting any
+-- role can set. Their DROP POLICY IF EXISTS stays. This file is on no applier
+-- (not in C2C_MIGRATION_FILES, not install-fresh's); it is amended so it cannot
+-- bring the bypass back if it ever joins one.
+-- =============================================================================
 
 -- ============================================================================
 -- Phase 4 — Orchestration Kernel: Domain Spine + Work Graph
@@ -404,13 +411,11 @@ ALTER TABLE orchestration.workflow_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orchestration.step_runs     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orchestration.step_run_events ENABLE ROW LEVEL SECURITY;
 
--- Admin bypass
+-- No admin bypass (P-70): the admin_bypass_* policies an earlier version made are dropped.
 DO $$
 BEGIN
     -- workflow_runs
     DROP POLICY IF EXISTS admin_bypass_workflow_runs ON orchestration.workflow_runs;
-    CREATE POLICY admin_bypass_workflow_runs ON orchestration.workflow_runs
-        USING (current_setting('app.bypass_rls', TRUE) = 'true');
 
     DROP POLICY IF EXISTS program_isolation_workflow_runs ON orchestration.workflow_runs;
     CREATE POLICY program_isolation_workflow_runs ON orchestration.workflow_runs
@@ -418,8 +423,6 @@ BEGIN
 
     -- step_runs
     DROP POLICY IF EXISTS admin_bypass_step_runs ON orchestration.step_runs;
-    CREATE POLICY admin_bypass_step_runs ON orchestration.step_runs
-        USING (current_setting('app.bypass_rls', TRUE) = 'true');
 
     DROP POLICY IF EXISTS program_isolation_step_runs ON orchestration.step_runs;
     CREATE POLICY program_isolation_step_runs ON orchestration.step_runs
@@ -427,8 +430,6 @@ BEGIN
 
     -- step_run_events
     DROP POLICY IF EXISTS admin_bypass_step_run_events ON orchestration.step_run_events;
-    CREATE POLICY admin_bypass_step_run_events ON orchestration.step_run_events
-        USING (current_setting('app.bypass_rls', TRUE) = 'true');
 
     DROP POLICY IF EXISTS program_isolation_step_run_events ON orchestration.step_run_events;
     CREATE POLICY program_isolation_step_run_events ON orchestration.step_run_events
