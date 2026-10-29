@@ -1,0 +1,72 @@
+Gates on the finished tree (HEAD e2cf417ba + this change), 2026-10-29T13:05:19Z. ci:purge-coverage reads the database built from blank (install-fresh + deploy-migrate) with this change.
+
+### ci:migration-drop-safety — exit 0
+[ci:migration-drop-safety] OK — 439 migrations, 42 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+### ci:migration-drop-safety:selftest — exit 0
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+
+### ci:migration-set-order — exit 0
+[ci:migration-set-order] OK — 439 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+### ci:migration-deploy-path — exit 0
+[ci:migration-deploy-path] OK — 103 baselined file(s) on no deploy path, none new.
+
+### ci:purge-coverage — exit 0
+     review_routes: A signed review workflow (20261023_review_routes.sql); retention undecided. Nothing the purge deletes is named by it, and nothing reaches it, so it is residue by name. Its tasks are unified_tasks rows that refuse DELETE (unified_tasks_route_rows_guard): a tenant holding one is not purged, stopped at unified_tasks (ROUTE_TASK_OWNED_BY_ROUTE) and rolled back.
+✅ purge-coverage: no foreign key stops the purge part-way (27 from tables it does not erase, each named).
+✅ purge-coverage: 464 org-keyed tables outside the purge reach (baseline 469, new 0, 5 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+
+### ci:purge-coverage:selftest — exit 0
+[ci:purge-coverage:selftest] 53 passed — the gate fails on what it exists to catch.
+
+### ci:tenant-isolation:no-regression — exit 0
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+
+### ci:sql-interpolation — exit 1
+[ci:sql-interpolation] ❌ 1 problem(s):
+  • server/routes/mdx-vault.ts: now 0 (baseline 5) — good news; lower the baseline to lock it in
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+
+### ci:sql-interpolation:selftest — exit 0
+  ! KNOWN GAP 1 — SQL text assembled in a variable, then passed to .query(text)
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+      not a pass — the gate still prints OK on this real injection shape (see KNOWN GAPS in the header).
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.
+
+### ci:unkeyed-request-tables — exit 0
+[ci:unkeyed-request-tables] 1095 tables created; 602 read by a per-request path; 91 of those carry NO tenant column; 91 baselined, 0 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+
+### ci:baseline-justifications — exit 0
+[ci:baseline-justifications] OK — baseline is empty (retired 2026-08-07); 115 inline tenant-isolation-safe suppression(s), every one with a reason.
+
+### ci:check-test-imports — exit 0
+[ci:test-imports] OK — every local import in every test file resolves.
+
+### ci:unreferenced-modules — exit 0
+Unreferenced modules: 73 (baseline 73)
+OK: no new unreachable modules.
+
+### ci:db-test-isolation — exit 0
+[ci:db-test-isolation] OK — 222 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+
+### ci:runtime-ddl — exit 0
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+[ci:runtime-ddl] ✅ no new runtime DDL.
+
+### ci:tenant-entry-points — exit 0
+[ci:tenant-entry-points] 13 entry point(s); 7 consider tenant entitlement, 6 do not (baseline 6)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+
+### audit:repo-health:ceiling — exit 0
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+✅ repo health strict gate passed.
+
+### ci:sql-interpolation — the exit 1 above, explained
+[ci:sql-interpolation] ❌ 1 problem(s):
+  • server/routes/mdx-vault.ts: now 0 (baseline 5) — good news; lower the baseline to lock it in
+Not this change: server/routes/mdx-vault.ts is deleted in the shared working tree by another lane (git status ' D server/routes/mdx-vault.ts', uncommitted), so its baseline count (5) is stale and the gate asks for it to be lowered. This change adds no interpolated value: before that deletion the gate passed with this change's files in place.

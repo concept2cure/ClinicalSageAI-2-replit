@@ -1,0 +1,13 @@
+stderr | server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable)
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 192ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 14ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 24ms
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable) 36ms
+   → expected { id: 4, jobId: 1, …(11) } to match object { status: 'failed', error: { …(2) } }
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 38ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable)
+AssertionError: expected { id: 4, jobId: 1, …(11) } to match object { status: 'failed', error: { …(2) } }
+-     "code": "PROJECT_PERMISSION_DENIED",
++     "code": "CSR_NARRATIVE_FAILED",
+      Tests  1 failed | 4 passed (5)

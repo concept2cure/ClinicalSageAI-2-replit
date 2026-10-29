@@ -21,6 +21,7 @@ import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import { StudyPivotalDeclarations, pivotalScopeOf } from './StudyPivotalDeclarations';
+import { CsrAssemblyControl } from './CsrAssemblyControl';
 import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -567,6 +568,7 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
         <CsrHeadingReview jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)}
           onImport={(sectionNumbers) => setImportSource({ kind: 'csr', jobId, sectionNumbers })} />
         <CsrNarrativeBuild jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)} />
+        <CsrAssemblyControl jobId={jobId} />
       </>)}
 
       {graphOn && (

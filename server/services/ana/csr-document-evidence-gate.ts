@@ -9,7 +9,7 @@ import {
   type CsrSectionSnapshot,
   type CsrBindingIssue,
 } from './csr-section-evidence-binding';
-import type { CsrClaimReceipt, CsrEvidenceFact } from './csr-claim-reconciliation';
+import type { CsrClaimFinding, CsrClaimReceipt, CsrEvidenceFact } from './csr-claim-reconciliation';
 
 export interface CsrDocumentSectionEvidence {
   snapshot: CsrSectionSnapshot;
@@ -27,6 +27,8 @@ export interface CsrDocumentEvidenceResult {
   checkedSections: number;
   checkedClaims: number;
   issues: CsrDocumentEvidenceIssue[];
+  /** CSR slice 5 (2026-10-30): every claim that did not reconcile, by section. */
+  claimFindings: Array<CsrClaimFinding & { sectionId: string }>;
 }
 
 /**
@@ -43,7 +45,7 @@ export function verifyCsrDocumentEvidence(
   if (!expectedSectionIds.length || expected.size !== expectedSectionIds.length ||
       expectedSectionIds.some(id => typeof id !== 'string' || !id.trim())) {
     return { status: 'blocked', checkedSections: 0, checkedClaims: 0,
-      issues: [{ sectionId: '', code: 'EMPTY_MANIFEST' }] };
+      issues: [{ sectionId: '', code: 'EMPTY_MANIFEST' }], claimFindings: [] };
   }
   const byId = new Map<string, CsrDocumentSectionEvidence>();
   for (const entry of sections) {
@@ -73,6 +75,7 @@ export function verifyCsrDocumentEvidence(
     seenFactIds.add(fact.factId);
   }
   let checkedClaims = 0;
+  const claimFindings: CsrDocumentEvidenceResult['claimFindings'] = [];
   for (const id of expectedSectionIds) {
     const entry = byId.get(id);
     if (!entry) { issues.push({ sectionId: id, code: 'MISSING_SECTION' }); continue; }
@@ -84,7 +87,8 @@ export function verifyCsrDocumentEvidence(
       entry.snapshot, entry.binding, entry.claims, facts);
     checkedClaims += checked.checkedClaims;
     for (const code of checked.issues) issues.push({ sectionId: id, code });
+    for (const f of checked.findings) claimFindings.push({ sectionId: id, ...f });
   }
   return { status: issues.length ? 'blocked' : 'reconciled_pending_human_review',
-    checkedSections: expectedSectionIds.length, checkedClaims, issues };
+    checkedSections: expectedSectionIds.length, checkedClaims, issues, claimFindings };
 }

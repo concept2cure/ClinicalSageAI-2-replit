@@ -213,8 +213,6 @@ export const createNonconformance = (v: {
   ncNumber: string; description: string; deviceName?: string; lotOrSerial?: string; source?: string;
 }) => qmsWrite<NonconformanceRow>('POST', 'nonconforming', compact(v));
 
-export const dispositionNonconformance = (id: number, v: { disposition: string; dispositionRationale: string }) =>
-  qmsWrite<NonconformanceRow>('PATCH', `nonconforming/${id}/disposition`, compact(v));
 
 export const createSupplier = (v: {
   supplierName: string; criticality: string; supplierCode?: string; scope?: string; approvalStatus?: string;

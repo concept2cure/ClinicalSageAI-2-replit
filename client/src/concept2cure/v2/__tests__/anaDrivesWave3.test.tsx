@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * AnA drives the wave-3 screens — wiring proof against the REAL Risk,
- * TemplateLibrary, and ArtifactsCenter surfaces: registration under the
+ * AnA drives the wave-3 screens — wiring proof against the REAL Risk and
+ * TemplateLibrary surfaces (ArtifactsCenter folded into the Vault, fold F3): registration under the
  * identity-mapped ids, genuine DOM effects through the surfaces' own state,
  * honest refusals on misses and empty cells, and the retry-hold across a
  * loading read.
@@ -21,7 +21,6 @@ vi.mock('@/utils/authToken', () => ({
 
 import { Risk } from '../surfaces/Risk';
 import { TemplateLibrary } from '../surfaces/TemplateLibrary';
-import { ArtifactsCenter } from '../surfaces/AdminSurfaces';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,
@@ -202,46 +201,7 @@ describe('TemplateLibrary — AnA operates the real library', () => {
   });
 });
 
-/* ── ArtifactsCenter ─────────────────────────────────────────────────────── */
-
-const ARTIFACTS = {
-  data: [
-    { id: 'a-1', name: 'SAP v2 draft', kind: 'document', fmt: 'docx', size: '48 KB', model: 'AnA', when: '2h ago', ver: 'v2', sig: 'unsigned', prog: 'BX-204' },
-    { id: 'a-2', name: 'CRL response memo', kind: 'document', fmt: 'pdf', size: '112 KB', model: 'AnA', when: '1d ago', ver: 'v1', sig: 'signed', prog: 'BX-204' },
-  ],
-};
-
-describe('ArtifactsCenter — AnA focuses artifacts by name', () => {
-  beforeEach(() => {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (_m: string, path: string) => {
-      if (path === '/api/artifacts-center') return ok(ARTIFACTS);
-      return ok({ data: [] });
-    });
-  });
-
-  it('registers under "artifacts-center"; focus drives the SAME highlight the follow-the-work hand-off drives', async () => {
-    const { container } = render(<ArtifactsCenter {...props()} />);
-    await screen.findByText('SAP v2 draft');
-    await waitFor(() => expect(registeredSurfaceId()).toBe('artifacts-center'));
-
-    let outcome: { status: string; detail?: string; reason?: string } = { status: '' };
-    act(() => {
-      outcome = applySurfaceAction(
-        directive('artifacts-center.focus-artifact', { artifact: 'crl response' }),
-        vi.fn(),
-      ) as typeof outcome;
-    });
-    expect(outcome).toEqual({ status: 'applied', detail: 'Focused CRL response memo' });
-    await waitFor(() => expect(container.querySelector('.is-focus')).not.toBeNull());
-
-    act(() => {
-      outcome = applySurfaceAction(
-        directive('artifacts-center.focus-artifact', { artifact: 'ghost doc' }),
-        vi.fn(),
-      ) as typeof outcome;
-    });
-    expect(outcome.status).toBe('failed');
-    expect(outcome.reason).toContain('No artifact named');
-  });
-});
+/* ── ArtifactsCenter: retired ─────────────────────────────────────────────
+   The gallery folded into the Vault (D2, fold F3 slice C, 2026-10-29). AnA's
+   focus there is vault.focus-document, by name or artifact id, proven against
+   the real Vault in vaultOrganizationArtifacts.test.tsx. */

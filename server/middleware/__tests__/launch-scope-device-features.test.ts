@@ -52,7 +52,8 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-510k', 'mdx/hooks/useEstarExport.ts'], ['device-510k', 'services/programTabsService.ts'],
     ['device-cer', 'mdx/hooks/useCerLiterature.ts'], ['device-presub', 'mdx/hooks/usePresub.ts'],
     ['device-udi', 'mdx/hooks/useUdi.ts'], ['labeling', 'v2/surfaces/Labeling.tsx'],
-    ['device-vault', 'mdx/hooks/useVault.ts'], ['device-clinical-studies', 'mdx/hooks/useClinicalStudies.ts'],
+    // No device-vault: it folded into the Vault (fold F3, 2026-10-29), whose calls the launch walk reads as the Vault's.
+    ['device-clinical-studies', 'mdx/hooks/useClinicalStudies.ts'],
     ['device-clinical-studies', 'mdx/hooks/useRbqm.ts'], ['device-clinical-studies', 'mdx/hooks/useStudyArchetypes.ts'],
     ['device-diagnostics', 'mdx/hooks/useIvd.ts'], ['device-diagnostics', 'mdx/hooks/useCdxClia.ts'],
     ['device-engineering', 'mdx/hooks/useEngineering.ts'], ['device-software', 'mdx/hooks/useSoftware.ts'],

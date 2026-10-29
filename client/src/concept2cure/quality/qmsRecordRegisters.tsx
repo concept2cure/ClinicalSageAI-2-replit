@@ -6,15 +6,15 @@
  */
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { formatDate } from './data';
 import { ReviewActions } from './ReviewActions';
 import { CAPA_SOURCE_KIND } from './capaSources';
 import {
-  AUDIT_STATUS_LABEL, CRITICALITY_LABEL, DISPOSITION_LABEL, NC_SOURCE_LABEL, SUPPLIER_STATUS_LABEL, createInternalAudit, createManagementReview, createNonconformance, createSupplier, dispositionNonconformance, isPast, isUndispositioned, reviewText, updateInternalAudit, updateSupplier, addReviewAction, reviewActions, type InternalAuditRow, type ManagementReviewRow, type NonconformanceRow, type SupplierRow,
+  AUDIT_STATUS_LABEL, CRITICALITY_LABEL, DISPOSITION_LABEL, NC_SOURCE_LABEL, SUPPLIER_STATUS_LABEL, createInternalAudit, createManagementReview, createNonconformance, createSupplier, isPast, isUndispositioned, reviewText, updateInternalAudit, updateSupplier, addReviewAction, reviewActions, type InternalAuditRow, type ManagementReviewRow, type NonconformanceRow, type SupplierRow,
 } from './qmsRecordData';
 import { type PillTone, type RegisterConfig, optionsOf, pill, num, Refused } from './qmsRegisterKit';
 import { raiseCapaFrom } from './qmsCapaRegister';
+import { signNcDisposition } from './qmsApproval';
 import { documentLabel, type RegisterContext } from './registerContext';
 import type { C2CFormField } from '../v2/C2CForm';
 
@@ -78,29 +78,33 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   },
   rowActions: [{
     label: 'Disposition',
-    title: 'Record the disposition and its rationale',
+    title: 'Decide the disposition, then sign it',
     show: isUndispositioned,
     form: (r) => ({
       eyebrow: 'Quality',
       title: `Disposition ${r.nc_number}`,
       sub: r.description,
-      governed: 'The disposition and its rationale are written to the audit trail under your name.',
-      submitLabel: 'Record disposition',
+      governed: 'You sign the disposition in the next step. Your reason is recorded as its rationale, and a signed disposition is not changed.',
+      submitLabel: 'Continue to sign',
       fields: [
         {
           key: 'disposition', label: 'Disposition', type: 'select', required: true,
           options: optionsOf(DISPOSITION_LABEL).filter((o) => o.value !== 'pending'),
         },
-        { key: 'dispositionRationale', label: 'Rationale', type: 'textarea', rows: 4, required: true, desc: `At least ${GOVERNED_REASON_MIN} characters, recorded verbatim.` },
       ],
     }),
-    submit: async (r, v) => {
-      const rationale = v.dispositionRationale.trim();
-      if (rationale.length < GOVERNED_REASON_MIN) {
-        throw new Refused(`a rationale of at least ${GOVERNED_REASON_MIN} characters is required.`);
-      }
-      await dispositionNonconformance(r.id, { disposition: v.disposition, dispositionRationale: rationale });
-      return `${r.nc_number}: ${DISPOSITION_LABEL[v.disposition] ?? v.disposition} was recorded.`;
+    sign: (r, v) => {
+      const label = v.disposition === 'pending' ? undefined : DISPOSITION_LABEL[v.disposition];
+      if (!label) throw new Refused('choose a disposition.');
+      return {
+        action: 'Sign disposition',
+        target: `${r.nc_number} ${r.description}`.slice(0, 160),
+        meta: `You sign the disposition of ${r.nc_number} as ${label}. Your reason is recorded as its rationale. A signed disposition is not changed.`,
+        rows: [{ label: 'Disposition', value: label }, ...(r.lot_or_serial ? [{ label: 'Lot or serial', value: r.lot_or_serial }] : [])],
+        meanings: ['approval', 'responsibility'],
+        post: (input) => signNcDisposition(r.id, v.disposition, input),
+        done: `${r.nc_number}: ${label} was signed.`,
+      };
     },
   }, raiseCapaFrom<NonconformanceRow>({
     source: 'nonconformance',

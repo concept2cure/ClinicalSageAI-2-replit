@@ -98,7 +98,8 @@ describe('RLS-scoped route mounts — tranche 2', () => {
   // mdx-prefix-gate.test.ts, which drives a real Express app.
   const MDX_SUBTREE_ROUTERS: Array<{ router: string; file: string; subtree: string }> = [
     { router: 'mdxAnaDraftsRoutes', file: 'server/routes/mdx-ana-drafts.ts', subtree: 'ana-drafts' },
-    { router: 'mdxVaultRoutes', file: 'server/routes/mdx-vault.ts', subtree: 'vault' },
+    // mdxVaultRoutes (mdx-vault.ts, /api/mdx/vault) left the tree with the device
+    // vault, which folded into the Vault (D2, fold F3, 2026-10-29).
   ];
 
   for (const { router, file, subtree } of MDX_SUBTREE_ROUTERS) {

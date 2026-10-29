@@ -236,7 +236,7 @@ export const REAL: Layout = {
       'device-udi': 'UdiSurface',
       'device-postmarket': 'PostmarketSurface',
       'device-presub': 'PreSubManager',
-      'device-vault': 'VaultSurface',
+      // No device-vault: it folded into the Vault (D2, fold F3, 2026-10-29).
       // No device-tasks: it folded into Tasks (D2, 2026-10-29).
       'device-validation': 'ValidationSurface',
       'device-submission': 'SubmissionsSurface',

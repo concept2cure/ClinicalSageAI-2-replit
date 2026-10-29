@@ -1,12 +1,19 @@
 /**
- * Artifacts Center — cross-project governed artifact gallery read route.
+ * Governed artifacts across the projects the caller can open, and one
+ * artifact's governed export.
  *
- * Backs the ui-v2 "Artifacts Center" surface
- * (client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx → ArtifactsCenter),
- * which today maps the ARTIFACTS fixture directly. It returns one row per
- * governed artifact the org owns, in the surface's ArtifactEntry display shape,
- * sourced from the concept2cure_artifacts / concept2cure_signatures / projects
- * tables. The read itself is the registry's one read
+ * GET / backs the Vault's organization view of governed artifacts
+ * (client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx,
+ * OrganizationGovernedArtifacts). It was the Artifacts center's gallery
+ * (AdminSurfaces.tsx ArtifactsCenter), which retired into the Vault (D2, fold
+ * F3 slice C, 2026-10-29). The gallery listed every artifact of the
+ * organization to any member, archived rows included. It now lists the
+ * non-archived artifacts of the projects the sharing policy admits the caller
+ * to (getAccessibleReportProjectIds, the policy the project Vault admits a
+ * project by), and nothing when it admits none. A refused or unverifiable
+ * access check is answered as such, never as an empty listing.
+ *
+ * The read itself is the registry's one read
  * (server/services/artifact-registry-read.ts), shared with the project Vault's
  * "Governed artifacts" branch since fold F3 slice A (2026-10-29): one query,
  * one signature rule (shared/artifact-governance.ts), never a second copy.
@@ -16,9 +23,11 @@
  * tenant/user context, scoped logger, honest error shaping, { success, data }
  * envelope, fail-closed on a missing table).
  *
- * Response: { success: true, data: ArtifactCenterRow[], total }
+ * Response: { success: true, data: ArtifactCenterRow[], total, meta: { scope:
+ *   'accessible-projects', total, listed, truncated } }. `total` counts every
+ *   row the scope matches, before the window.
  *
- * ── FIELD SOURCES (ArtifactEntry ← concept2cure_artifacts a) ──────────────────
+ * ── FIELD SOURCES (OrganizationArtifactRow ← concept2cure_artifacts a) ────────
  *   id    ← a.artifact_id                                    (real)
  *   name  ← a.title                                          (real)
  *   ver   ← 'v' || a.version                                 (real int, prefixed)
@@ -65,14 +74,15 @@ import {
   readArtifactRegistry,
 } from '../services/artifact-registry-read.js';
 import type { ArtifactOrigin } from '../../shared/artifact-governance.js';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
+import { getAccessibleReportProjectIds } from '../services/report-os/project-access.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
-/** Hard cap on rendered rows — this is a gallery, mirrors the existing
- *  /api/concept2cure/artifacts read (LIMIT 200). */
+/** The listing's window. The response says when there are more (meta.truncated). */
 const MAX_ROWS = 200;
 
-// ── Display-shape row (mirrors ArtifactEntry in fixtures/admin-data.ts) ──────────
+// ── Display-shape row (OrganizationArtifactRow in client surfaces/VaultOrganizationArtifacts.tsx) ──
 
 interface ArtifactCenterRow {
   id: string;
@@ -153,14 +163,36 @@ export default function createArtifactsCenterRoutes(): Router {
 
   /**
    * GET /api/artifacts-center
-   * Cross-project governed artifact gallery for the ui-v2 Artifacts Center
-   * surface, in ArtifactEntry display shape, newest-updated first.
+   * The governed artifacts of the projects the caller can open, newest-updated
+   * first, for the Vault's organization view.
    */
   router.get('/', async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req);
 
-      const rawRows = await readArtifactRegistry({ organizationId: orgId, programId: null, limit: MAX_ROWS });
+      /* Which projects the caller can open, by the policy the project Vault
+         admits a project by (canAccessReportProject, through
+         installProjectRouteAccess). Bound into the read before the window and
+         the count, so neither says anything about a project the caller cannot
+         open. A refusal, or a check that could not run, is not "none". */
+      let projectIds: number[];
+      try {
+        const userId = authedUserId(req);
+        const actor = await readCurrentProgramActor(pool, { organizationId: orgId, userId: userId ?? undefined });
+        projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
+      } catch (accessError) {
+        const failure = accessError instanceof ProgramReadAccessError
+          ? accessError
+          : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Project access could not be verified, so no governed artifact was listed.');
+        return res.status(failure.status).json({ success: false, error: failure.code, message: failure.message });
+      }
+
+      // One past the window, so a full window can say it is full.
+      const read = await readArtifactRegistry({ organizationId: orgId, projectIds, limit: MAX_ROWS + 1 });
+      const truncated = read.length > MAX_ROWS;
+      const rawRows = truncated ? read.slice(0, MAX_ROWS) : read;
+      const counted = Number(read[0]?.total_rows);
+      const total = Number.isFinite(counted) && counted >= rawRows.length ? counted : rawRows.length;
 
       const data: ArtifactCenterRow[] = rawRows.map(r => {
         const version = Number(r.version);
@@ -191,21 +223,26 @@ export default function createArtifactsCenterRoutes(): Router {
         };
       });
 
-      return res.json({ success: true, data, total: data.length });
+      return res.json({
+        success: true,
+        data,
+        total,
+        meta: { scope: 'accessible-projects', total, listed: data.length, truncated },
+      });
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('NO_TENANT')) {
         return res.status(400).json({ success: false, error: 'Organization context required' });
       }
       // Fail closed when the governed tables are not provisioned for this
-      // deployment (undefined_table) — the surface keeps its honest fixture.
+      // deployment (undefined_table): the Vault says so, never "none".
       const code = (error as { code?: string } | null)?.code;
       if (code === '42P01') {
         return res.status(503).json({ success: false, error: 'ARTIFACTS_TABLE_MISSING' });
       }
-      logger.error('artifacts center list error', {
+      logger.error('governed artifacts listing error', {
         err: error instanceof Error ? error.message : String(error),
       });
-      return res.status(500).json({ success: false, error: 'Failed to load artifacts center' });
+      return res.status(500).json({ success: false, error: 'Failed to load the governed artifacts' });
     }
   });
 

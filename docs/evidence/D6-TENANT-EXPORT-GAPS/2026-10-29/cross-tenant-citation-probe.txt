@@ -1,0 +1,4 @@
+citation 64510892-373c-4267-b4c0-8c3b32473737: source = B's document, evidence = A's document
+  in A's export (owner): false
+  in B's export (owner): true
+purge of A: purged; B's citation still there: false; B's document still there: true

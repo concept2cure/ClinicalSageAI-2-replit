@@ -76,6 +76,7 @@ const TEXT_LIKE_EXACT = new Set([
   'application/xml',
   'application/x-yaml',
   'application/x-ndjson',
+  'application/xslt+xml',
 ]);
 
 const ZIP_BASED_MIMES = new Set([

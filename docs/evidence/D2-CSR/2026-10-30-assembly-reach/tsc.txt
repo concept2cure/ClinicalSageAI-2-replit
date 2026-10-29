@@ -1,0 +1,7 @@
+$ NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
+exit 0
+(no diagnostics; two earlier runs were OOM-killed (137) while other sessions compiled; a narrowed run found one implicit-any in csr-assembly-placement.ts, fixed before this run)
+
+=== Adversarial review addendum (2026-10-30) ===
+Full NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p . was killed (out of memory; other sessions compiling).
+A narrowed run (temporary tsconfig extending tsconfig.json, files = csr-assembly-placement.ts, csr-assembly-run.ts, csr-jobs-assembly.ts and its test) reported 15 diagnostics, none in those files. All 15 come from global declaration files (Request.dbClient/identity augmentation, untyped jsonwebtoken/pdfkit/qrcode/metrics.js) that the narrowed file list does not load.

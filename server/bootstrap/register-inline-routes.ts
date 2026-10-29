@@ -44,7 +44,6 @@ import validationKitRoutes from '../routes/validation-kit';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
 import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
-import mdxVaultRoutes from '../routes/mdx-vault';
 import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
@@ -1169,13 +1168,14 @@ export function registerInlineSubmissionWorkflowRoutes({
      multiple routers at the same /api/mdx prefix keeps the kit's URL
      space coherent without consolidating into a single mega-router.
      Each module owns its own audit + tenant-scope. */
-  // mdxAnaDrafts + mdxVault query the global pool (concept2cure_artifacts,
-  // ana drafts) with no tenant scope of their own — mounted with no auth here,
-  // they fail closed under RLS_ENFORCE=on (and read org from req.user, which
-  // nothing was populating). requireTenantContext authenticates, establishes the
-  // AsyncLocalStorage tenant scope so those queries are permitted, and populates
-  // req.user/req.tenantContext the handlers already read.
-  // The gate is bound to the two URL sub-trees these routers own, NOT to the
+  // mdxAnaDrafts queries the global pool (ana drafts) with no tenant scope of
+  // its own — mounted with no auth here, it fails closed under RLS_ENFORCE=on
+  // (and reads org from req.user, which nothing was populating).
+  // requireTenantContext authenticates, establishes the AsyncLocalStorage
+  // tenant scope so those queries are permitted, and populates
+  // req.user/req.tenantContext the handler already reads. (mdx-vault was the
+  // second such router until the device vault folded into the Vault, fold F3.)
+  // The gate is bound to the URL sub-tree this router owns, NOT to the
   // shared /api/mdx prefix. `app.use('/api/mdx', requireTenantContext, router)`
   // reads as "gate this router" and is not that: path-mounted middleware runs
   // for every request matching the prefix, so it gated all 20+ routers stacked
@@ -1184,9 +1184,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   // 500-then-401 alternation in the UAT report's BP-02. Proven with a real
   // Express app before and after; see ledger L61.
   app.use('/api/mdx/ana-drafts', requireTenantContext);
-  app.use('/api/mdx/vault', requireTenantContext);
   app.use('/api/mdx', mdxAnaDraftsRoutes);
-  app.use('/api/mdx', mdxVaultRoutes);
+  // No mdx-vault router: the device vault folded into the Vault (D2, fold F3,
+  // 2026-10-29), whose reads are /api/c2c/project-vault and /api/artifacts-center.
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);

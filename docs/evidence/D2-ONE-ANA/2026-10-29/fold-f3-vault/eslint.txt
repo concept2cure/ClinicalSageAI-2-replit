@@ -1,0 +1,53 @@
+ESLint per file, HEAD against the working tree (warnings/errors). Pre-push refuses a file gaining a warning.
+Tool: tools/eslint-compare.sh.txt (git show HEAD:<file> | eslint --stdin, then eslint <file>).
+
+client/src/concept2cure/mdx/MdxSurfaceHost.tsx  head=4w/0e  now=4w/0e
+client/src/concept2cure/mdx/__tests__/mdxDerivedFiguresAreDerived.test.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/mdx/__tests__/uploadedFileHasNoAuthoringState.test.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/mdx/surfaceIds.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/V2App.tsx  head=7w/0e  now=7w/0e
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx  head=1w/0e  now=1w/0e
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/fixtures/admin-data.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/fixtures/collab-data.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/registryModel.ts  head=1w/0e  now=1w/0e
+client/src/concept2cure/v2/surfaceViews.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx  head=11w/0e  now=9w/0e
+client/src/concept2cure/v2/surfaces/Vault.tsx  head=4w/0e  now=4w/0e
+client/src/concept2cure/v2/surfaces/VaultGovernedArtifacts.tsx  head=0w/0e  now=0w/0e
+scripts/ci/check-ana-surface-context.mjs  head=5w/0e  now=5w/0e
+scripts/ci/check-launch-scope-api.ts  head=6w/0e  now=6w/0e
+scripts/visual-qa/dump-v2-surfaces.spec.tsx  head=1w/0e  now=1w/0e
+server/bootstrap/__tests__/mdx-prefix-gate.test.ts  head=0w/0e  now=0w/0e
+server/bootstrap/register-inline-routes.ts  head=32w/0e  now=32w/0e
+server/middleware/__tests__/launch-scope-api-gate.test.ts  head=1w/0e  now=1w/0e
+server/middleware/__tests__/launch-scope-device-features.test.ts  head=0w/0e  now=0w/0e
+server/middleware/__tests__/vault-artifact-leaf-gate.test.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/artifacts-center-manifest-fields.test.ts  head=0w/0e  now=0w/0e
+server/routes/__tests__/artifacts-center-signature-staleness.test.ts  head=0w/0e  now=0w/0e
+server/routes/artifacts-center-routes.ts  head=3w/0e  now=3w/0e
+server/routes/c2c/__tests__/project-vault-branches.test.ts  head=1w/0e  now=1w/0e
+server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts  head=0w/0e  now=0w/0e
+server/services/artifact-registry-read.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts  head=0w/0e  now=0w/0e
+server/services/entitlements/__tests__/launch-scope.test.ts  head=0w/0e  now=0w/0e
+shared/constants/launch-scope.ts  head=0w/0e  now=0w/0e
+shared/constants/mdx-project-features.ts  head=0w/0e  now=0w/0e
+shared/constants/ui-surface-registry.ts  head=1w/0e  now=1w/0e
+shared/constants/ui-surface-registry.ui-v2.ts  head=1w/0e  now=1w/0e
+shared/navigation/index.ts  head=0w/0e  now=0w/0e
+shared/navigation/surface-actions.ts  head=1w/0e  now=1w/0e
+tests/e2e/golden-customer-journey.e2e.ts  head=1w/0e  now=1w/0e
+tests/mdx-beta-surfaces-routes.test.ts  head=0w/0e  now=0w/0e
+tests/rls-scoped-route-mounts-tranche2.contract.test.ts  head=0w/0e  now=0w/0e
+tests/schema-contract/catalog-module-claims.contract.test.ts  head=0w/0e  now=0w/0e
+client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts  head=new  now=0w/0e
+client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx  head=new  now=0w/0e
+client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx  head=new  now=0w/0e
+server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts  head=new  now=0w/0e
+
+Deleted files have no 'now'. No file gains a warning; AdminSurfaces.tsx goes 11 -> 9; the four new files have none.

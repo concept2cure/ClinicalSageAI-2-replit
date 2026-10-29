@@ -157,9 +157,9 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     expect(m3.children[1].status).toBe('draft');
     expect(m3.children[1].pct).toBe(0);
     // The artifact query is anchored through the program uuid, org-scoped
-    // (the registry's one read binds organization, program, then the window).
+    // (the registry's one read binds organization, program, no project list, then the window).
     const artifactCall = queryMock.mock.calls.find((c) => String(c[0]).includes('concept2cure_artifacts'));
-    expect(artifactCall?.[1]).toEqual([7, PROJECT, 2001]);
+    expect(artifactCall?.[1]).toEqual([7, PROJECT, null, 2001]);
     expect(String(artifactCall?.[0])).toContain('regulatory_program_id');
   });
 

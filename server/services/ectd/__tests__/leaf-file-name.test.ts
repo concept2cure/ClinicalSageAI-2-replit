@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { leafFileName } from '../leaf-source-resolver';
+import { renderedLeafPackageName } from '../leaf-file-name';
 import { FILENAME_PATTERN } from '../ectd-regional-rules';
 
 describe('leafFileName', () => {
@@ -25,5 +26,13 @@ describe('leafFileName', () => {
     const name = leafFileName('  Módulo 3 / QOS (v2)  ', 'rendered_leaf_files:9');
     expect(name).toMatch(FILENAME_PATTERN);
     expect(name).not.toMatch(/--/);
+  });
+});
+
+describe('renderedLeafPackageName (2026-10-30, CSR assembly follow-up)', () => {
+  it('is the name the materializer stages a rendered_leaf_files row under', () => {
+    expect(renderedLeafPackageName('csr-14-tables.pdf', 12)).toBe(leafFileName('csr-14-tables.pdf', 'rendered_leaf_files:12'));
+    expect(renderedLeafPackageName('csr-14-tables.pdf', 12)).toBe('csr-14-tables-pdf-rendered-leaf-files-12.pdf');
+    expect(renderedLeafPackageName(null, 3)).toBe(leafFileName('rendered', 'rendered_leaf_files:3'));
   });
 });

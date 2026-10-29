@@ -57,6 +57,8 @@
 --
 -- All three remain deny-all, which is safe, and none is referenced by server
 -- code — so nothing is broken by leaving them until they are needed.
+-- (They were needed on 2026-10-29, and the chained list now scopes all three:
+-- see the 2026-10-29 note below.)
 --
 -- AMENDED 2026-10-13 (D3): "deny-all" was true of every role but the table
 -- OWNER. Measured on a database provisioned from blank, all three carry
@@ -206,6 +208,36 @@
 -- The three chains stay deny-all; reversing that is the repo's call, not a
 -- session's. Nothing is removed from this file. Evidence
 -- docs/evidence/D3/2026-10-13-child-rls-force-and-q-sub-children/.
+--
+-- ── AMENDED IN PLACE 2026-10-29 (D6, data portability): the three deny-all
+-- chains get their parent's policy ──────────────────────────────────────────
+-- csr_endpoint_results, ctd_module_sections and ctd_documents join the CHAINED
+-- list, so each is scoped through its parent's own tenant_isolation_policy:
+--
+--   csr_endpoint_results -> csr_endpoints(endpoint_id)         (specs)
+--   ctd_module_sections  -> ctd_submissions(submission_id)     (specs)
+--   ctd_documents        -> ctd_module_sections(section_id)    (chained, after it)
+--
+-- That is the exit the deny-all block names for them ("a table LEAVES this
+-- list by gaining a real parent-scoped policy in one of the lists above"),
+-- taken now because the deny-all no longer costs nothing. Since 2026-10-29
+-- the tenant purge erases csr_studies and ctd_programs, and these three
+-- cascade with them (server/services/tenant/purge-referrers.ts). The tenant
+-- export must return every row the purge erases, and it reads as the runtime
+-- role in the tenant's scope, where deny-all returns nothing. So a row here
+-- was destroyed by an erasure without being given back. It reads them now
+-- through server/services/tenant/purge-parent-scope.ts, by the same parent
+-- and key as the policies below.
+--
+-- Nothing is removed. Row security stays on and FORCEd. The deny-all block
+-- keeps all three names as its fallback: it skips any policied table, so it
+-- applies only where the chained block could not scope one (its parent
+-- unpolicied), and there the table stays deny-all rather than open. The
+-- chained rows are additive and guarded like their neighbours (the table
+-- present, the parent policied, the policy absent), so a re-run changes
+-- nothing. The first deploy after this change creates the three policies on
+-- a database the deny-all block ran on before.
+-- Evidence docs/evidence/D6-TENANT-EXPORT-GAPS/2026-10-29/.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
@@ -551,6 +583,10 @@ $$;
 -- blank. The last block in this file applies ENABLE and FORCE to the three
 -- from inside the deploy set. See the header note.
 --
+-- AMENDED IN PLACE 2026-10-29 (D6). The choice is reversed: the three are on
+-- this list now, because the tenant export must return what the purge erases
+-- and deny-all let it return nothing. See the header note.
+--
 -- NON-PUBLIC CHILDREN (AMENDED IN PLACE 2026-09-24, ledger L203). The same
 -- delegation works for a child outside public whose parent carries its own
 -- tenant_isolation_policy. So this list takes schema-qualified names; a bare
@@ -613,6 +649,16 @@ DECLARE
     -- Depth 2: a commitment hangs off a question, not off the submission. It
     -- follows q_sub_questions so that policy exists when this one is reached.
     ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
+
+    -- 2026-10-29 (D6): the three chains the deny-all block below held, see the
+    -- header note. csr_endpoints and ctd_submissions are policied by `specs`,
+    -- which runs first; ctd_documents follows ctd_module_sections so that
+    -- policy exists when it is reached. Integer keys throughout, checked
+    -- against the catalog. Each table's one reader is the tenant export
+    -- (server/services/tenant/purge-parent-scope.ts), by this same parent and key.
+    ['csr_endpoint_results',          'endpoint_id',        'csr_endpoints',          'id'],
+    ['ctd_module_sections',           'submission_id',      'ctd_submissions',        'id'],
+    ['ctd_documents',                 'section_id',         'ctd_module_sections',    'id'],
 
     -- 2026-09-24 (ledger L203): children outside public.
     ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
@@ -728,6 +774,13 @@ $$;
 -- will read empty under RLS_ENFORCE=on, and that is the signal to scope it
 -- properly: failing closed and visibly, rather than returning another tenant's
 -- rows.
+--
+-- AMENDED IN PLACE 2026-10-29 (D6). The reader appeared, the tenant export,
+-- and all three left by the route named above: the chained list scopes them.
+-- The names stay in this array as its fallback only. The check below skips a
+-- policied table, so this block does nothing where the chained block scoped
+-- them; where it could not (a parent unpolicied, so it skipped before
+-- enabling row security), the table is still deny-all rather than open.
 DO $$
 DECLARE
   deny_all TEXT[] := ARRAY['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];

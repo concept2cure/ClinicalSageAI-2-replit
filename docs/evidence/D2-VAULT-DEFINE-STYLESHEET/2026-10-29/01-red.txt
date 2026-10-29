@@ -1,0 +1,25 @@
+# Red on HEAD, real PostgreSQL 16 (RLS_ENFORCE=on, app_service), through POST /api/vault/ingest: the define.xml stylesheet and a slide deck are refused by type; define.xml itself is admitted
+
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xslt+xml, read as text, and stored as the type its name binds
+   → {"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .xsl is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .doc, .xls, .rtf."}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xsl, read as text, and stored as the type its name binds
+   → {"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .xsl is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .doc, .xls, .rtf."}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared text/xml, read as text, and stored as the type its name binds
+   → {"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .xsl is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .doc, .xls, .rtf."}}: expected 400 to be 201 // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is admitted declared application/xml, read as text, and stored as the type its name binds
+   → {"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .xsl is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .doc, .xls, .rtf."}}: expected 400 to be 201 // Object.is equality
+ ✓ tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > travels with its define.xml
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > the define.xml stylesheet > is refused when its bytes are not text
+   → expected 'FILE_TYPE_NOT_ALLOWED' to be 'FILE_SIGNATURE_MISMATCH' // Object.is equality
+ × tests/db/vault-define-stylesheet-intake.dbtest.ts > a slide deck > is admitted as a ZIP container within the archive limit
+   → {"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .pptx is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .doc, .xls, .rtf."}}: expected 400 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 1 passed (7)
+
+# The invariant, red with .xsl admitted to the format table and no name binding yet
+ × server/utils/__tests__/fileSignature.test.ts > every format the Vault admits is checked by its bytes and bound to its name (MR-08 Stage 3 step 3) > has a byte check and a name binding
+   → expected [ '.xsl' ] to deeply equal []
+ × server/utils/__tests__/fileSignature.test.ts > every format the Vault admits is checked by its bytes and bound to its name (MR-08 Stage 3 step 3) > admits the define.xml stylesheet as text under the types it is sent as, and only under its own name
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 50 passed (52)

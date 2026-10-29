@@ -46,6 +46,7 @@ import { pool } from '../../db.js';
 import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety.js';
+import { signatureTypeFor } from '../../utils/fileSignature.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
@@ -186,7 +187,7 @@ async function admitVaultDocument(
   if (targetRefusal) return targetRefusal;
 
   const fileName = args.fileName || 'document';
-  const mimeType = args.mimeType || 'application/octet-stream';
+  const declaredMime = args.mimeType || 'application/octet-stream';
   const fileSize = args.fileBuffer.length;
   const userId = args.userId ?? null;
 
@@ -203,13 +204,17 @@ async function admitVaultDocument(
   // this handler returned by hand, so the client contract is unchanged apart
   // from that new 503.
   try {
-    await assertUploadSafe(args.fileBuffer, mimeType, fileName, { origin: args.origin ?? 'upload' });
+    await assertUploadSafe(args.fileBuffer, declaredMime, fileName, { origin: args.origin ?? 'upload' });
   } catch (err) {
     if (err instanceof UploadSafetyError) {
       return { ok: false, status: err.status, code: err.code, message: err.message };
     }
     throw err;
   }
+  // Stored as the type the name binds, which the bytes were just checked
+  // against: an .xpt a browser sent as octet-stream is recorded as a transport
+  // file, a .csv sent as text/plain as CSV (MR-08 Stage 3 step 3).
+  const mimeType = signatureTypeFor(fileName, declaredMime);
 
   const contentHash = sha256Bytes(args.fileBuffer);
 
