@@ -1,0 +1,8 @@
+# Every test of the Module 2 builders, the CSR input loader and module2-csr-inputs (23 files), after
+ Test Files  23 passed (23)
+      Tests  327 passed (327)
+
+# The orchestrator suites (20 files), after
+ Test Files  1 failed | 19 passed (20)
+      Tests  1 failed | 316 passed (317)
+  The one failure, csr-job-runner.placeholder-gate (retained placeholder text is redrafted instead of failing), fails identically at HEAD; handed on.

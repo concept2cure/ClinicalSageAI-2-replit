@@ -1,0 +1,18 @@
+ESLint per changed file, at HEAD (bbe7971e; these files are unchanged since fb562e76) and now.
+Head: git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>. Now: npx eslint <file>.
+
+server/routes/mdx-udi.ts                                               head: 2 problems (0 errors, 2 warnings)    now: 2 problems (0 errors, 2 warnings)
+server/routes/mdx-labeling.ts                                          head: 0 problems                           now: 0 problems
+server/routes/q-sub.ts                                                 head: 0 problems                           now: 0 problems
+server/__tests__/routes/q-sub.test.ts                                  head: 0 problems                           now: 0 problems
+server/__tests__/security/tenant-isolation-q-sub.contract.test.ts      head: 0 problems                           now: 0 problems
+server/__tests__/routes/device-project-writes-admit-program.test.ts    head: (new file)                           now: 0 problems
+
+mdx-udi.ts, head:
+  147:64  warning  Async arrow function has too many lines (149). Maximum allowed is 100  max-lines-per-function
+  358:78  warning  Async arrow function has a complexity of 24. Maximum allowed is 15     complexity
+✖ 2 problems (0 errors, 2 warnings)
+mdx-udi.ts, now:
+  176:64  warning  Async arrow function has too many lines (146). Maximum allowed is 100  max-lines-per-function
+  381:78  warning  Async arrow function has a complexity of 25. Maximum allowed is 15     complexity
+✖ 2 problems (0 errors, 2 warnings)

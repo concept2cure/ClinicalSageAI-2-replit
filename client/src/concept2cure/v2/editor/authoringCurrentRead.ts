@@ -17,22 +17,36 @@ export function captureAuthoringSession() {
   return { sameRevision: () => guard.sameRevision() && authService.getUser() === account };
 }
 
-/** Shared by the existing canvas and workbench; session revision survives ordinary bearer refresh. */
+type AuthoringReadSession = { actor: string; key: number; sameRevision: () => boolean };
+
+/** A guard is current when captured unless a session adoption is pending (authService.adoptSession,
+ * across its GET /session). The session minted in that window is never current, and is kept while
+ * the same account's adoption is still pending, so one key fences the whole window. */
+function mintAuthoringReadSession(actor: string, key: number): { session: AuthoringReadSession; held: () => boolean } {
+  const guard = captureAuthoringSession();
+  if (guard.sameRevision()) return { session: { actor, key, sameRevision: guard.sameRevision }, held: () => false };
+  const account = authService.getUser();
+  return { session: { actor, key, sameRevision: () => false },
+    held: () => authService.getUser() === account && !authService.captureSessionReadGuard().sameRevision() };
+}
+
+/** Shared by the existing canvas and workbench; session revision survives ordinary bearer refresh.
+ * A new session is minted only when the actor, revision or adoption window changed; the render
+ * after a pending adoption settles mints exactly one. */
 export function useAuthoringReadSession(user: AuthUser | null) {
   const [, refresh] = useReducer((value: number) => value + 1, 0);
-  const current = useRef<{ actor: string; key: number; sameRevision: () => boolean } | null>(null);
+  const current = useRef<ReturnType<typeof mintAuthoringReadSession> | null>(null);
   const actor = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
-  if (!current.current || current.current.actor !== actor || !current.current.sameRevision()) {
-    const guard = captureAuthoringSession();
-    current.current = { actor, key: (current.current?.key ?? 0) + 1,
-      sameRevision: guard.sameRevision };
+  let owned = current.current;
+  if (!owned || owned.session.actor !== actor || !(owned.session.sameRevision() || owned.held())) {
+    owned = current.current = mintAuthoringReadSession(actor, (owned?.session.key ?? 0) + 1);
   }
   useEffect(() => {
     const stop = ['login', 'logout', 'session_expired', 'user_updated', 'token_refresh'].map(event =>
       authService.on(event as 'login' | 'logout' | 'session_expired' | 'user_updated' | 'token_refresh', refresh));
     return () => { stop.forEach(unsubscribe => unsubscribe()); };
   }, []);
-  return current.current;
+  return owned.session;
 }
 
 export function authoringCurrentReadPath(docId: string, programId: string | null, sections = false): string {

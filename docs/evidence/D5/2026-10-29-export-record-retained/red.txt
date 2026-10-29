@@ -1,0 +1,8 @@
+# authoring-export-record-retained.test.ts (new), against HEAD's router
+ × server/routes/__tests__/authoring-export-record-retained.test.ts > DELETE /api/authoring/export-history/:id > refuses for the exporter and for QA (["AUTHOR"]), and deletes and writes nothing
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-export-record-retained.test.ts > DELETE /api/authoring/export-history/:id > refuses for the exporter and for QA (["QA"]), and deletes and writes nothing
+   → expected 200 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 200 to be 409 // Object.is equality
+      Tests  2 failed (2)

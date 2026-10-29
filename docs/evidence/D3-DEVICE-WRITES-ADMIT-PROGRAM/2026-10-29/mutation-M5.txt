@@ -1,0 +1,40 @@
+Mutation M5: server/routes/q-sub.ts
+  replaced: if (err instanceof TenantAccessError) return notFoundInTenant(res, 'Project');
+  with:     if (err instanceof TenantAccessError) return clientError(res, 403, err.message);
+
+== server/__tests__/routes/device-project-writes-admit-program.test.ts
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+ × 'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 35 passed (39)
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses another organization's project with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses a project that does not exist with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses the organization's own deleted project with 404, and writes no row
+AssertionError: expected 403 to be 404 // Object.is equality
+ FAIL  'POST /api/q-sub': the project a record is filed under must be the caller organization's > refuses in the same words as the project read of the same records
+AssertionError: expected { status: 403, …(1) } to deeply equal { status: 404, …(1) }
++     "error": "Project does not belong to this organization",
++   "status": 403,
+
+== server/__tests__/routes/q-sub.test.ts
+ × server/__tests__/routes/q-sub.test.ts > POST /api/q-sub > returns 404 when service raises TenantAccessError
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+ FAIL  server/__tests__/routes/q-sub.test.ts > POST /api/q-sub > returns 404 when service raises TenantAccessError
+AssertionError: expected 403 to be 404 // Object.is equality
+
+== server/__tests__/security/tenant-isolation-q-sub.contract.test.ts
+ × server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub create > org-A POSTing under an org-B program returns 404, no row created
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+ FAIL  server/__tests__/security/tenant-isolation-q-sub.contract.test.ts > Tenant isolation — Q-Sub create > org-A POSTing under an org-B program returns 404, no row created
+AssertionError: expected 403 to be 404 // Object.is equality
+
+restored: sha256 before a64170114005caa5 after a64170114005caa5 -> identical

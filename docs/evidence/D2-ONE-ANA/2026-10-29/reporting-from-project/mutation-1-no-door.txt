@@ -1,0 +1,14 @@
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx
+# trimmed: per-test results, failure headlines, the failing assertion's line, and the summary (DOM dumps removed)
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project header offers it, named for the job and the place 5115ms
+   → Unable to find role="button" and name "See this project’s reports in Reporting & analytics"
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation 5069ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release 97ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered with no project open 9ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project header offers it, named for the job and the place
+TestingLibraryElementError: Unable to find role="button" and name "See this project’s reports in Reporting & analytics"
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:104:31
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:115:34
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
