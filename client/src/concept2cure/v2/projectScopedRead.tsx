@@ -24,6 +24,7 @@
  */
 import React, { useCallback, useState } from 'react';
 import { ErrorState, useLiveData } from './dataConnect';
+import { describeReadFailure, readFailureFor, type ReadRefusal } from '../mdx/hooks/useFetchJson';
 import { OPEN_PROGRAM_LABEL, openPrograms } from './programAction';
 
 export type ProjectRefusal = 'not-visible' | 'unchecked';
@@ -73,14 +74,64 @@ export function ProjectRefused({
 }
 
 /**
- * Which refusal a read through apiRequest came back with, or null. Read by the
- * sentence and the code as well as the status: a 404 or 503 from anywhere else
- * is not this answer.
+ * A read the server refused, said as what it is (D2, 2026-10-29;
+ * docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/): the one panel
+ * the project screens draw for readRefusalOf's answers, in describeReadFailure's
+ * words. A refusal is not an outage, so it is never "couldn't load", and Try
+ * again is offered only where a retry can change the answer.
+ */
+export function ReadRefused({ refusal, what, subject, retry, testId }: {
+  refusal: ReadRefusal;
+  /** What was not read: "the HFE/UE file". */
+  what: string;
+  /** What was not found or checked, when it is not the project: "this Q-Sub". */
+  subject?: string;
+  retry: () => void;
+  testId: string;
+}) {
+  const words = describeReadFailure(refusal, what, subject ? { subject } : {});
+  return (
+    <ErrorState
+      variant="panel"
+      title={words.title}
+      message={words.message}
+      retry={words.retryable ? retry : undefined}
+      testId={testId}
+    />
+  );
+}
+
+/**
+ * What AnA is told about a read that did not answer: a refusal as itself, and
+ * only a genuine failure (`refusal` null) as the screen's own `failed` summary.
+ * Published as a failure, a refusal would have AnA tell the user the store is
+ * down when the answer was "not in your organization" or "not enabled".
+ */
+export function unreadContext(refusal: ReadRefusal | null, what: string, prefix: string, retryAction: string, failed: string) {
+  if (!refusal) return { summary: failed, availableActions: [retryAction] };
+  const words = describeReadFailure(refusal, what);
+  return {
+    summary: `${prefix}${words.message} Nothing about it is claimed here.`,
+    ...(words.retryable ? { availableActions: [retryAction] } : {}),
+  };
+}
+
+/** A refusal's sentence, or the screen's own `failed` sentence for a genuine failure. */
+export function unreadSentence(refusal: ReadRefusal | null, what: string, failed: string, opts: { subject?: string; after?: string } = {}): string {
+  if (!refusal) return failed;
+  return describeReadFailure(refusal, what, opts.subject ? { subject: opts.subject } : {}).message + (opts.after ?? '');
+}
+
+/**
+ * Which refusal a read through apiRequest came back with, or null. The status
+ * and code are classified by the one read classifier (readFailureFor,
+ * mdx/hooks/useFetchJson.ts); a 404 is this answer only with admit-project's
+ * sentence, since a 404 from anywhere else is not about the project.
  */
 export function projectRefusalOfRead(read: { status?: number; code?: string; error?: string }): ProjectRefusal | null {
-  if (read.status === 404 && read.error === 'Project not found') return 'not-visible';
-  if (read.status === 503 && read.code === 'VERIFICATION_UNAVAILABLE') return 'unchecked';
-  return null;
+  const kind = readFailureFor(read.status, read.code);
+  if (kind === 'not-found') return read.error === 'Project not found' ? 'not-visible' : null;
+  return kind === 'unchecked' ? 'unchecked' : null;
 }
 
 /**

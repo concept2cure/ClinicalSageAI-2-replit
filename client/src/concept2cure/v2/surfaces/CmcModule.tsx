@@ -519,7 +519,7 @@ function CmConnectBar({ nav }: { nav?: (id: string) => void }) {
 /* "Open in", not "Push to": these buttons navigate with context — they write
    nothing. The data itself flows without them: every register save
    write-throughs to the canonical §3.2 source layer, and each compile files a
-   governed artifact the Vault's "Module 3 (CMC)" branch lists. A button
+   governed artifact the Vault lists under "Governed artifacts › Module 3". A button
    claiming to "save to Vault" while saving nothing was the dishonest copy the
    relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {

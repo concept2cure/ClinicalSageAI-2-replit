@@ -1,0 +1,251 @@
+# MUTATIONS at 84aada8f7 + this change. Each is applied to product code, the named suites run
+# (npx vitest run <suites>), and the file is restored; its sha256 is checked equal to the pre-mutation file.
+# 19 applied, 19 red, 0 survived.
+
+## M1: 404 is no longer not-found
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- if (status === 404) return 'not-found';
++ (deleted)
+suites: useFetchJson.readFailure.test.ts PreSubManager.refusalNotFailedRead.test.tsx IvdSurface.readiness.test.tsx
+result: RED; Test Files 3 failed (3); Tests 5 failed | 58 passed (63)
+  × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so 81ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a project the organization does not own (404) is not-found 8ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 404 is not-found, with its status and code 67ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 5055ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > a Q-Sub not in this organization (404) is said as itself 5008ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M2: 503 VERIFICATION_UNAVAILABLE is no longer unchecked
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- if (status === 503 && code === 'VERIFICATION_UNAVAILABLE') return 'unchecked';
++ (deleted)
+suites: useFetchJson.readFailure.test.ts humanFactorsRefusalNotFailedRead.test.tsx IvdSurface.readiness.test.tsx
+result: RED; Test Files 3 failed (3); Tests 5 failed | 56 passed (61)
+  × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so 46ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an ownership check that could not run (503 VERIFICATION_UNAVAILABLE) is unchecked 5ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 56ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 5008ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the check that could not run is tried again, and its answer is drawn 5012ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M3: MODULE_NOT_LICENSED falls to the role refusal (every 403 the same)
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- if (code === 'MODULE_NOT_LICENSED') return 'not-enabled';
++ (deleted)
+suites: useFetchJson.readFailure.test.ts PreSubManager.refusalNotFailedRead.test.tsx IvdSurface.readiness.test.tsx
+result: RED; Test Files 3 failed (3); Tests 7 failed | 56 passed (63)
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 20ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself 31ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 109ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > the module gate (403 MODULE_NOT_LICENSED) is not-enabled 5ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a genuine failure is no refusal 1ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 56ms
+  ... and 1 more failing
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M4: LAUNCH_SCOPE falls to the role refusal
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- if (code === 'LAUNCH_SCOPE') return 'out-of-release';
++ (deleted)
+suites: useFetchJson.readFailure.test.ts UdiSurface.refusalNotFailedRead.test.tsx IvdSurface.readiness.test.tsx
+result: RED; Test Files 3 failed (3); Tests 4 failed | 55 passed (59)
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > launch scope (403 LAUNCH_SCOPE) is out-of-release 5ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 59ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal outside the release (403 LAUNCH_SCOPE) says so 56ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 24ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M5: 428 is a failed read
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- if (status === 428) return 'signature';
++ (deleted)
+suites: useFetchJson.readFailure.test.ts labelingRefusalNotFailedRead.test.tsx
+result: RED; Test Files 2 failed (2); Tests 3 failed | 48 passed (51)
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a signature the act requires (428) is signature 6ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 428 is signature, with its status and code 56ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 5010ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M6a: ORG_REQUIRED is not an unconfirmed organization
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- 'ORG_REQUIRED', 'IVD_NO_TENANT',
++ 'IVD_NO_TENANT',
+suites: useFetchJson.readFailure.test.ts humanFactorsRefusalNotFailedRead.test.tsx
+result: RED; Test Files 2 failed (2); Tests 3 failed | 46 passed (49)
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an organization the route could not confirm (403 ORG_REQUIRED) is said as itself, to the reader and to AnA 11ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the route could not confirm (403 ORG_REQUIRED) is no-organization 6ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 60ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M6b: IVD_NO_TENANT is not an unconfirmed organization (the IVD board reads the shared classifier)
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- 'ORG_REQUIRED', 'IVD_NO_TENANT',
++ 'ORG_REQUIRED',
+suites: IvdSurface.readiness.test.tsx
+result: RED; Test Files 1 failed (1); Tests 1 failed | 11 passed (12)
+  × client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an organization the route could not confirm (403 IVD_NO_TENANT) says so 50ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M7: useFetchJson does not read the body's code
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- return errorCodeOf(JSON.parse(detail));
++ return JSON.parse(detail) && undefined;
+suites: useFetchJson.readFailure.test.ts PreSubManager.refusalNotFailedRead.test.tsx UdiSurface.refusalNotFailedRead.test.tsx
+result: RED; Test Files 3 failed (3); Tests 14 failed | 44 passed (58)
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 61ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 55ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 54ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 57ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a refetch clears the previous failure while it is in flight 5010ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > an ownership check that could not run (503) is said as itself, not as a failed read 5012ms
+  ... and 8 more failing
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M8: useFetchJson exposes no failure
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- failure: { kind: readFailureFor(status, code), status, ...(code ? { code } : {}) },
++ failure: null,
+suites: useFetchJson.readFailure.test.ts PreSubManager.refusalNotFailedRead.test.tsx UdiSurface.refusalNotFailedRead.test.tsx
+result: RED; Test Files 3 failed (3); Tests 26 failed | 32 passed (58)
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 5084ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > an ownership check that could not run (503) is said as itself, not as a failed read 5012ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 5017ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 5009ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a role refusal (403) is said as itself, not as a failed read 5007ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a signature the act requires (428) is said as itself, not as a failed read 5007ms
+  ... and 20 more failing
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M9: useLiveRows drops the server code again
+file: client/src/concept2cure/v2/dataConnect.tsx
+- ...(st.code ? { code: st.code } : {}),
+    meta: st.meta,
++ meta: st.meta,
+suites: labelingRefusalNotFailedRead.test.tsx
+result: RED; Test Files 1 failed (1); Tests 4 failed | 7 passed (11)
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 5009ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 12ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 7ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the check that could not run is tried again, and its answer is drawn 5007ms
+reverted: client/src/concept2cure/v2/dataConnect.tsx sha256 51b03e8cf336df44 restored
+
+## M10: Pre-Sub draws a refused list as a failed read
+file: client/src/concept2cure/mdx/presub/PreSubManager.tsx
+- const listRefusal = readRefusalOf(live.failure);
++ const listRefusal = null as ReturnType<typeof readRefusalOf>;
+suites: PreSubManager.refusalNotFailedRead.test.tsx
+result: RED; Test Files 1 failed (1); Tests 7 failed | 4 passed (11)
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 5031ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > an ownership check that could not run (503) is said as itself, not as a failed read 5010ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 5010ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 5008ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a role refusal (403) is said as itself, not as a failed read 5010ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a signature the act requires (428) is said as itself, not as a failed read 5008ms
+  ... and 1 more failing
+reverted: client/src/concept2cure/mdx/presub/PreSubManager.tsx sha256 09c6fea380efebc0 restored
+
+## M11: UDI draws a refused read as four failed panels
+file: client/src/concept2cure/mdx/surfaces/UdiSurface.tsx
+- const refusal = readRefusalOf(live.failure);
++ const refusal = null as ReturnType<typeof readRefusalOf>;
+suites: UdiSurface.refusalNotFailedRead.test.tsx
+result: RED; Test Files 1 failed (1); Tests 6 failed | 1 passed (7)
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a project the organization does not own (404) is said as itself, not as a failed read 5036ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > an ownership check that could not run (503) is said as itself, not as a failed read 5011ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 5010ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 5013ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a role refusal (403) is said as itself, not as a failed read 5012ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the check that could not run is tried again, and its answer is drawn 5009ms
+reverted: client/src/concept2cure/mdx/surfaces/UdiSurface.tsx sha256 58d37096bcd8bce6 restored
+
+## M12: Labeling draws a refused document read as a failed read
+file: client/src/concept2cure/v2/surfaces/Labeling.tsx
+- const docsRefusal = docsLive.error ? readRefusalOf(docsLive) : null;
++ const docsRefusal = null as ReturnType<typeof readRefusalOf>;
+suites: labelingRefusalNotFailedRead.test.tsx
+result: RED; Test Files 1 failed (1); Tests 7 failed | 4 passed (11)
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 5036ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 5009ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 5011ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 5007ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 5008ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 5007ms
+  ... and 1 more failing
+reverted: client/src/concept2cure/v2/surfaces/Labeling.tsx sha256 bb8ded20c3864f7c restored
+
+## M13: Human factors draws a refused read as a failed read
+file: client/src/concept2cure/v2/surfaces/HumanFactors.tsx
+- const hfRefusal = hf.error ? readRefusalOf(hf) : null;
++ const hfRefusal = null as ReturnType<typeof readRefusalOf>;
+suites: humanFactorsRefusalNotFailedRead.test.tsx
+result: RED; Test Files 1 failed (1); Tests 8 failed | 1 passed (9)
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 5027ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 5006ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 5005ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 5004ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an organization the route could not confirm (403 ORG_REQUIRED) is said as itself, to the reader and to AnA 5005ms
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 5009ms
+  ... and 2 more failing
+reverted: client/src/concept2cure/v2/surfaces/HumanFactors.tsx sha256 24639188ecb7a7d4 restored
+
+## M14: a project not in the organization offers Try again
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- message: `${sentence(subject)} was not found in your organization, ${notRead}`, retryable: false };
++ message: `${sentence(subject)} was not found in your organization, ${notRead}`, retryable: true };
+suites: useFetchJson.readFailure.test.ts PreSubManager.refusalNotFailedRead.test.tsx humanFactorsRefusalNotFailedRead.test.tsx
+result: RED; Test Files 3 failed (3); Tests 3 failed | 57 passed (60)
+  × client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 155ms
+  × client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 230ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > offers a retry only where trying again can change the answer 7ms
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M15: useFetchJson changes the error line existing callers read
+file: client/src/concept2cure/mdx/hooks/useFetchJson.ts
+- `HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
++ `HTTP ${res.status}${detail ? ` - ${detail.slice(0, 200)}` : ''}`,
+suites: useFetchJson.readFailure.test.ts EngineeringSurface.refusal.test.tsx
+result: RED; Test Files 1 failed | 1 passed (2); Tests 9 failed | 36 passed (45)
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 404 is not-found, with its status and code 66ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 54ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 55ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 53ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 55ms
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 is role, with its status and code 53ms
+  ... and 3 more failing
+reverted: client/src/concept2cure/mdx/hooks/useFetchJson.ts sha256 cf315ff2c81dc0a3 restored
+
+## M16: the project refusal reader no longer reads the unchecked class
+file: client/src/concept2cure/v2/projectScopedRead.tsx
+- return kind === 'unchecked' ? 'unchecked' : null;
++ return null;
+suites: EngineeringSurface.refusal.test.tsx
+result: RED; Test Files 1 failed (1); Tests 2 failed | 3 passed (5)
+  × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 33ms
+  × client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx > projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > reads the 404 and the 503 by their bodies 2ms
+reverted: client/src/concept2cure/v2/projectScopedRead.tsx sha256 64156567b89f77c7 restored
+
+## M17: the IVD board keeps a local 403 copy again
+file: client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx
+- const refusal = read.error ? readRefusalOf(read) : null;
++ if (read.status === 403 && read.code === 'MODULE_NOT_LICENSED') return { kind: 'refused', message: 'This feature is not enabled for your organization, so the IVDR readiness was not read.' };
+    const refusal = read.error ? readRefusalOf(read) : null;
+suites: useFetchJson.readFailure.test.ts
+result: RED; Test Files 1 failed (1); Tests 1 failed | 39 passed (40)
+  × client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/IvdReadinessBoard.tsx classifies no refusal itself 5ms
+reverted: client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx sha256 bfc552739da2bc86 restored
+
+## M18: AnA is told a refusal is a failure
+file: client/src/concept2cure/v2/projectScopedRead.tsx
+- if (!refusal) return { summary: failed, availableActions: [retryAction] };
++ return { summary: failed, availableActions: [retryAction] };
+suites: labelingRefusalNotFailedRead.test.tsx humanFactorsRefusalNotFailedRead.test.tsx
+result: RED; Test Files 2 failed (2); Tests 13 failed | 7 passed (20)
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 157ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 34ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 16ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 18ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 14ms
+  × client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 15ms
+  ... and 7 more failing
+reverted: client/src/concept2cure/v2/projectScopedRead.tsx sha256 64156567b89f77c7 restored
+

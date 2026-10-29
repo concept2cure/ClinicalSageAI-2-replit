@@ -1,0 +1,163 @@
+# Mutations, 2026-10-29T10:44:17.553001Z, against the working tree on ca574ff80
+# Each: exact replacement(s), each old string occurring once; run the two new suites; restore the bytes read before; sha256 must match.
+# Suites: server/__tests__/routes/content-digest-binders.pglite.test.ts server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+# sha256 before:
+#   1f7ac94fba198c61a77d4747e8a995688ce8e35d149ea790c204c136704cced0  server/routes/governed-signed-act.ts
+#   a748c48389fce3ed8a5024730eb437c22e06e786331ebe01d3a71bccfab7b546  server/routes/mdx-labeling-approvals.ts
+#   ebe62eef23cf04106b0a3c106da47517492fbe438b0ad9d2c5753ddf657331de  server/routes/mdx-risk-management.ts
+#   51e2cfe2f8baf71c003e507f4dd61374a58bb42819aba24b1b6c0effb70ef471  server/services/part11/governed-target-binders.ts
+#   10ee45283c9be1ffb252526cdcf2e4b93c14f4f1c59bdb81858edb9dd6c35325  server/services/part11/signature-persistence.ts
+#   76ce02f4a5c92c9b86d588735ac098d868410c074c0498c1b73684eab5e3c5ca  server/services/part11/signed-content-state.ts
+
+## M1: the label digest omits the symbols
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 11 failed | 79 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_code moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_name moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's description moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's required_by moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > a symbol added or removed moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest
+
+## M2: the label digest omits the label text it names
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 6 failed | 84 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest
+
+## M3: the translation digest omits the translator
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 4 failed | 86 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the signature row carries the translation content digest
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the document read says each translation matches, and an edit after a withdrawal is detected
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > digests the translation by its recipe
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translator moves the digest
+
+## M4: the hazard digest omits the benefit-risk rationale
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 4 failed | 86 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of benefit_risk_rationale moves the digest
+
+## M5: the hazard digest omits the risk controls
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 12 failed | 78 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's description moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's control_type moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's implementation_evidence moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's verification_evidence moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's effectiveness_evidence moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's introduces_new_risk moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's new_risk_item_id moves the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's status moves the digest
+
+## M6: the label digest is taken after the write: it covers the status the act writes
+   file: server/services/part11/governed-target-binders.ts
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 7 failed | 83 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > status, written by the act or placing the record, does not move the digest
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest
+
+## M7: the hazard digest is taken after the write: it covers the status the acceptance writes
+   file: server/services/part11/governed-target-binders.ts
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 4 failed | 86 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > status, written by the act or placing the record, does not move the digest
+
+## M8: fallback to the chain hash: the ceremony does not pass the declared basis
+   file: server/routes/governed-signed-act.ts
+   result: RED; 2 failed | 88 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted
+
+## M9: fallback to the chain hash: the writer ignores the declared basis
+   file: server/services/part11/signature-persistence.ts
+   result: RED; 4 failed | 86 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > a binder that falls back refuses the signature: SIGNATURE_CONTENT_UNBOUND, and nothing is inserted
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > the refusal names why the content could not be bound
+
+## M10: fallback to the chain hash: the label approval declares no basis
+   file: server/routes/mdx-labeling-approvals.ts
+   result: RED; 1 failed | 89 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged
+
+## M11: fallback to the chain hash: the residual acceptance declares no basis
+   file: server/routes/mdx-risk-management.ts
+   result: RED; 1 failed | 89 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted
+
+## M12: label text that cannot be read is treated as no text
+   file: server/services/part11/governed-target-binders.ts
+   result: RED; 3 failed | 87 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > falls back, with its reason, when the label or the text it names cannot be read
+   x server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > the refusal names why the content could not be bound
+
+## M13: the read does not compare digests: any signature by the same basis matches
+   file: server/services/part11/signed-content-state.ts
+   result: RED; 6 failed | 84 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a field edited after the approval is withdrawn is detected against the signature
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the document read says each translation matches, and an edit after a withdrawal is detected
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance
+
+## M14: the read takes a signature from before content binding at face value
+   file: server/services/part11/signed-content-state.ts
+   result: RED; 1 failed | 89 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a signature from before content binding is unverified, never "matches" or "changed"
+
+## M15: the read takes a withdrawn signature as in force
+   file: server/services/part11/signed-content-state.ts
+   result: RED; 1 failed | 89 passed (90); restored: sha256 match
+   x server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a revoked signature reads as withdrawn
+
+# Summary
+#   M1: RED (11 failed | 79 passed (90))
+#   M2: RED (6 failed | 84 passed (90))
+#   M3: RED (4 failed | 86 passed (90))
+#   M4: RED (4 failed | 86 passed (90))
+#   M5: RED (12 failed | 78 passed (90))
+#   M6: RED (7 failed | 83 passed (90))
+#   M7: RED (4 failed | 86 passed (90))
+#   M8: RED (2 failed | 88 passed (90))
+#   M9: RED (4 failed | 86 passed (90))
+#   M10: RED (1 failed | 89 passed (90))
+#   M11: RED (1 failed | 89 passed (90))
+#   M12: RED (3 failed | 87 passed (90))
+#   M13: RED (6 failed | 84 passed (90))
+#   M14: RED (1 failed | 89 passed (90))
+#   M15: RED (1 failed | 89 passed (90))
+# sha256 after:
+#   1f7ac94fba198c61a77d4747e8a995688ce8e35d149ea790c204c136704cced0  server/routes/governed-signed-act.ts  = before
+#   a748c48389fce3ed8a5024730eb437c22e06e786331ebe01d3a71bccfab7b546  server/routes/mdx-labeling-approvals.ts  = before
+#   ebe62eef23cf04106b0a3c106da47517492fbe438b0ad9d2c5753ddf657331de  server/routes/mdx-risk-management.ts  = before
+#   51e2cfe2f8baf71c003e507f4dd61374a58bb42819aba24b1b6c0effb70ef471  server/services/part11/governed-target-binders.ts  = before
+#   10ee45283c9be1ffb252526cdcf2e4b93c14f4f1c59bdb81858edb9dd6c35325  server/services/part11/signature-persistence.ts  = before
+#   76ce02f4a5c92c9b86d588735ac098d868410c074c0498c1b73684eab5e3c5ca  server/services/part11/signed-content-state.ts  = before

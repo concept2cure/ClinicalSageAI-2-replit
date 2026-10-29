@@ -41,8 +41,10 @@ import { DocumentsPanel, averageAssessedCompletion } from '../components/Documen
 import { DataGate } from '../components/DataGate';
 import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
 import { useUdi, type LabelRow } from '../hooks/useUdi';
+import { readRefusalOf } from '../hooks/useFetchJson';
 import { readyRows } from '../lib/dataState';
 import { EmptyState } from '../../v2/dataConnect';
+import { ReadRefused } from '../../v2/projectScopedRead';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface UdiSurfaceProps {
@@ -171,28 +173,48 @@ export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProp
     );
   }
 
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">Workstream</div>
-          <h1 className="page-title">UDI and labeling</h1>
-          <div className="page-sub">
-            21 CFR 801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
-          </div>
-        </div>
-        <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() =>
-              onAskAna("Summarise this project's UDI registration status and any labeling blockers.")
-            }
-            type="button"
-          >
-            {I.sparkles} Ask AnA
-          </button>
+  const header = (
+    <div className="page-header">
+      <div>
+        <div className="page-eyebrow">Workstream</div>
+        <h1 className="page-title">UDI and labeling</h1>
+        <div className="page-sub">
+          21 CFR 801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
         </div>
       </div>
+      <div className="page-actions">
+        <button
+          className="btn ghost small"
+          onClick={() =>
+            onAskAna("Summarise this project's UDI registration status and any labeling blockers.")
+          }
+          type="button"
+        >
+          {I.sparkles} Ask AnA
+        </button>
+      </div>
+    </div>
+  );
+
+  /* A refused read, said once as what it is (D2, 2026-10-29;
+     docs/evidence/D2-ONE-ANA/2026-10-29/refusal-not-failed-read/). One read
+     feeds every panel here, so a refusal drew four "Could not load …" panels,
+     the words for an outage, under counts of zero that read as this project's.
+     A refusal is not a count, so nothing is counted beside it. A genuine failure
+     (readRefusalOf null) still reaches each panel's failed read. */
+  const refusal = readRefusalOf(live.failure);
+  if (refusal) {
+    return (
+      <>
+        {header}
+        <ReadRefused refusal={refusal} what="the UDI and labeling record" retry={live.refresh} testId="udi-refused" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {header}
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">

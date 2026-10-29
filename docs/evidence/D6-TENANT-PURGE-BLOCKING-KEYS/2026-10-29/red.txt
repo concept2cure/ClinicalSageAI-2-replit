@@ -1,0 +1,26 @@
+Red. Each section was captured on the tree as it stood before the change it covers.
+Database: a private PostgreSQL 16.15 + pgvector 0.6.0, built from blank by node scripts/db/install-fresh.mjs then node scripts/db/deploy-migrate.mjs (APP_SERVICE_DB_PASSWORD set), the pair the CI real-database lane runs (.github/workflows/ci.yml, 'Provision a deploy-shaped database').
+
+## §1 Part 1, at head (allowlist unchanged). 2026-10-29T10:52:57Z, HEAD 84aada8f7
+### server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts (new)
+ ✓ server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_source_read_receipts(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_turn_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_run_events(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_artifact_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 0ms
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_vault_seals(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 6ms
+ ✓ server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_vault_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_vault_seals(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+AssertionError: purge_tenant_vault_seals is not on scripts/db/security-definer-allowlist.json: expected undefined to be defined
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+
+### tests/db/tenant-purge-artifact-records.dbtest.ts on install-fresh + deploy-migrate (PostgreSQL 16 + pgvector 0.6.0)
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 229ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 49ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays
+error: permission denied for function purge_tenant_vault_seals
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)

@@ -1,0 +1,833 @@
+# RED at HEAD 8b3ee4b57, before any implementation change (only the two new test files exist).
+# git status of the implementation files (empty = unchanged from HEAD):
+# $ npx vitest run server/__tests__/routes/content-digest-binders.pglite.test.ts server/services/part11/__tests__/labeling-risk-content-binders.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/content-digest-binders.pglite.test.ts
+{
+  "timestamp": "2026-10-29T10:25:14.352Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest 61ms
+   → expected 'governed-action-sha256-chain' to be 'labeling-document-content-sha256' // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the read says the signature matches the label as it stands 31ms
+   → expected undefined to match object { state: 'matches', …(3) }
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected 28ms
+   → expected undefined to match object { state: 'changed', …(2) }
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a field edited after the approval is withdrawn is detected against the signature 35ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed 23ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected 15ms
+   → expected 'ccccccccccccccccccccccccccccccccccccc…' to be '07c5b45917d244f40048a5a981f5e15769ae4…' // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the signature row carries the translation content digest 15ms
+   → expected 'governed-action-sha256-chain' to be 'labeling-translation-content-sha256' // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the document read says each translation matches, and an edit after a withdrawal is detected 27ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls 16ms
+   → expected 'governed-action-sha256-chain' to be 'risk-residual-acceptance-content-sha2…' // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance 18ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance 26ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged 15ms
+   → expected 201 to be 409 // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted 18ms
+   → expected 201 to be 409 // Object.is equality
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a signature from before content binding is unverified, never "matches" or "changed" 10ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a revoked signature reads as withdrawn 9ms
+   → Cannot read properties of undefined (reading 'state')
+ × server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a record never signed reads as unsigned 11ms
+   → expected undefined to match object { Object (state, signatureId) }
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-document has a content binder, so its signature never falls back silently 8ms
+   → expected undefined to be type of 'function'
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-translation has a content binder, so its signature never falls back silently 1ms
+   → expected undefined to be type of 'function'
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > risk-item has a content binder, so its signature never falls back silently 1ms
+   → expected undefined to be type of 'function'
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > names the three bases in the platform vocabulary 4ms
+   → expected { …(19) } to match object { …(3) }
+(19 matching properties omitted from actual)
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped 1ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of device_name moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of doc_kind moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of version moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of language moves the digest 1ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of region moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of udi_di moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of expires_at moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_code moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_name moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's description moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's required_by moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > a symbol added or removed moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > status, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_by, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_at, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > effective_date, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > updated_at, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_at, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_by, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > program_id, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > metadata, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > falls back, with its reason, when the label or the text it names cannot be read 0ms
+   → CONTENT_BINDERS.labeling-document is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > digests the translation by its recipe 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of labeling_document_id moves the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of language moves the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translator moves the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translation_method moves the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of back_translation_verified moves the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > status does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_by does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_at does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > updated_at does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > created_by does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > metadata does not move the digest 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > binds the translated text it names 0ms
+   → CONTENT_BINDERS.labeling-translation is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of ref_code moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazard moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazardous_situation moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of harm moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of sequence_of_events moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of severity moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of probability moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of detectability moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of initial_risk moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of control_strategy moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of source moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_severity moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_probability moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_risk moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of benefit_risk_rationale moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's description moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's control_type moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's implementation_evidence moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's verification_evidence moves the digest 3ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's effectiveness_evidence moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's introduces_new_risk moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's new_risk_item_id moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's status moves the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > status, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > acceptable, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > assigned_to, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > program_id, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > updated_at, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > metadata, written by the act or placing the record, does not move the digest 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > falls back when the hazard cannot be read 0ms
+   → CONTENT_BINDERS.risk-item is not a function
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > a binder that falls back refuses the signature: SIGNATURE_CONTENT_UNBOUND, and nothing is inserted 2ms
+   → expected SignerNotAttributableError: governed sign… { code: '…' } to match object { code: 'SIGNATURE_CONTENT_UNBOUND' }
+(1 matching property omitted from actual)
+ × server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > the refusal names why the content could not be bound 1ms
+   → expected [Function] to throw error matching /artifact 99.*Nothing was signed\.$/ but got 'governed sign: signer user 5 is not a…'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 90 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the signature row carries the label content digest, the basis named, and the chain hash kept on the manifest
+AssertionError: expected 'governed-action-sha256-chain' to be 'labeling-document-content-sha256' // Object.is equality
+
+Expected: "labeling-document-content-sha256"
+Received: "governed-action-sha256-chain"
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:272:31
+    270|     expect(res.status).toBe(201);
+    271|     const [sig] = await signaturesOn(`labeling-document:${id}`);
+    272|     expect(sig.binding_basis).toBe('labeling-document-content-sha256');
+       |                               ^
+    273|     expect(sig.bound_payload_digest).toBe(reviewed);
+    274|     expect(sig.bound_payload_digest).not.toBe(CHAIN);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the read says the signature matches the label as it stands
+AssertionError: expected undefined to match object { state: 'matches', …(3) }
+
+- Expected:
+{
+  "bindingBasis": "labeling-document-content-sha256",
+  "meaning": "approval",
+  "signerName": "Sam Signer",
+  "state": "matches",
+}
+
++ Received:
+undefined
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:287:41
+    285|     const res = await getDoc(id);
+    286|     expect(res.status).toBe(200);
+    287|     expect(res.body.data.signedContent).toMatchObject({
+       |                                         ^
+    288|       state: 'matches', signerName: 'Sam Signer', meaning: 'approval',…
+    289|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a symbol added to the approved label after signing is detected
+AssertionError: expected undefined to match object { state: 'changed', …(2) }
+
+- Expected:
+{
+  "currentDigest": "b015dc86a80c535b38cbea15fc594d37b8233b775c4a00053cedab9245dc0f1a",
+  "signedDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "state": "changed",
+}
+
++ Received:
+undefined
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:300:41
+    298|     expect(added.status).toBe(201);
+    299|     const res = await getDoc(id);
+    300|     expect(res.body.data.signedContent).toMatchObject({ state: 'change…
+       |                                         ^
+    301|     expect(res.body.data.signedContent.currentDigest).not.toBe(signed);
+    302|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > a field edited after the approval is withdrawn is detected against the signature
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:309:55
+    307|     expect((await patchDoc(id, { status: 'draft', reason: WITHDRAWAL }…
+    308|     expect((await patchDoc(id, { udiDi: '00812345678913' })).status).t…
+    309|     expect((await getDoc(id)).body.data.signedContent.state).toBe('cha…
+       |                                                       ^
+    310|   });
+    311|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > moving to effective changes no attested field: both signatures bind the digest the signer reviewed
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "5dadbac54b51ebb8e7ce85c94c59c0ab2a3025c231862a9e657047cbc268e71a",
+-   "5dadbac54b51ebb8e7ce85c94c59c0ab2a3025c231862a9e657047cbc268e71a",
++   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
++   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  ]
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:318:53
+    316|     expect((await patchDoc(id, { status: 'effective', effectiveDate: '…
+    317|     const rows = await signaturesOn(`labeling-document:${id}`);
+    318|     expect(rows.map((r) => r.bound_payload_digest)).toEqual([reviewed,…
+       |                                                     ^
+    319|     expect((await getDoc(id)).body.data.signedContent.state).toBe('mat…
+    320|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling document approval binds the label it approves > the label text it names is bound, and an edit of that text after signing is detected
+AssertionError: expected 'ccccccccccccccccccccccccccccccccccccc…' to be '07c5b45917d244f40048a5a981f5e15769ae4…' // Object.is equality
+
+Expected: "07c5b45917d244f40048a5a981f5e15769ae420fecb0c17de48a8958b1d44d23"
+Received: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:327:38
+    325|     await patchDoc(id, { status: 'approved', ...SIGNATURE });
+    326|     const [sig] = await signaturesOn(`labeling-document:${id}`);
+    327|     expect(sig.bound_payload_digest).toBe(await expectedDocDigest(id, …
+       |                                      ^
+    328|     await h.pg.query(`UPDATE concept2cure_artifacts SET content = 'Ins…
+    329|     expect((await getDoc(id)).body.data.signedContent.state).toBe('cha…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the signature row carries the translation content digest
+AssertionError: expected 'governed-action-sha256-chain' to be 'labeling-translation-content-sha256' // Object.is equality
+
+Expected: "labeling-translation-content-sha256"
+Received: "governed-action-sha256-chain"
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:339:31
+    337|     expect((await patchTrans(id, { status: 'approved', ...SIGNATURE })…
+    338|     const [sig] = await signaturesOn(`labeling-translation:${id}`);
+    339|     expect(sig.binding_basis).toBe('labeling-translation-content-sha25…
+       |                               ^
+    340|     expect(sig.bound_payload_digest).toBe(reviewed);
+    341|     expect(manifestOf(sig).auditSha256Chain).toBe(CHAIN);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > a labeling translation approval binds the translation it approves > the document read says each translation matches, and an edit after a withdrawal is detected
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:348:59
+    346|     await patchTrans(id, { status: 'approved', ...SIGNATURE });
+    347|     const before = await getDoc(docId);
+    348|     expect(before.body.data.translations[0].signedContent.state).toBe(…
+       |                                                           ^
+    349|     expect((await patchTrans(id, { status: 'review', reason: WITHDRAWA…
+    350|     expect((await patchTrans(id, { translator: 'B. Schmidt' })).status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls
+AssertionError: expected 'governed-action-sha256-chain' to be 'risk-residual-acceptance-content-sha2…' // Object.is equality
+
+Expected: "risk-residual-acceptance-content-sha256"
+Received: "governed-action-sha256-chain"
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:362:31
+    360|     expect((await patchRisk(id, { status: 'accepted', ...SIGNATURE }))…
+    361|     const [sig] = await signaturesOn(`risk-item:${id}`);
+    362|     expect(sig.binding_basis).toBe('risk-residual-acceptance-content-s…
+       |                               ^
+    363|     expect(sig.bound_payload_digest).toBe(reviewed);
+    364|     expect(manifestOf(sig)).toMatchObject({ auditSha256Chain: CHAIN, b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the acceptance
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:370:56
+    368|     const id = await seedHazard();
+    369|     await patchRisk(id, { status: 'accepted', ...SIGNATURE });
+    370|     expect((await getRisk(id)).body.data.signedContent.state).toBe('ma…
+       |                                                        ^
+    371|     expect((await patchRisk(id, { benefitRiskRationale: 'Accepted on c…
+    372|     expect((await getRisk(id)).body.data.signedContent).toMatchObject(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:380:56
+    378|     const ctl = await one('SELECT id FROM risk_controls WHERE risk_ite…
+    379|     expect((await request(app()).patch(`/api/mdx/risk-controls/${ctl.i…
+    380|     expect((await getRisk(id)).body.data.signedContent.state).toBe('ch…
+       |                                                        ^
+    381|   });
+    382| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a label naming text that cannot be read: 409, nothing signed, the document unchanged
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:388:24
+    386|     const id = await seedDoc({ artifact_id: 999 });
+    387|     const res = await patchDoc(id, { status: 'approved', ...SIGNATURE …
+    388|     expect(res.status).toBe(409);
+       |                        ^
+    389|     expect(res.body.error.code).toBe('SIGNATURE_CONTENT_UNBOUND');
+    390|     expect(res.body.error.message).toMatch(/Nothing was signed\.$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the hazard not accepted
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:402:26
+    400|     try {
+    401|       const res = await patchRisk(id, { status: 'accepted', ...SIGNATU…
+    402|       expect(res.status).toBe(409);
+       |                          ^
+    403|       expect(res.body.error.code).toBe('SIGNATURE_CONTENT_UNBOUND');
+    404|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a signature from before content binding is unverified, never "matches" or "changed"
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:429:18
+    427|     await ledgerSignature(`labeling-document:${id}`);
+    428|     const facet = (await getDoc(id)).body.data.signedContent;
+    429|     expect(facet.state).toBe('unverified');
+       |                  ^
+    430|     expect(facet.reason).toMatch(/chain hash/);
+    431|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a revoked signature reads as withdrawn
+TypeError: Cannot read properties of undefined (reading 'state')
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:436:55
+    434|     const id = await seedDoc({ status: 'approved' });
+    435|     await ledgerSignature(`labeling-document:${id}`, { is_valid: false…
+    436|     expect((await getDoc(id)).body.data.signedContent.state).toBe('wit…
+       |                                                       ^
+    437|   });
+    438|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/90]⎯
+
+ FAIL  server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a record never signed reads as unsigned
+AssertionError: expected undefined to match object { Object (state, signatureId) }
+
+- Expected:
+{
+  "signatureId": null,
+  "state": "unsigned",
+}
+
++ Received:
+undefined
+
+ ❯ server/__tests__/routes/content-digest-binders.pglite.test.ts:441:57
+    439|   it('a record never signed reads as unsigned', async () => {
+    440|     const id = await seedHazard();
+    441|     expect((await getRisk(id)).body.data.signedContent).toMatchObject(…
+       |                                                         ^
+    442|   });
+    443| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-document has a content binder, so its signature never falls back silently
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > labeling-translation has a content binder, so its signature never falls back silently
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > risk-item has a content binder, so its signature never falls back silently
+AssertionError: expected undefined to be type of 'function'
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:88:37
+     86| describe('registration', () => {
+     87|   it.each(['labeling-document', 'labeling-translation', 'risk-item'])(…
+     88|     expect(CONTENT_BINDERS[prefix]).toBeTypeOf('function');
+       |                                     ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > registration > names the three bases in the platform vocabulary
+AssertionError: expected { …(19) } to match object { …(3) }
+(19 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "LABELING_DOCUMENT_CONTENT": "labeling-document-content-sha256",
+-   "LABELING_TRANSLATION_CONTENT": "labeling-translation-content-sha256",
+-   "RISK_RESIDUAL_ACCEPTANCE_CONTENT": "risk-residual-acceptance-content-sha256",
++   "AGENCY_RESPONSE_CONTENT": "agency-response-content-sha256",
++   "AUTHORING_RENDITION": "authoring-rendition-sha256",
++   "C2C_ARTIFACT_VERSION_CONTENT": "c2c-artifact-version-content-sha256",
++   "C2C_DOCUMENT_SECTION": "c2c-document-section-sha256",
++   "C2C_DOCUMENT_SECTIONS": "c2c-document-sections-sha256",
++   "CMC_MODULE3_SECTION_VERSION": "cmc-module3-section-version-sha256",
++   "COMMITMENT_FULFILMENT_CONTENT": "commitment-fulfilment-content-sha256",
++   "DOCUMENT_VERSION_CONTENT": "document-version-content-sha256",
++   "ECTD_SEQUENCE_LEAF_MANIFEST": "ectd-sequence-leaf-manifest-sha256",
++   "FILED_ESTAR_ARTIFACT": "filed-estar-artifact-sha256",
++   "FINANCIAL_DISCLOSURE_CONTENT": "financial-disclosure-content-sha256",
++   "GOVERNED_ACTION_LEDGER": "governed-action-sha256-chain",
++   "INTERIM_SNAPSHOT_CONTENT": "interim-snapshot-content-sha256",
++   "PROTOCOL_DOCUMENT_CONTENT": "protocol-document-content-sha256",
++   "QMS_DOCUMENT_VERSION_CONTENT": "qms-document-version-content-sha256",
++   "REPORT_RUN_SEAL": "report-run-seal-sha256",
++   "SUBMISSION_RELEASE_PAYLOAD": "submission-release-payload-sha256",
++   "TRANSMITTED_BUNDLE_SHA256": "transmitted-bundle-sha256",
++   "VAULT_DOCUMENT_VERSION": "vault-document-version-sha256",
+  }
+
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:92:27
+     90|
+     91|   it('names the three bases in the platform vocabulary', () => {
+     92|     expect(BINDING_BASIS).toMatchObject({
+       |                           ^
+     93|       LABELING_DOCUMENT_CONTENT: 'labeling-document-content-sha256',
+     94|       LABELING_TRANSLATION_CONTENT: 'labeling-translation-content-sha2…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > digests the label by its recipe, organisation-scoped
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:103:56
+    101|   it('digests the label by its recipe, organisation-scoped', async () …
+    102|     const { client, calls } = clientOf(DOC_WORLD);
+    103|     const b = await CONTENT_BINDERS['labeling-document'](client, '11',…
+       |                                                        ^
+    104|     expect(b.basis).toBe('labeling-document-content-sha256');
+    105|     expect(b.digest).toBe(sha256(canonicalJson({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of device_name moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of doc_kind moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of version moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of language moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of region moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of udi_di moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of expires_at moves the digest
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ bindDoc server/services/part11/__tests__/labeling-risk-content-binders.test.ts:78:79
+     76| const sha256 = (s: string) => createHash('sha256').update(s).digest('h…
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:115:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_code moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's symbol_name moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's description moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > an edit of a symbol's required_by moves the digest
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ bindDoc server/services/part11/__tests__/labeling-risk-content-binders.test.ts:78:79
+     76| const sha256 = (s: string) => createHash('sha256').update(s).digest('h…
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:121:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > a symbol added or removed moves the digest
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ bindDoc server/services/part11/__tests__/labeling-risk-content-binders.test.ts:78:79
+     76| const sha256 = (s: string) => createHash('sha256').update(s).digest('h…
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:127:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > status, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_by, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > approved_at, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > effective_date, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > updated_at, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_at, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > created_by, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > program_id, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > metadata, written by the act or placing the record, does not move the digest
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ bindDoc server/services/part11/__tests__/labeling-risk-content-binders.test.ts:78:79
+     76| const sha256 = (s: string) => createHash('sha256').update(s).digest('h…
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:136:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > binds the text of the artifact it names, by the sha256 of its content, and an edit of that text moves the digest
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ bindDoc server/services/part11/__tests__/labeling-risk-content-binders.test.ts:78:79
+     76| const sha256 = (s: string) => createHash('sha256').update(s).digest('h…
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:142:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-document/v1 > falls back, with its reason, when the label or the text it names cannot be read
+TypeError: CONTENT_BINDERS.labeling-document is not a function
+ ❯ run server/services/part11/__tests__/labeling-risk-content-binders.test.ts:154:79
+    152|
+    153|   it('falls back, with its reason, when the label or the text it names…
+    154|     const run = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+       |                                                                               ^
+    155|     expect((await run({ doc: null })).fallbackReason).toMatch(/labelin…
+    156|     expect((await run({ ...DOC_WORLD, doc: { ...DOC, artifact_id: 99 }…
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:155:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > digests the translation by its recipe
+TypeError: CONTENT_BINDERS.labeling-translation is not a function
+ ❯ bindTranslation server/services/part11/__tests__/labeling-risk-content-binders.test.ts:79:90
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+       |                                                                                          ^
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+     81|
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:163:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of labeling_document_id moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of language moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translator moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of translation_method moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > an edit of back_translation_verified moves the digest
+TypeError: CONTENT_BINDERS.labeling-translation is not a function
+ ❯ bindTranslation server/services/part11/__tests__/labeling-risk-content-binders.test.ts:79:90
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+       |                                                                                          ^
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+     81|
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:173:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > status does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_by does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > approved_at does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > updated_at does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > created_by does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > metadata does not move the digest
+TypeError: CONTENT_BINDERS.labeling-translation is not a function
+ ❯ bindTranslation server/services/part11/__tests__/labeling-risk-content-binders.test.ts:79:90
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+       |                                                                                          ^
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+     81|
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:180:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > labeling-translation/v1 > binds the translated text it names
+TypeError: CONTENT_BINDERS.labeling-translation is not a function
+ ❯ bindTranslation server/services/part11/__tests__/labeling-risk-content-binders.test.ts:79:90
+     77|
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+       |                                                                                          ^
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+     81|
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:187:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > digests the hazard and its controls by the recipe, organisation-scoped
+TypeError: CONTENT_BINDERS.risk-item is not a function
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:195:48
+    193|   it('digests the hazard and its controls by the recipe, organisation-…
+    194|     const { client, calls } = clientOf(HAZARD_WORLD);
+    195|     const b = await CONTENT_BINDERS['risk-item'](client, '31', ORG, no…
+       |                                                ^
+    196|     expect(b.basis).toBe('risk-residual-acceptance-content-sha256');
+    197|     expect(b.digest).toBe(sha256(canonicalJson({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of ref_code moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazard moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of hazardous_situation moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of harm moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of sequence_of_events moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of severity moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of probability moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of detectability moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of initial_risk moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of control_strategy moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of source moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_severity moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_probability moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of residual_risk moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of benefit_risk_rationale moves the digest
+TypeError: CONTENT_BINDERS.risk-item is not a function
+ ❯ bindHazard server/services/part11/__tests__/labeling-risk-content-binders.test.ts:80:74
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+       |                                                                          ^
+     81|
+     82| const DOC_WORLD: World = { doc: DOC, symbols: [SYMBOL] };
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:214:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's description moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's control_type moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's implementation_evidence moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's verification_evidence moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's effectiveness_evidence moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's introduces_new_risk moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's new_risk_item_id moves the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > an edit of a control's status moves the digest
+TypeError: CONTENT_BINDERS.risk-item is not a function
+ ❯ bindHazard server/services/part11/__tests__/labeling-risk-content-binders.test.ts:80:74
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+       |                                                                          ^
+     81|
+     82| const DOC_WORLD: World = { doc: DOC, symbols: [SYMBOL] };
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:223:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > status, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > acceptable, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > assigned_to, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > program_id, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > updated_at, written by the act or placing the record, does not move the digest
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > metadata, written by the act or placing the record, does not move the digest
+TypeError: CONTENT_BINDERS.risk-item is not a function
+ ❯ bindHazard server/services/part11/__tests__/labeling-risk-content-binders.test.ts:80:74
+     78| const bindDoc = (w: World, rest = '11') => CONTENT_BINDERS['labeling-d…
+     79| const bindTranslation = (w: World, rest = '21') => CONTENT_BINDERS['la…
+     80| const bindHazard = (w: World, rest = '31') => CONTENT_BINDERS['risk-it…
+       |                                                                          ^
+     81|
+     82| const DOC_WORLD: World = { doc: DOC, symbols: [SYMBOL] };
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:229:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > risk-residual-acceptance/v1 > falls back when the hazard cannot be read
+TypeError: CONTENT_BINDERS.risk-item is not a function
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:235:48
+    233|
+    234|   it('falls back when the hazard cannot be read', async () => {
+    235|     const b = await CONTENT_BINDERS['risk-item'](clientOf({ hazard: nu…
+       |                                                ^
+    236|     expect(b.fallbackReason).toMatch(/risk item/);
+    237|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > a binder that falls back refuses the signature: SIGNATURE_CONTENT_UNBOUND, and nothing is inserted
+AssertionError: expected SignerNotAttributableError: governed sign… { code: '…' } to match object { code: 'SIGNATURE_CONTENT_UNBOUND' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "SIGNATURE_CONTENT_UNBOUND",
++ SignerNotAttributableError {
++   "code": "SIGNER_NOT_ATTRIBUTABLE",
+  }
+
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:249:125
+    247|   it('a binder that falls back refuses the signature: SIGNATURE_CONTEN…
+    248|     const { client, calls } = clientOf({ doc: null });
+    249|     await expect(persistGovernedSignSignature(client, { ...params, req…
+       |                                                                                                                             ^
+    250|       .rejects.toMatchObject({ code: 'SIGNATURE_CONTENT_UNBOUND' });
+    251|     expect(calls.some((c) => /electronic_signatures|FROM users/.test(c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/90]⎯
+
+ FAIL  server/services/part11/__tests__/labeling-risk-content-binders.test.ts > the writer refuses a declared content basis it cannot bind > the refusal names why the content could not be bound
+AssertionError: expected [Function] to throw error matching /artifact 99.*Nothing was signed\.$/ but got 'governed sign: signer user 5 is not a…'
+
+- Expected:
+/artifact 99.*Nothing was signed\.$/
+
++ Received:
+"governed sign: signer user 5 is not a member of org 7 — cannot attribute signature (§11.100)."
+
+ ❯ server/services/part11/__tests__/labeling-risk-content-binders.test.ts:256:125
+    254|   it('the refusal names why the content could not be bound', async () …
+    255|     const { client } = clientOf({ ...DOC_WORLD, doc: { ...DOC, artifac…
+    256|     await expect(persistGovernedSignSignature(client, { ...params, req…
+       |                                                                                                                             ^
+    257|       .rejects.toThrow(/artifact 99.*Nothing was signed\.$/);
+    258|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/90]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  90 failed (90)
+   Start at  10:25:12
+   Duration  5.41s (transform 941ms, setup 79ms, import 1.72s, tests 3.11s, environment 0ms)
+

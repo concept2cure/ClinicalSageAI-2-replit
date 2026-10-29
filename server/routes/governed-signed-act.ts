@@ -45,9 +45,16 @@
  * that signs through here. A wrong password also counts toward the account's
  * lockout inside reverifySigner.
  *
- * The signature row records only the factors step 4 verified, and binds the
- * ledger's chain hash with its basis named (deriveGovernedTargetBinding has no
- * content digest for these record types and says so; it never invents one).
+ * The signature row records only the factors step 4 verified. It binds what
+ * deriveGovernedTargetBinding derives for the target: the content digest when
+ * the target's prefix has a content binder (services/part11/
+ * governed-target-binders.ts), otherwise the ledger's chain hash with its
+ * basis named (it never invents a content hash). An act whose target has a
+ * binder declares that basis (`contentBasis`), and a binding that falls back
+ * then refuses the act, 409 SIGNATURE_CONTENT_UNBOUND, with nothing signed:
+ * the labeling approvals and the residual-risk acceptance, since 2026-10-29
+ * (docs/evidence/D5-CONTENT-DIGEST-BINDERS/2026-10-29/). The manifest keeps
+ * the ledger's chain hash beside the content digest either way.
  *
  * Not here: separation of duties. Authorship is not modelled for these record
  * types (resolveTargetAuthors returns "not modelled"), so an independence check
@@ -67,7 +74,7 @@ import { checkSigningAuthority } from '../services/part11/signing-authority-gate
 import { reverifySigner, type SignerReverification } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11/signature-meanings';
-import { persistGovernedSignSignature } from '../services/part11/signature-persistence';
+import { persistGovernedSignSignature, type BindingBasis } from '../services/part11/signature-persistence';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { resolveOrgId, resolveUserId } from '../types/auth-request';
 import { clientIpOf } from '../utils/client-ip';
@@ -119,6 +126,15 @@ export interface SignedAct {
   meanings: readonly GovernedSignMeaning[];
   /** The route's domain refusal codes and their statuses. Any other error is a 500 with no error text. */
   codeStatus: Readonly<Record<string, number>>;
+  /**
+   * The content basis (BINDING_BASIS) the target's binder records, when it has
+   * one (21 CFR 11.70). Declared, the signature binds that content or the act
+   * is refused, 409 SIGNATURE_CONTENT_UNBOUND, and nothing is signed: it never
+   * falls back to the ledger chain hash. Left out, the signature binds what
+   * deriveGovernedTargetBinding derives, the ledger basis named when there is
+   * no binder.
+   */
+  contentBasis?: BindingBasis;
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
   tenantRole?: string;
   /** The domain write, on the signing transaction. Throw an error with a `code` to refuse. */
@@ -184,8 +200,17 @@ function signatureComponents(req: Request, res: Response, meanings: readonly Gov
   return { orgId, userId, ...parsed.data, meaning };
 }
 
+/**
+ * The ceremony's own refusals inside the transaction, beside each route's. A
+ * declared content basis that cannot be bound (SignatureContentUnboundError)
+ * signed nothing, so it is a refusal the signer can read, not a 5xx whose
+ * outcome is unconfirmed.
+ */
+const CEREMONY_CODE_STATUS: Readonly<Record<string, number>> = { SIGNATURE_CONTENT_UNBOUND: 409 };
+
 /** A coded domain refusal keeps its status and sentence; anything else is a 500 that carries no error text. */
-function answerFailure(res: Response, codeStatus: Readonly<Record<string, number>>, err: unknown): void {
+function answerFailure(res: Response, routeCodeStatus: Readonly<Record<string, number>>, err: unknown): void {
+  const codeStatus = { ...CEREMONY_CODE_STATUS, ...routeCodeStatus };
   const code = (err as { code?: unknown } | null)?.code;
   if (typeof code === 'string' && codeStatus[code]) {
     res.status(codeStatus[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
@@ -271,6 +296,7 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
       ipAddress: clientIpOf(req),
       occurredAt: new Date(),
       ...(Object.keys(payload).length > 0 ? { extraManifest: { act: payload } } : {}),
+      ...(act.contentBasis ? { requiredBasis: act.contentBasis } : {}),
     });
     await client.query('COMMIT');
     await runAfterCommit(act, result, orgId, userId);

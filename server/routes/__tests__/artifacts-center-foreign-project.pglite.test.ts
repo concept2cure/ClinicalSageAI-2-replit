@@ -23,15 +23,21 @@ import createArtifactsCenterRoutes from '../artifacts-center-routes';
 beforeAll(async () => {
   h.pg = new PGlite();
   await h.pg.exec(`
-    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text);
+    -- The columns the registry's one read selects (services/artifact-registry-read.ts,
+    -- shared with the project Vault since 2026-10-29), as the real tables have them.
+    CREATE TABLE users (id integer PRIMARY KEY, name text, email text);
+    CREATE FUNCTION public.actor_name(integer) RETURNS TABLE(name text, email text)
+      LANGUAGE sql STABLE AS 'SELECT name, email FROM users WHERE id = $1';
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid);
     CREATE TABLE concept2cure_artifacts (
       id serial PRIMARY KEY, artifact_id text, title text, metadata json, type text, category text,
-      version integer, updated_at timestamp DEFAULT now(), project_id integer, content text, organization_id integer
+      version integer, updated_at timestamp DEFAULT now(), project_id integer, content text, organization_id integer,
+      ctd_section text, status text DEFAULT 'draft', content_hash text, created_by_id integer
     );
     CREATE TABLE concept2cure_signatures (id serial PRIMARY KEY, artifact_id integer, organization_id integer, status text, artifact_version_id integer);
     CREATE TABLE concept2cure_review_decisions (artifact_id integer, organization_id integer, decision text, version_reviewed integer);
     CREATE TABLE concept2cure_artifact_versions (id serial PRIMARY KEY, version integer);
-    INSERT INTO projects VALUES (10, 1, 'OWN-1', 'Own project'), (20, 2, 'THEIRS-9', 'Their secret program');
+    INSERT INTO projects VALUES (10, 1, 'OWN-1', 'Own project', NULL), (20, 2, 'THEIRS-9', 'Their secret program', NULL);
     INSERT INTO concept2cure_artifacts (artifact_id, title, metadata, type, category, version, project_id, content, organization_id) VALUES
       ('a-own', 'Own doc', '{}', 'document', 'document', 1, 10, 'x', 1),
       ('a-foreign', 'Filed under their id', '{}', 'document', 'document', 1, 20, 'x', 1);

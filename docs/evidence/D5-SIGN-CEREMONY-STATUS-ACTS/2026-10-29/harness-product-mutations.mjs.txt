@@ -1,0 +1,109 @@
+// Product mutations, IN MEMORY: each replaces one server file's text in the map
+// the gate scans. No file in the repository is written. Each is run through the
+// current gate (with the baseline's recorded pairs) and the pre-change gate.
+// Usage: node product-mutations.mjs <repo root> <pre-change gate path>
+import { readFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const [ROOT, OLD] = process.argv.slice(2);
+const gate = await import(pathToFileURL(path.join(ROOT, 'scripts/ci/check-sign-ceremony.mjs')).href);
+const acts = await import(pathToFileURL(path.join(ROOT, 'scripts/ci/check-sign-ceremony-status-acts.mjs')).href);
+const old = await import(pathToFileURL(OLD).href);
+const baseline = JSON.parse(readFileSync(path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json'), 'utf8'));
+const oldBaseline = JSON.parse(execSync('git show HEAD:scripts/ci/sign-ceremony-baseline.json', { cwd: ROOT, encoding: 'utf8' }));
+const real = gate.repoSources();
+
+const RISK = 'server/routes/mdx-risk-management.ts';
+const PATCH_ROUTE = "router.patch('/risk-items/:id', requireEditorAccess, refuseUnsignedAcceptability, whenAccepting, async (req: Request, res: Response) => {";
+const mutations = [
+  {
+    id: 'P1', desc: "M11: the acceptance goes back to a plain write (signGovernedAct removed from acceptResidualSigned)", file: RISK,
+    find: "  await signGovernedAct(req, res, {\n    domain: 'risk',", replace: "  await runWithoutSignature(req, res, {\n    domain: 'risk',", expect: 'red',
+  },
+  {
+    id: 'P1b', desc: "P1 again, on a gate with no signed-pair record (derived pairs only): why the record exists", file: RISK, ignoreRecord: true,
+    find: "  await signGovernedAct(req, res, {\n    domain: 'risk',", replace: "  await runWithoutSignature(req, res, {\n    domain: 'risk',", expect: 'green',
+  },
+  {
+    id: 'P2', desc: "a second, unsigned accept route: UPDATE risk_items SET status = 'accepted'", file: RISK,
+    find: PATCH_ROUTE,
+    replace: "router.post('/risk-items/:id/accept-quick', async (req: Request, res: Response) => {\n  await pool.query(`UPDATE risk_items SET status = 'accepted', updated_at = NOW() WHERE id = $1 AND organization_id = $2`, [req.params.id, getOrgId(req)]);\n  res.json({ ok: true });\n});\n\n" + PATCH_ROUTE,
+    expect: 'red',
+  },
+  {
+    id: 'P3', desc: "the flag alone, unsigned: UPDATE risk_items SET acceptable = TRUE", file: RISK,
+    find: PATCH_ROUTE,
+    replace: "router.post('/risk-items/:id/acceptable', async (req: Request, res: Response) => {\n  await pool.query(`UPDATE risk_items SET acceptable = TRUE WHERE id = $1 AND organization_id = $2`, [req.params.id, getOrgId(req)]);\n  res.json({ ok: true });\n});\n\n" + PATCH_ROUTE,
+    expect: 'red',
+  },
+  {
+    id: 'P4', desc: "a hazard created already accepted: INSERT INTO risk_items (..., status) VALUES (..., 'accepted')", file: RISK,
+    find: PATCH_ROUTE,
+    replace: "router.post('/risk-items/seed-accepted', async (req: Request, res: Response) => {\n  await pool.query(`INSERT INTO risk_items (organization_id, hazard, status) VALUES ($1, $2, 'accepted') RETURNING *`, [getOrgId(req), req.body.hazard]);\n  res.json({ ok: true });\n});\n\n" + PATCH_ROUTE,
+    expect: 'red',
+  },
+  {
+    id: 'P5', desc: "control: a non-governed status write, unsigned: UPDATE risk_items SET status = 'mitigating'", file: RISK,
+    find: PATCH_ROUTE,
+    replace: "router.post('/risk-items/:id/mitigate', async (req: Request, res: Response) => {\n  await pool.query(`UPDATE risk_items SET status = 'mitigating' WHERE id = $1 AND organization_id = $2`, [req.params.id, getOrgId(req)]);\n  res.json({ ok: true });\n});\n\n" + PATCH_ROUTE,
+    expect: 'green',
+  },
+  {
+    id: 'P6', desc: "a new file approving a consent form from a session: UPDATE consent_forms SET status = 'approved'", file: 'server/routes/zz-mutation-unsigned-approval.ts', create: true,
+    replace: "router.post('/forms/:id/approve-now', async (req, res) => {\n  await pool.query(`UPDATE consent_forms SET status = 'approved', updated_at = now() WHERE id = $1`, [req.params.id]);\n});\n",
+    expect: 'red',
+  },
+  {
+    id: 'P7', desc: "a ceremony starts signing a new pair (risk_controls.status = 'verified' inside the acceptance's run), not recorded", file: RISK,
+    find: "      const updated = await client.query(\n        `UPDATE risk_items SET status = 'accepted', acceptable = TRUE, updated_at = NOW()",
+    replace: "      await client.query(`UPDATE risk_controls SET status = 'verified' WHERE risk_item_id = $1`, [id]);\n      const updated = await client.query(\n        `UPDATE risk_items SET status = 'accepted', acceptable = TRUE, updated_at = NOW()",
+    expect: 'red',
+  },
+  {
+    id: 'P8', desc: "the labeling-pi defect fixed (acceptAgencyText stops writing 'approved'): its allowance must be lowered", file: 'server/services/labeling/labeling-pi-service.ts',
+    find: "SET content = $3::jsonb, status = 'approved', flag = NULL", replace: "SET content = $3::jsonb, status = 'review', flag = NULL", expect: 'red',
+  },
+];
+
+function newVerdict(sources, ignoreRecord = false) {
+  const derived = gate.repoSignedPairs(sources);
+  const recorded = ignoreRecord ? [] : baseline.signedPairs?.pairs ?? [];
+  const scan = gate.scanRepo({ sources, signedPairs: new Set([...derived.keys(), ...recorded]) });
+  const r = gate.evaluate(scan, baseline);
+  // Without a record (P1b) there is no record check either: the gate as it would be with derivation alone.
+  const { unrecorded } = ignoreRecord ? { unrecorded: [] } : acts.evaluateSignedPairs(derived, recorded);
+  const lines = [
+    ...r.failures.flatMap((f) => f.sites.map((s) => `FAIL ${f.file}:${s.line} ${s.kind}${s.act ? ` ${s.act}` : ''}${f.allowed ? ` (baseline allows ${f.allowed}, now ${f.count})` : ''}`)),
+    ...r.shrinkable.map((x) => `FAIL baseline allows more than exists: ${x.file} ${x.count} now, baseline ${x.allowed}`),
+    ...unrecorded.map((u) => `FAIL signed pair not recorded: ${u.pair} (signed in ${u.file})`),
+  ];
+  return { red: lines.length > 0, lines };
+}
+
+function oldVerdict(file, src) {
+  const r = old.evaluate({ [file]: old.scanSource(src) }, oldBaseline);
+  const lines = r.failures.flatMap((f) => f.sites.map((s) => `FAIL ${f.file}:${s.line} ${s.kind}`));
+  return { red: lines.length > 0, lines };
+}
+
+const base = newVerdict(real);
+console.log(`unmutated tree, current gate: ${base.red ? 'RED' : 'green'}${base.lines.length ? `\n  ${base.lines.join('\n  ')}` : ''}`);
+let wrong = 0;
+for (const m of mutations) {
+  const src = m.create ? m.replace : real.get(m.file);
+  if (!m.create && src.split(m.find).length !== 2) throw new Error(`${m.id}: anchor not found exactly once in ${m.file}`);
+  const mutated = m.create ? src : src.replace(m.find, m.replace);
+  const sources = new Map(real);
+  sources.set(m.file, mutated);
+  const now = newVerdict(sources, m.ignoreRecord);
+  const before = oldVerdict(m.file, mutated);
+  const got = now.red ? 'red' : 'green';
+  if (got !== m.expect) wrong += 1;
+  console.log(`\n${m.id}  ${m.desc}\n  file: ${m.file}${m.create ? ' (new, in memory)' : ''}`);
+  console.log(`  current gate:    ${got.toUpperCase()} (expected ${m.expect})${now.lines.length ? `\n    ${now.lines.join('\n    ')}` : ''}`);
+  console.log(`  pre-change gate: ${before.red ? 'RED' : 'green'}${before.lines.length ? `\n    ${before.lines.join('\n    ')}` : ''}`);
+}
+console.log(`\n${mutations.length - wrong} of ${mutations.length} product mutations as expected on the current gate. No repository file was written.`);
+process.exit(wrong ? 1 : 0);
