@@ -27,10 +27,11 @@ import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
-import { EmptyState } from '../../v2/dataConnect';
+import { EmptyState, ErrorState } from '../../v2/dataConnect';
+import { OPEN_PROGRAM_LABEL, openPrograms } from '../../v2/programAction';
 import { assessmentState, mayReassure } from '../../v2/assessmentState';
 import { ENG_RISK_PROB, ENG_RISK_SEVERITY } from '../data/engineering';
-import { useEngineering, type PanelScope } from '../hooks/useEngineering';
+import { useEngineering, type PanelScope, type ProjectRefusal } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
@@ -96,6 +97,40 @@ function NotKeyedMetric() {
       <div className="metric-val">—</div>
       <div className="metric-meta">{NOT_KEYED_LINE}</div>
     </>
+  );
+}
+
+/* The route's two refusals (useEngineering's `refusal`, from
+   server/lib/admit-project.ts), in words. Each panel used to draw its own
+   "Could not load …" with "Try again", which said neither fact, and a retry
+   cannot change a 404 (D2, 2026-10-29). */
+const REFUSAL_WORDS: Record<ProjectRefusal, { title: string; message: string }> = {
+  'not-visible': {
+    title: "This project isn't one this organization can see",
+    message: 'Nothing was read for it, so no engineering record is shown.',
+  },
+  unchecked: {
+    title: "This project couldn't be checked, so nothing was shown",
+    message:
+      'Whether this organization can see the project could not be checked, so no engineering record was read. ' +
+      'This says nothing about the project.',
+  },
+};
+
+/* A 404 is not transient: its way out is another project. Only the check that
+   could not run is tried again. */
+function ProjectRefused({ refusal, onRetry }: { refusal: ProjectRefusal; onRetry: () => void }) {
+  const words = REFUSAL_WORDS[refusal];
+  const unchecked = refusal === 'unchecked';
+  return (
+    <ErrorState
+      variant="panel"
+      title={words.title}
+      message={words.message}
+      retry={unchecked ? onRetry : openPrograms}
+      retryLabel={unchecked ? 'Try again' : OPEN_PROGRAM_LABEL}
+      testId="eng-project-refused"
+    />
   );
 }
 
@@ -253,29 +288,43 @@ export function EngineeringSurface({
   const draftCount = documents.filter((d) => d.status === 'draft').length;
   const avgCompletion = averageAssessedCompletion(documents);
 
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-eyebrow">
-            Workstream{programContext ? ` · ${programContext}` : ''}
-          </div>
-          <h1 className="page-title">Device engineering</h1>
-          <div className="page-sub">
-            21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software ·
-            FDA premarket cybersecurity.
-          </div>
+  const header = (
+    <div className="page-header">
+      <div>
+        <div className="page-eyebrow">
+          Workstream{programContext ? ` · ${programContext}` : ''}
         </div>
-        <div className="page-actions">
-          <button
-            className="btn ghost small"
-            onClick={() => onAskAna('Summarise the current state of the design history file.')}
-            type="button"
-          >
-            {I.sparkles} Ask AnA
-          </button>
+        <h1 className="page-title">Device engineering</h1>
+        <div className="page-sub">
+          21 CFR 820.30 design controls · ISO 14971 risk · IEC 62304 software ·
+          FDA premarket cybersecurity.
         </div>
       </div>
+      <div className="page-actions">
+        <button
+          className="btn ghost small"
+          onClick={() => onAskAna('Summarise the current state of the design history file.')}
+          type="button"
+        >
+          {I.sparkles} Ask AnA
+        </button>
+      </div>
+    </div>
+  );
+
+  /* The route refused the project, so it read nothing: one sentence, no panels. */
+  if (live.refusal) {
+    return (
+      <>
+        {header}
+        <ProjectRefused refusal={live.refusal} onRetry={live.refresh} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {header}
 
       <DataGate
         /* Four of these cards count `documents`, not `summary` — "Documents in

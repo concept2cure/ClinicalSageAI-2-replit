@@ -1,0 +1,12 @@
+# E3: any 503 is read as the ownership check
+# file: client/src/concept2cure/mdx/hooks/useEngineering.ts
+# replaced: "  if (status === '503' && errorValue(error) === 'VERIFICATION_UNAVAILABLE') return 'unchecked';"
+# with:     "  if (status === '503') return 'unchecked';"
+# test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+# vitest exit: 1
+ × EngineeringSurface — the route refuses the project > any other failure is still a failed read on each panel, never the ownership words 15ms
+ × projectRefusalOf — the two answers admit-project.ts gives, from useFetchJson's line > is null for every other failure, including a 404 or 503 that is not the ownership answer 1ms
+      Tests  2 failed | 3 passed (5)
+AssertionError: expected <div …(4)>…(3)</div> to be null
+AssertionError: expected 'unchecked' to be null
+# restored: sha256 matches (9305d40105af5771)

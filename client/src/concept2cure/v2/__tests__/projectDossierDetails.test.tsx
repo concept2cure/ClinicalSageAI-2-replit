@@ -2,7 +2,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { DossierReadinessCard, ModuleCompletion, dossierFacts, type DossierState } from '../surfaces/ProjectDossier';
+import { DossierReadinessCard, ModuleCompletion, dossierFacts, type DossierState, type RowCopy } from '../surfaces/ProjectDossier';
 
 afterEach(cleanup);
 
@@ -80,6 +80,20 @@ describe('the existing dossier details on Author', () => {
     expect(screen.getByText('Store unavailable.')).toBeTruthy();
     expect(screen.queryByText(/in review.*drafted/)).toBeNull();
     expect(dossierFacts({ ...r, state: { ...r.state, data: null, error: 'read failed' } })).toEqual({ dossier: null, dossierUnavailable: 'the dossier read failed' });
+  });
+
+  it('the home line asks for the one home document\'s copy, and with no home document it has no door', () => {
+    const copyFor = vi.fn((): RowCopy => ({ kind: 'none' }));
+    const view = render(<DossierReadinessCard read={read()} copyFor={copyFor} onOpen={vi.fn()} />);
+    expect(copyFor).toHaveBeenCalledWith('home');
+    expect(screen.getByTestId('pj-dossier-home-copy').textContent).toBe('No editing copy of this filing yet.');
+    view.unmount();
+    const r = read();
+    r.state.data!.home = { state: 'unavailable', pct: null, reason: 'Store unavailable.' };
+    r.state.data!.rows = [];
+    render(<DossierReadinessCard read={r} copyFor={copyFor} onOpen={vi.fn()} />);
+    expect(screen.getByTestId('pj-dossier-home').textContent, 'a door or copy words for no document').toBe('Store unavailable.');
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('states missing details and update time honestly, and preserves unknown statuses', () => {

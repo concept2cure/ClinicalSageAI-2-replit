@@ -176,5 +176,9 @@ export const CAPAS: RegisterConfig<CapaRow> = {
   detail: { label: 'Show action items', render: (r, onChanged) => <CapaActions capa={r} onChanged={onChanged} /> },
   ask: 'Give me a read-out on CAPA: which are open past their target close, which are high risk, which effectiveness checks failed, and what each needs next.',
   askRow: (r) => `Summarise CAPA ${r.capaCode} ${r.title}: the problem, its root cause, the action plan, and what it needs next.`,
+  facts: (r) => ({
+    capa: r.capaCode, title: r.title, type: r.type, source: r.source, raisedFrom: r.sourceRefs?.map((s) => s.label).join(', ') || null,
+    risk: r.riskLevel, state: r.state, targetClose: r.targetCloseDate?.slice(0, 10) ?? null,
+  }),
 };
 

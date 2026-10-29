@@ -1,0 +1,12 @@
+# E1: the hook never reports a refusal
+# file: client/src/concept2cure/mdx/hooks/useEngineering.ts
+# replaced: '    refusal: projectRefusalOf(error),'
+# with:     '    refusal: null,'
+# test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+# vitest exit: 1
+ × EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 58ms
+ × EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 14ms
+      Tests  2 failed | 3 passed (5)
+AssertionError: what the screen says: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to contain 'This project isn\'t one this organiza…'
+AssertionError: what the screen says: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' to contain 'This project couldn\'t be checked, so…'
+# restored: sha256 matches (9305d40105af5771)

@@ -10,6 +10,23 @@ import { type C2CFormConfig } from '../v2/C2CForm';
 export type Tone = 'ok' | 'warn' | 'err';
 export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
 
+/** One row as AnA is told it (QualityApp's published surface context). */
+export type RecordFacts = Record<string, string | number | null>;
+
+/** What a register tells the Quality shell for AnA: its state, its counts and its rows, as read. */
+export interface RecordRegisterContext {
+  tab: string;
+  title: string;
+  noun: [string, string];
+  state: 'loading' | 'failed' | 'ready';
+  /** The rows read, or null while loading or after a failed read. */
+  count: number | null;
+  counts: Array<{ label: string; val: string }>;
+  records: RecordFacts[];
+  /** True when more rows were read than are passed on. */
+  truncated: boolean;
+}
+
 export interface Column<R> { label: string; cell: (r: R) => React.ReactNode }
 export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
 
@@ -38,6 +55,8 @@ export interface RegisterConfig<R extends { id: number | string }> {
   rowActions?: RowAction<R>[];
   ask: string;
   askRow: (r: R) => string;
+  /** What AnA is told about a row: the register's own recorded values, nothing derived by a model. */
+  facts: (r: R) => RecordFacts;
   /** The CAPA sourceRefs kind this record is raised as: the register shows the
    *  CAPAs raised from each row, derived from the CAPA register. */
   capaSourceKind?: string;

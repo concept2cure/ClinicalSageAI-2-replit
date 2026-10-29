@@ -1,0 +1,10 @@
+# H5: a figure over several home documents opens the first one's copy
+# file: client/src/concept2cure/v2/surfaces/ProjectDossier.tsx
+# replaced: '  if (documents.length === 1) return <MarketCopy'
+# with:     '  if (documents.length >= 1) return <MarketCopy'
+# test: client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+# vitest exit: 1
+ × Author — the readiness card's home line > a figure over two home documents opens neither, and says why 5030ms
+      Tests  1 failed | 31 passed (32)
+AssertionError: the readiness card's home line: expected '0 of 6 sections approved or locked.Op…' to contain 'This figure counts 2 home documents, …'
+# restored: sha256 matches (ed20cd2989f0b397)
