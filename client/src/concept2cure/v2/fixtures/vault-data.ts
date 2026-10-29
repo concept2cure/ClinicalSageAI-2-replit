@@ -67,6 +67,7 @@ export interface VaultDoc {
   artifact?: VaultArtifactFacts;
   /** Upload-only extras, all projected from real columns. */
   docId?: string;
+  /** An upload's stored file size; on an artifact, its stored content's size, as the Artifacts center states it. */
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type (uploads only). Filing into a submission is

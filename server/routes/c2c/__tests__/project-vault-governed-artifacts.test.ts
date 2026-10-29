@@ -181,6 +181,16 @@ describe('GET /api/c2c/project-vault/:id — every artifact of the project, acro
     expect(leaf.hash).toBeUndefined();
   });
 
+  it('each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)', async () => {
+    seed([
+      artifact({ id: 9, content_bytes: 2048 }),
+      artifact({ id: 10, title: 'device-file.pdf', ctd_section: null, type: 'imported', content_bytes: 0 }),
+    ].map((r) => ({ ...r, total_rows: 2 })));
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROJECT}`);
+    const leaves = branch(res.body).children.flatMap((g: any) => g.children);
+    expect(leaves.map((l: any) => [l.id, l.sizeLabel])).toEqual([['art-9', '2 KB'], ['art-10', '0 KB']]);
+  });
+
   it('states the signature in the four states the Artifacts center uses', async () => {
     seed([
       artifact({ id: 1, title: 'A unsigned', ctd_section: '2.1', is_signed: false, signed_version: null, version: 2 }),
