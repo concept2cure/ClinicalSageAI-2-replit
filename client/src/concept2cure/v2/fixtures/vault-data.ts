@@ -19,6 +19,10 @@ export interface VaultDocFiling {
   placementStatus: string;
   confidence: string | null;
   rationale: string | null;
+  /** Who made the filing decision and when (Part 11 review F4). Absent from an older server. */
+  placedBy?: string | null;
+  placedByRecorded?: boolean;
+  placedAt?: string | null;
 }
 
 export interface VaultDoc {
