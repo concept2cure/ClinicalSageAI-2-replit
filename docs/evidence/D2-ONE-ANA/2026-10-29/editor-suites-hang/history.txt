@@ -1,0 +1,53 @@
+# History of the two lines involved. Read from GitHub (concept2cure/ClinicalSageAI-2-replit,
+# branch concept2cure-v2) with path-filtered commit lists and file reads at each sha. This clone is
+# shallow: c04ed02b and b513b53e are roots of it, so `git log -S` here stops at them.
+
+## client/src/concept2cure/v2/editor/authoringCurrentRead.ts, path history (newest first)
+b513b53e 2026-10-23 Preserve governed workflow reconciliation with October 21 canonical work
+8e51d2e2 2026-10-18 Remove warning growth in governed workflow delivery
+cc1607c3 2026-10-18 Complete governed authoring access and isolated project recall   (file created)
+
+At cc1607c3, unchanged since:
+  export function captureAuthoringSession() {
+    const account = authService.getUser();
+    const guard = authService.captureSessionReadGuard();
+    return { sameRevision: () => guard.sameRevision() && authService.getUser() === account };
+  }
+  ...
+    if (!current.current || current.current.actor !== actor || !current.current.sameRevision()) {
+      const guard = captureAuthoringSession();
+      current.current = { actor, key: (current.current?.key ?? 0) + 1, sameRevision: guard.sameRevision };
+    }
+
+## client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx, path history
+## (authoringAnaMarkdown.test.tsx and authoringAnaInsertGate.test.tsx list the same four at the top)
+67d96c06 2026-10-20 Complete audited launch handoffs and verified recovery safeguards
+ec57b551 2026-10-20 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+84b415e2 2026-10-19 Repair 39 client suites crashing on a stale authService mock
+0bf71a61 2026-10-13 Align editor sources and AnA with the canonical UI
+
+The authService mock at each:
+  84b415e2  vi.mock('@/services/portal/authService', () => ({
+              authService: { getUser: () => ({ id: 1, organizationId: 1 }) }, useAuth: () => ({ ... }) }));
+            (no captureSessionReadGuard: the read-session hook could not run)
+  ec57b551  vi.mock('@/services/portal/authService', async original => ({ ...await original<...>(),
+              useAuth: () => ({ ... }) }));
+            (real authService: getUser() is stably null)
+  67d96c06  authService: {
+              getUser: () => ({ id: 1, organizationId: 1 }),          <- a new object per call
+              captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+              on: actual.authService.on.bind(actual.authService),
+            },
+            (the hang: the identity-owned read session is reachable, and its account never matches)
+  HEAD      unchanged from 67d96c06 (in this clone the last commit shows as c04ed02b, a clone root)
+
+## A sibling from the same 67d96c06 batch: authoringClaimSurvivesRefusedSave.test.tsx
+  67d96c06  getUser: () => ({ id: 1, organizationId: 1 }),
+  b513b53e  getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),   <- one object, every call
+  18 suites carry the b513b53e form at HEAD; these three did not, until this change.
+
+## The record of the same cause
+docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-23/client-reconciliation/README.md:13
+  "The earlier 21 October client run was incomplete after a mock getter returned fresh account
+   objects; the retained fixture repairs match `AuthService.getUser()`'s stable account identity
+   and keep the session guard and all assertions."

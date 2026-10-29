@@ -1,0 +1,131 @@
+# Mutations. Each variant was copied over the file, run alone, then the fixed file was copied back
+# and checked with sha256sum -c (restored-ok after every run). Final git diff on the three files is
+# only the fix; canonicalAuthoringFlow.tsx and every product file are unchanged.
+
+## M1: re-introduce the cause only. The fixed file with its getUser line put back to
+##     getUser: () => ({ id: 1, organizationId: 1 }),   (the ?programId= path match is kept)
+##     Expected: the hang returns.
+### authoringConversationContext.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=692.172
+t=80s worker_rss_mb=1052.97
+t=120s worker_rss_mb=1155.2
+t=160s worker_rss_mb=1343.73
+t=200s worker_rss_mb=1845.87
+t=240s worker_rss_mb=0
+done after 240s
+restored-ok
+
+### authoringAnaMarkdown.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=906.695
+t=80s worker_rss_mb=926.199
+t=120s worker_rss_mb=1202.66
+t=160s worker_rss_mb=1566.63
+t=200s worker_rss_mb=1759.73
+t=240s worker_rss_mb=202.043
+done after 241s
+restored-ok
+
+### authoringAnaInsertGate.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+worker RSS:
+t=40s worker_rss_mb=683.895
+t=80s worker_rss_mb=885.949
+t=120s worker_rss_mb=1143.01
+t=160s worker_rss_mb=1542.36
+t=201s worker_rss_mb=1616.02
+t=241s worker_rss_mb=0
+done after 241s
+restored-ok
+
+## M2: the other layer. Stable getUser, but the exact-URL section mocks kept (no ?programId= match).
+##     Expected: no hang; the editor shows no sections and every test fails fast, honestly.
+### authoringConversationContext.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx
+ × authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > retains current saved section context when a phone ask hides the c
+ × authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > uses section B when its review replaces the initial section A hand
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)
+   Duration  14.54s (transform 3.05s, setup 116ms, import 3.73s, tests 10.15s, environment 351ms)
+EXIT 1
+### authoringAnaMarkdown.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaMarkdown.test.tsx
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders headings as headings and never shows the hashes 5092ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders emphasis as emphasis and never shows the asterisks 5034ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders bullet and ordered lists as lists 5066ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders inline code and fenced code without showing the backticks 5030m
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > renders a pipe table as a table 5039ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > builds React nodes — no raw HTML from the model is injected 5051ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > leaves the user’s own turn as plain text 5043ms
+ × authoringAnaMarkdown.test.tsx > AnA answers render as prose, not as markdown source > still shows the streaming status phase rather than an invented sentence
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed (8)
+   Duration  45.14s (transform 3.28s, setup 152ms, import 3.96s, tests 40.40s, environment 453ms)
+EXIT 1
+### authoringAnaInsertGate.test.tsx
+$ timeout 240 npx vitest run client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabl
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > a frozen document takes no insert, and the offer says so rather than
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > document view edits no section, so the offer says so instead of fail
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer cut off before it finished: disabled, whoever wrote it 504
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing c
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > an answer every model of which may write governed content is inserte
+ × authoringAnaInsertGate.test.tsx > the canonical insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a t
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed (7)
+   Duration  39.49s (transform 2.73s, setup 156ms, import 3.32s, tests 35.37s, environment 492ms)
+EXIT 1
+(each failure: 'Unable to find an element with the text: Section A' / 'General Information';
+ the DOM shows the saved document row and 'No sections yet in this document.')
+
+## Instrumented M1 (temporary, removed): the fresh-object getUser counts its calls and writes
+## synchronously to a scratch file, so it reports while the event loop is blocked.
+$ timeout 90 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx -t 'uses section B' --testTimeout=20000
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+EXIT 124
+probe log:
+Error: getUser call 20000
+    at Object.authService.getUser (client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx:18:122)
+    at captureAssemblyHeaders (client/src/concept2cure/v2/editor/assemblyBuildTransport.ts:85:44)
+    at headers (client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:42:14)
+    at Object.current [as authCurrent] (client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:45:33)
+    at controller (client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:258:60)
+    at client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:308:33
+    at useAuthoringAssemblyBuild (client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:309:10)
+    at DocumentWorkbench (client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:2228:20)
+getUser calls=200000 after 34798ms
+getUser calls=400000 after 65103ms
+
+## Product probe (temporary it, removed): stable account, the REAL auth guard, a real
+## authService.adoptSession('probe-token') held pending (fetch never answers /session), then one
+## click on section 3.2.S.2 in the workbench.
+$ timeout 75 npx vitest run client/src/concept2cure/v2/__tests__/authoringConversationContext.test.tsx -t 'PROBE pending adoption' --testTimeout=20000
+Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every rende
+ × authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > PROBE pending adoption 905ms
+   → Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent 
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:113:5
+ ❯ client/src/concept2cure/v2/surfaces/filingTarget.tsx:157:5
+      Tests  1 failed | 2 skipped (3)
+EXIT 1
+
+## Control for the product probe: identical, except /session answers 401, so adoptSession settles
+## (authRevision bumped, nothing pending) before the click.
+ ✓ authoringConversationContext.test.tsx > embedded asks carry the saved section that asked > PROBE pending adoption 1579ms
+      Tests  1 passed | 2 skipped (3)
+EXIT 0
+probe log:
+settled; apiRequest calls=15
+CONTROL adoption settled (user=null); clicking section B
+click returned; sections GETs since=2
+after 1s; sections GETs since=2
