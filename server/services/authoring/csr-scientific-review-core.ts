@@ -5,43 +5,23 @@
  */
 import { createHash } from 'node:crypto';
 
-export const CSR_SCIENTIFIC_REVIEW_FORMAT = 'c2c.csr-scientific-review.v1' as const;
-export const CSR_TABLE_KEYS = ['disposition', 'analysisPopulations', 'demographics',
-  'primaryEfficacy', 'secondaryEfficacy', 'exposure', 'aeOverallSummary', 'aeBySOC',
-  'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts'] as const;
-export type CsrTableKey = typeof CSR_TABLE_KEYS[number];
+/* The format, the table keys, the shapes and the exact numerical-display rule
+   are shared with the review screen that builds a map
+   (shared/authoring/csr-scientific-review.ts), so the screen never offers a
+   figure this verifier would refuse. Re-exported for this module's importers. */
+import {
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay,
+  type CsrTableKey, type RetainedScientificRun, type RetainedScientificTable,
+  type ScientificCellClaim, type ScientificReviewSubmission, type ScientificSectionReview,
+} from '../../../shared/authoring/csr-scientific-review.js';
+export { CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS };
+export type {
+  CsrTableKey, RetainedScientificRun, RetainedScientificTable,
+  ScientificCellClaim, ScientificReviewSubmission, ScientificSectionReview,
+};
 export interface ScientificReviewSnapshot {
   id: string;
   sections: ReadonlyArray<{ id: string; content: string | null }>;
-}
-export interface ScientificCellClaim {
-  id: string; start: number; end: number; quoteSha256: string;
-  runId: string; studyId: string; table: CsrTableKey; row: number; column: number;
-  expectedValue: string;
-}
-export interface ScientificSectionReview {
-  sectionId: string; contentSha256: string;
-  assessment: 'mapped-results' | 'no-quantitative-results';
-  rationale: string; claims: ScientificCellClaim[];
-}
-export interface ScientificReviewSubmission {
-  format: typeof CSR_SCIENTIFIC_REVIEW_FORMAT;
-  runIds: string[];
-  expectedTablesSha256: string;
-  allQuantitativeResultsMapped: true;
-  populationsMethodsUnitsReviewed: true;
-  sections: ScientificSectionReview[];
-}
-export interface RetainedScientificTable {
-  title: string; headers: string[]; rows: string[][];
-}
-export interface RetainedScientificRun {
-  runId: string; programId: string; releaseEligibilityVerified: boolean;
-  studies: Array<{
-    source: { documentId: string; sha256: string; version: string; studyId: string;
-      protocolNumber: string; clinicalVerification: 'not-established'; sourceApproval: 'canonical-lifecycle' };
-    tables: Partial<Record<CsrTableKey, RetainedScientificTable>>;
-  }>;
 }
 export interface ScientificReviewReceipt {
   format: typeof CSR_SCIENTIFIC_REVIEW_FORMAT;
@@ -68,20 +48,6 @@ const exactKeys = (v: Record<string, unknown>, keys: string[]) => Object.keys(v)
 const integer = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
 export const scientificSha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
 
-/** Do not accept a source cell of "190" merely because the draft says "1190".
- * This is exact display matching, not an NLP claim/estimand assessment. */
-function containsExactNumericalDisplay(quote: string, display: string): boolean {
-  for (let offset = quote.indexOf(display); offset !== -1; offset = quote.indexOf(display, offset + 1)) {
-    const left = offset > 0 ? quote[offset - 1] : '';
-    const right = quote[offset + display.length] ?? '';
-    const numericEdge = /[0-9.,%/]/;
-    const startsNumerically = /^[0-9.,%/]/.test(display);
-    const endsNumerically = /[0-9.,%/]$/.test(display);
-    if (!(startsNumerically && numericEdge.test(left)) &&
-        !(endsNumerically && /[0-9%/]/.test(right))) return true;
-  }
-  return false;
-}
 
 
 /** Canonical JSON for JSONB round trips. Undefined object properties are omitted. */

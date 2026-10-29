@@ -9,6 +9,7 @@ import {
   prepareScientificReviewReceipt, scientificTablesSha256,
   type RetainedScientificRun, type ScientificReviewReceipt,
 } from './csr-scientific-review-core.js';
+import { labelledCsr } from '../../../shared/authoring/csr-scientific-review.js';
 
 export interface CsrScientificReviewContext {
   tenantId: number; actorId: string; document: Record<string, unknown>;
@@ -71,7 +72,6 @@ function scope(input: CsrScientificReviewContext) {
   }
   return { organizationId: input.tenantId, programId, userId };
 }
-const labelledCsr = (value: unknown) => typeof value === 'string' && /(?:^|[^a-z0-9])(?:csr|clinical[ _-]+study[ _-]+report)(?:$|[^a-z0-9])/i.test(value);
 
 /** Stored identity wins over a caller's document-type selection. A retained
  * CSR origin or earlier scientific receipt keeps the requirement after rename.

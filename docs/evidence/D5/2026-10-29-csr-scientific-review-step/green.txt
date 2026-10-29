@@ -1,0 +1,81 @@
+# this change
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 354ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 192ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 233ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 67ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 73ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 12ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 34ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 85ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 147ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 13ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 36ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 55ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 343ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 68ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 35ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > uses the captured bearer and organization for the complete read and exact native verdict 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > permits a refreshed token for the same actor and pins it at dispatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses same-org actor swap before transport even before React rerenders 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses organization swap before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses missing claims before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses malformed token before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses missing bearer before reading the document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > retires an old actor response before exposing its saved document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses actor mismatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses organization mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses document mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses missing snapshot mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses malformed digest mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor -7 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 07 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 7.0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor true 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor null 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 2147483648 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps audit missing receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps audit false receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps actor receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps organization receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps document receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps request receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps round receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps hash receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps basis receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps verdict receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps snapshot receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps note receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps stale receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires reconciliation after HTTP408 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires reconciliation after HTTP503 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > shows a stale-content refusal without claiming rollback or allowing an unbound retry 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires meaningful grounds before a change request with  1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires meaningful grounds before a change request with short 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > finds each reported figure that is exactly a retained cell, with every cell it could be 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > never offers markup, or a figure inside a longer number ("12" in "10/12", "190" in "1190", "100" in a style) 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > a section with no matching figure offers none 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > WebCrypto and node:crypto agree on the same text 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > a confirmed map passes the server verifier, which checks every claim 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > an edited section after mapping is refused by the server, so a stale map cannot approve 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > undecided figures, missing statements, no mapped result and both attestations 4ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > a blank section is named: the server approves a CSR only when every section is written 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > locates submitToGateway (guards against the anchor moving) 2ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > never sets status to submitted 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > does not write a history reason claiming it reached the gateway 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > states plainly that nothing was transmitted 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > uses a status the CHECK constraint actually permits 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > still refuses to proceed on validation errors 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > the review board opens the decision dialog, so the properties below are the surface’s 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not attribute a signature to a hardcoded fixture identity 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not write the phantom C2C_SIGNED global 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not collect credentials it discards 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > never claims a §11.50 manifestation was recorded 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > says explicitly that a recorded decision is not an electronic signature 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > records the decision on the server and claims only what came back 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > points at the path that does perform a binding signature, and says truly how it verifies the signer 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > no longer labels the action as signing or sealing 1ms
+ Test Files  5 passed (5)
+      Tests  77 passed (77)
