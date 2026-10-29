@@ -28,11 +28,20 @@ const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !
 const cell = (v: unknown): AdamValue | undefined =>
   v === null || typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v)) ? v : undefined;
 
+/**
+ * Every row is a copy of one object holding every column, so all rows share a
+ * single fixed shape. Adding 40-odd keys to an empty object one at a time left
+ * V8 holding each row as a dictionary: a 34 MB XPT took about 270 MiB of heap
+ * (CDISC pilot defect D15, 2026-10-30). Column order and values are unchanged.
+ */
+const rowTemplate = (columns: string[]): AdamRow => Object.fromEntries(columns.map(c => [c, null]));
+
 function toRows(columns: string[], raw: unknown[]): AdamRow[] | null {
   const rows: AdamRow[] = [];
+  const template = rowTemplate(columns);
   for (const values of raw) {
     if (!Array.isArray(values) || values.length !== columns.length) return null;
-    const row: AdamRow = {};
+    const row: AdamRow = { ...template };
     for (let i = 0; i < columns.length; i++) {
       const value = cell(values[i]);
       if (value === undefined) return null;
@@ -105,9 +114,20 @@ export function ibmFloatToNumber(b: Buffer, at: number, length: number): number 
   return bytes[0] & 0x80 ? -magnitude : magnitude;
 }
 
-function decodeVariable(b: Buffer, at: number, v: XptVariable): AdamValue {
+/** Distinct character values kept per variable for sharing; past it, values are kept as decoded. */
+const INTERN_LIMIT = 4096;
+/**
+ * One character value, shared with every equal value of the same variable
+ * (CDISC pilot defect D15, 2026-10-30). A BDS dataset repeats a few values
+ * (PARAM, AVISIT, flags) on every row; holding one string per cell held each
+ * repetition separately. Equal strings are interchangeable, so no value changes.
+ */
+function decodeVariable(b: Buffer, at: number, v: XptVariable, interned: Map<string, string>): AdamValue {
   if (v.type === 'numeric') return ibmFloatToNumber(b, at, v.length);
   const text = b.toString('latin1', at, at + v.length).replace(/\s+$/, '');
+  const shared = interned.get(text);
+  if (shared !== undefined) return shared;
+  if (interned.size < INTERN_LIMIT) interned.set(text, text);
   return text;
 }
 
@@ -125,10 +145,12 @@ function readXpt(bytes: Buffer): AdamReadResult {
   if (obsAt < 0 || from + member.rowCount * obsLength > bytes.length) return { ok: false, reason: 'MALFORMED' };
   const columns = member.variables.map(v => v.name.toUpperCase());
   const rows: AdamRow[] = [];
+  const interned = member.variables.map(() => new Map<string, string>());
+  const template = rowTemplate(columns);
   for (let r = 0; r < member.rowCount; r++) {
-    const row: AdamRow = {};
+    const row: AdamRow = { ...template };
     let at = from + r * obsLength;
-    for (const v of member.variables) { row[v.name.toUpperCase()] = decodeVariable(bytes, at, v); at += v.length; }
+    member.variables.forEach((v, c) => { row[columns[c]] = decodeVariable(bytes, at, v, interned[c]); at += v.length; });
     rows.push(row);
   }
   return { ok: true, dataset: { name: member.name.toUpperCase(), format: 'xpt', columns, rows } };

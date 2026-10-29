@@ -37,7 +37,8 @@ const arm = z.object({ armId: id, armName: text, randomized: count,
   populations: z.object({ safety: count, itt: count, completed: count, mitt: count.optional(), perProtocol: count.optional() }).strict(),
 }).strict();
 const dispositionStatus = z.enum(['completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other']);
-const disposition = z.object({ subjectId: id, armId: id, status: dispositionStatus, reason: text.optional() }).strict();
+/** discontinuedForAdverseEvent: the subject-level record of withdrawal for an AE, present on every record when aeDiscontinuationBasis is 'subject'. */
+const disposition = z.object({ subjectId: id, armId: id, status: dispositionStatus, reason: text.optional(), discontinuedForAdverseEvent: z.boolean().optional() }).strict();
 const demographic = z.object({ subjectId: id, armId: id, age: finite.min(0).max(125), sex: z.enum(['M', 'F', 'Other']),
   race: text.optional(), ethnicity: text.optional(), weight: finite.positive().optional(), bmi: finite.positive().optional() }).strict();
 const interval = z.object({ lower: finite, upper: finite, level: text }).strict();
@@ -76,6 +77,8 @@ const CsrSourceEnvelopeFieldsSchema = z.object({
     /** Declared final-disposition categories: a declared category with no subject is a recorded 0; an undeclared, unused one is "not recorded". */
     dispositionCategories: z.array(dispositionStatus).min(1).max(6).optional(),
     dispositionBasis: z.enum(['end-of-study', 'end-of-treatment']).optional(),
+    /** Where AE discontinuation is recorded: per event (ledToDiscontinuation, the default) or per subject (disposition.discontinuedForAdverseEvent) when the study did not collect the action taken per event. */
+    aeDiscontinuationBasis: z.enum(['event', 'subject']).optional(),
     vitalSigns: z.array(vitalSign).max(maxRecords).optional(),
     concomitantMedications: z.array(concomitantMedication).max(maxRecords).optional() }).strict(),
 }).strict();
@@ -123,6 +126,19 @@ function validateDeclaredAndSubjectDomains(source: CsrSourceData, subjects: Map<
   });
 }
 
+/** CDISC pilot defect D2 (2026-10-30): AE discontinuation is recorded at one level only, and completely at that level. */
+function validateAeDiscontinuationBasis(source: CsrSourceData, subjects: Map<string, CsrSourceData['participants'][number]>, fail: ValidationFailure) {
+  const subjectLevel = source.studyData.aeDiscontinuationBasis === 'subject';
+  const records = source.studyData.disposition;
+  if (subjectLevel) {
+    if (records.some(r => typeof r.discontinuedForAdverseEvent !== 'boolean')) fail('A subject-level AE discontinuation basis requires the flag on every disposition record.');
+    if (records.some(r => r.discontinuedForAdverseEvent && !subjects.get(r.subjectId)?.safety)) fail('A subject recorded as discontinued for an AE must belong to the safety population.');
+    if (source.studyData.adverseEvents.some(e => e.ledToDiscontinuation !== undefined)) fail('A subject-level AE discontinuation basis cannot also carry event-level discontinuation flags.');
+  } else if (records.some(r => r.discontinuedForAdverseEvent !== undefined)) {
+    fail('Declare aeDiscontinuationBasis "subject" to record AE discontinuation on disposition records.');
+  }
+}
+
 export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine((source, ctx) => {
   const fail = (message: string, path: (string | number)[] = []) => ctx.addIssue({ code: z.ZodIssueCode.custom, message, path });
   if (source.studyInfo.protocolNumber !== source.studyData.protocolNumber) fail('Study information and observations must identify the same protocol.', ['studyInfo', 'protocolNumber']);
@@ -133,6 +149,7 @@ export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine
   source.participants.forEach(p => { if (!arms.has(p.armId)) fail('A participant names an unknown treatment arm.'); });
   validatePopulationCounts(source, arms, fail);
   validateDeclaredAndSubjectDomains(source, subjects, fail);
+  validateAeDiscontinuationBasis(source, subjects, fail);
   const randomized = source.participants.filter(p => p.randomized);
   if (randomized.length === 0) fail('This tabulation contract requires recorded randomized participants.');
   if (source.studyInfo.sampleSize !== undefined && source.studyInfo.sampleSize !== randomized.length) fail('Study sample size must match the randomized participant count.');
@@ -162,8 +179,9 @@ export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine
     if (r.comparatorArmId === r.armId) fail('An efficacy comparison cannot use its own arm as comparator.');
     if (r.ci && r.ci.lower > r.ci.upper) fail('Confidence interval bounds are reversed.');
     if (r.credibleInterval && r.credibleInterval.lower > r.credibleInterval.upper) fail('Credible interval bounds are reversed.');
-    const key = JSON.stringify([r.endpointName, r.endpointType, r.armId]);
-    if (endpoints.has(key)) fail('Duplicate efficacy endpoint result for an arm.');
+    // A pairwise result is keyed by its comparator too (2026-10-30, CDISC pilot): high vs placebo and high vs low are two results.
+    const key = JSON.stringify([r.endpointName, r.endpointType, r.armId, r.comparatorArmId ?? null]);
+    if (endpoints.has(key)) fail('Duplicate efficacy endpoint result for an arm and comparator.');
     endpoints.add(key);
   });
   if (!source.studyData.efficacy.some(r => r.endpointType === 'primary' && r.endpointName === source.studyInfo.primaryEndpoint)) fail('A recorded primary endpoint result must match study information.');
