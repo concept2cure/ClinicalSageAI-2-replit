@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../../db', () => ({pool:{query:async () => ({rows:[]})},getPool:()=>({query:async () => ({rows:[]})}),db:{}}));
 vi.mock('../../../lib/unified-ai-client', () => ({ai:null}));
-import { materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
+import { materializeCsrAssemblySource, materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
 import { getProtocolExport } from '../../protocol-export/protocol-export-service';
 import { savedImportSource, verifySavedWorkflowImport } from '../import-source-references';
 import { removeVisitTx, removeSoaAssessmentTx } from '../../protocol-development/protocol-development-service';
@@ -240,6 +240,27 @@ describe('stored CSR materialization',()=>{
     expect(queries.some(text=>/^\s*(INSERT|UPDATE|DELETE|LOCK)/i.test(text))).toBe(false);
     await database.exec("UPDATE users SET status='disabled' WHERE id=5");
     await expect(materializeWorkflowSource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({status:403});
+  });
+});
+
+// CSR slice 8 (2026-10-29): the assembler reads the job through the same checks as an import.
+describe('stored CSR assembly source',()=>{
+  beforeEach(async()=>{ await database.exec('ALTER TABLE csr_build_jobs ADD COLUMN IF NOT EXISTS source_run_id text'); });
+  it('returns the import’s verified sections and gaps with the job’s study, retained run and newest generation time',async()=>{
+    await database.exec("UPDATE csr_build_jobs SET source_run_id='run-1' WHERE id=1");
+    const imported=await materializeWorkflowSource(input({kind:'csr',jobId:1}),q);
+    const source=await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q);
+    expect(source).toMatchObject({jobId:1,studyId:'study-1',sourceRunId:'run-1',title:'Recorded CSR study',fingerprint:imported.fingerprint,sections:imported.sections,gaps:imported.gaps});
+    expect(source.lastGeneratedAt?.toISOString()).toBe('2026-10-01T12:00:00.000Z');
+  });
+  it('refuses through the import’s own checks: another actor, a forged hash, a non-CSR source',async()=>{
+    await expect(materializeCsrAssemblySource(input({kind:'csr',jobId:1},{userId:20}),q)).rejects.toMatchObject({status:403});
+    await database.exec("UPDATE csr_section_outputs SET content='Changed without matching retained hash' WHERE id=701");
+    await expect(materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_CSR_HASH_MISMATCH'});
+    await expect(materializeCsrAssemblySource(input({kind:'protocol',documentId:1}),q)).rejects.toMatchObject({code:'WORKFLOW_SOURCE_INVALID'});
+  });
+  it('reports a job with no retained run as such, never inventing one',async()=>{
+    expect((await materializeCsrAssemblySource(input({kind:'csr',jobId:1}),q)).sourceRunId).toBeNull();
   });
 });
 

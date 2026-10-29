@@ -1,0 +1,2 @@
+# Adversarial review re-run, 2026-10-29: NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
+exit 0

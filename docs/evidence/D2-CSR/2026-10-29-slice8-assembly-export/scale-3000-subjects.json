@@ -1,0 +1,55 @@
+{
+  "synthetic": "SYNTHETIC scale set — invented, not any study or patient",
+  "subjects": 3000,
+  "adverseEvents": 36000,
+  "labRecords": 216000,
+  "listings": [
+    {
+      "number": "16.2.1",
+      "rows": 174,
+      "pages": 6,
+      "verified": true
+    },
+    {
+      "number": "16.2.2",
+      "rows": 0,
+      "pages": 1,
+      "verified": true
+    },
+    {
+      "number": "16.2.3",
+      "rows": 74,
+      "pages": 3,
+      "verified": true
+    },
+    {
+      "number": "16.2.4",
+      "rows": 3000,
+      "pages": 167,
+      "verified": true
+    },
+    {
+      "number": "16.2.7",
+      "rows": 36000,
+      "pages": 1602,
+      "verified": true
+    },
+    {
+      "number": "16.2.8",
+      "rows": 216000,
+      "pages": 7449,
+      "verified": true
+    }
+  ],
+  "listingPages": 9228,
+  "totalPages": 9237,
+  "bytesWritten": 23760309,
+  "seconds": 79.9,
+  "heapBeforeMiB": 182,
+  "peakHeapMiB": 344,
+  "peakHeapGrowthMiB": 163,
+  "rssBeforeMiB": 295,
+  "peakRssMiB": 496,
+  "status": "complete",
+  "structureOk": true
+}
