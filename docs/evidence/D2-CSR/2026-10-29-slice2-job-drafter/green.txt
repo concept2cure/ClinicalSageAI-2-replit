@@ -1,0 +1,25 @@
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > carries every ICH_E3_GUIDANCE heading, in report order, and nothing else 14ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > uses E3's titles and nests each heading under its E3 parent 14ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > has no builder-invented synopsis or objectives children 4ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > records the E3 drafting mode on every heading 10ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > marks §1–§13 required 52ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > the CSR builder outline is ICH_E3_GUIDANCE > no longer exports the duplicate outline or a second section-number list 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a full build drafts every narrative heading that carries content, and no manual heading 15ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > a selected heading drafts its narrative subtree 8ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §3 by name 2ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §14.3.1 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §15 by name 1ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses manual §16.2.7 by name 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["99"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["2.1"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection ["5","5"] 0ms
+ ✓ server/services/__tests__/csr-builder-e3-outline.test.ts > drafting targets honour e3SectionDraftingMode > refuses an invalid selection [] 0ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses an AE percentage off by one, records why, then completes once the figure matches the cell 28ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a claim whose value is not the cell it names 7ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a figure stated with no claim at all 5ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > fails the job closed, drafting nothing, when the retained source no longer verifies 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses evidence retained for another protocol 4ms
+ ✓ server/services/csr/__tests__/csr-job-runner.evidence.test.ts > a run-bound CSR job drafts §12.2 over the retained tables > refuses a reply the gateway cannot attribute to a model 4ms
+      Tests  24 passed (24)

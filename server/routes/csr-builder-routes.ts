@@ -17,6 +17,9 @@ import {
   launchCSRBuild,
   getICHE3Structure,
   draftCSRSection,
+  flattenICHE3Sections,
+  csrSectionSelectionRefusal,
+  isDraftableE3Heading,
   compareWithExistingCSRs,
   analyzeCSRSafetySignals,
 } from '../services/csr-builder.js';
@@ -85,16 +88,10 @@ function parseJsonFromAIResponse(response: string): Record<string, unknown> | nu
 // Validation schemas
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ICH E3 valid section numbers
-const VALID_SECTION_NUMBERS = [
-  '1', '2', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '2.9', '2.10',
-  '3', '4', '5', '6', '7', '8', '8.1', '8.2',
-  '9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7',
-  '10', '10.1', '10.2', '11', '11.1', '11.2', '11.3', '11.4',
-  '12', '12.1', '12.2', '12.3', '12.4', '12.5', '13', '14', '15', '16',
-] as const;
-
-const validSectionSet = new Set<string>(VALID_SECTION_NUMBERS);
+// Section numbers are ICH_E3_GUIDANCE's, checked by the builder's one
+// selection rule (csrSectionSelectionRefusal). 2026-10-29: a hand-kept
+// VALID_SECTION_NUMBERS list (the builder's invented §2.1–2.10 and §8.x, no
+// §9.8 or §12.6) was deleted with the duplicate outline it mirrored.
 
 const studyInfoSchema = z.object({
   title: z.string().min(1).max(500),
@@ -115,14 +112,15 @@ const studyInfoSchema = z.object({
 const buildRequestSchema = z.object({
   projectId: z.number().int().positive().optional(),
   studyInfo: studyInfoSchema,
-  sectionsToGenerate: z.array(z.string()).max(50).optional().refine(
-    (sections) => !sections || sections.every(s => validSectionSet.has(s)),
-    { message: 'sectionsToGenerate contains invalid ICH E3 section numbers' }
+  sectionsToGenerate: z.array(z.string().max(16)).max(150).optional().refine(
+    (sections) => !csrSectionSelectionRefusal(sections),
+    { message: 'sectionsToGenerate must be unique ICH E3 section numbers that are drafted, not prepared from source (§3, §14–16)' }
   ),
 });
 
 const draftSectionSchema = z.object({
-  sectionNumber: z.enum(VALID_SECTION_NUMBERS),
+  sectionNumber: z.string().max(16).refine(isDraftableE3Heading,
+    { message: 'sectionNumber must be an ICH E3 heading the model drafts (a narrative heading with content of its own)' }),
   studyInfo: studyInfoSchema,
 });
 
@@ -177,10 +175,7 @@ router.get('/structure', (_req: Request, res: Response) => {
   res.json({
     success: true,
     structure,
-    totalSections: structure.reduce(
-      (count, s) => count + 1 + (s.childSections?.length || 0),
-      0
-    ),
+    totalSections: flattenICHE3Sections(structure).length,
   });
 });
 
@@ -192,7 +187,7 @@ router.post('/build', async (req: Request, res: Response) => {
   try {
     const validation = buildRequestSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { organizationId, userId } = getAuthContext(req);
@@ -230,7 +225,7 @@ router.post('/draft-section', async (req: Request, res: Response) => {
   try {
     const validation = draftSectionSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { sectionNumber, studyInfo } = validation.data;
@@ -257,7 +252,7 @@ router.post('/compare', async (req: Request, res: Response) => {
   try {
     const validation = compareSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { organizationId } = getAuthContext(req);
@@ -284,7 +279,7 @@ router.post('/safety-signals', async (req: Request, res: Response) => {
   try {
     const validation = safetySchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { drugName, indication } = validation.data;
@@ -312,7 +307,7 @@ router.post('/generate-narrative', async (req: Request, res: Response) => {
   try {
     const validation = narrativeSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { studyId, patientId, eventDescription, medicalHistory, concomitantMeds } = validation.data;
@@ -378,7 +373,7 @@ router.post('/analyze-benefit-risk', async (req: Request, res: Response) => {
   try {
     const validation = benefitRiskSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
+      return res.status(400).json({ error: 'Invalid request', details: validation.error.issues });
     }
 
     const { drugName, indication, efficacyData, safetyData } = validation.data;

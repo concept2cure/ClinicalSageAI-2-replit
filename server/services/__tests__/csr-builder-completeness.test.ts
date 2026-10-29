@@ -24,6 +24,10 @@
  *
  * Nested section selection is supported: selecting a child does not require
  * selecting its parent, and an invalid section code cannot produce 100%.
+ *
+ * 2026-10-29: the tree is ICH_E3_GUIDANCE (the builder's ICH_E3_STRUCTURE copy
+ * was deleted), so section numbers here are E3's own: ethics is drafted as
+ * §5.1–5.3, efficacy results as §11.4.1–11.4.7, deaths and SAEs as §12.3.x.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -54,8 +58,7 @@ import {
   generateCSRSections,
   hasUnresolvedPlaceholders,
   flattenICHE3Sections,
-  ICH_E3_STRUCTURE,
-  type CSRSection,
+  getICHE3Structure,
   type CSRBuildRequest,
 } from '../csr-builder';
 
@@ -131,10 +134,10 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       '[DATA TO BE INSERTED]\n\nThe primary endpoint was met/not met (p=[value]).'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s114 = flattenICHE3Sections(generated).find(s => s.number === '11.4')!;
+    const s114 = flattenICHE3Sections(generated).find(s => s.number === '11.4.1')!;
     expect(s114.status).toBe('needs_data');
     expect(s114.needsData).toBe(true);
     expect(s114.status).not.toBe('drafted');
@@ -144,10 +147,10 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       'The study was conducted in accordance with the Declaration of Helsinki and ICH GCP.'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5')!;
+    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
     expect(s5.status).toBe('drafted');
     expect(s5.needsData).toBeFalsy();
   });
@@ -161,20 +164,20 @@ describe('generateCSRSections — section status', () => {
     completeMock.mockResolvedValue(
       'A total of 312 deaths occurred during the study. 47 serious adverse events were reported.'
     );
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s123 = flattenICHE3Sections(generated).find(s => s.number === '12.3')!;
+    const s123 = flattenICHE3Sections(generated).find(s => s.number === '12.3.3')!;
     expect(s123.content).not.toContain('312');
     expect(s123.status).toBe('needs_data');
   });
 
   it('marks a section with no content "empty" (unchanged behavior)', async () => {
     completeMock.mockResolvedValue('');
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const sections = getICHE3Structure();
     const generated = await generateCSRSections(sections, makeRequest());
 
-    const s5 = generated.find(s => s.number === '5')!;
+    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5.2')!;
     expect(s5.status).toBe('empty');
   });
 });
@@ -186,12 +189,26 @@ describe('generateCSRSections — section status', () => {
 describe('targeted ICH E3 subsection drafting', () => {
   it('drafts a selected nested section without drafting its parent', async () => {
     completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
-    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
-    const generated = await generateCSRSections(sections, makeRequest({ sectionsToGenerate: ['11.4'] }));
+    const sections = getICHE3Structure();
+    const generated = await generateCSRSections(sections, makeRequest({ sectionsToGenerate: ['11.4.1'] }));
     const flat = flattenICHE3Sections(generated);
-    expect(flat.find(s => s.number === '11.4')?.content).toBeTruthy();
+    expect(flat.find(s => s.number === '11.4.1')?.content).toBeTruthy();
+    expect(flat.find(s => s.number === '11.4')?.content).toBeFalsy();
     expect(flat.find(s => s.number === '11')?.content).toBeFalsy();
-    expect(flat.find(s => s.number === '12.3')?.content).toBeFalsy();
+    expect(flat.find(s => s.number === '12.3.3')?.content).toBeFalsy();
+  });
+
+  it('drafts a selected bare parent through its children, never itself', async () => {
+    completeMock.mockResolvedValue('Reviewed, source-linked narrative draft.');
+    const flat = flattenICHE3Sections(await generateCSRSections(getICHE3Structure(), makeRequest({ sectionsToGenerate: ['5'] })));
+    expect(flat.find(s => s.number === '5')?.content).toBeFalsy();
+    for (const n of ['5.1', '5.2', '5.3']) expect(flat.find(s => s.number === n)?.content).toBeTruthy();
+  });
+
+  it('refuses a manual heading by name before billing', async () => {
+    await expect(launchCSRBuild(makeRequest({ sectionsToGenerate: ['16'] })))
+      .rejects.toThrow('CSR_SECTION_MANUAL');
+    expect(checkQuotaMock).not.toHaveBeenCalled();
   });
 
   it('does not call a nonexistent section complete', async () => {
@@ -256,7 +273,7 @@ describe('launchCSRBuild — job status/progress (fail closed)', () => {
 
     // Restrict to top-level, childless section numbers so the
     // sectionsToGenerate filter behaves simply (see file header note).
-    const request = makeRequest({ sectionsToGenerate: ['1', '5', '7'] });
+    const request = makeRequest({ sectionsToGenerate: ['1', '5.2', '7'] });
     const job = await launchCSRBuild(request);
 
     expect(job.status).toBe('complete');
@@ -278,13 +295,13 @@ describe('launchCSRBuild — job status/progress (fail closed)', () => {
       const userMsg = msgs.find(m => m.role === 'user')?.content ?? '';
       // §5 (Ethics) drafts clean; §7 (Introduction) still needs real
       // numbers — mirrors a realistic partially-complete CSR.
-      if (userMsg.includes('Section 5:')) {
+      if (userMsg.includes('Section 5.2:')) {
         return 'This study was conducted in accordance with ICH/GCP; IRB approval was obtained at all sites.';
       }
       return '[DATA TO BE INSERTED]\n\n[N] deaths occurred during the study.';
     });
 
-    const request = makeRequest({ sectionsToGenerate: ['5', '7'] });
+    const request = makeRequest({ sectionsToGenerate: ['5.2', '7'] });
     const job = await launchCSRBuild(request);
 
     expect(job.status).toBe('needs_data');

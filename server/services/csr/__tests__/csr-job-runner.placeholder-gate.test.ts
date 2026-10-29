@@ -270,8 +270,12 @@ describe('runCSRBuildJob — retained target selections and progress', () => {
     draftMock.mockImplementation(async (section: { number: string }) => sectionDraft(section.number, 'Source-prepared working text.'));
     await runCSRBuildJob(42);
     expect(fake.job).toMatchObject({ status: 'complete', progress: 100, error: null });
-    expect(draftMock.mock.calls.map(call => (call[0] as { number: string }).number)).toEqual(expect.arrayContaining(['1', '6', '13', '16']));
-    expect(fake.persisted.length).toBeGreaterThan(16);
+    // The whole report is every draftable ICH_E3_GUIDANCE heading; §3 and
+    // §14–16 are prepared from source and are never model drafting targets.
+    const drafted = draftMock.mock.calls.map(call => (call[0] as { number: string }).number);
+    expect(drafted).toEqual(expect.arrayContaining(['1', '6', '13', '11.4.1', '12.2.1', '12.6']));
+    expect(drafted.some(n => n === '3' || /^(14|15|16)(\.|$)/.test(n))).toBe(false);
+    expect(fake.persisted.length).toBeGreaterThan(60);
     expect(progressValues().every(value => typeof value === 'number' && value >= 0 && value <= 100)).toBe(true);
     expect(continueMock).toHaveBeenCalledExactlyOnceWith(42, 1);
   });

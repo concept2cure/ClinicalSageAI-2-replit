@@ -5,7 +5,8 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ database: null as unknown, sections: vi.fn(async () => [{ sectionNumber: '11' }]) }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
-vi.mock('../../services/csr-builder.js', () => ({ getICHE3Structure: () => [{ number: '11', title: 'Efficacy Results', required: true }] }));
+vi.mock('../../services/csr-builder.js', () => ({ getICHE3Structure: () => [{ number: '11', title: 'Efficacy Results', required: true }],
+  flattenICHE3Sections: (sections: Array<{ childSections?: unknown[] }>) => sections }));
 vi.mock('../../services/csr/csr-job-runner.js', () => ({ getCSRSectionOutputs: h.sections }));
 import createCsrWorkflowRoutes from '../csr-workflow-routes';
 const PROGRAM = '11111111-2222-4333-8444-000000000011';

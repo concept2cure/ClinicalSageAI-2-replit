@@ -17,9 +17,11 @@ vi.mock('../project-scope', () => ({ resolveCsrScope: async () => ({ projectId: 
 const { completeMock } = vi.hoisted(() => ({
   completeMock: vi.fn(async (_messages: unknown, _options?: unknown) => ''),
 }));
+// The provenance drafter reads the gateway's full reply (content + served model).
+const chat = async (messages: unknown, options?: unknown) => ({ content: await completeMock(messages, options), model: 'test-model', usage: { totalTokens: 7 } });
 vi.mock('../../../lib/unified-ai-client.js', () => ({
-  ai: { complete: completeMock },
-  default: { complete: completeMock },
+  ai: { complete: completeMock, chat },
+  default: { complete: completeMock, chat },
 }));
 vi.mock('../../usage-metering.js', () => ({
   checkQuota: vi.fn(async () => ({ allowed: true, remaining: 10, limit: 10 })),
@@ -44,7 +46,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { findUnsuppliedStatistics, isStatisticalSection } from '../unsupplied-statistics';
+import { findUnclaimedNumbers, findUnsuppliedStatistics, isStatisticalSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -62,10 +64,23 @@ const STUDY: CSRBuildRequest['studyInfo'] = {
 } as CSRBuildRequest['studyInfo'];
 
 function section(number: string): CSRSection {
-  return { number, title: 'T', required: true, description: 'D', content: '', status: 'empty' } as CSRSection;
+  return { number, title: 'T', required: true, description: 'D', draftingMode: 'narrative', content: '', status: 'empty' } as CSRSection;
 }
 
 const request = { organizationId: 1, userId: 1, studyInfo: STUDY } as CSRBuildRequest;
+
+describe('findUnclaimedNumbers (evidence-bound sections)', () => {
+  const known = { claimed: ['12 (10.5%)', '114'] };
+  it('passes claimed numbers and cross-references to report parts', () => {
+    expect(findUnclaimedNumbers('12 of 114 patients (10.5%); see Table 14.3.1, Listing 16.2.7, §12.2.1 and ICH E3.', known)).toEqual([]);
+  });
+  it('refuses any other number, however it is written', () => {
+    expect(findUnclaimedNumbers('13 of 114 patients; 11.5 percent; 1,250 events', known).map(f => f.text)).toEqual(['13', '11.5', '1250']);
+  });
+  it('does not let a reference word hide a percentage', () => {
+    expect(findUnclaimedNumbers('section 11.5% of patients', known).map(f => f.text)).toEqual(['11.5']);
+  });
+});
 
 describe('findUnsuppliedStatistics', () => {
   it('finds each kind of figure a model could invent', () => {
@@ -98,11 +113,13 @@ describe('findUnsuppliedStatistics', () => {
 describe('draftCSRSectionWithProvenance', () => {
   beforeEach(() => completeMock.mockReset());
 
+  // Since 2026-10-29 the builder drafts E3's own headings: §11.4 through
+  // §11.4.1–11.4.7, ethics through §5.1–5.3, §9.7 through §9.7.1–9.7.2.
   it('does not store a §11.4 model draft that states results nobody supplied', async () => {
     completeMock.mockResolvedValueOnce(
       'EFFICACY RESULTS\nThe primary endpoint was met: Drug X reduced the score by 4.2 points versus placebo (p<0.001; 95% CI 2.9 to 5.5).',
     );
-    const drafted = await draftCSRSectionWithProvenance(section('11.4'), request);
+    const drafted = await draftCSRSectionWithProvenance(section('11.4.1'), request);
 
     expect(drafted.source).toBe('template');
     expect(drafted.content).toContain('[DATA TO BE INSERTED]');
@@ -112,19 +129,21 @@ describe('draftCSRSectionWithProvenance', () => {
 
   it('keeps a model draft of a statistical section that states nothing unsupplied', async () => {
     completeMock.mockResolvedValueOnce('EFFICACY RESULTS\n[DATA TO BE INSERTED] for the primary endpoint in the 300 planned subjects.');
-    const drafted = await draftCSRSectionWithProvenance(section('11.4'), request);
+    const drafted = await draftCSRSectionWithProvenance(section('11.4.1'), request);
     expect(drafted.source).toBe('ai');
+    // The served model and token cost are the gateway's, not null and 0.
+    expect(drafted).toMatchObject({ model: 'test-model', tokenCost: 7 });
   });
 
   it('does not apply the guard to a non-statistical section', async () => {
     completeMock.mockResolvedValueOnce('ETHICS\nThe study was approved by 12 IRBs.');
-    const drafted = await draftCSRSectionWithProvenance(section('5'), request);
+    const drafted = await draftCSRSectionWithProvenance(section('5.1'), request);
     expect(drafted.source).toBe('ai');
   });
 
   it('the §9.7 template no longer asserts an analysis population or alpha nobody supplied', async () => {
     completeMock.mockResolvedValueOnce('');
-    const drafted = await draftCSRSectionWithProvenance(section('9.7'), request);
+    const drafted = await draftCSRSectionWithProvenance(section('9.7.1'), request);
     expect(drafted.source).toBe('template');
     expect(drafted.content).not.toMatch(/intent-to-treat|0\.05|finalized prior to database lock/i);
     expect(drafted.content).toContain('[DATA TO BE INSERTED FROM THE SAP]');

@@ -104,6 +104,8 @@ function rowToCSRSection(row: CsrSectionOutput): CSRSection {
     title: '', // Title is intentionally not denormalized in csr_section_outputs; downstream uses sectionNumber.
     required: true,
     description: '',
+    // A saved job output is a model-drafted heading; manual headings are never job outputs.
+    draftingMode: 'narrative',
     content: row.content,
     status: 'drafted',
   };

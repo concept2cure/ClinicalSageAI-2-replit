@@ -5,7 +5,7 @@ import type { CSRBuildRequest } from '../../csr-builder';
 
 const state = vi.hoisted(() => ({ database: null as unknown }));
 vi.mock('../../../db', () => ({ get db() { return state.database; } }));
-vi.mock('../../csr-builder', () => ({ ICH_E3_STRUCTURE: [], draftCSRSectionWithProvenance: vi.fn(), flattenICHE3Sections: () => [], hasUnresolvedPlaceholders: () => false }));
+vi.mock('../../csr-builder', () => ({ csrSectionSelectionRefusal: () => null, resolveCSRDraftTargets: () => [], draftCSRSectionWithProvenance: vi.fn(), hasUnresolvedPlaceholders: () => false }));
 import { enqueueCSRBuildJob } from '../csr-job-runner';
 import { resolveCsrScope } from '../project-scope';
 
