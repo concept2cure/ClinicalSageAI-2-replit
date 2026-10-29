@@ -11,9 +11,16 @@
  */
 
 export const CSR_SCIENTIFIC_REVIEW_FORMAT = 'c2c.csr-scientific-review.v1' as const;
+/** Every table the CSR engine builds, by key: the one list. The server's CSR
+ * evidence (server/services/csr/cortex-authoring-context.ts) re-exports it. The
+ * last two are built only when the source supplies them (CSR slice 6: ADVS/ADEG,
+ * ADCM). Until 2026-10-29 the server kept its own copy with them and this one
+ * had neither, so the review screen offered no vital-sign or con-med cell and
+ * the verifier refused a claim naming either table. Order matters: the tables
+ * hash (scientificTablesSha256) walks the keys in this order. */
 export const CSR_TABLE_KEYS = ['disposition', 'analysisPopulations', 'demographics',
   'primaryEfficacy', 'secondaryEfficacy', 'exposure', 'aeOverallSummary', 'aeBySOC',
-  'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts'] as const;
+  'aeTopPT', 'deathsSAEsDiscontinuations', 'labShifts', 'vitalSigns', 'concomitantMedications'] as const;
 export type CsrTableKey = typeof CSR_TABLE_KEYS[number];
 
 export interface ScientificCellClaim {
