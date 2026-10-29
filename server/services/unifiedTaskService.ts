@@ -10,6 +10,7 @@ import { db } from '../db';
 import { eq, and, or, ne, sql, isNull } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
+import { refuseRouteColumnsInInput, refuseRouteTaskWrite } from './tasking/task-state-machine';
 
 /**
  * Where a write runs: the db, or a caller's Drizzle transaction. A route that
@@ -155,6 +156,9 @@ class UnifiedTaskService {
     input: UnifiedTaskInput,
     runner: TaskWriteRunner = this.getDb()
   ): Promise<schema.UnifiedTask> {
+    // A route member is written only by the review route (RR1a, M9): input
+    // naming a route column creates nothing, whichever caller passed it.
+    refuseRouteColumnsInInput(input, 'task.create');
     const taskId = generateUUID();
     const moduleConfig = MODULE_CONFIG[input.moduleType];
 
@@ -321,6 +325,10 @@ class UnifiedTaskService {
     if (!sourceTask) return null;
     const [targetTask] = await lockLive(input.targetTaskId);
     if (!targetTask) return null;
+    // Either end a route member, read under its lock: refused before the link
+    // is written (RR1a, B1). The route opens its own steps.
+    refuseRouteTaskWrite(sourceTask, 'task.link');
+    refuseRouteTaskWrite(targetTask, 'task.link');
 
     // Create the link (tenant-stamped from the validated source task, D20)
     const link = await runner

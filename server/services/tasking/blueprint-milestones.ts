@@ -19,6 +19,7 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import { auditTaskAction, TaskAuditNotRecordedError } from './task-audit.js';
+import { refuseRouteColumnsInInput } from './task-state-machine.js';
 
 export interface BlueprintMilestone {
   id: string;
@@ -49,6 +50,9 @@ export const blueprintMilestoneTaskId = (projectId: number, milestoneId: string)
 export async function seedBlueprintMilestones(input: SeedBlueprintMilestonesInput): Promise<string[]> {
   const { organizationId, projectId, userId, registryId, milestones } = input;
   if (milestones.length === 0) return [];
+  // A blueprint never seeds a review route member (RR1a, M9): refused before
+  // a connection is taken, so nothing is seeded.
+  for (const milestone of milestones) refuseRouteColumnsInInput(milestone, 'blueprint.milestone');
 
   const client = (await pool.connect()) as PoolClient;
   try {

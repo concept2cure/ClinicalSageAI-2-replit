@@ -159,6 +159,8 @@ beforeAll(async () => {
       'db/migrations/20260813_audit_tamper_proof_log.sql',
       // unified_tasks.deleted_at, which the verdict's task lookup reads.
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      // The review route columns the Drizzle model names (RR1a).
+      'migrations/20261023_review_routes.sql',
     ],
     testOnlySql: `
       INSERT INTO users (id, name, email) VALUES

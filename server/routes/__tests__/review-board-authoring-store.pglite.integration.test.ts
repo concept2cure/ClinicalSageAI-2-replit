@@ -176,6 +176,8 @@ beforeAll(async () => {
       'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
       'db/migrations/20260807_task_graph_org_columns.sql',
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      // The review route columns the Drizzle model names (RR1a).
+      'migrations/20261023_review_routes.sql',
     ],
   });
   h.db = jdb.db;

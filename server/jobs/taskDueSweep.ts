@@ -193,6 +193,10 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
         .where(
           and(
             inArray(unifiedTasks.status, ['pending', 'in-progress', 'review', 'blocked']),
+            // A blocked review route member is waiting for an earlier step and
+            // cannot act: it is not reminded (RR1a, B11). Its step opening
+            // moves it to pending, and it is reminded from then.
+            sql`NOT (${unifiedTasks.status} = 'blocked' AND ${unifiedTasks.reviewRouteId} IS NOT NULL)`,
             isNull(unifiedTasks.deletedAt),
             isNotNull(unifiedTasks.assigneeId),
             isNotNull(unifiedTasks.dueDate),

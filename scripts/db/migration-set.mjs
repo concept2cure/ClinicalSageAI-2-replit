@@ -3532,6 +3532,18 @@ export const C2C_MIGRATION_FILES = [
   // exact source identity/content and never overwrites an existing source.
   'migrations/20261027_cdi_public_reference_seed.sql',
 
+  // Review routes (2026-10-23, D2, slice RR1a of
+  // docs/design/REVIEW_ROUTING_2026-10-23.md): public.review_routes (a route's
+  // header) and five route columns on unified_tasks, with the
+  // unified_tasks_route_rows_guard trigger that refuses any write to a route
+  // row's status, assignee, archive, blockers, due date, dependencies or route
+  // columns unless the transaction set c2c.review_route_writer (only
+  // server/services/review/review-route.ts does). Public with organization_id
+  // INTEGER NOT NULL, so the sweep below polices it; named constraints, each
+  // added only when absent; the only DROP is DROP TRIGGER IF EXISTS of its own
+  // triggers, re-created at once. After unified_tasks, task_dependencies and
+  // cross_module_task_links (base schema). Drops nothing the set creates.
+  'migrations/20261023_review_routes.sql',
   // An HFE/UE file names its project, by key (D2, 2026-10-29): hf_engineering_files
   // .program_id UUID, nullable (existing files stay the organization's unscoped
   // files), held to the file's organization by a NOT VALID composite key (ON

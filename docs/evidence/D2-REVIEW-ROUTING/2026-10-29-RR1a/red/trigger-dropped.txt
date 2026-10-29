@@ -1,0 +1,442 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s status 24ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s assignee 13ms
+   → expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'new row for relation "unified_tasks" …'
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s archive 23ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s blockers 5ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s due date 4ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s dependencies 4ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s route columns 4ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a DELETE of a route row 6ms
+   → promise resolved "Result{ command: 'DELETE', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT naming a route column 5ms
+   → promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into task_dependencies naming a route member 3ms
+   → expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'insert or update on table "task_depen…'
+ × tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into cross_module_task_links naming a route member 2ms
+   → expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'insert or update on table "cross_modu…'
+ × tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker) 2ms
+   → Cannot read properties of undefined (reading 'metadata')
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member 4ms
+ × tests/db/review-route-guard.dbtest.ts > what the guard admits > the route writer’s own transaction 3ms
+   → Cannot read properties of undefined (reading 'status')
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s status
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s archive
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s blockers
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s due date
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s dependencies
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s route columns
+AssertionError: promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "UPDATE",
++   "fields": [],
++   "oid": null,
++   "rowAsArray": false,
++   "rowCount": 1,
++   "rows": [],
+  }
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:106:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a raw UPDATE of a route row’s assignee
+AssertionError: expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'new row for relation "unified_tasks" …'
+
+- Expected:
+/ROUTE_TASK_OWNED_BY_ROUTE/
+
++ Received:
+"new row for relation \"unified_tasks\" violates check constraint \"unified_tasks_route_task_assignee\""
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:106:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > a DELETE of a route row
+AssertionError: promise resolved "Result{ command: 'DELETE', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "DELETE",
++   "fields": [],
++   "oid": null,
++   "rowAsArray": false,
++   "rowCount": 1,
++   "rows": [],
+  }
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:111:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT naming a route column
+AssertionError: promise resolved "Result{ command: 'INSERT', …(9) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ Result {
++   "RowCtor": null,
++   "_parsers": undefined,
++   "_prebuiltEmptyResultObject": null,
++   "_types": TypeOverrides {
++     "_types": {
++       "arrayParser": {
++         "create": [Function create],
++       },
++       "builtins": {
++         "ABSTIME": 702,
++         "ACLITEM": 1033,
++         "BIT": 1560,
++         "BOOL": 16,
++         "BPCHAR": 1042,
++         "BYTEA": 17,
++         "CHAR": 18,
++         "CID": 29,
++         "CIDR": 650,
++         "CIRCLE": 718,
++         "DATE": 1082,
++         "FLOAT4": 700,
++         "FLOAT8": 701,
++         "GTSVECTOR": 3642,
++         "INET": 869,
++         "INT2": 21,
++         "INT4": 23,
++         "INT8": 20,
++         "INTERVAL": 1186,
++         "JSON": 114,
++         "JSONB": 3802,
++         "MACADDR": 829,
++         "MACADDR8": 774,
++         "MONEY": 790,
++         "NUMERIC": 1700,
++         "OID": 26,
++         "PATH": 602,
++         "PG_DEPENDENCIES": 3402,
++         "PG_LSN": 3220,
++         "PG_NDISTINCT": 3361,
++         "PG_NODE_TREE": 194,
++         "POLYGON": 604,
++         "REFCURSOR": 1790,
++         "REGCLASS": 2205,
++         "REGCONFIG": 3734,
++         "REGDICTIONARY": 3769,
++         "REGNAMESPACE": 4089,
++         "REGOPER": 2203,
++         "REGOPERATOR": 2204,
++         "REGPROC": 24,
++         "REGPROCEDURE": 2202,
++         "REGROLE": 4096,
++         "REGTYPE": 2206,
++         "RELTIME": 703,
++         "SMGR": 210,
++         "TEXT": 25,
++         "TID": 27,
++         "TIME": 1083,
++         "TIMESTAMP": 1114,
++         "TIMESTAMPTZ": 1184,
++         "TIMETZ": 1266,
++         "TINTERVAL": 704,
++         "TSQUERY": 3615,
++         "TSVECTOR": 3614,
++         "TXID_SNAPSHOT": 2970,
++         "UUID": 2950,
++         "VARBIT": 1562,
++         "VARCHAR": 1043,
++         "XID": 28,
++         "XML": 142,
++       },
++       "getTypeParser": [Function getTypeParser],
++       "setTypeParser": [Function setTypeParser],
++     },
++     "binary": {},
++     "text": {},
++   },
++   "command": "INSERT",
++   "fields": [],
++   "oid": 0,
++   "rowAsArray": false,
++   "rowCount": 1,
++   "rows": [],
+  }
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:116:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into task_dependencies naming a route member
+AssertionError: expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'insert or update on table "task_depen…'
+
+- Expected:
+/ROUTE_TASK_OWNED_BY_ROUTE/
+
++ Received:
+"insert or update on table \"task_dependencies\" violates foreign key constraint \"task_dependencies_successor_task_id_unified_tasks_task_id_fk\""
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:126:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the app role without the route writer > an INSERT into cross_module_task_links naming a route member
+AssertionError: expected [Function] to throw error matching /ROUTE_TASK_OWNED_BY_ROUTE/ but got 'insert or update on table "cross_modu…'
+
+- Expected:
+/ROUTE_TASK_OWNED_BY_ROUTE/
+
++ Received:
+"insert or update on table \"cross_module_task_links\" violates foreign key constraint \"cross_module_task_links_target_task_id_unified_tasks_task_id_fk\""
+
+ ❯ refusedBy tests/db/review-route-guard.dbtest.ts:58:17
+     56|
+     57| const refusedBy = async (p: Promise<unknown>) => {
+     58|   await expect(p).rejects.toThrow(/ROUTE_TASK_OWNED_BY_ROUTE/);
+       |                 ^
+     59| };
+     60| const routeRow = async (taskId: string) =>
+ ❯ tests/db/review-route-guard.dbtest.ts:126:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker)
+TypeError: Cannot read properties of undefined (reading 'metadata')
+ ❯ tests/db/review-route-guard.dbtest.ts:134:41
+    132|     await asTenant(org, (c) => c.query(
+    133|       `UPDATE unified_tasks SET metadata = '{"dueSoonNotifiedAt":"2026…
+    134|     expect((await routeRow(`${RUN}-R`)).metadata).toEqual({ dueSoonNot…
+       |                                         ^
+    135|   });
+    136|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  tests/db/review-route-guard.dbtest.ts > what the guard admits > the route writer’s own transaction
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ tests/db/review-route-guard.dbtest.ts:144:41
+    142|   it('the route writer’s own transaction', async () => {
+    143|     await asTenant(org, (c) => c.query(`UPDATE unified_tasks SET statu…
+    144|     expect((await routeRow(`${RUN}-R`)).status).toBe('completed');
+       |                                         ^
+    145|   });
+    146| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 3 passed (16)
+   Start at  05:06:00
+   Duration  847ms (transform 93ms, setup 104ms, import 50ms, tests 186ms, environment 0ms)
+
