@@ -1,0 +1,23 @@
+Baseline: working tree over ceea6843, before this slice changed anything. Each file run alone:
+timeout 240 npx vitest run --config vitest.config.ts <file>
+
+server/services/ana/__tests__/tool-record-scope.test.ts                  Tests  18 passed (18)
+server/services/ana/__tests__/confirmed-write-role-gate.test.ts          Tests  9 passed (9)
+server/services/ana/__tests__/tool-selection.test.ts                     Tests  17 passed (17)
+server/__tests__/routes/device-project-writes-admit-program.test.ts      Tests  39 passed (39)
+server/__tests__/routes/device-project-reads-admit-program.test.ts       Tests  20 passed (20)
+server/routes/__tests__/labeling-translations-shape.test.ts              Tests  3 passed (3)
+tests/mdx-qms-labeling-search-analytics-routes.test.ts                   Tests  28 passed (28)
+
+Not in the keep-green set. It fails at head, before any change here:
+server/middleware/__tests__/launch-scope-api-gate.test.ts                Tests  5 failed | 38 passed (43)
+  × the real registry, launch scope on > judges a path as Express routes it, whatever its letter case
+  × the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there
+  × the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads
+  × the real registry, launch scope on > refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call
+  × the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects
+  Each asserts a launch-scope verdict for a path (/api/mdx/risk-items, ESG transmit, eSTAR, predicate-intel). None
+  names a labeling route or either AnA tool, and this slice changes nothing they import.
+
+npm run -s ci:program-ownership-single-source   OK
+npm run -s ci:sql-interpolation                OK (1066 baselined, unchanged)

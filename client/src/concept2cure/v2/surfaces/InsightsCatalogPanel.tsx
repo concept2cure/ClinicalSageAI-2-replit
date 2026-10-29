@@ -57,6 +57,23 @@ function runControlTitle(canRun: boolean, unavailableReason?: string): string | 
   return unavailableReason || (canRun ? undefined : 'Running a governed report needs an editor role');
 }
 
+/**
+ * The catalog card's statement that a type's counts are the organization's
+ * records, not the selected project's. Read from the server's `computedScope`
+ * only. The same words go on the card, on a pack tile and on a report's scope
+ * line (Insights.tsx), so an organization's counts are never headed by a
+ * project's name with nothing to say so (D2, 2026-10-29).
+ */
+export const ORGANIZATION_WIDE_RECORDS = 'Organization-wide records';
+export const COUNTS_NOT_NARROWED = 'Counts are not narrowed to the selected project.';
+
+export function OrganizationCountsNote({ className }: { className: string }) {
+  return <>
+    <div className={className}>{ORGANIZATION_WIDE_RECORDS}</div>
+    <div className={className}>{COUNTS_NOT_NARROWED}</div>
+  </>;
+}
+
 function RunUnavailableNote({ reason }: { reason?: string }) {
   if (!reason) return null;
   return <div className="rl-card-meta">{reason}</div>;
@@ -88,8 +105,7 @@ function TypeCard({
             ? `Declared for: ${type.scopes.join(', ')}`
             : 'Scope not declared'}
       </div>
-      {type.computedScope === 'organization' && <div className="rl-card-meta">Organization-wide records</div>}
-      {type.computedScope === 'organization' && <div className="rl-card-meta">Counts are not narrowed to the selected project.</div>}
+      {type.computedScope === 'organization' && <OrganizationCountsNote className="rl-card-meta" />}
       {(type.region || type.allowedPersonas?.length) && <div className="rl-card-meta">{[type.region, type.allowedPersonas?.map(readable).join(', ')].filter(Boolean).join(' · ')}</div>}
       {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
       {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}

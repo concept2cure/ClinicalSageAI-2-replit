@@ -10,11 +10,15 @@ export function lifecycleCalendarOf(domain: Record<string, unknown> | undefined)
   if (value.schemaVersion !== 1 || typeof value.observedAt !== 'string' || !['obligations', 'events', 'gaps', 'limits'].every(key => Array.isArray(value[key])) || !value.obligationSummary || !value.eventSummary) throw new Error('Unsupported or incomplete recorded lifecycle calendar.');
   return calendar as LifecycleCalendar;
 }
-export function renderLifecycleCalendar(calendar: LifecycleCalendar, provenance: InsightAtomRef[]): ReportSection[] {
+/** `scopeStatement` is the register's organisation sentence when the run's computed
+ *  scope is the organisation (render.ts). It goes first: under an open project the
+ *  rows include every admitted project's obligations. */
+export function renderLifecycleCalendar(calendar: LifecycleCalendar, provenance: InsightAtomRef[], scopeStatement: string | null = null): ReportSection[] {
   const table = (columns: string[], rows: Array<Array<string | number | null>>): ReportBlock => ({ kind: 'table', columns, rows, provenance });
   const counts = (summary: LifecycleCalendar['obligationSummary']) => table(['Date standing', 'Recorded rows'], Object.entries(summary).map(([key, value]) => [key, value]));
   return [
     { id: 'lifecycle-obligations', title: 'Recorded obligation calendar', blocks: [
+      ...(scopeStatement ? [{ kind: 'summary' as const, text: scopeStatement }] : []),
       { kind: 'summary', text: `Admitted recorded lifecycle dates observed at ${calendar.observedAt}. Unknown dates remain unknown; legal applicability and completeness are not assessed.` },
       counts(calendar.obligationSummary),
       table(['Obligation ID', 'Product ID', 'Product', 'Submission ID', 'Project ID', 'Region', 'Type', 'Classification', 'Title', 'Recorded status', 'Due date', 'Submitted date', 'Recurrence months', 'Date standing'], calendar.obligations.map(row => [row.id, row.product_id, row.product_name, row.submission_id, row.project_id, row.region, row.obligation_type, row.classification, row.title, row.status, row.due_date, row.submitted_date, row.recurrence_months, row.urgency])),

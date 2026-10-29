@@ -1,0 +1,27 @@
+# item 1 red at head bbe7971e: insightsLabelCurrencyMatrix.test.tsx
+ × client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx > existing Insights matrix run > runs the catalog type and preserves nullable columns, recorded values and explicit unknown currency in the UI 241ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', '/api/users/me/persona' ]
+Received:
+ FAIL  client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx > existing Insights matrix run > runs the catalog type and preserves nullable columns, recorded values and explicit unknown currency in the UI
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', '/api/users/me/persona' ]
+Received:
+     41|     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/pers…
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+
+# item 1 red at head: insightsLifecycleCalendar.test.tsx
+ × client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx > existing Insights lifecycle run > runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer 250ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', '/api/users/me/persona' ]
+Received:
+ FAIL  client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx > existing Insights lifecycle run > runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', '/api/users/me/persona' ]
+Received:
+     49|     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/pers…
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+
+# the calls apiRequest received (matrix test, "Number of calls: 2"): the persona GET is never sent
+#   1st: GET  /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25
+#   2nd: POST /api/report-os/runs { organizationId: 7, programId: ..., reportTypeId: global.label_currency_matrix, scopeType: project }
+# Cause: capturedActorHeaders (client/src/utils/authToken.ts:156) parses the token's claims; the fixture token
+# 'signed-in-matrix-fixture' has none, so the persona queryFn throws before apiRequest (reportingPersona.ts, 182c4b0e).

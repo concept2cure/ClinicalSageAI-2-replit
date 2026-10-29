@@ -106,9 +106,11 @@ export interface UseRbqmResult {
  *                  so without one there is nothing to fetch.
  */
 export function useRbqm(programId: string | null): UseRbqmResult {
-  const base = programId ? `/${encodeURIComponent(programId)}` : null;
-  const summaryUrl = base ? `/api/mdx/rbm-summary${base}` : null;
-  const attentionUrl = base ? `/api/mdx/rbm-attention${base}` : null;
+  /* Each route is written whole, so ci:launch-scope-api reads it as the
+     request it is (/api/mdx/rbm-summary/:id), not as a name joined to text. */
+  const id = programId ? encodeURIComponent(programId) : null;
+  const summaryUrl = id ? `/api/mdx/rbm-summary/${id}` : null;
+  const attentionUrl = id ? `/api/mdx/rbm-attention/${id}` : null;
 
   const s = useFetchJson<SummaryPayload>(summaryUrl);
   const a = useFetchJson<AttentionPayload>(attentionUrl);

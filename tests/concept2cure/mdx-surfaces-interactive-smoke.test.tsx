@@ -117,7 +117,9 @@ const LIVE: Record<string, unknown> = {
     document: { id: 'doc-1', title: '510(k)' },
     outline: [{ key: 's1', parent_key: null, label: 'Test section', path_order: 1, status: 'draft', version: 1, owner_id: 'T', accepted_at: null, has_content: true }],
   },
-  '/api/c2c/documents': { documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: '510k', agency: 'FDA', title: '510(k)' }] },
+  /* doc_type is the c2c_documents vocabulary ('k510', 20260528_phase9_document_schema.sql); the dossier
+     takes only an exact pathway document of the open project (pickDossierDocument, 62a8d5e7). */
+  '/api/c2c/documents': { documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: 'k510', agency: 'FDA', title: '510(k)' }] },
 };
 
 function wrap(node: React.ReactNode) {

@@ -1,0 +1,10 @@
+Mutation M3-door-drops-availability-gate
+File: client/src/concept2cure/v2/surfaces/ProjectMdxWorkflow.tsx
+-   const destination: WorkDestination = planned.surface && !available(planned.surface) ? planned.fallback ?? EVIDENCE_DESTINATION : planned;
++   const destination: WorkDestination = planned;
+Test: client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx
+
+× client/src/concept2cure/v2/__tests__/projectMdxWorkflowHumanFactorsDoor.test.tsx > the usability engineering file door > when the feature is not available, the workstream keeps its Evidence door and never offers it 28ms
+Tests  1 failed | 26 passed (27)
+
+Restored byte for byte: yes

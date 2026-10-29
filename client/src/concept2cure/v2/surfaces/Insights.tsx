@@ -19,7 +19,7 @@ import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { BundlesPanel } from './InsightsBundlesPanel';
 import { useLibraryActions } from './insightsLibraryActions';
-import { CatalogPanel } from './InsightsCatalogPanel';
+import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, OrganizationCountsNote } from './InsightsCatalogPanel';
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
@@ -596,6 +596,9 @@ interface RenderedReport {
   scopeId: string;
   /** What the report is about, by name (the server's stored scope label, else the program's name). */
   scopeLabel?: string;
+  /** The data boundary its engine computed (server RenderedReport.computedScope): a
+   *  register run at project scope still counts the organization's records. */
+  computedScope?: string;
   generatedAt: string;
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
@@ -1014,6 +1017,13 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
   return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This project' };
 }
 
+/** The run is headed by a project (or program, or submission) while its engine
+ *  counted the organization's records: the run's own carried `computedScope`,
+ *  never the type id. An account run is already headed as the organization. */
+function countsAreOrganizationWide(report: Pick<RenderedReport, 'computedScope' | 'scopeType'>): boolean {
+  return report.computedScope === 'organization' && report.scopeType !== 'account';
+}
+
 function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
@@ -1052,6 +1062,8 @@ function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false
           <span className={'ro-status st-' + stTone}>{report.status}</span>
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
+        {/* The project's name above the organization's counts says which they are. */}
+        {countsAreOrganizationWide(report) && <div role="note" data-testid="ro-scope-org"><OrganizationCountsNote className="ro-rep-meta" /></div>}
         {report.truthfulness && report.truthfulness.reasons && report.truthfulness.reasons.length ?
           <div className="ro-truth">{I.shieldCheck} Truthfulness gate — held at <b>{report.status}</b>: {report.truthfulness.reasons.join('; ')}.</div> : null}
         {seal ? <ROSealLine seal={seal} /> : null}
@@ -1076,6 +1088,22 @@ function PlanUnavailableCard({ type, family, reason = REPORT_PLAN_UNVERIFIED }: 
       <div className="ro-pack-title">{type.label}</div>
       <div className="ro-pack-sub">{reason}</div>
     </div>
+  );
+}
+
+/* Tiles no longer pre-generate a report client-side (that was the mock KPI
+   preview). Each tile runs the REAL governed report on click. A type whose
+   engine counts the organization's records says so, as its catalog card does,
+   from the catalog's `computedScope` (D2, 2026-10-29). */
+function RunPackTile({ type, fam, onRun }: { type: ReportType; fam: { label?: string; region?: string }; onRun: (t: ReportType) => void }) {
+  return (
+    <button className="ro-pack-card" onClick={() => onRun && onRun(type)}>
+      <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
+      <div className="ro-pack-title">{type.label}</div>
+      {type.computedScope === 'organization' && <OrganizationCountsNote className="ro-pack-sub" />}
+      <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>
+      <div className="ro-pack-open">Run report {I.right}</div>
+    </button>
   );
 }
 
@@ -1206,16 +1234,7 @@ function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun,
               <div className="ro-pack-sub">View only. Running a report needs an editor role in this organization.</div>
             </div>
           );
-          // Tiles no longer pre-generate a report client-side (that was the mock
-          // KPI preview). Each tile runs the REAL governed report on click.
-          return (
-            <button key={t.typeId} className="ro-pack-card" onClick={() => onRun && onRun(t)}>
-              <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
-              <div className="ro-pack-title">{t.label}</div>
-              <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>
-              <div className="ro-pack-open">Run report {I.right}</div>
-            </button>
-          );
+          return <RunPackTile key={t.typeId} type={t} fam={fam} onRun={onRun} />;
         })}
       </div>
     </div>
@@ -1310,6 +1329,14 @@ async function requestRun(type: ReportType, program: ProgramCtx | null, programI
   if (!res.ok) return { note: runRefusalNote(type.label, res.status, body) };
   const runId = body?.data?.run?.id;
   return typeof runId === 'number' && Number.isSafeInteger(runId) && runId > 0 ? { runId } : { note: REPORT_WRITE_UNCONFIRMED };
+}
+
+/** The result once a run is shown. It names the run's scope, so an organization-scope
+ *  run under a project's name says so, in the catalog card's words. */
+function ranReportText(label: string, report: RenderedReport): string {
+  const counts = countsAreOrganizationWide(report) ? ` ${ORGANIZATION_WIDE_RECORDS}. ${COUNTS_NOT_NARROWED}` : '';
+  return `The ${label} for ${report.scopeLabel || 'the stored scope'} ran against the governed record and is shown in the report canvas.${counts} ` +
+    'Every value is computed from the governed record; none is originated here.';
 }
 
 /** GET /runs/:id/rendered, adopted as the canvas's report; null when it did not come back. */
@@ -1410,6 +1437,11 @@ function openRunRefusal(label: string, status: number, payload: unknown): string
 function storedScopeLabel(label: unknown, row: ReportRunRow): string {
   return typeof label === 'string' && label ? label : row.scopeLabel || row.scopeId;
 }
+/** The computed data boundary the rendered document carries, else the run row's. */
+function storedComputedScope(scope: unknown, row: ReportRunRow): string | undefined {
+  if (typeof scope === 'string' && scope) return scope;
+  return row.computedScope ?? undefined;
+}
 function storedTypeLabel(label: unknown, row: ReportRunRow, type: ReportType | undefined): string {
   return typeof label === 'string' && label ? label : type?.label ?? row.reportTypeLabel;
 }
@@ -1430,6 +1462,7 @@ function reportFromRenderedRow(
     scopeType: rendered.scopeType ?? row.scopeType,
     scopeId: rendered.scopeId ?? row.scopeId,
     scopeLabel,
+    computedScope: storedComputedScope(rendered.computedScope, row),
     generatedAt: rendered.generatedAt ?? row.completedAt ?? row.createdAt,
     status,
     truthfulness,
@@ -1761,7 +1794,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
       setReport(adopted);
       setReportRunId(started.runId);
       setSeal(null);
-      settle({ text: `The ${type.label} for ${adopted.scopeLabel || 'the stored scope'} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
+      settle({ text: ranReportText(type.label, adopted) });
       pushCanvasTop();
     } finally {
       if (isCurrent()) setBusy(false);

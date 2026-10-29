@@ -1,0 +1,25 @@
+# The four suites still red with the core font staged, run after the fix WITHOUT staged fonts, as at head, compared test by test with head.
+
+## server/routes/__tests__/report-os-report-pack-export.test.ts
+head:  Tests  16 failed | 36 passed (52)
+after: Tests  16 failed | 36 passed (52)
+per-test outcomes: identical
+after, with the core font staged, the refusal: the route answers 422 instead of 200/403/404/409/503 (the PDF writer's 422s are REPORT_PDF_BRANDING_INVALID and REPORT_PDF_GLYPH_UNSUPPORTED); the suite's content carries CJK text (U+4E2D, U+544A, U+62A5, U+6587). A CJK stand-in (IPA Gothic as NotoSansCJK-*.ttc) is refused as REPORT_PDF_FONTS_UNAVAILABLE.
+
+## server/services/report-os/pdf/__tests__/company-branding.test.ts
+head:  Tests  5 failed (5)
+after: Tests  5 failed (5)
+per-test outcomes: identical
+after, with the core font staged, the refusal: cannot faithfully render U+65E5 
+
+## server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts
+head:  Tests  4 failed | 1 passed (5)
+after: Tests  4 failed | 1 passed (5)
+per-test outcomes: identical
+after, with the core font staged, the refusal: cannot faithfully render U+65E5 
+
+## server/services/report-os/pdf/__tests__/run-pdf.test.ts
+head:  Tests  15 failed (15)
+after: Tests  15 failed (15)
+per-test outcomes: identical
+after, with the core font staged, the refusal: cannot faithfully render U+2713 cannot faithfully render U+62A 

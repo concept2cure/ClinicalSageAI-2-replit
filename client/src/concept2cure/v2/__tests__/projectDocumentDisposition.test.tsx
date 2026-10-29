@@ -86,7 +86,7 @@ describe('reachable project document lifecycle controls', () => {
       if (url.includes('/search?')) return ok({ success: true, data: { query: 'retained', total: 1, limit: 100, offset: 0, results: [{
         id: '33333333-3333-4333-8333-333333333333', title: 'Retained search record', fileName: 'retained.pdf', documentType: 'REPORT',
         size: '1.0 MB', folderId: null, ctdSection: null, placementStatus: 'unfiled', snippet: 'Stored retained extraction',
-        originalFileAvailable: false, disposition: 'keep_data',
+        originalFileAvailable: false, disposition: 'keep_data', current: true,
       }] } });
       if (url === `/api/c2c/project-vault/${PID}`) return ok(vaultPayload());
       if (url.endsWith('/history')) return ok({ success: true, data: { entries: [], chain: { store: 'audit_logs', ok: true, rowsChecked: 0, legacyRows: 0, sequencedRows: 0 } } });

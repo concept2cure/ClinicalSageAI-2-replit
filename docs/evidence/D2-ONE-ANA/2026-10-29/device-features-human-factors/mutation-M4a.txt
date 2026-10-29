@@ -1,0 +1,22 @@
+Mutation M4a-screen-shows-unscoped-file
+File: client/src/concept2cure/v2/surfaces/HumanFactors.tsx
+-   const keyed = programId != null && hf.meta?.scope === 'program' && hf.meta?.programId === programId;
++   const keyed = programId != null;
+Test: client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx
+
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows the organization's unscoped file under the open project 5014ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows a file the route does not scope at all under the open project 5007ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > HumanFactors reads the open project > never shows another project's file under the open project 5008ms
+× client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx > Start the usability file: a project with no file of its own > is not offered where the empty file is not the project's 11ms
+Tests  4 failed | 8 passed (12)
+
+Test: client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx
+
+× client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > shows none of the file's records when the read is not keyed to the 
+× client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > says why the file is not shown, in one spelling 5010ms
+× client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > offers no use-scenario write into a file it cannot tie to the proje
+× client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not hand AnA the hidden file as this screen’s 55ms
+× client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx > HumanFactors — the organization's first file is not shown as this project's (slice 0) > does not promise that a recorded file appears here while the read i
+Tests  5 failed | 4 passed (9)
+
+Restored byte for byte: yes

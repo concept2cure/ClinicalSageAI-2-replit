@@ -497,7 +497,9 @@ export const UI_SURFACES: UiSurface[] = [
     // Project-first MDX, 2026-10-23: useK510 reads the existing document
     // preview, candidate and SE-matrix routes. Keep the predicate claim to
     // these endpoint families rather than the entire intelligence namespace.
-    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/510k/projects', '/api/predicate-intelligence/candidates', '/api/predicate-intelligence/se-matrix', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/510k/projects', '/api/predicate-intelligence/candidates', '/api/predicate-intelligence/se-matrix', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms', '/api/programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
@@ -515,7 +517,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: null,
     // Existing CER GSPR and PMS/PMCF panes (useCerGspr/useCerPostMarket/
     // useCerPmsFeeds); the program-scoped routes retain their own governance.
-    apiPrefixes: ['/api/cer', '/api/cerv2', '/api/gspr/catalog', '/api/gspr/programs', '/api/post-market/programs'],
+    // 2026-10-29 (trunk-red-sweep-2): '/api/mdx/audit' is the Audit trail tab its pathway screen
+    // reads (programTabsService.ts); it was served only through other features' '/api/mdx' root claims.
+    apiPrefixes: ['/api/cer', '/api/cerv2', '/api/gspr/catalog', '/api/gspr/programs', '/api/post-market/programs', '/api/mdx/audit'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -915,7 +919,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'stethoscope',
     group: 'device',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx', '/api/manufacturing', '/api/ivdr'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/audit', '/api/mdx/cdx', '/api/mdx/clia', '/api/mdx/ivdr', '/api/manufacturing', '/api/ivdr'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -931,7 +937,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'tag',
     group: 'device',
     uiKit: 'labeling',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/labeling'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -954,7 +962,9 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'alertTriangle',
     group: 'device',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx'],
+    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
+    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
+    apiPrefixes: ['/api/mdx/risk-items'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

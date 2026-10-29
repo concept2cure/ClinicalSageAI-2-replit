@@ -26,6 +26,16 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import { admitProject as admitProjectShared } from '../lib/admit-project';
+/*
+ * The six writes below were guarded by the caller's organization only, which
+ * is tenant scoping, not authorization: a `viewer` could create and amend
+ * labeling documents, add and approve translations, and add and remove
+ * symbols. Each now takes an editing role, as the UDI writes in mdx-udi.ts do.
+ * Per route, not `router.use`: this router is mounted at `/api/mdx` beside 31
+ * others, so a router-level gate would also run for theirs. The reads
+ * stay open to every member (D3, 2026-10-29).
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -114,7 +124,7 @@ router.get('/labeling', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/labeling', async (req: Request, res: Response) => {
+router.post('/labeling', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = docCreate.safeParse(req.body ?? {});
@@ -168,7 +178,7 @@ router.get('/labeling/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'get', err); }
 });
 
-router.patch('/labeling/:id', async (req: Request, res: Response) => {
+router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -244,7 +254,7 @@ router.get('/labeling/:id/translations', async (req: Request, res: Response) => 
   } catch (err) { return serverError(res, log, 'trans-list', err); }
 });
 
-router.post('/labeling/:id/translations', async (req: Request, res: Response) => {
+router.post('/labeling/:id/translations', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -274,7 +284,7 @@ router.post('/labeling/:id/translations', async (req: Request, res: Response) =>
   }
 });
 
-router.patch('/labeling/translations/:transId', async (req: Request, res: Response) => {
+router.patch('/labeling/translations/:transId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const transId = Number(req.params.transId);
@@ -337,7 +347,7 @@ router.get('/labeling/:id/symbols', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'sym-list', err); }
 });
 
-router.post('/labeling/:id/symbols', async (req: Request, res: Response) => {
+router.post('/labeling/:id/symbols', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -362,7 +372,7 @@ router.post('/labeling/:id/symbols', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'sym-create', err); }
 });
 
-router.delete('/labeling/symbols/:symId', async (req: Request, res: Response) => {
+router.delete('/labeling/symbols/:symId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const symId = Number(req.params.symId);
