@@ -2,7 +2,7 @@
  * A review route's naming history, by printed name (§2.12, M3; RR3 of
  * docs/design/REVIEW_ROUTING_2026-10-23.md): who sent it naming whom, who
  * handed back, who reassigned what from whom to whom, who withdrew or returned
- * it, each with its UTC time and reason. Shared by the Vault and the Quality
+ * it, who added a reviewer (RR2), each with its UTC time and reason. Shared by the Vault and the Quality
  * register. Moved out of v2/surfaces/VaultRouteReassign.tsx unchanged in RR2.
  */
 import React from 'react';
@@ -18,6 +18,7 @@ export function historyLine(h: RouteHistoryEntryView): string {
     send: () => `${who} sent it for review naming ${list((h.members ?? []).map((m) => `${m.printedName ?? `Account #${m.userId}`} (${m.role})`)) || 'no one'}`,
     'hand-back': () => `${who} handed back their ${work(h.role)}`,
     reassign: () => `${who} reassigned the ${work(h.role)} from ${h.fromName ?? 'a member'} to ${h.toName ?? 'another member'}`,
+    add: () => `${who} added ${h.toName ?? 'a member'} as a reviewer`,
     withdraw: () => `${who} withdrew the route`,
     return: () => `${who} returned it for revision`,
   }[h.action]();

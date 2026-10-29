@@ -38,7 +38,7 @@ export interface RouteHeaderView {
   createdAt: string;
 }
 export interface RouteHistoryEntryView {
-  action: 'send' | 'reassign' | 'hand-back' | 'withdraw' | 'return';
+  action: 'send' | 'reassign' | 'hand-back' | 'withdraw' | 'return' | 'add';
   at: string;
   actorId: number;
   actorName: string | null;
@@ -53,7 +53,7 @@ export interface RouteRoundView {
   members: RouteMemberView[];
   reviewComplete: boolean;
   approvalComplete: boolean;
-  /** The naming history (RR3): every send, reassignment, hand-back, withdrawal and return, oldest first. */
+  /** The naming history (RR3): every send, reassignment, hand-back, added reviewer (RR2), withdrawal and return, oldest first. */
   history?: RouteHistoryEntryView[];
 }
 

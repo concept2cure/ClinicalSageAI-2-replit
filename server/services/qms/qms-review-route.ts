@@ -24,6 +24,12 @@
  *     and the edits that would change the content under a route are refused
  *     while it is open (training-controlled-text.ts, document-lock.ts, revise);
  *   - withdraw, re-send, reassign and hand back, as RR3 gave the Vault.
+ *   - RR2: reviewers one after another (each review signature opens whatever
+ *     step is now due) and more than one QMS approver. Every named approver
+ *     signs. Each approval is the one signed approval, and only the last one
+ *     makes the document effective (the others leave it in review, with no
+ *     approval stamp). A reviewer added to an open route re-blocks the
+ *     approvers.
  *
  * Grandfathering (§2.13): a document already in review with no route is
  * `legacy` and keeps today's rule (any signing-authority approver who is not
@@ -40,7 +46,7 @@ import { recordGovernedAction } from '../../routes/c2c/actions';
 import { qmsSignedContent, type QmsDocumentRow } from './document-approval-signature';
 import { isQmsDesignatedApprover } from './qms-approver-designation';
 import {
-  closeReviewRoute, closeRouteTaskOnSignature, isOrgAdmin, openApproverStep, ReviewRouteRefusal, sendReviewRoute,
+  closeReviewRoute, closeRouteTaskOnSignature, isOrgAdmin, openReadySteps, ReviewRouteRefusal, sendReviewRoute,
   type RouteActSubject, type RouteRequest, type RouteSubject, type RouteTx,
 } from '../review/review-route';
 import { routeStanding, type RouteMember, type RouteRole, type RouteStanding } from '../review/review-route-standing';
@@ -229,14 +235,21 @@ export function qmsReviewSigning(documentId: number): QmsReviewSigning {
         // The signature row does not verify against the route (digest, meaning, signer): roll the act back.
         coded(refused(409, 'ROUTE_SIGNATURE_UNVERIFIED', 'The review signature does not verify against this route.'));
       }
-      if (after.reviewComplete) notices.push(...await openApproverStep(routeTxOf(client), { organizationId: orgId, standing: after, actorUserId: userId, subjectTitle }));
+      notices.push(...await openReadySteps(routeTxOf(client), { organizationId: orgId, standing: after, actorUserId: userId, subjectTitle }));
     },
   };
 }
 
 // ── The approval's part (approveQmsDocumentSigned's route hooks) ────────────
 
-interface RoutedApproval { row: QmsDocumentRow; standing: RouteStanding; member: RouteMember; userId: number; reason: string }
+interface RoutedApproval {
+  row: QmsDocumentRow; standing: RouteStanding; member: RouteMember; userId: number; reason: string;
+  /** Whether this signature is the last named approver's (RR2: every named approver signs). */
+  completes: boolean;
+  approvalsRequired: number;
+  /** Approvals on the route once this one is recorded. */
+  approvalsRecorded: number;
+}
 
 /** A QMS approver at signing time: the designation can have been removed after the route named them. */
 async function stillQmsApprover(client: QmsRouteClient, organizationId: number, userId: number): Promise<void> {
@@ -257,7 +270,13 @@ export async function qmsApprovalPrecheck(client: QmsRouteClient, orgId: number,
   if (standing.state === 'live' || standing.state === 'withdrawn') signingMember(standing, userId, 'approver');
 }
 
-/** The hooks an approval takes on a routed document (approveQmsDocumentSigned `route`). */
+/**
+ * The hooks an approval takes on a routed document (approveQmsDocumentSigned
+ * `route`). `before` says whether this signature completes the approval (every
+ * other named approver has signed, RR2). Only that one makes the document
+ * effective. `after` closes the approver's task on the signature and, on the
+ * last one, completes the route; every signature must verify against the route.
+ */
 export function qmsApprovalRoute(p: { userId: number; reason: string; notices: TaskEventNotice[] }) {
   return {
     before: async (client: QmsRouteClient, row: QmsDocumentRow, contentDigest: string): Promise<RoutedApproval | null> => {
@@ -266,7 +285,16 @@ export function qmsApprovalRoute(p: { userId: number; reason: string; notices: T
       const member = signingMember(standing, p.userId, 'approver');
       await stillQmsApprover(client, Number(row.organization_id), p.userId);
       sameContent(standing, contentDigest);
-      return { row, standing, member, userId: p.userId, reason: p.reason };
+      const approvers = standing.members.filter((m) => m.role === 'approver');
+      const signed = approvers.filter((m) => m.outcome === 'signed').length;
+      return {
+        row, standing, member, userId: p.userId, reason: p.reason,
+        completes: signed + 1 === approvers.length, approvalsRequired: approvers.length, approvalsRecorded: signed + 1,
+      };
+    },
+    completes: (routed: unknown): { completes: boolean; approvalsRecorded: number; approvalsRequired: number } => {
+      const r = routed as RoutedApproval;
+      return { completes: r.completes, approvalsRecorded: r.approvalsRecorded, approvalsRequired: r.approvalsRequired };
     },
     after: async (client: QmsRouteClient, routed: unknown, signatureId: number): Promise<void> => {
       const r = routed as RoutedApproval;
@@ -276,9 +304,11 @@ export function qmsApprovalRoute(p: { userId: number; reason: string; notices: T
         organizationId, standing: r.standing, member: r.member, signatureId, actorUserId: r.userId, reason: r.reason, subjectTitle,
       }));
       const after = await qmsStanding(client, { ...r.row, status: 'in_review' }, true);
-      if (!after.approvalComplete) {
+      const verified = after.members.find((m) => m.taskId === r.member.taskId)?.outcome === 'signed';
+      if (!verified || after.approvalComplete !== r.completes) {
         throw refused(409, 'ROUTE_SIGNATURE_UNVERIFIED', 'The approval signature does not verify against this route.');
       }
+      if (!r.completes) return;
       await closeReviewRoute(routeTxOf(client), {
         organizationId, standing: after, status: 'complete', reason: r.reason, actorUserId: r.userId,
         subjectType: 'qms_document', subjectId: String(r.row.id), subjectTitle,
