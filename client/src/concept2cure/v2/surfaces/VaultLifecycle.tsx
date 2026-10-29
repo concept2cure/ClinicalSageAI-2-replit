@@ -71,6 +71,13 @@ export interface VaultVersionLifecycle {
   creatorId?: number | null;
   review: VaultSignOff | null;
   approval: VaultSignOff | null;
+  /**
+   * RR2 records: on a routed version, every reviewer (and, once approved, every
+   * approver) who signed on its round, oldest first. Absent or null on a
+   * version with no route, whose line is `review` / `approval`.
+   */
+  reviewSignOffs?: VaultSignOff[] | null;
+  approvalSignOffs?: VaultSignOff[] | null;
   /** The version's latest review route (RR1a's round read); null when it has none. */
   round?: RouteRoundView | null;
   /** The route could not be read: its reviewers are unknown, never "none" (RR1b). */
@@ -135,14 +142,22 @@ function signOffLine(kind: 'Review' | 'Approval', s: VaultSignOff, retired: bool
   );
 }
 
+/** Who signed a sign-off: on a routed version everyone on its round, otherwise the one stored sign-off. */
+function signersOf(round: VaultSignOff[] | null | undefined, stored: VaultSignOff | null | undefined): VaultSignOff[] {
+  if (round?.length) return round;
+  return stored ? [stored] : [];
+}
+
 /** The stage and the sign-offs of one version, as the signature records hold them. */
 export function LifecycleSummary({ lifecycle }: { lifecycle: VaultVersionLifecycle | null | undefined }) {
   const retired = lifecycle?.stage === 'superseded';
+  const lines = (kind: 'Review' | 'Approval', signers: VaultSignOff[]) =>
+    signers.map((s) => <span key={`${kind}-${s.signatureRef}`} className="vd-ver-lc">{signOffLine(kind, s, retired)}</span>);
   return (
     <span className="vd-ver-lc" data-testid="vault-version-stage">
       {stageLabel(lifecycle?.stage)}
-      {lifecycle?.review ? <span className="vd-ver-lc">{signOffLine('Review', lifecycle.review, retired)}</span> : null}
-      {lifecycle?.approval ? <span className="vd-ver-lc">{signOffLine('Approval', lifecycle.approval, retired)}</span> : null}
+      {lines('Review', signersOf(lifecycle?.reviewSignOffs, lifecycle?.review))}
+      {lines('Approval', signersOf(lifecycle?.approvalSignOffs, lifecycle?.approval))}
     </span>
   );
 }

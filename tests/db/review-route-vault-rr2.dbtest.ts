@@ -452,7 +452,14 @@ describe('adding a reviewer to an open route (RR2, §2.10)', () => {
 
 /* ── RR2 records (2026-10-29) ─────────────────────────────────────────────────
    Design issues 1 and 2 of docs/evidence/D2-REVIEW-ROUTING/2026-10-29-RR2/:
-   an earlier approver's signature was recorded exactly as the last one. */
+   an earlier approver's signature was recorded exactly as the last one, and the
+   version's "Review signed by" line named only the reviewer whose signature
+   first completed the review (review_signature, written once per round). */
+async function lifecycleOf(vaultId: string) {
+  const r = await request(await appFor(mine, 'uploader')).get(`/api/c2c/project-vault/${mine.programId}/documents/${vaultId}/versions`);
+  expect(r.status, JSON.stringify(r.body)).toBe(200);
+  return r.body.data.versions[0].lifecycle;
+}
 const signatureRows = async (id: string) => (await owner.query(
   `SELECT id, signer_id, signer_name, signed_at, signature_type, upper(signature_meaning) AS meaning, signature_manifest
      FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2 ORDER BY id`, [mine.orgId, `canonical_document:${id}`])).rows;
@@ -466,6 +473,7 @@ async function trail(id: string): Promise<Array<{ event: string; signatureRef?: 
     () => inTenantSnapshot(getPool() as never, mine.orgId, async (client) =>
       (await readRecordAuditHistory(client as never, mine.orgId, { tableName: 'canonical_document', recordId: id }, notWalked)).data));
 }
+const utcOf = (v: unknown) => new Date(v as string).toISOString();
 
 describe('an earlier Vault approval is its own record (RR2 records, Part 11 §11.50)', () => {
   it('is its own signature type carrying k of n, and the audit trail never reads it as the approval', async () => {
@@ -491,3 +499,39 @@ describe('an earlier Vault approval is its own record (RR2 records, Part 11 §11
   });
 });
 
+describe('the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12)', () => {
+  it('two reviewers and two approvers: each line names everyone who signed, with printed name and UTC time', async () => {
+    const { id, vaultId } = await sent('REC-LINES', ['r1', 'r2'], ['approver', 'approver2'], route(['r1', 'r2'], ['approver', 'approver2']));
+    expect((await sign('r1', id, 'reviewed')).status).toBe(200);
+    expect((await lifecycleOf(vaultId)).reviewSignOffs ?? null).toBeNull(); // the review is not signed off yet
+    expect((await sign('r2', id, 'reviewed')).body.reviewComplete).toBe(true);
+    const reviews = (await signatureRows(id)).filter((s) => s.meaning === 'REVIEWED');
+    const reviewed = await lifecycleOf(vaultId);
+    expect(reviewed.review.printedName).toBe(names.r2); // review_signature: only the signature that completed the review
+    expect(reviewed.reviewSignOffs).toEqual(reviews.map((s) => ({
+      printedName: s.signer_name, meaning: 'REVIEWED', signedAt: utcOf(s.signed_at), signatureRef: `esig:${s.id}`, signerId: Number(s.signer_id),
+    })));
+    expect(reviewed.reviewSignOffs.map((s: { printedName: string }) => s.printedName)).toEqual([names.r1, names.r2]);
+    expect(reviewed.approvalSignOffs ?? null).toBeNull();
+
+    expect((await sign('approver', id, 'approved')).status).toBe(200);
+    expect((await lifecycleOf(vaultId)).approvalSignOffs ?? null).toBeNull(); // 1 of 2: the version is not approved
+    expect((await sign('approver2', id, 'approved')).body.stage).toBe('approved');
+    const approved = await lifecycleOf(vaultId);
+    expect(approved.approvalSignOffs.map((s: { printedName: string; meaning: string }) => [s.printedName, s.meaning]))
+      .toEqual([[names.approver, 'APPROVED'], [names.approver2, 'APPROVED']]);
+    expect(approved.approvalSignOffs.every((s: { signedAt: string }) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(s.signedAt))).toBe(true);
+  });
+
+  it('a reviewer added after the review was signed off is on the line too; review_signature is not rewritten', async () => {
+    const { id, vaultId } = await sent('REC-ADDED', ['r1'], ['approver']);
+    expect((await sign('r1', id, 'reviewed')).body.reviewComplete).toBe(true);
+    const before = (await stageOf(id)).review_signature;
+    expect((await addReviewer('uploader', id, 'r3')).status).toBe(200);
+    expect((await sign('r3', id, 'reviewed')).status).toBe(200);
+    expect((await stageOf(id)).review_signature).toEqual(before);
+    const lc = await lifecycleOf(vaultId);
+    expect(lc.review.printedName).toBe(names.r1);
+    expect(lc.reviewSignOffs.map((s: { printedName: string }) => s.printedName)).toEqual([names.r1, names.r3]);
+  });
+});

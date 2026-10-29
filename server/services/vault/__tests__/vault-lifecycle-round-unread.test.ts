@@ -46,3 +46,36 @@ describe("a version's review route read on its own (RR1b)", () => {
     expect(lc.roundUnread).toBe(false);
   });
 });
+
+/* RR2 records (2026-10-29): a routed version's sign-off lines come from its
+   round; a version with no route, or one whose route could not be read, keeps
+   today's one stored line, and so does a sign-off carried from Authoring. */
+describe("a version's sign-off lines (RR2 records, §2.12)", () => {
+  it('no route, or an unread one: no round lines, and the stored review line stands', async () => {
+    for (const route of ['none', 'fails'] as const) {
+      const lc = (await readVaultLifecycles(queryable(route), 3, ['v-1'])).get('v-1')!;
+      expect(lc.reviewSignOffs, route).toBeNull();
+      expect(lc.approvalSignOffs, route).toBeNull();
+      expect(lc.review, route).toMatchObject({ printedName: 'Rae Reviewer', signatureRef: 'esig:9' });
+    }
+  });
+
+  it('only a sign-off made on the round reads its lines from the round', async () => {
+    const { roundSignOffs } = await import('../vault-lifecycle');
+    const sig = (id: number, name: string, at: string) => ({ id, printedName: name, meaning: 'REVIEWED', signedAt: at });
+    const member = (userId: number, role: 'reviewer' | 'approver', signature: ReturnType<typeof sig> | null) =>
+      ({ taskId: `t${userId}`, userId, role, step: 1, printedName: null, outcome: signature ? 'signed' : 'pending', stepOpen: true, dueDate: null, signature, actId: null }) as const;
+    const round = {
+      route: {} as never, reviewComplete: true, approvalComplete: false, history: [],
+      members: [member(6, 'reviewer', sig(12, 'Ria Reviewer', '2026-10-29T11:00:00.000Z')), member(5, 'reviewer', sig(9, 'Rae Reviewer', '2026-10-29T10:00:00.000Z')), member(7, 'approver', null)],
+    };
+    const stored = (ref: string) => ({ actor: '6', signatureRef: ref, signedAt: '2026-10-29T11:00:00.000Z' });
+    expect(roundSignOffs(round as never, 'reviewer', stored('esig:12'))?.map((s) => [s.printedName, s.signatureRef, s.signerId])).toEqual([
+      ['Rae Reviewer', 'esig:9', 5], ['Ria Reviewer', 'esig:12', 6],
+    ]);
+    expect(roundSignOffs(round as never, 'reviewer', stored('esig:99'))).toBeNull(); // made on another round
+    expect(roundSignOffs(round as never, 'reviewer', stored('authoring-sig:6f1c2b1e-0a4d-4c7e-9f3a-111111111111'))).toBeNull(); // carried
+    expect(roundSignOffs(round as never, 'approver', null)).toBeNull(); // not approved
+    expect(roundSignOffs(null, 'reviewer', stored('esig:12'))).toBeNull();
+  });
+});
