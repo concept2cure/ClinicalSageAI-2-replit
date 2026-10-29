@@ -111,6 +111,31 @@ describe('Quality records', () => {
     expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/suppliers/9', { qualityAgreementId: 32 });
   });
 
+  it("signs a supplier's standing, and sends nothing before the signature", async () => {
+    const PENDING = {
+      id: 9, supplier_name: 'Acme Biologics', supplier_code: 'ACM', scope: null, criticality: 'critical',
+      approval_status: 'pending', approval_date: null, reapproval_date: null, last_audit_date: null,
+      next_audit_date: null, iso_certifications: null, quality_agreement_id: null,
+    };
+    H.reads['/api/mdx/qms/suppliers'] = { data: { data: [PENDING] }, loading: false, error: null };
+    H.reads['/api/mdx/qms/documents'] = { data: { data: [] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...PENDING, approval_status: 'approved' }, signedAt: '2026-10-29T12:00:00.000Z' }) });
+    render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Approval/ }));
+    const drawer = screen.getByRole('dialog');
+    fireEvent.change(within(drawer).getByLabelText(/^Standing/), { target: { value: 'approved' } });
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Continue to sign' }));
+    const signing = await screen.findByRole('dialog', { name: 'Sign supplier standing' });
+    expect(H.apiRequest).not.toHaveBeenCalled();
+
+    fireEvent.click(within(signing).getByRole('button', { name: 'stub-sign' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/suppliers/9/approval', {
+      approvalStatus: 'approved', password: 'pw', meaning: 'approval', reason: 'Re-test after column replacement confirmed a lab error.',
+    }));
+    await waitFor(() => expect(screen.getByText('Acme Biologics is now approved.')).toBeTruthy());
+  });
+
   it("says a supplier's quality agreement is unread when the controlled documents could not be read", () => {
     H.reads['/api/mdx/qms/suppliers'] = { data: { data: [{
       id: 9, supplier_name: 'Acme Biologics', supplier_code: null, scope: null, criticality: 'major',

@@ -134,6 +134,7 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { NC_DISPOSITION_CODE_STATUS, NC_DISPOSITION_DECISIONS, recordNcDisposition } from '../services/qms/nonconformance-disposition';
+import { SUPPLIER_APPROVAL_CODE_STATUS, SUPPLIER_APPROVAL_DECISIONS, recordSupplierApproval } from '../services/qms/supplier-approval';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
 import { DECISION_ACT_MEANINGS, REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
@@ -967,9 +968,16 @@ router.get('/qms/suppliers', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'supp-list', err); }
 });
 
+/* A supplier's standing is a signed decision (POST /qms/suppliers/:id/approval,
+   services/qms/supplier-approval.ts, 2026-10-29). A create records it as
+   pending, and an unsigned write that would set it is refused, not dropped. */
+const SIGNED_STANDING = "A supplier's approval standing is a signed decision: approve, conditionally approve or revoke it with Approval in the register.";
+const setsStanding = (s: { approvalStatus?: string | null; approvalDate?: string | null }, create: boolean) =>
+  (s.approvalStatus != null && !(create && s.approvalStatus === 'pending')) || s.approvalDate != null;
+
 function supplierInsertArgs(orgId: number, supplier: z.infer<typeof supplierCreate>): unknown[] {
   return [orgId, supplier.supplierName, supplier.supplierCode ?? null, supplier.scope ?? null, supplier.criticality,
-    supplier.approvalStatus ?? null, supplier.approvalDate ?? null, supplier.reapprovalDate ?? null,
+    null, null, supplier.reapprovalDate ?? null,
     supplier.qualityAgreementId ?? null, supplier.lastAuditDate ?? null, supplier.nextAuditDate ?? null,
     supplier.isoCertifications ?? null];
 }
@@ -980,6 +988,7 @@ router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Res
   const parsed = supplierCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  if (setsStanding(p, true)) return clientError(res, 422, `A new supplier is recorded as pending. ${SIGNED_STANDING} Nothing was recorded.`);
   try {
     const agreementRefusal = await qualityAgreementRefusal(req, orgId, p.qualityAgreementId);
     if (agreementRefusal) return clientError(res, 422, agreementRefusal);
@@ -1014,10 +1023,10 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = supplierPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  if (setsStanding(parsed.data, false)) return clientError(res, 422, `${SIGNED_STANDING} Nothing was changed.`);
   const COL: Record<string, string> = {
     supplierName: 'supplier_name', supplierCode: 'supplier_code', scope: 'scope',
-    criticality: 'criticality', approvalStatus: 'approval_status',
-    approvalDate: 'approval_date', reapprovalDate: 'reapproval_date',
+    criticality: 'criticality', reapprovalDate: 'reapproval_date',
     qualityAgreementId: 'quality_agreement_id', lastAuditDate: 'last_audit_date',
     nextAuditDate: 'next_audit_date', isoCertifications: 'iso_certifications',
   };
@@ -1054,6 +1063,36 @@ router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res
     if (actor) await scheduleSupplierTasks(orgId, rows[0] as SupplierTaskSource, Object.keys(parsed.data), actor);
     return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-patch', err); }
+});
+
+/* A supplier's approval standing, signed (services/qms/supplier-approval.ts):
+   through the one signing ceremony, as approval or responsibility. Its
+   re-approval task completes when an approval is signed, and a revoked
+   supplier owes no audit or re-approval (services/qms/qms-record-tasks.ts). */
+const supplierApprovalBody = z.object({ approvalStatus: z.enum(SUPPLIER_APPROVAL_DECISIONS) });
+router.post('/qms/suppliers/:id/approval', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');
+  const parsed = supplierApprovalBody.safeParse({ approvalStatus: req.body?.approvalStatus });
+  if (!parsed.success) {
+    return clientError(res, 400, `A supplier's standing is set to one of ${SUPPLIER_APPROVAL_DECISIONS.join(', ')}. Nothing was signed.`, parsed.error.flatten().fieldErrors);
+  }
+  const decision = parsed.data.approvalStatus;
+  const target = `qms-supplier:${id}`;
+  let row: Record<string, unknown> | null = null;
+  await signGovernedAct(req, res, {
+    domain: 'qms',
+    target,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: SUPPLIER_APPROVAL_CODE_STATUS,
+    run: async (client, orgId) => {
+      row = await recordSupplierApproval(client, orgId, id, decision);
+      return { target, payload: { approvalStatus: decision, supplierName: row.supplier_name }, body: { data: row } };
+    },
+    afterCommit: async (_result, orgId, userId) => {
+      if (row) await scheduleSupplierTasks(orgId, row as unknown as SupplierTaskSource, decision === 'revoked' ? [] : ['approvalDate'], userId);
+    },
+  });
 });
 
 /* ─── Internal audits ───────────────────────────────────────── */

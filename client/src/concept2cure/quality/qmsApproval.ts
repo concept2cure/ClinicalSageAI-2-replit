@@ -99,6 +99,16 @@ export function signNcDisposition(
 }
 const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Reload the register and check the nonconformance before you sign again.';
 
+/** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
+export function signSupplierApproval(
+  id: number,
+  approvalStatus: string,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/suppliers/${id}/approval`, { approvalStatus }, input, UNCONFIRMED_APPROVAL);
+}
+const UNCONFIRMED_APPROVAL = "The server did not confirm the supplier's standing. Reload the register and check the supplier before you sign again.";
+
 /**
  * A route that signs through the platform's one ceremony (routes/governed-signed-act.ts),
  * which answers with the signature's time. A coded refusal (4xx) is the server's

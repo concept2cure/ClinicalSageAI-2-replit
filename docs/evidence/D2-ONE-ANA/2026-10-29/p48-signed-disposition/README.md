@@ -1,4 +1,4 @@
-# P-48: a nonconformance is dispositioned by a signature
+# P-48: a nonconformance's disposition and a supplier's approval are signed decisions
 
 Row: D2 (launch catalog: QMS), with D5 (Part 11). The plan's inventory
 (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §2.3) lists "NCR disposition and supplier approval not
@@ -45,7 +45,7 @@ Searches run:
 
 ## Proof
 
-- `server/routes/__tests__/qms-nc-disposition-signed.test.ts` passes 3 of 3, mounting the QMS router with the
+- `server/routes/__tests__/qms-signed-decisions.test.ts` passes 3 of 3, mounting the QMS router with the
   ceremony's dependencies reduced to their verdicts:
   - a signed disposition commits in the order BEGIN, the update (with the reason as the rationale), the `sign` ledger
     entry, the signature, COMMIT, and answers 201 with the signature id;
@@ -53,7 +53,7 @@ Searches run:
     meaning `review` (400);
   - a second disposition answers 409 and rolls back, signing nothing.
   - **Shown failing first:** against the route as it was, all three fail; the unsigned PATCH answered 200.
-- `server/services/qms/__tests__/nonconformance-disposition.pglite.test.ts` passes 2 of 2, against PostgreSQL in
+- `server/services/qms/__tests__/qms-signed-decisions.pglite.test.ts` passes 2 of 2, against PostgreSQL in
   process with the canonical DDL:
   - the disposition is set once, with the reason as its rationale, and a second is refused with the first kept;
   - `pending` counts as open, and another organisation's record is not found and is left unchanged.
@@ -69,10 +69,72 @@ Searches run:
 - The Quality client suite, every QMS route test, `server/services/qms` and the labeling and analytics routes pass
   610 of 610 (49 files). `tsc --noEmit` reports no error in the changed files.
 
+## Second change: a supplier's approval standing is signed
+
+21 CFR 820.50 and ISO 13485 §7.4.1 make approving a supplier a quality decision. Before this change:
+- the standing was a field any editor could PATCH, with an audit row beside it;
+- a create could set it to approved;
+- there was no signature.
+
+### What already exists
+
+| Piece | Path | Before this change |
+|---|---|---|
+| Supplier writes | `POST` and `PATCH /api/mdx/qms/suppliers`, `server/routes/mdx-qms.ts` | Both took `approvalStatus` and `approvalDate`. |
+| AnA's `register_supplier` | `server/services/ana/AnaToolExecutor.ts` | Writes `pending` only, so it sets no standing. It is a second unaudited writer of supplier rows; that is owed below. |
+| Reminders | `scheduleSupplierTasks`, `server/services/qms/qms-record-tasks.ts` | Recording `approvalDate` completes the re-approval task, and a revoked supplier owes no task. |
+
+### What changed
+
+- **`POST /api/mdx/qms/suppliers/:id/approval`**, a signed act through `signGovernedAct` with approval or
+  responsibility. It sets approved, conditional or revoked through `recordSupplierApproval`
+  (`server/services/qms/supplier-approval.ts`):
+  - approving or conditionally approving dates the approval on the day it is signed;
+  - a standing that would not change answers 409, and another organisation's supplier answers 404;
+  - after the commit, the supplier's tasks follow: an approval completes the re-approval task, and a revocation
+    closes both.
+- **The unsigned writes refuse the standing** with 422; they never drop it and write the rest:
+  - a PATCH carrying `approvalStatus` or `approvalDate`;
+  - a create setting anything but pending.
+  - A create records pending.
+- **The supplier register** gains an Approval action, which signs, and drops the approval fields from Add supplier
+  and Update. `createSupplier` and `updateSupplier` no longer carry them.
+- **One route test and one PGlite file now cover the signed QMS decisions:** `qms-signed-decisions.test.ts` and
+  `qms-signed-decisions.pglite.test.ts`, renamed from the disposition-only files.
+
+### Proof
+
+- **`qms-signed-decisions.test.ts`** passes 5 of 5. The supplier cases:
+  - an approval commits in the order BEGIN, the update, the `sign` ledger entry, the signature, COMMIT;
+  - a PATCH carrying the standing beside an audit date answers 422 and writes nothing;
+  - a create as approved answers 422;
+  - signing pending answers 400;
+  - signing the current standing answers 409 and signs nothing.
+- **`qms-signed-decisions.pglite.test.ts`** passes 3 of 3:
+  - an approval sets the date;
+  - an unchanged standing is refused;
+  - a revocation is recorded;
+  - another organisation's supplier is not found, and its row stays pending.
+- **`QmsRecords.test.tsx`** passes. Approval, then Approved, then Continue to sign opens "Sign supplier standing",
+  with nothing sent yet. Signing sends `POST …/suppliers/9/approval` with `{ approvalStatus, reason, meaning,
+  password }`, and the register says "Acme Biologics is now approved."
+- **Updated tests:**
+  - `qms-legacy-api-retired.test.ts`: a manager's unsigned revoke answers 422, the supplier stays approved, and no
+    audit row is written;
+  - `qms-governed-writes-audited.test.ts`: the supplier update case audits an audit-date change, not a standing.
+- **Shown failing first:**
+  - Without the PATCH's refusal, the standing beside an audit date was dropped and the audit date written: the case
+    failed (1 failed, 4 passed). The first version of that case sent the standing alone, which an empty update
+    refused anyway; that version passed with the refusal removed, so it was strengthened.
+  - With the client posting to the plain supplier route, the screen case fails.
+- The Quality client suite, every QMS route test, `server/services/qms` and the labeling and analytics routes pass
+  614 of 614 (49 files).
+
 ## Owed
 
-- **Supplier approval as a signed act.** It still goes through `PATCH /qms/suppliers/:id` with an audit row. It is
-  next, and the kit's `sign` action is ready for it.
+- AnA's `register_supplier` writes `qms_suppliers` through the pool with no audit row: a second writer beside
+  `POST /qms/suppliers`. Converging it onto the route's writer is owed under zero duplication.
+- Re-approval due after an approval: the register's re-approval date is still set by Update, not by the approval.
 - **Correcting a signed disposition.** A correction would be a second signed act that names the first, never an
   overwrite. Not offered.
 - A Postgres dbtest of the route (no server here); the domain SQL is proven on PGlite.

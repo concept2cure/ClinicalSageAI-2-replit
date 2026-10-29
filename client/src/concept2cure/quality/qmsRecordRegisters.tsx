@@ -14,7 +14,7 @@ import {
 } from './qmsRecordData';
 import { type PillTone, type RegisterConfig, optionsOf, pill, num, Refused } from './qmsRegisterKit';
 import { raiseCapaFrom } from './qmsCapaRegister';
-import { signNcDisposition } from './qmsApproval';
+import { signNcDisposition, signSupplierApproval } from './qmsApproval';
 import { documentLabel, type RegisterContext } from './registerContext';
 import type { C2CFormField } from '../v2/C2CForm';
 
@@ -146,7 +146,7 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   title: 'Suppliers',
   sub:
     'Your approved supplier list: what each supplier provides, how critical it is, its approval standing, and ' +
-    'when it is next due for audit and re-approval. Changes to approval standing are recorded under your name.',
+    'when it is next due for audit and re-approval. A supplier is approved, conditionally approved or revoked by your signature.',
   noun: ['supplier', 'suppliers'],
   listPath: '/api/mdx/qms/suppliers',
   grid: 'minmax(0, 1fr) minmax(0, 1fr) 96px 120px 110px 110px 130px',
@@ -176,7 +176,7 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   createForm: (ctx) => ({
     eyebrow: 'Quality',
     title: 'Add a supplier',
-    sub: 'Recorded as pending unless you record its approval here.',
+    sub: 'Recorded as pending. Approve it with your signature from the register (Approval).',
     governed: 'Adding a supplier writes an audit entry under your name.',
     submitLabel: 'Add supplier',
     fields: [
@@ -184,8 +184,6 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
       { key: 'supplierCode', label: 'Supplier code', type: 'text', half: true },
       { key: 'scope', label: 'What it supplies', type: 'textarea', rows: 2, placeholder: 'Drug substance, GMP manufacture; release testing' },
       { key: 'criticality', label: 'Criticality', type: 'seg', required: true, options: optionsOf(CRITICALITY_LABEL) },
-      { key: 'approvalStatus', label: 'Approval', type: 'select', half: true, options: optionsOf(SUPPLIER_STATUS_LABEL), default: 'pending' },
-      { key: 'approvalDate', label: 'Approved on', type: 'date', half: true },
       { key: 'nextAuditDate', label: 'Next audit', type: 'date', half: true },
       { key: 'reapprovalDate', label: 'Re-approval due', type: 'date', half: true },
       qualityAgreementField(ctx, null),
@@ -194,23 +192,20 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
   create: async (v) => {
     const row = await createSupplier({
       supplierName: v.supplierName.trim(), supplierCode: v.supplierCode.trim(), scope: v.scope.trim(),
-      criticality: v.criticality, approvalStatus: v.approvalStatus, approvalDate: v.approvalDate,
-      nextAuditDate: v.nextAuditDate, reapprovalDate: v.reapprovalDate, qualityAgreementId: agreementId(v.qualityAgreementId),
+      criticality: v.criticality, nextAuditDate: v.nextAuditDate, reapprovalDate: v.reapprovalDate, qualityAgreementId: agreementId(v.qualityAgreementId),
     });
     return `${row.supplier_name} was added as ${(SUPPLIER_STATUS_LABEL[row.approval_status] ?? row.approval_status).toLowerCase()}.`;
   },
   rowActions: [{
     label: 'Update',
-    title: 'Record a change to approval standing or audit dates',
+    title: 'Record audit dates, the re-approval date or the quality agreement',
     form: (r, ctx) => ({
       eyebrow: 'Quality',
       title: `Update ${r.supplier_name}`,
-      sub: `Currently ${(SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status).toLowerCase()}. Only the fields you change are recorded.`,
+      sub: `Currently ${(SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status).toLowerCase()}. Only the fields you change are recorded. Approval standing is signed (Approval).`,
       governed: 'The update is written to the audit trail under your name.',
       submitLabel: 'Record update',
       fields: [
-        { key: 'approvalStatus', label: 'Approval', type: 'select', half: true, options: optionsOf(SUPPLIER_STATUS_LABEL), default: r.approval_status },
-        { key: 'approvalDate', label: 'Approved on', type: 'date', half: true, default: r.approval_date?.slice(0, 10) ?? '' },
         { key: 'lastAuditDate', label: 'Last audit', type: 'date', half: true, default: r.last_audit_date?.slice(0, 10) ?? '' },
         { key: 'nextAuditDate', label: 'Next audit', type: 'date', half: true, default: r.next_audit_date?.slice(0, 10) ?? '' },
         { key: 'reapprovalDate', label: 'Re-approval due', type: 'date', half: true, default: r.reapproval_date?.slice(0, 10) ?? '' },
@@ -219,7 +214,6 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     }),
     submit: async (r, v) => {
       const before: Record<string, string> = {
-        approvalStatus: r.approval_status, approvalDate: r.approval_date?.slice(0, 10) ?? '',
         lastAuditDate: r.last_audit_date?.slice(0, 10) ?? '', nextAuditDate: r.next_audit_date?.slice(0, 10) ?? '',
         reapprovalDate: r.reapproval_date?.slice(0, 10) ?? '',
         qualityAgreementId: r.quality_agreement_id == null ? '' : String(r.quality_agreement_id),
@@ -231,6 +225,33 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
       if (typeof changed.qualityAgreementId === 'string') changed.qualityAgreementId = Number(changed.qualityAgreementId);
       await updateSupplier(r.id, changed);
       return `${r.supplier_name} was updated.`;
+    },
+  }, {
+    label: 'Approval',
+    title: 'Approve, conditionally approve or revoke this supplier with your signature',
+    form: (r) => ({
+      eyebrow: 'Quality',
+      title: `Approval of ${r.supplier_name}`,
+      sub: `Currently ${(SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status).toLowerCase()}.`,
+      governed: 'You sign the decision in the next step, with your reason. Approving dates the approval today.',
+      submitLabel: 'Continue to sign',
+      fields: [{
+        key: 'approvalStatus', label: 'Standing', type: 'select', required: true,
+        options: optionsOf(SUPPLIER_STATUS_LABEL).filter((o) => o.value !== 'pending' && o.value !== r.approval_status),
+      }],
+    }),
+    sign: (r, v) => {
+      const label = v.approvalStatus === 'pending' || v.approvalStatus === r.approval_status ? undefined : SUPPLIER_STATUS_LABEL[v.approvalStatus];
+      if (!label) throw new Refused('choose a standing other than the current one.');
+      return {
+        action: 'Sign supplier standing',
+        target: r.supplier_code ? `${r.supplier_name} (${r.supplier_code})` : r.supplier_name,
+        meta: `You sign ${r.supplier_name} as ${label.toLowerCase()}. Your reason is recorded with the signature.`,
+        rows: [{ label: 'Standing', value: label }, { label: 'Criticality', value: CRITICALITY_LABEL[r.criticality] ?? r.criticality }],
+        meanings: ['approval', 'responsibility'],
+        post: (input) => signSupplierApproval(r.id, v.approvalStatus, input),
+        done: `${r.supplier_name} is now ${label.toLowerCase()}.`,
+      };
     },
   }, raiseCapaFrom<SupplierRow>({
     source: 'supplier',
