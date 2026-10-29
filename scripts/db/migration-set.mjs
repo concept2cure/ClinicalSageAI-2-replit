@@ -3625,6 +3625,12 @@ export const C2C_MIGRATION_FILES = [
   // pair on the same transaction. After the base schema (organization_users).
   // Public with organization_id INTEGER NOT NULL; creates no table; no DROP.
   'migrations/20261029f_qms_approver_designation.sql',
+  // The GMP deviation record (D2, 2026-10-29, P-49): qc_deviations, as
+  // shared/schema/qc-schemas.ts has defined it since the QC module and nothing
+  // ever created (its /api/qc routes were a 501 stub), with client_workspace_id
+  // nullable. After the base schema (organizations). Public with
+  // organization_id INTEGER NOT NULL; CREATE ... IF NOT EXISTS only; no DROP.
+  'migrations/20261029g_qc_deviations.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

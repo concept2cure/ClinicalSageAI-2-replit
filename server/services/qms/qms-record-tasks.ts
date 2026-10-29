@@ -128,3 +128,46 @@ export async function scheduleSupplierTasks(
 /** After an internal audit is planned or moved. Never throws. */
 export const scheduleInternalAuditTask = (organizationId: number, a: InternalAuditTaskSource, actorId: number): Promise<SourceTaskOutcome> =>
   replaceSourceTask({ organizationId, ...internalAuditTaskPlan(a, actorId), actorId });
+
+export const DEVIATION_TASK_SOURCE = 'qms_deviation';
+/** Notice before a deviation's target closure: investigations run on weeks, not months. */
+export const DEVIATION_REMIND_DAYS = 7;
+
+export interface DeviationTaskSource {
+  id: number; deviation_number: string; title: string; classification: string; status: string;
+  target_closure_date: Date | string | null;
+}
+
+/**
+ * A deviation owes its close by its target date (P-49), to the person who
+ * recorded the date, until it is closed. A critical deviation's task is
+ * critical, a major one's high.
+ */
+export function deviationTaskPlan(d: DeviationTaskSource, actorId: number | null): RecordTaskPlan {
+  const due = dayOf(d.target_closure_date);
+  const closed = d.status === 'closed';
+  const priority = d.classification === 'critical' ? 'critical' : d.classification === 'major' ? 'high' : 'medium';
+  return {
+    sourceEntityType: DEVIATION_TASK_SOURCE,
+    sourceEntityId: `qms-deviation:${d.id}`,
+    closeAs: closed ? 'completed' : 'cancelled',
+    same: (m) => m.due === due,
+    next: closed || !due ? null : {
+      moduleType: 'Quality',
+      title: `Close deviation ${d.deviation_number}: ${d.title}`,
+      description: `Deviation ${d.deviation_number} (${d.classification}) is due to close on ${due}. Record its investigation `
+        + 'in Quality, Deviations, and send it for approval; the close is signed.',
+      category: 'deviation',
+      taskType: 'action',
+      ...(actorId ? { assigneeId: actorId } : {}),
+      priority,
+      dueDate: new Date(`${due}T00:00:00Z`),
+      tags: ['qms', 'deviation'],
+      metadata: { deviationId: d.id, due, remindDaysBefore: DEVIATION_REMIND_DAYS },
+    },
+  };
+}
+
+/** After a deviation is recorded, moved or closed. Never throws. */
+export const scheduleDeviationTask = (organizationId: number, d: DeviationTaskSource, actorId: number): Promise<SourceTaskOutcome> =>
+  replaceSourceTask({ organizationId, ...deviationTaskPlan(d, actorId), actorId });

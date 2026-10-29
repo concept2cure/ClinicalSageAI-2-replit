@@ -9,7 +9,6 @@ import {
   insertQcSpecificationSchema,
   insertQcOosInvestigationSchema,
   insertQcBatchReleaseSchema,
-  insertQcDeviationSchema,
   insertQcMicrobiologicalTestSchema,
   insertQcReferenceStandardSchema,
 } from '../../shared/schema/qc-schemas';
@@ -389,112 +388,8 @@ router.post('/batch-releases/:id/release', async (_req: Request, res: Response) 
   });
 });
 
-// ============================================================================
-// DEVIATION MANAGEMENT APIS
-// ============================================================================
-
-// Get all deviations
-router.get('/deviations', async (req: Request, res: Response) => {
-  try {
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const { clientWorkspaceId, deviationType, severity } = req.query;
-    const deviations = await storage.getQcDeviations({
-      organizationId: guard.orgId,
-      clientWorkspaceId: Number(clientWorkspaceId),
-      deviationType: deviationType as string,
-      severity: severity as string,
-    });
-    res.json(deviations);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to fetch deviations');
-  }
-});
-
-// Get single deviation
-router.get('/deviations/:id', async (req: Request, res: Response) => {
-  try {
-    const guardDev = requireAuthedOrgId(req, res); if (!guardDev.ok) return;
-    const deviation = await storage.getQcDeviation(Number(req.params.id), guardDev.orgId);
-    if (!deviation) {
-      return res.status(404).json({ error: 'Deviation not found' });
-    }
-    res.json(deviation);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to fetch deviation');
-  }
-});
-
-// Create deviation
-router.post('/deviations', async (req: Request, res: Response) => {
-  try {
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const validatedData = withoutTenantKey(insertQcDeviationSchema).parse(req.body);
-    const deviation = await storage.createQcDeviation({ ...validatedData, organizationId: guard.orgId });
-    res.status(201).json(deviation);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
-    } else {
-      sendQcError(res, error, 'Failed to create deviation');
-    }
-  }
-});
-
-// Update deviation
-router.put('/deviations/:id', async (req: Request, res: Response) => {
-  try {
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const deviation = await storage.updateQcDeviation(Number(req.params.id), guard.orgId, withoutOrgId(req.body ?? {}));
-    res.json(deviation);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to update deviation');
-  }
-});
-
-// Perform impact assessment
-router.post('/deviations/:id/impact-assessment', async (req: Request, res: Response) => {
-  try {
-    const assessment = req.body;
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const deviation = await storage.performImpactAssessment(Number(req.params.id), guard.orgId, assessment);
-    res.json(deviation);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to perform impact assessment');
-  }
-});
-
-// Link CAPA to deviation
-router.post('/deviations/:id/capa', async (req: Request, res: Response) => {
-  try {
-    const { capaNumber, correctiveActions, preventiveActions } = req.body;
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const deviation = await storage.linkCapaToDeviation(Number(req.params.id), guard.orgId, {
-      capaNumber,
-      correctiveActions,
-      preventiveActions,
-    });
-    res.json(deviation);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to link CAPA');
-  }
-});
-
-// Get deviation trending analysis
-router.get('/deviations/trending', async (req: Request, res: Response) => {
-  try {
-    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
-    const { startDate, endDate, category } = req.query;
-    const trending = await storage.getDeviationTrending({
-      organizationId: guard.orgId,
-      startDate: startDate as string,
-      endDate: endDate as string,
-      category: category as string,
-    });
-    res.json(trending);
-  } catch (error) {
-    sendQcError(res, error, 'Failed to get trending analysis');
-  }
-});
+// Deviations are the Quality register's (P-49, 2026-10-29): /api/mdx/qms/deviations
+// (server/routes/mdx-qms-deviations.ts). The stub that stood here had no store and answered 501.
 
 // ============================================================================
 // MICROBIOLOGICAL TESTING APIS

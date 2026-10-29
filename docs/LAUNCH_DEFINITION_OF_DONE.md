@@ -896,10 +896,16 @@ one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality
 - a CAPA raised from it, through the existing `raiseCapaFrom`;
 - closure as a signed decision, through the one signing ceremony.
 
-The store is a new public table with `organization_id INTEGER NOT NULL`, appended to `C2C_MIGRATION_FILES` before
-the final sweep pair (Rule 1). The `/api/qc/deviations` stub (`server/routes/qc.routes.ts`), which has no store and
-answers 501, is deleted in the same change. Its OOS stub stays, because OOS is not a deviation. The nonconformance tab
-stops being described as deviations. (Parity §8 Q5; slice G16.)
+The store is `qc_deviations`, as `shared/schema/qc-schemas.ts` has defined it since the QC module. No migration had
+ever created it. `migrations/20261029g_qc_deviations.sql` creates it with `client_workspace_id` nullable, because a
+Quality record is the organisation's, and appends it to `C2C_MIGRATION_FILES` before the final sweep pair (Rule 1). It
+is public with `organization_id INTEGER NOT NULL`. *(Corrected on building: this entry first said "a new public table";
+the existing definition is reached instead, under Rule 3.)*
+
+The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage implementations behind them are deleted
+in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
+would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
+nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
 
 ### P-50 — Training is assigned per document, may be done before the effective date, and is distributed as tasks
 
