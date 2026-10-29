@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const auth = vi.hoisted(() => vi.fn());
-vi.mock('../vault-source-input.js', async load => ({ ...await load<typeof import('../vault-source-input.js')>(), authorizeCsrSourceProgram: auth }));
+vi.mock('../source-access.js', async load => ({ ...await load<typeof import('../source-access.js')>(), authorizeCsrSourceProgram: auth }));
 import { readSavedClinicalTables } from '../saved-clinical-tables.js';
 import { orchestratorInputDigest } from '../../submission-orchestrator-inputs.js';
 import { sealSignPayloadDigest } from '../../ectd/sign-payload-seal.js';

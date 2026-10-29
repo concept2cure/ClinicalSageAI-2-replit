@@ -27,11 +27,11 @@
 import type { E3Basis, E3Section } from './types.js';
 import { E3_PLAN_SECTIONS, E3_REPORT_NOTES } from './csr-e3-sections-plan.js';
 import { E3_RESULTS_SECTIONS } from './csr-e3-sections-results.js';
-import { E3_APPENDIX_SECTIONS } from './csr-e3-sections-appendices.js';
+import { E3_ANNEXES, E3_APPENDIX_SECTIONS, e3AnnexesFor, type E3Annex } from './csr-e3-sections-appendices.js';
 import { CDISC_CONVENTION, e3SectionBasis } from './csr-e3-basis.js';
 import { clip } from './section-brief.js';
 
-export { E3_REPORT_NOTES };
+export { E3_REPORT_NOTES, E3_ANNEXES, e3AnnexesFor, type E3Annex };
 
 /** Every E3 heading, in report order. */
 export const ICH_E3_GUIDANCE: readonly E3Section[] = Object.freeze([
@@ -116,7 +116,21 @@ function basisLine(b: E3Basis): string {
     : b.confidence === 'recall'
       ? recallHow(b)
       : 'platform practice, not a requirement';
-  return `- ${b.ref} — ${how}${b.url ? ` (${b.url})` : ''}`;
+  return `- ${b.ref} — ${how}${b.url ? ` (${b.url})` : ''}${quoteLine(b)}`;
+}
+
+/** A quoted span, shown as read only when it was read; otherwise as recalled wording. */
+function quoteLine(b: E3Basis): string {
+  if (!b.quote) return '';
+  return b.confidence === 'regulator-text' ? `; it reads: "${b.quote}"` : `; recalled wording, not yet checked: "${b.quote}"`;
+}
+
+/** One line per annex: E3's display model for this heading. */
+function annexBlock(number: string): string | null {
+  const annexes = e3AnnexesFor(number);
+  if (!annexes.length) return null;
+  const lines = annexes.map((a) => `- ICH E3 Annex ${a.id}, ${a.title} (recall): ${a.elements.join('; ')}`);
+  return `### Display model\n${lines.join('\n')}`;
 }
 
 /**
@@ -167,6 +181,8 @@ export function renderE3Brief(number?: string | null, maxChars = 4000): string |
     bullets('It carries', s.contains),
     s.sources?.length ? `### Usually from (platform practice; the SAP and define.xml decide)\n${s.sources.map((i) => `- ${i}`).join('\n')}` : null,
     bullets('Presented as', s.presentation),
+    annexBlock(s.number),
+    bullets('How to write it', s.writing),
     bullets('Common deficiencies', s.pitfalls),
     children.length ? `### Headings under it\n${children.map((c) => `- ${c.number} ${c.title}`).join('\n')}` : null,
     s.see?.length ? `### Read with\n${s.see.join(', ')}` : null,

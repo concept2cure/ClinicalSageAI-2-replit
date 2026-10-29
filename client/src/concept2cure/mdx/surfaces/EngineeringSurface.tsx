@@ -29,6 +29,7 @@ import { DocumentsPanel, averageAssessedCompletion } from '../components/Documen
 import { DataGate } from '../components/DataGate';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import { OPEN_PROGRAM_LABEL, openPrograms } from '../../v2/programAction';
+import { assessmentState, mayReassure } from '../../v2/assessmentState';
 import { ENG_RISK_PROB, ENG_RISK_SEVERITY } from '../data/engineering';
 import { useEngineering, type PanelScope, type ProjectRefusal } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
@@ -268,6 +269,16 @@ export function EngineeringSurface({
      an empty one, so its counts are printed only once every source read for
      this project has resolved. */
   const blockersRead = blockersState.status === 'ready' || blockersState.status === 'empty';
+  /* The four-state discriminator (v2/assessmentState.ts) is what may select
+     "Nothing is blocking": the check ran only when every source read for this
+     project resolved AND held records. An empty `blockers` alone is not it. */
+  const blockerVerdict = assessmentState({
+    loading: blockersState.status === 'loading',
+    unreadable: blockersState.status === 'error',
+    scopeExists: !nothingRecorded,
+    findingCount: blockers.length,
+    assessmentRan: blockersRead,
+  });
 
   /* Slice 0 audit: the documents read is organization-scoped too (the route
      reports `documents: 'organization'`), so its rows feed no card until keyed. */
@@ -348,7 +359,15 @@ export function EngineeringSurface({
               <div className="metric-val">{s.openRisks}</div>
               <div className="metric-meta">
                 {/* Slice 0 audit: an empty risk file is not "all verified". */}
-                {risks.length === 0 ? 'No risks recorded' : s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
+                {/* `risks` is [] for a failed or pending read too; this card is
+                    gated on summary and documents, not on the risk file. */}
+                {live.risks.status === 'error'
+                  ? 'Risk file could not be read'
+                  : live.risks.status === 'loading'
+                    ? 'Reading the risk file'
+                    : risks.length === 0
+                      ? 'No risks recorded yet'
+                      : s.openRisks === 0 ? 'All risks verified' : 'Not yet verified'}
               </div>
             </div>
             <div className="metric-card" data-tone={ecrsKeyed ? 'warn' : undefined}>
@@ -454,7 +473,7 @@ export function EngineeringSurface({
             }
             testId="eng-no-blockers"
           />
-        ) : blockers.length === 0 ? (
+        ) : blockerVerdict === 'assessed-clear' ? (
           /* The last hand-rolled copy of the empty state `<DataGate>` used to
              draw — it reproduced the gate's `data-gate-inner` / `-copy` /
              `-title` / `-detail` markup by hand, and was the only thing still
@@ -467,7 +486,7 @@ export function EngineeringSurface({
              for it, so the copy names what was read and what was left out. */
           <EmptyState
             icon={I.checkCircle}
-            title={leftOut.length === 0 ? 'Nothing is blocking your documents' : 'No blockers in the records read for this project'}
+            title={leftOut.length === 0 && mayReassure(blockerVerdict) ? 'Nothing is blocking your documents' : 'No blockers in the records read for this project'}
             hint={`No ${listOf(readSources.map((b) => b.found), 'or')} were found.` + leftOutSentence}
             testId="eng-no-blockers"
           />

@@ -8,10 +8,12 @@ import { registryTemplateUnavailabilityReason } from '../../market-specs/documen
 type EditorTemplate = Awaited<ReturnType<typeof getBuiltinAuthoringTemplates>>[number];
 const CROSS_SEGMENT = new Set(['US_EUA', 'US_RFD']);
 const SCOPE_CONCERNS: Readonly<Record<string, string[]>> = {
-  US_EUA: ['The existing outline is device/assay oriented; its availability does not establish therapeutic or vaccine EUA content coverage.'],
+  US_EUA: ['The existing outline is device/assay oriented; a drug or biologic EUA request is the separate US_EUA_THERAPEUTIC identity.'],
   US_RFD: ['The existing generic pre-submission outline does not provide a dedicated jurisdiction/primary-mode-of-action rationale.'],
-  US_NDA_ANNUAL: ['This source primarily models 21 CFR 314.81 NDA annual-report parts. Its name does not establish all biologics reports under Parts 600/601.'],
-  US_CBE: ['The existing CBE records describe NDA/ANDA parts; confirm the applicable biologics change classification and records under 21 CFR 601.12.'],
+  US_NDA_ANNUAL: ['This source models 21 CFR 314.81 NDA annual-report parts. A licensed biologic reports under US_BLA_ANNUAL (601.12(d)), US_BLA_PMR_ANNUAL (601.70), US_BLA_PEDIATRIC_ANNUAL (601.28) and US_BLA_DISTRIBUTION (600.81).'],
+  US_CBE: ['The existing CBE records describe NDA/ANDA parts under 21 CFR 314.70; a licensed biologic files US_BLA_CBE30 or US_BLA_CBE0 under 601.12(c).'],
+  // 2026-10-29: the new identities' own records are recall-only (eCFR/fda.gov unreachable here).
+  US_EXPANDED_ACCESS_INDIVIDUAL: ['Form FDA 3926 has no FDAFormsRegistry entry, official asset or field map; its part is manual. Every citation in the record is recall, not re-read on eCFR.'],
 };
 
 function templateFacts(template: EditorTemplate | undefined) {
@@ -68,10 +70,13 @@ export async function buildUsBiotechAuthoringCoverage(coverage: readonly Documen
     summary: { filings: filings.length, editorLoadableDefinitions: filings.filter(row => row.editorTemplateId).length,
       reusableDocuments: reusableDocuments.length, scopedConcerns: filings.filter(row => row.scopeConcerns.length).length },
     unrepresentedNeeds: [
-      { need: 'Exact expanded access working-document/Form FDA 3926 source path, distinguished by individual/group and application-specific scope',
-        existingOwners: ['shared/regulatory/global-document-registry.ts', 'server/config/FDAFormsRegistry.ts', 'server/services/authoring/authoring-source-import.ts'] },
-      { need: 'Separately retained Type D/INTERACT editor starts and their applicable meeting-program context',
-        existingOwners: ['server/services/ind/ctd/lifecycle-document-types.ts', 'server/services/ana-ri/document-templates.ts'] },
+      // 2026-10-29: the three expanded-access identities and Type D/INTERACT now
+      // have exact registry identities, records and project packs. What is still
+      // not represented is the official 3926 form path, and re-read regulator text.
+      { need: 'Official Form FDA 3926 asset, field map and reviewed fill path (the expanded-access 3926 part is manual until then)',
+        existingOwners: ['server/config/FDAFormsRegistry.ts', 'server/services/ind-forms', 'server/services/forms/fill-official-pdf.ts'] },
+      { need: 'Regulator-text re-read (eCFR, fda.gov) of the 2026-10-29 Type D/INTERACT, expanded-access, BLA report/change and CBER/EUA records; every basis is recall',
+        existingOwners: ['server/services/ind/ctd/us-biotech-meetings-sources.ts', 'server/services/ind/ctd/us-biotech-expanded-access-sources.ts', 'server/services/ind/ctd/us-biotech-bla-reports-sources.ts', 'server/services/ind/ctd/us-biotech-bla-changes-cber-sources.ts'] },
       { need: 'Sponsor document-template formatting and retained Word layout beyond the current structured-text import/export',
         existingOwners: ['server/services/authoring/authoring-export.ts', 'shared/templates/template-spec.ts'] },
     ],

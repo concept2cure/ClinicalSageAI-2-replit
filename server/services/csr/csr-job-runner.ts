@@ -34,13 +34,16 @@ import {
   type CsrSectionOutput,
 } from '@shared/schema';
 import {
-  ICH_E3_STRUCTURE,
+  csrSectionSelectionRefusal,
   draftCSRSectionWithProvenance,
-  flattenICHE3Sections,
   hasUnresolvedPlaceholders,
+  resolveCSRDraftTargets,
   type CSRBuildRequest,
   type CSRSection,
 } from '../csr-builder';
+import { CsrAuthoringContextError, csrSectionTableKeys, parseCsrEvidenceSelection,
+  type CsrAuthoringEvidence } from './cortex-authoring-context';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -90,14 +93,22 @@ function requireDb(): NonNullable<typeof db> {
 interface CSRStudyInfoSnapshot {
   studyInfo: CSRBuildRequest['studyInfo'];
   deepResearchJobId?: number;
+  /** The retained run whose engine tables ground the results sections. */
+  evidenceSource?: CSRBuildRequest['evidenceSource'];
 }
 
-function readStudyInfoSnapshot(
-  raw: unknown
-): { studyInfo: CSRBuildRequest['studyInfo']; deepResearchJobId?: number } {
+type EvidenceSource = NonNullable<CSRBuildRequest['evidenceSource']>;
+
+/** A retained-run binding, normalised; throws CSR_EVIDENCE_SELECTION_INVALID. */
+function parseEvidenceSource(value: unknown): EvidenceSource {
+  const { programId, runId, studyId } = parseCsrEvidenceSelection({ ...(value as object), sectionNumber: '1' });
+  return { programId, runId, studyId };
+}
+
+function readStudyInfoSnapshot(raw: unknown): CSRStudyInfoSnapshot {
   if (raw && typeof raw === 'object') {
     const obj = raw as Record<string, unknown>;
-    // New shape: { studyInfo, deepResearchJobId }
+    // New shape: { studyInfo, deepResearchJobId, evidenceSource? }
     if (obj.studyInfo && typeof obj.studyInfo === 'object') {
       return {
         studyInfo: obj.studyInfo as CSRBuildRequest['studyInfo'],
@@ -105,6 +116,7 @@ function readStudyInfoSnapshot(
           typeof obj.deepResearchJobId === 'number'
             ? obj.deepResearchJobId
             : undefined,
+        ...(obj.evidenceSource !== undefined ? { evidenceSource: obj.evidenceSource as EvidenceSource } : {}),
       };
     }
     // Back-compat: legacy rows stored the raw studyInfo directly
@@ -117,6 +129,47 @@ function readStudyInfoSnapshot(
     studyInfo: {} as CSRBuildRequest['studyInfo'],
     deepResearchJobId: undefined,
   };
+}
+
+/**
+ * The headings a retained job drafts (ICH_E3_GUIDANCE's draftable headings, or
+ * those under its selection), or null when the retained selection is unusable:
+ * unknown, duplicated in a way the builder refuses, or naming a manual heading.
+ * Null or [] is the whole report.
+ */
+function retainedDraftTargets(persisted: unknown): CSRSection[] | null {
+  if (persisted != null && !Array.isArray(persisted)) return null;
+  const selection = Array.isArray(persisted) && persisted.length > 0 ? [...new Set(persisted as string[])] : undefined;
+  try {
+    const targets = resolveCSRDraftTargets(selection);
+    return targets.length ? targets : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The retained evidence pack for one results section of a run-bound job, or
+ * undefined for a section no engine table supports (§9.7, §10.2, §12.5).
+ * Loaded through the canonical project-authorized, receipt-verified reader
+ * as the job's requester, re-checked per section. A revoked or withdrawn
+ * source, a missing requester or a pack for another protocol throws, and the
+ * job fails closed rather than drafting the section from metadata.
+ */
+async function loadSectionEvidence(
+  source: EvidenceSource, sectionNumber: string,
+  job: { organizationId: number; requestedBy: number | null; studyId: string },
+): Promise<CsrAuthoringEvidence | undefined> {
+  if (!csrSectionTableKeys(sectionNumber).length) return undefined;
+  const [{ loadCsrAuthoringEvidence }, { pool }] = await Promise.all([
+    import('./cortex-authoring-reader'), import('../../db'),
+  ]);
+  const evidence = await loadCsrAuthoringEvidence(pool as unknown as RequestSqlClient,
+    { organizationId: job.organizationId, userId: job.requestedBy ?? 0 }, { ...source, sectionNumber });
+  if (evidence.source.protocolNumber !== job.studyId) {
+    throw new CsrAuthoringContextError('CSR_EVIDENCE_STUDY_MISMATCH', 409);
+  }
+  return evidence;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -140,13 +193,17 @@ export async function enqueueCSRBuildJob(
   // Reject malformed section selections before creating a persistent job.
   // Undefined or [] retains the established whole-report behavior.
   const requestedSections = req.sectionsToGenerate;
-  if (requestedSections !== undefined) {
-    const supported = new Set(flattenICHE3Sections(ICH_E3_STRUCTURE).map(section => section.number));
-    if (!Array.isArray(requestedSections) ||
-        requestedSections.some(number => typeof number !== 'string' || !supported.has(number)) ||
-        new Set(requestedSections).size !== requestedSections.length) {
-      throw new CsrScopeError('CSR_SECTION_SELECTION_INVALID', 400,
-        'Choose unique ICH E3 section numbers from the CSR template. No job was created.');
+  if (requestedSections !== undefined && requestedSections.length > 0) {
+    const refusal = csrSectionSelectionRefusal(requestedSections);
+    if (refusal) throw new CsrScopeError(refusal.code, 400, `${refusal.message} No job was created.`);
+  } else if (requestedSections !== undefined && !Array.isArray(requestedSections)) {
+    throw new CsrScopeError('CSR_SECTION_SELECTION_INVALID', 400,
+      'Choose unique ICH E3 section numbers from the CSR template. No job was created.');
+  }
+  let evidenceSource: EvidenceSource | undefined;
+  if (req.evidenceSource !== undefined) {
+    try { evidenceSource = parseEvidenceSource(req.evidenceSource); } catch {
+      throw new CsrScopeError('CSR_EVIDENCE_SELECTION_INVALID', 400, 'The retained run binding is invalid. No job was created.');
     }
   }
   // A CSR build must belong to an explicit project, rather than silently
@@ -176,6 +233,7 @@ export async function enqueueCSRBuildJob(
   const snapshot: CSRStudyInfoSnapshot = {
     studyInfo: { ...req.studyInfo, protocolNumber: protocolNumber.trim() },
     deepResearchJobId: req.deepResearchJobId,
+    ...(evidenceSource ? { evidenceSource } : {}),
   };
 
   const [row] = await d
@@ -262,7 +320,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   }
 
   // 3. Rebuild the CSRBuildRequest from the persisted snapshot
-  const { studyInfo, deepResearchJobId } = readStudyInfoSnapshot(
+  const { studyInfo, deepResearchJobId, evidenceSource } = readStudyInfoSnapshot(
     job.studyInfoSnapshot
   );
   // Resume must use the study identity recorded on the job, not an edited,
@@ -296,22 +354,15 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   if (!claimed) return;
 
   const persistedSubset = job.sectionsToGenerate ?? null;
-  const fresh = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
-  const canonicalSections = flattenICHE3Sections(fresh);
-  const canonicalNumbers = new Set(canonicalSections.map(section => section.number));
   // Empty arrays retain the existing full-build meaning. An unusable retained
   // selection must never become a vacuously complete job or discard unknown slots.
-  if (!canonicalSections.length || (persistedSubset != null && (!Array.isArray(persistedSubset)
-    || persistedSubset.some(number => !canonicalNumbers.has(number))))) {
+  const allTargets = retainedDraftTargets(persistedSubset);
+  if (!allTargets) {
     await d.update(csrBuildJobs).set({ status: 'failed', progress: 0, updatedAt: new Date(),
       error: { reason: 'invalid_section_selection', message: 'The retained CSR selection does not identify supported report sections.' },
     }).where(eq(csrBuildJobs.id, jobId));
     return;
   }
-  const subsetFilter =
-    persistedSubset && persistedSubset.length > 0
-      ? new Set(persistedSubset)
-      : null;
   const request: CSRBuildRequest = {
     organizationId: job.organizationId,
     userId: job.requestedBy ?? 0,
@@ -330,9 +381,6 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
   };
 
   // 5. Resume only missing/blank targets; preserve every nonblank saved target.
-  const allTargets = canonicalSections.filter(s =>
-    subsetFilter ? subsetFilter.has(s.number) : true
-  );
   const targetNumbers = new Set(allTargets.map(section => section.number));
 
   const alreadyPersisted = await d
@@ -397,10 +445,16 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 
       currentSection.number = section.number;
 
+      // A job bound to a retained run drafts each results section over that
+      // section's engine tables; a refused or revoked source fails the job.
+      const evidence = evidenceSource
+        ? await loadSectionEvidence(evidenceSource, section.number, job)
+        : undefined;
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
-        aiCtx
+        aiCtx,
+        evidence
       );
 
       // A model response must target the section being drafted. An unexpected
@@ -586,6 +640,30 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
 }
 
 /**
+ * Counts the verifiable, non-placeholder saved sections of a job, and says
+ * whether a job recorded as complete fails its saved-output integrity check.
+ */
+function savedSectionsVerdict(
+  row: { status: string; sectionsToGenerate: string[] | null },
+  sectionRows: Array<{ sectionNumber: string; content: string; contentHash: string | null }>,
+): { sectionsComplete: number; integrityFailure: boolean } {
+  const resolvedTargets = retainedDraftTargets(row.sectionsToGenerate ?? null);
+  const targetCodes = resolvedTargets?.map(section => section.number) ?? row.sectionsToGenerate ?? [];
+  const validTargets = !!resolvedTargets && targetCodes.length > 0;
+  const integrity = validTargets
+    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
+    : { covered: [], missing: targetCodes, mismatched: [] };
+  const verified = new Set(integrity.covered);
+  const sectionsComplete = sectionRows.filter(section =>
+    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
+  ).length;
+  const integrityFailure = row.status === 'complete' &&
+    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
+      sectionsComplete !== targetCodes.length);
+  return { sectionsComplete, integrityFailure };
+}
+
+/**
  * Org-scoped read of a job's current state. Returns null when the job
  * either does not exist OR belongs to a different organization — the two
  * cases are deliberately collapsed to avoid leaking job existence across
@@ -630,23 +708,7 @@ export async function getCSRBuildJobStatus(
         eq(csrSectionOutputs.organizationId, organizationId)
       )
     );
-  const canonicalTargets = flattenICHE3Sections(ICH_E3_STRUCTURE).map(section => section.number);
-  const targetCodes = row.sectionsToGenerate?.length
-    ? row.sectionsToGenerate
-    : canonicalTargets;
-  const validTargets = targetCodes.length > 0 &&
-    new Set(targetCodes).size === targetCodes.length &&
-    targetCodes.every(code => canonicalTargets.includes(code));
-  const integrity = validTargets
-    ? verifySavedCsrSectionIntegrity(targetCodes, sectionRows)
-    : { covered: [], missing: targetCodes, mismatched: [] };
-  const verified = new Set(integrity.covered);
-  const sectionsComplete = sectionRows.filter(section =>
-    verified.has(section.sectionNumber) && !hasUnresolvedPlaceholders(section.content)
-  ).length;
-  const integrityFailure = row.status === 'complete' &&
-    (sectionRows.length === 0 || integrity.mismatched.length > 0 || integrity.missing.length > 0 ||
-      sectionsComplete !== targetCodes.length);
+  const { sectionsComplete, integrityFailure } = savedSectionsVerdict(row, sectionRows);
 
   return {
     status: integrityFailure ? 'failed' : row.status,

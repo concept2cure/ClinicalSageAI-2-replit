@@ -96,6 +96,36 @@ describe('.gitleaks.toml carries the working-tree gate’s rules for the credent
     expect(digestLine.test(`"auth.test.ts": "${hex.slice(0, 40)}"`)).toBe(false);
   });
 
+  // gitleaks' default sentry-access-token rule reads "sentry" followed by hex
+  // as a Sentry token, so `"client/src/utils/sentry.ts": "<digest>"` in an
+  // evidence manifest was 208 of the 211 full-history findings on 2026-10-27
+  // (MR-02). The same file-digest allowlist, verbatim, applies to it.
+  it('the file-digest allowlist covers the sentry-access-token rule too, verbatim', () => {
+    const sentry = ruleBlock('sentry-access-token');
+    const generic = ruleBlock('generic-api-key');
+    const of = (block: string) => literals(block.slice(block.indexOf('file digests in evidence manifests')));
+    expect(sentry.indexOf('file digests in evidence manifests'), 'sentry-access-token has no file-digest allowlist').toBeGreaterThan(-1);
+    expect(of(sentry)[0]).toBe(of(generic)[0]);
+    const digestLine = re2(of(sentry)[0]);
+    const hex = '2b982cf48740d1446d993b484bf8a80933a88ea7a80727221e952cca87f3f3eb';
+    expect(digestLine.test(`    "client/src/utils/sentry.ts": "${hex}",`)).toBe(true);
+    expect(digestLine.test(`"sentry_auth_token": "${hex}"`)).toBe(false); // ci-secret-scan-ignore: negative test vector
+  });
+
+  // A catalog key is lowercase words joined by separators, sometimes doubled
+  // where a title's punctuation was dropped: `cdi-rebyota-02-cber-cmc-bla-review-memo---rebyota`
+  // (the CDI CSR reference manifests, 2026-10-27).
+  it('an identifier with doubled separators is an identifier; mixed case or no separator is not', () => {
+    const id = re2(literals(ruleBlock('generic-api-key'))[0]);
+    expect(id.test('cdi-rebyota-02-cber-cmc-bla-review-memo---rebyota')).toBe(true);
+    expect(id.test('cdi-rebyota-01-bioresearch-monitoring-final-discipline-review--octo')).toBe(true);
+    expect(id.test('cdi-rbx2660-s12879-022-07256-y')).toBe(true);
+    expect(id.test('-leading-separator')).toBe(false);
+    expect(id.test('trailing-separator-')).toBe(false);
+    expect(id.test('a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6')).toBe(false);
+    expect(id.test('sk-Live-0123456789ABCdef')).toBe(false); // ci-secret-scan-ignore: negative test vector
+  });
+
   it('one escape hatch for both scanners', () => {
     const marker = /const IGNORE_MARKER = '([^']+)';/.exec(GATE)?.[1];
     expect(marker).toBe('ci-secret-scan-ignore');

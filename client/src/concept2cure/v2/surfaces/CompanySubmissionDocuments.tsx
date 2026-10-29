@@ -72,15 +72,10 @@ function confirmedCopy(value: unknown): value is CopyReceipt {
   const body = value as Partial<CopyReceipt> | null;
   return typeof body?.document?.id === 'string' && body.reviewRequired === true && typeof body.message === 'string';
 }
-async function correspondenceDownloadBody(result: Response, current: () => boolean) {
-  if (!current()) return null;
-  if (!result.ok) {
-    const body = await result.json().catch(() => null);
-    if (!current()) return null;
-    throw new Error(serverMessage(body) || 'The template download was refused.');
-  }
-  const blob = await result.blob();
-  return current() ? blob : null;
+/** Throws the refusal of a non-ok render; returns quietly when this visit is no longer current. */
+async function correspondenceRefusal(result: Response, current: () => boolean) {
+  const body = await result.json().catch(() => null);
+  if (current()) throw new Error(serverMessage(body) || 'The template download was refused.');
 }
 
 function companionActions(props: CompanionProps, library: CompanyLibrary, selection: CompanionSelection) {
@@ -127,8 +122,10 @@ function companionActions(props: CompanionProps, library: CompanyLibrary, select
     try {
       const result = await apiRequest('POST', `${PATH}/letterhead/render`, { purpose: 'submission', sequenceId: seq.id,
         ...(library.variantId ? { variantId: library.variantId } : {}), title });
-      const blob = await correspondenceDownloadBody(result, current);
-      if (!blob || !current()) return;
+      if (!current()) return;
+      if (!result.ok) { await correspondenceRefusal(result, current); return; }
+      const blob = await result.blob();
+      if (!current()) return;
       if (!downloadBlob(`${safeFileName(submission.title || `Submission ${submission.id}`)}-correspondence.docx`, blob)) throw new Error('The browser could not save the template.');
       library.setNote({ tone: 'ok', text: 'Correspondence Word template downloaded using the saved company presentation preference. Review the draft content and place its reviewed PDF explicitly from Vault before including it in a submission.' });
     } catch (error) {

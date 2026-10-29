@@ -51,6 +51,10 @@ import { AUTHORING_READ_TOOLS } from './authoring-read-tools.js';
 // chain and where the open project stands, FDA's technical rules — read from
 // server/services/ind/ctd. Handlers registered from regulatory-knowledge-tools.ts.
 import { REGULATORY_KNOWLEDGE_TOOLS } from './regulatory-knowledge-tools.js';
+// The retained CSR evidence pack for one ICH E3 section of a Submission Center
+// run, and exact-cell reconciliation of drafted figures. Handler registered
+// from csr-section-evidence-tool.ts.
+import { GET_CSR_SECTION_EVIDENCE } from './csr-section-evidence-tool.js';
 // What agencies require of a CMC dossier, which documents say so in which
 // version, and the science behind it — read from server/services/cmc/knowledge.
 // Handlers registered from cmc-knowledge-tools.ts.
@@ -2256,6 +2260,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SEARCH_DOCUMENT_PASSAGES,
   ...AUTHORING_READ_TOOLS,
   ...REGULATORY_KNOWLEDGE_TOOLS,
+  GET_CSR_SECTION_EVIDENCE,
   ...CMC_KNOWLEDGE_TOOLS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,

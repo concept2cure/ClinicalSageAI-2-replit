@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { CompanyLegalDocument } from '../../../../shared/company-documents';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { companyLegalVaultTargetRefusal, vaultVersionNotTransmittable } from '../../vault/vault-lifecycle';
 import { readCompanyLegalRegistry, readCompanyLegalRegistryForVault, syncCompanyLegalRegistry } from '../legal-registry';
 
@@ -32,8 +33,8 @@ beforeEach(async () => {
     CREATE TABLE vault.legal_holds(organization_id integer,lifted_at timestamptz);
     CREATE TABLE vault.documents(id uuid,organization_id integer,program_id uuid,document_code text,
       supersedes_id uuid,document_title text,content_hash text,version text,deleted_at timestamptz);
-    CREATE TABLE canonical_documents(canonical_id text,organization_id integer,source_refs jsonb,stage text,content_hash text,created_at timestamptz);
-    CREATE TABLE audit_logs(tenant_id integer,table_name text,record_id text,action text,new_values jsonb);`);
+    CREATE TABLE canonical_documents(canonical_id text,organization_id integer,source_refs jsonb,stage text,content_hash text,created_at timestamptz);`);
+  await db.exec(AUDIT_LOGS_PGLITE_DDL);
 });
 afterEach(async () => { await db?.close(); });
 
