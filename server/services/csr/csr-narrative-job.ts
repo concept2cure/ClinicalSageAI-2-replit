@@ -6,9 +6,14 @@
  *   - subjects are selected by the E3 §12.3.2 rule (narrative-subject-selection)
  *     and composed one at a time, in treatment-group and subject order; each
  *     narrative is saved with its SHA-256 and the digest of its ADaM facts the
- *     moment it is composed, so only one subject's facts are composed at a time
- *     (the saved rows, text included, are read whole to verify and resume, and
- *     §14.3.3 is one text of every narrative, so landing holds all of them);
+ *     moment it is composed, so only one subject's facts are composed at a time;
+ *   - memory does not grow with the narrative count (2026-10-30, the build off
+ *     the request path): resume reads each saved row's integrity verdict and
+ *     digest, not its text (NarrativeStore.heads), and landing reads the text a
+ *     page at a time and streams §14.3.3 into the section store as its opening
+ *     and one block per subject (narrative-section.ts), so at most a page of
+ *     narrative text is held at once. The landed text is the whole-section
+ *     composer's, byte for byte;
  *   - a resumed run skips exactly the subjects whose saved narrative verifies
  *     and still matches its facts, and recomposes the rest;
  *   - a saved narrative whose text no longer matches its hash is never
@@ -27,7 +32,7 @@ import { selectNarrativeSubjects, type NarrativeCategory } from './narrative-sub
 import { buildNarrativeIndex, factsDigest, subjectNarrativeFacts, type NarrativeDatasets } from './narrative-subject-facts.js';
 import { composeSubjectNarrative, type ComposedNarrative, type NarrativeProseWriter } from './narrative-compose.js';
 import type { NarrativeIssue } from './narrative-reconciliation.js';
-import { narrativesCrossReference, narrativesSection, type SectionNarrative } from './narrative-section.js';
+import { narrativeSectionBlock, narrativesCrossReference, narrativesSectionHead, type NarrativeSectionHead } from './narrative-section.js';
 
 export const NARRATIVE_COMPOSER = 'csr-narrative-job';
 
@@ -47,18 +52,36 @@ export interface SavedNarrative {
   content: string | null; contentHash: string | null; factsDigest: string; qc: NarrativeQc;
 }
 export interface NarrativeSectionRow { sectionNumber: '14.3.3' | '12.3.2'; content: string; contentHash: string; lineage: Record<string, unknown> }
+/** §14.3.3 as it is landed: its text arrives in chunks (the opening, then a page of blocks at a time). */
+export interface StreamedNarrativeSection { sectionNumber: '14.3.3'; chunks: AsyncIterable<string>; lineage: Record<string, unknown> }
+/** A saved row without its text: the store's own integrity verdict on the text it holds. */
+export interface SavedNarrativeHead {
+  subjectId: string; sequence: number; status: 'composed' | 'refused'; factsDigest: string;
+  /** A composed row holds nonblank text whose SHA-256 is its content_hash; a refused row holds neither. */
+  verified: boolean; prose: 'template' | 'model' | null;
+}
+export interface NarrativePageCursor { sequence: number; subjectId: string }
 export interface NarrativeStore {
-  saved(): Promise<SavedNarrative[]>;
+  /** Every saved row of the build, without its text. */
+  heads(): Promise<SavedNarrativeHead[]>;
+  /** Saved rows with their text, ordered by (sequence, subjectId), after `after`, at most `limit`. */
+  page(after: NarrativePageCursor | null, limit: number): Promise<SavedNarrative[]>;
   /** Persist one subject; false when the build stopped being runnable (cancelled). */
   save(row: SavedNarrative): Promise<boolean>;
-  /** Writes §14.3.3; §12.3.2 only where it is absent or this job wrote it. */
-  writeSections(rows: NarrativeSectionRow[]): Promise<{ written: string[]; kept: string[] }>;
+  /**
+   * Writes §14.3.3 from its chunks and its SHA-256 over exactly what was written;
+   * §12.3.2 only where it is absent or this job wrote it. All or nothing: a
+   * chunk source that throws leaves both sections as they were.
+   */
+  writeSections(sections: { narratives: StreamedNarrativeSection; crossReference: NarrativeSectionRow }): Promise<{ written: string[]; kept: string[] }>;
 }
 export interface NarrativeJobInput {
   bundle: CsrAdamBundle; datasets: NarrativeDatasets; store: NarrativeStore;
   protocolNumber: string; writer?: NarrativeProseWriter;
   /** Recorded on the section lineage: the manifest digest and the run it came from. */
   provenance?: Record<string, unknown>;
+  /** Subjects done (composed, refused or resumed) of those selected; false stops the run. */
+  onProgress?: (done: number, total: number) => Promise<boolean | void>;
 }
 export interface NarrativeJobResult {
   status: 'complete' | 'incomplete' | 'failed' | 'stopped';
@@ -67,6 +90,14 @@ export interface NarrativeJobResult {
   sections: { written: string[]; kept: string[] };
   reason?: 'saved_narrative_integrity_failed' | 'narratives_refused' | 'build_not_runnable';
   subjects?: string[];
+}
+
+/** Narratives read per landing page: the most text the job holds at once. */
+export const NARRATIVE_PAGE = 50;
+
+/** A saved row that fails its integrity check while §14.3.3 is being streamed. */
+export class NarrativeLandingIntegrityError extends Error {
+  constructor(readonly subjects: string[]) { super('A saved narrative failed its integrity check while §14.3.3 was landed.'); this.name = 'NarrativeLandingIntegrityError'; }
 }
 
 const sha256 = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
@@ -85,12 +116,33 @@ function savedRow(c: ComposedNarrative, sequence: number, digest: string, armNam
       ...(c.modelProseRefused ? { modelProseRefused: c.modelProseRefused } : {}) } };
 }
 
-function sectionRows(input: NarrativeJobInput, narratives: SectionNarrative[], counts: NarrativeJobResult['counts'], aesiDeclared: boolean, prose: string[]): NarrativeSectionRow[] {
-  const data = { protocolNumber: input.protocolNumber, counts, aesiDeclared, narratives };
-  const model = prose.includes('model') && input.writer ? { model: input.writer.model } : {};
-  const lineage = { source: 'template', composer: NARRATIVE_COMPOSER, subjects: narratives.length, prose: [...new Set(prose)].sort(), ...model, ...input.provenance };
-  return ([['14.3.3', narrativesSection(data)], ['12.3.2', narrativesCrossReference(data)]] as const)
-    .map(([sectionNumber, content]) => ({ sectionNumber, content, contentHash: sha256(content), lineage }));
+function lineageOf(input: NarrativeJobInput, subjects: number, prose: Array<string | null>): Record<string, unknown> {
+  const used = [...new Set(prose.map(p => p ?? 'template'))].sort();
+  const model = used.includes('model') && input.writer ? { model: input.writer.model } : {};
+  return { source: 'template', composer: NARRATIVE_COMPOSER, subjects, prose: used, ...model, ...input.provenance };
+}
+
+/** The opening, then each selected subject's block in order, read a page at a time and verified as it is read. */
+async function* sectionChunks(store: NarrativeStore, head: NarrativeSectionHead, order: string[]): AsyncGenerator<string> {
+  yield narrativesSectionHead(head);
+  const emitted = new Set<string>();
+  let after: NarrativePageCursor | null = null;
+  for (;;) {
+    const rows = await store.page(after, NARRATIVE_PAGE);
+    if (!rows.length) break;
+    const last = rows[rows.length - 1];
+    after = { sequence: last.sequence, subjectId: last.subjectId };
+    let chunk = '';
+    for (const row of rows) {
+      if (order[row.sequence] !== row.subjectId) continue; // a subject an earlier selection held
+      if (row.status !== 'composed' || !verifies(row)) throw new NarrativeLandingIntegrityError([row.subjectId]);
+      chunk += narrativeSectionBlock({ subjectId: row.subjectId, armName: row.qc.armName, categories: row.qc.categories, events: row.qc.events, text: row.content! });
+      emitted.add(row.subjectId);
+    }
+    if (chunk) yield chunk;
+  }
+  const absent = order.filter(id => !emitted.has(id));
+  if (absent.length) throw new NarrativeLandingIntegrityError(absent);
 }
 
 /** Compose, persist and land the narratives of every selected subject; resumable per subject. */
@@ -98,34 +150,48 @@ export async function runNarrativeJob(input: NarrativeJobInput): Promise<Narrati
   const selection = selectNarrativeSubjects(input.bundle, input.datasets);
   const result: NarrativeJobResult = { status: 'complete', selected: selection.subjects.length, composed: 0, refused: 0, resumed: 0,
     counts: selection.counts, sections: { written: [], kept: [] } };
-  const prior = new Map((await input.store.saved()).map(row => [row.subjectId, row]));
-  const damaged = [...prior.values()].filter(row => !verifies(row)).map(row => row.subjectId);
+  const prior = new Map((await input.store.heads()).map(row => [row.subjectId, row]));
+  const damaged = [...prior.values()].filter(row => !row.verified).map(row => row.subjectId);
   if (damaged.length) return { ...result, status: 'failed', reason: 'saved_narrative_integrity_failed', subjects: damaged };
+  const total = selection.subjects.length;
+  if (await input.onProgress?.(0, total) === false) return { ...result, status: 'stopped', reason: 'build_not_runnable' };
   const index = buildNarrativeIndex(input.datasets);
   for (const [sequence, subject] of selection.subjects.entries()) {
     const facts = subjectNarrativeFacts(input.datasets, index, subject);
     const digest = factsDigest(facts);
     const saved = prior.get(subject.subjectId);
-    if (saved?.status === 'composed' && saved.factsDigest === digest && saved.sequence === sequence) { result.resumed++; continue; }
-    const composed = await composeSubjectNarrative(facts, input.writer);
-    const row = savedRow(composed, sequence, digest, subject.armName, facts.events.map(e => e.term));
-    if (!await input.store.save(row)) return { ...result, status: 'stopped', reason: 'build_not_runnable' };
+    if (saved?.status === 'composed' && saved.factsDigest === digest && saved.sequence === sequence) result.resumed++;
+    else {
+      const composed = await composeSubjectNarrative(facts, input.writer);
+      const row = savedRow(composed, sequence, digest, subject.armName, facts.events.map(e => e.term));
+      if (!await input.store.save(row)) return { ...result, status: 'stopped', reason: 'build_not_runnable' };
+    }
+    if (await input.onProgress?.(sequence + 1, total) === false) return { ...result, status: 'stopped', reason: 'build_not_runnable' };
   }
   return landSections(input, selection.subjects.map(s => s.subjectId), result, selection.aesiDeclared);
 }
 
-/** Re-read every selected subject's saved row, verify it, and write the sections only when all are composed. */
+/** Re-check every selected subject's saved row, and write the sections only when all are verified and composed. */
 async function landSections(input: NarrativeJobInput, order: string[], result: NarrativeJobResult, aesiDeclared: boolean): Promise<NarrativeJobResult> {
-  const saved = new Map((await input.store.saved()).map(row => [row.subjectId, row]));
-  const rows = order.map(id => saved.get(id));
-  const damaged = order.filter((id, i) => !rows[i] || !verifies(rows[i]!));
+  const heads = new Map((await input.store.heads()).map(row => [row.subjectId, row]));
+  const rows = order.map(id => heads.get(id));
+  const damaged = order.filter((_id, i) => !rows[i] || !rows[i]!.verified || rows[i]!.sequence !== i);
   if (damaged.length) return { ...result, status: 'failed', reason: 'saved_narrative_integrity_failed', subjects: damaged };
   const refused = rows.filter(r => r!.status === 'refused').map(r => r!.subjectId);
   result.refused = refused.length;
   result.composed = order.length - refused.length;
   if (refused.length) return { ...result, status: 'incomplete', reason: 'narratives_refused', subjects: refused };
-  const narratives: SectionNarrative[] = rows.map(r => ({ subjectId: r!.subjectId, armName: r!.qc.armName, categories: r!.qc.categories,
-    events: r!.qc.events, text: r!.content! }));
-  result.sections = await input.store.writeSections(sectionRows(input, narratives, result.counts, aesiDeclared, rows.map(r => r!.qc.prose ?? 'template')));
+  const head = { protocolNumber: input.protocolNumber, counts: result.counts, aesiDeclared, subjects: order.length };
+  const lineage = lineageOf(input, order.length, rows.map(r => r!.prose));
+  const crossReference = narrativesCrossReference({ ...head, narratives: order.map(subjectId => ({ subjectId })) });
+  try {
+    result.sections = await input.store.writeSections({
+      narratives: { sectionNumber: '14.3.3', chunks: sectionChunks(input.store, head, order), lineage },
+      crossReference: { sectionNumber: '12.3.2', content: crossReference, contentHash: sha256(crossReference), lineage },
+    });
+  } catch (err) {
+    if (err instanceof NarrativeLandingIntegrityError) return { ...result, status: 'failed', reason: 'saved_narrative_integrity_failed', subjects: err.subjects };
+    throw err;
+  }
   return result;
 }

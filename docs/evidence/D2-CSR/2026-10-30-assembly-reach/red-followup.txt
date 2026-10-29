@@ -1,0 +1,94 @@
+# Follow-up fixes (2026-10-30): the new tests run against the tree BEFORE each fix (red).
+
+## 1 + 3 (real storeRenderedLeafFile / upsertLeaf / materializeLeafSources / packageEctdSubmission): server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC) 2281ms
+   → expected [ 'csr-14-tables.pdf', …(11) ] to deeply equal []
+ × server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC) 726ms
+   → This assembly has already been placed. Assemble again to place a new version.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > packages a placed CSR with every GoToR link in the body naming a file in the package (SYNTHETIC)
+AssertionError: expected [ 'csr-14-tables.pdf', …(11) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "csr-14-tables.pdf",
++   "csr-16-1-1-protocol.pdf",
++   "csr-16-1-2-sample-crf.pdf",
++   "csr-16-1-3-iec-irb.pdf",
++   "csr-16-1-4-investigators.pdf",
++   "csr-16-1-5-signatures.pdf",
++   "csr-16-1-7-randomisation.pdf",
++   "csr-16-1-9-statistical-methods.pdf",
++   "csr-16-2-1-discontinued.pdf",
++   "csr-16-2-4-demographics.pdf",
++   "csr-16-2-7-adverse-events.pdf",
++   "csr-16-3-crfs.pdf",
++ ]
+
+    179|   expect(targets.length).toBeGreaterThan(3);
+    180|   const folder = path.posix.dirname(bodyEntry);
+    181|   expect(targets.filter(t => !zip.file(`${folder}/${t}`))).toEqual([]);
+       |                                                            ^
+    182| }, 300_000);
+    183|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/csr/__tests__/csr-assembly-packaged.pglite.test.ts > finishes a placement refused part-way by placing again, with no second leaf for a file already placed (SYNTHETIC)
+CsrAssemblyRunError: This assembly has already been placed. Assemble again to place a new version.
+     40| const OPEN_STATUSES = new Set(['draft', 'assembling', 'validated']);
+     41| const TRANSMITTED = new Set(['sent', 'acknowledged']);
+     42| const refuse = (code: string, status: number, message: string): never …
+       |                                                                                  ^
+     43|
+     44| /** The program's sequences a CSR may be placed into: open, in a submi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'CSR_PLACEMENT_ALREADY_PLACED', status: 409 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  13:20:31
+   Duration  15.84s (transform 5.14s, setup 133ms, import 8.37s, tests 6.97s, environment 0ms)
+
+
+## 2, 3, 4: server/services/csr/__tests__/csr-assembly-run.pglite.test.ts
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 630ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 505ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 59ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 352ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 322ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 461ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 491ms
+ × server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place an assembly made before the build’s sections changed (its fingerprint is not the job’s now) 465ms
+   → promise resolved "{ sequenceId: 90, …(7) }" instead of rejecting
+ × server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses to place a body whose drafted text keeps a data placeholder, naming the section; a manual heading not supplied does not block 432ms
+   → expected undefined to deeply equal [ '11.4.1' ]
+ × server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > lets a placement claim left by a stopped worker expire: shown as interrupted, and placed again into the same sequence only 472ms
+   → expected { state: 'placing', leaves: [], …(5) } to match object { state: 'interrupted', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 7 passed (10)
+
+## board: client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 288ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 44ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 118ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 116ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 37ms
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a placement a stopped worker left as interrupted, not as being placed, and offers to place it again into that sequence (2026-10-30) 5012ms
+   → Unable to find an element with the text: /stopped before it finished/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > marks a drafted section that keeps a data placeholder as blocking placement 5009ms
+   → Unable to find an element with the text: /Section 11\.4\.1 still holds a data placeholder/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 6 passed (8)

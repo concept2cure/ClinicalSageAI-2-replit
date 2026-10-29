@@ -1,0 +1,20 @@
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 205ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 60ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 52ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 55ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 78ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 57ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 88ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 81ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 88ms
+ × server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 50ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it
+AssertionError: expected undefined to be 'blocked' // Object.is equality
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2)
+AssertionError: expected [ { …(5) }, { …(2) }, { …(12) }, …(4) ] to deeply equal ArrayContaining{…}
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document
+AssertionError: expected 'reconciled_pending_human_review' to be 'blocked' // Object.is equality
+ FAIL  server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks
+AssertionError: expected 'reconciled_pending_human_review' to be 'blocked' // Object.is equality
+      Tests  4 failed | 6 passed (10)

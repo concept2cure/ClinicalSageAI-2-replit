@@ -133,9 +133,10 @@ import {
   type QmsReviewSchedule,
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { NC_DISPOSITION_CODE_STATUS, NC_DISPOSITION_DECISIONS, recordNcDisposition } from '../services/qms/nonconformance-disposition';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
 import { scheduleInternalAuditTask, scheduleSupplierTasks, type InternalAuditTaskSource, type SupplierTaskSource } from '../services/qms/qms-record-tasks';
-import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
+import { DECISION_ACT_MEANINGS, REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { admitProject } from '../lib/admit-project';
 
 const router = Router();
@@ -175,7 +176,6 @@ const DOC_STATUS = ['draft', 'in_review', 'effective', 'superseded', 'retired'] 
 const CRITICALITY = ['critical', 'major', 'minor'] as const;
 const SUPPLIER_STATUS = ['pending', 'approved', 'conditional', 'revoked'] as const;
 const AUDIT_STATUS = ['planned', 'in_progress', 'closed', 'cancelled'] as const;
-const DISPOSITION = ['use_as_is', 'rework', 'regrade', 'scrap', 'return_to_supplier', 'pending'] as const;
 
 /* ─── Documents ─────────────────────────────────────────────── */
 
@@ -1328,10 +1328,7 @@ const ncCreate = z.object({
      Absent or null: the organization's unscoped record, as before. */
   programId:      z.string().max(64).optional().nullable(),
 });
-const ncDispoBody = z.object({
-  disposition:           z.enum(DISPOSITION),
-  dispositionRationale:  z.string().max(4000).optional().nullable(),
-});
+const ncDispoBody = z.object({ disposition: z.enum(NC_DISPOSITION_DECISIONS) });
 
 router.get('/qms/nonconforming', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -1384,36 +1381,30 @@ router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res:
   } catch (err) { return serverError(res, log, 'nc-create', err); }
 });
 
-router.patch('/qms/nonconforming/:id/disposition', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
+/* A disposition is a signed decision (services/qms/nonconformance-disposition.ts,
+   2026-10-29): through the one signing ceremony, with the signer's reason
+   recorded as its rationale, and only on an open record. It was an unsigned
+   PATCH with an optional rationale, and a second one overwrote the first. */
+router.patch('/qms/nonconforming/:id/disposition', requireEditorAccess, signedActAttempts, async (req: Request, res: Response) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const parsed = ncDispoBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  try {
-    const { rows } = await qmsClient(req).query(`UPDATE qms_nonconforming_products
-          SET disposition = $3,
-              disposition_rationale = $4,
-              disposition_at = NOW(),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-        RETURNING *`,
-      [id, orgId, parsed.data.disposition, parsed.data.dispositionRationale ?? null],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'NC record');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The disposition —
-       scrap, rework, use-as-is — is already stamped on the NC row by the UPDATE
-       above, so it is not reverted; `meta.auditTrail` reports whether the
-       §11.10(e) record of who dispositioned the product exists. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.nonconforming.disposition',
-      resourceType: 'qms_nonconforming_product', resourceId: id,
-      details: { disposition: parsed.data.disposition },
-    }, requestConnectable(req));
-    return ok(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'nc-disposition', err); }
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 400, 'id must be a positive integer. Nothing was signed.');
+  const parsed = ncDispoBody.safeParse({ disposition: req.body?.disposition });
+  if (!parsed.success) {
+    return clientError(res, 400, `A disposition is one of ${NC_DISPOSITION_DECISIONS.join(', ')}. Nothing was signed.`, parsed.error.flatten().fieldErrors);
+  }
+  const target = `qms-nonconforming:${id}`;
+  await signGovernedAct(req, res, {
+    domain: 'qms',
+    target,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: NC_DISPOSITION_CODE_STATUS,
+    run: async (client, orgId) => {
+      // The ceremony has already admitted the reason; it is the disposition's rationale.
+      const rationale = governedReason.parse(req.body?.reason);
+      const row = await recordNcDisposition(client, orgId, id, parsed.data.disposition, rationale);
+      return { target, payload: { disposition: parsed.data.disposition, ncNumber: row.nc_number }, body: { data: row } };
+    },
+  });
 });
 
 /* ─── Change control (ICH Q10 §3.2.3 / EU GMP Annex 15 / 21 CFR 820.30·820.70) ──

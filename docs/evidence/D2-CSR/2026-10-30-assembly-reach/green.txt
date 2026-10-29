@@ -1,0 +1,80 @@
+ ✓ server/services/csr/__tests__/csr-assembly-scale.test.ts > the CSR listings are generated streaming, at several thousand pages > assembles 400 synthetic subjects with the heap under a fixed ceiling 13410ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 97ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 14ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 33ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 647ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 459ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 52ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 342ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 353ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 489ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 373ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > builds the body, §14 and §16 leaves; bookmarks reach four levels and every link resolves 664ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > numbers the engine tables 14.1.x / 14.2.x / 14.3.x and bookmarks them to four levels in the §14 leaf 573ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > an imported CSR assembles into separate 5.3.5.1 leaves with their STF roles > renders identically twice (the leaf digests a later sequence compares) 686ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > lists the protocol, sample CRF, investigators, signatures and SAP as blocking gaps when they are not supplied 337ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied document whose bytes are not the version named, or that is not a PDF 110ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > documents only the sponsor can supply are never composed > refuses a supplied copy of a listing the source generates, and a not-applicable claim without a reason 120ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails a link to a §14 table the tables leaf does not define, a file outside the assembly and an undefined internal destination 471ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > fails bookmarks that stop at three levels, and a heading drawn without its bookmark 18ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > marks an assembly incomplete when its drafted body has no fourth-level heading 329ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: the structural check fails a broken §14 hyperlink and bookmarks shallower than four levels > reports a body cross-reference that names nothing in the assembly, and does not link it 423ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > names the subject and column when the source records something else, and a source record left unlisted 446ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > red first: a listing that disagrees with its source subject fails > holds the adverse-event listing to every source event of the subject, each used once 362ms
+ ✓ server/services/csr/__tests__/csr-assembly.test.ts > hand-off to Submission Center’s packager > packages the leaves into the study folder with its stf-<study-id>.xml and every cross-reference resolved 955ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > composes from the bound run’s ADaM bundle, as the user, and lands §14.3.3 and §12.3.2 290ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run 15ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a hand-built source by name, as the Vault reader states it 14ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses an ADAE row that does not establish seriousness, naming the row 16ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 8ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 108ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 13ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 10ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed 576ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 618ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 490ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 354ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 92ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 27ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 386ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 67ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 21ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 128ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 105ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 48ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 490ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 36ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 112ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 204ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 48ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 146ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > composes from the verified job and its retained run; §3, §14 and §16 are filled here, §15 stays a gap 762ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a job that was not built from a retained run, before reading any source rows 78ms
+ ✓ server/services/csr/__tests__/csr-assembly-source.test.ts > assembling a saved CSR job > refuses a retained source whose records do not name their subject 76ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > builds the narratives and shows the QC list with missing fields, prose source, refusals and review state 299ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 106ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 78ms
+ Test Files  11 passed (11)
+      Tests  56 passed (56)
+
+=== Adversarial review addendum (2026-10-30): the three suites after the two placement guards ===
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 88ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 8ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 27ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 19ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 515ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 412ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 78ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 328ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 336ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 435ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 448ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 395ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 63ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 24ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 136ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 139ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 66ms
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+Neighbours re-run: csr-assembly*, csr-narrative-store, csrNarrativeBuild, csrBuildProgress, csr-jobs-narratives, rendered-leaf-files: 10 files, 53 tests passed.

@@ -12,9 +12,12 @@
  *   review state, records a decision as the signed-in reviewer, and hands the
  *   approved set to the existing Authoring import (workflow-source-import).
  * - CsrNarrativeBuild sits under the section review on the same board (slice
- *   7): "Build narratives" composes the build's patient safety narratives from
- *   its bound run's ADaM data into §14.3.3 and §12.3.2, and the QC list shows
- *   each subject's qualifying events, missing fields, how the prose was written,
+ *   7): "Build narratives" queues the build of the patient safety narratives
+ *   from its bound run's ADaM data into §14.3.3 and §12.3.2 (off the request
+ *   since 2026-10-30), polls its status (queued, running with subjects done of
+ *   total, complete, incomplete with the refused subjects, failed, cancelled,
+ *   or stalled, which building again resumes), and the QC list shows each
+ *   subject's qualifying events, missing fields, how the prose was written,
  *   any refusal, and whether §14.3.3 still awaits review.
  */
 import React, { useCallback, useEffect, useState } from 'react';
@@ -167,44 +170,104 @@ export interface CsrNarrativeQcRow {
     model?: string; modelProseRefused?: Array<{ code: string; detail: string }>; refusal?: { reason: string } };
 }
 interface NarrativeBuildResult { status: 'complete' | 'incomplete' | 'failed' | 'stopped'; selected: number; composed: number; refused: number;
-  sections: { written: string[]; kept: string[] } }
+  sections: { written: string[]; kept: string[] }; subjects?: string[] }
+/** GET /api/csr/jobs/:jobId/narratives/status `run` (csr-narrative-run.ts readLatestNarrativeRun). */
+export interface CsrNarrativeRun {
+  id: number; status: 'queued' | 'running' | 'complete' | 'incomplete' | 'failed' | 'cancelled'; subjectsDone: number; subjectsTotal: number | null;
+  stalled: boolean; updatedAt: string; result: NarrativeBuildResult | null;
+  error: { code: string; message: string; subjects?: string[]; issues?: Array<{ path: string; message: string }> } | null;
+}
 
 const CATEGORY: Record<string, string> = { death: 'Death', serious: 'SAE', discontinuation: 'Withdrawn for AE', aesi: 'AESI' };
 
 function narrativeOutcome(r: NarrativeBuildResult): string {
-  if (r.status === 'incomplete') return `${r.composed} of ${r.selected} narratives composed. ${r.refused} subject(s) could not be narrated from the source rows, so §14.3.3 was not written.`;
+  if (r.status === 'incomplete') return `${r.composed} of ${r.selected} narratives composed. ${r.refused} subject(s) could not be narrated from the source rows, so §14.3.3 was not written.${r.subjects?.length ? ` Not composed: ${r.subjects.join(', ')}.` : ''}`;
   const kept = r.sections.kept.length ? ` §${r.sections.kept.join(', §')} already held drafted text and was kept.` : '';
   return `${r.composed} of ${r.selected} narratives composed from the ADaM rows; §${r.sections.written.join(' and §')} written.${kept}`;
 }
 
-/** "Build narratives" and the per-subject narrative QC list, on the build board. */
-export function CsrNarrativeBuild({ jobId, headings, onChanged }: { jobId: number; headings: CsrBoardHeading[]; onChanged: () => void }) {
+const active = (run: CsrNarrativeRun | null | undefined) => !!run && (run.status === 'queued' || run.status === 'running') && !run.stalled;
+
+function runFailure(run: CsrNarrativeRun): string {
+  const issues = run.error?.issues?.length ? ` ${run.error.issues.map(i => `${i.path}: ${i.message}`).join(' ')}` : '';
+  const subjects = run.error?.subjects?.length ? ` Subjects: ${run.error.subjects.join(', ')}.` : '';
+  return `${run.error?.message ?? 'The narrative build did not finish.'}${subjects}${issues}`;
+}
+
+/** What the board says about the newest build: its progress while it runs, then its outcome or refusal as the server recorded it. */
+function runMessage(run: CsrNarrativeRun): { alert: boolean; text: string } {
+  if (run.stalled) return { alert: true, text: `This narrative build stopped making progress at ${new Date(run.updatedAt).toLocaleString()} (${run.subjectsDone} of ${run.subjectsTotal ?? '?'} subjects). Build narratives resumes it; narratives already composed are kept.` };
+  if (run.status === 'queued') return { alert: false, text: 'Queued. The narratives are composed off this page; progress appears here.' };
+  if (run.status === 'running') return { alert: false, text: run.subjectsTotal == null ? 'Reading the run’s ADaM data.' : `Composing narratives: ${run.subjectsDone} of ${run.subjectsTotal} subjects.` };
+  if (run.result && (run.status === 'complete' || run.status === 'incomplete')) return { alert: run.status !== 'complete', text: narrativeOutcome(run.result) };
+  return { alert: true, text: runFailure(run) };
+}
+
+/** The newest build's progress bar and status line, or nothing before the first build. */
+function NarrativeRunStatus({ run }: { run: CsrNarrativeRun | null | undefined }) {
+  if (!run) return null;
+  const status = runMessage(run);
+  return <>
+    {active(run) && run.subjectsTotal != null && <progress aria-label="Narrative progress" max={run.subjectsTotal || 1} value={run.subjectsDone} />}
+    <p role={status.alert ? 'alert' : 'status'}>{status.text}</p>
+  </>;
+}
+
+/** The build's newest narrative run, polled while it runs. `undefined` until first read. */
+function useNarrativeRun(jobId: number, pollMs: number, onSettled: () => void) {
+  const [run, setRun] = useState<CsrNarrativeRun | null | undefined>(undefined);
+  const [readError, setReadError] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    const result = await apiCall<{ run?: CsrNarrativeRun | null }>('GET', `${JOBS}/${jobId}/narratives/status`);
+    if (result.ok && result.body && 'run' in result.body) { setRun(result.body.run ?? null); setReadError(null); return; }
+    setReadError(apiErrorText(result, 'The narrative build status could not be read.'));
+  }, [jobId]);
+  useEffect(() => { void load(); }, [load]);
+  const running = active(run);
+  const [wasRunning, setWasRunning] = useState(false);
+  useEffect(() => {
+    if (running) { setWasRunning(true); const timer = setInterval(() => { void load(); }, pollMs); return () => clearInterval(timer); }
+    if (wasRunning) { setWasRunning(false); onSettled(); }
+    return undefined;
+  }, [running, wasRunning, load, pollMs, onSettled]);
+  /** A build was just queued: settle on its outcome even if it finished before the first status read. */
+  const watch = useCallback(() => setWasRunning(true), []);
+  return { run, readError, load, watch };
+}
+
+/** "Build narratives", its progress, and the per-subject narrative QC list, on the build board. */
+export function CsrNarrativeBuild({ jobId, headings, onChanged, pollMs = 2000 }: { jobId: number; headings: CsrBoardHeading[]; onChanged: () => void; pollMs?: number }) {
   const [rows, setRows] = useState<CsrNarrativeQcRow[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ alert: boolean; text: string } | null>(null);
-  const load = useCallback(async () => {
+  const loadQc = useCallback(async () => {
     const result = await apiCall<{ subjects?: CsrNarrativeQcRow[] }>('GET', `${JOBS}/${jobId}/narratives`);
     if (result.ok && Array.isArray(result.body?.subjects)) { setRows(result.body!.subjects!); return; }
     setMessage({ alert: true, text: apiErrorText(result, 'The narrative QC list could not be read.') });
   }, [jobId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void loadQc(); }, [loadQc]);
+  const settled = useCallback(() => { void loadQc(); onChanged(); }, [loadQc, onChanged]);
+  const { run, readError, load, watch } = useNarrativeRun(jobId, pollMs, settled);
   const build = async () => {
     if (busy) return;
     setBusy(true); setMessage(null);
-    const result = await apiCall<NarrativeBuildResult>('POST', `${JOBS}/${jobId}/narratives`);
+    const result = await apiCall<{ runId: number }>('POST', `${JOBS}/${jobId}/narratives`);
     setBusy(false);
-    if (result.ok && result.body) { setMessage({ alert: result.body.status !== 'complete', text: narrativeOutcome(result.body) }); onChanged(); }
-    else setMessage({ alert: true, text: apiErrorText(result, 'The narratives were not composed.') });
+    if (!result.ok && (result.body as { code?: string } | null)?.code !== 'CSR_NARRATIVE_BUILD_IN_PROGRESS') setMessage({ alert: true, text: apiErrorText(result, 'The narrative build was not queued.') });
+    else watch();
     await load();
   };
   const section = headings.find(h => h.num === '14.3.3');
+  const building = busy || active(run);
   return <section aria-label="Patient safety narratives" style={{ marginTop: 16, maxWidth: 900 }}>
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
       <strong>Patient safety narratives</strong>
       <span>Deaths, other serious adverse events, withdrawals for an adverse event and protocol-defined AESIs, from the run’s ADaM data</span>
-      <button type="button" className="btn" disabled={busy} onClick={() => void build()}>{I.fileText} {busy ? 'Building…' : 'Build narratives'}</button>
+      <button type="button" className="btn" disabled={building} onClick={() => void build()}>{I.fileText} {building ? 'Building…' : 'Build narratives'}</button>
     </div>
     {section && section.state !== 'not_drafted' && <p>§14.3.3 is {STATE_LABEL[section.state].toLowerCase()}{section.state !== 'approved' ? '; each narrative below awaits that review' : ''}.</p>}
+    <NarrativeRunStatus run={run} />
+    {readError && <p role="alert">{readError}</p>}
     {message && <p role={message.alert ? 'alert' : 'status'}>{message.text}</p>}
     {rows === null ? null : rows.length === 0
       ? <p>No narratives have been composed for this build.</p>

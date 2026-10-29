@@ -51,6 +51,39 @@
 --     final tenant sweep polices it. CREATE ... IF NOT EXISTS only, with its
 --     constraints inside the CREATE; nothing is dropped and no other file in
 --     the set creates or removes it.
+--
+-- AMENDED IN PLACE 2026-10-30 (D2, CSR end to end, reach of slice 8:
+-- docs/evidence/D2-CSR/2026-10-30-assembly-reach/; RULE 1 of CLAUDE.md):
+--   * Table 4, csr_assembly_runs: one row per assembly of a CSR build into
+--     its eCTD leaves (server/services/csr/csr-assembly-run.ts, its only
+--     writer). The assembly runs off the request thread, like the build it
+--     assembles; the row carries its status, progress and stage, the
+--     appendices the user declared not applicable (each with its reason, who
+--     and when), the Vault documents supplied for 16.1.x / 16.3 by exact
+--     digest, the result (each leaf with page count, SHA-256 and the
+--     rendered_leaf_files row that retains its bytes; every missing appendix
+--     and whether it blocks), and the placement into a sequence. A partial
+--     unique index allows one queued or running assembly per build. Public,
+--     organization_id INTEGER NOT NULL, so the final tenant sweep polices it.
+--     CREATE ... IF NOT EXISTS only, with its constraints inside the CREATE;
+--     nothing is dropped and no other file in the set creates or removes it.
+--
+-- AMENDED IN PLACE 2026-10-30 (D2, CSR end to end, the narrative build off
+-- the request path: docs/evidence/D2-CSR/2026-10-30-narrative-queue/; RULE 1
+-- of CLAUDE.md):
+--   * Table 5, csr_narrative_runs: one row per request to build a CSR's
+--     patient safety narratives (server/services/csr/csr-narrative-run.ts, its
+--     only writer). The build runs off the request thread on the CSR build's
+--     own queue pattern (a durable row, a worker started with setImmediate,
+--     claimed by a conditional UPDATE); the row carries its status (queued,
+--     running, complete, incomplete, failed, cancelled), subjects done of
+--     total, the attempt that holds it, and the outcome or the refusal by
+--     code. A run whose worker stopped (a restart) is taken over by the next
+--     request and resumes per subject from csr_narrative_outputs. A partial
+--     unique index allows one queued or running build per CSR build. Public,
+--     organization_id INTEGER NOT NULL, so the final tenant sweep polices it.
+--     CREATE ... IF NOT EXISTS only, with its constraints inside the CREATE;
+--     nothing is dropped and no other file in the set creates or removes it.
 -- ============================================================================
 
 BEGIN;
@@ -254,5 +287,76 @@ CREATE TABLE IF NOT EXISTS csr_narrative_outputs (
 
 CREATE INDEX IF NOT EXISTS csr_narrative_outputs_org_job_idx
   ON csr_narrative_outputs (organization_id, job_id, sequence);
+
+-- ----------------------------------------------------------------------------
+-- Table 4 (2026-10-30 amendment, assembly reach): csr_assembly_runs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_assembly_runs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  requested_by      integer REFERENCES users(id) ON DELETE SET NULL,
+  status            text NOT NULL DEFAULT 'queued'
+    CHECK (status IN ('queued', 'assembling', 'assembled', 'failed')),
+  progress          integer NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  stage             text,
+  -- { "16.2.3": { "reason": "...", "declaredBy": 5, "declaredAt": "..." } }
+  not_applicable    jsonb NOT NULL DEFAULT '{}'::jsonb,
+  -- { "16.1.1": { "documentId": "<vault uuid>", "sha256": "<hex>" } }
+  supplied          jsonb NOT NULL DEFAULT '{}'::jsonb,
+  result            jsonb,
+  error             jsonb,
+  placement         jsonb,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  started_at        timestamptz,
+  completed_at      timestamptz,
+  CONSTRAINT csr_assembly_runs_outcome_check
+    CHECK (status <> 'assembled' OR result IS NOT NULL),
+  CONSTRAINT csr_assembly_runs_failure_check
+    CHECK (status <> 'failed' OR error IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_assembly_runs_org_job_idx
+  ON csr_assembly_runs (organization_id, job_id, id);
+
+-- One queued or running assembly per build.
+CREATE UNIQUE INDEX IF NOT EXISTS csr_assembly_runs_one_active_idx
+  ON csr_assembly_runs (job_id) WHERE status IN ('queued', 'assembling');
+
+-- ----------------------------------------------------------------------------
+-- Table 5 (2026-10-30 amendment, narrative build off the request path): csr_narrative_runs
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS csr_narrative_runs (
+  id                serial PRIMARY KEY,
+  organization_id   integer NOT NULL REFERENCES organizations(id),
+  job_id            integer NOT NULL REFERENCES csr_build_jobs(id) ON DELETE CASCADE,
+  requested_by      integer REFERENCES users(id) ON DELETE SET NULL,
+  status            text NOT NULL DEFAULT 'queued'
+    CHECK (status IN ('queued', 'running', 'complete', 'incomplete', 'failed', 'cancelled')),
+  subjects_done     integer NOT NULL DEFAULT 0 CHECK (subjects_done >= 0),
+  subjects_total    integer CHECK (subjects_total IS NULL OR subjects_total >= 0),
+  -- Incremented by each claim; a worker writes only while it holds the latest attempt.
+  attempt           integer NOT NULL DEFAULT 0 CHECK (attempt >= 0),
+  result            jsonb,
+  error             jsonb,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  started_at        timestamptz,
+  completed_at      timestamptz,
+  CONSTRAINT csr_narrative_runs_outcome_check
+    CHECK (status NOT IN ('complete', 'incomplete') OR result IS NOT NULL),
+  CONSTRAINT csr_narrative_runs_failure_check
+    CHECK (status <> 'failed' OR error IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS csr_narrative_runs_org_job_idx
+  ON csr_narrative_runs (organization_id, job_id, id);
+
+-- One queued or running narrative build per CSR build.
+CREATE UNIQUE INDEX IF NOT EXISTS csr_narrative_runs_one_active_idx
+  ON csr_narrative_runs (job_id) WHERE status IN ('queued', 'running');
 
 COMMIT;
