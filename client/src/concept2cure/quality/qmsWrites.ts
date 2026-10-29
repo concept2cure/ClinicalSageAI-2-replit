@@ -6,20 +6,33 @@
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { ChangeState, ChangeType, Classification, LinkType, Relationship } from './changeData';
 
-/** Write to a QMS route and return the envelope's `data`. `apiRequest` throws
- *  every refusal but a 401, which it returns; that is a session refusal here.
- *  The quality records (qmsRecordData.ts) write through this too. */
-export async function qmsWrite<T>(method: 'POST' | 'PATCH', path: string, body: Record<string, unknown>): Promise<T> {
-  const res = await apiRequest(method, `/api/mdx/qms/${path}`, body);
-  const parsed = (await res.json().catch(() => null)) as { data?: T } | null;
+/** Send a governed write and return the record `take` finds in the reply.
+ *  `apiRequest` throws every refusal but a 401, which it returns; that is a
+ *  session refusal here. */
+async function send<T>(
+  method: 'POST' | 'PATCH', url: string, body: Record<string, unknown>, take: (parsed: unknown) => T | null,
+): Promise<T> {
+  const res = await apiRequest(method, url, body);
+  const parsed = (await res.json().catch(() => null)) as unknown;
   if (res.status === 401) {
     throw new Error((serverMessage(parsed) ?? 'Your session could not be verified. Sign in again.') + ' Nothing was changed.');
   }
-  if (!parsed || parsed.data == null) {
+  const row = take(parsed);
+  if (row == null) {
     throw new Error('The server did not return the record. Reload to see whether the change was recorded.');
   }
-  return parsed.data;
+  return row;
 }
+
+/** Write to a QMS route and return the envelope's `data`. The quality records
+ *  (qmsRecordData.ts) write through this too. */
+export const qmsWrite = <T>(method: 'POST' | 'PATCH', path: string, body: Record<string, unknown>): Promise<T> =>
+  send(method, `/api/mdx/qms/${path}`, body, (p) => ((p as { data?: T } | null)?.data ?? null));
+
+/** Write to the CAPA routes (server/routes/capa-mdr.ts), which return the
+ *  record itself with its audit outcome under `meta`, not a `data` envelope. */
+export const capaWrite = <T>(path: string, body: Record<string, unknown>): Promise<T> =>
+  send('POST', `/api/capa-mdr/${path}`, body, (p) => (p && typeof p === 'object' && 'id' in p ? (p as T) : null));
 
 const qmsPost = <T>(path: string, body: Record<string, unknown>): Promise<T> => qmsWrite<T>('POST', path, body);
 

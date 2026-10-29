@@ -849,7 +849,7 @@ findings and what already existed are in `docs/design/CLIENT_JOURNEY_2026-10-25.
 
 Launch scope, module grants and every route are unchanged by this decision.
 
-### P-48 — The QMS app holds the quality records a biotech keeps: nonconformances, suppliers, internal audits, management reviews
+### P-48 — The QMS app holds the quality records a biotech keeps: CAPA, nonconformances, suppliers, internal audits, management reviews
 
 Decided 2026-10-29 by the founder ("we need to offer everything www.weave.bio does and much more plus what Veeva
 basics offers biotechs"). The QMS app was controlled documents and change control. Veeva QMS Basics also keeps
@@ -860,9 +860,11 @@ records its audit row. No screen called them. The launch scope refused them in p
 
 The four become tabs of Quality (`client/src/concept2cure/quality/QmsRecords.tsx`). Their paths leave
 `LAUNCH_EXCLUDED_API` and fall under the quality surface's existing `/api/mdx/qms` claim. The catalog entry keeps its id,
-surface and module (`qms`, `quality`), so no grant changes. CAPA is not in this decision. Its register already exists
-(`server/routes/capa-mdr.ts`, tables `capa_records` and `capa_actions` from `migrations/20260504_capa_mdr.sql`), and
-change control links to a CAPA by reference. Reaching that register from Quality is the next QMS slice, not a new one. Evidence:
+surface and module (`qms`, `quality`), so no grant changes. CAPA is reached the same way. Its register already existed
+(`server/routes/capa-mdr.ts`, tables `capa_records` and `capa_actions` from `migrations/20260504_capa_mdr.sql`), claimed
+only by the hidden device post-market surface. The quality surface now claims `/api/capa-mdr/capa` as well. Complaints,
+MDR and vigilance under `/api/capa-mdr` stay hidden with device post-market. The CAPA lifecycle map moves to
+`shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
 
 ## How sessions run under this file
