@@ -230,3 +230,31 @@ describe('every governed QMS write records a §11.10(e) row', () => {
     });
   }
 });
+
+describe("a supplier's quality agreement names this organisation's controlled document", () => {
+  /** The document lookup answers `documentFound`; every other statement answers one row. */
+  function documentLookup(documentFound: boolean) {
+    query.mockImplementation(async (sql: unknown) => /FROM qms_documents WHERE id = \$1 AND organization_id = \$2/i.test(String(sql))
+      ? { rows: documentFound ? [{ id: 41 }] : [], rowCount: documentFound ? 1 : 0 }
+      : { rows: [{ id: 5, organization_id: 9 }], rowCount: 1 });
+  }
+  const wrote = () => query.mock.calls.some(([sql]) => /INSERT INTO qms_suppliers|UPDATE qms_suppliers/i.test(String(sql)));
+
+  it.each([
+    ['adding a supplier', 'post', '/api/mdx/qms/suppliers', { supplierName: 'Acme CDMO', criticality: 'critical', qualityAgreementId: 41 }],
+    ['updating a supplier', 'patch', '/api/mdx/qms/suppliers/5', { qualityAgreementId: 41 }],
+  ] as const)('refuses another organisation\'s document when %s, writing nothing', async (_name, method, path, body) => {
+    documentLookup(false);
+    const res = await request(app())[method](path).send(body);
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(res.body)).toMatch(/controlled document of this organization/);
+    expect(wrote()).toBe(false);
+  });
+
+  it('admits its own document', async () => {
+    documentLookup(true);
+    const res = await request(app()).patch('/api/mdx/qms/suppliers/5').send({ qualityAgreementId: 41 });
+    expect(res.status).toBe(200);
+    expect(wrote()).toBe(true);
+  });
+});

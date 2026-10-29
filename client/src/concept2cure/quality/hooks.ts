@@ -14,31 +14,7 @@ import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow } from './data';
 import {adaptDoc,adaptPeriodicReview,nextReviewDueOf,type ServerDoc} from './qmsDocumentRecord';
-
-/** Unwrap the API envelope — `ok(res, rows, meta)` returns `{ data, ... }`,
- *  but tolerate a bare array or a `{ rows }` shape too.
- *
- *  Returns null when the body carries no list we can adapt. The register used to
- *  crash on `{ data: {} }`: `p?.data ?? p?.rows ?? []` only reaches the `[]`
- *  when `data` is absent, so a present-but-not-a-list `data` was handed back
- *  unchanged and `.map` threw inside useMemo during render, unwinding the whole
- *  surface. Null rather than `[]` because an empty array is a real answer —
- *  "the register is empty" — and manufacturing one for a body we cannot read
- *  would leave the surface permanently blank instead of falling back to the
- *  fixtures the way it already does when the fetch fails. */
-interface Envelope<T> {
-  data?: T[];
-  rows?: T[];
-  count?: number;
-}
-function listOf<T>(payload: unknown): T[] | null {
-  const p = payload as Envelope<T> | null;
-  const rows = Array.isArray(payload) ? payload : p?.data ?? p?.rows;
-  if (!Array.isArray(rows)) return null;
-  /* These are all row-list endpoints; a list of anything but row objects is a
-     body we cannot adapt either (`adaptDoc(null)` throws the same way). */
-  return rows.every((r) => typeof r === 'object' && r !== null) ? (rows as T[]) : null;
-}
+import { listOf } from './qmsList';
 
 /** A body arrived but held no list — a 200 we could not read. Reported through
  *  the hook's existing `error` so "unreadable" is not silently indistinguishable

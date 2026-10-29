@@ -68,6 +68,13 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - Another tab's rows are never published under the current one.
   - At most 100 rows are passed, and the summary says when there are more.
 
+- A supplier's quality agreement, the eighth change. `qms_suppliers.quality_agreement_id` and the routes' `qualityAgreementId` already existed (`mdx-qms.ts`), but nothing set or showed them. The server also accepted any integer, including another organisation's document id.
+  - The server now refuses, with a 422, a `qualityAgreementId` that is not a live controlled document of the caller's organisation. This applies on create and on update (`qualityAgreementRefusal`).
+  - The supplier register shows a Quality agreement column with the document's number. The add and update drawers pick the agreement from the controlled-document register, effective documents first.
+  - The register kit gains a context (`registerContext.ts`) that a configuration asks for with `needs`. It reads the controlled documents once, for the column, the forms and AnA's facts. An unread or failed read shows as such, never as "—".
+  - Fixed: a supplier update sent each changed field's old value, not the value chosen, so a move from pending to approved was recorded as pending. It now sends the chosen value.
+  - `hooks.ts` drops its own copy of `listOf` for the one in `qmsList.ts`.
+
 ## Proof
 
 - `npx vitest run client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx`: 6 of 6 pass.
@@ -102,6 +109,13 @@ server and client; `nonconform|supplier|internal-audit|management-review` in `cl
   - a failed register read is said, and the typed reference is kept.
   - **Shown failing first:** with the reference's `derive` removed, the first case fails.
 - `npm run ci:launch-scope-api` reports 538 API paths named by launch and shell screens, none refused.
+- `qms-governed-writes-audited.test.ts` passes 19 of 19. Another organisation's document is refused as a quality agreement on create and on update, and the organisation's own is admitted.
+  - **Shown failing first:** both refusal cases fail at the prior HEAD.
+- `QmsRecords.test.tsx` passes 11 of 11:
+  - supplier 9's agreement reads QA-0007, and choosing QA-0008 sends `PATCH /api/mdx/qms/suppliers/9` with `{ qualityAgreementId: 32 }`;
+  - with the documents read failed, the column says "document #31 (register not read)".
+  - **Shown failing first:** the update case first failed by sending 31, the old value (the bug above). With the document label returning "—" or "…", both cases fail.
+- The Quality client suite passes 248 of 248 (22 files).
 
 ## Owed
 
