@@ -52,6 +52,10 @@ export interface WorkflowSectionOrigin {
   originalAuthorship: 'machine' | 'template' | 'unknown';
   model: string | null;
   modelEvidence: 'unrecorded' | 'recorded-name-only';
+  /** CSR slice 5 (2026-10-30): a CSR section's claim receipts, bound to the stored copy's
+   * hash and the retained run's evidence digest. Parsed, fail-closed, by
+   * server/services/csr/csr-claim-receipts.ts; absent when the section has none. */
+  csrEvidence?: Readonly<Record<string, unknown>>;
 }
 
 export interface WorkflowImportOrigin {

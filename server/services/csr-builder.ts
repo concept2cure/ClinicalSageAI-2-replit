@@ -16,6 +16,7 @@ import type { E3Section } from './ind/ctd/types.js';
 import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
 import { acceptEvidenceBoundDraft, acceptModelDraft } from './csr/unsupplied-statistics.js';
 import { CSR_EVIDENCE_DRAFTING_RULES, splitCsrClaims, type CsrAuthoringEvidence } from './csr/cortex-authoring-context.js';
+import { buildCsrClaimReceipts } from './csr/csr-claim-receipts.js';
 import { resolveCsrBuildContext } from './csr/project-scope';
 
 // Load the canonical gateway client only when an async drafting operation
@@ -516,6 +517,9 @@ function acceptSectionReply(
     const split = splitCsrClaims(content);
     if (!acceptEvidenceBoundDraft({ sectionNumber: number, prose: split.prose, claims: split.claims }, evidence, info, lineage)) return null;
     content = split.prose;
+    // Slice 5: each claim's cell, bound to this exact text and the pack's digest.
+    const receipts = buildCsrClaimReceipts(evidence, lineage.reconciliation, content);
+    if (receipts) lineage.claimReceipts = receipts;
   } else if (!acceptModelDraft(number, content, info, lineage)) {
     return null;
   }

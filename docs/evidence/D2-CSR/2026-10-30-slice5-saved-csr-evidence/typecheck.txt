@@ -1,0 +1,12 @@
+Full `NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .`: Killed (exit 137) three times, container OOM (15 GB shared with concurrent lanes).
+Scoped check: a temporary tsconfig extending ./tsconfig.json with files = the slice-5 sources and tests
+(saved-document-critique, csr-saved-evidence, csr-claim-receipts, workflow-source-import, csr-builder, and the four test files),
+closing over every import transitively. Result: 0 errors in any file this slice touches. The 16 errors reported all come from
+ambient declarations (Express request augmentation) that the narrowed include leaves out:
+server/db/requestDbLease.ts (4), server/middleware/establishRequestTenantScope.ts, server/middleware/requirePlatformAdmin.ts,
+server/routes/c2c/shared.ts, server/services/ana-ri/proposal-seal.ts, server/services/ana/AnaToolExecutor.ts (2),
+server/services/authoring/authoring-permissions.ts, server/services/cmc/link-to-module3.ts, server/services/mfaService.ts (2),
+server/services/token-revocation.ts, server/utils/jwtVerify.ts.
+Full-project tsc remains for the root session to run.
+
+2026-10-30 adversarial review: full `tsc --noEmit -p .` (12 GB heap) OOM-killed again (exit 137). Scoped tsc over csr-saved-evidence.ts, saved-document-critique.ts and saved-csr-evidence.pglite.test.ts (with transitive imports): 0 errors in those files. Full-project run still owed by the root session.

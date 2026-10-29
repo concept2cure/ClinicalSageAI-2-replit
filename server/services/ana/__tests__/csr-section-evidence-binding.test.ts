@@ -18,7 +18,7 @@ const verify = (snap = snapshot, bind = binding, cs: CsrClaimReceipt[] = [claim]
   verifyCsrSectionEvidenceBinding(snap, bind, cs, fs);
 describe('CSR section/version evidence binding', () => {
   it('accepts an exact qualified section and source receipt without claiming approval', () => {
-    expect(verify()).toEqual({ accepted: true, issues: [], checkedClaims: 1 });
+    expect(verify()).toEqual({ accepted: true, issues: [], checkedClaims: 1, findings: [] });
   });
   it('fails on edited saved text', () => {
     expect(verify({ ...snapshot, savedContent: snapshot.savedContent + ' changed' }).issues).toContain('SECTION_VERSION_CHANGED');
