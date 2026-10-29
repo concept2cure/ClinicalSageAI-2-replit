@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CsrSourceReceipt, CsrSourceSelection } from '@shared/csr-source-input';
 import { apiCall, apiErrorText } from '../apiCall';
 import { CsrBuildDraftControl } from './CsrBuildProgress';
+import { StudyPivotalDeclarations } from './StudyPivotalDeclarations';
 
 const FORMAT = 'concept2cure.csr-source.v1';
 const SOURCES = '/api/submission-orchestrator/csr/sources';
@@ -171,6 +172,9 @@ export function CsrSourceInputControls({ programId, runId, interactionBusy, onSe
     {previewError && <p role="alert">{previewError}</p>}
     <ClinicalSourcePreview activePreview={activePreview} blocked={blocked} included={included} setIncluded={setIncluded} onSelectionChange={selectionHandler.current} />
     <FrozenClinicalTables runId={runId} activeSaved={activeSaved} blocked={blocked} onRetry={() => setSavedRefresh(value => value + 1)} onNav={onNav} />
+    {/* Pivotal declarations (D5, 2026-10-29) on the CSR card a launch screen shows; the
+        CSR workflow board, where they also appear, is not a launch surface. */}
+    <StudyPivotalDeclarations scope={{ programId }} />
   </section>;
 }
 

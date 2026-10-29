@@ -66,6 +66,47 @@ scope: a writing role (re-read from the database, not the token), edit
 permission under the project's sharing, and a project that is not archived.
 10/10 (`red.txt` §5).
 
+## Correction: production served none of it (follow-up, 2026-10-29)
+
+This README first reported the declaration delivered. In production it was
+not reachable.
+- **The API was refused.** With launch scope enforced (the production
+  default), `/api/csr-workflow/pivotal` was out of scope. Only the regulatory
+  workspace claims `/api/csr-workflow`, and that surface left the launch
+  catalog on 2026-10-08. Every read and write was refused.
+- **The panel was on a locked screen.** It sat only on the CSR workflow board,
+  which is not a launch surface either.
+- **No check caught it.** None of the evidence above ran `ci:launch-scope-api`
+  or asked the production verdict.
+
+Fixed:
+- **The panel** is also on the Submission Center's CSR card
+  (`CsrSourceInputControls.tsx`, under eCTD Compile). Production serves that
+  card, and it opens on the project's program.
+- **The endpoint.** eCTD Compile claims exactly `/api/csr-workflow/pivotal`
+  (`ui-surface-registry.ts`). The board and the rest of `/api/csr-workflow`
+  stay out of scope (`csr-pivotal-launch-scope.test.ts`).
+
+Seen failing first (`reach.txt`):
+- `ci:launch-scope-api` refuses the mounted panel while the endpoint is
+  unclaimed;
+- the scope test fails without the claim;
+- the card case fails without the mount.
+
+Green:
+- 217/217 across the scope tests and the route;
+- 15/15 on the card;
+- 158/158 across the 16 client suites that render the card or the panel.
+
+The board's own reach in production belongs to the CSR end-to-end lane. It
+is handed on there.
+
+Disclosed:
+- `shared/constants/ui-surface-registry.ts`, changed today by the D2 fold
+  lane (`302d632db`, `d140aefa5`, and others): one apiPrefixes entry.
+- `CsrSourceInputControls.tsx` and its test (CSR slice 3, `7b209818a`): the
+  panel's mount; the test answers its read, and one case answers by path.
+
 ## Fixtures changed, and why
 
 **Phase 3 meant pivotal.** These suites' Phase 3 studies were pivotal only by
