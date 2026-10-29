@@ -51,7 +51,7 @@ be linked to an IND project is a product decision, not taken here.
 | `document-class-not-an-application.pglite.test.ts` (new), 4 cases: <ul><li>a CSR project refuses an IND submission;</li><li>`csr` is refused as an application;</li><li>the IND project takes its IND (control);</li><li>the status is 422</li></ul> | 3 fail (both refusals created a submission; the status was unmapped); the control passes | 4/4 |
 | `add-project-market.pglite` (the sentence, pinned whole) | fails on the old sentence | passes |
 | The class suites: picker offers, the Submit tab, create offer, market support | — | 139 passed, 4 skipped (`green.txt`) |
-| Wide run (`wide.txt`) | — | WIDE_PLACEHOLDER |
+| Wide run (`wide.txt`): 547 files in five batches (submission service, projects, regulatory and schema contracts, IND lifecycle and the submissions routes, the client surfaces that show a filing class) | — | 7,898 passed, 55 failed, 5 skipped. Every failure is red without this change: the slice-1 baseline, three re-run at the parent, and four with causes in other files |
 
 ## Not done
 
