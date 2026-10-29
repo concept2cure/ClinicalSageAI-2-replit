@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-source-import.pglite.test.ts
+{
+  "timestamp": "2026-10-29T05:00:55.673Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local visit, composes live rows, and fingerprints retained cells 286ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > admits an explicitly removed local assessment, composes live rows, and fingerprints retained cells 112ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a missing retired endpoint rather than dropping its retained cell 95ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-protocol retired endpoint rather than dropping its retained cell 112ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > retained protocol matrix cells after governed source removals > refuses a foreign-organization retired endpoint rather than dropping its retained cell 65ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > preserves the full canonical structured protocol and actual matrix cells without source signing prose 64ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > holds an unverified controlled export while caller-executor content-only export excludes signature authority 115ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > discloses missing actual source data and explicit unbound association without inventing authorship 213ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > changes the fingerprint when composed SoA source facts or original scope change 122ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > denies an unassigned private-source actor before any source prose read, and permits a current project member 94ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses foreign tenant sources, mismatched recorded programs and missing recorded design relationships 74ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > refuses a cross-protocol assessment cell rather than silently dropping it from composition 59ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > retains positive current protocol machine-span proof, including accepted drafts, without inventing model qualification 115ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored protocol materialization > does not mistake deterministic copy lineage for proof of original AI generation 64ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > uses exact persisted ICH code/content/hash and retains null model as unknown qualification 93ms
+ × server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output 98ms
+   → expected [ …(2) ] to include 'CSR section 14 is prepared from sourc…'
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > expands a selected actual parent only into available persisted descendant codes, retaining missing gaps 110ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > refuses missing selected output and a changed or forged recorded hash 141ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > changes selected fingerprints on truthful content/provenance changes while unrelated output leaves a selected copy stable 126ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > enforces fresh actor access and source-job/output project identity before reading CSR prose 72ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > does not mutate any original source during materialization and rejects inactive actors 110ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > reads the exact tenant/program row and verifies its actual UUID origin through the existing Authoring source verifier 908ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > requires actual current source access, refuses a different target and a withdrawn saved source 98ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > retains unfiled scope, demands an explicit association and detects changed result snapshots at governance time 78ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > imports saved generated-document payloads as draft copies without transferring approval or transmission 60ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > refuses deferred IVD through the otherwise launch-accessible Authoring endpoint before reading a source 92ms
+ ✓ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > saved IVD verified-source materialization > honors newly filed protocol scope even before its first study design and refuses binding disagreement 90ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/workflow-source-import.pglite.test.ts > stored CSR materialization > preserves partial gaps and organization source scope with explicit association, rather than completing missing output
+AssertionError: expected [ …(2) ] to include 'CSR section 14 is prepared from sourc…'
+ ❯ server/services/authoring/__tests__/workflow-source-import.pglite.test.ts:201:25
+    199|     // its absence from the draft is still a gap, said as what it is.
+    200|     expect(result.gaps).not.toContain('CSR section 14 has no saved out…
+    201|     expect(result.gaps).toContain('CSR section 14 is prepared from sou…
+       |                         ^
+    202|     expect(result.gaps).toContain('CSR section 3 is prepared from sour…
+    203|     expect(result.gaps.some(g=>g.includes('placeholder'))).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  05:00:43
+   Duration  27.63s (transform 10.07s, setup 243ms, import 11.55s, tests 14.23s, environment 0ms)
+
