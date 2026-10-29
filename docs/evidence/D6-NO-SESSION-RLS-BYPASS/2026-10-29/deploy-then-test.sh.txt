@@ -1,0 +1,14 @@
+#!/bin/bash
+# deploy-then-test.sh: a HEAD-installed database (copy of c2c_rls_red_tpl), deployed with mut-src's set, then the P-70 dbtest on it.
+P=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/rls-bypass
+. $P/env.sh
+DB=c2c_rls_mutdeploy
+psql "$PGBASE/postgres?sslmode=disable" -q -c "DROP DATABASE IF EXISTS $DB WITH (FORCE)" -c "CREATE DATABASE $DB TEMPLATE c2c_rls_red_tpl" >/dev/null 2>&1
+U="$PGBASE/$DB?sslmode=disable"
+cd $P/mut-src
+DATABASE_URL="$U" DATABASE_OWNER_URL="$U" APP_DATABASE_URL="postgresql://app_service:${APP_SERVICE_DB_PASSWORD}@127.0.0.1:55452/$DB?sslmode=disable" node scripts/db/deploy-migrate.mjs > $P/mut-deploy.log 2>&1
+rc=$?
+echo "deploy-migrate exit $rc"
+if [ $rc -ne 0 ]; then grep -n "P-70\|ERROR\|✗\|failed" $P/mut-deploy.log | head -5; exit $rc; fi
+psql "$PGBASE/postgres?sslmode=disable" -q -c "DROP DATABASE IF EXISTS ${DB}_tpl WITH (FORCE)" -c "CREATE DATABASE ${DB}_tpl TEMPLATE $DB" >/dev/null 2>&1
+$P/run-dbtest-db.sh $P/mut-src ${DB}_tpl c2c_rls_mut tests/db/no-session-rls-bypass.dbtest.ts

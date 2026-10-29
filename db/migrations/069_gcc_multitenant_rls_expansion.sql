@@ -13,6 +13,17 @@
 -- organisations ahead of this file, so on an install-fresh run the
 -- one-organisation condition did not hold. It could have held on a later
 -- re-run, once the C-48 bridge had mirrored a single tenant.
+--
+-- AMENDED IN PLACE 2026-10-29 (P-70, D6; docs/evidence/D6-NO-SESSION-RLS-BYPASS/
+-- 2026-10-29/): identity.can_access_org, can_write_org, can_access_program and
+-- can_write_program no longer return TRUE when app.bypass_rls is 'true'. Any
+-- role can set a custom setting, so the runtime role could lift, from inside its
+-- own connection, the 146 policies these helpers decide (vault.documents and
+-- signing.signatures among them). The four IF blocks are removed, with nothing
+-- in their place: no platform arm is added, because the platform scope is
+-- itself a session setting and the Vault has none by design. This file runs on
+-- install-fresh only; databases installed before today get the same change from
+-- migrations/20261029j_no_session_rls_bypass.sql (deploy set).
 
 BEGIN;
 
@@ -99,10 +110,6 @@ AS $$
 DECLARE
   v_current_org_id UUID := identity.current_org_id();
 BEGIN
-  IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-    RETURN TRUE;
-  END IF;
-
   IF v_current_org_id IS NULL THEN
     RETURN FALSE;
   END IF;
@@ -132,10 +139,6 @@ AS $$
 DECLARE
   v_current_org_id UUID := identity.current_org_id();
 BEGIN
-  IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-    RETURN TRUE;
-  END IF;
-
   IF v_current_org_id IS NULL THEN
     RETURN FALSE;
   END IF;
@@ -171,10 +174,6 @@ DECLARE
   v_program_org_id UUID;
   v_has_auth BOOLEAN := FALSE;
 BEGIN
-  IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-    RETURN TRUE;
-  END IF;
-
   IF p_program_id IS NULL THEN
     RETURN FALSE;
   END IF;
@@ -226,10 +225,6 @@ DECLARE
   v_program_org_id UUID;
   v_has_auth BOOLEAN := FALSE;
 BEGIN
-  IF current_setting('app.bypass_rls', TRUE) = 'true' THEN
-    RETURN TRUE;
-  END IF;
-
   IF p_program_id IS NULL THEN
     RETURN FALSE;
   END IF;

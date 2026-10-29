@@ -1,0 +1,19 @@
+{
+ "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+ "compilerOptions": {
+  "noEmit": true,
+  "incremental": false
+ },
+ "include": [],
+ "files": [
+  "/home/user/ClinicalSageAI-2-replit/shared/types/express.d.ts",
+  "/home/user/ClinicalSageAI-2-replit/server/services/innovation/submission-readiness-twin-service.ts",
+  "/home/user/ClinicalSageAI-2-replit/server/services/innovation/__tests__/readiness-twin-records-only-what-it-assessed.test.ts",
+  "/home/user/ClinicalSageAI-2-replit/server/db/sessionScope.ts",
+  "/home/user/ClinicalSageAI-2-replit/tests/integration/innovation-platform.test.ts",
+  "/home/user/ClinicalSageAI-2-replit/tests/db/no-session-rls-bypass.dbtest.ts",
+  "/home/user/ClinicalSageAI-2-replit/tests/schema-contract/program-same-org-keys.pglite.test.ts",
+  "/home/user/ClinicalSageAI-2-replit/tests/schema-contract/integer-project-same-org-keys.pglite.test.ts",
+  "/home/user/ClinicalSageAI-2-replit/tests/schema-contract/chat-threads-program-key.pglite.test.ts"
+ ]
+}

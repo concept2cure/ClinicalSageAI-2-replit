@@ -17,9 +17,17 @@
  * before any tenant purge and before any VALIDATE CONSTRAINT.
  *
  * Every statement is a SELECT, inside a READ ONLY transaction that is rolled
- * back. The row-level policies are lifted for the transaction
- * (app.rls_enforce / app.bypass_rls): otherwise they hide other tenants' rows,
- * and a cross-tenant report under-counts exactly the rows it exists to find.
+ * back. Tenant enforcement is turned off for the transaction (app.rls_enforce):
+ * otherwise the policies hide other tenants' rows, and a cross-tenant report
+ * under-counts exactly the rows it exists to find.
+ *
+ * No session setting lifts every policy any more (P-70, 2026-10-29): the Vault's
+ * policies have no enforcement arm, and app.bypass_rls, which this script used
+ * to set, is read by nothing. So a check whose table (or whose programs table)
+ * this role is held to by row security, with no policy the enforcement switch
+ * opens, is REFUSED with its reason, never reported clean. On a managed
+ * Postgres whose owner is not a superuser (vault.documents FORCEs row security)
+ * run it as a role with BYPASSRLS. docs/evidence/D6-NO-SESSION-RLS-BYPASS/2026-10-29/.
  *
  * The integer project key on concept2cure_artifacts and c2c_submission_packages
  * (migrations/20261001_integer_project_same_org_keys.sql, PF-03) is checked
@@ -31,7 +39,7 @@
  *
  * Exit: 0 no record names a foreign or missing project
  *       1 at least one does (listed)
- *       2 configuration
+ *       2 configuration, or a check this role could not complete (refused)
  */
 
 import { pathToFileURL } from 'node:url';
@@ -221,8 +229,30 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
 ]);
 
 /**
+ * Can this session read every row of `relation`? Not when row security applies
+ * to it (row_security_active) and no permissive SELECT policy has the
+ * enforcement arm while enforcement is off. Returns the reason, or null.
+ */
+async function rowSecurityRefusal(client, relation) {
+  const { rows } = await client.query(
+    `SELECT row_security_active($1::regclass) AS held,
+            EXISTS (SELECT 1 FROM pg_policy p
+                     WHERE p.polrelid = $1::regclass AND p.polpermissive AND p.polcmd IN ('r', '*')
+                       AND coalesce(pg_get_expr(p.polqual, p.polrelid), '') LIKE '%app.rls_enforce%') AS enforce_arm,
+            coalesce(current_setting('app.rls_enforce', true), '') = 'on' AS enforcing,
+            current_user AS role`,
+    [relation],
+  );
+  const { held, enforce_arm: enforceArm, enforcing, role } = rows[0];
+  if (!held || (enforceArm && !enforcing)) return null;
+  return `row security holds ${role} to ${relation} and no policy admits every tenant's rows; ` +
+    'run as a role with BYPASSRLS (P-70: no session setting lifts it)';
+}
+
+/**
  * Run every check the schema can answer. A store this database lacks, or
- * whose key column it lacks, is reported as skipped, never as clean.
+ * whose key column it lacks, is reported as skipped, never as clean; a store
+ * this role cannot read in full is reported as refused, never as clean.
  * `client.query(text, params)` must return `{ rows }` (pg or PGlite).
  */
 export async function runProgramSameOrgPreflight(client) {
@@ -239,6 +269,12 @@ export async function runProgramSameOrgPreflight(client) {
     const { rel, col, programs } = present.rows[0];
     if (!rel || !col || !programs) {
       results.push({ relation: check.relation, keyedBy: check.keyedBy, skipped: true, rows: [] });
+      continue;
+    }
+    const refused = (await rowSecurityRefusal(client, check.relation))
+      ?? (await rowSecurityRefusal(client, check.references ?? 'public.regulatory_programs'));
+    if (refused) {
+      results.push({ relation: check.relation, keyedBy: check.keyedBy, skipped: false, refused, rows: [] });
       continue;
     }
     const { rows } = await client.query(check.sql);
@@ -264,12 +300,18 @@ async function main() {
   const client = new Client({ connectionString: url, ssl: sslFor(url) });
   await client.connect();
   let found = 0;
+  let refused = 0;
   try {
     await client.query('BEGIN READ ONLY');
-    await client.query(`SELECT set_config('app.rls_enforce', 'off', true), set_config('app.bypass_rls', 'true', true)`);
+    await client.query(`SELECT set_config('app.rls_enforce', 'off', true)`);
     for (const r of await runProgramSameOrgPreflight(client)) {
       if (r.skipped) {
         console.info(`  - ${r.relation}: not in this schema (skipped)`);
+        continue;
+      }
+      if (r.refused) {
+        refused += 1;
+        console.error(`  ✗ ${r.relation}: NOT CHECKED — ${r.refused}`);
         continue;
       }
       found += r.rows.length;
@@ -284,6 +326,10 @@ async function main() {
   if (found) {
     console.error(`\n✗ ${found} record(s) to clear before any tenant purge or VALIDATE CONSTRAINT (set the key to NULL, unless a store names another remedy above).`);
     process.exit(1);
+  }
+  if (refused) {
+    console.error(`\n✗ ${refused} store(s) could not be read in full as this role, so this is not a clean result (see above).`);
+    process.exit(2);
   }
   console.info('\n✓ every project key names a project of its own organization.');
 }
