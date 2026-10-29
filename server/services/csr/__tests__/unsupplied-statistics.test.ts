@@ -84,6 +84,19 @@ describe('findUnsuppliedStatistics', () => {
     expect(findUnsuppliedStatistics(draft, STUDY)).toEqual([]);
   });
 
+  it('finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval', () => {
+    const draft = 'Global cure occurred in 10/12 participants on Drug X and 4/11 on placebo. ' +
+      'The posterior probability that Drug X is superior was 0.993; the odds ratio was 7.8 (95% CrI 1.1 to 69.5).';
+    const found = findUnsuppliedStatistics(draft, STUDY);
+    expect(found.map((s) => s.kind)).toEqual(expect.arrayContaining(['count', 'posterior probability', 'interval', 'effect estimate']));
+    expect(found.map((s) => s.text)).toEqual(expect.arrayContaining(['10/12', '4/11', 'CrI 1.1 to 69.5']));
+  });
+
+  it('admits a supplied phase written n/N, a date and a posterior placeholder', () => {
+    const draft = 'This Phase 2/3 study was locked on 10/12/2025. The posterior probability [DATA TO BE INSERTED] is reported in the SAP.';
+    expect(findUnsuppliedStatistics(draft, { ...STUDY, phase: '2/3' })).toEqual([]);
+  });
+
   it('admits placeholder prose', () => {
     const draft = '[DATA TO BE INSERTED] The primary endpoint was [met/not met] (p=[value]); [N] patients completed.';
     expect(findUnsuppliedStatistics(draft, STUDY)).toEqual([]);

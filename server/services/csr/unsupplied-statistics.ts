@@ -38,6 +38,12 @@ const PATTERNS: readonly StatPattern[] = [
   { kind: 'count', re: /\b\d[\d,]*\s+(?:patients|subjects|participants|deaths|events)\b/gi },
   { kind: 'percentage', re: /\b\d+(?:\.\d+)?\s*%(?!\s*(?:CI\b|confidence\b|credible\b))/gi },
   { kind: 'significance level', re: /\b(?:alpha|α|significance level)\s*(?:of|=|:)?\s*0?\.\d+/gi },
+  // A Bayesian result (2026-10-29): a posterior probability, an n/N count and
+  // an interval written without brackets. Each is as much an invented figure
+  // as a p-value; the patterns above did not see them.
+  { kind: 'posterior probability', re: /\b(?:posterior|probability)\b[^.\n]{0,60}?(?<![\d.])0?\.\d+/gi },
+  { kind: 'count', re: /(?<![\d/.])\d+\s*\/\s*\d+(?![\d/.])/g },
+  { kind: 'interval', re: /\b(?:CI|CrI|credible interval|confidence interval)\b[^.\d\n]{0,12}?-?\d+(?:\.\d+)?\s*(?:,|;|–|—|\bto\b)\s*-?\d+(?:\.\d+)?/gi },
 ];
 
 /** Every number written in the supplied study information, normalised. */
