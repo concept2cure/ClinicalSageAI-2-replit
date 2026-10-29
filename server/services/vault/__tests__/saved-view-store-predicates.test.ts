@@ -52,7 +52,8 @@ function vaultModuleProblems(src: string): string[] {
   for (const m of src.matchAll(/`([^`]*saved_precedent_queries[^`]*)`/g)) {
     const sql = m[1];
     const verb = (/^\s*(SELECT|UPDATE|DELETE|INSERT|WITH)/i.exec(sql)?.[1] ?? 'SQL').toUpperCase();
-    if (!/organization_id\s*=\s*\$/.test(sql)) problems.push(`${verb} without organization_id = $n`);
+    // An INSERT names the organisation in its column list; every other statement predicates on it.
+    if (verb === 'INSERT' ? !/\(\s*organization_id\b/.test(sql) : !/organization_id\s*=\s*\$/.test(sql)) problems.push(`${verb} without organization_id = $n`);
     if (!/surface\s*=\s*'vault'/.test(sql) && verb !== 'INSERT') problems.push(`${verb} without surface = 'vault'`);
     if (verb === 'INSERT' && !/'vault'/.test(sql)) problems.push(`INSERT without surface 'vault'`);
     if (verb !== 'INSERT' && !/user_id\s*=\s*\$/.test(sql)) problems.push(`${verb} without the owner arm (user_id = $n)`);

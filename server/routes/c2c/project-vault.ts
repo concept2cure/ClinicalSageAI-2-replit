@@ -84,7 +84,7 @@ import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSq
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { hasVaultFilters, parseLibrarySearchFilters, parseProgramSearchFilters, readVaultSearchPaging, vaultFiltersAsked, vaultLifecycleStageSql, vaultSuggestedSql, vaultUnfiledSql, wantsFacets } from '../../services/vault/vault-document-filter.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
-import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
+import { GOVERNED_WRITE_ROLES, governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { signedActAttempts, signGovernedAct } from '../governed-signed-act.js';
 import { DECISION_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -104,7 +104,15 @@ import {
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
-import { ProgramReadAccessError, getCurrentAccessibleProgramScope } from '../../services/c2c/current-program-access';
+import {
+  ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
+  type CurrentProgramAccess,
+} from '../../services/c2c/current-program-access';
+import { requestConnectable, requestPgClient } from '../../db/requestDb';
+import {
+  SavedViewRefusal, changeSavedView, createSavedViewSchema, deleteSavedView, insertSavedView, listSavedViews,
+  lockSavedView, patchSavedViewSchema, validateViewParameters,
+} from '../../services/vault/vault-saved-views.js';
 import { projectVaultRelationshipHistory, VaultHistoryAccessError } from '../../services/vault/vault-history-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
@@ -1345,6 +1353,127 @@ export default function createProjectVaultRoutes(): Router {
    * for a project id. An empty query is not "match everything"; an error is
    * never an empty result.
    */
+  /* ── Saved views (D2, P-46; docs/design/VAULT_SAVED_VIEWS_2026-10-29.md R2) ──
+     A view is a search remembered, stored in the one saved-query store
+     (server/services/vault/vault-saved-views.ts). It is never run here: applying
+     one sets the find view's state and the search routes above run it under the
+     reader's current access. The view id is `viewId`, never `id`, so project
+     admission (router.param('id')) runs only on the list route. */
+  const savedViewFailure = (res: Response, err: unknown, opts: { what: 'read' | 'save'; projectScoped: boolean }) => {
+    if (err instanceof SavedViewRefusal) return res.status(err.status).json({ success: false, error: err.code, message: err.message, ...err.body });
+    if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err, opts.projectScoped);
+    logger.error('vault saved view failed', { what: opts.what, err: err instanceof Error ? err.name : 'unknown' });
+    return opts.what === 'read'
+      ? res.status(500).json({ success: false, error: 'SAVED_VIEWS_UNAVAILABLE', message: 'Saved views could not be read. This is not an empty list.' })
+      : res.status(500).json({ success: false, error: 'SAVED_VIEW_NOT_SAVED', message: 'The view was not saved. Nothing was changed.' });
+  };
+  const viewIdOf = (raw: unknown): number | null => {
+    const s = String(raw ?? '');
+    return /^[1-9]\d{0,9}$/.test(s) && Number(s) <= 2147483647 ? Number(s) : null;
+  };
+
+  /** GET /:id/saved-views: this project's views and the library views the reader may see. */
+  router.get('/:id/saved-views', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const access = res.locals.currentProgramAccess as CurrentProgramAccess;
+    try {
+      const q = requestPgClient(req);
+      const views = await listSavedViews(q, {
+        organizationId: orgId, actor: access.actor, programId: access.programId,
+        resolveView: () => resolveVaultView(access.programId, orgId, q),
+      });
+      return res.json({ success: true, data: { programId: access.programId, views } });
+    } catch (err) {
+      return savedViewFailure(res, err, { what: 'read', projectScoped: true });
+    }
+  });
+
+  /** POST /saved-views: save the current search as a personal or organisation view. */
+  router.post('/saved-views', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const parsed = createSavedViewSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(422).json({ success: false, error: 'VALIDATION_FAILED', message: 'The view is not in the expected shape. Nothing was saved.', details: parsed.error.flatten().fieldErrors });
+    }
+    const body = parsed.data;
+    const userId = governedActorId(req) ?? undefined;
+    try {
+      const q = requestPgClient(req);
+      const actor = body.programId
+        ? (await requireCurrentProgramAccess(q, { organizationId: orgId, userId, programId: body.programId })).actor
+        : await readCurrentProgramActor(q, { organizationId: orgId, userId });
+      if (body.visibility === 'org_public' && !GOVERNED_WRITE_ROLES.has(actor.role)) {
+        throw new SavedViewRefusal(403, 'SAVED_VIEW_PUBLISH_DENIED', 'Your role can save views for yourself only. Nothing was saved.');
+      }
+      const filters = await validateViewParameters({
+        programId: body.programId, q: body.q, filters: body.filters,
+        resolveView: () => resolveVaultView(body.programId as string, orgId, q),
+      });
+      const id = await insertSavedView(q, { organizationId: orgId, actor, body, filters });
+      logger.info('vault saved view created', { orgId, actorId: actor.userId, viewId: id, action: 'create', visibility: body.visibility });
+      const [view] = await listSavedViews(q, {
+        organizationId: orgId, actor, programId: body.programId, viewId: id,
+        resolveView: () => resolveVaultView(body.programId as string, orgId, q),
+      });
+      return res.status(201).json({ success: true, data: view ?? { id } });
+    } catch (err) {
+      return savedViewFailure(res, err, { what: 'save', projectScoped: body.programId !== null });
+    }
+  });
+
+  /**
+   * PATCH and DELETE /saved-views/:viewId: one transaction. The row the reader may
+   * see is locked, its project re-admitted, authority checked and repeated in
+   * the statement.
+   */
+  const changeView = (kind: 'patch' | 'delete') => async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const viewId = viewIdOf(req.params.viewId);
+    if (viewId === null) return res.status(404).json({ success: false, error: 'SAVED_VIEW_NOT_FOUND', message: 'No such saved view.' });
+    const parsed = kind === 'patch' ? patchSavedViewSchema.safeParse(req.body ?? {}) : null;
+    if (parsed && !parsed.success) {
+      return res.status(422).json({ success: false, error: 'VALIDATION_FAILED', message: 'Change one thing at a time: the name, who can see it, or what it searches. Nothing was changed.', details: parsed.error.flatten().fieldErrors });
+    }
+    const userId = governedActorId(req) ?? undefined;
+    const client = await requestConnectable(req).connect();
+    let projectScoped = false;
+    try {
+      await client.query('BEGIN');
+      const actor = await readCurrentProgramActor(client, { organizationId: orgId, userId, forShare: true });
+      const row = await lockSavedView(client, { organizationId: orgId, actor, viewId });
+      projectScoped = row.programId !== null;
+      if (row.programId) await requireCurrentProgramAccess(client, { organizationId: orgId, userId, programId: row.programId, forShare: true });
+      if (kind === 'delete') {
+        await deleteSavedView(client, { organizationId: orgId, actor, row });
+        await client.query('COMMIT');
+        logger.info('vault saved view deleted', { orgId, actorId: actor.userId, viewId, action: 'delete', visibility: row.visibility });
+        return res.json({ success: true, data: { id: viewId } });
+      }
+      const body = parsed!.data!;
+      const filters = 'q' in body
+        ? await validateViewParameters({ programId: row.programId, q: body.q, filters: body.filters, resolveView: () => resolveVaultView(row.programId as string, orgId, client) })
+        : undefined;
+      const action = await changeSavedView(client, { organizationId: orgId, actor, row, body, filters });
+      await client.query('COMMIT');
+      logger.info('vault saved view changed', { orgId, actorId: actor.userId, viewId, action, visibility: 'visibility' in body ? body.visibility : row.visibility });
+      const [view] = await listSavedViews(client, {
+        organizationId: orgId, actor, programId: row.programId, viewId,
+        resolveView: () => resolveVaultView(row.programId as string, orgId, client),
+      });
+      return res.json({ success: true, data: view ?? { id: viewId } });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      return savedViewFailure(res, err, { what: 'save', projectScoped });
+    } finally {
+      client.release();
+    }
+  };
+  router.patch('/saved-views/:viewId', changeView('patch'));
+  router.delete('/saved-views/:viewId', changeView('delete'));
+
   router.get('/search', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
