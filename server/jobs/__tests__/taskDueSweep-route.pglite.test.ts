@@ -80,4 +80,12 @@ describe('my work (B11)', () => {
     expect(ordinary).toMatchObject({ waitingOn: null, overdue: true });
     expect(work.overdue).toBe(1);
   });
+
+  it('says which items are route members, so the tray opens them where the route is acted on (RR1b)', async () => {
+    const { readMyWork } = await import('../../services/tasking/my-work');
+    const roles = async (user: number) => Object.fromEntries(
+      (await readMyWork(drizzle(pg) as unknown as RequestDb, 1, user)).items.map(i => [i.taskId, i.reviewRole]));
+    expect(await roles(3)).toEqual({ 'R-APPROVER': 'approver', 'T-BLOCKED': null });
+    expect(await roles(4)).toEqual({ 'R-REVIEWER': 'reviewer' });
+  });
 });
