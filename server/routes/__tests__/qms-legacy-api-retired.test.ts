@@ -244,16 +244,17 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
     });
   }
 
-  it('a manager still revokes a supplier, and the change is audited', async () => {
+  /* Since 2026-10-29 a supplier's standing is a signed act (POST …/suppliers/:id/approval,
+     qms-signed-decisions.test.ts): the unsigned PATCH that set it refuses and changes nothing. */
+  it("a manager revokes a supplier only with a signature", async () => {
     as('manager');
     const res = await request(await productionApp()).patch('/api/mdx/qms/suppliers/12').send({ approvalStatus: 'revoked' });
-    expect(res.status).toBe(200);
-    expect(H.supplier?.approval_status).toBe('revoked');
-    expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qms.supplier.update', resourceType: 'qms_supplier' })]);
-    expect(res.body.meta?.auditTrail).toEqual({ persisted: true, chained: true });
+    expect(res.status).toBe(422);
+    expect(H.supplier?.approval_status).toBe('approved');
+    expect(H.audit).toEqual([]);
   });
 
-  /* Since 2026-10-29 a disposition is a signed act (qms-nc-disposition-signed.test.ts):
+  /* Since 2026-10-29 a disposition is a signed act (qms-signed-decisions.test.ts):
      an editor's disposition without the signature writes nothing. */
   it('a member dispositions nonconforming product only with a signature', async () => {
     as('member');

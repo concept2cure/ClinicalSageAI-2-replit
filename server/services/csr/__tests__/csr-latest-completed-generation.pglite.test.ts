@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -32,6 +34,8 @@ beforeAll(async () => {
     INSERT INTO csr_section_outputs (organization_id,project_id,job_id,section_number,content,content_hash,ai_generated,token_cost)
       SELECT organization_id,project_id,id,'13','Retained generation ' || id,'recorded-hash-' || id,false,0 FROM csr_build_jobs;
   `);
+  // The loader reads each study's pivotal declaration (2026-10-29).
+  await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
 });
 afterAll(async () => { await database?.close(); });
 describe('CSR sources supplied to CTD summaries', () => {

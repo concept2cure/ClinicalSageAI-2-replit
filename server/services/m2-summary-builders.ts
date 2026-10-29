@@ -167,6 +167,12 @@ export interface CSRSummaryInput {
    * Shown as planned; never counted as enrolled or exposed.
    */
   plannedSampleSize?: number | null;
+  /**
+   * The sponsor's declaration that this study is pivotal: true or false as
+   * declared (csr/study-pivotal-declaration.ts); absent or null = not declared.
+   * Only `true` makes a study pivotal; the phase never does.
+   */
+  pivotal?: boolean | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -512,8 +518,8 @@ function efficacyHeadline(o: EndpointOutcomes, pivotalCount: number): string {
     o.unrecorded > 0 ? `not recorded for ${o.unrecorded}` : '',
   ].filter(Boolean).join(', ');
   return o.met > 0
-    ? `Efficacy was demonstrated in ${o.met} of ${pivotalCount} pivotal (Phase 3) study/ies (primary endpoint outcome: ${tally}):`
-    : `Efficacy is not established from the record: no pivotal (Phase 3) study is recorded as meeting its primary endpoint (primary endpoint outcome: ${tally}):`;
+    ? `Efficacy was demonstrated in ${o.met} of ${pivotalCount} pivotal study/ies (primary endpoint outcome: ${tally}):`
+    : `Efficacy is not established from the record: no pivotal study is recorded as meeting its primary endpoint (primary endpoint outcome: ${tally}):`;
 }
 
 /** Every study's size and SAE/death counts are recorded, so the safety data are complete. */
@@ -643,16 +649,25 @@ const COMPOSED_25 = ['2.5.1', '2.5.2', '2.5.3', '2.5.4', '2.5.5', '2.5.6', '2.5.
    (shared/clinical-phase.ts). These read c.phase as a bare digit with
    startsWith('3'), so a study recorded as "Phase 3" or "III" was never pivotal
    and "Phase 1" was never clinical pharmacology (CSR path review, 2026-10-29).
-   "2/3" reads as it always did here, Phase 2 first: whether a Phase 2/3 study
-   counts as pivotal is a product decision, not a parser's. */
+   "2/3" reads Phase 2 first.
+   Pivotal is not a phase. It is the sponsor's declaration, per study
+   (csr/study-pivotal-declaration.ts; founder's decision of 2026-10-29): only a
+   declared `true` makes a study pivotal, and a study with no declaration is
+   named as undeclared. Until then Phase 3 meant pivotal and a Phase 2/3 study
+   never was. */
 const firstPhase = (c: CSRSummaryInput) => phaseNumbers(c.phase)[0] ?? null;
 const isPhase1 = (c: CSRSummaryInput) => firstPhase(c) === 1;
-const isPhase3 = (c: CSRSummaryInput) => firstPhase(c) === 3;
 const isPhase2Or3 = (c: CSRSummaryInput) => firstPhase(c) === 2 || firstPhase(c) === 3;
+const isPivotal = (c: CSRSummaryInput) => c.pivotal === true;
+/** The gap naming every study whose pivotal status the sponsor has not declared; null when all are declared. */
+function undeclaredPivotalGap(csrs: CSRSummaryInput[]): string | null {
+  const undeclared = csrs.filter(c => c.pivotal !== true && c.pivotal !== false);
+  return undeclared.length > 0 ? `pivotal status not declared for ${undeclared.map(c => c.protocolNumber).join(', ')}` : null;
+}
 
 export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   const csrs = ctx.csrs;
-  const pivotal = csrs.filter(isPhase3);
+  const pivotal = csrs.filter(isPivotal);
   const clinPharm = csrs.filter(isPhase1);
   const controlled = csrs.filter(isPhase2Or3);
   const totalSubjects = csrs.reduce((s, c) => s + (c.ittPopulation || c.sampleSize || 0), 0);
@@ -665,7 +680,9 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   if (unsized > 0) gaps.push(`sample size not recorded for ${unsized} study/ies — the exposure total excludes them`);
   gaps.push('biopharmaceutics (2.5.2): no biopharmaceutic data recorded');
   if (clinPharm.length === 0) gaps.push('clinical pharmacology (Phase 1) characterization');
-  if (pivotal.length === 0) gaps.push('pivotal (Phase 3) efficacy evidence');
+  if (pivotal.length === 0) gaps.push('pivotal efficacy evidence (no study is declared pivotal)');
+  const undeclared25 = undeclaredPivotalGap(csrs);
+  if (undeclared25) gaps.push(undeclared25);
   if (outcomes.unrecorded > 0) gaps.push(`primary endpoint outcome not recorded for ${outcomes.unrecorded} of ${pivotal.length} pivotal study/ies`);
   if (totalSubjects === 0) gaps.push('safety database (no exposure data)');
   if (safety.gap) gaps.push(safety.gap);
@@ -814,7 +831,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   const safety = safetyCounts(csrs);
   const controlledCount = csrs.filter(isPhase2Or3).length;
   const phase1 = csrs.filter(isPhase1);
-  const pivotal = csrs.filter(isPhase3);
+  const pivotal = csrs.filter(isPivotal);
   const outcomes = pivotalOutcomes(pivotal);
   const ae = commonAdverseEvents(csrs);
 
@@ -824,7 +841,9 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
   if (unsized27 > 0) gaps.push(`sample size not recorded for ${unsized27} study/ies — the exposure total excludes them`);
   gaps.push('biopharmaceutic studies (2.7.1): no biopharmaceutic data recorded');
   if (phase1.length === 0) gaps.push('no Phase 1 (clinical pharmacology) studies');
-  if (pivotal.length === 0) gaps.push('no Phase 3 (pivotal efficacy) studies');
+  if (pivotal.length === 0) gaps.push('no pivotal efficacy study declared');
+  const undeclared27 = undeclaredPivotalGap(csrs);
+  if (undeclared27) gaps.push(undeclared27);
   if (outcomes.unrecorded > 0) gaps.push(`primary endpoint outcome not recorded for ${outcomes.unrecorded} of ${pivotal.length} pivotal study/ies`);
   if (safety.gap) gaps.push(safety.gap);
   gaps.push(...ae.gaps);
@@ -852,7 +871,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
     ``,
     heading('2.7.3'),
     controlledCount > 0
-      ? `${controlledCount} Phase 2–3 study/ies are recorded. ${pivotal.length > 0 ? efficacyHeadline(outcomes, pivotal.length) : 'No pivotal (Phase 3) study is recorded.'}`
+      ? `${controlledCount} Phase 2–3 study/ies are recorded. ${pivotal.length > 0 ? efficacyHeadline(outcomes, pivotal.length) : 'No study is declared pivotal.'}`
       : `[No controlled efficacy study available — efficacy has not been evaluated]`,
     ...pivotal.map(c =>
       `  • ${c.protocolNumber} (${phaseLabel(c.phase)}): ${c.studyDesign}, n=${sampleSizeText(c)}. Primary endpoint (${c.primaryEndpoint}): ${unterminated(c.primaryResult)}. Primary endpoint outcome: ${endpointOutcomeText(c)}.`

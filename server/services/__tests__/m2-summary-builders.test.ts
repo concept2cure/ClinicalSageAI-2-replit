@@ -20,6 +20,9 @@ const pivotal: CSRSummaryInput = {
   // 2026-10-15: efficacy is concluded only from a recorded outcome, never from
   // a Phase 3 CSR existing; this fixture records the outcome its result describes.
   primaryEndpointMet: true,
+  // 2026-10-29: pivotal is the sponsor's declaration, never the phase
+  // (csr/study-pivotal-declaration.ts); this fixture's study is declared pivotal.
+  pivotal: true,
   sampleSize: 600,
   ittPopulation: 590,
   saeCount: 12,
@@ -36,6 +39,7 @@ const phase1: CSRSummaryInput = {
   // Extracted and zero, not "never extracted".
   saeCount: 0,
   deathCount: 0,
+  pivotal: false,
 };
 
 describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
@@ -237,7 +241,7 @@ describe('buildM25ClinicalOverview', () => {
       indication: 'type 2 diabetes',
       investigationalProduct: 'BX-115',
     });
-    expect(r.gaps).toContain('pivotal (Phase 3) efficacy evidence');
+    expect(r.gaps).toContain('pivotal efficacy evidence (no study is declared pivotal)');
     expect(r.narrative).toMatch(/cannot be concluded/);
     expect(r.completeness).toBeLessThan(100);
   });
