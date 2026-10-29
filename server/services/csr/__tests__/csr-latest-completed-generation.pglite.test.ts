@@ -38,7 +38,8 @@ describe('CSR sources supplied to CTD summaries', () => {
   it('uses one latest completed generation per study after tenant/project/status filtering, with deterministic ties', async () => {
     const inputs = await loadCsrInputsForProject(7, 11, { actorUserId: 5 });
     expect(inputs).toHaveLength(2);
-    expect(inputs.find(s => s.studyId === 'STUDY-A')).toMatchObject({ sampleSize: 20, csrSections: [{ content: 'Retained generation 2' }] });
+    // The build request's sampleSize is the planned size: it travels as planned, never as enrolled.
+    expect(inputs.find(s => s.studyId === 'STUDY-A')).toMatchObject({ sampleSize: null, plannedSampleSize: 20, csrSections: [{ content: 'Retained generation 2' }] });
     expect(inputs.find(s => s.studyId === 'STUDY-B')?.csrSections?.[0]?.content).toBe('Retained generation 7');
     expect(inputs.find(s => s.studyId === 'STUDY-B')?.sampleSize).toBeNull();
   });
