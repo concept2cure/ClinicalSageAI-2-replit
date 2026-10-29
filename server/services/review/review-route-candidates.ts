@@ -17,13 +17,18 @@
  * a record that is not there yet. Once the record exists, the validator reads
  * the record's own authorship, as the send does.
  *
+ * For a reassignment (RR3, `forReassign`) on a version whose route is open,
+ * the validator is asked as the reassignment asks it: the route's own sender is
+ * the sender, the reader is the actor (who cannot name themselves), and
+ * everyone on the route is already named.
+ *
  * Every statement carries the organization.
  *
  * @module server/services/review/review-route-candidates
  */
 import { findVaultLifecycleRecord, readVaultLifecycleSource } from '../vault/vault-lifecycle';
 import { ReviewRouteRefusal, validateRouteMember } from './review-route-member';
-import { routeSubjectTarget, type RouteQueryable, type RouteRole } from './review-route-standing';
+import { routeStanding, routeSubjectTarget, type RouteQueryable, type RouteRole } from './review-route-standing';
 import { printedNameOf, senderTimeZone } from './review-route';
 
 export interface RouteCandidateRefusal {
@@ -62,6 +67,17 @@ async function answer(run: () => Promise<unknown>): Promise<RouteCandidateRefusa
   }
 }
 
+/** Who sends and who is already named: the reader and nobody at a send; the open route's sender and members at a reassignment. */
+async function namingContext(
+  q: RouteQueryable,
+  p: { organizationId: number; readerId: number; forReassign?: boolean; canonicalId: string | null },
+): Promise<{ senderId: number; named: ReadonlySet<number> }> {
+  if (!p.forReassign || !p.canonicalId) return { senderId: p.readerId, named: new Set() };
+  const standing = await routeStanding(q, { organizationId: p.organizationId, subjectType: 'canonical_document', subjectId: p.canonicalId, inReview: true });
+  if (standing.state !== 'live') return { senderId: p.readerId, named: new Set() };
+  return { senderId: standing.route!.senderId, named: new Set(standing.members.map((m) => m.userId)) };
+}
+
 /**
  * The candidates for one Vault version of this organization, or null when the
  * version is not this organization's live version. Throws on a read failure:
@@ -69,7 +85,7 @@ async function answer(run: () => Promise<unknown>): Promise<RouteCandidateRefusa
  */
 export async function readRouteCandidates(
   q: RouteQueryable,
-  p: { organizationId: number; vaultId: string; readerId: number },
+  p: { organizationId: number; vaultId: string; readerId: number; forReassign?: boolean },
 ): Promise<RouteCandidates | null> {
   const source = await readVaultLifecycleSource(q, p.organizationId, p.vaultId);
   if (!source) return null;
@@ -90,6 +106,7 @@ export async function readRouteCandidates(
   );
   if (rows.length > MAX_MEMBERS) throw new Error(`More than ${MAX_MEMBERS} members: the picker cannot list them all`);
   const subjectTarget = routeSubjectTarget('canonical_document', canonicalId ?? '');
+  const naming = await namingContext(q, { ...p, canonicalId });
   const candidates: RouteCandidate[] = [];
   for (const row of rows) {
     const candidateId = Number(row.id);
@@ -97,7 +114,7 @@ export async function readRouteCandidates(
     const ask = (role: RouteRole) => answer(async () => {
       const v = await validateRouteMember(q, {
         organizationId: p.organizationId, subjectTarget, programId: source.programId, contentDigest: source.contentHash,
-        role, candidateId, senderId: p.readerId, actorId: p.readerId, named: new Set(), authorship,
+        role, candidateId, senderId: naming.senderId, actorId: p.readerId, named: naming.named, authorship,
       });
       name = v.printedName;
     });
