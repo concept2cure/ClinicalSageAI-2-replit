@@ -27,8 +27,10 @@ import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { useCapasBySource } from './capaSources';
 import { useRegisterContext } from './registerContext';
+import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
+import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
-import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, plural } from './qmsRegisterKit';
+import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep, plural } from './qmsRegisterKit';
 
 /** How many rows AnA is passed; the count says when there are more. */
 const MAX_FACT_ROWS = 100;
@@ -51,6 +53,8 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const today = new Date().toISOString().slice(0, 10);
   const capas = useCapasBySource(config.capaSourceKind);
   const ctx = useRegisterContext(config.needs);
+  const user = useAuthUser(); // display only; the server resolves the signer
+  const [signing, setSigning] = React.useState<SignedStep | null>(null);
   /* The CAPAs raised from each row, from the CAPA register (capaSources.ts). */
   const columns: Column<R>[] = config.capaSourceKind
     ? [...config.columns, {
@@ -66,6 +70,16 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const rowMin = registerRowMinWidth(grid);
 
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /* A row action that signs hands its decision to the EsignModal; one that submits writes now. */
+  const submitRow = (row: R, action: RowAction<R>, v: Record<string, string>) => {
+    if (!action.sign) { void run(() => action.submit(row, v)); return; }
+    try {
+      setSigning(action.sign(row, v));
+      setDrawer(null);
+    } catch (err) {
+      setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const run = async (write: () => Promise<string>) => {
     if (writing.current) return;
     writing.current = true;
@@ -193,7 +207,27 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         <C2CForm
           config={{ ...drawer.action.form(drawer.row, ctx), ...(refusal ? { notice: refusal } : {}) }}
           onCancel={() => setDrawer(null)}
-          onSubmit={(v) => void run(() => drawer.action.submit(drawer.row, v))}
+          onSubmit={(v) => submitRow(drawer.row, drawer.action, v)}
+        />
+      )}
+      {signing && (
+        <EsignModal
+          open
+          action={signing.action}
+          target={signing.target}
+          targetMeta={signing.meta}
+          signedRows={signing.rows}
+          defaultMeaning={signing.meanings[0]}
+          meanings={signing.meanings}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          onClose={() => setSigning(null)}
+          onSign={async (input) => {
+            const manifest = await signing.post(input);
+            setNotice(signing.done);
+            setVersion((n) => n + 1);
+            read.refresh();
+            return manifest;
+          }}
         />
       )}
     </>

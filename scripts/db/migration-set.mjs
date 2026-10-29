@@ -3610,6 +3610,13 @@ export const C2C_MIGRATION_FILES = [
   // NULL, so the sweep below gives it its policy. Every statement is guarded;
   // no DROP. docs/design/VAULT_DATA_ROOM_SEAL_2026-10-29.md.
   'migrations/20261029d_vault_data_room_seals.sql',
+  // The sponsor's per-study pivotal declaration (D5, 2026-10-29): what Module 2
+  // reads instead of inferring pivotal from the phase. Append-only (UPDATE and
+  // TRUNCATE refused; DELETE is the tenant purge's, PURGE_CHILD_TABLES). No
+  // foreign key. Public with organization_id INTEGER NOT NULL, so the sweep
+  // below gives it its policy. Every statement is guarded; no DROP.
+  // docs/design/STUDY_PIVOTAL_DECLARATION_2026-10-29.md.
+  'migrations/20261029e_study_pivotal_declarations.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

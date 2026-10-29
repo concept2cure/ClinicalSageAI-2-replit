@@ -11,7 +11,8 @@ export function launchQualificationSurfaces(apps: readonly LaunchApp[] = LAUNCH_
 
 export function accessQualificationSurfaces() {
   const surfaces = launchQualificationSurfaces();
-  for (const id of ['compliance-reports','audit-trail','part11-console']) {
+  // part11-console folded into audit-trail on 2026-10-29 (D2); audit-trail carries both chain verdicts.
+  for (const id of ['compliance-reports','audit-trail']) {
     if (!surfaces.some(surface=>surface.id===id)) surfaces.push({ id, app: LAUNCH_SHELL_SURFACES[id] ?? 'Audit and compliance reports' });
   }
   return surfaces;

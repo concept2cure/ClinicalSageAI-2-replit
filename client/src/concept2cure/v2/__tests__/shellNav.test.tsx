@@ -285,11 +285,13 @@ describe('Tasks is one entry: everyone’s tasks, with the board’s own filter 
   });
 });
 
-describe('Artifacts center, no longer a rail entry, is reached from ⌘K', () => {
+describe('the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault', () => {
   /* tests/e2e/golden-customer-journey.e2e.ts clicked the rail's "Artifacts
-     Center" button. That entry went (registryModel.ts RAIL_CORE). This is the
-     path the journey takes instead, by the same accessible names. */
-  it('the top bar’s search opens the palette, and the result opens Artifacts center', async () => {
+     Center" button. That entry went (registryModel.ts RAIL_CORE), and then the
+     screen folded into the Vault (D2, fold F3 slice C, 2026-10-29), whose
+     organization view lists the same rows. This is the path the journey takes
+     now, by the same accessible names. ⌘K no longer lists the retired screen. */
+  it('the top bar’s search opens the palette, and the result opens the Vault, not a retired screen', async () => {
     const onNav = vi.fn();
     function Harness() {
       const [open, setOpen] = React.useState(false);
@@ -304,8 +306,10 @@ describe('Artifacts center, no longer a rail entry, is reached from ⌘K', () =>
     await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Search, jump, or run a command' }));
     fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Artifacts' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /Artifacts center/i })[0]);
-    expect(onNav).toHaveBeenCalledWith('artifacts-center');
+    expect(screen.queryAllByRole('button', { name: /Artifacts center/i })).toEqual([]);
+    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Vault' } });
+    fireEvent.click(screen.getAllByRole('button', { name: /^Vault/ })[0]);
+    expect(onNav).toHaveBeenCalledWith('vault');
   });
 });
 

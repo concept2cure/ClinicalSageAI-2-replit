@@ -20,6 +20,7 @@ vi.mock('../hooks', () => ({
     rows: H.trainingRows,
     loading: false, error: null, refresh: H.trainRefresh,
   }),
+  useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => H.user }));
 vi.mock('@/lib/queryClient', async (original) => ({

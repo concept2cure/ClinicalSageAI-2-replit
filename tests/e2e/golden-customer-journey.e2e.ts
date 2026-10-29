@@ -314,13 +314,15 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
   expect(JSON.stringify(payload(persisted))).toContain(JOURNEY.artifactTitle);
   expect(JSON.stringify(payload(persisted))).toContain('review');
 
-  // Artifacts center is not a nav place any more (docs/design/ONE_ANA_ONE_CANVAS.md §5;
-  // registryModel.ts RAIL_CORE). Open it from the top bar's search, by accessible
-  // names: the path client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A
-  // direct URL load bounces back to Home (the shell restores its own state on a cold load).
+  // The Artifacts center folded into the Vault (D2, fold F3 slice C, 2026-10-29):
+  // with no project open, the Vault lists the governed artifacts of every project
+  // the author can open, with the gallery's governance line. Open it from the top
+  // bar's search, by accessible names: the path
+  // client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A direct URL load
+  // bounces back to Home (the shell restores its own state on a cold load).
   await page.getByRole('button', { name: 'Search, jump, or run a command' }).click();
-  await page.getByPlaceholder(/Search surfaces/).fill('Artifacts');
-  await page.getByRole('button', { name: /Artifacts center/i }).first().click();
+  await page.getByPlaceholder(/Search surfaces/).fill('Vault');
+  await page.getByRole('button', { name: /^Vault/ }).first().click();
   // Anchor on the row's testid, not the exact title: the listing truncates
   // long titles in the cell text, so an exact-text locator can never match.
   // The governance label is the claim under test and is asserted verbatim.

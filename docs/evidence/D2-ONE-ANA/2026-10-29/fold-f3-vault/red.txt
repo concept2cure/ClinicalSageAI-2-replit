@@ -1,0 +1,93 @@
+RED, Part 1 (parity gaps), run at HEAD e2cf417ba with no product change: the two new suites only.
+Command: npx vitest run server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+Result: Test Files 2 failed (2); Tests 27 failed (27).
+
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each open project, the legacy project with no program record included
+    -> AssertionError: expected [ 'a-archived', 'a-foreign', …(3) ] to deeply equal [ 'a-legacy', 'a-open' ]
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot open, an archived row, or a row under another organization’s project
+    -> AssertionError: expected '{"success":true,"data":[{"id":"a-fore…' not to contain 'a-shut'
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > names each row’s program, so the Vault can open that project, and null where the project has none
+    -> AssertionError: expected { id: 'a-open', …(18) } to match object { prog: 'OPEN-1', …(2) }
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > asks the sharing policy about this caller in this organization
+    -> AssertionError: expected [] to deeply equal [ { organizationId: 1, userId: 7 } ]
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > with no project open to the caller, lists nothing and reads no registry row
+    -> AssertionError: expected [ { id: 'a-foreign', …(18) }, …(4) ] to deeply equal []
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member is refused, never shown an empty listing
+    -> AssertionError: expected 200 to be 403 // Object.is equality
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is a 503, never an empty listing
+    -> AssertionError: expected 200 to be 503 // Object.is equality
+ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not list
+    -> AssertionError: expected undefined to match object { total: 207, listed: 200, …(1) }
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > reads the organization listing and shows each artifact’s governance
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says the signature on the current version in words, four states
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > carries the gallery’s cited-source and review line, verbatim
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says whose projects it covers, and when the window is full, that it is
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > none in the projects the caller can open is said as that
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a failed read is an error, never an empty registry, and can be tried again
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a refusal says what it is, with no retry a retry cannot change
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > exports the listing through the one manifest builder, with the same columns
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > downloads a row’s governed DOCX, and says a refusal in words
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > opens a row in the editor through authoring.open-document, by title
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > asks AnA about a row by name, project and version
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > tells AnA what the view shows, and that a failed read is not zero
+    -> AssertionError: expected undefined to be truthy
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with a project open, the organization view is one click away and reads nothing until opened > reads the listing only when asked
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > is in the registry with an artifact id and no title
+    -> AssertionError: expected false to be true // Object.is equality
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with a project open, selects the leaf whose artifact id it is, the state a person’s click drives
+    -> Error: Action "vault.focus-document" requires param "document".
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > an artifact saved after the tree was read is found on one re-read, then selected
+    -> Error: Action "vault.focus-document" requires param "document".
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > one that is not in this project’s Vault after the re-read is an honest miss, never a guess
+    -> Error: Action "vault.focus-document" requires param "document".
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with no project open, focuses the row in the organization view, by id or by name
+    -> TestingLibraryElementError: Unable to find an element by: [data-testid="vault-org-artifacts"]
+ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with neither a title nor an id, refuses
+    -> Error: Action "vault.focus-document" requires param "document".
+
+Two edits to the tests after this run:
+ 1. "names each row's program, so the Vault can open that project…" became "names each row's project as its own
+    organization records it, and its status in the Vault's words". The draft asserted a `programId` field per row; the
+    design dropped it (no screen needs it), so the case now asserts `prog`, `status` and `author`. Reworded, it pins
+    fields the route already returned, so it would pass at HEAD: it guards the shape, and the other seven server cases
+    prove the scoping (each red at HEAD above).
+ 2. "with no project open, focuses the row in the organization view, by id or by name": an unknown id is re-read once
+    before it is a miss (the Live Drive re-read rule), so the last expectation waits for the deferred outcome and counts
+    the re-read instead of expecting a synchronous failure. At HEAD the case fails earlier, on the absent view.
+
+────────────────────────────────────────────────────────────────────────────
+
+RED, Part 2 fold guard, run on the working tree after Part 1 and before any retirement edit (HEAD e2cf417ba).
+Command: npx vitest run client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+Result: 8 of 9 fail. The one that passes ('lands on the Vault, which the shell can mount') pins the destination, which exists before the fold.
+
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > resolves artifacts-center to the Vault from a link, an in-app move and AnA, with or without a project open
+    -> AssertionError: expected undefined to be 'vault' // Object.is equality
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > resolves device-vault to the Vault from a link, an in-app move and AnA, with or without a project open
+    -> AssertionError: expected undefined to be 'vault' // Object.is equality
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > artifacts-center keeps no screen of its own: no view, no registry entry for ⌘K, no kit id
+    -> AssertionError: expected { component: [Function] } to be undefined
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > device-vault keeps no screen of its own: no view, no registry entry for ⌘K, no kit id
+    -> AssertionError: expected { component: [Function Surface], …(1) } to be undefined
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > leaves no client code naming the retired screens, their hook or the kit’s vault data
+    -> AssertionError: expected [ …(8) ] to deeply equal []
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > serves no /api/mdx/vault route and no screen calls one
+    -> AssertionError: expected '/**\n * Inline-route bootstrap slots.…' not to match /mdx-vault|\/api\/mdx\/vault/api\
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > is in no launch scope list and no rail, and no tour stops on either
+    -> AssertionError: expected [ 'vault', 'artifacts-center' ] to not include 'artifacts-center'
+ client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts > artifacts-center and device-vault are folded into the Vault > gives AnA the Vault’s focus in place of the gallery’s, and the Live Drive hand-off rides it
+    -> AssertionError: expected [ 'projects.new-project', …(108) ] to not include 'artifacts-center.focus-artifact'
+
+Catalogue contract cases: their red is mutations M16 and M17 (the two migrations' rows restored one at a time), in mutations.txt.

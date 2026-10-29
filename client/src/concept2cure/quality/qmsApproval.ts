@@ -76,36 +76,74 @@ export type QmsPeriodicReviewDecision =
  * changes nothing on the document: the review is the signature
  * (server/services/qms/periodic-review.ts).
  */
-export async function postQmsPeriodicReview(
+export function postQmsPeriodicReview(
   id: number,
   decision: QmsPeriodicReviewDecision,
   input: { reason: string; password: string; totp?: string },
 ): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/documents/${id}/periodic-review`, decision, { ...input, meaning: 'review' }, UNCONFIRMED_REVIEW);
+}
+const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
+
+/**
+ * Sign a nonconformance's disposition. The reason is recorded as its
+ * rationale, and a signed disposition is not changed
+ * (server/services/qms/nonconformance-disposition.ts).
+ */
+export function signNcDisposition(
+  id: number,
+  disposition: string,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('PATCH', `/api/mdx/qms/nonconforming/${id}/disposition`, { disposition }, input, UNCONFIRMED_DISPOSITION);
+}
+const UNCONFIRMED_DISPOSITION = 'The server did not confirm the disposition. Reload the register and check the nonconformance before you sign again.';
+
+/** Sign a supplier's approval standing (server/services/qms/supplier-approval.ts). */
+export function signSupplierApproval(
+  id: number,
+  approvalStatus: string,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+): Promise<EsigSignedManifest> {
+  return sendSignedAct('POST', `/api/mdx/qms/suppliers/${id}/approval`, { approvalStatus }, input, UNCONFIRMED_APPROVAL);
+}
+const UNCONFIRMED_APPROVAL = "The server did not confirm the supplier's standing. Reload the register and check the supplier before you sign again.";
+
+/**
+ * A route that signs through the platform's one ceremony (routes/governed-signed-act.ts),
+ * which answers with the signature's time. A coded refusal (4xx) is the server's
+ * sentence. A dropped connection or a server error may have come after the
+ * commit, so it is not "nothing was signed", and signing again could record a
+ * second act.
+ */
+async function sendSignedAct(
+  method: 'POST' | 'PATCH',
+  path: string,
+  fields: Record<string, unknown>,
+  input: { meaning: EsigSignedManifest['meaning']; reason: string; password: string; totp?: string },
+  unconfirmed: string,
+): Promise<EsigSignedManifest> {
   let res: Response;
   try {
-    res = await apiRequest('POST', `/api/mdx/qms/documents/${id}/periodic-review`, {
-      ...decision,
+    res = await apiRequest(method, path, {
+      ...fields,
       password: input.password,
       ...(input.totp ? { mfaToken: input.totp } : {}),
-      meaning: 'review',
+      meaning: input.meaning,
       reason: input.reason,
     });
   } catch (err) {
-    // A coded refusal (4xx) is the server's sentence. A dropped connection or a
-    // server error may have come after the commit, so it is not "nothing was
-    // signed", and signing again could record a second review.
     const status = (err as { status?: unknown } | null)?.status;
     if (typeof status === 'number' && status < 500) throw err;
-    throw new Error(UNCONFIRMED_REVIEW);
+    throw new Error(unconfirmed);
   }
   const json = (await res.json().catch(() => null)) as { signedAt?: string; sha256Chain?: string } | null;
   if (res.status === 401) {
     throw refusedSigning(serverMessage(json) ?? 'Your password or code was not verified. Re-enter them and sign again.');
   }
-  if (!json?.signedAt) throw new Error(UNCONFIRMED_REVIEW);
-  return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
+  if (!json?.signedAt) throw new Error(unconfirmed);
+  return { meaning: input.meaning, reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
-const UNCONFIRMED_REVIEW = 'The server did not confirm the review. Reload the register and check the document’s last review before you sign again.';
 
 /**
  * Send a draft controlled document for review: the existing edit route,

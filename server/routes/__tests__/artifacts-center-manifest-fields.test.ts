@@ -17,6 +17,17 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* The listing is bound to the projects the caller can open (fold F3 slice C,
+   2026-10-29). The sharing policy is stubbed here to open project 4, the
+   fixture's own; artifacts-center-accessible-projects.pglite.test.ts proves the binding. */
+vi.mock('../../services/c2c/current-program-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 5, role: 'author' }),
+}));
+vi.mock('../../services/report-os/project-access.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [4],
+}));
 
 import createArtifactsCenterRoutes from '../artifacts-center-routes';
 

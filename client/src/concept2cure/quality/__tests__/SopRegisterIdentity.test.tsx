@@ -23,6 +23,8 @@ function payload(path: string, organizationId: string) {
     doc_type: 'sop', category: null, version: '1.0', status: 'effective', effective_date: '2026-09-01', next_review_date: null, updated_at: null }] };
   if (path === '/api/mdx/qms/training/compliance') return { data: [{ id, doc_number: docNumber, title,
     document_version: '1.0', eligible: true, unavailable_reason: null, current: old ? 1 : 0, of: old ? 1 : 2, last_cycle: null }] };
+  if (path === '/api/mdx/qms/training/expiring') return { data: [{ userId: old ? 30 : 31, userName: old ? 'Previous tenant member' : 'Current tenant member',
+    documentId: id, docNumber, title, documentVersion: '1.0', expiresAt: '2026-11-20T00:00:00.000Z', daysLeft: 10 }] };
   return { data: [] };
 }
 type Pending = { path: string; organizationId: string; signal?: { aborted: boolean }; resolve: (value: ReturnType<typeof json>) => void };
@@ -50,7 +52,8 @@ describe('the register retires all tenant-owned reads when identity changes', ()
     view.rerender(register());
     expect(screen.queryByText('Previous tenant procedure', { selector: '.qms-title' })).toBeNull();
     expect(document.querySelector('.qms-train-pct')).toBeNull();
-    await waitFor(() => expect(pending).toHaveLength(4));
+    expect(screen.queryByText('Previous tenant member')).toBeNull();
+    await waitFor(() => expect(pending).toHaveLength(5));
     await act(async () => { for (const read of pending) read.resolve(json(payload(read.path, read.organizationId))); });
     expect(await screen.findByText('Current tenant procedure', { selector: '.qms-title' })).toBeTruthy();
     expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0/2');
@@ -59,13 +62,15 @@ describe('the register retires all tenant-owned reads when identity changes', ()
   it('aborts old reads and ignores their late successful bodies after the new tenant renders', async () => {
     const pending = stubReads('12');
     const view = render(register());
-    await waitFor(() => expect(pending).toHaveLength(4));
+    await waitFor(() => expect(pending).toHaveLength(5));
     adopt('8', '13');
     view.rerender(register());
     expect(await screen.findByText('Current tenant procedure', { selector: '.qms-title' })).toBeTruthy();
     expect(pending.every(read => read.signal?.aborted)).toBe(true);
     await act(async () => { for (const read of pending) read.resolve(json(payload(read.path, read.organizationId))); });
     expect(screen.queryByText('Previous tenant procedure', { selector: '.qms-title' })).toBeNull();
+    expect(screen.queryByText('Previous tenant member')).toBeNull();
+    expect(screen.getByText('Current tenant member')).toBeTruthy();
     expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0/2');
   });
 });

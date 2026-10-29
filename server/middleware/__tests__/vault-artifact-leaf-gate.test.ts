@@ -10,7 +10,8 @@
  *   MODULE_ENFORCEMENT=enforce an organization entitled to the Vault and not
  *   the Artifacts center was refused the export. `vault` now also claims it
  *   (a86ed04ed's method). The gate admits a path when the organization holds
- *   ANY claimant, so an Artifacts-center-only organization keeps its export.
+ *   ANY claimant, so an Artifacts-center-only organization kept its export
+ *   until the Artifacts center folded into the Vault (slice C, below).
  * - /api/concept2cure/projects is claimed only by project-home and
  *   conversation-thread, which have no catalog row, so under enforcement it is
  *   refused to every organization (core-project-record-gating, "Left as
@@ -95,12 +96,17 @@ describe('the Vault’s governed-artifact leaf, under module enforcement', () =>
     expect(await verdicts(503, [exportCall, ...projectCalls])).toEqual(all([exportCall, ...projectCalls], '403 MODULE_NOT_LICENSED'));
   });
 
-  it('only the vault row gains: the Artifacts center keeps its claims, and /api/concept2cure/projects is unchanged', async () => {
+  /* Fold F3 slice C (2026-10-29): the Artifacts center folded into the Vault,
+     so its registry entry and claims went. /api/artifacts-center is the Vault's
+     alone; /api/atoms, which had no route and no caller, is claimed by nothing.
+     A module the catalogue now deprecates claims nothing, so an organization
+     holding it and not the Vault is refused (every organization was granted
+     both at creation: both were launch modules). */
+  it('the Vault alone claims /api/artifacts-center now, and /api/concept2cure/projects is unchanged', async () => {
     const map = buildPrefixMap();
-    expect([...map.get('/api/artifacts-center')!].sort()).toEqual(['artifacts-center', 'vault']);
-    expect([...map.get('/api/atoms')!]).toEqual(['artifacts-center']);
+    expect([...map.get('/api/artifacts-center')!]).toEqual(['vault']);
+    expect(map.has('/api/atoms')).toBe(false);
     expect([...map.get('/api/concept2cure/projects')!].sort()).toEqual(['conversation-thread', 'project-home']);
-    // An Artifacts-center-only organization keeps its export.
-    expect(await ask(502, exportCall)).toBe('served');
+    expect(await ask(502, exportCall)).toBe('403 MODULE_NOT_LICENSED');
   });
 });

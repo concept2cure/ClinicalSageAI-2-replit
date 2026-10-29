@@ -1,0 +1,94 @@
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > queues the build, shows subjects done of total while it runs, then the outcome and the QC list 436ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows a failed build by its recorded refusal, naming the rows 52ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says a stalled build stopped, and building again resumes it 42ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says so when the build status cannot be read, rather than showing nothing 20ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 62ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 265ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 21ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 35ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 33ms
+stderr | server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 489ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome 47ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing 73ms
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical
+[SYNTHETIC memory] narratives=1000 section14_3_3_chars=673113 maxSentChars=33934 maxReadChars=29358
+ ✓ server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical 3112ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 11ms
+stdout | server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed
+[SYNTHETIC scale, PGlite] subjects=1000 narratives=200 firstRunMs=540 resumeMs=130
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 167ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 11ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 6ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed 674ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds
+[SYNTHETIC scale] subjects=1000 narratives=200 facts=3660 ms=45 section14_3_3_chars=135019 counts={"death":10,"serious":110,"discontinuation":60,"aesi":40}
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > composes every selected subject and lands §14.3.3 and the §12.3.2 cross-reference 29ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > resumes per subject: a stopped run keeps its saved subjects and the rerun composes only the rest 19ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > never overwrites a saved narrative that fails its hash: the run fails and preserves it 8ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > lands no section while a selected subject is refused, and lists it 3ms
+stdout | server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5)
+[SYNTHETIC scale target] subjects=5000 narratives=1000 ms=352 section14_3_3_chars=673113
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds 107ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5) 353ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 18ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 1ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 13ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 8ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 7ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 15ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 8ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form 9ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none 8ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 9ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 3ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects exactly the subjects who died, had an SAE, withdrew for an AE or had a declared AESI 18ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > never misses an SAE subject: every AESER = Y row’s subject is selected, pre-treatment ones included 12ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > orders by treatment group (manifest order) then subject 13ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > selects no AESI subject when the protocol declares none, and refuses a declared flag that ADAE lacks 23ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses a blank AESER rather than reading it as not serious 2ms
+ ✓ server/services/csr/__tests__/narrative-subject-selection.test.ts > E3 §12.3.2 narrative selection (SYNTHETIC data) > refuses an ADAE subject that ADSL does not list 1ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > returns the bundle and its subject-level datasets, ADMH included, and commits 15ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses while any dataset is not approved at its pinned version, and rolls back 4ms
+ ✓ server/services/csr/__tests__/vault-adam-narrative-datasets.test.ts > readCsrAdamDatasets (SYNTHETIC data) > refuses a hand-built csr-source.v1 file by name 2ms
+ Test Files  9 passed (9)
+      Tests  45 passed (45)
+
+=== Adversarial review 2026-10-30: re-run after the two review fixes ===
+ ✓ server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical 2803ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > replays and enforces its row shape: a composed row has text and hash, a refused row has neither 7ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > persists, resumes and lands the sections; a drafted §12.3.2 is kept 116ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > stops on a cancelled build and saves nothing for it 8ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > reads the QC list without the narrative text, organization-scoped 4ms
+ ✓ server/services/csr/__tests__/csr-narrative-store.pglite.test.ts > csr_narrative_outputs (SYNTHETIC data) > SYNTHETIC scale through the database: 1,000 subjects, 200 narratives persisted one by one, then resumed 526ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2 256ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > refuses a build with no bound run at once, and queues nothing 20ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a hand-built source on the run by name, as the Vault reader states it 28ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records a refusal by its code when the reader states one without the CSR_ prefix (access lost, Vault bytes unavailable) 28ms
+ ✓ server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data) > records an ADAE row that does not establish seriousness, naming the row 36ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects 393ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome 40ms
+ ✓ server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing 52ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 401ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 25ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 68ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 175ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 56ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 121ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > queues the build, shows subjects done of total while it runs, then the outcome and the QC list 326ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > refreshes the QC list and the board when the build finished before the first status read 39ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows a failed build by its recorded refusal, naming the rows 28ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says a stalled build stopped, and building again resumes it 36ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 42ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says so when the build status cannot be read, rather than showing nothing 31ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 51ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > composes every selected subject and lands §14.3.3 and the §12.3.2 cross-reference 33ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > resumes per subject: a stopped run keeps its saved subjects and the rerun composes only the rest 19ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > never overwrites a saved narrative that fails its hash: the run fails and preserves it 12ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > lands no section while a selected subject is refused, and lists it 3ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale: 1,000 subjects, about 200 narratives, every fact reconciled, within seconds 123ms
+ ✓ server/services/csr/__tests__/csr-narrative-job.test.ts > narrative job (SYNTHETIC data) > SYNTHETIC scale target: 5,000 subjects, about 1,000 narratives (design decision 5) 347ms
+ Test Files  7 passed (7)
+      Tests  33 passed (33)
+tsc (12 GB heap): exit 0

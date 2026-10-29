@@ -3,7 +3,7 @@
  * same authorized tenant snapshot. No new store, no approval side effect.
  */
 import { createHash } from 'node:crypto';
-import { reconcileCsrClaims, type CsrClaimReceipt, type CsrEvidenceFact } from './csr-claim-reconciliation';
+import { reconcileCsrClaims, type CsrClaimFinding, type CsrClaimReceipt, type CsrEvidenceFact } from './csr-claim-reconciliation';
 
 export interface CsrSectionEvidenceBinding {
   sectionId: string;
@@ -29,11 +29,11 @@ export function verifyCsrSectionEvidenceBinding(
   binding: CsrSectionEvidenceBinding | null | undefined,
   claims: readonly CsrClaimReceipt[],
   evidence: readonly CsrEvidenceFact[],
-): { accepted: boolean; issues: CsrBindingIssue[]; checkedClaims: number } {
+): { accepted: boolean; issues: CsrBindingIssue[]; checkedClaims: number; findings: CsrClaimFinding[] } {
   const issues: CsrBindingIssue[] = [];
   if (!binding || !nonblank(binding.sectionId) || !nonblank(binding.anaRunId) ||
       !sha.test(binding.sectionSha256) || !Array.isArray(binding.claimIds)) {
-    return { accepted: false, issues: ['BINDING_MISSING'], checkedClaims: 0 };
+    return { accepted: false, issues: ['BINDING_MISSING'], checkedClaims: 0, findings: [] };
   }
   if (!nonblank(snapshot.sectionId) || binding.sectionId !== snapshot.sectionId)
     issues.push('SECTION_ID_MISMATCH');
@@ -52,5 +52,7 @@ export function verifyCsrSectionEvidenceBinding(
   }
   const checked = reconcileCsrClaims(claims, evidence);
   if (!checked.accepted) issues.push('EVIDENCE_RECONCILIATION_FAILED');
-  return { accepted: issues.length === 0, issues, checkedClaims: checked.checkedClaims };
+  // CSR slice 5 (2026-10-30): the claim-level findings travel with the
+  // section verdict, so a caller can name the exact cell that failed.
+  return { accepted: issues.length === 0, issues, checkedClaims: checked.checkedClaims, findings: checked.findings };
 }

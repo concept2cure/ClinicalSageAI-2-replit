@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -89,6 +91,8 @@ beforeAll(async () => {
       lineage jsonb, generated_at timestamp DEFAULT now(), review_status text NOT NULL DEFAULT 'draft', reviewer_id integer, review_decided_at timestamptz, review_reason text, reviewed_content_hash text, UNIQUE(job_id,section_number));
     INSERT INTO client_workspaces VALUES (71,7);
   `);
+  // The CSR loader reads each study's pivotal declaration (2026-10-29).
+  await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
 });
 
 beforeEach(async () => {

@@ -74,6 +74,18 @@ export interface CsrAssemblyInput {
   outDir: string;
   /** Content-derived timestamp for the PDFs, never the wall clock. */
   contentModifiedAt: Date;
+  /** Told each stage as it starts, with the share of the work done (0–1), so a queued assembly can show progress. */
+  onStage?: (stage: string, done: number) => Promise<void> | void;
+  /**
+   * Called with each leaf other than the body once it is written, before the
+   * body is drawn; returns the name that leaf ships under in a package. The
+   * body's links, its §16 list and the cross-references name that file. The
+   * assembly queue (csr-assembly-run.ts) retains the leaf here and returns its
+   * rendered_leaf_files package name, so the links still resolve after
+   * placement and packaging (2026-10-30). Omitted: each leaf ships under its
+   * own name, as when these leaves are handed to the packager directly.
+   */
+  shipAs?: (leaf: AssembledLeaf) => Promise<string>;
 }
 
 export interface AssembledLeaf extends EctdLeaf {
@@ -221,13 +233,24 @@ function nearestHeading(number: string, heads: ReadonlyArray<{ number: string }>
   return '14';
 }
 
-function leafTargets(tfls: readonly PlannedTfl[], built: Built): Map<string, { fileName: string; destination: string | null }> {
+/** The name each leaf other than the body ships under (input.shipAs), with every filed appendix's §16 entry renamed to it. */
+async function shippedNames(input: CsrAssemblyInput, built: Built): Promise<ReadonlyMap<string, string>> {
+  const names = new Map<string, string>();
+  for (const l of built.leaves) names.set(l.fileName, input.shipAs ? await input.shipAs(l) : l.fileName);
+  for (const [number, state] of built.appendices) {
+    if (state.state === 'filed') built.appendices.set(number, { ...state, fileName: names.get(state.fileName) ?? state.fileName });
+  }
+  return names;
+}
+
+function leafTargets(tfls: readonly PlannedTfl[], built: Built, names: ReadonlyMap<string, string>): Map<string, { fileName: string; destination: string | null }> {
   const targets = new Map<string, { fileName: string; destination: string | null }>();
-  for (const head of tflHeadings(tfls)) targets.set(head.number, { fileName: CSR_TABLES_FILE, destination: headingDestination(head.number) });
-  for (const t of tfls) targets.set(t.number, { fileName: CSR_TABLES_FILE, destination: t.destination });
+  const tables = names.get(CSR_TABLES_FILE) ?? CSR_TABLES_FILE;
+  for (const head of tflHeadings(tfls)) targets.set(head.number, { fileName: tables, destination: headingDestination(head.number) });
+  for (const t of tfls) targets.set(t.number, { fileName: tables, destination: t.destination });
   for (const l of built.leaves) {
     if (l.appendix === '14') continue;
-    targets.set(l.appendix, { fileName: l.fileName, destination: l.origin === 'generated' ? listingDestination(l.appendix) : null });
+    targets.set(l.appendix, { fileName: names.get(l.fileName) ?? l.fileName, destination: l.origin === 'generated' ? listingDestination(l.appendix) : null });
   }
   return targets;
 }
@@ -242,23 +265,34 @@ function crossReferencesOf(body: AssembledLeaf, targets: ReadonlyMap<string, { f
     .map(fileName => ({ id: `${body.fileName}->${fileName}`, source: body.fileName, target: fileName, label: `CSR body link to ${fileName}` }));
 }
 
+async function stage(input: CsrAssemblyInput, name: string, done: number): Promise<void> {
+  if (input.onStage) await input.onStage(name, done);
+}
+
 /** Assemble the CSR's leaves into `outDir`. Listings first, then §14, then the body that links to both. */
 export async function assembleCsr(input: CsrAssemblyInput): Promise<CsrAssemblyResult> {
   const built: Built = { ctd: validate(input), leaves: [], appendices: new Map(), missing: [], notApplicable: [] };
   await fs.mkdir(path.join(input.outDir, 'receipts'), { recursive: true });
   const plan = planListings(input.listingSource);
+  await stage(input, 'Checking supplied appendices', 0);
   await settleAppendices(input, built, new Set(plan.generated.map(d => d.number)), new Map(plan.unavailable.map(u => [u.number, u.reason])));
   const listings: AssembledListing[] = [];
-  for (const def of plan.generated) listings.push(await renderListing(input, built, def));
+  for (const [i, def] of plan.generated.entries()) {
+    await stage(input, `Listing ${def.number}`, (i + 1) / (plan.generated.length + 3));
+    listings.push(await renderListing(input, built, def));
+  }
   const tfls = planTfls(input.tables);
+  await stage(input, 'Section 14 tables', (plan.generated.length + 1) / (plan.generated.length + 3));
   if (tfls.length) await renderTables(input, built, tfls);
-  const targets = leafTargets(tfls, built);
+  await stage(input, 'Report body', (plan.generated.length + 2) / (plan.generated.length + 3));
+  const names = await shippedNames(input, built);
+  const targets = leafTargets(tfls, built, names);
   const bodyPath = path.join(input.outDir, CSR_BODY_FILE);
   const sections = new Map(input.sections.map(s => [s.code, { title: s.title, content: s.content }]));
   const body = await renderBody({ studyId: input.studyId, title: input.title, sections, tfls, appendices: built.appendices, leafTargets: targets, stamp: input.contentModifiedAt }, bodyPath);
   const bodyLeaf = leaf(input, built.ctd, { appendix: 'body', fileName: CSR_BODY_FILE, title: `${input.title} — Clinical Study Report`, fileTag: CSR_BODY_FILE_TAG, origin: 'generated', sourcePath: bodyPath, sha256: body.written.sha256, bytes: body.written.bytes, pages: body.written.pages });
   const leaves = [bodyLeaf, ...built.leaves].sort((a, b) => (a.appendix === 'body' ? -1 : b.appendix === 'body' ? 1 : compareDotted(a.appendix, b.appendix)));
-  const structure = await checkCsrAssemblyStructure({ body: { fileName: CSR_BODY_FILE, path: bodyPath, headings: body.headings }, leaves: built.leaves.map(l => ({ fileName: l.fileName, path: l.sourcePath })) });
+  const structure = await checkCsrAssemblyStructure({ body: { fileName: CSR_BODY_FILE, path: bodyPath, headings: body.headings }, leaves: built.leaves.map(l => ({ fileName: names.get(l.fileName) ?? l.fileName, path: l.sourcePath })) });
   const usedTargets = new Set([...targets.keys()]);
   const bodyGaps = [...(input.gaps ?? []), ...(tfls.length ? [] : ['Section 14: the retained run holds no engine table; no Section 14 document is filed.'])];
   const status = built.missing.some(m => m.blocking) || bodyGaps.length || !structure.ok || body.unresolved.length || listings.some(l => !l.verification.ok) ? 'incomplete' : 'complete';

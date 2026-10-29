@@ -1,0 +1,1573 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+[database] Database connection successful
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > queues, runs off the request, and retains every leaf with its page count and SHA-256 (SYNTHETIC) 524ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a stored copy that differs from the assembled file as a failure, not an assembly 411ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a build with no bound run, and a declaration without a reason 74ms
+ × server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf 377ms
+   → promise resolved "{ sequenceId: 90, …(7) }" instead of rejecting
+ × server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it 314ms
+   → promise resolved "{ sequenceId: 90, …(7) }" instead of rejecting
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > places every leaf under 5.3.5.1 with its STF role once each blocking appendix is supplied or declared, and records the declarations 461ms
+ ✓ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > records a writer refusal part-way as a partial placement, naming what was placed 443ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 71ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 15ms
+ × server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 24ms
+   → expected { …(2) } to match object { …(2) }
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > queues the assembly and shows its progress while it runs 290ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a refusal to assemble as stated 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > shows a failed read as an alert, not as "not assembled" 20ms
+ × client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated 5104ms
+   → Unable to find role="alert"
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"CSR assembly"[39m
+      [33mstyle[39m=[32m"margin-top: 16px; max-width: 900px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0mCSR files[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0mThe body, the Section 14 tables and the §16 appendices as separate Module 5.3.5.1 files, each with its study tagging role[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-layers"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mAssemble CSR files[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; gap: 8px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mAssembled, incomplete: see the gaps below.[0m
+            [0m [0m
+            [0mContents to [0m
+            [0m4[0m
+            [0m level(s), [0m
+            [0m91[0m
+            [0m link(s) checked[0m
+            [0m, all resolved.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mGap: [0m
+            [0mCSR section 15 is prepared from source outputs and records.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mLeaves are PDF 1.7.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"overflow-x: auto;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33maria-label[39m=[32m"Assembled CSR files"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mFile[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mContent[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSection[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSHA-256[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-body.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mSYN — Clinical Study Report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0mstudy-report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m41[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-16-2-7-adverse-events.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mListing 16.2.7 Adverse Event Listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0madverse-event-listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0mbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<strong>[39m
+            [0mMissing appendices[0m
+          [36m</strong>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Missing appendices"[39m
+            [33mstyle[39m=[32m"list-style: none; padding: 0px; margin: 4px 0px 0px;"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.1[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mProtocol and protocol amendments[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mBlocks placement[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mOnly the sponsor can supply this document.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.1"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.11[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mPublications based on the study[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [36m>[39m
+                  [0mInclude if it applies[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mInclude it if it applies.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.11"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p>[39m
+            [0mSupply or declare, then choose “Assemble CSR files” again: the report’s §16 list states each choice.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; gap: 4px;"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mPlace into a sequence (Module 5.3.5.1)[0m
+          [36m</strong>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Sequence"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mChoose a sequence[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"90"[39m
+              [36m>[39m
+                [0mLMN-201 IND[0m
+                [0m · sequence [0m
+                [0m0004[0m
+                [0m ([0m
+                [0mdraft[0m
+                [0m)[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<label>[39m
+              [0mReason [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mvalue[39m=[32m"CSR for the Part B data cut"[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mPlace CSR files[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"CSR assembly"[39m
+      [33mstyle[39m=[32m"margin-top: 16px; max-width: 900px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0mCSR files[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0mThe body, the Section 14 tables and the §16 appendices as separate Module 5.3.5.1 files, each with its study tagging role[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-layers"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mAssemble CSR files[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; gap: 8px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mAssembled, incomplete: see the gaps below.[0m
+            [0m [0m
+            [0mContents to [0m
+            [0m4[0m
+            [0m level(s), [0m
+            [0m91[0m
+            [0m link(s) checked[0m
+            [0m, all resolved.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mGap: [0m
+            [0mCSR section 15 is prepared from source outputs and records.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mLeaves are PDF 1.7.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"overflow-x: auto;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33maria-label[39m=[32m"Assembled CSR files"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mFile[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mContent[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSection[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSHA-256[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-body.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mSYN — Clinical Study Report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0mstudy-report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m41[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-16-2-7-adverse-events.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mListing 16.2.7 Adverse Event Listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0madverse-event-listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0mbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<strong>[39m
+            [0mMissing appendices[0m
+          [36m</strong>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Missing appendices"[39m
+            [33mstyle[39m=[32m"list-style: none; padding: 0px; margin: 4px 0px 0px;"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.1[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mProtocol and protocol amendments[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mBlocks placement[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mOnly the sponsor can supply this document.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.1"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.11[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mPublications based on the study[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [36m>[39m
+                  [0mInclude if it applies[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mInclude it if it applies.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.11"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p>[39m
+            [0mSupply or declare, then choose “Assemble CSR files” again: the report’s §16 list states each choice.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; gap: 4px;"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mPlace into a sequence (Module 5.3.5.1)[0m
+          [36m</strong>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Sequence"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mChoose a sequence[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"90"[39m
+              [36m>[39m
+                [0mLMN-201 IND[0m
+                [0m · sequence [0m
+                [0m0004[0m
+                [0m ([0m
+                [0mdraft[0m
+                [0m)[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<label>[39m
+              [0mReason [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mvalue[39m=[32m"CSR for the Part B data cut"[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mPlace CSR files[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > assembles again with the supplied document and the declarations the user entered 129ms
+ ✓ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > is reachable on the csr-workflow board for the job 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called
+AssertionError: expected { …(2) } to match object { …(2) }
+- Expected
++ Received
+  {
+-   "code": "CSR_PLACEMENT_SEQUENCE_LOCKED",
+-   "error": StringMatching /Sequence 0004 is frozen.*Nothing was placed\./,
++   "code": "CSR_PLACEMENT_REFUSED",
++   "error": "csr-body.pdf was not placed: Cannot read properties of undefined (reading 'id') Nothing was placed.",
+ ❯ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts:80:20
+     78|   const res = await request(app).post(`/api/csr/jobs/41/assembly/${row…
+     79|   expect(res.status).toBe(409);
+     80|   expect(res.body).toMatchObject({ code: 'CSR_PLACEMENT_SEQUENCE_LOCKE…
+       |                    ^
+     81|   expect(h.upsertLeaf).not.toHaveBeenCalled();
+     82|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses a frozen sequence, a transmitted one and another project’s, before writing any leaf
+AssertionError: promise resolved "{ sequenceId: 90, …(7) }" instead of rejecting
+- Expected
++ Received
+- Error {
+-   "message": "rejected promise",
++ {
++   "declarations": {},
++   "leaves": [
++     {
++       "appendix": "body",
++       "fileName": "csr-body.pdf",
++       "leafId": 1001,
++     },
++     {
++       "appendix": "14",
++       "fileName": "csr-14-tables.pdf",
++       "leafId": 1002,
++     },
++     {
++       "appendix": "16.2.1",
++       "fileName": "csr-16-2-1-discontinued.pdf",
++       "leafId": 1003,
++     },
++     {
++       "appendix": "16.2.4",
++       "fileName": "csr-16-2-4-demographics.pdf",
++       "leafId": 1004,
++     },
++     {
++       "appendix": "16.2.7",
++       "fileName": "csr-16-2-7-adverse-events.pdf",
++       "leafId": 1005,
++     },
++   ],
++   "placedAt": "2026-10-29T11:55:48.617Z",
++   "placedBy": 5,
++   "reason": "CSR for the Part B data cut",
++   "sequenceId": 90,
++   "sequenceNumber": "0004",
++   "state": "placed",
+ ❯ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts:146:62
+    144|   writes.length = 0;
+    145|   const id = await assembled();
+    146|   await expect(place(placementDeps({ status: 'frozen' }), id)).rejects…
+       |                                                              ^
+    147|     message: expect.stringMatching(/Sequence 0004 is frozen; its leave…
+    148|   await expect(place(placementDeps({ status: 'dispatched' }), id)).rej…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  server/services/csr/__tests__/csr-assembly-run.pglite.test.ts > refuses placement while a blocking 16.1.x appendix is missing, naming it
+AssertionError: promise resolved "{ sequenceId: 90, …(7) }" instead of rejecting
+- Expected
++ Received
+- Error {
+-   "message": "rejected promise",
++ {
++   "declarations": {},
++   "leaves": [
++     {
++       "appendix": "body",
++       "fileName": "csr-body.pdf",
++       "leafId": 1001,
++     },
++     {
++       "appendix": "14",
++       "fileName": "csr-14-tables.pdf",
++       "leafId": 1002,
++     },
++     {
++       "appendix": "16.2.1",
++       "fileName": "csr-16-2-1-discontinued.pdf",
++       "leafId": 1003,
++     },
++     {
++       "appendix": "16.2.4",
++       "fileName": "csr-16-2-4-demographics.pdf",
++       "leafId": 1004,
++     },
++     {
++       "appendix": "16.2.7",
++       "fileName": "csr-16-2-7-adverse-events.pdf",
++       "leafId": 1005,
++     },
++   ],
++   "placedAt": "2026-10-29T11:55:48.945Z",
++   "placedBy": 5,
++   "reason": "CSR for the Part B data cut",
++   "sequenceId": 90,
++   "sequenceNumber": "0004",
++   "state": "placed",
+ ❯ server/services/csr/__tests__/csr-assembly-run.pglite.test.ts:160:44
+    158|   writes.length = 0;
+    159|   const id = await assembled();
+    160|   await expect(place(placementDeps({}), id)).rejects.toMatchObject({ c…
+       |                                            ^
+    161|     message: expect.stringMatching(/Appendix 16\.1\.1 \(.+\).*missing\…
+    162|   expect(writes).toEqual([]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx > lists each leaf with pages and SHA-256 and each missing appendix with whether it blocks; shows a placement refusal as stated
+TestingLibraryElementError: Unable to find role="alert"
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"CSR assembly"[39m
+      [33mstyle[39m=[32m"margin-top: 16px; max-width: 900px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0mCSR files[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0mThe body, the Section 14 tables and the §16 appendices as separate Module 5.3.5.1 files, each with its study tagging role[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-layers"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mAssemble CSR files[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; gap: 8px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mAssembled, incomplete: see the gaps below.[0m
+            [0m [0m
+            [0mContents to [0m
+            [0m4[0m
+            [0m level(s), [0m
+            [0m91[0m
+            [0m link(s) checked[0m
+            [0m, all resolved.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mGap: [0m
+            [0mCSR section 15 is prepared from source outputs and records.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mLeaves are PDF 1.7.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"overflow-x: auto;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33maria-label[39m=[32m"Assembled CSR files"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mFile[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mContent[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSection[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSHA-256[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-body.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mSYN — Clinical Study Report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0mstudy-report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m41[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-16-2-7-adverse-events.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mListing 16.2.7 Adverse Event Listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0madverse-event-listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0mbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<strong>[39m
+            [0mMissing appendices[0m
+          [36m</strong>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Missing appendices"[39m
+            [33mstyle[39m=[32m"list-style: none; padding: 0px; margin: 4px 0px 0px;"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.1[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mProtocol and protocol amendments[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mBlocks placement[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mOnly the sponsor can supply this document.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.1"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.11[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mPublications based on the study[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [36m>[39m
+                  [0mInclude if it applies[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mInclude it if it applies.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.11"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p>[39m
+            [0mSupply or declare, then choose “Assemble CSR files” again: the report’s §16 list states each choice.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; gap: 4px;"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mPlace into a sequence (Module 5.3.5.1)[0m
+          [36m</strong>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Sequence"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mChoose a sequence[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"90"[39m
+              [36m>[39m
+                [0mLMN-201 IND[0m
+                [0m · sequence [0m
+                [0m0004[0m
+                [0m ([0m
+                [0mdraft[0m
+                [0m)[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<label>[39m
+              [0mReason [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mvalue[39m=[32m"CSR for the Part B data cut"[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mPlace CSR files[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"CSR assembly"[39m
+      [33mstyle[39m=[32m"margin-top: 16px; max-width: 900px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"[39m
+      [36m>[39m
+        [36m<strong>[39m
+          [0mCSR files[0m
+        [36m</strong>[39m
+        [36m<span>[39m
+          [0mThe body, the Section 14 tables and the §16 appendices as separate Module 5.3.5.1 files, each with its study tagging role[0m
+        [36m</span>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-layers"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mAssemble CSR files[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: grid; gap: 8px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<p[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mAssembled, incomplete: see the gaps below.[0m
+            [0m [0m
+            [0mContents to [0m
+            [0m4[0m
+            [0m level(s), [0m
+            [0m91[0m
+            [0m link(s) checked[0m
+            [0m, all resolved.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mGap: [0m
+            [0mCSR section 15 is prepared from source outputs and records.[0m
+          [36m</p>[39m
+          [36m<p>[39m
+            [0mLeaves are PDF 1.7.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"overflow-x: auto;"[39m
+        [36m>[39m
+          [36m<table[39m
+            [33maria-label[39m=[32m"Assembled CSR files"[39m
+          [36m>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mFile[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mContent[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSection[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mscope[39m=[32m"col"[39m
+                [36m>[39m
+                  [0mSHA-256[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-body.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mSYN — Clinical Study Report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0mstudy-report[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m41[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0mcsr-16-2-7-adverse-events.pdf[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0mListing 16.2.7 Adverse Event Listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m5.3.5.1[0m
+                  [0m · [0m
+                  [0madverse-event-listings[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [0m3[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mclass[39m=[32m"mono"[39m
+                  [33mstyle[39m=[32m"overflow-wrap: anywhere;"[39m
+                [36m>[39m
+                  [0mbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb[0m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<strong>[39m
+            [0mMissing appendices[0m
+          [36m</strong>[39m
+          [36m<ul[39m
+            [33maria-label[39m=[32m"Missing appendices"[39m
+            [33mstyle[39m=[32m"list-style: none; padding: 0px; margin: 4px 0px 0px;"[39m
+          [36m>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.1[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mProtocol and protocol amendments[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mBlocks placement[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mOnly the sponsor can supply this document.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.1"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+            [36m<li[39m
+              [33mstyle[39m=[32m"display: grid; gap: 4px; padding: 4px 0px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"mono"[39m
+                [36m>[39m
+                  [0m16.1.11[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mPublications based on the study[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [36m>[39m
+                  [0mInclude if it applies[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<span>[39m
+                [0mInclude it if it applies.[0m
+              [36m</span>[39m
+              [36m<label>[39m
+                [0mSupply from the Vault[0m
+                [0m [0m
+                [36m<select[39m
+                  [33maria-label[39m=[32m"Supply appendix 16.1.11"[39m
+                [36m>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m>[39m
+                    [0mChoose a document[0m
+                  [36m</option>[39m
+                  [36m<option[39m
+                    [33mvalue[39m=[32m"11111111-2222-4333-8444-0000000000aa"[39m
+                  [36m>[39m
+                    [0mProtocol v3[0m
+                    [0m (version [0m
+                    [0m3[0m
+                    [0m)[0m
+                  [36m</option>[39m
+                [36m</select>[39m
+              [36m</label>[39m
+              [36m<label>[39m
+                [0mNot applicable because[0m
+                [0m [0m
+                [36m<input[39m
+                  [33mclass[39m=[32m"c2c-input"[39m
+                  [33mmaxlength[39m=[32m"2000"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</label>[39m
+            [36m</li>[39m
+          [36m</ul>[39m
+          [36m<p>[39m
+            [0mSupply or declare, then choose “Assemble CSR files” again: the report’s §16 list states each choice.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: grid; gap: 4px;"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mPlace into a sequence (Module 5.3.5.1)[0m
+          [36m</strong>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Sequence"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m""[39m
+              [36m>[39m
+                [0mChoose a sequence[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"90"[39m
+              [36m>[39m
+                [0mLMN-201 IND[0m
+                [0m · sequence [0m
+                [0m0004[0m
+                [0m ([0m
+                [0mdraft[0m
+                [0m)[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<label>[39m
+              [0mReason [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mvalue[39m=[32m"CSR for the Part B data cut"[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-send"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.854 2.147-10.94 10.939"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mPlace CSR files[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/csrAssemblyControl.test.tsx:98:24
+     96|   fireEvent.change(screen.getByLabelText('Reason'), { target: { value:…
+     97|   fireEvent.click(screen.getByRole('button', { name: /Place CSR files/…
+     98|   expect((await screen.findByRole('alert')).textContent).toMatch(/Appe…
+       |                        ^
+     99| });
+    100|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  3 failed (3)
+      Tests  4 failed | 12 passed (16)
+   Start at  11:55:34
+   Duration  29.90s (transform 4.68s, setup 341ms, import 10.81s, tests 17.03s, environment 734ms)
+
+=== Adversarial review (2026-10-30): two placement guards added, each shown red first ===
+--- (a) the new route test before any guard: an assembly whose body cites 'Table 14.3.9', absent from it, was placed (200) ---
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 73ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 12ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 28ms
+ × server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 19ms
+   → expected 200 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+--- (b) with the unresolved-reference guard in and the build-status guard removed: an assembly of a build still 'drafting' was placed (200) ---
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > queues an assembly off the request, records the declarations, and reads it back 93ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses a short declaration and an unreachable job by status, not as an empty result 13ms
+ ✓ server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place into a frozen sequence before the leaf writer is called 33ms
+ × server/routes/__tests__/csr-jobs-assembly.pglite.test.ts > refuses to place an assembly whose body cites a table or listing it does not contain, or a build that is not complete 40ms
+   → expected 200 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+Both guards restored; the suite is green (see green.txt addendum).

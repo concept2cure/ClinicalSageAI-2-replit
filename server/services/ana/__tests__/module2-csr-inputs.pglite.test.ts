@@ -10,6 +10,8 @@
  * that mocked the loader never saw it. Here the loader and the scope run against
  * a database.
  */
+import { readFileSync } from 'fs';
+import path from 'path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -44,6 +46,8 @@ beforeAll(async () => {
     INSERT INTO csr_build_jobs VALUES
       (1,7,11,'STUDY-A','complete','{"studyInfo":{"protocolNumber":"BX-301","phase":"3","sampleSize":600}}','2026-10-01');
   `);
+  // The CSR loader reads each study's pivotal declaration (2026-10-29).
+  await database.exec(readFileSync(path.join(process.cwd(), 'migrations/20261029e_study_pivotal_declarations.sql'), 'utf8'));
 });
 afterAll(async () => { await database?.close(); });
 

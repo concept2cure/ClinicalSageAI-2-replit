@@ -20,6 +20,8 @@ import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceAc
 import { shellProgramId, useShellProject } from '../shellProject';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { StudyPivotalDeclarations, pivotalScopeOf } from './StudyPivotalDeclarations';
+import { CsrAssemblyControl } from './CsrAssemblyControl';
 import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
@@ -331,6 +333,8 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
   const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
   const jobId = Number(board?.meta?.jobId);
   const canImport = !!targetProgramId && Number.isSafeInteger(jobId) && jobId > 0;
+  // The sponsor's per-study pivotal declarations, for a board scoped to one project.
+  const pivotalScope = pivotalScopeOf(boardPath, targetProgramId);
   const [importSource, setImportSource] = useState<WorkflowImportSource | null>(null);
 
   /* ── Clinical-Regulatory Intelligence Graph (flag-gated) ──
@@ -494,6 +498,8 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
             </div>
           )}
 
+          {pivotalScope && <StudyPivotalDeclarations scope={pivotalScope} />}
+
           {graphOn && coverage && <CoverageStrip coverage={coverage} />}
 
           <div className="ctable" style={{ maxWidth: graphOn ? 1100 : 760 }}>
@@ -562,6 +568,7 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
         <CsrHeadingReview jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)}
           onImport={(sectionNumbers) => setImportSource({ kind: 'csr', jobId, sectionNumbers })} />
         <CsrNarrativeBuild jobId={jobId} headings={board!.headings} onChanged={() => setBoardVersion(v => v + 1)} />
+        <CsrAssemblyControl jobId={jobId} />
       </>)}
 
       {graphOn && (

@@ -18,6 +18,9 @@ export interface CsrEvidenceFact {
   estimate?: number;
   method?: string;
   unit?: string;
+  /** CSR slice 5 (2026-10-30): the exact text of a retained engine-table cell.
+   * When either side carries it, both must, and the two must be identical. */
+  cellText?: string;
 }
 export interface CsrClaimReceipt {
   claimId: string;
@@ -31,6 +34,8 @@ export interface CsrClaimReceipt {
   estimate?: number;
   method?: string;
   unit?: string;
+  /** The cell text the drafted section stated; see CsrEvidenceFact.cellText. */
+  cellText?: string;
 }
 export interface CsrClaimFinding {
   claimId: string;
@@ -107,7 +112,8 @@ export function reconcileCsrClaims(
     if (claim.endpoint !== fact.endpoint) add(id, 'ENDPOINT_MISMATCH');
     if (!sameOptionalNumber(claim.numerator, fact.numerator) ||
         !sameOptionalNumber(claim.denominator, fact.denominator) ||
-        !sameOptionalNumber(claim.estimate, fact.estimate)) add(id, 'NUMERIC_MISMATCH');
+        !sameOptionalNumber(claim.estimate, fact.estimate) ||
+        (claim.cellText ?? null) !== (fact.cellText ?? null)) add(id, 'NUMERIC_MISMATCH');
     if ((claim.method ?? '') !== (fact.method ?? '')) add(id, 'METHOD_MISMATCH');
     if ((claim.unit ?? '') !== (fact.unit ?? '')) add(id, 'UNIT_MISMATCH');
   }

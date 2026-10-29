@@ -1,0 +1,30 @@
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts
+[database] Database connection successful
+
+stdout | server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical
+[SYNTHETIC memory] narratives=1000 section14_3_3_chars=673113 maxSentChars=673289 maxReadChars=772214
+
+ × server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical 1917ms
+   → expected 673289 to be less than 67311.3
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts > narrative build memory at 1,000 narratives (SYNTHETIC data) > never moves more than a page of narrative text in one statement, and lands §14.3.3 byte-identical
+AssertionError: expected 673289 to be less than 67311.3
+ ❯ server/services/csr/__tests__/csr-narrative-memory.pglite.test.ts:67:29
+     65|     const page = expected.length / 10; // 1,000 narratives: a tenth of…
+     66|     console.info(`[SYNTHETIC memory] narratives=1000 section14_3_3_cha…
+     67|     expect(traffic.maxSent).toBeLessThan(page);
+       |                             ^
+     68|     expect(traffic.maxRead).toBeLessThan(page);
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  12:16:33
+   Duration  9.33s (transform 1.70s, setup 119ms, import 2.93s, tests 5.84s, environment 0ms)
+

@@ -101,7 +101,13 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // Its reference facts are published through Projects/ProjectHome, not a new id.
 // 2026-10-29 D2: device-tasks folds into Tasks, which publishes as 'tasks'. The
 // retired id is an alias, no longer a routable publisher (foldDeviceTasks.test.ts).
-const ID_BASELINE = 112;
+// 2026-10-29 D2 fold F3: artifacts-center and device-vault fold into the Vault,
+// which publishes as 'vault'. Both retired ids are aliases, no longer routable
+// publishers (foldVaultArtifactsCenter.test.ts).
+// 2026-10-29 D2: part11-console folds into Audit trail, which publishes as
+// 'audit-trail' with the audit_events chain verdict in its facts. The retired id
+// is an alias, no longer a routable publisher (foldPart11Console.test.ts).
+const ID_BASELINE = 109;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.

@@ -129,7 +129,6 @@
     "server/routes/mdx-submission-gateway.ts",
     "server/routes/mdx-templates.ts",
     "server/routes/mdx-udi.ts",
-    "server/routes/mdx-vault.ts",
     "server/routes/mdx-work-packages.ts",
     "server/routes/mission-control.ts",
     "server/routes/nda-cockpit.routes.ts",
