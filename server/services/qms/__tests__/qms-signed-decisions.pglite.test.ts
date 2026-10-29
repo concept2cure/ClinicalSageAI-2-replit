@@ -55,12 +55,16 @@ describe('a signed nonconformance disposition', () => {
 
 describe("a signed supplier standing", () => {
   it('approves with the signing day as its approval date, revokes, and refuses an unchanged or foreign standing', async () => {
-    const approved = await recordSupplierApproval(client(), 1, 1, 'approved');
+    const approved = await recordSupplierApproval(client(), 1, 1, 'approved', '2027-10-29');
     expect(approved).toMatchObject({ approval_status: 'approved' });
     expect(approved.approval_date).toBeTruthy();
-    expect(await refusal(recordSupplierApproval(client(), 1, 1, 'approved'))).toBe('SUPPLIER_STANDING_UNCHANGED');
-    expect(await recordSupplierApproval(client(), 1, 1, 'revoked')).toMatchObject({ approval_status: 'revoked' });
-    expect(await refusal(recordSupplierApproval(client(), 1, 2, 'approved'))).toBe('SUPPLIER_NOT_FOUND');
+    expect(new Date(approved.reapproval_date as string).toISOString().slice(0, 10)).toBe('2027-10-29');
+    expect(await refusal(recordSupplierApproval(client(), 1, 1, 'approved', '2028-01-01'))).toBe('SUPPLIER_STANDING_UNCHANGED');
+    // A revocation leaves the dates as they were.
+    const revoked = await recordSupplierApproval(client(), 1, 1, 'revoked', null);
+    expect(revoked).toMatchObject({ approval_status: 'revoked' });
+    expect(new Date(revoked.reapproval_date as string).toISOString().slice(0, 10)).toBe('2027-10-29');
+    expect(await refusal(recordSupplierApproval(client(), 1, 2, 'approved', '2027-10-29'))).toBe('SUPPLIER_NOT_FOUND');
     expect((await jdb.pglite.query('SELECT approval_status FROM qms_suppliers WHERE id = 2')).rows).toEqual([{ approval_status: 'pending' }]);
   });
 });

@@ -134,7 +134,7 @@ Searches run:
 
 - ~~AnA's `register_supplier` writes `qms_suppliers` through the pool with no audit row.~~ Done in the third change
   below.
-- Re-approval due after an approval: the register's re-approval date is still set by Update, not by the approval.
+- ~~Re-approval due after an approval was still set by Update.~~ The approval sets it since the fourth change below.
 - **Correcting a signed disposition.** A correction would be a second signed act that names the first, never an
   overwrite. Not offered.
 - A Postgres dbtest of the route (no server here); the domain SQL is proven on PGlite.
@@ -162,4 +162,29 @@ Searches run:
     tool register pass 227 and 521. `tsc --noEmit` reports no error.
 - **Owed.** The tools still run on the pool, not a request-pinned, tenant-scoped client, as they did before. Moving
   AnA's writes onto a tenant-scoped client is a platform change for every tool, not this one.
+
+## Fourth change: an approval names when the supplier is next re-approved
+
+- **What existed.** A signed approval dated itself, but `reapproval_date` stayed whatever Update had last recorded. The
+  re-approval reminder (`scheduleSupplierTasks`) was completed by the approval, then rewritten for that same old date.
+- **What changed.**
+  - `POST /qms/suppliers/:id/approval` takes `reapprovalDate`, as a periodic review takes its next review date:
+    - approving or conditionally approving requires a date after today (UTC);
+    - revoking takes none, and refuses one (400, nothing signed).
+  - `recordSupplierApproval` writes the date with the standing, in the signing transaction, and the reminder follows
+    it. A revocation leaves both dates as they were.
+  - The date is in the ledger payload beside the decision.
+  - The Approval drawer gains "Next re-approval". It is required to continue to sign an approval, and is shown in the
+    signing dialog's attested rows.
+- **Proof.**
+  - `qms-signed-decisions.test.ts`:
+    - the approval commits with its date;
+    - an approval with no date, with a past date, or a revocation with a date answers 400 and signs nothing.
+  - `qms-signed-decisions.pglite.test.ts`: the approval writes the date, and a revocation keeps it.
+  - `QmsRecords.test.tsx`: continuing without the date is refused in the drawer; with it, the signature sends
+    `reapprovalDate`.
+  - **Shown failing first:** without the server's date rule, the route case fails; without the drawer's refusal, the
+    screen case fails.
+  - The Quality client suite, every QMS route test, `server/services/qms` and the labeling and analytics routes pass
+    617 of 617 (49 files).
 

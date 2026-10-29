@@ -133,6 +133,16 @@ const CASES: Array<{
     status: 200,
   },
   {
+    name: 'recording a deviation (P-57)',
+    method: 'post',
+    path: '/api/mdx/qms/deviations',
+    body: { deviationNumber: 'DEV-2026-001', title: 'EM excursion', description: 'Viable count above action limit.', deviationType: 'unplanned', classification: 'major', detectedDate: '2026-10-20' },
+    action: 'mdx.qms.deviation.create',
+    resourceType: 'qc_deviation',
+    row: { id: 5, organization_id: 9, deviation_number: 'DEV-2026-001', status: 'open', classification: 'major', title: 'EM excursion', target_closure_date: null },
+    status: 201,
+  },
+  {
     name: 'recording a management-review action (P-48)',
     method: 'post',
     path: '/api/mdx/qms/management-reviews/3/actions',

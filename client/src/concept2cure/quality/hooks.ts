@@ -103,11 +103,14 @@ export function useTrainingCompliance() {
 export interface TrainingExpiryRow {
   userId: number; userName: string | null; documentId: number; docNumber: string; title: string;
   documentVersion: string; expiresAt: string; daysLeft: number;
+  /** Already lapsed: no current receipt, and the last one on this release expired. */
+  lapsed: boolean;
 }
 const isExpiryRow = (r: unknown): r is TrainingExpiryRow => {
   const o = r as Record<string, unknown> | null;
   return !!o && Number.isInteger(o.userId) && Number.isInteger(o.documentId) && typeof o.docNumber === 'string' &&
-    typeof o.expiresAt === 'string' && typeof o.daysLeft === 'number' && (o.userName === null || typeof o.userName === 'string');
+    typeof o.expiresAt === 'string' && typeof o.daysLeft === 'number' && typeof o.lapsed === 'boolean' &&
+    (o.userName === null || typeof o.userName === 'string');
 };
 /** Each active member whose current training lapses within `withinDays` —
  *  GET /api/mdx/qms/training/expiring (G10). A body that is not that list is a failure. */

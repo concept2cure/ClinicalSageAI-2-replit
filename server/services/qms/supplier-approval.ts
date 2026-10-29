@@ -8,7 +8,8 @@
  * with the signer's password, a meaning (approval or responsibility) and a
  * reason. A new supplier is recorded as pending, the PATCH refuses the
  * standing, and a decision that would not change it is refused. Approving or
- * conditionally approving dates the approval on the day it is signed.
+ * conditionally approving dates the approval on the day it is signed, and sets
+ * the next re-approval date the signer gave; revoking leaves both as they were.
  *
  * @module server/services/qms/supplier-approval
  */
@@ -27,14 +28,15 @@ interface SqlClient { query(sql: string, params?: unknown[]): Promise<{ rows: Ar
 
 /** On the signing transaction: set the supplier's standing, or refuse. */
 export async function recordSupplierApproval(
-  client: SqlClient, organizationId: number, id: number, decision: SupplierApprovalDecision,
+  client: SqlClient, organizationId: number, id: number, decision: SupplierApprovalDecision, reapprovalDate: string | null,
 ): Promise<Record<string, unknown>> {
   const { rows } = await client.query(`UPDATE qms_suppliers
         SET approval_status = $3::text,
             approval_date = CASE WHEN $3::text IN ('approved', 'conditional') THEN CURRENT_DATE ELSE approval_date END,
+            reapproval_date = CASE WHEN $3::text IN ('approved', 'conditional') THEN $4::date ELSE reapproval_date END,
             updated_at = NOW()
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND approval_status IS DISTINCT FROM $3::text
-      RETURNING *`, [id, organizationId, decision]);
+      RETURNING *`, [id, organizationId, decision, reapprovalDate]);
   if (rows.length === 1) return rows[0];
   const existing = await client.query(
     `SELECT approval_status FROM qms_suppliers WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, organizationId]);

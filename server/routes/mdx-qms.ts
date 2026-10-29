@@ -15,6 +15,7 @@
  *   GET    /api/mdx/qms/training/expiring               periodic refresh due
  *
  *   Suppliers, internal audits and nonconforming products: mdx-qms-records.ts.
+ *   Deviations: mdx-qms-deviations.ts.
  *
  *   GET    /api/mdx/qms/management-reviews              list reviews
  *   POST   /api/mdx/qms/management-reviews              create
@@ -130,6 +131,7 @@ import { readRouteRounds, type RouteRound } from '../services/review/review-rout
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
 import { getOrgId, getUserId, qmsClient } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
+import qmsDeviationsRouter from './mdx-qms-deviations';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
@@ -938,6 +940,8 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
 
 /* The supplier, internal-audit and nonconformance routes (mdx-qms-records.ts). */
 router.use(qmsRecordsRouter);
+/* The GMP deviation register (mdx-qms-deviations.ts, P-57). */
+router.use(qmsDeviationsRouter);
 
 /* ─── Management reviews ────────────────────────────────────── */
 

@@ -921,6 +921,127 @@ questions `docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md` §1.4 left open wi
   expiry list G10, the outstanding-training list) apply this when compliance moves onto assignments (the design's
   slice 3).
 
+### P-51 to P-57: decided under the founder's delegation of 2026-10-29
+
+The founder delegated, on 2026-10-29: "make founder level decisions based on the best situation for the platform and
+our paying clients and human users … we're not ready for ETMF or CTMS. You could park those completely … We're
+focusing on completing what we have started and perfecting it all." These decide the questions that sessions had
+left open (`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8,
+`docs/work-orders/MR-12-qms-controlled-document-control.md` NEW-2 to NEW-4, and
+`docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/FOUNDER-DECISIONS-OWED-2026-10-26.md`). Training assignment,
+training before the effective date and distribution (MR-12 NEW-2, NEW-3; parity §8 item 8) are P-49, the training
+lane's, and are not decided again here. *(Corrected 2026-10-29: this block first carried its own training entry and
+numbered the deviation decision P-49, then P-50; both numbers were taken by the training lane's P-49 and P-50 as these
+landed, and those govern. The deviation decision is P-57.)* The
+test for each was:
+does it complete something already in the catalog, for the client who pays for it, without widening the catalog?
+None widens it.
+
+### P-51 — Review and approval follow the review-routing decision; retirement has its own meaning (NEW-4)
+
+NEW-4 was decided on 2026-10-29 by the review-routing coordinator, under the founder's delegation of 2026-10-07
+(`docs/design/REVIEW_ROUTING_2026-10-23.md` §4, with D-Q in §7). RR4 is building it. For a QMS controlled document:
+- at least one approver holds the QMS approver designation, and that approver is not the author or a contributor;
+- reviewers are optional; when any are named, all of them sign before the approval;
+- sending for review is a governed act with a reason, not a signature.
+
+That decision stands and is recorded here. *(Corrected 2026-10-29: this entry first read "review is a signed act; the
+same person may review and approve", written before the review-routing decision was found. That decision governs.)*
+
+What NEW-4 left open is retirement's meaning. Retirement is signed with its own meaning, `retirement` ("you withdraw
+this document from use"), not `approval`. Stored retirements keep the meaning they were signed with. This unblocks
+MR-12 Stage 5 step 3. Stage 7's review step is RR4's.
+
+### P-52 — Controlled output: Letter, the FDA PDF specification, a default confidentiality line (MR-09 NEW)
+
+- Page size is US Letter, because the launch boundary is a US IND (P-28).
+- The PDF target is FDA's PDF specification for eCTD: PDF 1.4 to 1.7, fonts embedded, no security settings.
+- The default footer reads "CONFIDENTIAL. Proprietary information of {organisation}. Do not distribute without
+  permission." An organisation may change it.
+- This unblocks CAT1-09 and template formatting (W5).
+
+### P-53 — Parked, with no sessions
+
+- eTMF;
+- CTMS;
+- safety case processing and E2B;
+- EDC;
+- an NDA workflow;
+- re-admitting the Template Library;
+- any widening of P-28's composition boundary.
+
+Safety and EDC are "partner or integrate" when they return, and no partner is approached now. eTMF is not a source
+for `assess_inspection_readiness`, which answers from stated inputs, labelled (2026-10-26 list, row 9).
+(Parity §8 Q9, Q10, Q11.)
+
+### P-54 — Lanes, order and scope corrections
+
+- **Lanes released.**
+  - The Weave-gap lane's items (G2, G3, G6, G15, and G11 and G17 with them) are released to the next free session.
+  - The training-assignment lane is not released: it is active, and landed P-49 on 2026-10-29.
+- **P-39's order stands.** Commitments converge (step 2) before the correspondence family (step 3), so G3's parser
+  waits; zero duplication outranks speed.
+- **Device post-market stays in Projects**, as P-48's correction of 2026-10-29 already reads (Q6).
+- **SSO signing (MR-09 Stage 6) keeps its phase.** It moves to Phase 1 only if a signing customer signs in through SSO
+  alone (Q12).
+- **Support for D9** is the drafted Mon–Fri 08:00–18:00 US Eastern (Q13).
+- **Claims policy confirmed (Q14):** no claim of doing everything Weave does, and §4's claims only with their basis.
+- **The old IND briefing-book assembler goes.** Its replacement is `IndBriefingBookStart.tsx`, starting the US
+  meeting-package templates (5894e1aaa). The server routes and service it called are deleted once a search shows
+  they have no caller.
+
+### P-55 — The Authoring questions of 2026-10-26 are decided as recommended
+
+Rows 1 to 22 of `FOUNDER-DECISIONS-OWED-2026-10-26.md` are decided as each row recommends:
+- a conditional heading may be recorded not applicable, with a reason and the approver's signature;
+- R-1: 2.4 and 2.6 read `nonclinical_studies`, counting `in_reporting` for an IND and never `planned` or `cancelled`.
+  The ingest path converges onto it;
+- 2.6's tabulated summaries are a preparation worksheet;
+- calculators over stated inputs stay, labelled `basis: 'stated'`;
+- no standalone QOS, drug substance or drug product project;
+- folds only after their functions are carried over, and the digital twin is retired;
+- the M2, M4 and M5 QC rules are carried into Submission Readiness as named findings, not a score;
+- and so on through row 22, each as its row recommends.
+
+The guideline hosts in row 14, and §8 Q15's network access, are owner actions in the environment settings, not
+decisions.
+
+### P-56 — No model is approved until the PQ evidence exists
+
+PQ-DRAFT-001 stays unapproved until P-31's items 4 and 6 land:
+- item 4, gold-bank coverage for CMC / Module 3 and Module 2.5 to 2.7, authored from real source text and never
+  invented. It is scheduled as a W3 slice;
+- item 6, a product provider key, which is an owner action.
+
+Then approval is a signature, with P-31 as its reasoning. Until then, production refuses governed drafting and every
+drafting claim says "staging". Approving a model without its evidence would give a paying client a qualification
+their own QA would reject. (Parity §8 Q1.)
+
+### P-57 — Deviations are their own record in Quality
+
+A GMP deviation is a departure from an approved procedure or instruction (21 CFR 211.192, 211.100(b); EU GMP
+Chapter 1, 1.4(xiv)). It is often not product-keyed: a missed environmental-monitoring reading, a skipped step, an
+out-of-window calibration. The nonconformance register is keyed to a product or material and a lot, so it cannot hold
+one. Veeva QMS Basics keeps deviations, and P-48 already named them. The Quality app gains a deviation register:
+- classification as minor, major or critical;
+- what happened, where and when, and the procedure departed from;
+- immediate action, investigation and root cause;
+- the impact on product or batch, when there is one;
+- a CAPA raised from it, through the existing `raiseCapaFrom`;
+- closure as a signed decision, through the one signing ceremony.
+
+The store is `qc_deviations`, as `shared/schema/qc-schemas.ts` has defined it since the QC module. No migration had
+ever created it. `migrations/20261029g_qc_deviations.sql` creates it with `client_workspace_id` nullable, because a
+Quality record is the organisation's, and appends it to `C2C_MIGRATION_FILES` before the final sweep pair (Rule 1). It
+is public with `organization_id INTEGER NOT NULL`. *(Corrected on building: this entry first said "a new public table";
+the existing definition is reached instead, under Rule 3.)*
+
+The `/api/qc/deviations` routes (`server/routes/qc.routes.ts`) and both storage implementations behind them are deleted
+in the same change: the in-memory one that answered 501, and a database one over the table that did not exist. They
+would have become a second writer of the record. Their OOS stub stays, because OOS is not a deviation. The
+nonconformance tab stops being described as deviations. (Parity §8 Q5; slice G16.)
+
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one
