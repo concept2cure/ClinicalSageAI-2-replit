@@ -1,0 +1,46 @@
+# Gates, run at 02608acfe (this fix) in the shared working tree.
+# The working tree also holds another session's uncommitted RR4 edits (QMS, server/services/review);
+# they were not touched, staged or reverted.
+
+## npm run --silent ci:pushed-lint-errors -> exit 0
+[ci:pushed-lint-errors] OK — no ESLint errors in 3 changed file(s) against origin/concept2cure-v2.
+
+## npm run --silent ci:undefined-css-classes -> exit 0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+## npm run --silent ci:class-vocabulary -> exit 0
+[ci:class-vocabulary] OK — 5728 file(s) scanned, no restated class vocabulary.
+
+## npm run --silent ci:untracked-imports -> exit 0
+[ci:untracked-imports] OK — every relative import in 3 file(s) resolves to a tracked file.
+
+## npm run --silent ci:pushed-typecheck -> exit 0
+[ci:pushed-typecheck] 2 type-relevant file(s) changed against origin/concept2cure-v2: client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx, client/src/concept2cure/v2/surfaces/Vault.tsx
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+## npm run --silent ci:pushed-lint-warnings -> exit 1, from the other session's uncommitted files only
+[ci:eslint-warning-ratchet] --since 67b61128facedff009ed7994a6bb32e807318258 (67b61128f) -- 18 lintable file(s) changed; linting both versions of each...
+
+    +1  server/routes/mdx-qms.ts  (1 -> 2)
+         server/routes/mdx-qms.ts:740:79  complexity  Async arrow function has a complexity of 18. Maximum allowed is 15.
+    +1  server/routes/tenant-users.ts  (2 -> 3)
+         server/routes/tenant-users.ts:701:1  max-lines  File has too many lines (522). Maximum allowed is 500.
+    +1  server/services/governance/separation-of-duties.ts  (0 -> 1)
+         server/services/governance/separation-of-duties.ts:542:8  complexity  Async function 'resolveTargetAuthors' has a complexity of 16. Maximum allowed is 15.
+    +1  server/services/qms/controlled-document-service.ts  (0 -> 1)
+         server/services/qms/controlled-document-service.ts:155:8  complexity  Async function 'updateControlledQmsDocument' has a complexity of 22. Maximum allowed is 15.
+    +1  server/services/review/review-route-member.ts  (0 -> 1)
+         server/services/review/review-route-member.ts:53:8  complexity  Async function 'validateRouteMember' has a complexity of 18. Maximum allowed is 15.
+
+[ci:eslint-warning-ratchet] net +5 warning(s) across the files changed since 67b61128facedff009ed7994a6bb32e807318258.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 5 warning(s) (listed above).
+
+## This change's lintable files, both versions, ESLint (the ratchet's measure)
+client/src/concept2cure/v2/surfaces/Vault.tsx: 67b61128f 4 warnings, 0 errors; 02608acfe 4 warnings, 0 errors
+client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx: 67b61128f 0 warnings, 0 errors; 02608acfe 0 warnings, 0 errors
+client/src/concept2cure/v2/styles/misc-surfaces-v2.css: not linted by ESLint

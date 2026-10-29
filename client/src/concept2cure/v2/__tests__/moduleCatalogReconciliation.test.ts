@@ -100,7 +100,10 @@ function catalogMigrationFiles(): string[] {
  * evidenced?" — 'identity-console' (enterprise SSO/SCIM) is a real commercial
  * add-on, and 'qmp' / 'report-governance' are features, so all three ARE seeded.
  */
-const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
+const NEVER_LICENSABLE = new Set(['audit-trail']);
+/** Folded into a NEVER_LICENSABLE app (part11-console into audit-trail, D2, 2026-10-29):
+ *  no longer a shell app, and still never seeded. */
+const FOLDED_NEVER_LICENSABLE = ['part11-console'];
 
 /**
  * Module ids that MORE THAN ONE migration seeds, and why.
@@ -272,6 +275,10 @@ describe('Apps catalog ↔ shell taxonomy', () => {
     // the shell's app list would silently re-introduce an "Audit trail" toggle.
     for (const id of NEVER_LICENSABLE) {
       expect(shell.has(id), `${id} should still be a real shell app`).toBe(true);
+      expect(seeded, `${id} must not be entitlement-gated`).not.toContain(id);
+    }
+    for (const id of FOLDED_NEVER_LICENSABLE) {
+      expect(shell.has(id), `${id} folded into audit-trail and is no shell app`).toBe(false);
       expect(seeded, `${id} must not be entitlement-gated`).not.toContain(id);
     }
   });

@@ -74,7 +74,53 @@ async function namingContext(
 ): Promise<{ senderId: number; named: ReadonlySet<number> }> {
   if (!p.forReassign || !p.canonicalId) return { senderId: p.readerId, named: new Set() };
   const standing = await routeStanding(q, { organizationId: p.organizationId, subjectType: 'canonical_document', subjectId: p.canonicalId, inReview: true });
-  if (standing.state !== 'live') return { senderId: p.readerId, named: new Set() };
+  return namingOf(standing, p.readerId, true);
+}
+
+/**
+ * Every active member of the organization, each with the validator's answer
+ * as reviewer and as approver, for one subject (the Vault version's picker
+ * above; the QMS document's, RR4, server/services/qms/qms-review-route.ts).
+ * Throws on a read failure.
+ */
+export async function listRouteCandidates(
+  q: RouteQueryable,
+  p: {
+    organizationId: number; subjectTarget: string; programId: string | null; contentDigest: string; readerId: number;
+    naming: { senderId: number; named: ReadonlySet<number> };
+    authorship?: { authors: readonly number[]; sources: readonly string[] };
+  },
+): Promise<RouteCandidate[]> {
+  const { rows } = await q.query(
+    `SELECT u.id FROM organization_users ou JOIN users u ON u.id = ou.user_id
+      WHERE ou.organization_id = $1 AND u.status = 'active'
+      ORDER BY lower(COALESCE(NULLIF(trim(u.name), ''), u.email)), u.id
+      LIMIT $2`,
+    [p.organizationId, MAX_MEMBERS + 1],
+  );
+  if (rows.length > MAX_MEMBERS) throw new Error(`More than ${MAX_MEMBERS} members: the picker cannot list them all`);
+  const candidates: RouteCandidate[] = [];
+  for (const row of rows) {
+    const candidateId = Number(row.id);
+    let name = `Account #${candidateId}`;
+    const ask = (role: RouteRole) => answer(async () => {
+      const v = await validateRouteMember(q, {
+        organizationId: p.organizationId, subjectTarget: p.subjectTarget, programId: p.programId, contentDigest: p.contentDigest,
+        role, candidateId, senderId: p.naming.senderId, actorId: p.readerId, named: p.naming.named, authorship: p.authorship,
+      });
+      name = v.printedName;
+    });
+    const reviewer = await ask('reviewer');
+    const approver = await ask('approver');
+    if (reviewer && approver) name = await printedNameOf(q, p.organizationId, candidateId);
+    candidates.push({ id: candidateId, name, reviewer, approver });
+  }
+  return candidates;
+}
+
+/** Who sends and who is already named on a live route, for a reassignment's read (RR3); the reader and nobody otherwise. */
+export function namingOf(standing: { state: string; route: { senderId: number } | null; members: Array<{ userId: number }> }, readerId: number, forReassign?: boolean) {
+  if (!forReassign || standing.state !== 'live') return { senderId: readerId, named: new Set<number>() };
   return { senderId: standing.route!.senderId, named: new Set(standing.members.map((m) => m.userId)) };
 }
 
@@ -97,31 +143,10 @@ export async function readRouteCandidates(
     const authors = [p.readerId, ...(uploader.rows[0]?.created_by == null ? [] : [Number(uploader.rows[0].created_by)])];
     authorship = { authors, sources: ['Vault uploader', 'lifecycle record creator'] };
   }
-  const { rows } = await q.query(
-    `SELECT u.id FROM organization_users ou JOIN users u ON u.id = ou.user_id
-      WHERE ou.organization_id = $1 AND u.status = 'active'
-      ORDER BY lower(COALESCE(NULLIF(trim(u.name), ''), u.email)), u.id
-      LIMIT $2`,
-    [p.organizationId, MAX_MEMBERS + 1],
-  );
-  if (rows.length > MAX_MEMBERS) throw new Error(`More than ${MAX_MEMBERS} members: the picker cannot list them all`);
-  const subjectTarget = routeSubjectTarget('canonical_document', canonicalId ?? '');
   const naming = await namingContext(q, { ...p, canonicalId });
-  const candidates: RouteCandidate[] = [];
-  for (const row of rows) {
-    const candidateId = Number(row.id);
-    let name = `Account #${candidateId}`;
-    const ask = (role: RouteRole) => answer(async () => {
-      const v = await validateRouteMember(q, {
-        organizationId: p.organizationId, subjectTarget, programId: source.programId, contentDigest: source.contentHash,
-        role, candidateId, senderId: naming.senderId, actorId: p.readerId, named: naming.named, authorship,
-      });
-      name = v.printedName;
-    });
-    const reviewer = await ask('reviewer');
-    const approver = await ask('approver');
-    if (reviewer && approver) name = await printedNameOf(q, p.organizationId, candidateId);
-    candidates.push({ id: candidateId, name, reviewer, approver });
-  }
+  const candidates = await listRouteCandidates(q, {
+    organizationId: p.organizationId, subjectTarget: routeSubjectTarget('canonical_document', canonicalId ?? ''),
+    programId: source.programId, contentDigest: source.contentHash, readerId: p.readerId, naming, authorship,
+  });
   return { timeZone: await senderTimeZone(q, p.readerId), canonicalId, candidates };
 }

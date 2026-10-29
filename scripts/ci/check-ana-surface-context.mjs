@@ -104,7 +104,14 @@ const SCAN_ROOT = 'client/src/concept2cure';
 // 2026-10-29 D2 fold F3: artifacts-center and device-vault fold into the Vault,
 // which publishes as 'vault'. Both retired ids are aliases, no longer routable
 // publishers (foldVaultArtifactsCenter.test.ts).
-const ID_BASELINE = 110;
+// 2026-10-29 D2: part11-console folds into Audit trail, which publishes as
+// 'audit-trail' with the audit_events chain verdict in its facts. The retired id
+// is an alias, no longer a routable publisher (foldPart11Console.test.ts).
+// 2026-10-29 D2: setup folds into Admin and access, which publishes as
+// 'admin-console' with the Profile card's configuration in its facts while the
+// Settings tab shows it. The retired id is an alias, no longer a routable
+// publisher (foldSetup.test.ts).
+const ID_BASELINE = 108;
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.
@@ -121,7 +128,7 @@ const ID_BASELINE = 110;
 const NO_CONTEXT_NEEDED = {
   'client-portal': 'external-participant surface that deliberately offers no assistant',
   'ana-command': 'AnA rail surface; its subject is AnA, not a screen under discussion',
-  'ana-memory': 'AnA rail surface; renders what AnA already holds',
+  // ana-memory folded into conversation-thread on 2026-10-29 (D2); it is no longer a routable id.
   coverage: 'engineering diagnostic, not a customer capability',
   /* Owns the rail's column and runs NO assistant on it. Its middle pane is a
      client-side intent router ("Report builder") that composes text locally —

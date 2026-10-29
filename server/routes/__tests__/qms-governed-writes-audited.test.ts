@@ -123,13 +123,13 @@ const CASES: Array<{
     status: 200,
   },
   {
-    name: 'changing an approved supplier',
+    name: "changing an approved supplier's audit date",
     method: 'patch',
     path: '/api/mdx/qms/suppliers/5',
-    body: { approvalStatus: 'conditional' },
+    body: { nextAuditDate: '2026-12-01' },
     action: 'mdx.qms.supplier.update',
     resourceType: 'qms_supplier',
-    row: { id: 5, organization_id: 9, approval_status: 'conditional' },
+    row: { id: 5, organization_id: 9, approval_status: 'approved', next_audit_date: '2026-12-01' },
     status: 200,
   },
   {

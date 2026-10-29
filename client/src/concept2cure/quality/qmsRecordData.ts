@@ -214,14 +214,14 @@ export const createNonconformance = (v: {
 }) => qmsWrite<NonconformanceRow>('POST', 'nonconforming', compact(v));
 
 
+/** A new supplier is pending; its standing is signed (qmsApproval.ts signSupplierApproval). */
 export const createSupplier = (v: {
-  supplierName: string; criticality: string; supplierCode?: string; scope?: string; approvalStatus?: string;
-  approvalDate?: string; nextAuditDate?: string; reapprovalDate?: string; qualityAgreementId?: number;
+  supplierName: string; criticality: string; supplierCode?: string; scope?: string;
+  nextAuditDate?: string; reapprovalDate?: string; qualityAgreementId?: number;
 }) => qmsWrite<SupplierRow>('POST', 'suppliers', compact(v));
 
 export const updateSupplier = (id: number, v: {
-  approvalStatus?: string; approvalDate?: string; lastAuditDate?: string; nextAuditDate?: string; reapprovalDate?: string;
-  qualityAgreementId?: number;
+  lastAuditDate?: string; nextAuditDate?: string; reapprovalDate?: string; qualityAgreementId?: number;
 }) => qmsWrite<SupplierRow>('PATCH', `suppliers/${id}`, compact(v));
 
 export const createInternalAudit = (v: { auditNumber: string; scope: string; auditStandard?: string; plannedDate?: string }) =>

@@ -1,3 +1,14 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of part11-console into Audit trail (CLAUDE.md Rule 1).
+-- The Part 11 console (part11-console) is folded into Audit trail, which states
+-- both audit chains' verdicts (audit_logs from the ledger, audit_events from
+-- GET /api/part11/audit-trail/chain-integrity) on screen and to AnA. The console
+-- was never seeded (see COMPLIANCE CONTROLS below); remove it from step 1's
+-- keep-list only, so a row any other path added is deprecated on every replay
+-- instead of staying live for a screen that no longer exists (and failing
+-- 20260823's tier guard, which skips deprecated rows). The row, its metadata,
+-- module_subscriptions FKs and every tenant record stay; no DELETE. audit-trail
+-- stays unseeded and on the keep-list. 20260823 has no part11-console row.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/README.md.
 -- AMENDED IN PLACE 2026-10-29 — D2 fold F3: artifacts-center and device-vault into Vault (CLAUDE.md Rule 1).
 -- The Artifacts center (artifacts-center) and the device kit's document vault
 -- (device-vault) are folded into the Vault: each project's Governed artifacts
@@ -173,7 +184,8 @@
 -- Not seeding them does NOT remove the apps: both remain in the shell and fully
 -- reachable. It only means no entitlement row exists to gate them, so they are
 -- unconditionally available. They stay in the step-1 protected list below so a
--- row added by some other path is never retired either.
+-- row added by some other path is never retired either. (2026-10-29: the Part 11
+-- console folded into Audit trail and left that list; see the header.)
 --
 -- The line drawn is "is this the mechanism by which Part 11 compliance is
 -- recorded or evidenced?". 'identity-console' (enterprise SSO / SCIM) is a
@@ -309,7 +321,6 @@ UPDATE available_modules
    'nonclinical',
    'orchestration',
    'orphan',
-   'part11-console',
    'pdev',
    'pediatric',
    'pharmacovigilance',

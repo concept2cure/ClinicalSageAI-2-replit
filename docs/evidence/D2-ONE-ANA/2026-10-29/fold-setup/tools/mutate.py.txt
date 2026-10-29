@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Mutation runner for the setup fold, Part 1.
+
+Each mutation replaces one exact, single-occurrence string, runs the suite, and
+reverses by replacement (never by copying a backup over the file: the tree is
+shared with other agents). Every file's md5 is checked after each reversal.
+"""
+import hashlib, os, re, subprocess, sys
+
+REPO = '/home/user/ClinicalSageAI-2-replit'
+OUT = os.path.dirname(os.path.abspath(__file__))
+S = 'client/src/concept2cure/v2/surfaces/'
+SET = S + 'AdminSettings.tsx'
+ACC = S + 'AdminAccess.tsx'
+PRO = S + 'OrganizationProfileCard.tsx'
+SRV = 'server/routes/mdx-admin.ts'
+T = 'client/src/concept2cure/v2/__tests__/'
+SUITE = [T + 'adminConsoleSettings.test.tsx', T + 'adminSettingsGoverned.test.tsx',
+         T + 'adminSettingsClientTypeGoverned.test.tsx', T + 'adminSettingsRetentionPeriod.test.tsx',
+         T + 'adminSetupMfaCopy.test.tsx', 'server/routes/__tests__/mdx-admin-facets.test.ts']
+
+MUTATIONS = [
+    ('M1', 'the Profile card is not mounted on Settings', SET,
+     "      <OrganizationProfileCard onContext={onProfileContext} />\n", ""),
+    ('M2', 'the session-policy card is not mounted', SET, "      <SessionPolicySetting />\n", ""),
+    ('M3', 'the gateway-account card is not mounted', SET, "      <GatewayAccountsSetting />\n", ""),
+    ('M4', 'the PDF/A card is not mounted', SET, "      <PdfARequirementSetting />\n", ""),
+    ('M5', 'the retention card is not mounted', SET, "      <RetentionPeriodCard describeFailure={saveFailure} />\n", ""),
+    ('M6', 'the legal-holds card is not mounted', SET, "      <LegalHoldsCard describeFailure={saveFailure} />\n", ""),
+    ('M7', 'the SSO tab has no Identity console door', ACC,
+     "          {tab === 'sso' && <IdentityConsoleDoor onNav={onNav} />}\n", ""),
+    ('M8', 'the door opens the wrong surface', SET, "onClick={() => onNav('identity-console')}", "onClick={() => onNav('admin-console')}"),
+    ('M9', 'the configuration is published on any tab', ACC,
+     "  if (tab !== 'settings' || !configuration) return view;", "  if (!configuration) return view;"),
+    ('M10', 'the configuration facts are not published', ACC,
+     "    facts: { ...view.facts, configuration: configuration.facts },", "    facts: view.facts,"),
+    ('M11', 'the profile saves without a reason', PRO, "    if (why.length < 3) {", "    if (false) {"),
+    ('M12', 'the rename PATCH drops the reason', PRO,
+     "        name: name.trim(),\n        reason: why,\n", "        name: name.trim(),\n"),
+    ('M13', 'the client type is saved without the reason', PRO,
+     "await saveProfile(patch, why)", "await saveProfile(patch, '')"),
+    ('M14', 'an unsaved change is not published', PRO, "        hasUnsavedChanges: dirty,", "        hasUnsavedChanges: false,"),
+    ('M15', 'a failed read is published as a profile', PRO,
+     "    if (loadError) {\n      return {\n        summary:\n          'The organization record could not be read",
+     "    if (false) {\n      return {\n        summary:\n          'The organization record could not be read"),
+    ('M16', 'an unreachable server reads as a refusal', PRO,
+     "  if (status === 0) return 'the server could not be reached, so nothing was saved.';",
+     "  if (status === 0) return 'the change was not accepted.';"),
+    ('M17', 'the tab still says nothing on it changes a setting', SET,
+     "          Each card below reads its setting and changes it under a reason, written to the audit trail.",
+     "          As set now. Nothing on this tab changes them yet."),
+    ('M18', 'Ask AnA sends nothing', SET, "onClick={() => onAsk(SUMMARISE_CONFIGURATION)}", "onClick={() => undefined}"),
+    ('M19', 'the server serves the session-timeout row again', SRV,
+     "    const settings = [\n      secondFactor,\n",
+     "    const settings = [\n      secondFactor,\n      orgRead && { id: 'session-ttl', label: 'Session timeout', kind: 'duration', value: `${sessionMins} minutes`, desc: '' },\n"),
+    ('M20', 'the second-factor row loses the enrolment pointer', SRV,
+     " otherwise an emailed code. Each person sets up an authenticator app from Account in the account menu. Supports 21 CFR",
+     " otherwise an emailed code. Supports 21 CFR"),
+    ('M21', 'the Settings tab drops the description of a record row', SET,
+     "                <div className=\"adm-setting-desc\">{s.desc}</div>\n", ""),
+]
+
+def md5(p):
+    return hashlib.md5(open(os.path.join(REPO, p), 'rb').read()).hexdigest()
+
+def run():
+    p = subprocess.run(['npx', 'vitest', 'run', *SUITE], cwd=REPO, capture_output=True, text=True, timeout=900)
+    out = re.sub(r'\x1b\[[0-9;]*m', '', p.stdout + p.stderr)
+    m = re.search(r'Tests\s+(.*)', out)
+    fails = [l.strip() for l in out.splitlines() if l.strip().startswith('×')]
+    return p.returncode, (m.group(1).strip() if m else '?'), fails
+
+only = set(sys.argv[1:])
+files = sorted({m[2] for m in MUTATIONS})
+before = {f: md5(f) for f in files}
+results = []
+for mid, what, path, old, new in MUTATIONS:
+    if only and mid not in only:
+        continue
+    full = os.path.join(REPO, path)
+    src = open(full).read()
+    assert src.count(old) == 1, f'{mid}: needle occurs {src.count(old)} times'
+    open(full, 'w').write(src.replace(old, new))
+    try:
+        code, tally, fails = run()
+    finally:
+        cur = open(full).read()
+        assert cur.count(new) >= 1 if new else True
+        restored = cur.replace(new, old, 1) if new else src
+        if not new:
+            restored = src  # deletion: the mutated file is src minus `old`; restore the exact text
+            assert cur == src.replace(old, ''), f'{mid}: file changed during the run'
+        open(full, 'w').write(restored)
+        assert md5(path) == before[path], f'{mid}: {path} not restored byte-for-byte'
+    killed = code != 0
+    results.append((mid, what, 'KILLED' if killed else 'SURVIVED', tally, fails[:3]))
+    print(f'{mid} {"KILLED" if killed else "SURVIVED"} — {what} — {tally}', flush=True)
+    for f in fails[:3]:
+        print(f'    {f}', flush=True)
+
+for f in files:
+    assert md5(f) == before[f], f'{f} not restored'
+k = sum(1 for r in results if r[2] == 'KILLED')
+print(f'\n{k}/{len(results)} killed; every mutated file restored (md5 checked).')

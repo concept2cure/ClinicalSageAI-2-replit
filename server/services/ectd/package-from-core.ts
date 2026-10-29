@@ -20,7 +20,8 @@ import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
-import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, toPackagerRegion, type LeafFileResolver } from './core-to-packager';
+import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, fdaSubmissionTypeFor, toPackagerRegion, type LeafFileResolver } from './core-to-packager';
+import { sequenceSpineFdaSubmissionId } from './sequence-spine-fda-identity';
 import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf, type PriorLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
@@ -401,8 +402,22 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     }
   }
 
+  // FDA: the submission-id this sequence declares, by the one rule the package
+  // spine also follows. An amendment names the Original Application it
+  // continues; this spine used to declare every sequence's own number
+  // (sequence-spine-fda-identity.ts, 2026-10-29).
+  const coreSequence = { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type };
+  let fdaSubmissionId: string | undefined;
+  if (toPackagerRegion(sequence.region) === 'fda') {
+    const fdaType = fdaSubmissionTypeFor(coreSequence, coreLeaves);
+    fdaSubmissionId = await sequenceSpineFdaSubmissionId(queryableFromDrizzle(db), {
+      organizationId, submissionId: submission.id, region: sequence.region, sequenceNumber: sequence.sequenceNumber,
+      submissionType: fdaType.submissionType, submissionSubType: fdaType.submissionSubType,
+    });
+  }
+
   const { input, skipped } = buildPackagerInputFromCore({
-    sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
+    sequence: coreSequence,
     submission: { applicationType: submission.applicationType, productName: submission.productName },
     // 2026-09-22 (W5/D7): the projection must carry the uuid half of the
     // reference. Without it every vault-backed leaf reached resolveFile with
@@ -420,6 +435,7 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
     contacts: params.contacts,
     outputDir: params.outputDir,
     emitUnzipped: params.emitUnzipped,
+    fdaSubmissionId,
   });
 
   // Lifecycle: for a FOLLOW-UP sequence (not 0000), diff the leaves against the

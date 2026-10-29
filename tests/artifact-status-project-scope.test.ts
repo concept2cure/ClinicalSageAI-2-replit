@@ -92,10 +92,12 @@ vi.mock('../server/middleware/redisRateLimiter', () => ({
 /* Access is decided on the INTEGER project, as the real verifyProjectAccess
    decides it (it parses the id as an integer; anything else is no access).
    The caller may act in project 3 and in no other. */
-vi.mock('../server/routes/c2c/project-access', () => ({
-  verifyProjectAccess: vi.fn(async (_req: unknown, id: unknown) => String(id) === '3'),
-  getActorRole: () => 'admin',
-}));
+vi.mock('../server/routes/c2c/project-access', async () => {
+  const verifyProjectAccess = vi.fn(async (_req: unknown, id: unknown) => String(id) === '3');
+  // The router's admission, decided by the same stub (c2c/__tests__/support/admission-double.ts).
+  const { admissionDecidedBy } = await import('../server/routes/c2c/__tests__/support/admission-double');
+  return { verifyProjectAccess, getActorRole: () => 'admin', projectAdmissionMiddleware: admissionDecidedBy(verifyProjectAccess) };
+});
 /* The one translation rule (its own suite proves it): the integer id of a
    project of this organization, or a program UUID through its anchor. */
 vi.mock('../server/services/cmc/resolve-cmc-artifact-project', () => ({
@@ -208,10 +210,15 @@ describe('PUT …/status: the artifact of the project the URL names', () => {
     expect(statusWrite('review')).toBeUndefined();
   });
 
-  it('a project lookup that could not complete is a 500, never a "not found" — and it is asked strictly', async () => {
+  // 2026-10-29 (D6, docs/evidence/D6-PROJECT-WRITE-GATES/2026-10-29/): the
+  // router's project admission now asks first, so a lookup that could not
+  // complete is its 503 PROJECT_ACCESS_UNAVAILABLE, no longer the handler's 500.
+  it('a project lookup that could not complete is a 503 PROJECT_ACCESS_UNAVAILABLE, never a "not found" — and it is asked strictly', async () => {
     st.queue = [[ARTIFACT]];
     const res = await put('13', 'review');
-    expect(res.status).toBe(500);
+    expect(res.status).not.toBe(404);
+    expect(res.status).toBe(503);
+    expect(res.body.error?.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
     expect(statusWrite('review')).toBeUndefined();
     expect(resolveCmcArtifactProject).toHaveBeenCalledWith(99, '13', { strict: true });
   });

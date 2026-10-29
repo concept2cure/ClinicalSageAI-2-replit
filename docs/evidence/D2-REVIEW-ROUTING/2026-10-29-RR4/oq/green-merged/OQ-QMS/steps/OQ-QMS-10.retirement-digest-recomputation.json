@@ -1,0 +1,168 @@
+{
+  "method": "tests/validation/lib/qms-digest.mjs computeQmsDocumentRetirementDigest — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentRetirementDigest (the approval recipe over the stored row with metadata.retired removed)",
+  "digestInput": {
+    "kind": "qms-document-version-content",
+    "id": 38,
+    "organizationId": 6,
+    "docNumber": "SOP-OQ-B-20261029153957",
+    "version": "1.0",
+    "title": "OQ-006 Second SOP 20261029153957",
+    "docType": "sop",
+    "category": "production",
+    "artifactId": null,
+    "nextReviewDate": "2026-11-03",
+    "metadata": {
+      "sections": [
+        {
+          "key": "purpose",
+          "hint": "Why this document exists and what it governs.",
+          "label": "Purpose",
+          "order": 1
+        },
+        {
+          "key": "scope",
+          "hint": "What and who it applies to, with explicit exclusions.",
+          "label": "Scope",
+          "order": 2
+        },
+        {
+          "key": "responsibilities",
+          "hint": "Roles accountable for each step.",
+          "label": "Responsibilities",
+          "order": 3
+        },
+        {
+          "key": "definitions",
+          "hint": "Terms, abbreviations, and acronyms used.",
+          "label": "Definitions",
+          "order": 4
+        },
+        {
+          "key": "procedure",
+          "hint": "The step-by-step controlled process.",
+          "label": "Procedure",
+          "order": 5
+        },
+        {
+          "key": "references",
+          "hint": "Regulations, standards, and linked documents.",
+          "label": "References",
+          "order": 6
+        },
+        {
+          "key": "attachments",
+          "hint": "Forms, templates, and records this document produces.",
+          "label": "Attachments",
+          "order": 7
+        },
+        {
+          "key": "revision_history",
+          "hint": "Version, date, author, and a summary of each change.",
+          "label": "Revision history",
+          "order": 8
+        },
+        {
+          "key": "approval",
+          "hint": "Author, reviewer, and approver signatures.",
+          "label": "Approval",
+          "order": 9
+        }
+      ],
+      "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+      "templateKey": "sop",
+      "authoringContent": {
+        "title": "OQ-006 Second SOP 20261029153957",
+        "sections": [
+          {
+            "id": "05dfd038-f485-45e7-bba5-2419d7abeea1",
+            "code": "qms-purpose",
+            "title": "Purpose",
+            "content": "<p>OQ-006 Second SOP 20261029153957: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+            "orderIndex": 1
+          },
+          {
+            "id": "5c9cc661-31d5-4dc4-bd48-f331e4f478a8",
+            "code": "qms-scope",
+            "title": "Scope",
+            "content": "",
+            "orderIndex": 2
+          },
+          {
+            "id": "6744e120-39aa-42d7-bbea-7fe5aba7e660",
+            "code": "qms-responsibilities",
+            "title": "Responsibilities",
+            "content": "",
+            "orderIndex": 3
+          },
+          {
+            "id": "dea62cd8-f684-4e8f-bc31-57d17bf8e007",
+            "code": "qms-definitions",
+            "title": "Definitions",
+            "content": "",
+            "orderIndex": 4
+          },
+          {
+            "id": "e14fb286-8b7c-4a2a-8f6a-398cb7951744",
+            "code": "qms-procedure",
+            "title": "Procedure",
+            "content": "",
+            "orderIndex": 5
+          },
+          {
+            "id": "da9a147f-4125-4235-9cfc-448b7f4a4b30",
+            "code": "qms-references",
+            "title": "References",
+            "content": "",
+            "orderIndex": 6
+          },
+          {
+            "id": "e1b4ee51-6cfb-4278-b1fb-b75df01c704a",
+            "code": "qms-attachments",
+            "title": "Attachments",
+            "content": "",
+            "orderIndex": 7
+          },
+          {
+            "id": "c1635b06-530f-42cf-a28f-903bd7001a42",
+            "code": "qms-revision_history",
+            "title": "Revision history",
+            "content": "",
+            "orderIndex": 8
+          },
+          {
+            "id": "8c10fc88-34e1-4a04-a6b8-48dd03408458",
+            "code": "qms-approval",
+            "title": "Approval",
+            "content": "",
+            "orderIndex": 9
+          }
+        ],
+        "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+        "documentId": "f30a1a49-3801-484e-8724-11312b403a8e"
+      }
+    }
+  },
+  "recomputed": "bcbe1842db1dc1d1831d8fbdead51b77aff0d797ef2b3f55b62f9b7d7a7cfa67",
+  "reportedBySignature": "bcbe1842db1dc1d1831d8fbdead51b77aff0d797ef2b3f55b62f9b7d7a7cfa67",
+  "storedOnDocument": "bcbe1842db1dc1d1831d8fbdead51b77aff0d797ef2b3f55b62f9b7d7a7cfa67",
+  "match": true,
+  "signatureRow": {
+    "id": 29,
+    "document_id": null,
+    "version_id": null,
+    "signed_target": "qms-document:38",
+    "signature_type": "qms-document-retirement",
+    "signature_purpose": "OQ-006 step 10: superseded by validation (signed)",
+    "signer_id": 7,
+    "signer_name": "OQ Signer",
+    "signer_title": null,
+    "signer_email": "oq-signer@validation.local",
+    "signature_meaning": "APPROVED",
+    "signature_hash": "aa283b6322d964369936ccf058f15863398ba7534a61c88e8fe4a7d39c3625de",
+    "binding_basis": "qms-document-version-content-sha256",
+    "second_factor_verified": true,
+    "is_valid": true,
+    "signed_at": "2026-10-29T15:42:30.496Z",
+    "ip_address": "127.0.0.1"
+  }
+}

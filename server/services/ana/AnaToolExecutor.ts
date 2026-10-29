@@ -15045,25 +15045,21 @@ registerToolHandler('register_supplier', async (input, ctx) => {
   }
   try {
     const { getPool } = await import('../../db.js');
-    const { rows } = await getPool().query(
-      `INSERT INTO qms_suppliers (
-         organization_id, supplier_name, supplier_code, scope, criticality,
-         approval_status, iso_certifications
-       ) VALUES ($1,$2,$3,$4,$5,'pending',$6)
-       RETURNING id, supplier_name, criticality, approval_status`,
-      [
-        ctx.organizationId, name,
-        typeof input.supplier_code === 'string' ? input.supplier_code : null,
-        typeof input.scope === 'string' ? input.scope : null,
-        crit,
-        Array.isArray(input.iso_certifications)
-          ? (input.iso_certifications as unknown[]).filter((s) => typeof s === 'string')
-          : null,
-      ],
-    );
+    // The route's writer and its §11.10(e) row (services/qms/qms-record-create.ts).
+    const { recordNewSupplier } = await import('../qms/qms-record-create.js');
+    const { row, auditTrail } = await recordNewSupplier(getPool(), ctx.organizationId, ctx.userId ?? null, {
+      supplierName: name,
+      criticality: crit,
+      supplierCode: typeof input.supplier_code === 'string' ? input.supplier_code : null,
+      scope: typeof input.scope === 'string' ? input.scope : null,
+      isoCertifications: Array.isArray(input.iso_certifications)
+        ? (input.iso_certifications as unknown[]).filter((s): s is string => typeof s === 'string')
+        : null,
+    });
     return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Registered ${crit} supplier "${name}" (pending approval).`,
+      ok: true, id: row.id, supplier_name: row.supplier_name, criticality: row.criticality, approval_status: row.approval_status,
+      auditTrail,
+      message: withAuditNote(`Registered ${crit} supplier "${name}" (pending approval).`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({
@@ -15088,23 +15084,20 @@ registerToolHandler('log_nonconforming_product', async (input, ctx) => {
        the row to the same rule. */
     const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
       ? input.program_id : null;
-    const { rows } = await getPool().query(
-      `INSERT INTO qms_nonconforming_products (
-         organization_id, nc_number, device_name, lot_or_serial, source, description,
-         detected_by, disposition, program_id
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8)
-       RETURNING id, nc_number, source, disposition`,
-      [
-        ctx.organizationId, ncNumber,
-        typeof input.device_name === 'string' ? input.device_name : null,
-        typeof input.lot_or_serial === 'string' ? input.lot_or_serial : null,
-        typeof input.source === 'string' ? input.source : null,
-        description, ctx.userId ?? null, programId,
-      ],
-    );
+    // The route's writer and its §11.10(e) row (services/qms/qms-record-create.ts).
+    const { recordNewNonconformance } = await import('../qms/qms-record-create.js');
+    const { row, auditTrail } = await recordNewNonconformance(getPool(), ctx.organizationId, ctx.userId ?? null, {
+      ncNumber,
+      description,
+      deviceName: typeof input.device_name === 'string' ? input.device_name : null,
+      lotOrSerial: typeof input.lot_or_serial === 'string' ? input.lot_or_serial : null,
+      source: typeof input.source === 'string' ? input.source : null,
+      programId,
+    });
     return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Logged NC ${ncNumber} (disposition pending).`,
+      ok: true, id: row.id, nc_number: row.nc_number, source: row.source, disposition: row.disposition,
+      auditTrail,
+      message: withAuditNote(`Logged NC ${ncNumber} (disposition pending).`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({

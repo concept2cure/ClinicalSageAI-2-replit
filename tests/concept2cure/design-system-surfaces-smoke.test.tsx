@@ -124,7 +124,8 @@ function assertNoReactErrors() {
 }
 
 // No MemorySurface / AdminSurface cases. The kit's AnA Memory surface was
-// retired for v2 `ana-memory` (same /api/mdx/ana/memory endpoint, write-capable),
+// retired for v2 `ana-memory` (same /api/mdx/ana/memory endpoint), which itself
+// folded into the conversation's "What AnA remembers" on 2026-10-29,
 // and its admin surface was never imported by the kit's own app — admin is
 // product-level, on v2 `admin-console`.
 describe('design-system surface smoke tests', () => {

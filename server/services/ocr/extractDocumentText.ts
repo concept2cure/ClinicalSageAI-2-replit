@@ -53,11 +53,18 @@ export interface ExtractedDocumentText {
    * layer and for every other format.
    */
   coverage?: ExtractionCoverage;
+  /**
+   * Set when `ocr: false` stopped short of OCR that the file needs: a scanned
+   * PDF, or an image. Its text is then still to be read (MR-08 Stage 3).
+   */
+  ocrDeferred?: true;
 }
 
 /** What a caller lets automatic PDF OCR spend. Without it, OCR reads every page. */
 export interface ExtractDocumentTextOptions {
   pdfOcrBudget?: { maxPages: number; maxDurationMs: number };
+  /** False reads a text layer only and never runs OCR; what needs OCR comes back `ocrDeferred`. */
+  ocr?: boolean;
 }
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -76,7 +83,7 @@ export { AUTOMATIC_PDF_OCR_BUDGET } from './ocr-budget';
  * formats hid that. It is also where the page mapping lives, which is the part
  * a passage citation depends on.
  */
-async function extractPdfText(buffer: Buffer, budget?: ExtractDocumentTextOptions['pdfOcrBudget']): Promise<ExtractedDocumentText> {
+async function extractPdfText(buffer: Buffer, budget?: ExtractDocumentTextOptions['pdfOcrBudget'], allowOcr = true): Promise<ExtractedDocumentText> {
   let text = '';
   /* The per-page pieces the extractor produced, kept so a page span can be
      ALIGNED against the combined text rather than inferred from it. */
@@ -102,6 +109,7 @@ async function extractPdfText(buffer: Buffer, budget?: ExtractDocumentTextOption
   if (text.length >= PDF_TEXT_MIN) {
     return { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined };
   }
+  if (!allowOcr) return { text: '', method: 'none', ocrDeferred: true };
   // Thin or no text layer → scanned PDF; recover with OCR, within the caller's budget.
   // Coverage is kept even when the text layer wins: a budget-limited OCR that
   // found little says nothing about the pages it never read.
@@ -237,9 +245,9 @@ export async function extractDocumentText(
     case 'text':
       return { text: buffer.toString('utf8').trim(), method: 'utf8' };
     case 'image':
-      return extractImageText(buffer);
+      return options.ocr === false ? { text: '', method: 'none', ocrDeferred: true } : extractImageText(buffer);
     case 'pdf':
-      return extractPdfText(buffer, options.pdfOcrBudget);
+      return extractPdfText(buffer, options.pdfOcrBudget, options.ocr !== false);
     case 'docx':
       return extractDocxText(buffer);
     case 'xpt':

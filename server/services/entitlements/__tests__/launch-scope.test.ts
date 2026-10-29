@@ -142,9 +142,9 @@ describe('the scope list itself', () => {
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
   });
-  it('keeps the two Part 11 surfaces the catalog may never gate', () => {
+  it('keeps the Part 11 surface the catalog may never gate', () => {
+    // part11-console folded into audit-trail on 2026-10-29 (see 'the folded Part 11 console').
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
-    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);
   });
   // docs/SURFACE_DECISIONS_2026-10-08.md: each was assessed and checked by a
   // skeptic, and none does what its place promises for a real organisation.
@@ -211,6 +211,48 @@ describe('the folded Artifacts center and device vault', () => {
       expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain(id);
     }
     expect(LAUNCH_MODULE_IDS).toContain('vault');
+  });
+});
+
+describe('the folded Part 11 console', () => {
+  it('is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-part11-console/. It was a shell
+       surface, never a catalogue module (21 CFR §11.10(e)); its two functions,
+       the audit_events chain's live verdict and AnA reading it, are Audit
+       trail's now. Audit trail stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(false);
+    expect(isLaunchSurface('part11-console')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('part11-console');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('audit-trail');
+    expect(isLaunchSurface('audit-trail')).toBe(true);
+  });
+});
+
+describe('the folded setup', () => {
+  it('is in no scope list and no grant: Admin and access → Settings holds the organisation\'s setup (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-setup/. It was a shell surface,
+       never a catalogue module; its name and client type, and the gateway,
+       session, PDF/A, retention and legal-hold cards, are on admin-console's
+       Settings tab. admin-console stays a shell surface the catalog cannot gate. */
+    expect(LAUNCH_SURFACE_IDS.has('setup')).toBe(false);
+    expect(isLaunchSurface('setup')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('setup');
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('admin-console');
+    expect(isLaunchSurface('admin-console')).toBe(true);
+  });
+});
+
+describe('the folded AnA memory', () => {
+  it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on
+       2026-10-08 ('the shell no longer carries' above) and was never a catalogue
+       module; its two real reads are the conversation's "What AnA remembers".
+       The conversation is a launch shell surface, so a bought ana-memory row can
+       buy nothing. */
+    expect(LAUNCH_SURFACE_IDS.has('ana-memory')).toBe(false);
+    expect(isLaunchSurface('ana-memory')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ana-memory');
+    expect(isLaunchSurface('conversation-thread')).toBe(true);
   });
 });
 

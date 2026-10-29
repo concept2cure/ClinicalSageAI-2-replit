@@ -122,6 +122,14 @@ describe('the Vault uploader stages each file with its own fields (gap 7.1)', ()
     expect(sent[2].get('documentCode')).toBe('b.pdf');
   });
 
+  it('says when a recorded file’s text is still being read (MR-08 Stage 3)', async () => {
+    stubIngest([{ status: 201, body: { success: true, document: { version: '1.0', extraction: 'pending' } } }]);
+    const panel = await choose([new File(['%PDF scanned'], 'scan.pdf')]);
+    fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
+    const [row] = within(panel).getAllByTestId('vault-stage-row');
+    expect(await within(row).findByText('Recorded as v1.0 · Unfiled, needs a folder · Its text is still being read; search finds it once that is done.')).toBeTruthy();
+  });
+
   it('flags a second file with the same name before it is sent', async () => {
     stubIngest([]);
     const a = new File(['a'], 'protocol.pdf');

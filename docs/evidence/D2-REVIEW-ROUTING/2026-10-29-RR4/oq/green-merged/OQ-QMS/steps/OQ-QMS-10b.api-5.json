@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/part11/signatures/by-target?target=qms-document%3A38",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 47,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 28,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "qms-document:38",
+          "signature_type": "qms-document-approval",
+          "signature_purpose": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+          "signer_id": 7,
+          "signer_name": "OQ Signer",
+          "signer_title": null,
+          "signer_email": "oq-signer@validation.local",
+          "signature_meaning": "APPROVED",
+          "signature_hash": "f03ca352ca984aad1f159faa58d2c24431db3813b9a9de2fb94f1f82d117bf6e",
+          "binding_basis": "qms-document-version-content-sha256",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-10-29T15:42:00.552Z",
+          "ip_address": "127.0.0.1"
+        }
+      ]
+    }
+  }
+}

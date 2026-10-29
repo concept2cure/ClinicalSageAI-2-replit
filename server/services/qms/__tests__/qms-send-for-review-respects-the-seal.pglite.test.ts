@@ -40,6 +40,13 @@
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+// RR4: a send names its review route; the route's own writer is proven against PostgreSQL
+// (tests/db/review-route-qms-rr4.dbtest.ts), so here it is a stand-in and this suite keeps to its subject.
+vi.mock('../qms-review-route', async (original) => ({
+  ...(await original<typeof import('../qms-review-route')>()),
+  sendQmsRoute: async () => ({ routeId: 'route-stand-in', notices: [] }),
+}));
+const QMS_ROUTE = { reviewers: [], approvers: [8], approvalDueDate: '2099-01-01' };
 
 vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction: async () => ({ actionId: 'action', auditId: 'audit', sha256Chain: 'chain' }) }));
 vi.mock('../../c2c/document-alias-map', () => ({ recordDocumentAlias: async () => ({ recorded: true }), canonicalIdFor: async () => null, DocumentAliasConflictError: class extends Error {} }));
@@ -173,7 +180,7 @@ describe('a sealed editing copy survives a send-for-review', () => {
 describe('an unsealed draft still goes to review, exactly as before', () => {
   it('sends an unsealed draft for review and moves the editing copy to IN_REVIEW', async () => {
     const row = await controlled(null);
-    const updated = await updateControlledQmsDocument(ctx, row.id, { status: 'in_review', reason: 'Send for independent review' });
+    const updated = await updateControlledQmsDocument(ctx, row.id, { status: 'in_review', reason: 'Send for independent review', route: QMS_ROUTE });
     expect(updated.status).toBe('in_review');
     // IN_REVIEW is deliberately NOT a sealing status (document-lock.ts): review
     // is a state a document is edited during, and the review board finds work

@@ -105,16 +105,16 @@ beforeAll(async () => {
       (6, 'renamed beside another', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (7, 'unreadable named', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (8, 'unnamed', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
-      (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (3, 2, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (5, 3, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (7, 4, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (8, 4, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (9, 5, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (10, 5, 'fda', '0001', ${ORG}, ${USER}, 'sent'),
-      (11, 5, 'fda', '0002', ${ORG}, ${USER}, NULL),
-      (12, 6, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (13, 6, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (14, 7, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (15, 7, 'fda', '0001', ${ORG}, ${USER}, NULL),
-      (16, 8, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (17, 8, 'fda', '0001', ${ORG}, ${USER}, NULL);
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
+      (1, 1, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (2, 1, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (3, 2, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (4, 2, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (5, 3, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (6, 3, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (7, 4, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (8, 4, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (9, 5, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (10, 5, 'fda', '0001', 'amendment', ${ORG}, ${USER}, 'sent'),
+      (11, 5, 'fda', '0002', 'amendment', ${ORG}, ${USER}, NULL),
+      (12, 6, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (13, 6, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (14, 7, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (15, 7, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (16, 8, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (17, 8, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (300, ${ORG}, 'Stability Summary', '<p>filed text, now under revision</p>', 'm3.2.p.8.1', 'in_review'),
       (301, ${ORG}, 'Other', '<p>unrelated approved leaf</p>', 'm3.2.p.1', 'approved'),

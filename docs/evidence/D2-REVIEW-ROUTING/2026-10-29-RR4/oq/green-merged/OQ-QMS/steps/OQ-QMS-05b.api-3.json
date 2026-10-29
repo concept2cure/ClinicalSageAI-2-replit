@@ -1,0 +1,256 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/mdx/qms/documents/36/versions",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 43,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": "15",
+          "organization_id": 6,
+          "document_id": 36,
+          "version": "1.0",
+          "authoring_document_id": "de4f6fe2-5435-4ff6-9285-602219254744",
+          "record_kind": "signed",
+          "controlled_document": {
+            "id": 36,
+            "title": "OQ-006 Document control SOP 20261029153957",
+            "status": "effective",
+            "version": "1.0",
+            "category": "production",
+            "doc_type": "sop",
+            "metadata": {
+              "approval": {
+                "at": "2026-10-29T15:40:30.503+00:00",
+                "by": 7,
+                "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+                "meaning": "APPROVED",
+                "bindingBasis": "qms-document-version-content-sha256",
+                "contentDigest": "bde162766f3e681732e45f1b78b6392a035c759c4b2ecfa7fe469dded6515f8a",
+                "twoPersonRule": "enforced"
+              },
+              "sections": [
+                {
+                  "key": "purpose",
+                  "hint": "Why this document exists and what it governs.",
+                  "label": "Purpose",
+                  "order": 1
+                },
+                {
+                  "key": "scope",
+                  "hint": "What and who it applies to, with explicit exclusions.",
+                  "label": "Scope",
+                  "order": 2
+                },
+                {
+                  "key": "responsibilities",
+                  "hint": "Roles accountable for each step.",
+                  "label": "Responsibilities",
+                  "order": 3
+                },
+                {
+                  "key": "definitions",
+                  "hint": "Terms, abbreviations, and acronyms used.",
+                  "label": "Definitions",
+                  "order": 4
+                },
+                {
+                  "key": "procedure",
+                  "hint": "The step-by-step controlled process.",
+                  "label": "Procedure",
+                  "order": 5
+                },
+                {
+                  "key": "references",
+                  "hint": "Regulations, standards, and linked documents.",
+                  "label": "References",
+                  "order": 6
+                },
+                {
+                  "key": "attachments",
+                  "hint": "Forms, templates, and records this document produces.",
+                  "label": "Attachments",
+                  "order": 7
+                },
+                {
+                  "key": "revision_history",
+                  "hint": "Version, date, author, and a summary of each change.",
+                  "label": "Revision history",
+                  "order": 8
+                },
+                {
+                  "key": "approval",
+                  "hint": "Author, reviewer, and approver signatures.",
+                  "label": "Approval",
+                  "order": 9
+                }
+              ],
+              "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+              "templateKey": "sop",
+              "authoringContent": {
+                "title": "OQ-006 Document control SOP 20261029153957",
+                "sections": [
+                  {
+                    "id": "86f96476-c904-4077-9d1b-2c686099c4f6",
+                    "code": "qms-purpose",
+                    "title": "Purpose",
+                    "content": "<p>OQ-006 Document control SOP 20261029153957: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+                    "orderIndex": 1
+                  },
+                  {
+                    "id": "3ae2135f-f535-49f9-a232-21811d90714e",
+                    "code": "qms-scope",
+                    "title": "Scope",
+                    "content": "",
+                    "orderIndex": 2
+                  },
+                  {
+                    "id": "39296e5c-06ae-4676-9a8d-ec99c53fbcba",
+                    "code": "qms-responsibilities",
+                    "title": "Responsibilities",
+                    "content": "",
+                    "orderIndex": 3
+                  },
+                  {
+                    "id": "fcfe81e6-4de1-45ad-b434-bfc4f64759df",
+                    "code": "qms-definitions",
+                    "title": "Definitions",
+                    "content": "",
+                    "orderIndex": 4
+                  },
+                  {
+                    "id": "55a81050-ebc4-4575-9a5e-856a307b0eb4",
+                    "code": "qms-procedure",
+                    "title": "Procedure",
+                    "content": "",
+                    "orderIndex": 5
+                  },
+                  {
+                    "id": "100d7f27-7e8b-4d72-8ecf-ce129b5b69ea",
+                    "code": "qms-references",
+                    "title": "References",
+                    "content": "",
+                    "orderIndex": 6
+                  },
+                  {
+                    "id": "982bf2b5-5779-498a-bf55-004222482ce4",
+                    "code": "qms-attachments",
+                    "title": "Attachments",
+                    "content": "",
+                    "orderIndex": 7
+                  },
+                  {
+                    "id": "171ab974-e8b7-4e24-85b1-c67bd3ddd62e",
+                    "code": "qms-revision_history",
+                    "title": "Revision history",
+                    "content": "",
+                    "orderIndex": 8
+                  },
+                  {
+                    "id": "928f31e9-111b-4d71-81f0-aeb112149ad4",
+                    "code": "qms-approval",
+                    "title": "Approval",
+                    "content": "",
+                    "orderIndex": 9
+                  }
+                ],
+                "programId": "5db2ade5-3c0a-48c1-9c4c-07719687cbba",
+                "documentId": "de4f6fe2-5435-4ff6-9285-602219254744"
+              }
+            },
+            "author_id": 6,
+            "created_at": "2026-10-29T15:39:58.374Z",
+            "deleted_at": null,
+            "doc_number": "SOP-OQ-20261029153957",
+            "updated_at": "2026-10-29T15:40:30.472Z",
+            "approved_at": "2026-10-29T15:40:30.503Z",
+            "approver_id": 7,
+            "artifact_id": null,
+            "effective_date": "2026-10-29T00:00:00.000Z",
+            "organization_id": 6,
+            "next_review_date": "2026-11-08T00:00:00.000Z",
+            "superseded_by_id": null,
+            "authoring_document_id": "de4f6fe2-5435-4ff6-9285-602219254744"
+          },
+          "sections": [
+            {
+              "id": "86f96476-c904-4077-9d1b-2c686099c4f6",
+              "code": "qms-purpose",
+              "title": "Purpose",
+              "content": "<p>OQ-006 Document control SOP 20261029153957: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+              "orderIndex": 1
+            },
+            {
+              "id": "3ae2135f-f535-49f9-a232-21811d90714e",
+              "code": "qms-scope",
+              "title": "Scope",
+              "content": "",
+              "orderIndex": 2
+            },
+            {
+              "id": "39296e5c-06ae-4676-9a8d-ec99c53fbcba",
+              "code": "qms-responsibilities",
+              "title": "Responsibilities",
+              "content": "",
+              "orderIndex": 3
+            },
+            {
+              "id": "fcfe81e6-4de1-45ad-b434-bfc4f64759df",
+              "code": "qms-definitions",
+              "title": "Definitions",
+              "content": "",
+              "orderIndex": 4
+            },
+            {
+              "id": "55a81050-ebc4-4575-9a5e-856a307b0eb4",
+              "code": "qms-procedure",
+              "title": "Procedure",
+              "content": "",
+              "orderIndex": 5
+            },
+            {
+              "id": "100d7f27-7e8b-4d72-8ecf-ce129b5b69ea",
+              "code": "qms-references",
+              "title": "References",
+              "content": "",
+              "orderIndex": 6
+            },
+            {
+              "id": "982bf2b5-5779-498a-bf55-004222482ce4",
+              "code": "qms-attachments",
+              "title": "Attachments",
+              "content": "",
+              "orderIndex": 7
+            },
+            {
+              "id": "171ab974-e8b7-4e24-85b1-c67bd3ddd62e",
+              "code": "qms-revision_history",
+              "title": "Revision history",
+              "content": "",
+              "orderIndex": 8
+            },
+            {
+              "id": "928f31e9-111b-4d71-81f0-aeb112149ad4",
+              "code": "qms-approval",
+              "title": "Approval",
+              "content": "",
+              "orderIndex": 9
+            }
+          ],
+          "content_digest": "bde162766f3e681732e45f1b78b6392a035c759c4b2ecfa7fe469dded6515f8a",
+          "signature_id": "27",
+          "approved_at": "2026-10-29T15:40:30.472Z",
+          "recorded_at": "2026-10-29T15:40:30.472Z"
+        }
+      ]
+    }
+  }
+}

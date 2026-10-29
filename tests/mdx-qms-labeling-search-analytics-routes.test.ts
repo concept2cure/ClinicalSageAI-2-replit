@@ -262,7 +262,7 @@ describe('QMS routes', () => {
     expect(res.status).toBe(422);
   });
 
-  // A disposition is a signed act (2026-10-29; server/routes/__tests__/qms-nc-disposition-signed.test.ts).
+  // A disposition is a signed act (2026-10-29; server/routes/__tests__/qms-signed-decisions.test.ts).
   it('NC disposition without a signature 400, nothing written', async () => {
     const res = await request(makeApp())
       .patch('/api/mdx/qms/nonconforming/1/disposition')

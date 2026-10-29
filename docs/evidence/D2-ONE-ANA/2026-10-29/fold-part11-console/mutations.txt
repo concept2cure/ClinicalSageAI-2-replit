@@ -1,0 +1,83 @@
+# MUTATIONS — fold of part11-console into Audit trail (D2, 2026-10-29)
+# Each: one exact single-occurrence replacement, the named checks run, reversed by replacement
+# (never a copy-back: AdminSurfaces.tsx and the checklist files are shared). md5sum -c after each run: all OK.
+# Runners: tools/mutate.py.txt (Part 1), tools/mutate2.py.txt (Part 2).
+
+## Part 1 — 12/12 killed (suite: auditTrailEventChainVerdict.test.tsx, 17 tests at the time)
+M1 KILLED — intact without the integrity verdict (AuditEventChain.tsx): 1/17 failed
+    × "intact" needs the server's integrity verdict too: a status with no verdict is not intact
+M2 KILLED — an empty chain is not "no entries" (finding 111 regresses) (AuditEventChain.tsx): 1/17 failed
+    × finding 111: an empty chain is "nothing to verify", never intact, even when the route says true
+M3 KILLED — a refusal reads as a failed verification (AuditEventChain.tsx): 1/17 failed
+    × a 403 is "not available to your role", not "couldn’t verify"
+M4 KILLED — a 200 with no payload reads as an empty chain (AuditEventChain.tsx): 1/17 failed
+    × a 200 with no payload is a failed verification, not an empty chain
+M5 KILLED — an error is rendered as an empty chain (AuditEventChain.tsx): 4/17 failed
+    × a 500 is a failed verification, with a way to try again — never an empty chain
+    × a 200 that is not a verdict (a list body) is a failed verification, not an empty chain
+    × a 200 with no payload is a failed verification, not an empty chain
+    × a count that is not a number is a failed verification
+M6 KILLED — the shape guard takes any totalEntries (AuditEventChain.tsx): 1/17 failed
+    × a count that is not a number is a failed verification
+M7 KILLED — a failed verification offers no way to try again (AuditEventChain.tsx): 1/17 failed
+    × a 500 is a failed verification, with a way to try again — never an empty chain
+M8 KILLED — the ledger loading branch tells AnA nothing of the second chain (AdminSurfaces.tsx): 1/17 failed
+    × a ledger still loading publishes the audit-event verdict to AnA, not a blank
+M9 KILLED — no second verdict when the ledger shows no rows (AdminSurfaces.tsx): 3/17 failed
+    × a failed ledger read still states the audit-event verdict, on screen and to AnA
+    × an empty ledger still states the audit-event verdict
+    × a ledger the role cannot read still states what the server lets it read of the audit-event chain
+M10 KILLED — the ready summary omits the second chain (AdminSurfaces.tsx): 4/17 failed
+    × an intact chain says intact, how many entries, and sits beside the ledger verdict
+    × the two chains are never merged: an intact ledger beside a broken audit-event chain says both
+    × finding 111: an empty chain is "nothing to verify", never intact, even when the route says true
+    × a 500 is a failed verification, with a way to try again — never an empty chain
+M11 KILLED — the two chains merged under one fact (Part11Console's key collision) (AdminSurfaces.tsx): 1/17 failed
+    × the two chains are never merged: an intact ledger beside a broken audit-event chain says both
+M12 KILLED — the ready banner drops the second verdict (AdminSurfaces.tsx): 13/17 failed
+    × reads the route the Part 11 console read
+    × an intact chain says intact, how many entries, and sits beside the ledger verdict
+    × the two chains are never merged: an intact ledger beside a broken audit-event chain says both
+    × finding 111: an empty chain is "nothing to verify", never intact, even when the route says true
+    × an unhashed chain reads "not verifiable", not the raw key, and is not intact
+    × "intact" needs the server's integrity verdict too: a status with no verdict is not intact
+    × an unrecognised status is "not verified", not intact
+    × a 500 is a failed verification, with a way to try again — never an empty chain
+    × a 200 that is not a verdict (a list body) is a failed verification, not an empty chain
+    × a 200 with no payload is a failed verification, not an empty chain
+    × a count that is not a number is a failed verification
+    × a 403 is "not available to your role", not "couldn’t verify"
+    × while the verification is in flight, nothing is called intact — on screen or to AnA
+
+## Part 2 — 8/8 killed
+P1 KILLED — the alias is removed: old links and AnA land nowhere (registryModel.ts)
+    red  1/4 failed in foldPart11Console.test.ts
+      × resolves part11-console to Audit trail from a link, an in-app move and AnA, with or without a project open
+P2 KILLED — the id is left on a rail (registryModel.ts)
+    red  1/4 failed in foldPart11Console.test.ts
+      × is in no launch scope list and no rail, and no tour stops on it; Audit trail stays never-switchable
+P3 KILLED — the id is left in LAUNCH_SHELL_SURFACES (launch-scope.ts)
+    red  2/42 failed in foldPart11Console.test.ts, launch-scope.test.ts
+      × is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)
+      × is in no launch scope list and no rail, and no tour stops on it; Audit trail stays never-switchable
+P4 KILLED — the id is left on 20260810's keep-list (a stray row stays live and fails 20260823's tier guard) (20260810_reconcile_module_catalog.sql)
+    red  1/19 failed in catalog-module-claims.contract.test.ts
+      × deprecates a part11-console row added by another path, and keeps its subscription, across replay
+P5 KILLED — a tour stop on the retired id is left in (demo-scripts.ts)
+    red  1/4 failed in foldPart11Console.test.ts
+      × is in no launch scope list and no rail, and no tour stops on it; Audit trail stays never-switchable
+P6 KILLED — Audit trail loses its claim on /api/part11 (the route its second verdict reads) (ui-surface-registry.ts)
+    red  1/4 failed in foldPart11Console.test.ts
+      × lands on Audit trail, which reads the console's route under a registry claim that covers it
+    pass scripts/ci/check-launch-scope-api.ts exit 0
+      × ci:launch-scope-api: 545 API paths named by launch and shell screens; none refused. {"launch":495,"infrastructure":2,"never-gated":48}
+P7 KILLED — ID_BASELINE is left at 110 (check-ana-surface-context.mjs)
+    red  scripts/ci/check-ana-surface-context.mjs exit 1
+      × [ci:ana-surface-context] FAIL — 1 issue(s):
+      ×   surface-id coverage FELL to 109, below the baseline of 110 — a routable surface id stopped publishing its screen state to AnA. Restore the publish call.
+P8 KILLED — the access-qualification list keeps the retired id (launch-catalog.ts)
+    red  1/4 failed in launch-qualification-catalog.test.ts
+      × both browser qualification specs actually use the canonical derivation
+
+# P6 note: ci:launch-scope-api stays green when audit-trail drops /api/part11, because 'review' also claims
+# that prefix; the fold guard is what pins audit-trail's own claim on the route its second verdict reads.

@@ -9,6 +9,11 @@ Done on 2026-10-29:
 - human factors reached inside the project (`8658aa74`);
 - device API claims narrowed (`11a7d5ce`).
 
+Landed since, against this plan:
+- **F1** slices A and B (`59b1482d2`, `79d00b348`): the risk register and design-control trace are the project's, inside device-engineering; Accept residual is signed, and since `84aada8f7` binds the hazard's content. The fold itself (retiring `risk` and `design-controls`) waits on decision 4.
+- **F3, done** (`3038bbe66`, `58008b4ac`, `b9de04c62`): device-vault and artifacts-center are folded into Vault and retired. The device "framework" filter was not carried: it was a client-side guess from the kind, not a recorded fact (`docs/evidence/D2-ONE-ANA/2026-10-29/fold-f3-vault/`).
+- Engineering's nonconformance and documents panels read the project (`07d0116f9`); DHF and change requests stay organization-wide pending a decision (the kit store holds one kit per organization; nothing writes `change_requests`).
+
 This file is the plan for the rest, read at `96537cfe`. Line numbers are at that commit.
 
 The placement map that governs these folds is `.design/client-journey/FUNCTION_PARITY.md`, `INFORMATION_ARCHITECTURE.md` §5 and `A2_10_REMAINING_FOLDS.md`. This file applies it; it does not replace it.

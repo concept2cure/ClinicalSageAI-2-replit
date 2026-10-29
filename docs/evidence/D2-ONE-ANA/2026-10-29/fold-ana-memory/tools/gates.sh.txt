@@ -1,0 +1,11 @@
+#!/bin/bash
+# Usage: gates.sh OUT script... ; runs each npm script, records its tail and exit
+OUT=$1; shift
+cd /home/user/ClinicalSageAI-2-replit
+for g in "$@"; do
+  echo "=== npm run $g" >> $OUT
+  timeout 900 npm run --silent "$g" > /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/ana-memory-fold/gate.out 2>&1
+  rc=$?
+  tail -4 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/ana-memory-fold/gate.out >> $OUT
+  echo "=== exit $rc ($g)" >> $OUT
+done

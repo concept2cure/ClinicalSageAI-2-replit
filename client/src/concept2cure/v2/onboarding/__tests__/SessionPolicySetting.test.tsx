@@ -97,7 +97,7 @@ describe('session policy remains bound to the original workspace', () => {
     session.organizationId = '38';
     fireEvent.click(screen.getByRole('button', { name: 'Save session policy' }));
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
-    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(await screen.findByText(/organization changed.*reopen this page/i)).toBeTruthy();
     expect(screen.queryByRole('spinbutton')).toBeNull();
   });
 
@@ -107,7 +107,7 @@ describe('session policy remains bound to the original workspace', () => {
     render(<SessionPolicySetting />);
     session.organizationId = '38';
     await act(async () => { finish(json(200, payload)); });
-    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(await screen.findByText(/organization changed.*reopen this page/i)).toBeTruthy();
     expect(screen.queryByRole('spinbutton')).toBeNull();
     expect(apiRequest).toHaveBeenCalledTimes(1);
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings');
@@ -122,7 +122,7 @@ describe('session policy remains bound to the original workspace', () => {
     await waitFor(() => expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(true));
     session.organizationId = '38';
     await act(async () => { finish(json(200, { success: true, settings: { security: { sessionTimeoutMinutes: 35, maxConcurrentSessions: 2 } } })); });
-    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(await screen.findByText(/organization changed.*reopen this page/i)).toBeTruthy();
     expect(screen.queryByText(/session policy saved/i)).toBeNull();
     expect(screen.queryByRole('spinbutton')).toBeNull();
     expect(apiRequest.mock.calls.filter(([method]) => method === 'PATCH')).toHaveLength(1);

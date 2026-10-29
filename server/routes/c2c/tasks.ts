@@ -28,6 +28,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
+import { admittedProjectId, projectAdmissionMiddleware } from './project-access';
 
 const logger = createScopedLogger('concept2cure-tasks');
 const router = Router();
@@ -62,6 +63,17 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+
+/* Every task route admits the project first (D6, docs/evidence/D6-PROJECT-WRITE-GATES/
+   2026-10-29/). The handlers scoped every statement to the organization and
+   checked nothing else, so a viewer, a member without edit permission, a
+   member who is not on a private project and any caller of an archived
+   project created, changed, deleted and bulk-generated its tasks, and read
+   them. Reads are admitted in read mode, writes in write mode; the assessment
+   is a POST that changes nothing, so it is admitted as a read. */
+router.param('projectId', projectAdmissionMiddleware({
+  routes: { 'POST /projects/:projectId/tasks/assess': 'read' },
+}));
 
 /* ── Project tasks and submission milestones ────────────────────────────── */
 
@@ -305,10 +317,16 @@ router.put('/projects/:projectId/tasks/:taskId', async (req: Request, res: Respo
     const updates: Record<string, unknown> = { ...data, updatedAt: new Date() };
     if (data.dueDate) updates.dueDate = new Date(data.dueDate);
 
+    // The URL's project as well: the project admitted above is the only one
+    // whose task this may change.
     const [updated] = await db
       .update(projectTasks)
       .set(updates)
-      .where(and(eq(projectTasks.id, taskId), eq(projectTasks.organizationId, organizationId)))
+      .where(and(
+        eq(projectTasks.id, taskId),
+        eq(projectTasks.organizationId, organizationId),
+        eq(projectTasks.projectId, admittedProjectId(req)),
+      ))
       .returning();
 
     if (!updated) return sendError(res, 404, 'Task not found');
@@ -332,9 +350,14 @@ router.delete('/projects/:projectId/tasks/:taskId', async (req: Request, res: Re
 
     // db's union return type isn't iterable; cast at the boundary then index
     // (matches the .returning() pattern used elsewhere in this file).
+    // The URL's project as well, as in the PUT.
     const deletedRows = (await db
       .delete(projectTasks)
-      .where(and(eq(projectTasks.id, taskId), eq(projectTasks.organizationId, organizationId)))
+      .where(and(
+        eq(projectTasks.id, taskId),
+        eq(projectTasks.organizationId, organizationId),
+        eq(projectTasks.projectId, admittedProjectId(req)),
+      ))
       .returning()) as any[];
     const deleted = deletedRows[0];
     if (!deleted) return sendError(res, 404, 'Task not found');

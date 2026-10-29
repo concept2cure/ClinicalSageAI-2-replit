@@ -813,6 +813,15 @@ close the gap between what we have and what Veeva offers here"). That direction 
 
 ## Product decisions, 2026-10-25 (founder)
 
+- **Who may change an organisation view (left open above; answered 2026-10-29 by the saved-views design,
+  `docs/design/VAULT_SAVED_VIEWS_2026-10-29.md` §3.3, as the founder's delegated product call).** Any member may
+  save a personal view, viewers included, because a personal view is a search remembered. Publishing to the
+  organisation, sharing a personal view, and changing a shared view's parameters take a writing role and are the
+  creator's. An organisation manager may rename or delete any organisation view. The creator may always withdraw
+  their own (make it personal, or delete it), even after losing a writing role. A view is a preference, not a
+  governed record: no chained audit row, with the creator, last editor and time kept on the row. The day a view
+  drives a governed act it becomes a governed record, audited and versioned.
+
 ### P-47 — A client starts at their projects; features live in the project, not in an app list
 
 Decided by the founder on 2026-10-25, after testing the product as a client and finding they could not tell how
@@ -871,6 +880,27 @@ surface now also claims `/api/capa-mdr/capa`, so Quality reaches CAPA for every 
 vigilance stay with device post-market. The CAPA lifecycle map moves to
 `shared/constants/capa-lifecycle.ts`, so the server enforces and the screen offers one set of moves. Evidence:
 `docs/evidence/D2-ONE-ANA/2026-10-29/p48-quality-records/`.
+
+### P-49 — Training on a controlled SOP is assigned by role and by name, opens at approval, and reaches the people assigned
+
+Decided by the founder, 2026-10-29, answering MR-12's NEW-2 and NEW-3 and the distribution question in
+`docs/design/PARITY_WEAVE_VEEVA_BASICS_2026-10-29.md` §8 item 8 (the recommendations, chosen as offered):
+
+- **Assignment (NEW-2): roles, plus named people.** Each controlled document lists the job roles and any named people
+  who must train on it. The organisation manages its own list of job roles; a role is a job function (QA,
+  Manufacturing, Clinical Operations), not a permission role, so assigning by role never means "everyone with access".
+  Curricula (sets of documents assigned to a role together) can be added later without moving data.
+- **Training before the effective date (NEW-3): yes, once approved.** Between approval and the effective date is the
+  training period. An acknowledgment of an approved version binds that version's digest and release signature, and it
+  counts toward compliance from the moment that version is in force. Nothing counts toward a version that is not yet
+  in force.
+- **Distribution: the people assigned.** When a version is approved, each person it is assigned to (by role or by
+  name) receives a task to read and acknowledge it, due by its effective date. The task uses the existing
+  deadline-task infrastructure; there is no second scheduler. Nobody else is notified.
+- **Compliance counts the assigned people.** The denominator is the distinct people assigned, the numerator their
+  unexpired acknowledgments of the version in force. A document assigned to nobody reads "not assigned", never 0/N.
+
+Not decided here: MR-12 NEW-4 (review quorum and the retirement meaning).
 
 ## How sessions run under this file
 

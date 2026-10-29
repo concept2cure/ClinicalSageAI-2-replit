@@ -57,7 +57,6 @@ const CATALOG_FILES = [
 const CONTEXTUAL = {
   apps: 'the catalog itself — listing it inside itself is a loop',
   'admin-console': 'platform administration, reached from the admin area not subscribed to',
-  setup: 'first-run configuration, reached before any catalog exists',
   onboarding: 'first-run flow, entered automatically',
   'onboarding-ingest': 'step within the onboarding flow',
   billing: 'account administration, not a subscribable capability',
@@ -74,9 +73,9 @@ const CONTEXTUAL = {
   'project-home': 'the landing surface for a project, routed to on selection',
   'conversation-thread': 'AnA rail destination, reached by asking a question',
   'ana-command': 'AnA rail surface, on the persistent rail',
-  'ana-memory': 'AnA rail surface, on the persistent rail',
-  'audit-trail': 'governance surface, reached from Part 11 console and record views',
-  'part11-console': 'governance surface, reached from admin and compliance views',
+  // ana-memory folded into conversation-thread on 2026-10-29 (D2); its links land there.
+  // part11-console folded into audit-trail on 2026-10-29 (D2); its links land here.
+  'audit-trail': 'governance surface, reached from admin, compliance and record views',
   'compliance-reports': 'reporting surface, reached from Reporting & analytics and the audit trail',
   'task-board': 'on the persistent rail as Tasks',
   coverage: 'engineering diagnostic, not a customer capability',

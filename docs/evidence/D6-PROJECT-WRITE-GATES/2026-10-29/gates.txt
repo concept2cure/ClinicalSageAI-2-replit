@@ -1,0 +1,46 @@
+# gates.txt
+
+## 1. On HEAD 46db6c762 + this change only (a scratch extraction, in a throwaway git index so the gates' git ls-files run)
+
+### npm run ci:sql-interpolation (HEAD 46db6c762 + this change, a scratch extraction in a throwaway git index)
+[ci:sql-interpolation] 26 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1062 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+### exit 0
+### npm run ci:program-ownership-single-source (HEAD 46db6c762 + this change, a scratch extraction in a throwaway git index)
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+### exit 0
+### npm run ci:tenant-isolation:no-regression (HEAD 46db6c762 + this change, a scratch extraction in a throwaway git index)
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+### exit 0
+### npm run ci:tenant-entry-points (HEAD 46db6c762 + this change, a scratch extraction in a throwaway git index)
+[ci:tenant-entry-points] 13 entry point(s); 7 consider tenant entitlement, 6 do not (baseline 6)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+### exit 0
+### npm run ci:drizzle-tenant-scope (HEAD 46db6c762 + this change, a scratch extraction in a throwaway git index)
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+### exit 0
+
+## 2. On the shared working tree at 46db6c762 (this change plus other sessions' uncommitted work)
+
+### npm run ci:sql-interpolation
+[ci:sql-interpolation] 26 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1062 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+### exit 0
+### npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+### exit 0
+### npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+### exit 0
+### npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 13 entry point(s); 7 consider tenant entitlement, 6 do not (baseline 6)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+### exit 0
+### npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+### exit 0
+
+# At 18ecfe003, ci:tenant-isolation:no-regression failed on HEAD alone (server/services/qms/training-compliance.ts:113,
+# from 5c75de2ab), with or without this change; main fixed it in c5f8e1ac4.

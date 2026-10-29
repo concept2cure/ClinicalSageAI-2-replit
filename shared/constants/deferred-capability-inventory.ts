@@ -40,9 +40,9 @@ export const DEFERRED_CAPABILITY_INVENTORY: readonly DeferredCapability[] = [
   { surfaceId: 'ana-command', decision: 'converge', canonicalSurfaces: ['conversation-thread', 'insights', 'dispatch-readiness'],
     implementedParts: 'Enterprise portfolio commands and retained workflow controls.', completionNeeded: 'Qualify actual service effects and audit records for each command; converge on the current conversation, reports and filing gate.',
     description: 'Deferred command board; workflow effect and audit claims remain unqualified. Use AnA conversations, Reporting and Dispatch readiness for their current recorded workflows.' },
-  { surfaceId: 'ana-memory', decision: 'converge', canonicalSurfaces: ['conversation-thread'],
-    implementedParts: 'Memory browser over the retained MDX store.', completionNeeded: 'Read and govern the memory actually used by each AnA turn rather than an unwritten second store.',
-    description: 'Deferred memory browser; it does not read the memory used by AnA conversations. Its empty list cannot establish what AnA remembers.' },
+  /* ana-memory left this list on 2026-10-29: it folded into the conversation, which
+     now reads the memory each turn uses ("What AnA remembers"; D2,
+     docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/). */
   { surfaceId: 'training', decision: 'converge', canonicalSurfaces: ['quality'],
     implementedParts: 'Retained training screen and discovery layout.', completionNeeded: 'Provide persisted lessons, paths and assessed certifications before exposure, or converge on QMS read-and-understood training.',
     description: 'Deferred training screen. Guided lessons, paths and certifications are unfinished. Quality provides the current read-and-understood training record.' },

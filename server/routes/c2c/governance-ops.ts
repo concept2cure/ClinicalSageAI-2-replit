@@ -21,7 +21,7 @@ import {
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 import type { GovernedLifecycleState } from '../../services/governed-decision-repository';
 
 const logger = createScopedLogger('concept2cure-governance-ops');
@@ -51,6 +51,12 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+/* Every /projects/:projectId route admits the project first (D6, docs/evidence/
+   D6-PROJECT-WRITE-GATES/2026-10-29/). The decision transition checked read
+   access only, so a viewer, a member without edit permission and any caller
+   of an archived project moved a governed decision. It is admitted in write
+   mode in front of its own lifecycle rules; the reads keep read mode. */
+router.param('projectId', projectAdmissionMiddleware());
 
 /**
  * GET /api/concept2cure/projects/:projectId/governance/decisions

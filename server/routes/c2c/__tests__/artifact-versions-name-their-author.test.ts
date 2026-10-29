@@ -57,7 +57,12 @@ vi.mock('../../../middleware/tenantContext', () => ({
 vi.mock('../../../middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_q: unknown, _s: unknown, n: () => void) => n(),
 }));
-vi.mock('../project-access', () => ({ verifyProjectAccess: vi.fn(async () => true), getActorRole: () => 'viewer' }));
+vi.mock('../project-access', async () => {
+  const verifyProjectAccess = vi.fn(async () => true);
+  // The router's admission, decided by the same stub (c2c/__tests__/support/admission-double.ts).
+  const { admissionDecidedBy } = await import('./support/admission-double');
+  return { verifyProjectAccess, getActorRole: () => 'viewer', projectAdmissionMiddleware: admissionDecidedBy(verifyProjectAccess) };
+});
 vi.mock('../../../services/clinical-regulatory-evidence/lineage-gate', () => ({ enforceAuthorLineage: vi.fn() }));
 vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({ interceptArtifactChange: vi.fn(), interceptFeedback: vi.fn() }));
 vi.mock('../../../services/generation-guard.js', () => ({ createTraceId: () => 't1', emitTraceEvent: vi.fn() }));

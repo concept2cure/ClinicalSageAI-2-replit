@@ -18,7 +18,10 @@
  *     member's drawer says so, and lists the grants it has;
  *   - a role's scopes are read from the checks that enforce them
  *     (server/services/tenant/role-scopes.ts), so they are shown, not edited;
- *   - a setting is shown as it is; nothing on this tab changes it yet.
+ *   - a row of the organisation's record is shown as it is. Since Setup folded
+ *     into Settings (D2, 2026-10-29), each governed setting is changed on its own
+ *     card under a reason (adminConsoleSettings.test.tsx); the session timeout is
+ *     the session-policy card, not a row.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,7 +55,6 @@ const payload = {
     audit: [],
     settings: [
       { id: 'sso', label: 'Single sign-on', kind: 'toggle', value: 'Disabled', desc: 'SAML / OIDC via your IdP' },
-      { id: 'session', label: 'Session timeout', kind: 'number', value: '30 minutes', desc: 'Idle sign-out' },
     ],
     sso: {
       primary: { kind: '—', provider: 'Not configured', status: 'disabled', domain: '', users: 0, lastSync: 'never' },
@@ -101,7 +103,6 @@ describe('Admin: each action reaches the real thing, or is not offered', () => {
     expect(screen.queryByRole('button', { name: /Edit scopes/ })).toBeNull();
     clickTab('Settings');
     expect(screen.getByText('Single sign-on').closest('button')).toBeNull();
-    expect(screen.getByText('Session timeout').closest('button')).toBeNull();
     expect(p.onAsk).not.toHaveBeenCalled();
   });
 

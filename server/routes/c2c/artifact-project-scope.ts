@@ -27,12 +27,22 @@ import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifa
 import { verifyProjectAccess } from './project-access';
 import { paramStr } from './shared';
 
-/** The integer project the URL names, when the caller may act in it; else null (answer 404). */
-export async function authorizedProjectId(req: Request, organizationId: number): Promise<number | null> {
+/**
+ * The integer project the URL names in this organization (an integer id, or a
+ * program UUID through its anchor), or null when it names none. Access is not
+ * decided here: the artifacts router admits this id before any handler runs.
+ */
+export async function urlProjectId(req: Request, organizationId: number): Promise<number | null> {
   const urlProject = paramStr(req.params.projectId).replace(/^proj_/, '');
   const spine = await resolveCmcArtifactProject(organizationId, urlProject, { strict: true });
-  if (spine.state !== 'linked') return null;
-  return (await verifyProjectAccess(req, String(spine.artifactProjectId))) ? spine.artifactProjectId : null;
+  return spine.state === 'linked' ? spine.artifactProjectId : null;
+}
+
+/** The integer project the URL names, when the caller may act in it; else null (answer 404). */
+export async function authorizedProjectId(req: Request, organizationId: number): Promise<number | null> {
+  const projectId = await urlProjectId(req, organizationId);
+  if (projectId === null) return null;
+  return (await verifyProjectAccess(req, String(projectId))) ? projectId : null;
 }
 
 export type ProjectArtifact = typeof concept2cureArtifacts.$inferSelect;

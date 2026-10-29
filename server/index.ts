@@ -37,6 +37,7 @@ import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSw
 import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { startTaskDueSweep } from './jobs/taskDueSweep';
 import { startCsrQueueRecovery } from './jobs/csrQueueRecovery';
+import { startVaultProcessingSweep } from './jobs/vaultProcessingSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -293,6 +294,11 @@ async function startServer() {
     // restart stopped, as its requester, after re-checking their access.
     // Disable with CSR_QUEUE_RECOVERY_DISABLED=true. See jobs/csrQueueRecovery.ts.
     startCsrQueueRecovery();
+
+    // Vault: read the text of every version the upload request left pending
+    // (a scanned PDF's OCR is off the request, MR-08 Stage 3). Self-guards in
+    // tests; disable with VAULT_PROCESSING_SWEEP_DISABLED=true.
+    startVaultProcessingSweep();
   });
 }
 

@@ -40,6 +40,8 @@ const of = (...ns: number[]) => ns.map(id).sort();
 beforeAll(async () => {
   db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL, migrations: [
     'migrations/20260906_vault_documents_fulltext.sql',
+    // The search counts versions still being read (MR-08 Stage 3) from the catalog.
+    'migrations/20260905_document_catalog.sql',
     'migrations/20261006_document_data_dispositions.sql',
     'migrations/20260731c_canonical_documents.sql',
   ] });

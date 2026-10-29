@@ -41,6 +41,7 @@ const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
 import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
+import { WhatAnaRemembers } from '../WhatAnaRemembers';
 import {
   CanvasDocumentList, documentListUrl, rowsOf, useDocumentList, useNarrowCanvas,
   type BuiltDocument, type ListFocus, type ListScope,
@@ -1102,6 +1103,9 @@ export type { AskOrigin } from '../editor/askAnaToDraft';
 
 export function ConversationThread({ onNav, liveDrive, shellChat, engine }: OwnedSurfaceViewProps) {
   const [engineOpen, setEngineOpen] = useState(false);
+  /* What AnA remembers (the fold of `ana-memory`, 2026-10-29): her notes on
+     working with this person, read only, beside the conversation. */
+  const [remembersOpen, setRemembersOpen] = useState(false);
   const engineMenuId = useId();
   const [location, navigate] = useLocation();
   /* The conversation the URL names (routing.ts), read once, at mount. It is
@@ -1931,6 +1935,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           >
             {I.plus} New conversation
           </button>
+          <button type="button" className="ct-head-open" aria-haspopup="dialog" onClick={() => setRemembersOpen(true)}>
+            {I.history} What AnA remembers
+          </button>
           {/* The canvas's Documents list: shown and hidden here while no
               document is open; an open document reaches it from its bar. */}
           {!expandedDocId && (conversationId || projectOpen) && (
@@ -2378,6 +2385,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           onClose={summary.close}
           onContinue={summaryContinue}
         />
+      )}
+      {/* The project its notes are read for is the one this conversation's turns carry. */}
+      {remembersOpen && (
+        <WhatAnaRemembers projectRef={shellProjectId} projectName={shellProgramName()} onClose={() => setRemembersOpen(false)} />
       )}
       <C2CToast msg={toast} />
     </div>

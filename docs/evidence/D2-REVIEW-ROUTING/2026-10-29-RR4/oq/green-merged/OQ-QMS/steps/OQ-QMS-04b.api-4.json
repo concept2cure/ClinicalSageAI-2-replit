@@ -1,0 +1,69 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5198/api/mdx/qms/documents/36/review-route",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "documentId": 36,
+      "status": "in_review",
+      "round": {
+        "route": {
+          "id": "01a12bfb-5fe2-4b8f-9c5c-29229b0c2c4f",
+          "round": 1,
+          "senderId": 6,
+          "senderName": "OQ Runner",
+          "order": "parallel",
+          "status": "open",
+          "statusReason": null,
+          "statusBy": null,
+          "statusAt": null,
+          "contentDigest": "bde162766f3e681732e45f1b78b6392a035c759c4b2ecfa7fe469dded6515f8a",
+          "reviewDueAt": null,
+          "approvalDueAt": "2026-11-03T23:59:59.999Z",
+          "createdAt": "2026-10-29T15:40:01.247Z"
+        },
+        "members": [
+          {
+            "taskId": "ROUTE-01a12bfb-7",
+            "userId": 7,
+            "role": "approver",
+            "step": 1,
+            "printedName": "OQ Signer",
+            "outcome": "pending",
+            "stepOpen": true,
+            "dueDate": "2026-11-03T23:59:59.999Z",
+            "signature": null,
+            "actId": null
+          }
+        ],
+        "reviewComplete": true,
+        "approvalComplete": false,
+        "history": [
+          {
+            "action": "send",
+            "at": "2026-10-29T15:40:01.346Z",
+            "actorId": 6,
+            "actorName": "OQ Runner",
+            "reason": "OQ-006 step 04b: SOP A ready for QA approval",
+            "members": [
+              {
+                "userId": 7,
+                "role": "approver",
+                "printedName": "OQ Signer"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
