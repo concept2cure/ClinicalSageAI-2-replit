@@ -119,12 +119,25 @@ describe('the other create paths refuse route columns (M9)', () => {
     const { pglitePool } = await import('./pglite-pool.fixture');
     const handler = new CreateTaskHandler(pglitePool(() => holder.pg) as never);
     const result = await handler.execute(
-      { type: 'create_task', params: { title: 'Rule task', review_route_id: ROUTE } } as never,
+      { type: 'create_task', params: { title: 'Rule task', moduleType: 'IND', review_route_id: ROUTE } } as never,
       { organizationId: ORG, projectId: PROJECT, userId: USER, event: 'artifact.approved', data: {} } as never,
       { ruleId: 'rule-1', name: 'Rule' } as never,
     );
     expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Review route fields/);
     expect((await run('SELECT count(*)::int AS n FROM unified_tasks')).rows[0].n).toBe(0);
+  });
+
+  it("the same rule action without a route column still creates its task (the refusal is the route column's)", async () => {
+    const { CreateTaskHandler } = await import('../../rules-engine/actions/index');
+    const { pglitePool } = await import('./pglite-pool.fixture');
+    const handler = new CreateTaskHandler(pglitePool(() => holder.pg) as never);
+    const result = await handler.execute(
+      { type: 'create_task', params: { title: 'Rule task', moduleType: 'IND' } } as never,
+      { organizationId: ORG, projectId: PROJECT, userId: USER, event: 'artifact.approved', data: {} } as never,
+      { ruleId: 'rule-1', name: 'Rule' } as never,
+    );
+    expect(result.success, String(result.error)).toBe(true);
   });
 
   it('a blueprint milestone naming reviewRouteId: nothing seeded', async () => {

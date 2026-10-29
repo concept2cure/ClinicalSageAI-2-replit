@@ -1,0 +1,676 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:03:59.873Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T05:03:59.875Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:03:59.875Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:04:00.508Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written
+[AnA Command] Executed update_task: FAILED — A task in "pending" cannot move to "completed".
+
+stderr | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row
+[AnA Command] Executed create_task: OK — Created task "Smuggled review" — ID: 1.
+
+ × server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written 46ms
+   → expected undefined to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+ × server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row 43ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a rule's create_task action naming review_route_id: the action fails, nothing inserted 40ms
+ × server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a blueprint milestone naming reviewRouteId: nothing seeded 37ms
+   → promise resolved "[ 'TASK-BP-1-pre-ind', …(1) ]" instead of rejecting
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:04:12.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:04:12.260Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-29T05:04:12.260Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-29T05:04:12.261Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH status: 409, the task and the ledger unchanged 107ms
+   → {"success":true,"data":{"id":1,"taskId":"ROUTE-R","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":"c-1","sourceEntityType":"canonical_document","title":"Review: Clinical overview v2","description":null,"category":null,"taskType":null,"assigneeId":6,"assigneeName":"Rita Reviewer","assignedBy":null,"assignedAt":null,"teamId":null,"status":"in-progress","priority":"medium","progress":null,"completionPercentage":null,"startDate":null,"dueDate":"2026-11-01T00:00:00.000Z","completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":5,"createdAt":"2026-10-29T05:04:17.255Z","updatedAt":"2026-10-29T05:04:17.318Z","deletedAt":null,"deletedBy":null,"reviewRouteId":"00000000-0000-4000-8000-0000000000aa","reviewRole":"reviewer","reviewStep":1,"routeSignatureId":null,"routeActId":null}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged 47ms
+   → expected 'CONFLICT_STALE' to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned 72ms
+   → {"success":true,"data":[{"taskId":"ROUTE-R","assignedTo":"Owner","assigneeId":5}],"count":1}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > DELETE (archive): 409, not archived 40ms
+   → {"success":true,"archived":true,"taskId":"ROUTE-R"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the predecessor: 409, no edge, nothing blocked 52ms
+   → {"success":true,"data":{"id":1,"dependencyId":"DEP-1793250257548-90360320","organizationId":7,"predecessorTaskId":"ROUTE-R","successorTaskId":"TASK-A","dependencyType":"finish-to-start","lagTime":0,"status":"active","isCritical":null,"isBlocking":true,"impactScore":null,"riskLevel":null,"cascadeEffect":null,"validationRules":null,"violationReason":null,"bypassReason":null,"bypassedBy":null,"bypassedAt":null,"metadata":null,"createdAt":"2026-10-29T05:04:17.548Z","updatedAt":"2026-10-29T05:04:17.548Z"},"successorBlocked":true}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the successor: 409, no edge, nothing blocked 44ms
+   → {"success":true,"data":{"id":1,"dependencyId":"DEP-1793250257598-4711ad3d","organizationId":7,"predecessorTaskId":"TASK-A","successorTaskId":"ROUTE-R","dependencyType":"finish-to-start","lagTime":0,"status":"active","isCritical":null,"isBlocking":true,"impactScore":null,"riskLevel":null,"cascadeEffect":null,"validationRules":null,"violationReason":null,"bypassReason":null,"bypassedBy":null,"bypassedAt":null,"metadata":null,"createdAt":"2026-10-29T05:04:17.598Z","updatedAt":"2026-10-29T05:04:17.598Z"},"successorBlocked":true}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the completion cascade skips a route member as a dependent 65ms
+   → expected 'in-progress' to be 'blocked' // Object.is equality
+ ✓ server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the remind route, which writes nothing on the row, still serves a route member 54ms
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks with reviewRouteId: 400, no row 71ms
+   → {"success":true,"data":{"id":5,"taskId":"TASK-1793250257776-d0656a5e","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Smuggled review","description":null,"category":null,"taskType":null,"assigneeId":6,"assigneeName":"Rita Reviewer","assignedBy":5,"assignedAt":"2026-10-29T05:04:17.780Z","teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.781Z","updatedAt":"2026-10-29T05:04:17.781Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null}}: expected 200 to be 400 // Object.is equality
+stderr | server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created
+Error creating tasks from template: DrizzleQueryError: Failed query: select "id", "template_id", "organization_id", "name", "description", "category", "submission_type", "milestone", "is_active", "is_default", "version", "tasks", "dependencies", "milestones", "default_duration", "critical_path", "best_practices", "regulatory_requirements", "risk_factors", "usage_count", "last_used_at", "avg_completion_time", "success_rate", "tags", "metadata", "created_by_id", "created_at", "updated_at" from "task_templates" where ("task_templates"."template_id" = $1 and "task_templates"."organization_id" = $2) limit $3
+params: BUILTIN-IND,7,1
+    at PglitePreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at PglitePreparedQuery.execute (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:826:26 {
+  query: 'select "id", "template_id", "organization_id", "name", "description", "category", "submission_type", "milestone", "is_active", "is_default", "version", "tasks", "dependencies", "milestones", "default_duration", "critical_path", "best_practices", "regulatory_requirements", "risk_factors", "usage_count", "last_used_at", "avg_completion_time", "success_rate", "tags", "metadata", "created_by_id", "created_at", "updated_at" from "task_templates" where ("task_templates"."template_id" = $1 and "task_templates"."organization_id" = $2) limit $3',
+  params: [ 'BUILTIN-IND', 7, 1 ],
+  cause: error: relation "task_templates" does not exist
+      at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+    length: 114,
+    severity: 'ERROR',
+    code: '42P01',
+    detail: undefined,
+    hint: undefined,
+    position: '429',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '1469',
+    routine: 'parserOpenTable',
+    query: 'select "id", "template_id", "organization_id", "name", "description", "category", "submission_type", "milestone", "is_active", "is_default", "version", "tasks", "dependencies", "milestones", "default_duration", "critical_path", "best_practices", "regulatory_requirements", "risk_factors", "usage_count", "last_used_at", "avg_completion_time", "success_rate", "tags", "metadata", "created_by_id", "created_at", "updated_at" from "task_templates" where ("task_templates"."template_id" = $1 and "task_templates"."organization_id" = $2) limit $3',
+    params: [ 'BUILTIN-IND', 7, 1 ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/bulk-create with a task naming review_route_id: 400, nothing created 77ms
+   → {"success":true,"data":[{"id":5,"taskId":"TASK-1793250257842-2e3bacec","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"IND","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Bulk one","description":null,"category":null,"taskType":null,"assigneeId":5,"assigneeName":"Owner","assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.849Z","updatedAt":"2026-10-29T05:04:17.849Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null},{"id":6,"taskId":"TASK-1793250257867-d14c16fb","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Bulk two","description":null,"category":null,"taskType":null,"assigneeId":5,"assigneeName":"Owner","assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.869Z","updatedAt":"2026-10-29T05:04:17.869Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null}],"count":2}: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created 32ms
+   → {"success":false,"error":"Failed to create tasks from template"}: expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata 45ms
+   → expected { …(3) } to deeply equal { note: 'kept' }
+ × server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > PATCH /:id/status: 409, unchanged, no ledger row 133ms
+   → {"success":true,"task":{"id":1,"taskId":"ROUTE-R","organizationId":42,"clientWorkspaceId":null,"projectId":null,"moduleType":"CMC","moduleIcon":null,"moduleColor":null,"sourceEntityId":"1","sourceEntityType":"stability_study","title":"Review: Clinical overview v2","description":null,"category":null,"taskType":null,"assigneeId":42,"assigneeName":null,"assignedBy":null,"assignedAt":null,"teamId":null,"status":"in-progress","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":false,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":false,"regulatoryImpact":false,"notificationSettings":null,"automationEnabled":true,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":9,"lastModifiedBy":7,"createdAt":"2026-10-29T05:04:23.693Z","updatedAt":"2026-10-29T05:04:23.796Z","deletedAt":null,"deletedBy":null,"reviewRouteId":"00000000-0000-4000-8000-0000000000aa","reviewRole":"reviewer","reviewStep":1,"routeSignatureId":null,"routeActId":null},"message":"Task status updated to in-progress"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link from the route member: 409, no link, neither blocking array written 54ms
+   → {"success":true,"link":{"id":1,"linkId":"a315b382-a096-415a-8b52-2a108b83963b","organizationId":42,"sourceTaskId":"ROUTE-R","sourceModule":"CMC","targetTaskId":"TASK-A","targetModule":"IND","linkType":"dependency","dependencyType":null,"isBlocking":true,"status":"active","impactDescription":null,"riskLevel":null,"metadata":null,"createdAt":"2026-10-29T05:04:23.859Z"},"message":"Tasks linked successfully: dependency relationship created"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link to the route member: 409, no link, neither blocking array written 51ms
+   → {"success":true,"link":{"id":1,"linkId":"e7d2bfcd-eeea-4fd6-a85e-b82ebf8847ce","organizationId":42,"sourceTaskId":"TASK-A","sourceModule":"IND","targetTaskId":"ROUTE-R","targetModule":"CMC","linkType":"dependency","dependencyType":null,"isBlocking":true,"status":"active","impactDescription":null,"riskLevel":null,"metadata":null,"createdAt":"2026-10-29T05:04:23.908Z"},"message":"Tasks linked successfully: dependency relationship created"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > POST /unified naming reviewRouteId: 400, no task, no ledger row 33ms
+   → {"success":true,"task":{"id":3,"taskId":"5a089b9e-cd18-4fe4-8bb6-94ea69e0fe35","organizationId":42,"clientWorkspaceId":null,"projectId":null,"moduleType":"IND","moduleIcon":"FileText","moduleColor":"#10B981","sourceEntityId":null,"sourceEntityType":null,"title":"Smuggled","description":null,"category":"regulatory","taskType":"action","assigneeId":null,"assigneeName":null,"assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":false,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":false,"regulatoryImpact":false,"notificationSettings":null,"automationEnabled":true,"aiSuggestions":null,"tags":[],"attachments":null,"comments":null,"metadata":{},"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":7,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:23.952Z","updatedAt":"2026-10-29T05:04:23.952Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null},"message":"Task created successfully in IND module"}: expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > createUnifiedTask, called directly with a route column, refuses and inserts nothing 30ms
+   → promise resolved "{ id: 3, …(68) }" instead of rejecting
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > a module sync (insert-only) leaves the route member as it was 35ms
+ × server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task 505ms
+   → expected [ 'R-APPROVER', 'R-REVIEWER', …(1) ] to deeply equal [ 'R-REVIEWER', 'T-BLOCKED' ]
+ × server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage 13ms
+   → expected { taskId: 'R-APPROVER', …(14) } to match object { waitingOn: 'review', …(2) }
+(13 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 21 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task
+AssertionError: expected [ 'R-APPROVER', 'R-REVIEWER', …(1) ] to deeply equal [ 'R-REVIEWER', 'T-BLOCKED' ]
+
+- Expected
++ Received
+
+  [
++   "R-APPROVER",
+    "R-REVIEWER",
+    "T-BLOCKED",
+  ]
+
+ ❯ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts:61:49
+     59|     const { runTaskDueSweep } = await import('../taskDueSweep');
+     60|     const summary = await runTaskDueSweep();
+     61|     expect(h.notices.map(n => n.taskId).sort()).toEqual(['R-REVIEWER',…
+       |                                                 ^
+     62|     expect(summary.overdueNotified).toBe(2);
+     63|     const marker = await pg.query<{ task_id: string; marked: boolean }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/21]⎯
+
+ FAIL  server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage
+AssertionError: expected { taskId: 'R-APPROVER', …(14) } to match object { waitingOn: 'review', …(2) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "dueSoon": false,
+-   "overdue": false,
+-   "waitingOn": "review",
++   "overdue": true,
+  }
+
+ ❯ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts:78:22
+     76|     const work = await readMyWork(drizzle(pg) as unknown as RequestDb,…
+     77|     const approver = work.items.find(i => i.taskId === 'R-APPROVER')!;
+     78|     expect(approver).toMatchObject({ waitingOn: 'review', overdue: fal…
+       |                      ^
+     79|     const ordinary = work.items.find(i => i.taskId === 'T-BLOCKED')!;
+     80|     expect(ordinary).toMatchObject({ waitingOn: null, overdue: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > PATCH /:id/status: 409, unchanged, no ledger row
+AssertionError: {"success":true,"task":{"id":1,"taskId":"ROUTE-R","organizationId":42,"clientWorkspaceId":null,"projectId":null,"moduleType":"CMC","moduleIcon":null,"moduleColor":null,"sourceEntityId":"1","sourceEntityType":"stability_study","title":"Review: Clinical overview v2","description":null,"category":null,"taskType":null,"assigneeId":42,"assigneeName":null,"assignedBy":null,"assignedAt":null,"teamId":null,"status":"in-progress","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":false,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":false,"regulatoryImpact":false,"notificationSettings":null,"automationEnabled":true,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":9,"lastModifiedBy":7,"createdAt":"2026-10-29T05:04:23.693Z","updatedAt":"2026-10-29T05:04:23.796Z","deletedAt":null,"deletedBy":null,"reviewRouteId":"00000000-0000-4000-8000-0000000000aa","reviewRole":"reviewer","reviewStep":1,"routeSignatureId":null,"routeActId":null},"message":"Task status updated to in-progress"}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:83:44
+     81|   (await pg.query('SELECT status, assignee_id, blocked_by, blocks, del…
+     82| const refused = (r: request.Response, code = 'ROUTE_TASK_OWNED_BY_ROUT…
+     83|   expect(r.status, JSON.stringify(r.body)).toBe(status);
+       |                                            ^
+     84|   expect(r.body.code).toBe(code);
+     85| };
+ ❯ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:91:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link from the route member: 409, no link, neither blocking array written
+AssertionError: {"success":true,"link":{"id":1,"linkId":"a315b382-a096-415a-8b52-2a108b83963b","organizationId":42,"sourceTaskId":"ROUTE-R","sourceModule":"CMC","targetTaskId":"TASK-A","targetModule":"IND","linkType":"dependency","dependencyType":null,"isBlocking":true,"status":"active","impactDescription":null,"riskLevel":null,"metadata":null,"createdAt":"2026-10-29T05:04:23.859Z"},"message":"Tasks linked successfully: dependency relationship created"}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:83:44
+     81|   (await pg.query('SELECT status, assignee_id, blocked_by, blocks, del…
+     82| const refused = (r: request.Response, code = 'ROUTE_TASK_OWNED_BY_ROUT…
+     83|   expect(r.status, JSON.stringify(r.body)).toBe(status);
+       |                                            ^
+     84|   expect(r.body.code).toBe(code);
+     85| };
+ ❯ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:101:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link to the route member: 409, no link, neither blocking array written
+AssertionError: {"success":true,"link":{"id":1,"linkId":"e7d2bfcd-eeea-4fd6-a85e-b82ebf8847ce","organizationId":42,"sourceTaskId":"TASK-A","sourceModule":"IND","targetTaskId":"ROUTE-R","targetModule":"CMC","linkType":"dependency","dependencyType":null,"isBlocking":true,"status":"active","impactDescription":null,"riskLevel":null,"metadata":null,"createdAt":"2026-10-29T05:04:23.908Z"},"message":"Tasks linked successfully: dependency relationship created"}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:83:44
+     81|   (await pg.query('SELECT status, assignee_id, blocked_by, blocks, del…
+     82| const refused = (r: request.Response, code = 'ROUTE_TASK_OWNED_BY_ROUT…
+     83|   expect(r.status, JSON.stringify(r.body)).toBe(status);
+       |                                            ^
+     84|   expect(r.body.code).toBe(code);
+     85| };
+ ❯ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:101:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > POST /unified naming reviewRouteId: 400, no task, no ledger row
+AssertionError: {"success":true,"task":{"id":3,"taskId":"5a089b9e-cd18-4fe4-8bb6-94ea69e0fe35","organizationId":42,"clientWorkspaceId":null,"projectId":null,"moduleType":"IND","moduleIcon":"FileText","moduleColor":"#10B981","sourceEntityId":null,"sourceEntityType":null,"title":"Smuggled","description":null,"category":"regulatory","taskType":"action","assigneeId":null,"assigneeName":null,"assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":false,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":false,"regulatoryImpact":false,"notificationSettings":null,"automationEnabled":true,"aiSuggestions":null,"tags":[],"attachments":null,"comments":null,"metadata":{},"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":7,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:23.952Z","updatedAt":"2026-10-29T05:04:23.952Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null},"message":"Task created successfully in IND module"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ refused server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:83:44
+     81|   (await pg.query('SELECT status, assignee_id, blocked_by, blocks, del…
+     82| const refused = (r: request.Response, code = 'ROUTE_TASK_OWNED_BY_ROUT…
+     83|   expect(r.status, JSON.stringify(r.body)).toBe(status);
+       |                                            ^
+     84|   expect(r.body.code).toBe(code);
+     85| };
+ ❯ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:111:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > createUnifiedTask, called directly with a route column, refuses and inserts nothing
+AssertionError: promise resolved "{ id: 3, …(68) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "actualHours": null,
++   "aiSuggestions": null,
++   "approvalHistory": null,
++   "approvalRequired": false,
++   "approvalStatus": null,
++   "approvers": null,
++   "assignedAt": null,
++   "assignedBy": null,
++   "assigneeId": null,
++   "assigneeName": null,
++   "attachments": null,
++   "automationEnabled": true,
++   "automationRules": null,
++   "blockedBy": null,
++   "blocks": null,
++   "category": "regulatory",
++   "clientVisibility": null,
++   "clientWorkspaceId": null,
++   "comments": null,
++   "completedAt": null,
++   "completionPercentage": 0,
++   "createdAt": 2026-10-29T05:04:23.985Z,
++   "createdById": null,
++   "criticalPath": false,
++   "crossModuleLinks": null,
++   "deletedAt": null,
++   "deletedBy": null,
++   "deliverableId": null,
++   "dependencies": null,
++   "description": null,
++   "dueDate": null,
++   "escalationPath": null,
++   "estimatedHours": null,
++   "filingType": null,
++   "id": 3,
++   "impactScore": null,
++   "lastModifiedBy": null,
++   "lifecyclePhase": null,
++   "linkedTasks": null,
++   "market": null,
++   "metadata": {},
++   "moduleColor": "#10B981",
++   "moduleData": null,
++   "moduleIcon": "FileText",
++   "moduleSource": null,
++   "moduleType": "IND",
++   "notificationSettings": null,
++   "organizationId": 42,
++   "priority": "medium",
++   "progress": 0,
++   "projectId": null,
++   "regulatoryImpact": false,
++   "reviewRole": null,
++   "reviewRouteId": null,
++   "reviewStep": null,
++   "riskLevel": null,
++   "routeActId": null,
++   "routeSignatureId": null,
++   "sourceEntityId": null,
++   "sourceEntityType": null,
++   "startDate": null,
++   "status": "pending",
++   "studyId": null,
++   "tags": [],
++   "taskId": "135c8c25-d06b-4d07-b47f-c09f33cf6693",
++   "taskType": "action",
++   "teamId": null,
++   "title": "Direct",
++   "updatedAt": 2026-10-29T05:04:23.985Z,
+  }
+
+ ❯ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts:124:5
+    122|     await expect(
+    123|       service.createUnifiedTask({ moduleType: 'IND', title: 'Direct', …
+    124|     ).rejects.toMatchObject({ code: 'ROUTE_COLUMNS_NOT_ADMITTED' });
+       |     ^
+    125|     expect((await pg.query("SELECT 1 FROM unified_tasks WHERE title = …
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH status: 409, the task and the ledger unchanged
+AssertionError: {"success":true,"data":{"id":1,"taskId":"ROUTE-R","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":"c-1","sourceEntityType":"canonical_document","title":"Review: Clinical overview v2","description":null,"category":null,"taskType":null,"assigneeId":6,"assigneeName":"Rita Reviewer","assignedBy":null,"assignedAt":null,"teamId":null,"status":"in-progress","priority":"medium","progress":null,"completionPercentage":null,"startDate":null,"dueDate":"2026-11-01T00:00:00.000Z","completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":5,"createdAt":"2026-10-29T05:04:17.255Z","updatedAt":"2026-10-29T05:04:17.318Z","deletedAt":null,"deletedBy":null,"reviewRouteId":"00000000-0000-4000-8000-0000000000aa","reviewRole":"reviewer","reviewStep":1,"routeSignatureId":null,"routeActId":null}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:58:44
+     56| }
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                            ^
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+     60| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:113:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > PATCH assign: 409, the assignee unchanged
+AssertionError: expected 'CONFLICT_STALE' to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+
+Expected: "ROUTE_TASK_OWNED_BY_ROUTE"
+Received: "CONFLICT_STALE"
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:59:23
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+       |                       ^
+     60| };
+     61| const refusedCreate = (r: request.Response) => {
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > auto-assign: 409, nothing assigned
+AssertionError: {"success":true,"data":[{"taskId":"ROUTE-R","assignedTo":"Owner","assigneeId":5}],"count":1}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:58:44
+     56| }
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                            ^
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+     60| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:129:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > DELETE (archive): 409, not archived
+AssertionError: {"success":true,"archived":true,"taskId":"ROUTE-R"}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:58:44
+     56| }
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                            ^
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+     60| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:135:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the predecessor: 409, no edge, nothing blocked
+AssertionError: {"success":true,"data":{"id":1,"dependencyId":"DEP-1793250257548-90360320","organizationId":7,"predecessorTaskId":"ROUTE-R","successorTaskId":"TASK-A","dependencyType":"finish-to-start","lagTime":0,"status":"active","isCritical":null,"isBlocking":true,"impactScore":null,"riskLevel":null,"cascadeEffect":null,"validationRules":null,"violationReason":null,"bypassReason":null,"bypassedBy":null,"bypassedAt":null,"metadata":null,"createdAt":"2026-10-29T05:04:17.548Z","updatedAt":"2026-10-29T05:04:17.548Z"},"successorBlocked":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:58:44
+     56| }
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                            ^
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+     60| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:147:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > dependencies, a route member as the successor: 409, no edge, nothing blocked
+AssertionError: {"success":true,"data":{"id":1,"dependencyId":"DEP-1793250257598-4711ad3d","organizationId":7,"predecessorTaskId":"TASK-A","successorTaskId":"ROUTE-R","dependencyType":"finish-to-start","lagTime":0,"status":"active","isCritical":null,"isBlocking":true,"impactScore":null,"riskLevel":null,"cascadeEffect":null,"validationRules":null,"violationReason":null,"bypassReason":null,"bypassedBy":null,"bypassedAt":null,"metadata":null,"createdAt":"2026-10-29T05:04:17.598Z","updatedAt":"2026-10-29T05:04:17.598Z"},"successorBlocked":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ refused server/routes/__tests__/route-task-guard.pglite.integration.test.ts:58:44
+     56| }
+     57| const refused = (r: request.Response) => {
+     58|   expect(r.status, JSON.stringify(r.body)).toBe(409);
+       |                                            ^
+     59|   expect(r.body.code).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+     60| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:147:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the generic task writers refuse a review route member (B1) > the completion cascade skips a route member as a dependent
+AssertionError: expected 'in-progress' to be 'blocked' // Object.is equality
+
+Expected: "blocked"
+Received: "in-progress"
+
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:157:22
+    155|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+    156|     const b = await row('ROUTE-B');
+    157|     expect(b.status).toBe('blocked');
+       |                      ^
+    158|     expect(b.blocked_by).toEqual(['TASK-A']);
+    159|     const moved = (await pg.query<{ target: string }>('SELECT target F…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks with reviewRouteId: 400, no row
+AssertionError: {"success":true,"data":{"id":5,"taskId":"TASK-1793250257776-d0656a5e","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Smuggled review","description":null,"category":null,"taskType":null,"assigneeId":6,"assigneeName":"Rita Reviewer","assignedBy":5,"assignedAt":"2026-10-29T05:04:17.780Z","teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.781Z","updatedAt":"2026-10-29T05:04:17.781Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ refusedCreate server/routes/__tests__/route-task-guard.pglite.integration.test.ts:62:44
+     60| };
+     61| const refusedCreate = (r: request.Response) => {
+     62|   expect(r.status, JSON.stringify(r.body)).toBe(400);
+       |                                            ^
+     63|   expect(r.body.code).toBe('ROUTE_COLUMNS_NOT_ADMITTED');
+     64| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:172:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/bulk-create with a task naming review_route_id: 400, nothing created
+AssertionError: {"success":true,"data":[{"id":5,"taskId":"TASK-1793250257842-2e3bacec","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"IND","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Bulk one","description":null,"category":null,"taskType":null,"assigneeId":5,"assigneeName":"Owner","assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.849Z","updatedAt":"2026-10-29T05:04:17.849Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null},{"id":6,"taskId":"TASK-1793250257867-d14c16fb","organizationId":7,"clientWorkspaceId":null,"projectId":null,"moduleType":"Vault","moduleIcon":null,"moduleColor":null,"sourceEntityId":null,"sourceEntityType":null,"title":"Bulk two","description":null,"category":null,"taskType":null,"assigneeId":5,"assigneeName":"Owner","assignedBy":null,"assignedAt":null,"teamId":null,"status":"pending","priority":"medium","progress":0,"completionPercentage":0,"startDate":null,"dueDate":null,"completedAt":null,"estimatedHours":null,"actualHours":null,"linkedTasks":null,"dependencies":null,"blockedBy":null,"blocks":null,"moduleSource":null,"moduleData":null,"crossModuleLinks":null,"automationRules":null,"escalationPath":null,"approvalRequired":null,"approvers":null,"approvalStatus":null,"approvalHistory":null,"impactScore":null,"riskLevel":null,"criticalPath":null,"regulatoryImpact":null,"notificationSettings":null,"automationEnabled":null,"aiSuggestions":null,"tags":null,"attachments":null,"comments":null,"metadata":null,"lifecyclePhase":null,"market":null,"filingType":null,"studyId":null,"deliverableId":null,"clientVisibility":null,"createdById":5,"lastModifiedBy":null,"createdAt":"2026-10-29T05:04:17.869Z","updatedAt":"2026-10-29T05:04:17.869Z","deletedAt":null,"deletedBy":null,"reviewRouteId":null,"reviewRole":null,"reviewStep":null,"routeSignatureId":null,"routeActId":null}],"count":2}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ refusedCreate server/routes/__tests__/route-task-guard.pglite.integration.test.ts:62:44
+     60| };
+     61| const refusedCreate = (r: request.Response) => {
+     62|   expect(r.status, JSON.stringify(r.body)).toBe(400);
+       |                                            ^
+     63|   expect(r.body.code).toBe('ROUTE_COLUMNS_NOT_ADMITTED');
+     64| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:180:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > the create paths refuse input naming a route column (M9) > POST /tasks/from-template naming reviewRouteId: 400, nothing created
+AssertionError: {"success":false,"error":"Failed to create tasks from template"}: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ refusedCreate server/routes/__tests__/route-task-guard.pglite.integration.test.ts:62:44
+     60| };
+     61| const refusedCreate = (r: request.Response) => {
+     62|   expect(r.status, JSON.stringify(r.body)).toBe(400);
+       |                                            ^
+     63|   expect(r.body.code).toBe('ROUTE_COLUMNS_NOT_ADMITTED');
+     64| };
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:187:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/21]⎯
+
+ FAIL  server/routes/__tests__/route-task-guard.pglite.integration.test.ts > a reassignment resets the reminder markers (B11, assignTaskInTx) > clears dueSoonNotifiedAt and overdueNotifiedAt and keeps the rest of the metadata
+AssertionError: expected { …(3) } to deeply equal { note: 'kept' }
+
+- Expected
++ Received
+
+  {
++   "dueSoonNotifiedAt": "2026-10-28T00:00:00.000Z",
+    "note": "kept",
++   "overdueNotifiedAt": "2026-10-31T00:00:00.000Z",
+  }
+
+ ❯ server/routes/__tests__/route-task-guard.pglite.integration.test.ts:204:28
+    202|     const after = await row('TASK-G');
+    203|     expect(after.assignee_id).toBe(7);
+    204|     expect(after.metadata).toEqual({ note: 'kept' });
+       |                            ^
+    205|   });
+    206| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > AnA cannot move a review route member (B1) > update_task on a project task mirrored by a route member: refused, nothing written
+AssertionError: expected undefined to be 'ROUTE_TASK_OWNED_BY_ROUTE' // Object.is equality
+
+- Expected:
+"ROUTE_TASK_OWNED_BY_ROUTE"
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts:101:23
+     99|     const out = await command('update_task', { projectId: PROJECT, tas…
+    100|     expect(out.success).toBe(false);
+    101|     expect(out.error).toBe('ROUTE_TASK_OWNED_BY_ROUTE');
+       |                       ^
+    102|     expect((await run('SELECT status FROM unified_tasks WHERE task_id …
+    103|     expect((await run('SELECT status FROM project_tasks WHERE id = 31'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > AnA create_task naming reviewRouteId: refused, no project task, no board row
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts:111:25
+    109|   it('AnA create_task naming reviewRouteId: refused, no project task, …
+    110|     const out = await command('create_task', { projectId: PROJECT, tit…
+    111|     expect(out.success).toBe(false);
+       |                         ^
+    112|     expect(out.error).toBe('ROUTE_COLUMNS_NOT_ADMITTED');
+    113|     expect((await run('SELECT count(*)::int AS n FROM project_tasks'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/21]⎯
+
+ FAIL  server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts > the other create paths refuse route columns (M9) > a blueprint milestone naming reviewRouteId: nothing seeded
+AssertionError: promise resolved "[ 'TASK-BP-1-pre-ind', …(1) ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  "TASK-BP-1-pre-ind",
+  "TASK-BP-1-review",
+]
+
+ ❯ server/services/ana-ri/__tests__/route-task-guard-creators.pglite.integration.test.ts:143:5
+    141|         ],
+    142|       }),
+    143|     ).rejects.toMatchObject({ code: 'ROUTE_COLUMNS_NOT_ADMITTED' });
+       |     ^
+    144|     expect((await run('SELECT count(*)::int AS n FROM unified_tasks'))…
+    145|     expect(await ledgerRows()).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/21]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  21 failed | 3 passed (24)
+   Start at  05:03:52
+   Duration  36.17s (transform 9.31s, setup 186ms, import 4.26s, tests 30.71s, environment 1ms)
+
