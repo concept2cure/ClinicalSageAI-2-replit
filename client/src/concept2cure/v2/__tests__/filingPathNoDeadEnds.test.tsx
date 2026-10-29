@@ -7,7 +7,12 @@
  * this release:
  *
  *   1. Submission Center, device filings: "Open 510(k) surface" on every row,
- *      while `device-510k` is outside the launch scope.
+ *      while `device-510k` was outside the launch scope. The founder's request
+ *      of 2026-10-23 made device surfaces features of the client's project
+ *      (Projects, shared/constants/launch-scope.ts). So the row now offers the
+ *      door and it opens the surface. The rule that kept the door off a locked
+ *      surface (offered only where surfaceAvailable says it can be opened) is
+ *      pinned with the verdict a release without it returns.
  *   2. Vault, with a project open: "Inspection readiness" opened `etmf`, also
  *      locked.
  *   3. Vault, with no project open: "Open a project to see its vault" and
@@ -21,6 +26,8 @@
  *
  * Each exit is shown here with the server's launch-scope verdicts as
  * production has them: a surface outside the scope reads 'launch-scope'.
+ * `lockedHere` adds a surface to that set for one case, to show a door
+ * follows the verdict rather than a hard-coded id.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,6 +35,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { isLaunchSurface } from '../../../../../shared/constants/launch-scope';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const lockedHere = vi.hoisted(() => new Set<string>());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
@@ -48,7 +56,7 @@ vi.mock('../navEntitlements', async (importOriginal) => {
     ...real,
     useNavEntitlements: () => ({
       verdictFor: (id: string) =>
-        inScope(id) ? null : { id, label: id, entitled: false, source: 'launch-scope', requiredTier: null },
+        inScope(id) && !lockedHere.has(id) ? null : { id, label: id, entitled: false, source: 'launch-scope', requiredTier: null },
       resolved: true,
       masterAdmin: false,
       platformAdmin: false,
@@ -88,33 +96,59 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  lockedHere.clear();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
 describe('No dead ends on the filing path (F16)', () => {
   it('the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it', () => {
-    expect(['device-510k', 'etmf', 'ectd-coauthor'].map(isLaunchSurface)).toEqual([false, false, false]);
-    expect(['projects', 'vault', 'document-authoring'].map(isLaunchSurface)).toEqual([true, true, true]);
+    expect(['etmf', 'ectd-coauthor'].map(isLaunchSurface)).toEqual([false, false]);
+    // device-510k: a feature of the client's project since the founder's request of 2026-10-23.
+    expect(['projects', 'vault', 'document-authoring', 'device-510k'].map(isLaunchSurface)).toEqual([true, true, true, true]);
   });
 
-  it('Submission Center: a device filing row does not offer the locked 510(k) surface', async () => {
+  it('Submission Center: a device filing row opens the 510(k) surface, which is in this release', async () => {
     const onNav = vi.fn();
     render(<SubmissionCenter onAsk={vi.fn()} onNav={onNav} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 Glucose Sensor 510(k)'));
+    const doors = screen.getAllByTitle('Open the 510(k) surface — the device filing workspace');
+    expect(doors).toHaveLength(1);
+    fireEvent.click(doors[0]);
+    expect(onNav).toHaveBeenCalledWith('device-510k');
+  });
+
+  it('Submission Center: where the 510(k) surface is not in the release, a device filing row does not offer it', async () => {
+    lockedHere.add('device-510k');
+    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     await waitFor(() => expect(document.body.textContent).toContain('ZX-9 Glucose Sensor 510(k)'));
     expect(screen.queryAllByTitle('Open the 510(k) surface — the device filing workspace')).toHaveLength(0);
     expect(screen.queryByText(/Open 510\(k\) surface/)).toBeNull();
   });
 
   /* Design review 2026-10-08: with no device filing tracked, the empty state
-     sent the reader to "the 510(k) surface's filing panel", which is locked. */
-  it('Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface', async () => {
-    const base = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation(async (method: string, url: string) =>
-      method === 'GET' && url === '/api/510k/estar/submissions' ? ok({ submissions: [] }) : base(method, url));
-    render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
-    await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
-    expect(document.body.textContent).not.toMatch(/from the 510\(k\) surface's filing panel/);
-    expect(document.body.textContent).toContain('which is not part of this release');
+     sent the reader to "the 510(k) surface's filing panel" while it was locked.
+     It names that panel only where the surface can be opened. */
+  describe('Submission Center, with no device filings', () => {
+    beforeEach(() => {
+      const base = apiRequest.getMockImplementation()!;
+      apiRequest.mockImplementation(async (method: string, url: string) =>
+        method === 'GET' && url === '/api/510k/estar/submissions' ? ok({ submissions: [] }) : base(method, url));
+    });
+
+    it('the empty state names the 510(k) surface\'s filing panel, which is in this release', async () => {
+      render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+      await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
+      expect(document.body.textContent).toMatch(/from the 510\(k\) surface's filing panel/);
+      expect(document.body.textContent).not.toContain('which is not part of this release');
+    });
+
+    it('where the 510(k) surface is not in the release, the empty state says so and sends no one there', async () => {
+      lockedHere.add('device-510k');
+      render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+      await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
+      expect(document.body.textContent).not.toMatch(/from the 510\(k\) surface's filing panel/);
+      expect(document.body.textContent).toContain('which is not part of this release');
+    });
   });
 
   it('Vault, with a project open: no "Inspection readiness" door into the locked eTMF', async () => {
@@ -160,7 +194,7 @@ describe('No dead ends on the filing path (F16)', () => {
   it('the launch-scope panel has one way back: Projects', () => {
     const onNav = vi.fn();
     render(
-      <LaunchScopeGate surfaceId="device-510k" surface={{ id: 'device-510k', label: '510(k)' } as never} onNav={onNav}>
+      <LaunchScopeGate surfaceId="etmf" surface={{ id: 'etmf', label: 'eTMF' } as never} onNav={onNav}>
         <div>the locked surface</div>
       </LaunchScopeGate>,
     );
