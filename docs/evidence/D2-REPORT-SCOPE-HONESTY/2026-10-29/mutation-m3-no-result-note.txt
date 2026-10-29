@@ -1,0 +1,14 @@
+# Mutation m3-no-result-note, then restored from the fixed copy (sha256sum -c OK). REPORT_PDF_NOTO_CORE_DIR=<staged fonts> npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > states the catalog card’s note beside "Run report" 84ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > says nothing of the kind on a tile whose engine computes the project 38ms
+ × client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s 73ms
+   → expected 'The Inspection Readiness & 483 Respon…' to contain 'Organization-wide records. Counts are…'
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body 375ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a run whose engine computed the project carries no organization note 107ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > an organization (account) run is already headed as the organization and adds nothing 42ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope 26ms
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s
+AssertionError: expected 'The Inspection Readiness & 483 Respon…' to contain 'Organization-wide records. Counts are…'
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)

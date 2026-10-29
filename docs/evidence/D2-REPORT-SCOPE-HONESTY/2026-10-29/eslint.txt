@@ -1,0 +1,41 @@
+# ESLint, plain npx eslint, at head (ceea6843, via git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>) and after
+
+## client/src/concept2cure/v2/surfaces/Insights.tsx — head
+   461:19  warning  Arrow function has a complexity of 25. Maximum allowed is 15                           complexity
+   747:1   warning  Function 'roRouteReply' has a complexity of 26. Maximum allowed is 15                  complexity
+   749:1   warning  File has too many lines (1661). Maximum allowed is 500                                 max-lines
+   870:1   warning  Function 'ROChart' has a complexity of 21. Maximum allowed is 15                       complexity
+   947:1   warning  Function 'ROBlock' has a complexity of 24. Maximum allowed is 15                       complexity
+  1604:1   warning  Function 'ReportingCanvasForSession' has too many lines (503). Maximum allowed is 100  max-lines-per-function
+  1604:1   warning  Function 'ReportingCanvasForSession' has a complexity of 107. Maximum allowed is 15    complexity
+✖ 7 problems (0 errors, 7 warnings)
+## client/src/concept2cure/v2/surfaces/Insights.tsx — after
+   461:19  warning  Arrow function has a complexity of 25. Maximum allowed is 15                           complexity
+   750:1   warning  Function 'roRouteReply' has a complexity of 26. Maximum allowed is 15                  complexity
+   751:1   warning  File has too many lines (1681). Maximum allowed is 500                                 max-lines
+   873:1   warning  Function 'ROChart' has a complexity of 21. Maximum allowed is 15                       complexity
+   950:1   warning  Function 'ROBlock' has a complexity of 24. Maximum allowed is 15                       complexity
+  1637:1   warning  Function 'ReportingCanvasForSession' has too many lines (503). Maximum allowed is 100  max-lines-per-function
+  1637:1   warning  Function 'ReportingCanvasForSession' has a complexity of 107. Maximum allowed is 15    complexity
+✖ 7 problems (0 errors, 7 warnings)
+
+## client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx — head
+(no problems)
+## client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx — after
+(no problems)
+
+## server/services/report-os/render/render.ts — head
+(no problems)
+## server/services/report-os/render/render.ts — after
+(no problems)
+
+## server/services/report-os/render/lifecycle-calendar.ts — head
+(no problems)
+## server/services/report-os/render/lifecycle-calendar.ts — after
+(no problems)
+
+## client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx — new
+(no problems)
+
+## server/services/report-os/render/__tests__/render-organization-scope.test.ts — new
+(no problems)

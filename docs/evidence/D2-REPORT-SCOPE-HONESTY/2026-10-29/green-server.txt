@@ -1,0 +1,8 @@
+# With the fix. REPORT_PDF_NOTO_CORE_DIR=<staged fonts> npx vitest run --config vitest.config.ts server/services/report-os/render/__tests__/render-organization-scope.test.ts
+
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > the register states it (the sentence the calendar reuses) 6ms
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > the lifecycle calendar under an open project states the register’s sentence above its obligations 1ms
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > is read from the carried computedScope, not the type: a calendar computed over the project does not say it 1ms
+ ✓ server/services/report-os/render/__tests__/render-organization-scope.test.ts > the organization statement in the rendered body > reaches the exported PDF body 592ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
