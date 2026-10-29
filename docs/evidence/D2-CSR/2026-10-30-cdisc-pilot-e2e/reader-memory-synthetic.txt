@@ -1,0 +1,4 @@
+# D15 red: HEAD reader (rows built key by key)
+{"reader":"reader-head.ts","rows":60000,"columns":44,"fileMiB":60.4,"heldMiB":239,"heldBytesPerCell":95}
+# D15 green: rows copied from one all-columns template, character values shared per variable
+{"reader":"adam-dataset-reader.ts","rows":60000,"columns":44,"fileMiB":60.4,"heldMiB":41,"heldBytesPerCell":16}

@@ -11,13 +11,40 @@ import { CsrEfficacyResultSchema, CsrSourceSelectionSchema, CsrStudyInfoSchema }
  */
 export const CSR_ADAM_BUNDLE_FORMAT = 'concept2cure.csr-adam-bundle.v1' as const;
 export const CSR_EFFICACY_RESULTS_FORMAT = 'concept2cure.csr-efficacy-results.v1' as const;
-/** ADMH (medical history) joined 2026-10-29 for the slice-7 safety narratives; the tabulation does not read it. */
-export const ADAM_DATASET_NAMES = ['ADSL', 'ADAE', 'ADEX', 'ADLB', 'ADVS', 'ADEG', 'ADCM', 'ADMH'] as const;
+/** ADMH (medical history) joined 2026-10-29 for the slice-7 safety narratives; the tabulation does not read it.
+ * ADLBC and ADLBH (2026-10-30, CDISC pilot defect D4): laboratory data split into chemistry and haematology. */
+export const ADAM_DATASET_NAMES = ['ADSL', 'ADAE', 'ADEX', 'ADLB', 'ADLBC', 'ADLBH', 'ADVS', 'ADEG', 'ADCM', 'ADMH'] as const;
 export type AdamDatasetName = typeof ADAM_DATASET_NAMES[number];
 
 const text = z.string().trim().min(1).max(2_000);
 const id = z.string().trim().min(1).max(120);
 const ref = CsrSourceSelectionSchema;
+const variable = z.string().regex(/^[A-Z][A-Z0-9]{0,7}$/);
+const codes = <T extends [string, ...string[]]>(values: T) => z.record(z.string().trim().min(1).max(200), z.enum(values))
+  .refine(m => Object.keys(m).length > 0 && Object.keys(m).length <= 100, { message: 'Declare between 1 and 100 coded values.' });
+
+/**
+ * The study's ADaM conventions where they differ from ADaMIG 1.1 names, as its
+ * define.xml and SAP record them (2026-10-30, CDISC pilot defects D1–D3, D5,
+ * D6, D9). Each one is declared, never guessed: without it the engine
+ * requires the ADaMIG name and refuses as before. The manifest's digest binds
+ * the declaration, so the derivation states its own basis.
+ */
+export const CsrAdamConventionsSchema = z.object({
+  /** The ADSL variable holding each subject's end-of-study disposition: EOSSTT (default) or DCDECOD, the CDISC standardized disposition term (COMPLETED, ADVERSE EVENT, DEATH …). */
+  disposition: z.enum(['EOSSTT', 'DCDECOD']).optional(),
+  /** An ADSL Y/blank flag recording discontinuation for an adverse event (for example DSRAEFL), when the study did not collect event-level AEACN. */
+  aeDiscontinuationFlag: variable.optional(),
+  /** The SAP's causality class for AREL/AEREL values outside the CDISC defaults (for example REMOTE). */
+  causality: codes(['related', 'not related']).optional(),
+  /** The define.xml decode of ANRIND to NORMAL, HIGH or LOW (for example N, H, L). */
+  rangeIndicator: codes(['NORMAL', 'HIGH', 'LOW']).optional(),
+  /** The BDS record that is the last on-treatment value, named by a variable and value (for example AVISIT = End of Treatment), instead of ONTRTFL. */
+  lastOnTreatment: z.object({ variable, value: text }).strict().optional(),
+  /** Exposure from ADSL when the study has no ADEX: duration in days and, optionally, the average daily dose with its unit. */
+  exposure: z.object({ durationDays: variable, averageDailyDose: z.object({ variable, unit: z.string().trim().min(1).max(20) }).strict().optional() }).strict().optional(),
+}).strict();
+export type CsrAdamConventions = z.infer<typeof CsrAdamConventionsSchema>;
 
 export const CsrAdamBundleSchema = z.object({
   format: z.literal(CSR_ADAM_BUNDLE_FORMAT),
@@ -27,7 +54,7 @@ export const CsrAdamBundleSchema = z.object({
   arms: z.array(z.object({ treatment: text, armId: id, armName: text }).strict()).min(1).max(100),
   /** The ADSL flag that marks randomized subjects: RANDFL unless the SAP defines randomized as ITTFL. */
   randomizedFlag: z.enum(['RANDFL', 'ITTFL']).optional(),
-  datasets: z.object({ ADSL: ref, ADAE: ref, ADEX: ref.optional(), ADLB: ref.optional(), ADVS: ref.optional(),
+  datasets: z.object({ ADSL: ref, ADAE: ref, ADEX: ref.optional(), ADLB: ref.optional(), ADLBC: ref.optional(), ADLBH: ref.optional(), ADVS: ref.optional(),
     ADEG: ref.optional(), ADCM: ref.optional(), ADMH: ref.optional() }).strict(),
   efficacyResults: ref,
   /**
@@ -41,6 +68,7 @@ export const CsrAdamBundleSchema = z.object({
     preferredTerms: z.array(text).min(1).max(500).optional(),
   }).strict().refine(a => a.flagVariable !== undefined || a.preferredTerms !== undefined,
     { message: 'Declare an ADAE flag variable or the preferred terms that define the protocol’s adverse events of special interest.' }).optional(),
+  conventions: CsrAdamConventionsSchema.optional(),
 }).strict();
 export type CsrAdamBundle = z.infer<typeof CsrAdamBundleSchema>;
 

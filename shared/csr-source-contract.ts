@@ -16,6 +16,7 @@ function jsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
   if (schema instanceof z.ZodArray) return { type: 'array', items: jsonSchema(schema.element),
     ...(schema._def.minLength ? { minItems: schema._def.minLength.value } : {}),
     ...(schema._def.maxLength ? { maxItems: schema._def.maxLength.value } : {}) };
+  if (schema instanceof z.ZodRecord) return { type: 'object', additionalProperties: jsonSchema(schema.valueSchema) };
   if (schema instanceof z.ZodEnum) return { type: 'string', enum: schema.options };
   if (schema instanceof z.ZodLiteral) return { type: typeof schema.value, const: schema.value };
   if (schema instanceof z.ZodBoolean) return { type: 'boolean' };
@@ -76,9 +77,10 @@ function csrAdamBundleContract() {
     efficacyResults: { format: CSR_EFFICACY_RESULTS_FORMAT, schema: jsonSchema(CsrEfficacyResultsSchema) },
     derivationRules: [
       'Every named file must be the current, approved Vault version at the digest the manifest pins.',
-      'ADSL: one row per subject; arms from TRT01P through the manifest’s arm map; populations from RANDFL (or the declared flag), SAFFL, ITTFL or FASFL, and PPROTFL; disposition from EOSSTT and DCSREAS; demographics from AGE, SEX, RACE, ETHNIC, WEIGHTBL, BMIBL. A subject ongoing at the data cut, an unmapped treatment or a reassigned actual treatment is refused.',
+      'ADSL: one row per subject; arms from TRT01P through the manifest’s arm map; populations from RANDFL (or the declared flag), SAFFL, ITTFL or FASFL, and PPROTFL; disposition from EOSSTT and DCSREAS, or from DCDECOD when conventions.disposition declares it; demographics from AGE, SEX, RACE, ETHNIC, WEIGHTBL, BMIBL. A subject ongoing at the data cut, an unmapped treatment or a reassigned actual treatment is refused.',
       'ADAE: treatment-emergent rows (TRTEMFL = Y) by AEBODSYS and AEDECOD, with ASEV/AESEV, AESER, AREL/AEREL, AEOUT or AESDTH, and AEACN (without them a fatal outcome or an AE discontinuation is unrecorded, so the file is refused rather than counted as 0). On a treatment-emergent row, AESDTH = N or a known AEOUT must establish a non-fatal event, and AEACN must not be blank or UNKNOWN; otherwise the row is refused. A row naming a subject ADSL does not list, or a treatment-emergent row outside the safety population, is refused.',
-      'ADEX: TRTDURD in days for every safety subject. ADLB: shift from the baseline range indicator (ANRIND) to the last on-treatment one. ADVS/ADEG: baseline and last on-treatment AVAL. ADCM: concomitant (CONCOMFL or ONTRTFL) coded medications.',
+      'Declared conventions (manifest conventions, for a define.xml that does not use ADaMIG 1.1 names; nothing is guessed without them): aeDiscontinuationFlag reads AE withdrawal per subject from an ADSL flag instead of AEACN, and the AE tables say "subject-level"; causality maps further AREL/AEREL values to related or not related; rangeIndicator decodes ANRIND; lastOnTreatment names the last on-treatment record (for example AVISIT = End of Treatment) instead of ONTRTFL; exposure reads duration and average daily dose from ADSL when there is no ADEX.',
+      'ADEX: TRTDURD in days for every safety subject. ADLB, or ADLBC and ADLBH (a parameter in both is refused): shift from the baseline range indicator (ANRIND) to the last on-treatment one. ADVS/ADEG: baseline and last on-treatment AVAL, per analysis timepoint (ATPT) for a parameter whose baselines differ by ATPT. ADCM: concomitant (CONCOMFL or ONTRTFL) coded medications.',
       'The last on-treatment value is ordered by ADT, else ADY, else AVISITN, never by file order. Nothing is imputed: a blank required value is refused by variable and row.',
     ] };
 }

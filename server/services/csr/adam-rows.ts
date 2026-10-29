@@ -3,9 +3,10 @@
  * (adam-source-derivation.ts) and its safety domains (adam-safety-domains.ts).
  * CSR slice 6, 2026-10-29. Every failure is a typed AdamDerivationError.
  */
+import type { CsrAdamConventions } from '../../../shared/csr-adam-bundle.js';
 import type { CsrSourceEnvelope } from '../../../shared/csr-source-input.js';
 import type { AdamDataset, AdamRow } from './adam-dataset-reader.js';
-import { CsrSourceInputError } from './source-access.js';
+import { CsrSourceInputError } from './csr-source-error.js';
 
 export class AdamDerivationError extends CsrSourceInputError {
   constructor(code: string, message: string, path?: string) {
@@ -16,7 +17,7 @@ export class AdamDerivationError extends CsrSourceInputError {
 export const refuse = (code: string, message: string, path?: string): never => { throw new AdamDerivationError(code, message, path); };
 
 export interface AdamDatasets {
-  ADSL: AdamDataset; ADAE: AdamDataset; ADEX?: AdamDataset; ADLB?: AdamDataset;
+  ADSL: AdamDataset; ADAE: AdamDataset; ADEX?: AdamDataset; ADLB?: AdamDataset; ADLBC?: AdamDataset; ADLBH?: AdamDataset;
   ADVS?: AdamDataset; ADEG?: AdamDataset; ADCM?: AdamDataset; ADMH?: AdamDataset;
 }
 export type StudyData = CsrSourceEnvelope['studyData'];
@@ -77,29 +78,67 @@ export function subjectFor(ds: AdamDataset, row: AdamRow, i: number, subjects: M
 
 // ── Baseline and last on-treatment value (ADLB, ADVS, ADEG) ─────────────────
 
+export type LastOnTreatmentRule = CsrAdamConventions['lastOnTreatment'];
 export interface Series { subject: Subject; parameter: string; baseline: AdamRow | null; onTreatment: Array<{ row: AdamRow; i: number }> }
 
-export function seriesOf(ds: AdamDataset, subjects: Map<string, Subject>, value: string): Map<string, Series> {
-  requireColumns(ds, 'USUBJID', 'PARAMCD', 'ABLFL', 'ONTRTFL', value);
+const parameterText = (ds: AdamDataset, row: AdamRow) => (has(ds, 'PARAM') && text(row, 'PARAM')) || text(row, 'PARAMCD');
+
+/**
+ * Parameters whose baselines differ by analysis timepoint (ATPT) for some
+ * subject, such as blood pressure measured lying and standing, each with its
+ * own ABLFL baseline. Each is summarised per timepoint (CDISC pilot defect D7,
+ * 2026-10-30); every other parameter keeps one series per subject.
+ */
+function parametersByTimepoint(ds: AdamDataset): Set<string> {
+  const out = new Set<string>();
+  if (!has(ds, 'ATPT')) return out;
+  const timepoints = new Map<string, Set<string>>();
+  for (const row of ds.rows) {
+    if (text(row, 'ABLFL').toUpperCase() !== 'Y') continue;
+    const parameter = parameterText(ds, row);
+    const key = JSON.stringify([text(row, 'USUBJID'), parameter]);
+    const set = timepoints.get(key) ?? new Set<string>();
+    set.add(text(row, 'ATPT'));
+    timepoints.set(key, set);
+    if (set.size > 1) out.add(parameter);
+  }
+  return out;
+}
+
+/** Baseline and on-treatment rows per subject and parameter. On-treatment is
+ * ONTRTFL = Y, or, when the manifest declares it, the record that is the last
+ * on-treatment value (for example AVISIT = End of Treatment; defect D5). */
+export function seriesOf(ds: AdamDataset, subjects: Map<string, Subject>, value: string, last?: LastOnTreatmentRule): Map<string, Series> {
+  requireColumns(ds, 'USUBJID', 'PARAMCD', 'ABLFL', last ? last.variable : 'ONTRTFL', value);
+  const byTimepoint = parametersByTimepoint(ds);
   const series = new Map<string, Series>();
   ds.rows.forEach((row, i) => {
     const baseline = flag(ds, row, i, 'ABLFL');
-    const onTreatment = !baseline && flag(ds, row, i, 'ONTRTFL');
+    const onTreatment = !baseline && (last ? text(row, last.variable) === last.value : flag(ds, row, i, 'ONTRTFL'));
     const subject = subjectFor(ds, row, i, subjects, onTreatment);
     if (!subject.participant.safety || (!baseline && !onTreatment)) return;
-    const parameter = (has(ds, 'PARAM') && text(row, 'PARAM')) || required(ds, row, i, 'PARAMCD');
+    const name = (has(ds, 'PARAM') && text(row, 'PARAM')) || required(ds, row, i, 'PARAMCD');
+    const timepoint = byTimepoint.has(name) ? text(row, 'ATPT') : '';
+    const parameter = timepoint ? `${name}, ${timepoint}` : name;
     const key = JSON.stringify([subject.participant.subjectId, parameter]);
     const s = series.get(key) ?? { subject, parameter, baseline: null, onTreatment: [] };
-    if (baseline && s.baseline) refuse('BASELINE_AMBIGUOUS', `${ds.name} flags more than one baseline (ABLFL) for a subject and parameter.`, where(ds, i, 'ABLFL'));
+    if (baseline && s.baseline) refuse('BASELINE_AMBIGUOUS', `${ds.name} flags more than one baseline (ABLFL) for a subject and parameter${timepoint ? ' at one timepoint (ATPT)' : ''}.`, where(ds, i, 'ABLFL'));
     if (baseline) s.baseline = row; else s.onTreatment.push({ row, i });
     series.set(key, s);
   });
   return series;
 }
 
-/** The last on-treatment row by ADT, else ADY, else AVISITN; never by file order. */
-export function lastOnTreatment(ds: AdamDataset, s: Series, value: string): AdamRow | null {
+/** The last on-treatment row: the declared record, else by ADT, else ADY, else AVISITN; never by file order. */
+export function lastOnTreatment(ds: AdamDataset, s: Series, value: string, last?: LastOnTreatmentRule): AdamRow | null {
   if (!s.onTreatment.length) return null;
+  const sameValue = (rows: AdamRow[]) => new Set(rows.map(r => JSON.stringify(r[value]))).size === 1;
+  if (last) {
+    if (!sameValue(s.onTreatment.map(o => o.row))) {
+      refuse('LAST_VALUE_AMBIGUOUS', `${ds.name} records different values in more than one ${last.variable} = ${last.value} record for a subject and parameter.`, where(ds, s.onTreatment[1].i, value));
+    }
+    return s.onTreatment[0].row;
+  }
   const by = ['ADT', 'ADY', 'AVISITN'].find(v => has(ds, v))
     ?? refuse('ORDER_UNRECORDED', `${ds.name} records no ADT, ADY or AVISITN, so its last on-treatment value is not established.`, ds.name);
   const keyed = s.onTreatment.map(({ row, i }) => {
@@ -108,9 +147,9 @@ export function lastOnTreatment(ds: AdamDataset, s: Series, value: string): Adam
     return { row, key: key as number | string };
   });
   const max = keyed.reduce((m, k) => (k.key > m ? k.key : m), keyed[0].key);
-  const last = keyed.filter(k => k.key === max);
-  if (new Set(last.map(k => JSON.stringify(k.row[value]))).size > 1) {
+  const lastRows = keyed.filter(k => k.key === max).map(k => k.row);
+  if (!sameValue(lastRows)) {
     refuse('LAST_VALUE_AMBIGUOUS', `${ds.name} records different values at the same last on-treatment time for a subject and parameter.`, ds.name);
   }
-  return last[0].row;
+  return lastRows[0];
 }

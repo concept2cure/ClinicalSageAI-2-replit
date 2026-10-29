@@ -11,7 +11,7 @@ import {
 import type { CsrSourceEnvelope, CsrSourceSelection } from '../../../shared/csr-source-input.js';
 import { readAdamDataset } from './adam-dataset-reader.js';
 import { deriveCsrSourceFromAdam, type AdamDatasets } from './adam-source-derivation.js';
-import { CsrSourceInputError } from './source-access.js';
+import { CsrSourceInputError } from './csr-source-error.js';
 
 export interface AdamComponent { bytes: Buffer; fileName: string; approved: boolean }
 type LoadComponent = (selection: CsrSourceSelection) => Promise<AdamComponent>;
