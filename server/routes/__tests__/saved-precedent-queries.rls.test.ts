@@ -91,23 +91,21 @@ function appAsOrg(org: number | null) {
   return app;
 }
 
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+const PROGRAM_1 = '11111111-1111-4111-8111-111111111111';
+
 beforeAll(async () => {
   pg = new PGlite();
-  // Minimal DDL matching shared/schema.ts savedPrecedentQueries.
-  await pg.exec(`
-    CREATE TABLE saved_precedent_queries (
-      id serial PRIMARY KEY,
-      organization_id integer NOT NULL,
-      user_id integer,
-      label text NOT NULL,
-      query text NOT NULL,
-      scope json,
-      hits integer NOT NULL DEFAULT -1,
-      last_run_at timestamp,
-      created_at timestamp NOT NULL DEFAULT now(),
-      updated_at timestamp NOT NULL DEFAULT now()
-    );
-  `);
+  // The real store: stub parents, regulatory_programs' creator, then the table's
+  // only creator as amended for Vault saved views (P-46, 2026-10-29).
+  await pg.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT); CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);
+                 INSERT INTO organizations (id, name) VALUES (1, 'one'), (2, 'two');
+                 INSERT INTO users (id, name) VALUES (10, 'a'), (11, 'b'), (20, 'c');`);
+  await pg.exec(readFileSync(join(ROOT, 'migrations/20260524_program_workbench_schema.sql'), 'utf8'));
+  await pg.query(
+    `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, 1, 'Alpha', 'Alpha', 'IND', 'drug', 'FDA', 'Alpha')`, [PROGRAM_1]);
+  await pg.exec(readFileSync(join(ROOT, 'migrations/20260505_saved_precedent_queries.sql'), 'utf8'));
 });
 
 afterAll(async () => {
@@ -143,6 +141,50 @@ describe('GET /api/saved-precedent-queries — org scoping preserved through req
     const res = await request(appAsOrg(null)).get('/api/saved-precedent-queries');
     expect(res.status).toBe(403);
     expect(res.body.data).toBeUndefined();
+  });
+});
+
+/* The table also holds Vault saved views (surface 'vault'). The precedent routes
+   must never list, change or delete one: a private view is its owner's alone. */
+describe('Vault saved views never reach the precedent routes', () => {
+  const PRECEDENT_KEYS = ['createdAt', 'hits', 'id', 'label', 'lastRunAt', 'query', 'scope', 'updatedAt', 'userId'];
+  const scope = (filters: Record<string, string[]>) => JSON.stringify({ v: 1, filters, includeSuperseded: false });
+  let vaultIds: number[] = [];
+  beforeEach(async () => {
+    const r = await pg.query<{ id: number }>(
+      `INSERT INTO saved_precedent_queries (organization_id, user_id, label, query, surface, visibility, program_id, scope) VALUES
+         (1, 10, 'V-mine',   '', 'vault', 'private',    NULL, $1::jsonb),
+         (1, 11, 'V-theirs', '', 'vault', 'private',    NULL, $1::jsonb),
+         (1, 10, 'V-shared', 'stability', 'vault', 'org_public', $2, $3::jsonb)
+       RETURNING id`, [scope({ documentType: ['CSR'] }), PROGRAM_1, scope({ folderId: ['module-3'] })]);
+    vaultIds = r.rows.map((row) => row.id);
+  });
+
+  it('GET lists only precedent rows, with exactly the keys it always carried', async () => {
+    const res = await request(appAsOrg(1)).get('/api/saved-precedent-queries');
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((r: { label: string }) => r.label).sort()).toEqual(['A1', 'A2']);
+    for (const row of res.body.data) expect(Object.keys(row).sort()).toEqual(PRECEDENT_KEYS);
+  });
+
+  it('POST and PATCH return the ten precedent columns, not the Vault ones', async () => {
+    const posted = await request(appAsOrg(1)).post('/api/saved-precedent-queries').send({ label: 'New', query: 'q-new' });
+    expect(posted.status).toBe(201);
+    expect(Object.keys(posted.body.data).sort()).toEqual([...PRECEDENT_KEYS, 'organizationId'].sort());
+    const patched = await request(appAsOrg(1)).patch(`/api/saved-precedent-queries/${posted.body.data.id}`).send({ label: 'Renamed' });
+    expect(patched.status).toBe(200);
+    expect(Object.keys(patched.body.data).sort()).toEqual([...PRECEDENT_KEYS, 'organizationId'].sort());
+    const stored = await pg.query<{ surface: string; visibility: string }>(`SELECT surface, visibility FROM saved_precedent_queries WHERE id = $1`, [posted.body.data.id]);
+    expect(stored.rows[0]).toEqual({ surface: 'precedent', visibility: 'org_public' });
+  });
+
+  it('PATCH and DELETE of a Vault view are not found, and leave it untouched', async () => {
+    for (const id of vaultIds) {
+      expect((await request(appAsOrg(1)).patch(`/api/saved-precedent-queries/${id}`).send({ label: 'hijacked' })).status).toBe(404);
+      expect((await request(appAsOrg(1)).delete(`/api/saved-precedent-queries/${id}`)).status).toBe(404);
+    }
+    const left = await pg.query<{ label: string }>(`SELECT label FROM saved_precedent_queries WHERE surface = 'vault' ORDER BY id`);
+    expect(left.rows.map((r) => r.label)).toEqual(['V-mine', 'V-theirs', 'V-shared']);
   });
 });
 

@@ -94,7 +94,6 @@ export const SURFACE_CTX: Record<string, SurfaceContextDef> = {
   labeling:                 { mod: 'Labeling',        noun: 'label',                     et: 'label' },
   risk:                     { mod: 'MedicalDevice',   noun: 'risk item',                 et: 'risk' },
   'deep-research':          { mod: 'Intelligence',    noun: 'research',                  et: 'research' },
-  setup:                    { mod: 'Regulatory',      noun: 'setting',                   et: 'admin' },
   'audit-trail':            { mod: 'Quality',         noun: 'audit item',                et: 'audit' },
   billing:                  { mod: 'Regulatory',      noun: 'billing item',              et: 'billing' },
   home:                     { mod: 'Regulatory',      noun: 'item',                      et: 'workspace' },

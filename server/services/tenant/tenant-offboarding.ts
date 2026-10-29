@@ -1221,6 +1221,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'qms_nonconforming_products',
   // Vault seals (VR-19), through their door: they reference the project.
   'vault_data_room_seals',
+  // Saved queries and Vault saved views (P-46): the tenant's own search
+  // parameters. Before regulatory_programs, whose delete would cascade project
+  // views; library views and precedent rows have no cascade and are reached
+  // only here.
+  'saved_precedent_queries',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

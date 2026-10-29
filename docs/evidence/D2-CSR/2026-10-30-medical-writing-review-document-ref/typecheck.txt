@@ -1,0 +1,23 @@
+Full: NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p . -> exit 137 (container OOM-kill while other lanes ran), no output.
+Scoped: tsconfig extending the repo's, files = the changed files (imports pulled in transitively):
+server/db/requestDbLease.ts(51,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>
+server/db/requestDbLease.ts(51,42): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>
+server/db/requestDbLease.ts(61,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'
+server/db/requestDbLease.ts(82,39): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>
+server/middleware/establishRequestTenantScope.ts(220,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/me
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/n
+server/services/ana/AnaToolExecutor.ts(58,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. '/home/user/ClinicalSageA
+server/services/ana/AnaToolExecutor.ts(180,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. '/home/user/ClinicalSage
+server/services/authoring/authoring-permissions.ts(125,24): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, Parsed
+server/services/cmc/link-to-module3.ts(36,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-repli
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_module
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrco
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/js
+16 errors, none in a changed file: each is an ambient declaration (Express Request augmentation, untyped .js modules) that the scoped config leaves out because include is empty.
+
+--- Adversarial review re-run (2026-10-29) ---
+NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p .
+exit 0, 0 errors (full project, with every concurrent item's working-tree changes present).

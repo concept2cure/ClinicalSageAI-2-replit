@@ -269,7 +269,6 @@ function lazyOwnedSurface(
 }
 
 const CapabilityIndex = lazySurface(() => import('./intelligence/Intelligence').then((m) => ({ default: m.CapabilityIndex })));
-const Setup = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Setup })));
 const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Apps })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
@@ -553,7 +552,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   review: { component: Review },
   risk: { component: Risk },
   'safety-narrative': { component: SafetyNarrative },
-  setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },

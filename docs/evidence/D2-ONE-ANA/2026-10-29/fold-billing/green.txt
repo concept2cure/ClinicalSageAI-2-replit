@@ -1,0 +1,180 @@
+# fold-billing Part 1 — GREEN, on HEAD e455afe16 + this change (working tree shared with the ectd-publishing fold in progress)
+
+## This change's own suites: 7 files, 112/112
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > reads the first page under the plan status: mapped rows, a View link only where Stripe gave one 106ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > says billing is not set up when there is no Stripe customer — never "No invoices yet" 35ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > says "No invoices yet" when billing is set up and Stripe has issued none 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a failed read is an error with Try again, never an empty list, and the retry reads again 179ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > an unreachable service is an error, never an empty list 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (a bare array) is an error, not "no invoices" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (a non-array list) is an error, not "no invoices" 33ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (no billingSetUp verdict) is an error, not "no invoices" 24ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (no cursor field) is an error, not "no invoices" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a body that is not an invoice page (null rows) is an error, not "no invoices" 26ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > a 403 is a refusal for the role, not a failure 22ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a billing administrator > pages by Stripe cursor and says which invoices are on screen 132ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > a member > is told who sees invoices, and no invoice request is made 19ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > the page on screen, row by row 23ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > a failed read is said to be a failure, with no rows 23ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > billing not set up is its own fact 20ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx > what AnA reads on Licensing > for a member, says the list was not read and why 17ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > adopts the snapshot: plan label, session window, weekly buckets 83ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > states an idle session honestly instead of fabricating a countdown 17ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > renders honest empty states on a malformed snapshot (never a fixture) 20ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > mounted as usage, reads no invoices and offers no Billing tab 126ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > mounted as billing, reads no invoices and offers no Billing tab 57ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > shows no credit balance, auto-reload or credit pools — the ledger is never spent 43ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > the usage tab shows no per-category credit card 20ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — the invoice list moved to Licensing > points to Compare subscriptions, where the invoices are 27ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — service unreachable > renders honest error states when the billing service is unreachable 17ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > AnA's tab action after the move > opens the tabs the screen has, and says where the invoices went instead of opening one it does not 19ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — Billing > is not offered to a member; Usage & limits and Compare subscriptions are 177ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — Billing > is not offered to an organisation administrator whose session lacks the billing permission 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx > Account menu — Billing > is offered to a billing administrator and opens Licensing, never the retired billing screen 76ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > no balance, no Buy more, no auto-reload control, and no credits read 199ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > credits are not presented as metered > makes no price claim it cannot honour 46ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > the referral offer > is gone — the product cannot pay it 37ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses member before reading anything 15ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses viewer before reading anything 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses manager before reading anything 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses approver before reading anything 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses reviewer before reading anything 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > refuses user before reading anything 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > admits admin 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > admits owner 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > agrees with the session permission the screen reads, for every role 15ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > requires the authenticated principal 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > who may read the invoice list > requires an organisation context, and reads only its own customer 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > says billing is not set up when the organisation has no Stripe customer, and asks Stripe nothing 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > says billing is set up when the list is merely empty 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > projects each Stripe invoice, amounts in major units 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > does not call the page length a total 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > what the read says > a failed Stripe read is an error, never an empty list 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > asks Stripe for one page of the organisation’s customer, ten by default 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > returns the cursor for the next page when Stripe has more, and none on the last page 4ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > clamps the page size to 1..100 3ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("abc") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("in_1;drop") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("cus_7") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id ("in_") 2ms
+ ✓ server/routes/__tests__/billing-invoices-admin-gate.test.ts > paging > refuses a cursor that is not an invoice id (" in_1") 2ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /seats returns actual saved configuration and warns about the failed audit 23ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /weekly-limits/requests returns actual saved configuration and warns about the failed audit 5ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /seats preserves the existing organization role refusal 3ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /weekly-limits/requests preserves the existing organization role refusal 3ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /seats requires the authenticated principal 3ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /weekly-limits/requests requires the authenticated principal 2ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /seats refuses missing reason before writing 3ms
+ ✓ server/routes/__tests__/billing-configuration-audit-outcome.test.ts > billing configuration save outcomes > /weekly-limits/requests refuses missing reason before writing 2ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "admin" 2ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "manager" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "member" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "viewer" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "owner" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "super_admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "editor" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "user" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "Admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "VIEWER" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > agrees with requireEditorAccess for role "" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > gives a viewer nothing and a member the write permission 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > every auth response that returns a user derives its permissions, none hard-codes an empty list 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "admin" 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "manager" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "member" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "viewer" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "owner" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "super_admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "editor" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "user" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "Admin" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "VIEWER" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > report:finalize agrees with the finalize guard for role "" 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a member is not offered Finalize; under the default signing policy an admin is and a manager is not 1ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > sessionPermissions > a signing policy that names managers offers them Finalize 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is the admin|owner set exactly — `withExtendingRoles` must not widen it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is granted to exactly the roles the route admits, and to no other 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > is narrower than governed:write — a manager writes, and does not attest 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > an admin holds all three; the three gates are not the same gate 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > offers the control to a session that carries no permissions array, as the two precedents do 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > audit:attest > the client predicate agrees with the session for every role 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is the admin|owner set exactly — `withExtendingRoles` must not widen it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "owner" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "manager" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "approver" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "reviewer" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "member" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "viewer" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "user" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "super_admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "Admin" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > is granted to role "" exactly when the billing guard admits it 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > a manager writes governed records and does not administer billing 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > offers to a session with no permissions array, as the precedents do; an array is authoritative 0ms
+ ✓ server/middleware/__tests__/session-permissions.test.ts > billing:admin > every billing-administration guard in billing-dashboard.ts reads the one list 1ms
+ Test Files  7 passed (7)
+      Tests  112 passed (112)
+
+## Regression set: 51 suites touching the account menu, Licensing, usage/billing, permissions and the billing routes — 626/627
+## The one failure is trunk's, not this change's: one-signing-authority-policy.test.ts counts isSigningAuthorized calls in
+## server/services/review/review-route-member.ts (committed in 5985619e5), a file this change does not touch.
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > FAILS OPEN when entitlement resolution throws 1ms
+ × server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/part11/__tests__/one-signing-authority-policy.test.ts > one signing-authority policy (P-27) > calls the policy predicate directly only where the answer is displayed or judges another person
+ Test Files  1 failed | 50 passed (51)
+      Tests  1 failed | 626 passed (627)
+
+## The 51 suites
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx
+client/src/concept2cure/v2/__tests__/accountMenuBilling.test.tsx
+client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx
+client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+client/src/concept2cure/v2/__tests__/clientNamesSlice1Features.test.tsx
+client/src/concept2cure/v2/__tests__/cmdkAudience.test.tsx
+client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx
+client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx
+client/src/concept2cure/v2/__tests__/complianceAttestation.test.tsx
+client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx
+client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx
+client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx
+client/src/concept2cure/v2/__tests__/onboardingActivatesPlan.test.tsx
+client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx
+client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx
+client/src/concept2cure/v2/__tests__/registryModel.test.ts
+client/src/concept2cure/v2/__tests__/riskAndDesignControlsSharedMounts.test.tsx
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx
+client/src/concept2cure/v2/__tests__/shellWiring.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceReachability.test.ts
+client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx
+client/src/concept2cure/v2/__tests__/unlockJourney.test.tsx
+client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx
+client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx
+client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts
+server/bootstrap/__tests__/api-auth-gate.test.ts
+server/bootstrap/__tests__/regulatory-root-gate.test.ts
+server/middleware/__tests__/auth-carries-provider.test.ts
+server/middleware/__tests__/csrf-webhook-exemption.test.ts
+server/middleware/__tests__/moduleEntitlementGate.test.ts
+server/middleware/__tests__/session-permissions.test.ts
+server/middleware/__tests__/signing-roles-p18.test.ts
+server/middleware/__tests__/storageQuotaGuard.test.ts
+server/middleware/__tests__/tenantLifecycleGuard.test.ts
+server/routes/__tests__/billing-configuration-audit-outcome.test.ts
+server/routes/__tests__/billing-credit-capabilities.test.ts
+server/routes/__tests__/billing-invoices-admin-gate.test.ts
+server/services/__tests__/billing-free-tier-activation.test.ts
+server/services/__tests__/credit-autoreload-audit-outcome.test.ts
+server/services/part11/__tests__/one-signing-authority-policy.test.ts
+server/services/study-design/__tests__/crf-shell.test.ts
+server/startup/__tests__/stripe-webhook-raw-body.contract.test.ts
+tests/ci/no-ghost-globals.contract.test.ts

@@ -1,0 +1,52 @@
+=== npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+=== npm run ci:unreferenced-modules
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+exit 0
+=== npm run ci:launch-scope
+[ci:launch-scope] 7 apps · 49 surfaces · 12 modules · 33 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+exit 0
+=== npm run ci:launch-scope-api
+ci:launch-scope-api: 558 API paths named by launch and shell screens; none refused. {"launch":508,"infrastructure":2,"never-gated":48}
+exit 0
+=== npm run ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 113 renderable surface(s): 87 in the Apps catalog, 26 declared contextual.
+
+exit 0
+=== npm run ci:ana-surface-context
+  113 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (74 surface file(s) hold a call).
+
+exit 0
+=== npm run audit:ui-authority
+  Passed: 47
+  Failed: 0
+  Total:  47
+
+AUDIT PASSED — all checks green.
+
+exit 0
+=== npm run ci:internals-in-copy
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/PublishingCenter.tsx'
+}
+
+Node.js v22.22.0
+exit 1
+
+=== ci:internals-in-copy, scoped copy (tools/internals-in-copy.scoped.mjs.txt): the stock gate reads every git-tracked file and
+=== crashes with ENOENT on client/src/concept2cure/v2/surfaces/PublishingCenter.tsx, which the ectd-publishing fold deleted in the shared tree.
+=== The scoped copy skips files that no longer exist and adds the untracked LicensingInvoices.tsx:
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+=== scoped tsc (tools/tsc-scoped.py.txt) over the 13 changed files
+scoped tsc: 13 changed files; errors in them: 0; errors elsewhere (ambient, untouched): 6

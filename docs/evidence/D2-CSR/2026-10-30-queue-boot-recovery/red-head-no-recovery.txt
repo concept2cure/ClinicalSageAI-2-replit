@@ -1,0 +1,25 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts [ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts ]
+Error: Cannot find module '/server/services/csr/csr-queue-recovery' imported from /home/user/ClinicalSageAI-2-replit/server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts
+ ❯ server/services/csr/__tests__/csr-queue-recovery.pglite.test.ts:23:1
+     21| import { buildCsrNarratives, type NarrativeQueryable } from '../csr-na…
+     22| import { readLatestNarrativeRun, runNarrativeRun } from '../csr-narrat…
+     23| import { runCsrQueueRecovery, type CsrQueueRecoveryDeps, type StalledI…
+       | ^
+     24| import { narrativeBundle, narrativeDatasets } from './support/adam-nar…
+     25|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:52:16
+   Duration  2.38s (transform 1.19s, setup 133ms, import 0ms, tests 0ms, environment 0ms)
+

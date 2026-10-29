@@ -59,3 +59,59 @@ M21 KILLED — the Settings tab drops the description of a record row — 1 fail
     × client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Settings → Second factor at sign-in > says what sign-in asks for, and where each person enrols an authenticator 123ms
 
 21/21 killed; every mutated file restored (md5 checked).
+
+# Part 2 — the retirement (tools/mutate2.py.txt)
+
+Checks per mutation: the fold guards (foldSetup.test.ts, launch-scope.test.ts) and, where the mutation is for a CI list, that gate. Reversed by replacement on the file as it stood; md5 of every file checked before and after (md5sum -c, all OK).
+
+P1 KILLED — the alias is gone
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P2 KILLED — the alias opens no tab
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 6ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P3 KILLED — the alias opens the wrong tab
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open 7ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > resolves setup to admin-console’s Settings tab from a link and an in-app move, with or without a project open
+P4 KILLED — the old id keeps a view
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P5 KILLED — the old id keeps a registry entry (⌘K lists it)
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P6 KILLED — the old id stays a launch shell surface
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 3ms
+      × server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29) 5ms
+      FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+P7 KILLED — the old id keeps its rail group
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 4ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface
+P8 KILLED — admin-console does not claim the retention route
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > lands on admin-console, which mounts the settings Setup held and claims the routes they call
+P9 KILLED — the discoverability list still names setup
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface 5ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > is in no launch scope list, rail or CI list, and no tour stops on it; admin-console stays a shell surface
+      console.error(`\\n[ci:surface-discoverability] FAIL — ${failures.length} issue(s):\\n`);
+    by ci:surface-discoverability
+      [ci:surface-discoverability] FAIL — 1 issue(s):
+P10 KILLED — ID_BASELINE keeps the retired publisher
+    by ci:ana-surface-context
+      [ci:ana-surface-context] FAIL — 1 issue(s):
+P11 KILLED — Setup survives with its own AnA publisher
+    by the fold guards (foldSetup.test.ts, launch-scope.test.ts)
+      × client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher 119ms
+      FAIL  client/src/concept2cure/v2/__tests__/foldSetup.test.ts > setup is folded into Admin and access > keeps no screen of its own: no view, no registry entry for ⌘K, no component, no AnA publisher
+P12 KILLED — the GAMP kit route is left unmapped
+    by ci:launch-scope-api
+
+12/12 killed; every mutated file restored (md5 checked).

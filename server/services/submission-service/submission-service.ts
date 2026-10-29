@@ -3589,6 +3589,53 @@ async function editLeafStudyTagging(input: UpsertLeafInput, ctx: { organizationI
   return { ...(value.row as SubmissionLeaf), auditTrail, ...(sequenceStatusChanged ? { sequenceStatusChanged } : {}) };
 }
 
+/**
+ * The parent leaf a lifecycle act names must be one this organization owns, in
+ * this sequence or (for replace|append|delete, 2026-10-30) a current leaf of an
+ * earlier sequence of the same submission. Moved out of upsertLeaf unchanged
+ * otherwise.
+ */
+async function assertParentLeafInScope(
+  input: UpsertLeafInput & { parentLeafId: number },
+  seq: { submissionId: number; sequenceNumber: string },
+  organizationId: number,
+): Promise<void> {
+  // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
+  // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
+  // caller's org AND live in THIS sequence; otherwise the eCTD lifecycle chain
+  // would link a modified-file operation to a leaf the tenant doesn't own or that
+  // sits in another sequence, corrupting the index. (The document pointer above is
+  // checked the same way; parentLeafId must not be the weaker link.)
+  // 2026-10-30 (D2, CSR lifecycle): a replace|append|delete may also name a
+  // leaf of an EARLIER sequence of the same submission — the leaf actually on
+  // file that it supersedes (eCTD lifecycle). That parent must be live, in this
+  // organization, not itself a withdrawal; the packager binds the act to the
+  // file it was filed as (package-from-core readEarlierParentKeys).
+  const crossSequence = ['replace', 'append', 'delete'].includes(String(input.lifecycleOp ?? ''));
+  const [parent] = await db
+    .select({ id: submissionLeaves.id })
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.id, input.parentLeafId),
+        crossSequence
+          ? sql`(${submissionLeaves.sequenceId} = ${input.sequenceId} OR (${submissionLeaves.lifecycleOp} <> 'delete' AND ${submissionLeaves.sequenceId} IN (
+              SELECT e.id FROM ectd_sequences e WHERE e.organization_id = ${organizationId} AND e.submission_id = ${seq.submissionId}
+                AND e.deleted_at IS NULL AND e.sequence_number < ${seq.sequenceNumber})))`
+          : eq(submissionLeaves.sequenceId, input.sequenceId),
+        eq(submissionLeaves.organizationId, organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .limit(1);
+  if (!parent) {
+    throw new SubmissionError(
+      'FORBIDDEN',
+      'parentLeafId must reference a leaf in this sequence, or a current leaf of an earlier sequence of this submission, owned by this organization.'
+    );
+  }
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
@@ -3764,32 +3811,7 @@ export async function upsertLeaf(
     documentProgramId,
   };
 
-  // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
-  // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
-  // caller's org AND live in THIS sequence; otherwise the eCTD lifecycle chain
-  // would link a modified-file operation to a leaf the tenant doesn't own or that
-  // sits in another sequence, corrupting the index. (The document pointer above is
-  // checked the same way; parentLeafId must not be the weaker link.)
-  if (input.parentLeafId != null) {
-    const [parent] = await db
-      .select({ id: submissionLeaves.id })
-      .from(submissionLeaves)
-      .where(
-        and(
-          eq(submissionLeaves.id, input.parentLeafId),
-          eq(submissionLeaves.sequenceId, input.sequenceId),
-          eq(submissionLeaves.organizationId, ctx.organizationId),
-          isNull(submissionLeaves.deletedAt)
-        )
-      )
-      .limit(1);
-    if (!parent) {
-      throw new SubmissionError(
-        'FORBIDDEN',
-        'parentLeafId must reference a leaf in this sequence owned by this organization.'
-      );
-    }
-  }
+  if (input.parentLeafId != null) await assertParentLeafInScope({ ...input, parentLeafId: input.parentLeafId }, seq, ctx.organizationId);
 
   if (input.leafId) {
     const leafId = input.leafId;

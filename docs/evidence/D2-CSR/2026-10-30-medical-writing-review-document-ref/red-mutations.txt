@@ -1,0 +1,4 @@
+MUTATION status-ignores-gate-and-issues:  × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > returns the evidence finding for a saved CSR section whose figure differs from its retained cell 205ms
+MUTATION status-ignores-gate-and-issues:  × server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts > medical_writing_review with a document reference runs the CSR section evidence check > records an unreadable retained run as blocked, never as agreement 59ms
+MUTATION status-ignores-gate-and-issues: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+MUTATION status-ignores-gate-and-issues:       Tests  2 failed | 9 passed (11)
