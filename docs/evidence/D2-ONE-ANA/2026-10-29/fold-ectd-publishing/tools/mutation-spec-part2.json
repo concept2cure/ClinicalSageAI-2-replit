@@ -1,0 +1,188 @@
+[
+ {
+  "id": "P2-M1",
+  "what": "the alias is gone: an old link or AnA's target lands nowhere",
+  "file": "client/src/concept2cure/v2/registryModel.ts",
+  "old": "  'ectd-publishing': 'ectd-compile',\n",
+  "new": "",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M2",
+  "what": "eCTD Compile does not claim the reference reads (production refuses them)",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],",
+  "new": "      ],",
+  "suite": [
+   "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M2g",
+  "what": "the same, against the gate",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],",
+  "new": "      ],",
+  "cmd": [
+   "npm",
+   "run",
+   "--silent",
+   "ci:launch-scope-api"
+  ]
+ },
+ {
+  "id": "P2-M3",
+  "what": "the claim is widened to the retired screen's whole /api/ectd",
+  "file": "shared/constants/ui-surface-registry.ts",
+  "old": "      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],",
+  "new": "      '/api/ectd'],",
+  "suite": [
+   "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M4",
+  "what": "ectd-publishing is put back on 20260810's keep-list",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "   'ectd-compile',\n",
+  "new": "   'ectd-compile',\n   'ectd-publishing',\n",
+  "suite": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M5",
+  "what": "the heal step is put back",
+  "file": "db/migrations/20260810_reconcile_module_catalog.sql",
+  "old": "-- 1b) Removed 2026-10-29 (the ectd-publishing fold; see the note at the top). It\n-- cleared step 1's deprecation for ectd-publishing alone, the one row it named.\n",
+  "new": "UPDATE available_modules\n   SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,\n       updated_at = now()\n WHERE module_id IN ('ectd-publishing')\n   AND COALESCE(metadata::jsonb, '{}'::jsonb) ? 'deprecated';\n",
+  "suite": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M6",
+  "what": "the packaging row is put back",
+  "file": "db/migrations/20260823_module_catalog_commercial_packaging.sql",
+  "old": "  ('ectd-compile', 'standard'),\n",
+  "new": "  ('ectd-compile', 'standard'),\n  ('ectd-publishing', 'standard'),\n",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M7",
+  "what": "eCTD Compile does not register the reference handlers",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "    ...ectdReferenceActionHandlers(reference, {",
+  "new": "    ...((_r: unknown, _ids: unknown) => ({}))(reference, {",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+  ]
+ },
+ {
+  "id": "P2-M8",
+  "what": "a held open-code-list is never released when the listing lands",
+  "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+  "old": "  }, [statusState, orchState, reference.loadState]);",
+  "new": "  }, [statusState, orchState]);",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+  ]
+ },
+ {
+  "id": "P2-M9",
+  "what": "set-reference-version is left on the retired surface id",
+  "file": "shared/navigation/surface-actions.ts",
+  "old": "    id: 'ectd-compile.set-reference-version',\n    surfaceId: 'ectd-compile',",
+  "new": "    id: 'ectd-compile.set-reference-version',\n    surfaceId: 'ectd-publishing',",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M10",
+  "what": "filter-codes requires a query again, so AnA cannot clear the filter",
+  "file": "shared/navigation/surface-actions.ts",
+  "old": "    params: [{ name: 'query', required: false,",
+  "new": "    params: [{ name: 'query', required: true,",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx"
+  ]
+ },
+ {
+  "id": "P2-M11",
+  "what": "the retired id keeps a view of its own",
+  "file": "client/src/concept2cure/v2/surfaceViews.ts",
+  "old": "  'ectd-compile': { component: EctdCompile },\n",
+  "new": "  'ectd-compile': { component: EctdCompile },\n  'ectd-publishing': { component: EctdCompile },\n",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M12",
+  "what": "ectd-publishing is put back in the Submission Center launch app",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'ind-checklist', 'dispatch-readiness'],",
+  "new": "    surfaces: ['submission-center', 'ectd-compile', 'ectd-publishing', 'gateway-transmittals', 'ind-checklist', 'dispatch-readiness'],",
+  "suite": [
+   "server/services/entitlements/__tests__/launch-scope.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M12f",
+  "what": "the same, against the fold guard",
+  "file": "shared/constants/launch-scope.ts",
+  "old": "    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'ind-checklist', 'dispatch-readiness'],",
+  "new": "    surfaces: ['submission-center', 'ectd-compile', 'ectd-publishing', 'gateway-transmittals', 'ind-checklist', 'dispatch-readiness'],",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M13",
+  "what": "ID_BASELINE left at 108",
+  "file": "scripts/ci/check-ana-surface-context.mjs",
+  "old": "const ID_BASELINE = 107;",
+  "new": "const ID_BASELINE = 108;",
+  "cmd": [
+   "npm",
+   "run",
+   "--silent",
+   "ci:ana-surface-context"
+  ]
+ },
+ {
+  "id": "P2-M14",
+  "what": "the deferred-inventory row is put back",
+  "file": "shared/constants/deferred-capability-inventory.ts",
+  "old": "  // ectd-publishing converged (D2, 2026-10-29): its reference is eCTD Compile's eCTD reference panel.\n",
+  "new": "  { surfaceId: 'ectd-publishing', decision: 'converge', canonicalSurfaces: ['ectd-compile'], implementedParts: 'Publishing reference screen.', completionNeeded: 'A reference screen is not publication.', description: 'Deferred publishing reference screen.' },\n",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M15",
+  "what": "20260814j inserts the row again (a fresh database gets a catalogue row for a retired screen)",
+  "file": "migrations/20260814j_catalog_missing_product_surfaces.sql",
+  "old": "    ('report-engine', 'Report engine',",
+  "new": "    ('ectd-publishing', 'Publishing centre',\n     'eCTD specification versions, controlled vocabularies and the qualification harness the assembled sequence is checked against.',\n     'Submissions', '/concept2cure/ectd-publishing', 'send', 270, '{\"tiers\": [], \"industries\": []}'::json),\n\n    ('report-engine', 'Report engine',",
+  "suite": [
+   "tests/schema-contract/catalog-module-claims.contract.test.ts"
+  ]
+ },
+ {
+  "id": "P2-M15r",
+  "what": "the same, against the catalogue reconciliation",
+  "file": "migrations/20260814j_catalog_missing_product_surfaces.sql",
+  "old": "    ('report-engine', 'Report engine',",
+  "new": "    ('ectd-publishing', 'Publishing centre',\n     'eCTD specification versions, controlled vocabularies and the qualification harness the assembled sequence is checked against.',\n     'Submissions', '/concept2cure/ectd-publishing', 'send', 270, '{\"tiers\": [], \"industries\": []}'::json),\n\n    ('report-engine', 'Report engine',",
+  "suite": [
+   "client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts"
+  ]
+ }
+]

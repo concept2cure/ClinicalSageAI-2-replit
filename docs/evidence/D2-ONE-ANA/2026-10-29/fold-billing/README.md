@@ -1,4 +1,4 @@
-# Fold `billing` into Licensing (D2, 2026-10-29), Part 1
+# Fold `billing` into Licensing (D2, 2026-10-29), Parts 1 and 1b
 
 **Launch row:** D2 ("one AnA"; `docs/LAUNCH_DEFINITION_OF_DONE.md`).
 
@@ -109,11 +109,55 @@ Type-check and lint:
 
 No migration, registry, launch-scope or surface-action file is touched in Part 1: they are the checklist files, held for "checklist go".
 
-## Not carried, and found
+## Part 1b: who may buy, change or manage the subscription
 
-- **Checkout, DTC checkout and the billing portal accept any member.** `POST /api/billing/portal` opens the Stripe customer portal, which itself lists the organisation's invoices and payment methods, so a member can still see invoice history through "Manage billing". The IA names server gates on all three (`INFORMATION_ARCHITECTURE.md` §8, administration session). Gating them changes who may buy and manage a subscription, which the placement map does not ask of this fold. Recommended next: `requireRole(...BILLING_ADMIN_ROLES)` on `/portal`, and "Manage billing" offered on `canAdministerBilling`.
-- **Two menu doors to one screen for administrators.** A billing administrator's menu has "Billing" and "Compare subscriptions", both opening `licensing`. This follows the placement map. Each names a job, but the IA's eventual "Subscription & billing" is one entry; renaming is a naming decision (IA section 9), not this fold's.
-- **`/api/billing/rate-limits` has no caller.** The usage screen mirrors its grid. Unchanged.
+Part 1 is on trunk as `9c2fdec74`. The lead decided Part 1's first "not carried" item should be done now, because the design document already names these gates. INFORMATION_ARCHITECTURE.md, item 10 "Administration" of the order of work, and the administration session: "server role gates on `/api/billing/checkout`, `/dtc-checkout`, `/portal` and `/invoices`". Its evidence line: "a member cannot fetch invoices or start checkout". Part 1 gated `/invoices`. Part 1b gates the other three, and nothing else.
+
+### What already exists (Part 1b)
+
+| Piece | Path | What it does today | What it does not do |
+|---|---|---|---|
+| The three routes | `server/routes/billing.ts` `POST /checkout`, `/portal`, `/dtc-checkout` | Take the organisation from the token, never the body. Validate the body with zod. Open Stripe Checkout, open the customer portal, or activate the free tier (`createDTCCheckoutSession`). | **No role gate**: `authenticateToken` only. A member could open a Checkout that bills the organisation, activate the free tier, or open the portal, with its payment methods, cancellation and the invoice history Part 1 refuses them. |
+| The free-tier service guard | `server/services/billing.ts` `createDTCCheckoutSession`, pinned by `server/services/__tests__/billing-free-tier-activation.test.ts` | Refuses to "activate" free over a live paid plan, and writes nothing. | It is not a role check. Its test's header said the route had none; that comment now says the route has one. The service guard stays. |
+| Licensing's controls | `client/src/concept2cure/v2/surfaces/LicensingSurface.tsx` | "Manage billing" (portal) whenever a status is read. Every plan card's checkout ("Start free", "Start 14-day trial", "Choose …"). "Ask AnA about Enterprise". | Offered every control to every member. |
+| Onboarding's activation | `client/src/concept2cure/v2/surfaces/Onboarding.tsx` `activate()` step 3 | Sends `/dtc-checkout` or `/checkout` last. It reports the outcome per step. | Already an administrator's act: its discovery save admits admin and owner only (`server/routes/onboarding-discovery-routes.ts` `canEditDiscovery`), and a member is told so above the steps. A 403 at checkout read "did not return a checkout link". Both failure notes said "Retry from Usage & Billing", a screen that no longer has billing. |
+| Sign-up | `client/src/concept2cure/auth/ZenSignup.tsx` | Sends `/dtc-checkout` with the sign-up token. | Unaffected: sign-up mints the first user as `admin` (`server/routes/auth.ts` `/signup`). |
+| Other callers | grep of `client/src`, `server`, `shared`, `tests`, `scripts` for the three paths | None but the three above. The server tests that name `/checkout` (`csrf-webhook-exemption`, `stripe-webhook-raw-body`, `tenantLifecycleGuard`, `storageQuotaGuard`) build their own stubs. | |
+
+### The change
+
+- **Server:** `requireRole(...BILLING_ADMIN_ROLES)` on `POST /checkout`, `/dtc-checkout` and `/portal` (`server/routes/billing.ts`, with its header listing who each route admits). This is the guard `/invoices` takes. `GET /status` stays readable by every member, so a member still sees which subscription the organisation is on. The price lists stay public.
+- **Licensing:**
+  - "Manage billing" is offered only with `canAdministerBilling`.
+  - Each plan card's control is one `PlanCta`. "Ask AnA about Enterprise" buys nothing, so everyone keeps it. Every checkout is a billing administrator's. The current subscription is marked by the card's Current tag.
+  - A member reads one line under the plan status: "Invoices and subscription changes are for billing administrators: your organization's admins and owners." This replaces Part 1's invoice-only note, so a member is not told twice.
+  - AnA's facts carry `subscriptionActions` in every state. A member's available actions say checkout and the portal are not theirs, and the summary says so in one sentence.
+- **Onboarding:**
+  - A session without the permission sends no checkout. The summary reads "Choosing the subscription is for billing administrators: your organization's admins and owners. No plan was provisioned."
+  - A 403 from checkout (a session older than its permissions) reads the same, not "did not return a checkout link".
+  - The two failure notes now say "Retry from Compare subscriptions", the registry label.
+  - I added no plan-step note: the wizard already tells a member that only an owner or administrator activates.
+
+### Red, green, mutations (Part 1b)
+
+- **Red**, against trunk `70c9e75ad` before the change:
+  - `billing-checkout-portal-admin-gate.test.ts`, **24/35 failed**. Each of the seven refused roles (member, viewer, manager, approver, reviewer, user, business_admin) got **200 and reached the Stripe service** on each of the three routes, and the permission-agreement case failed on each.
+  - Licensing and onboarding: **6/6 new cases failed**. The five existing onboarding cases pass before and after, because an unknown session is offered checkout as before.
+- **Green:**
+  - the seven 1b suites, **74/74**: server 45 (the gate 35, plus the free-tier service and the webhook contract) and client 29 (Licensing's controls, invoices and Enterprise action, and onboarding);
+  - the regression set, now 62 suites (Part 1's 51, plus onboarding, sign-up, the free-tier service and the webhook contract), **741/741** on `70c9e75ad` + this change.
+- **Mutations, 12/12 killed** (`mutations.txt`, "Part 1b"; `tools/mutate-1b.py.txt`):
+  - each of the three route guards removed (3);
+  - Manage billing offered to every member; checkout offered on a member's cards; Ask AnA about Enterprise taken from a member; AnA told a member may buy; AnA offered checkout for a member; the member's one-line note removed (6);
+  - onboarding sends checkout without the permission; a 403 read as a missing link; the retired "Usage & Billing" name restored (3).
+- **Gates**, on `70c9e75ad` + this change, all green: undefined-css-classes, unreferenced-modules, launch-scope, launch-scope-api, surface-discoverability, ana-surface-context and audit:ui-authority. `ci:internals-in-copy` passes through the scoped copy; the stock gate still crashes on the ectd-publishing fold's deleted `PublishingCenter.tsx`.
+- **Type-check and lint:** scoped `tsc` over the 9 files, 0 errors in them. ESLint 0 errors; no file gained a warning, net −1.
+
+## Not carried, and found (for the founder)
+
+- **Two menu doors to one screen for administrators.** A billing administrator's menu has "Billing" and "Compare subscriptions", both opening `licensing`. This follows the placement map. Each names a job, but the design document's eventual "Subscription & billing" is one entry. Renaming is a naming decision (INFORMATION_ARCHITECTURE.md section 9), not this fold's.
+- **`/api/billing/rate-limits` has no caller.** The usage screen mirrors its grid as `USAGE_RATE_LIMITS`. Unchanged.
+- (Part 1's first item, checkout and the portal accepting any member, is done in Part 1b above.)
 
 ## Part 2 (after "checklist go")
 

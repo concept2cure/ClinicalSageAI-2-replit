@@ -1,3 +1,13 @@
+-- AMENDED IN PLACE 2026-10-29 — D2 fold of ectd-publishing into eCTD Compile (CLAUDE.md Rule 1).
+-- The eCTD publishing reference (ectd-publishing) is folded into eCTD Compile,
+-- whose eCTD reference panel carries its spec versions, Regional IG OID and
+-- controlled vocabularies (EctdCompileReference.tsx); `ectd-publishing` is an
+-- alias that opens it. This file was the row's only writer, so its VALUES row is
+-- removed: a fresh database never holds a catalogue row for a screen that no
+-- longer exists. A deployed database keeps its row, its metadata and its
+-- subscriptions; 20260810 (amended the same day) deprecates it on every replay.
+-- No DELETE. The note below about eight surfaces describes the file as written.
+-- Evidence: docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/README.md.
 -- ============================================================================
 -- Apps catalog — add eight built surfaces a user could not find
 -- (GA ledger L40)
@@ -85,10 +95,6 @@ BEGIN
     ('labeling-smpc', 'SmPC labeling',
      'EU Summary of Product Characteristics authoring and change control, section by section against the QRD template.',
      'Labeling', '/concept2cure/labeling-smpc', 'tag', 260, '{"tiers": [], "industries": []}'::json),
-
-    ('ectd-publishing', 'Publishing centre',
-     'eCTD specification versions, controlled vocabularies and the qualification harness the assembled sequence is checked against.',
-     'Submissions', '/concept2cure/ectd-publishing', 'send', 270, '{"tiers": [], "industries": []}'::json),
 
     ('report-engine', 'Report engine',
      'Protocol and portfolio analytics — structured reads over the study record rather than a static dashboard.',

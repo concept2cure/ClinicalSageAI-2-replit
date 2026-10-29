@@ -242,6 +242,21 @@ describe('the folded setup', () => {
   });
 });
 
+describe('the folded eCTD publishing reference', () => {
+  it('is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)', () => {
+    /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ectd-publishing/. It left the
+       Submission Center app on 2026-10-08 ('is out of the submission-center app'
+       above); its spec versions, Regional IG OID and vocabularies are eCTD
+       Compile's now, which is in that app, so a bought ectd-publishing row can
+       buy nothing and the reference needs no grant of its own. */
+    const submit = LAUNCH_APPS.find((app) => app.id === 'submission-center')!;
+    expect(isLaunchSurface('ectd-publishing')).toBe(false);
+    expect(LAUNCH_MODULE_IDS as readonly string[]).not.toContain('ectd-publishing');
+    expect(submit.surfaces).toContain('ectd-compile');
+    expect(submit.modules).toContain('ectd-compile');
+  });
+});
+
 describe('the folded AnA memory', () => {
   it('is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)', () => {
     /* docs/evidence/D2-ONE-ANA/2026-10-29/fold-ana-memory/. It left the shell on
