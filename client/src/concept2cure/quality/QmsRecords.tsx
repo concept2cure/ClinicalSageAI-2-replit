@@ -25,6 +25,7 @@ import { listOf } from './qmsList';
 import { formatDate } from './data';
 import { Kpi } from './Kpi';
 import { CapaActions } from './CapaActions';
+import { CAPA_SOURCE_KIND, useCapasBySource } from './capaSources';
 import { ReviewActions } from './ReviewActions';
 import { shellProgramId } from '../v2/shellProject';
 import {
@@ -68,6 +69,9 @@ interface RegisterConfig<R extends { id: number | string }> {
   rowActions?: RowAction<R>[];
   ask: string;
   askRow: (r: R) => string;
+  /** The CAPA sourceRefs kind this record is raised as: the register shows the
+   *  CAPAs raised from each row, derived from the CAPA register. */
+  capaSourceKind?: string;
   /** What a row opens to, under it; its first cell becomes the toggle. */
   detail?: { label: string; render: (r: R, onChanged: () => void) => React.ReactNode };
 }
@@ -329,10 +333,11 @@ const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
     },
   }, raiseCapaFrom<NonconformanceRow>({
     source: 'nonconformance',
-    ref: (r) => ({ kind: 'qms_nonconforming_product', id: String(r.id), label: r.nc_number }),
+    ref: (r) => ({ kind: CAPA_SOURCE_KIND.nonconforming, id: String(r.id), label: r.nc_number }),
     title: (r) => `${r.nc_number}: ${r.description}`.slice(0, 200),
     problem: (r) => [r.description, [r.device_name, r.lot_or_serial].filter(Boolean).join(', ')].filter(Boolean).join('\n'),
   })],
+  capaSourceKind: CAPA_SOURCE_KIND.nonconforming,
   ask: 'Give me a read-out on nonconformances: which are awaiting disposition, how long each has been open, and which recur by product, lot or source.',
   askRow: (r) => `Summarise nonconformance ${r.nc_number}: what was found, its disposition, and whether it needs a CAPA or a change.`,
 };
@@ -421,10 +426,11 @@ const SUPPLIERS: RegisterConfig<SupplierRow> = {
     },
   }, raiseCapaFrom<SupplierRow>({
     source: 'supplier',
-    ref: (r) => ({ kind: 'qms_supplier', id: String(r.id), label: r.supplier_code || r.supplier_name }),
+    ref: (r) => ({ kind: CAPA_SOURCE_KIND.supplier, id: String(r.id), label: r.supplier_code || r.supplier_name }),
     title: (r) => `Supplier issue: ${r.supplier_name}`,
     problem: (r) => [r.supplier_name, r.scope].filter(Boolean).join(': '),
   })],
+  capaSourceKind: CAPA_SOURCE_KIND.supplier,
   ask: 'Give me a read-out on suppliers: which critical suppliers are not approved, whose audits or re-approvals are past due, and what falls due next quarter.',
   askRow: (r) => `Summarise supplier ${r.supplier_name}: what it supplies, its approval standing, and what its qualification needs next.`,
 };
@@ -506,11 +512,12 @@ const AUDITS: RegisterConfig<InternalAuditRow> = {
     },
   }, raiseCapaFrom<InternalAuditRow>({
     source: 'internal_audit',
-    ref: (r) => ({ kind: 'qms_internal_audit', id: String(r.id), label: r.audit_number }),
+    ref: (r) => ({ kind: CAPA_SOURCE_KIND.audit, id: String(r.id), label: r.audit_number }),
     title: (r) => `Findings of ${r.audit_number}`,
     problem: (r) => `${r.scope}\n${r.major_findings ?? 0} major and ${r.minor_findings ?? 0} minor findings.`,
     show: (r) => r.status !== 'planned' && r.status !== 'cancelled',
   })],
+  capaSourceKind: CAPA_SOURCE_KIND.audit,
   ask: 'Give me a read-out on the internal audit programme: what is planned and overdue, which audits found major findings, and which areas have not been audited this year.',
   askRow: (r) => `Summarise internal audit ${r.audit_number}: its scope, status and findings, and what follow-up it needs.`,
 };
@@ -585,11 +592,12 @@ const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     },
   }, raiseCapaFrom<ManagementReviewRow>({
     source: 'management_review',
-    ref: (r) => ({ kind: 'qms_management_review', id: String(r.id), label: `Management review ${r.period}` }),
+    ref: (r) => ({ kind: CAPA_SOURCE_KIND.review, id: String(r.id), label: `Management review ${r.period}` }),
     title: (r) => `Action from the ${r.period} management review`,
     problem: (r) => reviewText(r.outputs, 'decisions'),
   })],
   detail: { label: 'Show actions', render: (r, onChanged) => <ReviewActions review={r} onChanged={onChanged} /> },
+  capaSourceKind: CAPA_SOURCE_KIND.review,
   ask: 'Prepare the inputs for our next management review from the quality records: nonconformances and their dispositions, internal audit findings, supplier standing, and change control.',
   askRow: (r) => `Summarise the ${r.period} management review: what it reviewed, what it decided, and which actions are still open.`,
 };
@@ -605,7 +613,19 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
   /* Bumped by every write, so an open detail re-reads what the write changed. */
   const [version, setVersion] = React.useState(0);
   const today = new Date().toISOString().slice(0, 10);
-  const grid = config.grid + ' 230px';
+  const capas = useCapasBySource(config.capaSourceKind);
+  /* The CAPAs raised from each row, from the CAPA register (capaSources.ts). */
+  const columns: Column<R>[] = config.capaSourceKind
+    ? [...config.columns, {
+      label: 'CAPA',
+      cell: (r) => {
+        const codes = capas.codesFor(String(r.id));
+        if (codes === null) return capas.failed ? 'not read' : '…';
+        return codes.length ? <span className="mono">{codes.join(', ')}</span> : '—';
+      },
+    }]
+    : config.columns;
+  const grid = config.grid + (config.capaSourceKind ? ' 120px' : '') + ' 230px';
   const rowMin = registerRowMinWidth(grid);
 
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
@@ -667,7 +687,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
         </div>
         <div className="qms-table">
           <div className="qms-thead" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-            {config.columns.map((c) => <div key={c.label}>{c.label}</div>)}
+            {columns.map((c) => <div key={c.label}>{c.label}</div>)}
             <div />
           </div>
           {notice && <div className="qms-empty" role="status" data-tone="ok">{notice}</div>}
@@ -686,7 +706,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk }: { 
           {loaded && rows.map((r) => (
             <React.Fragment key={r.id}>
             <div className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-              {config.columns.map((c, i) => (i === 0 && config.detail ? (
+              {columns.map((c, i) => (i === 0 && config.detail ? (
                 <button key={c.label} className="qms-cell qms-num" aria-expanded={openId === r.id} title={config.detail.label}
                   onClick={() => setOpenId(openId === r.id ? null : r.id)}>
                   {c.cell(r)}
