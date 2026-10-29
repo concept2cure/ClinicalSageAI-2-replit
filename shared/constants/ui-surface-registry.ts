@@ -461,6 +461,9 @@ export const UI_SURFACES: UiSurface[] = [
       // build bound to the run, read its sections, triage them, build narratives. Exactly the
       // jobs router, not the /api/csr builder prefix.
       '/api/csr/jobs',
+      // The CSR card's pivotal declarations (D5, 2026-10-29): exactly this endpoint. The rest of
+      // /api/csr-workflow (the board, claimed by the regulatory workspace) stays out of scope.
+      '/api/csr-workflow/pivotal',
       // The eCTD reference (folded from ectd-publishing, D2 2026-10-29; EctdCompileReference.tsx):
       // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
       // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification

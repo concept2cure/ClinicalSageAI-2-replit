@@ -1,0 +1,40 @@
+# Red: each wiring point removed in turn (restored after its run); the test that holds it fails
+
+## M1 the source contract does not take it (shared/csr-source-input.ts)
+ × csr-nct-number.test.ts > the source contract > takes a ClinicalTrials.gov number in its form, NCT and eight digits 7ms
+      Tests  1 failed | 52 passed (53)
+
+## M2 the build route strips it, as before (server/routes/csr-builder-routes.ts)
+ × csr-nct-number.test.ts > the CSR builder route > keeps the registration a request states (it was stripped), and refuses a malformed one 35ms
+      Tests  1 failed | 52 passed (53)
+
+## M3 the prompt does not state it (server/services/csr-builder.ts)
+ × csr-nct-number.test.ts > drafting > the prompt states the registration, and the §1 and §2 templates print it 19ms
+      Tests  1 failed | 52 passed (53)
+
+## M4 the templates do not print it (server/services/csr-builder.ts)
+ × csr-nct-number.test.ts > drafting > the prompt states the registration, and the §1 and §2 templates print it 21ms
+ × csr-nct-number.test.ts > the CSR builder route > keeps the registration a request states (it was stripped), and refuses a malformed one 35ms
+      Tests  2 failed | 51 passed (53)
+
+## M5 the title page does not print it (server/services/csr/csr-assembly-body.ts)
+ × csr-nct-number.test.ts > the assembled title page > prints the registration under the study 673ms
+      Tests  1 failed | 52 passed (53)
+
+## M6 the Clinical Study Index has no registration column (server/services/m2-summary-builders.ts)
+ × csr-nct-number.test.ts > Module 2.7 Clinical Study Index > carries the registration beside the study 10ms
+ × csr-nct-number.test.ts > Module 2.7 Clinical Study Index > says the source states none (undefined), never leaves it blank 3ms
+ × csr-nct-number.test.ts > Module 2.7 Clinical Study Index > says the source states none (null), never leaves it blank 2ms
+      Tests  3 failed | 50 passed (53)
+
+## M7 the loader does not hand it to Module 2 (server/services/csr/load-csr-inputs-for-project.ts)
+ × study-pivotal-declaration.pglite.test.ts > the sponsor declares, per study, whether it is pivotal > Module 2’s input carries each study’s ClinicalTrials.gov number as its source stated it, and none that is malformed 14ms
+      Tests  1 failed | 52 passed (53)
+
+## M8 the assembly source does not read it (server/services/authoring/workflow-source-import.ts)
+ × workflow-source-import.pglite.test.ts > stored CSR assembly source > carries the study’s ClinicalTrials.gov number from the job’s source, and none the source did not state 39ms
+      Tests  1 failed | 52 passed (53)
+
+## M9 the source panel does not show it (client/src/concept2cure/v2/surfaces/CsrSourceInputControls.tsx)
+ × csrSourceInputControls.test.tsx > names the study’s ClinicalTrials.gov number from its source, or says the source states none (D5, 2026-10-29) 80ms
+      Tests  1 failed | 13 passed (14)

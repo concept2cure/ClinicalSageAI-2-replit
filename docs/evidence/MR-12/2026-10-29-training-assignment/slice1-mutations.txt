@@ -1,0 +1,85 @@
+# Mutations on the slice-1 working tree over cbcd32f58b: each check removed, its test run, the file restored (diff -q clean after each). M1-M4: tests/db/qms-job-roles.dbtest.ts on PostgreSQL 16, RLS_ENFORCE=on, app_service. M5: the PGlite replay test.
+
+## M1: the in-transaction administrator check removed (requireJobRoleAdministrator not called)
+ × tests/db/qms-job-roles.dbtest.ts > only an administrator, with a reason, and nothing is written otherwise > a viewer is refused by the editor gate; a member, a manager and an approver by the administrator rule 127ms
+   → {"data":{"id":16,"name":"Not an administrator 21","description":null,"createdAt":"2026-10-29T18:51:27.966Z"}}: expected 201 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 skipped (12)
+
+## M2: the self-removal refusal removed
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > an administrator does not remove themselves from a role: 403 QMS_TRAINING_SELF_UNASSIGN; another administrator may 162ms
+   → expected 200 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 skipped (12)
+
+## M3: the in-use refusal on role deletion removed
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a role a document is assigned to is not deleted: 409 QMS_JOB_ROLE_IN_USE naming the document 176ms
+   → {"data":{"id":18,"deleted":true}}: expected 200 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 skipped (12)
+
+## M4: the active-member predicate on the person added dropped (organization and status no longer checked)
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 150ms
+   → 52: {"data":{"id":9,"jobRoleId":19,"userId":52,"addedAt":"2026-10-29T18:51:50.660Z"}}: expected 201 to be 422 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 11 skipped (12)
+
+## M5: one index of the migration left unguarded (CREATE INDEX without IF NOT EXISTS)
+error: relation "qms_training_assignments_user_idx" already exists
+      Tests  8 skipped (8)
+
+# ── Review fixes (2026-10-29T19:27:15Z) ──────────────────────────────────────────────────
+# On the fixed slice-1 code: each check below removed, the case that pins it run alone (-t), the file restored and its sha256
+# compared with the pre-mutation file. R1, R5 and R6 are the reviewer's mutations, which had left the suite green before the
+# review fixes; P1 and L1 remove this round's two fixes; M4 is re-run because the active-member predicate moved into
+# ACTIVE_MEMBERS_SQL (the earlier M4 above ran on the inline predicate). A first M4 that also dropped the only use of $2
+# failed with 500 (PostgreSQL could not type the parameter), which is not the admission the case exists to catch; it was
+# re-run with $2 kept bound, and that run is the one below.
+
+## R1: the membership standing read without FOR SHARE inside the write (standingOf(..., true) -> false in requireJobRoleAdministrator)
+# test filter: -t "a demotion committed"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403 QMS_JOB_ROLE_AUTHORITY, nothing written 1520ms
+   → the write waits on the membership row the demotion holds (FOR SHARE): expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+
+## P1: the organization's standing not checked on the write (the decision !== 'allow' refusal removed from jobRoleRefusal)
+# test filter: -t "pending deletion"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > an organization pending deletion takes no change, though the lifecycle guard still holds it as active 143ms
+   → {"data":{"id":168,"name":"Pending deletion","description":null,"createdAt":"2026-10-29T19:26:06.135Z"}}: expected 201 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+
+## R5: every holder listed as active (active: active.has(...) -> active: true)
+# test filter: -t "marked inactive"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number 289ms
+   → the rows stay; active says who still holds the role: expected [ [ 233, …(2) ], …(3) ] to deeply equal [ [ 233, …(2) ], …(3) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+
+## R6: deleted documents counted (AND d.deleted_at IS NULL dropped from documentCount and from the in-use refusal)
+# test filter: -t "deleted document"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > an assignment on a deleted document does not hold the role in use 140ms
+   → expected 1 to be +0 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+
+## M4: the account and organization status dropped from the one active-member predicate (ACTIVE_MEMBERS_SQL; $2 kept bound as $2::text IS NOT NULL)
+# test filter: -t "not an active member"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > the refusals > a person who is not an active member of this organization is 422 QMS_NOT_A_MEMBER; a live member twice is 409 172ms
+   → 288: {"data":{"id":93,"jobRoleId":175,"userId":288,"addedAt":"2026-10-29T19:26:55.877Z"}}: expected 201 to be 422 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+
+## L1: nameless holders passed to memberLabels (the name-or-address filter removed), whose fallback is the bare id
+# test filter: -t "marked inactive"; exit 1; restored, sha256 equal to the pre-mutation file
+ × tests/db/qms-job-roles.dbtest.ts > an administrator manages the job roles, each change with its ledger pair on one transaction > a member who was suspended, or whose membership ended, stays listed, is marked inactive, and is never a bare number 245ms
+   → the rows stay; active says who still holds the role: expected [ [ 275, …(2) ], …(3) ] to deeply equal [ [ 275, …(2) ], …(3) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)

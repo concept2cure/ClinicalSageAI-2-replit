@@ -1,0 +1,11 @@
+# RED: the race case of tests/db/qms-job-roles.dbtest.ts against mutation R1, the administrator check's membership read made without FOR SHARE
+# (mdx-qms-training.ts requireJobRoleAdministrator: standingOf(client, orgId, userId, true) -> false). Real PostgreSQL 16, RLS_ENFORCE=on, app_service,
+# database c2c_mr12_trn_dbtest (2026-10-29T19:27:15Z). The owner pool holds BEGIN; UPDATE organization_users SET role='member' on an administrator; the case fires
+# POST /job-roles and waits 1.5 s. Without the lock the write does not wait: it reads the committed 'admin', settles before the demotion commits,
+# and answers 201. With the lock (the real code; green in slice1-dbtest-green.txt) it waits, then reads 'member' and answers 403 QMS_JOB_ROLE_AUTHORITY.
+# The file was restored after the run (sha256 equal).
+ × tests/db/qms-job-roles.dbtest.ts > the authority is read on the write's own transaction > a demotion committed while the write waits on the membership row is seen: 403 QMS_JOB_ROLE_AUTHORITY, nothing written 1520ms
+   → the write waits on the membership row the demotion holds (FOR SHARE): expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)

@@ -1,0 +1,5 @@
+# Wide run: server/services/csr, server/services/authoring, the Module 2 and CSR suites in server/services/__tests__, the CSR route suites, module2-csr-inputs and the client CSR suites
+ Test Files  1 failed | 147 passed (148)
+      Tests  1 failed | 2122 passed (2123)
+      1  FAIL  server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts
+# cross-sector-builtin-authoring-templates pins 392 builtin templates and finds 446: a count of the template catalogs, which this change does not touch.
