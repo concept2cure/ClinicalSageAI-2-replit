@@ -37,6 +37,10 @@ const RECORDERS = [
   'createGovernedExportConsequence', // the governed export row
   'sendRecordedFile', // routes/ind-lifecycle/shared.ts, over sendAuditedDownload
   'sendRecordedFormSet', // routes/ind-forms.routes.ts, over sendAuditedDownload
+  // services/compute/exportGovernance.ts: the governed export record with the
+  // SHA-256 of the bytes; it throws unless the caller passes allowDegradedMode,
+  // and a handler that passes it is not recording (below).
+  'registerExportGovernanceQuick',
 ];
 
 /** A file whose downloads record through a recorder of its own domain, named with what it writes. */
@@ -56,6 +60,10 @@ const OWN_RECORDER: Record<string, { recorder: string; writes: string }> = {
   'server/routes/ectd-export.ts': {
     recorder: 'recordGovernedEctdExport',
     writes: 'the governed eCTD export record with the SHA-256 of the package bytes, and its §11.10(e) audit event',
+  },
+  'server/routes/ivdr-binder-routes.ts': {
+    recorder: 'recordPackDownload',
+    writes: 'a PACK_DOWNLOADED audit event after the stored bytes match the pack receipt; PACK_DOWNLOAD_NOT_RECORDED, and nothing sent, when it does not persist',
   },
   'server/routes/admin/business-center.ts': {
     recorder: 'recordAuditRow',
@@ -79,8 +87,6 @@ const NOT_SERVED: Array<{ file: string; handler: string; path?: string; unmounte
   { file: 'server/routes/etmf.routes.ts', handler: "get('/trials/:trialId/inspection-package'", path: '/api/etmf/trials/1/inspection-package' },
   { file: 'server/routes/ind-lifecycle/submission.routes.ts', handler: "get('/portfolio/drift/csv'", path: '/api/ind-lifecycle/portfolio/drift/csv' },
   { file: 'server/routes/intelligent-reports.ts', handler: "get('/:reportId/export/:format'", path: '/api/intelligent-reports/1/export/pdf' },
-  { file: 'server/routes/ivdr-binder-routes.ts', handler: "get('/packs/:packId/download'", path: '/api/ivdr/packs/1/download' },
-  { file: 'server/routes/ivdr-routes.ts', handler: "get('/classify/:id/report'", path: '/api/ivdr/classify/1/report' },
   { file: 'server/routes/knowledge-base.ts', handler: "get('/search-connectors'", path: '/api/knowledge-base/search-connectors' },
   { file: 'server/routes/knowledge-base.ts', handler: "post('/generate-docx'", path: '/api/knowledge-base/generate-docx' },
   { file: 'server/routes/knowledge-base.ts', handler: "post('/generate-ind-package'", path: '/api/knowledge-base/generate-ind-package' },
@@ -92,7 +98,6 @@ const NOT_SERVED: Array<{ file: string; handler: string; path?: string; unmounte
   { file: 'server/routes/planner-routes.ts', handler: "post('/export-summary'", path: '/api/planner/export-summary' },
   { file: 'server/routes/predicate-intelligence.ts', handler: "post('/render-se-docx'", path: '/api/predicate-intelligence/render-se-docx' },
   { file: 'server/routes/predicate-intelligence.ts', handler: "post('/render-se-docx-v2'", path: '/api/predicate-intelligence/render-se-docx-v2' },
-  { file: 'server/routes/rtm-export.ts', handler: "get('/programs/:programId/rtm/csv'", path: '/api/programs/1/rtm/csv' },
   { file: 'server/routes/tenant-export.ts', handler: "get('/'", path: '/api/tenant-export' },
   { file: 'server/routes/tenant-export.ts', handler: "get('/full'", path: '/api/tenant-export/full' },
   // Mounted only when test routes are enabled, which production refuses (register-core-routes.ts).
@@ -136,7 +141,17 @@ function handlers(text: string) {
     if (m) out.push({ opens: line.trim(), method: m[1], path: m[3], body: [line] });
     else if (out.length) out[out.length - 1].body.push(line);
   }
-  return out.map((h) => ({ ...h, body: code(h.body.join('\n')) }));
+  return out.map((h) => ({ ...h, body: code(named(text, h.opens) ?? h.body.join('\n')) }));
+}
+
+/** `router.post('/x', [middleware,] sendX);` is judged by sendX's own body, not by the lines after it. */
+function named(text: string, opens: string): string | null {
+  const name = opens.match(/,\s*([A-Za-z_$][\w$]*)\s*\);?\s*$/)?.[1];
+  if (!name) return null;
+  const start = text.search(new RegExp(`^(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*\\(`, 'm'));
+  if (start < 0) return null;
+  const end = text.indexOf('\n}', start);
+  return text.slice(start, end < 0 ? undefined : end + 2);
 }
 
 const all = sourceFiles(join(ROOT, 'server')).map((path) => ({
@@ -152,8 +167,8 @@ const delivering = all.flatMap(({ file, text }) =>
       method: h.method,
       path: h.path,
       records:
-        RECORDERS.some((r) => calls(h.body, r)) ||
-        (file in OWN_RECORDER && calls(h.body, OWN_RECORDER[file].recorder)),
+        !/allowDegradedMode\s*:\s*true/.test(h.body) &&
+        (RECORDERS.some((r) => calls(h.body, r)) || (file in OWN_RECORDER && calls(h.body, OWN_RECORDER[file].recorder))),
     })),
 );
 const notServedFor = (h: { file: string; method: string; path: string }) =>

@@ -327,9 +327,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           createdAt: record.created_at,
         },
       };
-      res.setHeader('Content-Type', 'application/json');
       const safeId = String(id).replace(/[^a-zA-Z0-9\-_]/g, '');
-      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
 
       // Register governed export (fail-closed for governed flows)
       const reportJson = JSON.stringify(report);
@@ -355,6 +353,9 @@ export default function createIVDRRoutes(pool: Pool): Router {
         ipAddress: req.ip,
       });
 
+      // After the record, so a refused export is an error, not a saved file.
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="ivdr-classification-${safeId}.json"`);
       return res.json(report);
     } catch (error: any) {
       return safeError(res, error, 'IVDR_CLASS_REPORT_ERROR', 'Classification report');
