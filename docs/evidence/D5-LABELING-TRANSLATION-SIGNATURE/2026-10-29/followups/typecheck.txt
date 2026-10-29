@@ -1,0 +1,16 @@
+Type check of the changed files and everything they import, as the parent slice did it. 2026-10-29T08:37:26Z.
+
+Two scratch tsconfigs extend ./tsconfig.json (strict), with noEmit and incremental off. Each lists the files it
+checks and the repo's declaration files (server and shared *.d.ts; client/src and shared *.d.ts).
+
+- Server: mdx-labeling.ts, mdx-labeling-approvals.ts, separation-of-duties.ts, AnaToolExecutor.ts, the two
+  labeling route tests (mocked and PGlite), labeling-tools-record-creator.test.ts, and the three modules that
+  augment express's Request (server/auth.ts, server/middleware/auth.ts, server/middleware/tenantContext.ts).
+- Client: Labeling.tsx, LabelingTranslationApproval.tsx, labelingViewerHidesWrites.test.tsx,
+  labelingTranslationApprovalSigned.test.tsx, and client/src/concept2cure/auth/ZenLogin.tsx (its
+  vite/client reference declares *.module.css).
+
+NODE_OPTIONS=--max-old-space-size=24576 npx tsc -p <scratch>/tsconfig.json
+
+server: exit 0, 0 lines of output (56s)
+client: exit 0, 0 lines of output (53s)

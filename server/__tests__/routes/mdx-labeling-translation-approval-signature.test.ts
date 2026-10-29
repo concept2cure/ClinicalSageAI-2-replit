@@ -54,6 +54,8 @@ function freshTranslation(): Row {
     id: 1, labeling_document_id: 4, organization_id: ORG, language: 'de', status: 'review',
     translation_method: 'human', back_translation_verified: true, artifact_id: null,
     approved_by: null, approved_at: null,
+    // Who added it (20261029b): someone other than the signer, so separation of duties admits the approval.
+    created_by: 3,
   };
 }
 
@@ -64,6 +66,11 @@ const tx = {
     const word = sql.trim().split(/\s+/)[0].toUpperCase();
     if (word === 'BEGIN' || word === 'COMMIT' || word === 'ROLLBACK') { h.log.push(word); return { rows: [], rowCount: 0 }; }
     if (/pg_advisory_xact_lock/.test(sql)) { h.log.push(`LOCK:${String(params[0])}`); return { rows: [], rowCount: 0 }; }
+    // Separation of duties reads the translation's creator on the signing transaction.
+    if (/SELECT created_by FROM labeling_translations/.test(sql)) {
+      h.log.push('AUTHORS');
+      return h.translation ? { rows: [{ created_by: h.translation.created_by }], rowCount: 1 } : { rows: [], rowCount: 0 };
+    }
     if (/FROM labeling_translations/.test(sql) && /FOR UPDATE/.test(sql)) {
       h.log.push('READ');
       return h.translation ? { rows: [{ ...h.translation }], rowCount: 1 } : { rows: [], rowCount: 0 };
@@ -158,7 +165,8 @@ function app() {
 
 const approve = (body: Row) => request(app()).patch('/api/mdx/labeling/translations/1').send(body);
 const writes = () => h.statements.filter((s) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(s.sql));
-const stamps = () => h.statements.filter((s) => /\bapproved_(by|at)\s*=/.test(s.sql));
+/** Statements that set an approval stamp to a value. Clearing one (`= NULL`) withdraws an approval, as ci:sign-ceremony reads it. */
+const stamps = () => h.statements.filter((s) => /\bapproved_(by|at)\s*=\s*(?!NULL\b)[^\s,]/.test(s.sql));
 /** Nothing changed on either connection and no ledger or signature row was written. */
 function nothingWritten() {
   expect(writes()).toEqual([]);
@@ -264,6 +272,19 @@ describe('the ceremony refuses, and nothing is approved', () => {
     expect(h.log).toContain('ROLLBACK');
   });
 
+  it('the person who added the translation: 403 separation of duties, read on the signing transaction, before any stamp', async () => {
+    h.translation = { ...freshTranslation(), created_by: SIGNER };
+    const res = await approve({ status: 'approved', ...SIGNATURE });
+    nothingWritten();
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('SEPARATION_OF_DUTIES');
+    expect(res.body.error.message).toMatch(/Nothing was signed\.$/);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', `LOCK:governed-signed-act:${ORG}:labeling-translation:1`, 'READ', 'AUTHORS', 'ROLLBACK']);
+    const authors = h.statements.find((s) => /SELECT created_by/.test(s.sql))!;
+    expect(authors.via).toBe('tx');
+    expect(authors.sql).toMatch(/organization_id = \$2/);
+  });
+
   it("a translation the organization does not hold, or whose document is deleted: 404, rolled back", async () => {
     h.translation = null;
     const res = await approve({ status: 'approved', ...SIGNATURE });
@@ -306,6 +327,7 @@ describe('the signed approval', () => {
       'TENANT',
       `LOCK:governed-signed-act:${ORG}:labeling-translation:1`,
       'READ',
+      'AUTHORS',
       'UPDATE',
       'LEDGER:sign:labeling-translation:1',
       'SIGNATURE:labeling-translation:1',
@@ -331,6 +353,8 @@ describe('the signed approval', () => {
     const decided = {
       translationId: 1, labelingDocumentId: 4, language: 'de', previousStatus: 'review',
       translationMethod: 'human', backTranslationVerified: true, meaning: 'responsibility',
+      // Separation of duties, recorded as the QMS approval records it.
+      twoPersonRule: 'enforced', originalAuthorId: 3,
     };
     const ledger = recordGovernedAction.mock.calls[0][1];
     expect(ledger).toMatchObject({ command: 'sign', target: 'labeling-translation:1', domain: 'labeling', reason: REASON });

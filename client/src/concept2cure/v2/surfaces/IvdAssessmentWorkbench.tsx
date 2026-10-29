@@ -48,8 +48,11 @@ export function enteredIvdrFacts(values: Record<string, string>) {
   return facts;
 }
 
-export function IvdAssessmentWorkbench({ onNav }: { onNav?: (id: string) => void }) {
-  const programId = shellProgramId(useShellProject());
+/** `programId`: the project the host has open (device-diagnostics passes its
+ *  program). Left out, the shell's open project, as on the ivd-completeness screen. */
+export function IvdAssessmentWorkbench({ onNav, programId: given }: { onNav?: (id: string) => void; programId?: string | null }) {
+  const shell = shellProgramId(useShellProject());
+  const programId = given === undefined ? shell : given;
   return programId ? <ProgramIvdWorkbench key={programId} programId={programId} onNav={onNav} />
     : <section><h2>Saved IVD evidence</h2><p>Open a project to assess and save IVD evidence.</p></section>;
 }

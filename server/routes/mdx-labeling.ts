@@ -5,7 +5,8 @@
  *   GET    /api/mdx/labeling                                   list docs
  *   POST   /api/mdx/labeling                                   create doc
  *   GET    /api/mdx/labeling/:id                               single + nested
- *   PATCH  /api/mdx/labeling/:id                               partial update
+ *   PATCH  /api/mdx/labeling/:id                               partial update;
+ *                                                              to `approved` or `effective`, an e-signature
  *
  *   GET    /api/mdx/labeling/:id/translations                  list
  *   POST   /api/mdx/labeling/:id/translations                  add translation
@@ -19,7 +20,7 @@
  *   GET    /api/mdx/labeling/:id/coverage                      translation coverage
  */
 
-import { Router, Request, Response, type RequestHandler } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -37,8 +38,18 @@ import { admitProject as admitProjectShared } from '../lib/admit-project';
  * stay open to every member (D3, 2026-10-29).
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
-import { signedActAttempts, signGovernedAct } from './governed-signed-act';
-import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
+import { resolveUserId } from '../types/auth-request';
+/* The approval controls (D5, 2026-10-29), on the QMS controlled document's
+   lifecycle: a document's approval, its move to effective and its
+   supersession, and a translation's approval, are electronic signatures, each
+   from the step before it; the record's creator may not approve it; and a
+   record that carries an approval is not edited until it is moved back, with
+   a reason, which withdraws the approval. */
+import {
+  DOC_SIGNED_STATUS, signingLimit, editsBesides,
+  signDocumentStatus, moveDocumentStatus, refuseControlledDocumentEdit,
+  approveTranslationSigned, moveTranslationStatus, refuseApprovedTranslationEdit,
+} from './mdx-labeling-approvals';
 
 const router = Router();
 const log = createScopedLogger('mdx-labeling');
@@ -121,12 +132,37 @@ router.get('/labeling', async (req: Request, res: Response) => {
   }
 });
 
+/** The create's values, in its INSERT's order ($1..$13). */
+function docInsertParams(p: z.infer<typeof docCreate>, orgId: number, userId: number): unknown[] {
+  return [
+    orgId, p.programId ?? null, p.deviceName, p.docKind,
+    p.version ?? null, p.status ?? null, p.language ?? null,
+    p.region ?? null, p.udiDi ?? null, p.effectiveDate ?? null,
+    p.expiresAt ?? null, p.artifactId ?? null, userId,
+  ];
+}
+
 router.post('/labeling', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // The creator is recorded: separation of duties refuses their approval.
+  const userId = resolveUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const parsed = docCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A document is created unapproved. Approving it, making it effective and
+     superseding it are the signed acts on the PATCH below; a create with any
+     of those statuses was one with no signature and no approver (D5,
+     2026-10-29). */
+  if (DOC_SIGNED_STATUS.has(String(p.status))) {
+    return clientError(
+      res,
+      428,
+      'Approving a labeling document, making it effective or superseding it is an electronic signature: create it, then sign that step with your password, what the signature means and a reason. Nothing was saved.',
+      { code: 'LABELING_DOCUMENT_APPROVAL_REQUIRES_SIGNATURE' },
+    );
+  }
   try {
     /* The create and the PATCH below stored the client's `programId` without
        asking. The same-organization key (20261013b) refused another
@@ -139,18 +175,13 @@ router.post('/labeling', requireEditorAccess, async (req: Request, res: Response
     const { rows } = await pool.query(
       `INSERT INTO labeling_documents (
          organization_id, program_id, device_name, doc_kind, version, status,
-         language, region, udi_di, effective_date, expires_at, artifact_id
+         language, region, udi_di, effective_date, expires_at, artifact_id, created_by
        ) VALUES (
          $1,$2,$3,$4,COALESCE($5,'1.0'),COALESCE($6,'draft'),
-         COALESCE($7,'en'),$8,$9,$10,$11,$12
+         COALESCE($7,'en'),$8,$9,$10,$11,$12,$13
        )
        RETURNING *`,
-      [
-        orgId, p.programId ?? null, p.deviceName, p.docKind,
-        p.version ?? null, p.status ?? null, p.language ?? null,
-        p.region ?? null, p.udiDi ?? null, p.effectiveDate ?? null,
-        p.expiresAt ?? null, p.artifactId ?? null,
-      ],
+      docInsertParams(p, orgId, userId),
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create', err); }
@@ -175,13 +206,16 @@ router.get('/labeling/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'get', err); }
 });
 
-router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Response) => {
+router.patch('/labeling/:id', requireEditorAccess, signingLimit(DOC_SIGNED_STATUS), async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = docPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  if (DOC_SIGNED_STATUS.has(String(parsed.data.status))) return signDocumentStatus(req, res, id, parsed.data);
+  const { status, ...fields } = parsed.data;
+  if (status !== undefined && editsBesides(fields, []).length === 0) return moveDocumentStatus(req, res, id, orgId, status);
   const COL: Record<string, string> = {
     programId: 'program_id', deviceName: 'device_name', docKind: 'doc_kind',
     version: 'version', status: 'status', language: 'language', region: 'region',
@@ -199,14 +233,16 @@ router.patch('/labeling/:id', requireEditorAccess, async (req: Request, res: Res
   args.push(id, orgId);
   try {
     if (!(await admitProject(res, parsed.data.programId, orgId))) return;
+    // A document that carries an approval is not edited (mdx-labeling-approvals.ts says why).
     const { rows } = await pool.query(
       `UPDATE labeling_documents SET ${setFrags.join(', ')}
         WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+          AND status NOT IN ('approved', 'effective', 'superseded')
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Labeling document');
-    return ok(res, rows[0]);
+    if (rows.length > 0) return ok(res, rows[0]);
+    return refuseControlledDocumentEdit(res, id, orgId);
   } catch (err) { return serverError(res, log, 'patch', err); }
 });
 
@@ -254,6 +290,9 @@ router.get('/labeling/:id/translations', async (req: Request, res: Response) => 
 router.post('/labeling/:id/translations', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // The creator is recorded: separation of duties refuses their approval.
+  const userId = resolveUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   if (!(await requireDocInOrg(orgId, id))) return notFoundInTenant(res, 'Labeling document');
@@ -275,13 +314,13 @@ router.post('/labeling/:id/translations', requireEditorAccess, async (req: Reque
     const { rows } = await pool.query(
       `INSERT INTO labeling_translations (
          labeling_document_id, organization_id, language, translator,
-         translation_method, back_translation_verified, status, artifact_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),COALESCE($7,'pending'),$8)
+         translation_method, back_translation_verified, status, artifact_id, created_by
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,false),COALESCE($7,'pending'),$8,$9)
        RETURNING *`,
       [
         id, orgId, p.language, p.translator ?? null,
         p.translationMethod ?? null, p.backTranslationVerified ?? null,
-        p.status ?? null, p.artifactId ?? null,
+        p.status ?? null, p.artifactId ?? null, userId,
       ],
     );
     return created(res, rows[0]);
@@ -292,110 +331,7 @@ router.post('/labeling/:id/translations', requireEditorAccess, async (req: Reque
   }
 });
 
-/* ─── Translation approval: an electronic signature ─────────────────────────
-   Approving a translation releases that language's label, and the row then
-   names who approved it and when (approved_by, approved_at), so it is read as
-   a signed record. Until 2026-10-29 the PATCH below stamped both from a
-   session alone. Since 43fb57cc it needed an editor, and nothing more: no
-   re-authentication (21 CFR 11.200), no declared meaning (11.50(a)(3)), no
-   reason, and no electronic_signatures row (11.50, 11.70).
-
-   A PATCH to `approved` now runs the platform's one route-level signing
-   ceremony, signGovernedAct (./governed-signed-act.ts). The RIM label
-   approval uses it the same way on its own route. In order:
-     1. signing authority, before the password;
-     2. the password, and the second factor when one is enrolled;
-     3. on one transaction: the stamp, the `sign` ledger pair and the
-        signature row.
-   Any other status change asks for nothing, as before.
-
-   Not here: separation of duties. labeling_translations records no author.
-   `translator` is a free-text name, and the create stores no user, so there
-   is no one to compare the signer with (D5, 2026-10-29). */
-
-/** The per-signer signing-attempt limit, only for the requests that sign. */
-const whenApproving: RequestHandler = (req, res, next) =>
-  req.body?.status === 'approved' ? signedActAttempts(req, res, next) : next();
-
-/** The approval's own refusals, by code, for signGovernedAct. */
-const TRANSLATION_APPROVAL_CODE_STATUS = {
-  TRANSLATION_NOT_FOUND: 404,
-  TRANSLATION_ALREADY_APPROVED: 409,
-} as const;
-
-function approvalRefused(code: keyof typeof TRANSLATION_APPROVAL_CODE_STATUS, message: string): Error {
-  return Object.assign(new Error(message), { code });
-}
-
-type TranslationApprovalRow = {
-  labeling_document_id: number; language: string; status: string;
-  translation_method: string | null; back_translation_verified: boolean | null;
-};
-
-/** The signed approval of translation `transId`. Answers the request itself. */
-async function approveTranslationSigned(
-  req: Request, res: Response, transId: number, patch: Record<string, unknown>,
-): Promise<void> {
-  /* The signature covers the translation as it stands. A field edited in the
-     same request would be signed before anyone reviewed it. */
-  const edits = Object.keys(patch).filter((k) => k !== 'status' && patch[k] !== undefined);
-  if (edits.length > 0) {
-    res.status(400).json({ error: {
-      code: 'TRANSLATION_APPROVAL_EDITS_FIELDS',
-      message: `An approval signs the translation as it stands. Save the change to ${edits.join(', ')} first, then approve it. Nothing was signed.`,
-    } });
-    return;
-  }
-  const target = `labeling-translation:${transId}`;
-  await signGovernedAct(req, res, {
-    domain: 'labeling',
-    target,
-    meanings: DECISION_ACT_MEANINGS,
-    codeStatus: TRANSLATION_APPROVAL_CODE_STATUS,
-    run: async (client, orgId, userId) => {
-      /* On the signing transaction, under the ceremony's lock on this target
-         (DP-65): a second approval waits here and then reads what the first
-         left. The document must be live and the organization's. */
-      const { rows } = await client.query<TranslationApprovalRow>(
-        `SELECT t.labeling_document_id, t.language, t.status,
-                t.translation_method, t.back_translation_verified
-           FROM labeling_translations t
-           JOIN labeling_documents d
-             ON d.id = t.labeling_document_id AND d.organization_id = t.organization_id
-          WHERE t.id = $1 AND t.organization_id = $2 AND d.deleted_at IS NULL
-          FOR UPDATE OF t`,
-        [transId, orgId],
-      );
-      const current = rows[0];
-      if (!current) throw approvalRefused('TRANSLATION_NOT_FOUND', 'Translation not found. Nothing was signed.');
-      if (current.status === 'approved') {
-        throw approvalRefused('TRANSLATION_ALREADY_APPROVED', 'This translation is already approved. Nothing was signed.');
-      }
-      const updated = await client.query(
-        `UPDATE labeling_translations
-            SET status = 'approved', approved_by = $3, approved_at = NOW(), updated_at = NOW()
-          WHERE id = $1 AND organization_id = $2
-          RETURNING *`,
-        [transId, orgId, userId],
-      );
-      return {
-        target,
-        // What was approved: it goes on the ledger and the signature manifest.
-        payload: {
-          translationId: transId,
-          labelingDocumentId: current.labeling_document_id,
-          language: current.language,
-          previousStatus: current.status,
-          translationMethod: current.translation_method,
-          backTranslationVerified: current.back_translation_verified === true,
-        },
-        body: { data: updated.rows[0] },
-      };
-    },
-  });
-}
-
-router.patch('/labeling/translations/:transId', requireEditorAccess, whenApproving, async (req: Request, res: Response) => {
+router.patch('/labeling/translations/:transId', requireEditorAccess, signingLimit(new Set(['approved'])), async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const transId = Number(req.params.transId);
@@ -403,6 +339,8 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, whenApprovi
   const parsed = transPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   if (parsed.data.status === 'approved') return approveTranslationSigned(req, res, transId, parsed.data);
+  const { status, ...fields } = parsed.data;
+  if (status !== undefined && editsBesides(fields, []).length === 0) return moveTranslationStatus(req, res, transId, orgId, status);
   const COL: Record<string, string> = {
     language: 'language', translator: 'translator', translationMethod: 'translation_method',
     backTranslationVerified: 'back_translation_verified', status: 'status',
@@ -418,14 +356,15 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, whenApprovi
   setFrags.push(`updated_at = NOW()`);
   args.push(transId, orgId);
   try {
+    // An approved translation is not edited (mdx-labeling-approvals.ts says why).
     const { rows } = await pool.query(
       `UPDATE labeling_translations SET ${setFrags.join(', ')}
-        WHERE id = $${args.length - 1} AND organization_id = $${args.length}
+        WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND status <> 'approved'
         RETURNING *`,
       args,
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Translation');
-    return ok(res, rows[0]);
+    if (rows.length > 0) return ok(res, rows[0]);
+    return refuseApprovedTranslationEdit(res, transId, orgId);
   } catch (err) { return serverError(res, log, 'trans-patch', err); }
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState, isPendingStore } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
@@ -15,6 +15,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
+import { shellProgramId, useShellProject } from '../shellProject';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -150,9 +151,22 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const traceRef = citeQms('traceability', asOf);
   const elementDefs = useMemo(() => designControlChecklistDefs(asOf), [asOf]);
 
+  /* D2, fold F1 slice A (2026-10-29): with a project open, the read is that
+     project's design inputs (GET /api/design-controls?program_id=), which the
+     route admits first and answers with `meta.scope: 'program'` and the
+     `programId`. An answer not keyed to the open project (an unreported scope,
+     the organization's, or another project's) is not drawn under it. With no
+     project open, the read is the organization's register, as before. */
+  const openProject = useShellProject();
+  const programId = shellProgramId(openProject);
+
   /* Fixture-free: read the org's REAL design inputs. `rows` is a fresh [] while
      loading / on error, so the derivations below are null-safe. */
-  const live = useLiveRows<DcInput>('/api/design-controls');
+  const live = useLiveRows<DcInput>(
+    programId ? '/api/design-controls?program_id=' + encodeURIComponent(programId) : '/api/design-controls',
+  );
+  const unkeyed = programId != null && !live.loading && !live.error
+    && (live.meta?.scope !== 'program' || live.meta?.programId !== programId);
 
   /* Design inputs created in THIS session, held on their own and merged with the
      live file below so the "new design input" form can insert optimistically.
@@ -197,9 +211,11 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const pendingStore = isPendingStore(live);
 
   const [added, setAdded] = useState<DcInput[]>([]);
+  /* Inputs added this session belong to the project they were added under. */
+  useEffect(() => { setAdded([]); }, [programId]);
   const inputs = useMemo(
-    () => (added.length ? [...live.rows, ...added] : live.rows),
-    [live.rows, added],
+    () => (unkeyed ? [] : added.length ? [...live.rows, ...added] : live.rows),
+    [live.rows, added, unkeyed],
   );
 
   const [form, setForm] = useState(false);
@@ -284,6 +300,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         req: v.req,
         cat: v.cat || 'functional',
         riskRef: v.riskRef || undefined,
+        ...(programId ? { programId } : {}),
       });
       const row = (await res.json())?.data as DcInput | undefined;
       if (!row || !row.id) throw new Error('malformed response');
@@ -312,7 +329,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   };
 
   const hasRows = inputs.length > 0;
-  const isLive = !live.loading && !live.error && !pendingStore;
+  const isLive = !live.loading && !live.error && !pendingStore && !unkeyed;
 
   /* What AnA can see of this screen. A DHF question is always about a specific
      gap — "what is untraced?", "does design validation hold?" — and until now she had
@@ -325,11 +342,13 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     if (live.loading) {
       return { summary: 'The design history file is still loading; nothing on screen is final yet.' };
     }
-    if (live.error) {
+    if (live.error || unkeyed) {
       return {
         summary:
-          'The design history file could not be read, so this screen is showing no design inputs because ' +
-          'of a failure, not because none are recorded.',
+          (unkeyed
+            ? 'The design-input read was not tied to the open project, so nothing on this screen is a statement about it'
+            : 'The design history file could not be read') +
+          ', so this screen is showing no design inputs because of a failure, not because none are recorded.',
         availableActions: ['Retry the design-input read'],
       };
     }
@@ -385,7 +404,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         'Read the design-control completeness checklist, including the elements no store evidences',
       ],
     };
-  }, [live.loading, live.error, pendingStore, trace, checklist, assessable.length, present, untracked, elPct, firstGap, asOf, dcBasis]);
+  }, [live.loading, live.error, unkeyed, pendingStore, trace, checklist, assessable.length, present, untracked, elPct, firstGap, asOf, dcBasis]);
   usePublishSurfaceContext('design-controls', anaContext);
 
   return (
@@ -394,12 +413,12 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
-          <p className="sp-state">Organization-wide design-controls register. Design and development — {dcBasis} — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
+          <p className="sp-state">{programId ? 'This project’s design inputs.' : 'Organization-wide design-controls register.'} Design and development — {dcBasis} — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button
           className="sp-primary"
           onClick={() => setForm(true)}
-          disabled={pendingStore}
+          disabled={pendingStore || unkeyed}
           title={pendingStore ? 'The design-controls store is not provisioned in this environment.' : undefined}
         >{I.plus} New design input</button>
       </div>
@@ -412,6 +431,13 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           icon={I.alertTriangle}
           title="Couldn't load the design history file"
           hint="The design-controls store didn't respond. These are your organization's design inputs — sign in and retry, or check the service is reachable."
+        />
+      ) : unkeyed ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load this project's design inputs"
+          hint="The design-controls read did not say it was this project's, so no design input is shown under it. Reload, or check the service is current."
         />
       ) : pendingStore && !hasRows ? (
         <EmptyState

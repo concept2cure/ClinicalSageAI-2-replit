@@ -1,0 +1,17 @@
+# Grant finding, 2026-10-29: an organisation entitled to ivd-completeness and not to device-diagnostics.
+# A temporary test (grant-finding.test.ts.txt beside this file) asked the real gate (moduleEntitlementGate, launch scope on,
+# MODULE_ENFORCEMENT=enforce), the real registry and the real verdict function (decideNavEntitlement). It was removed after the run.
+# 'folded' = the real registry with the ivd-completeness entry removed and its three IVD claims added to device-diagnostics.
+# canAccessModule is mocked: ivd-completeness allowed, device-diagnostics refused (the class in question).
+
+/api/ivd-completeness/completeness  today: claimed by ivd-completeness -> served  |  folded: claimed by device-diagnostics -> 403 MODULE_NOT_LICENSED
+/api/ivd-assessments  today: claimed by ivd-completeness -> served  |  folded: claimed by device-diagnostics -> 403 MODULE_NOT_LICENSED
+/api/ivd-assessments/documents  today: claimed by ivd-completeness -> served  |  folded: claimed by device-diagnostics -> 403 MODULE_NOT_LICENSED
+/api/ivd-assessments/classification  today: claimed by ivd-completeness -> served  |  folded: claimed by device-diagnostics -> 403 MODULE_NOT_LICENSED
+standard plan, provisioned rows: ivd-completeness entitled (subscribed); device-diagnostics entitled (subscribed)
+standard plan, no rows: ivd-completeness entitled (included); device-diagnostics entitled (included)
+standard plan, device-diagnostics switched off: ivd-completeness entitled (subscribed); device-diagnostics locked (disabled)
+free plan, explicit ivd-completeness grant only: ivd-completeness entitled (subscribed); device-diagnostics locked (tier)
+ ✓ server/middleware/__tests__/tmpF2GrantFinding.test.ts > F2 grant finding: entitled to ivd-completeness, not to device-diagnostics > today the readiness calls are claimed by ivd-completeness and served; folded, device-diagnostics alone claims them and they are refused 17ms
+ ✓ server/middleware/__tests__/tmpF2GrantFinding.test.ts > F2 grant finding: entitled to ivd-completeness, not to device-diagnostics > the navigation verdict: identical packaging gives identical verdicts; only a per-module subscription decision splits them 1ms
+      Tests  2 passed (2)

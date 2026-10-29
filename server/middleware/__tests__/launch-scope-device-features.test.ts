@@ -59,7 +59,9 @@ describe('the real registry with the device features in Projects (62a8d5e7)', ()
     ['device-postmarket', 'mdx/hooks/usePostmarket.ts'], ['device-analytics', 'mdx/hooks/useAnalytics.ts'],
     ['device-workstream', 'mdx/hooks/useClientReview.ts'], ['device-submission', 'mdx/hooks/useSubmissions.ts'],
     ['device-validation', 'mdx/hooks/useWorkbench.ts'], ['human-factors', 'v2/surfaces/HumanFactors.tsx'],
-    ['design-controls', 'v2/surfaces/DesignControls.tsx'], ['ivd-completeness', 'v2/surfaces/IvdCompleteness.tsx'],
+    // The IVDR family board names its read; both screens mount it (F2, 2026-10-29).
+    ['design-controls', 'v2/surfaces/DesignControls.tsx'], ['ivd-completeness', 'v2/surfaces/IvdReadinessBoard.tsx'],
+    ['device-diagnostics', 'v2/surfaces/IvdReadinessBoard.tsx'],
   ];
   const file = (f: string) => path.join(REAL.root, 'client/src/concept2cure', f);
   const named = (f: string) => [...fs.readFileSync(file(f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')

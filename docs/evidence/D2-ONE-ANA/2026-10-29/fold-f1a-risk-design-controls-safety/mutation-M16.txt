@@ -1,0 +1,8 @@
+M16: the signing-attempt limit is skipped
+file: server/routes/mdx-risk-management.ts
+test: server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+exit: 1
+restored byte for byte: True
+
+ × server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts > the signed acceptance > goes through the per-signer signing-attempt limit; a plain status change does not 13ms
+      Tests  1 failed | 32 passed (33)

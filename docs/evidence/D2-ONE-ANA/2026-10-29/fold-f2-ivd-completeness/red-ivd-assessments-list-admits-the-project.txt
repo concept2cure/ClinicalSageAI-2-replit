@@ -1,0 +1,23 @@
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > another organization's project: 404, and nothing is listed 19ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a missing project: 404, and nothing is listed 4ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a deleted project: 404, and nothing is listed 3ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > a malformed project: 404, and nothing is listed 3ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > when the ownership check cannot run: 503, and nothing is listed 4ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > the organization's own project: asked once, then listed by that project on the request client 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the assessments list > no project named: the organization's list, with no ownership check 3ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > another organization's project: 404, and nothing is listed 3ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a missing project: 404, and nothing is listed 9ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a deleted project: 404, and nothing is listed 3ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > a malformed project: 404, and nothing is listed 4ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > when the ownership check cannot run: 503, and nothing is listed 2ms
+ × server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > the organization's own project: asked once, then listed by that project on the request client 3ms
+ ✓ server/routes/__tests__/ivd-assessments-list-admits-the-project.test.ts > the generated documents list > no project named: the organization's list, with no ownership check 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"rows":[{"id":"saved-1","organization_id":7,"program_id":"ffffffff-ffff-4fff-8fff-ffffffffffff"}],"count":1}: expected 200 to be 404 // Object.is equality
+AssertionError: {"rows":[{"id":"saved-1","organization_id":7,"program_id":"99999999-9999-4999-8999-999999999999"}],"count":1}: expected 200 to be 404 // Object.is equality
+AssertionError: {"rows":[{"id":"saved-1","organization_id":7,"program_id":"dddddddd-dddd-4ddd-8ddd-dddddddddddd"}],"count":1}: expected 200 to be 404 // Object.is equality
+AssertionError: {"rows":[{"id":"saved-1","organization_id":7,"program_id":"not-a-uuid"}],"count":1}: expected 200 to be 404 // Object.is equality
+AssertionError: {"rows":[{"id":"saved-1","organization_id":7,"program_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}],"count":1}: expected 200 to be 503 // Object.is equality
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)

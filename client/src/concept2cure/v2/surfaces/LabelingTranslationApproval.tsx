@@ -10,6 +10,11 @@
  * (EsignModal, on useEsignature), and no longer sends the bare status change
  * the other steps send.
  *
+ * The row's step control is here too: Approve for a translation in review,
+ * Advance before that, nothing once approved, and nothing at all for a role
+ * that cannot write (canGovernedWrite; the server's requireEditorAccess
+ * refuses that role every labeling write). AnA is offered the same steps.
+ *
  * @module client/src/concept2cure/v2/surfaces/LabelingTranslationApproval
  */
 import * as React from 'react';
@@ -17,6 +22,7 @@ import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { useAuthUser } from '@/services/portal/authService';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
+import { I } from '../icons';
 
 /** The meanings the server's approval takes (DECISION_ACT_MEANINGS). */
 const TRANSLATION_APPROVAL_MEANINGS: ReadonlyArray<EsigMeaning> = ['approval', 'responsibility'];
@@ -24,9 +30,13 @@ const NOTHING_SIGNED = 'Nothing was signed.';
 const UNCONFIRMED_APPROVAL =
   'The server did not confirm the approval. Reload the label and check the translation before you sign again.';
 
-/** The server's sentence, ending once with "Nothing was signed." (the ceremony's refusals already do). */
+/**
+ * The server's sentence, saying "Nothing was signed." once. The ceremony's
+ * refusals end with it; the separation-of-duties wording says it mid-sentence,
+ * then names the remedy.
+ */
 function refusedSigning(message: string): Error {
-  return new Error(message.trimEnd().endsWith(NOTHING_SIGNED) ? message : `${message} ${NOTHING_SIGNED}`);
+  return new Error(message.includes(NOTHING_SIGNED) ? message : `${message.trimEnd()} ${NOTHING_SIGNED}`);
 }
 
 type SignInput = { meaning: EsigMeaning; reason: string; password: string; totp?: string };
@@ -97,4 +107,27 @@ export function TranslationApprovalDialog({ translation, label, onClose, onSigne
       }}
     />
   );
+}
+
+/** A translation row's next step. `canWrite` is canGovernedWrite for the signed-in role; without it nothing is offered. */
+export function TranslationStepControl({ status, canWrite, onApprove, onAdvance }: {
+  status: string;
+  canWrite: boolean;
+  onApprove: () => void;
+  onAdvance: () => void;
+}) {
+  if (!canWrite || status === 'approved') return null;
+  return status === 'review'
+    ? <button className="btn ghost" style={{ height: 26 }} onClick={onApprove}>{I.penLine} Approve</button>
+    : <button className="btn ghost" style={{ height: 26 }} onClick={onAdvance}>{I.arrowRight} Advance</button>;
+}
+
+/** What AnA may offer for the translations: the same steps the screen offers this role. */
+export function translationStepActions(canWrite: boolean): string[] {
+  return canWrite
+    ? [
+        'Add a target-language translation (a real persisted write)',
+        'Advance a translation through pending, in progress and review, then approve it with an electronic signature',
+      ]
+    : ['Read the translations. This role cannot add, advance or approve them'];
 }

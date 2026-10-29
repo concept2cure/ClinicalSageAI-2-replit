@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > the ivd-completeness screen reads what is open > with a project open, it reads and draws that project's board 79ms
+ × client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > the ivd-completeness screen reads what is open > with no project open, it reads the organization and says so 5035ms
+ × client/src/concept2cure/v2/__tests__/ivdCompletenessOneBoard.test.tsx > one board, two mounts > the family board is drawn by IvdReadinessBoard only, and both screens mount it 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+TestingLibraryElementError: Unable to find an element by: [data-testid="ivd-readiness-board"]
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx' }
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

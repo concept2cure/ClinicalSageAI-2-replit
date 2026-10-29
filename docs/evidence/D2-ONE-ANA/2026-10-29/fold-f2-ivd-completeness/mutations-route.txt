@@ -1,0 +1,34 @@
+### M1: the completeness route drops admitProject
+mutated server/routes/ivd-completeness-routes.ts
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > another organization's project: 404, and no IVD table is read 16ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a missing project: 404, and no IVD table is read 12ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a deleted project: 404, and no IVD table is read 13ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > a malformed project: 404, and no IVD table is read 10ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > two project ids are no project: 404 8ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > a project the organization does not own is refused before anything is read > when the ownership check cannot run: 503, and no IVD table is read 14ms
+      Tests  6 failed | 6 passed (12)
+
+### M2: the classifications read drops the program filter
+mutated server/routes/ivd-completeness-routes.ts
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > every family comes from the open project's records only 52ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > a project with no IVD records reads seven empty families, never the organization's 16
+      Tests  2 failed | 10 passed (12)
+
+### M3: every store also returns the organization's unscoped rows under a project
+mutated server/routes/ivd-completeness-routes.ts
+mutated server/routes/ivd-completeness-routes.ts
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > every family comes from the open project's records only 54ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > a project with no IVD records reads seven empty families, never the organization's 16
+      Tests  2 failed | 10 passed (12)
+
+### M4: GSPR goes back to the organization's newest checklist (no project clause)
+mutated server/routes/ivd-completeness-routes.ts
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > GSPR is this project's checklist, matched as text whatever its case, not the organiza
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > a project with no IVD records reads seven empty families, never the organization's 15
+      Tests  2 failed | 10 passed (12)
+
+### M5: GSPR compares project_id without lower-casing it
+mutated server/routes/ivd-completeness-routes.ts
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > every family comes from the open project's records only 56ms
+ × server/routes/__tests__/ivd-completeness-reads-the-project.pglite.test.ts > under a project, the board reads that project and nothing else > GSPR is this project's checklist, matched as text whatever its case, not the organiza
+      Tests  2 failed | 10 passed (12)

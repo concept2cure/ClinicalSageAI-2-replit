@@ -3552,7 +3552,35 @@ export const C2C_MIGRATION_FILES = [
   // (regulatory_programs_id_org_uq, created here too when absent). Public with
   // organization_id INTEGER NOT NULL; creates no table; guarded; no DROP.
   'migrations/20261029_hf_engineering_files_program_key.sql',
+  // Labeling approvals record their approver, and labeling records their
+  // creator (D5, 2026-10-29): labeling_documents.approved_by / approved_at /
+  // created_by and labeling_translations.created_by, each INTEGER → users(id)
+  // or TIMESTAMPTZ, nullable, added only when pg_attribute shows it absent.
+  // After 20260511_qms_and_labeling.sql (both tables). Public with
+  // organization_id INTEGER NOT NULL; creates no table; no DROP, no backfill.
+  'migrations/20261029b_labeling_approval_stamps_and_creators.sql',
 
+  // A design input names its project, by key, and a design input or a risk item
+  // names only its own organization's project (D2, fold F1 slice A, 2026-10-29):
+  // c2c_design_controls.program_id UUID, nullable (existing inputs stay the
+  // organization's unscoped inputs), a NOT VALID composite key ON DELETE SET NULL
+  // (program_id) and an index for the project read; and a NOT VALID composite key
+  // on risk_items (program_id, organization_id) whose delete action is the one its
+  // existing program key has (NO ACTION on the 20260507 lineage, SET NULL
+  // (program_id) where drizzle push left none). After 20260717 and 20260507 (the
+  // tables) and 20260926b (regulatory_programs_id_org_uq, created here too when
+  // absent). Public with organization_id INTEGER NOT NULL; creates no table;
+  // guarded; no DROP.
+  'migrations/20261029c_design_controls_and_risk_items_program_keys.sql',
+  // The IVD assessment workbench's store (D2, fold F2, 2026-10-29):
+  // ivd_assessments and ivd_generated_documents, which only install-fresh
+  // created, so saving and listing failed on every deployed database. Every
+  // statement is CREATE ... IF NOT EXISTS; no DROP, ALTER or ADD CONSTRAINT, and
+  // no other file in either root names the two tables. Its one prerequisite is
+  // organizations (base schema). Public with organization_id INTEGER NOT NULL,
+  // so the sweep below polices both. Pinned by
+  // tests/schema-contract/ivd-assessments-deploy-set.pglite.test.ts.
+  'migrations/20260610_ivd_assessments.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -187,6 +187,20 @@ describe('the signed approval', () => {
     expect(within(rowOf('German')).getByRole('button', { name: /Approve/ })).toBeTruthy();
   });
 
+  it('a separation-of-duties refusal that already says "Nothing was signed." is said once', async () => {
+    // The canonical wording (separationOfDutiesRefusal) says it mid-sentence, then names the remedy.
+    const unresolved =
+      'No author is recorded for "labeling-translation:12", so a review, approval or lock signature cannot be shown to be ' +
+      'independent of the author. Nothing was signed. Establish who authored it through an audited action, then have a ' +
+      'different, authorized user sign.';
+    patchAnswer = async () => { throw new ApiRequestError(unresolved, 409, null, 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED'); };
+    const dialog = await openApproval();
+    fireEvent.click(within(dialog).getByText('stub-sign'));
+    await waitFor(() => expect(H.signError).not.toBeNull());
+    expect(H.signError).toBe(unresolved);
+    expect(within(rowOf('German')).getByRole('button', { name: /Approve/ })).toBeTruthy();
+  });
+
   it('a dropped connection says the outcome is unconfirmed, not that nothing was signed', async () => {
     patchAnswer = async () => { throw new TypeError('Failed to fetch'); };
     const dialog = await openApproval();

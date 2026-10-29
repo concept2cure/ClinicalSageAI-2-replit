@@ -412,6 +412,24 @@ const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: strin
     source: 'run requester',
     numericId: true,
   },
+  // A labeling document and a labeling translation (D5, 2026-10-29): approving
+  // one is signed (routes/mdx-labeling.ts), and its author is whoever added it,
+  // which the create records (migrations/20261029b). `translator` is a free-text
+  // name, not a user, so it is not an author source. A row added before
+  // 20261029b records no creator and is refused, never guessed. A later editor
+  // of the row is not recorded, so is not counted (the evidence README says so).
+  'labeling-document': {
+    sql: `SELECT created_by FROM labeling_documents WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'created_by',
+    source: 'labeling document creator',
+    numericId: true,
+  },
+  'labeling-translation': {
+    sql: `SELECT created_by FROM labeling_translations WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'created_by',
+    source: 'translation creator',
+    numericId: true,
+  },
 };
 
 /**
