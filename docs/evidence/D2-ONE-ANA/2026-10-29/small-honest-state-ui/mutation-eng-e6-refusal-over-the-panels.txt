@@ -1,0 +1,12 @@
+# E6: the refusal drawn above the failed panels
+# file: client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx
+# replaced: '  if (live.refusal) {\n    return (\n      <>\n        {header}\n        <ProjectRefused refusal={live.refusal} onRetry={live.refresh} />\n      </>\n    );\n  }\n\n  return (\n    <>\n      {header}\n'
+# with:     '  return (\n    <>\n      {header}\n      {live.refusal && <ProjectRefused refusal={live.refusal} onRetry={live.refresh} />}\n'
+# test: client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.refusal.test.tsx
+# vitest exit: 1
+ × EngineeringSurface — the route refuses the project > a 404 says the project is not one this organization can see, and offers another project, not a retry 194ms
+ × EngineeringSurface — the route refuses the project > a 503 says the project could not be checked, so nothing was shown, and the retry reads again 20ms
+      Tests  2 failed | 3 passed (5)
+TestingLibraryElementError: Found multiple elements with the role "button" and name "Try again"
+AssertionError: a panel failure per panel: expected 'Workstream · ENG-1 · ENG-1 SensorDevi…' not to match /Could not load/
+# restored: sha256 matches (97c5f4f420374a6d)

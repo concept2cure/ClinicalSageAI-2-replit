@@ -14,6 +14,10 @@
  * program column yet, so those panels are organization-wide and the
  * surface labels them accordingly rather than implying they belong to
  * the selected program.
+ *
+ * `refusal` names the route's two refusals of the project itself (404 not
+ * this organization's, 503 the check could not run), so the surface can say
+ * which one in words instead of drawing a failed read on every panel.
  */
 
 import { useFetchJson } from './useFetchJson';
@@ -70,9 +74,39 @@ export interface UseEngineeringResult {
   documents: DataState<DocumentRow[]>;
   /** Per-panel tenancy; defaults to organization when unreported. */
   scopes: Record<string, PanelScope>;
+  /** The route refused the project, so it read nothing. Null otherwise. */
+  refusal: ProjectRefusal | null;
   loading: boolean;
   error: string | null;
   refresh: () => void;
+}
+
+/**
+ * The two answers the route gives when it does not admit the project
+ * (server/lib/admit-project.ts, through ad0b119b). It reads nothing either way.
+ *   not-visible  404 {"error":"Project not found"}: this organization does not
+ *                own the project, or it does not exist. A retry cannot change it.
+ *   unchecked    503 VERIFICATION_UNAVAILABLE: the ownership check could not
+ *                run. That is not an answer about the project, and a retry may
+ *                get one.
+ * Every other failure is null, and stays a failed read on each panel.
+ */
+export type ProjectRefusal = 'not-visible' | 'unchecked';
+
+/** The status useFetchJson's error line starts with: `HTTP <status>[: <body>]`. */
+const HTTP_STATUS = /^\s*HTTP\s+(\d{3})\b/;
+/** The envelope's `"error":"<value>"`, matched and never parsed: useFetchJson
+ *  cuts the body at 200 characters, so it is rarely a whole object. */
+const errorValue = (line: string) => /"error"\s*:\s*"([^"]*)"/.exec(line)?.[1] ?? null;
+
+/** Which refusal useFetchJson's error line is, or null. Read by the body as
+ *  well as the status: a 404 or 503 from anywhere else is not this answer. */
+export function projectRefusalOf(error: string | null | undefined): ProjectRefusal | null {
+  if (!error) return null;
+  const status = HTTP_STATUS.exec(error)?.[1];
+  if (status === '404' && errorValue(error) === 'Project not found') return 'not-visible';
+  if (status === '503' && errorValue(error) === 'VERIFICATION_UNAVAILABLE') return 'unchecked';
+  return null;
 }
 
 const IDLE = 'The engineering record is held per project.';
@@ -117,6 +151,7 @@ export function useEngineering(programId: string | null): UseEngineeringResult {
     issues: state('issues', data?.data.issues),
     documents: state('documents', data?.data.documents),
     scopes: data?.meta?.scopes ?? {},
+    refusal: projectRefusalOf(error),
     loading,
     error,
     refresh,
