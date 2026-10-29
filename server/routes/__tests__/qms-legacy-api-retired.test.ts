@@ -223,7 +223,7 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
     { name: 'requalify or revoke a supplier', method: 'patch', path: '/api/mdx/qms/suppliers/12', body: { approvalStatus: 'revoked' }, state: supplierStatus, before: 'approved' },
     {
       name: 'disposition nonconforming product', method: 'patch', path: '/api/mdx/qms/nonconforming/13/disposition',
-      body: { disposition: 'use_as_is', dispositionRationale: 'within tolerance' }, state: ncDisposition, before: 'pending',
+      body: { disposition: 'use_as_is', reason: 'Within tolerance per the specification', meaning: 'approval', password: 'x' }, state: ncDisposition, before: 'pending',
     },
     { name: 'qualify a supplier', method: 'post', path: '/api/mdx/qms/suppliers', body: { supplierName: 'New Co', criticality: 'major', approvalStatus: 'approved' }, state: nothing, before: null },
     { name: 'record a nonconformance', method: 'post', path: '/api/mdx/qms/nonconforming', body: { ncNumber: 'NC-002', description: 'Burr on housing' }, state: nothing, before: null },
@@ -253,14 +253,17 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
     expect(res.body.meta?.auditTrail).toEqual({ persisted: true, chained: true });
   });
 
-  it('a member still dispositions nonconforming product, and the change is audited', async () => {
+  /* Since 2026-10-29 a disposition is a signed act (qms-nc-disposition-signed.test.ts):
+     an editor's disposition without the signature writes nothing. */
+  it('a member dispositions nonconforming product only with a signature', async () => {
     as('member');
     const res = await request(await productionApp())
       .patch('/api/mdx/qms/nonconforming/13/disposition')
       .send({ disposition: 'rework', dispositionRationale: 'Deburr and re-inspect' });
-    expect(res.status).toBe(200);
-    expect(H.nc?.disposition).toBe('rework');
-    expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qms.nonconforming.disposition' })]);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({ code: 'ESIGNATURE_COMPONENT_MISSING' });
+    expect(H.nc?.disposition).toBe('pending');
+    expect(H.audit).toEqual([]);
   });
 
   it('a manager still routes a draft for review: the twin of transition to=in_review', async () => {

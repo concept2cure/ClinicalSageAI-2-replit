@@ -7,6 +7,8 @@
 import * as React from 'react';
 import { type C2CFormConfig } from '../v2/C2CForm';
 import type { RegisterContext } from './registerContext';
+import type { EsigMeaning } from '../hooks/useEsignature';
+import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type Tone = 'ok' | 'warn' | 'err';
 export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
@@ -32,14 +34,33 @@ export interface RecordRegisterContext {
 export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode }
 export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
 
+/**
+ * A decision the form collected, to be signed in the shared EsignModal. Nothing
+ * is sent until the signature; `post` sends the decision with it.
+ */
+export interface SignedStep {
+  action: string;
+  target: string;
+  /** What the signer attests, shown before they sign. */
+  meta: string;
+  rows: Array<{ label: string; value: string }>;
+  meanings: EsigMeaning[];
+  post: (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }) => Promise<EsigSignedManifest>;
+  /** The register's notice once the signature has committed. */
+  done: string;
+}
+
 export type RowAction<R> = {
   label: string;
   title: string;
   show?: (r: R) => boolean;
   form: (r: R, ctx: RegisterContext) => Omit<C2CFormConfig, 'notice'>;
+} & (
   /** Returns the confirmation, or throws a refusal the drawer shows. */
-  submit: (r: R, v: Record<string, string>) => Promise<string>;
-};
+  | { submit: (r: R, v: Record<string, string>) => Promise<string>; sign?: never }
+  /** Returns the decision to sign, or throws a refusal the drawer shows. */
+  | { sign: (r: R, v: Record<string, string>) => SignedStep; submit?: never }
+);
 
 export interface RegisterConfig<R extends { id: number | string }> {
   title: string;
