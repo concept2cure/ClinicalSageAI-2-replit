@@ -238,11 +238,18 @@ describe('Audit trail — the audit-event verdict does not depend on the ledger 
     expect(await screen.findByText('Audit-event chain intact')).toBeTruthy();
   });
 
-  it('a ledger the role cannot read still states what the server lets it read of the audit-event chain', async () => {
-    serve({ [LEDGER]: () => { throw thrown(403, 'Owners, admins and managers read the audit trail.'); } });
-    mount();
+  it('a role the audit-reader gate refuses is refused both verdicts, and neither is called intact (P-65)', async () => {
+    // Since P-65 (2026-10-29) the chain verdict takes the ledger's gate, requireAuditReader,
+    // so the server refuses a non-reader both reads with the same body.
+    const refused = () => { throw thrown(403, 'The audit trail is read by organisation administrators and managers.'); };
+    serve({ [LEDGER]: refused, [CHAIN]: refused });
+    const { seen } = mount();
     expect(await screen.findByText('The audit trail is not available to your role')).toBeTruthy();
-    expect(await screen.findByText('Audit-event chain intact')).toBeTruthy();
+    expect(await screen.findByText('The audit-event chain is not available to your role')).toBeTruthy();
+    expect(screen.queryByText('Couldn’t verify the audit-event chain')).toBeNull();
+    expect(region().textContent).not.toMatch(/intact/);
+    await waitFor(() => expect(eventFacts(seen)?.auditEventChainUnavailable).toMatch(/cannot read the audit-event chain/));
+    expect(eventFacts(seen)?.auditEventChain).toBeNull();
   });
 
   it('a ledger still loading publishes the audit-event verdict to AnA, not a blank', async () => {

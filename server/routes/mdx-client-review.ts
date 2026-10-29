@@ -16,15 +16,24 @@
  * is likewise curated: internal-only fields (approval chains, escalation
  * paths, AI suggestions, module data, comment threads) are not selected.
  *
- * ## Scope honesty
+ * ## The project is admitted first (P-61 item 5, 2026-10-29)
  *
  * `unified_tasks` links `projects.id` (integer) and carries no program uuid
- * column — the canonical program space (regulatory_programs.id) is a
- * different id space. `programId` is therefore validated and echoed back in
- * `meta` for kit-surface parity, but the row filter is organization-wide,
- * optionally narrowed by `project_id`. `meta.scope` reports which applied
- * ('project' | 'organization') so the surface can label the zone honestly —
- * same convention as the engineering board's per-panel scopes.
+ * column; a project's program is `projects.regulatory_program_id`. Until
+ * 2026-10-29 `programId` was validated and echoed back in `meta` while the row
+ * filter stayed organization-wide, and `project_id` was trusted as given, so a
+ * room that named one project shared every project's tasks. Now, before
+ * anything is read or shared:
+ *   - a `programId` goes through admitProject (server/lib/admit-project.ts):
+ *     404 when the organization does not own the live project, 503 when the
+ *     check cannot run;
+ *   - a `project_id` must be one of the organization's projects and, with a
+ *     `programId`, that program's: 404 otherwise, 503 when the check cannot run.
+ * The room then holds that project's tasks only: the integer project's, or
+ * those of every integer project anchored to the program. `meta.scope` is
+ * 'project'. With neither, the room is the organization's, as before, and
+ * `meta.scope` says 'organization'. Pinned by
+ * __tests__/mdx-client-review-admits-project.test.ts.
  *
  * RLS (CI gate ci:requestdb-coverage): reads run through requestDb(req)
  * (request-scoped, tenant-pinned connection) and additionally filter
@@ -33,19 +42,22 @@
  * unprovisioned (42P01) rather than 500-ing.
  *
  * READ-ONLY by design: classification writes (setting a task's visibility)
- * and client commenting are explicitly out of scope for this slice.
+ * and client commenting are explicitly out of scope for this slice. There is
+ * no write here, so no requireEditorAccess either.
  *
  * @module routes/mdx-client-review
  */
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
-import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
-import { unifiedTasks } from '../../shared/schema';
+import { ok, clientError, orgRequired, serverError, notFoundInTenant } from '../lib/api-response';
+import { admitProject } from '../lib/admit-project';
+import { respondVerificationUnavailable } from '../lib/verification-outcome';
+import { projects, unifiedTasks } from '../../shared/schema';
 import {
   CLIENT_REVIEW_STATES,
   countClientReviewGroups,
@@ -90,6 +102,49 @@ const listQuery = z.object({
     .optional(),
 });
 
+type RoomDb = ReturnType<typeof requestDb>;
+
+/**
+ * Admit the project the request names and return the room's project filter
+ * (P-61 item 5): undefined for the organization's room, null once a refusal has
+ * been answered. A program goes through admitProject; an integer project must
+ * be the organization's and, with a program, that program's.
+ */
+async function admitRoom(
+  res: Response,
+  db: RoomDb,
+  orgId: number,
+  programId: string | undefined,
+  projectId: number | undefined,
+): Promise<SQL | undefined | null> {
+  if (!(await admitProject(res, log, programId, orgId))) return null;
+  if (projectId === undefined) {
+    if (programId === undefined) return undefined;
+    // The program's integer projects, of this organization.
+    return inArray(unifiedTasks.projectId, db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.organizationId, orgId), eq(projects.regulatoryProgramId, programId))));
+  }
+  let owned: Array<{ programId: string | null }>;
+  try {
+    owned = await db
+      .select({ programId: projects.regulatoryProgramId })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, orgId)))
+      .limit(1);
+  } catch (err) {
+    respondVerificationUnavailable(res, log, 'The project ownership check', err);
+    return null;
+  }
+  const anchored = owned[0]?.programId?.toLowerCase() ?? null;
+  if (owned.length === 0 || (programId !== undefined && anchored !== programId.toLowerCase())) {
+    notFoundInTenant(res, 'Project');
+    return null;
+  }
+  return eq(unifiedTasks.projectId, projectId);
+}
+
 /* ─── GET /api/mdx/client-review ──────────────────────────────────── */
 
 router.get('/client-review', async (req: Request, res: Response) => {
@@ -102,8 +157,11 @@ router.get('/client-review', async (req: Request, res: Response) => {
   }
   const { programId, project_id: projectId, limit = 500 } = parsed.data;
 
-  const scope: 'project' | 'organization' =
-    projectId !== undefined ? 'project' : 'organization';
+  // The project is admitted before anything is read (P-61 item 5).
+  const db = requestDb(req);
+  const projectFilter = await admitRoom(res, db, orgId, programId, projectId);
+  if (projectFilter === null) return;
+  const scope: 'project' | 'organization' = projectFilter ? 'project' : 'organization';
 
   // The whitelist filter: internal / NULL / unknown values never match.
   const conditions = [
@@ -114,10 +172,9 @@ router.get('/client-review', async (req: Request, res: Response) => {
     // this filter a task archived on the board kept appearing to the client.
     isNull(unifiedTasks.deletedAt),
   ];
-  if (projectId !== undefined) conditions.push(eq(unifiedTasks.projectId, projectId));
+  if (projectFilter) conditions.push(projectFilter);
 
   try {
-    const db = requestDb(req);
     const rows = await db
       .select({
         // Curated client-safe projection — internal-only columns

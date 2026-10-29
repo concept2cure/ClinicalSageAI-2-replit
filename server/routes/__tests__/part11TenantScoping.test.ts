@@ -127,7 +127,9 @@ describe('GET /signatures/:signatureId/manifest — the scope is mandatory now',
 describe('GET /audit-trail/chain-integrity — already scoped, now connected', () => {
   it('binds the chain read to the caller’s org', async () => {
     const query = rows([]);
-    const res = await request(app(query, { organizationId: 7 })).get('/audit-trail/chain-integrity');
+    // An audit reader: the verdict takes requireAuditReader since P-65 (2026-10-29),
+    // pinned by part11-chain-integrity-reader-gate.test.ts.
+    const res = await request(app(query, { organizationId: 7, role: 'admin' })).get('/audit-trail/chain-integrity');
     expect(res.status).toBe(200);
     const [sql, params] = query.mock.calls[0];
     expect(sql).toMatch(/WHERE organization_id = \$1/);

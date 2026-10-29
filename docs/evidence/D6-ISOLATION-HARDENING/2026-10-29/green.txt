@@ -1,0 +1,310 @@
+# Green
+
+## §1 Built from blank with the finished tree (install-fresh + deploy-migrate)
+install-fresh exit 0
+  ✓ applied: migrations/20260905_document_catalog.sql
+  ✓ applied: migrations/20260905b_vault_document_chunks.sql
+  ✓ applied: migrations/20260911_vault_evidence_citations.sql
+  ✓ applied: migrations/20260926_vault_documents_record_immutability.sql
+  ✓ applied: migrations/20261027_cdi_public_reference_seed.sql
+  ✓ applied: migrations/20261029_cdi_public_reference_seed_v2.sql
+✅ Schema migration complete — safe to roll services.
+deploy-migrate exit 0
+            table             | rls | forced | policies 
+------------------------------+-----+--------+----------
+ vault.document_archives      | t   | t      |        4
+ vault.document_catalog       | t   | t      |        4
+ vault.document_chunks        | t   | t      |        4
+ vault.document_read_receipts | t   | t      |        4
+ vault.documents              | t   | t      |        8
+ vault.evidence_citations     | t   | t      |        4
+ vault.legal_holds            | t   | t      |        1
+ vault.retention_policies     | f   | f      |        0
+
+          polname           | polcmd | policy_oid | checks_both_ends 
+----------------------------+--------+------------+------------------
+ rls_vault_citations_delete | d      |     115962 | 
+ rls_vault_citations_insert | a      |     115958 | t
+ rls_vault_citations_select | r      |     115957 | 
+ rls_vault_citations_update | w      |     115960 | t
+
+           collection            | sources | current | with_fit | with_predecessor 
+---------------------------------+---------+---------+----------+------------------
+ cdi-csr-reference-2026-10-27-v1 |      78 |       0 |       78 |                0
+ cdi-csr-reference-2026-10-29-v2 |      78 |      78 |        0 |               78
+
+ current_public_with_fit 
+-------------------------
+                       0
+
+
+## §2 Rule 1: the finished tree deployed twice onto the database built at HEAD
+### deploy 1
+  ✓ applied: migrations/20260905_document_catalog.sql
+  ✓ applied: migrations/20260905b_vault_document_chunks.sql
+  ✓ applied: migrations/20260911_vault_evidence_citations.sql
+  ✓ applied: migrations/20260926_vault_documents_record_immutability.sql
+  ✓ applied: migrations/20261027_cdi_public_reference_seed.sql
+  ✓ applied: migrations/20261029_cdi_public_reference_seed_v2.sql
+✅ Schema migration complete — safe to roll services.
+deploy 1 exit 0
+### deploy 2
+  ✓ applied: migrations/20260905_document_catalog.sql
+  ✓ applied: migrations/20260905b_vault_document_chunks.sql
+  ✓ applied: migrations/20260911_vault_evidence_citations.sql
+  ✓ applied: migrations/20260926_vault_documents_record_immutability.sql
+  ✓ applied: migrations/20261027_cdi_public_reference_seed.sql
+  ✓ applied: migrations/20261029_cdi_public_reference_seed_v2.sql
+✅ Schema migration complete — safe to roll services.
+deploy 2 exit 0
+### state after deploy 1
+            table             | rls | forced | policies 
+------------------------------+-----+--------+----------
+ vault.document_archives      | t   | t      |        4
+ vault.document_catalog       | t   | t      |        4
+ vault.document_chunks        | t   | t      |        4
+ vault.document_read_receipts | t   | t      |        4
+ vault.documents              | t   | t      |        8
+ vault.evidence_citations     | t   | t      |        4
+ vault.legal_holds            | t   | t      |        1
+ vault.retention_policies     | f   | f      |        0
+
+          polname           | polcmd | policy_oid | checks_both_ends 
+----------------------------+--------+------------+------------------
+ rls_vault_citations_delete | d      |      86526 | 
+ rls_vault_citations_insert | a      |     122985 | t
+ rls_vault_citations_select | r      |      86523 | 
+ rls_vault_citations_update | w      |     122987 | t
+
+           collection            | sources | current | with_fit | with_predecessor 
+---------------------------------+---------+---------+----------+------------------
+ cdi-csr-reference-2026-10-27-v1 |      78 |       0 |       78 |                0
+ cdi-csr-reference-2026-10-29-v2 |      78 |      78 |        0 |               78
+
+ current_public_with_fit 
+-------------------------
+                       0
+
+### state after deploy 2: identical to deploy 1 (diff empty), policy oids included: the second deploy replaced no policy and retired nothing
+(diff: no difference)
+Deploy 1 replaced only the INSERT and UPDATE citation policies (oids 86524/86525 -> 122985/122987); SELECT and DELETE kept their HEAD oids (86523, 86526).
+
+## §3 psql probes on that database
+### citation probe (runtime role, tenant B scope)
+    role     | a_doc_visible_to_b 
+-------------+--------------------
+ app_service |                  0
+
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/isolation-hardening/probe/citation-probe.sql:11: ERROR:  new row violates row-level security policy for table "evidence_citations"
+### owner probe (NOSUPERUSER NOBYPASSRLS owner of every vault table, tenant A scope)
+      role       | superuser | bypassrls 
+-----------------+-----------+-----------
+ iso_owner_probe | off       | f
+
+            table             | forced | caller_is_owner 
+------------------------------+--------+-----------------
+ vault.document_archives      | t      | t
+ vault.document_catalog       | t      | t
+ vault.document_chunks        | t      | t
+ vault.document_read_receipts | t      | t
+ vault.documents              | t      | t
+ vault.evidence_citations     | t      | t
+ vault.legal_holds            | t      | t
+
+         probe          | documents | document_chunks | document_catalog | document_read_receipts | evidence_citations | document_archives 
+------------------------+-----------+-----------------+------------------+------------------------+--------------------+-------------------
+ own row (A)            |         1 |               1 |                1 |                      1 |                  1 |                 1
+ other tenant's row (B) |         0 |               0 |                0 |                      0 |                  0 |                 0
+
+### purge door probe (door owned by that role; runtime role, platform scope, purging A)
+ versions_returned_by_door 
+---------------------------
+                         2
+
+   tenant   | documents | chunks_of_live_docs | chunks | catalog | receipts | citations | archives 
+------------+-----------+---------------------+--------+---------+----------+-----------+----------
+ A (purged) |         0 |                   0 |      0 |       0 |        0 |         0 |        0
+ B          |         1 |                   1 |      1 |       1 |        1 |         1 |        1
+
+
+## finished tree, d140aefa5 + this change. 2026-10-29T19:10:45Z
+### the new real-database suite, fresh copy of the database built from blank with the finished tree
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot cite A's document as evidence for its own claim
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cites its own documents (the policy is not a blanket deny)
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot re-point its own citation at A's document
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a delegate that may read A's program still cannot cite A's document
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > the application writer refuses a foreign document before the database is asked
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a replay replaces no citation policy (the replacement is conditional on the policy text)
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > every Vault table with row-level security FORCEs it
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the table owner, not a superuser, reads only its own tenant's rows
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+### the same suite on the HEAD-built database after two deploys of the finished tree
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+### unit and PGlite suites this change adds or touches
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_signed_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_lineage_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_ivdr_histories(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_reg_questions(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ × server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_review_routes(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_signed_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_lineage_records(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_ivdr_histories(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_reg_questions(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ FAIL  server/services/tenant/__tests__/tenant-purge-doors-reviewed.test.ts > the tenant purge can call every door it opens > public.purge_tenant_review_routes(p_org integer) is reviewed, so the deploy leaves app_service its EXECUTE
+ Test Files  1 failed | 13 passed (14)
+      Tests  5 failed | 183 passed (188)
+(tenant-purge-doors-reviewed: the 5 failing cases are doors added by the tenant-custody lane's uncommitted tenant-offboarding.ts, not on the allowlist yet; purge_tenant_vault_records passes. Not this change.)
+
+## §4 Related real-database suites, fresh copies of the database built from blank
+## real-database suites (vitest.db.config.ts, RLS_ENFORCE=on), fresh copy of c2c_iso_green_tpl (install-fresh + deploy-migrate, finished tree)
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot cite A's document as evidence for its own claim
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cites its own documents (the policy is not a blanket deny)
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > B cannot re-point its own citation at A's document
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a delegate that may read A's program still cannot cite A's document
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > the application writer refuses a foreign document before the database is asked
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: an evidence citation cites only its own organization's document > a replay replaces no citation policy (the replacement is conditional on the policy text)
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > every Vault table with row-level security FORCEs it
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the table owner, not a superuser, reads only its own tenant's rows
+ ✓ tests/db/vault-isolation-hardening.dbtest.ts > P-66: the Vault child tables FORCE row-level security > the purge door, owned by that role, still erases the purged tenant's Vault rows and no one else's
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ ✓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ × tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > admits a well-formed direct post, as the control
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses another organisation, program or byte content, and a body hash that is not its own
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses a passage not where it says, a stale text hash, a page beyond the count, and a page on a version without one
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record refuses a post its writer would refuse (critique 15) > refuses a reply under a closed or foreign annotation, a closed post, and a deleted version
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses changes to its words, anchor and author, and a second or foreign outcome
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses DELETE, a DELETE from a trigger the runtime role made itself, and TRUNCATE
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > refuses a runtime-role DELETE of the program, which would cascade as the owner, for annotations and relationships
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > the record never changes and is never deleted while its version exists (critique 15) > the tenant purge removes an organisation's annotations with its versions, and no one else's; the owners match
+ ✓ tests/db/vault-version-annotations-record.dbtest.ts > a document's history says when older entries are not shown (critique 15) > cuts at 200 entries and says so; a short history says nothing is cut
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active hold
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > both tables have RLS enabled and a policy for every command
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_catalog: each tenant reads its own row and not the other's
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > document_read_receipts: each tenant reads its own row and not the other's
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot overwrite B's comprehension record
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot forge a catalog row for B's document
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot plant a read receipt on B's document — the proof the coverage gate trusts
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > A cannot delete B's read receipt
+ ✓ tests/db/vault-catalog-tenant-isolation.dbtest.ts > vault.document_catalog and vault.document_read_receipts are tenant-isolated > a tenant still writes its OWN catalog row and receipt — the policy is not a blanket deny
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > capa_records: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_submissions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > q_sub_questions: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > ctd_documents: each tenant sees its own row and not the other's
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07)
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+ ✓ tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > positive control: tenant A, handed its own uuid, retrieves its own passage
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > tenant A's session, handed tenant B's uuid, never receives B's passage
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a uuid that disagrees with the session scope is refused, not quietly answered
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > …including when the session scope carries no uuid — exactly when a header fallback fires
+ ✓ tests/db/rag-pipeline-tenant-scope.dbtest.ts > the RAG pipeline scopes the vault to the session, not to its caller's argument (D3) > a missing uuid keeps its existing refusal (unchanged by this fix)
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > its creating migration is in the deploy set
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the retention job's write still works in the organisation's scope (control)
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the tenant purge erases the organisation's archives, and no one else's
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a recorded checksum cannot be changed or cleared; a missing one can be set once
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a revision link, a project scope, the organization and the source type do not change
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a superseded capture cannot be made current again
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > createSupersedingSource retires the predecessor and links the revision
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > a mutable column still changes
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > reads a real schema, not an empty one
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > every text-like secret-shaped column is withheld or recorded as not a secret
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > every column either list names exists in an exported table
+ ✓ tests/db/tenant-export-withheld-columns.dbtest.ts > the tenant export decides every secret-shaped column it reads > no column is on both lists
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > the call the script made — no tenant scope — is refused under RLS enforcement
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > backfillVaultChunksForTenant finds the document the tenant owns
+ ✓ tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > refuses an organization that does not exist, rather than sweeping nothing
+ FAIL  tests/db/vault-passage-search.dbtest.ts [ tests/db/vault-passage-search.dbtest.ts ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase > is not purged, and keeps everything, until a decision is made about that table
+ Test Files  2 failed | 15 passed (17)
+      Tests  3 failed | 121 passed | 10 skipped (134)
+
+NOTICE:  database "platform_ci_vault_fixture_iso" does not exist, skipping
+## Vault-fixture suites (they need a database named platform_ci_vault_fixture_*: a copy of the same database)
+ Test Files  8 passed (8)
+      Tests  65 passed (65)
+### the Vault-fixture suites that needed the fixture database (vault-passage-search among them)
+ Test Files  5 passed (5) / Tests  52 passed (52): vault-passage-search, vault-chunking-off, vault-passage-search-keyless, review-route-vault, cmc-source-evidence
+
+## §5 tenant-purge-blocking-keys: pre-existing, bisected (not this change)
+On the database built from blank at 18:56 it fails 3 of 6 with 'labeling_documents violates labeling_translations_document_same_org_fk'; on the database built at HEAD, before and after deploying this change, 1 of 6 (the held-table case), the same as HEAD. Same purge code each run (sha prefix 3014cb22e165).
+  undo on a copy of the blank-built database: noforce -> Tests  3 failed | 3 passed (6) violates foreign key constraint "labeling_translations_document_same_org_fk"
+  undo on a copy of the blank-built database: headdoor-headcit -> Tests  3 failed | 3 passed (6) violates foreign key constraint "labeling_translations_document_same_org_fk"
+  undo on a copy of the blank-built database: no-v2-rows -> Tests  3 failed | 3 passed (6) violates foreign key constraint "labeling_translations_document_same_org_fk"
+  (noforce: the five Vault tables NO FORCE; headdoor-headcit: HEAD's door file and HEAD's citation file applied over; no-v2-rows: the 78 v2 rows deleted and v1 made current again). The schemas of the two blank builds differ only in this change's DDL (pg_dump -s diff, 52 lines, all of it this change).

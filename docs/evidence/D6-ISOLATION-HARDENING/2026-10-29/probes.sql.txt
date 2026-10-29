@@ -1,0 +1,119 @@
+-- The psql probes behind red.txt §2 and green.txt §3. Seed, then each probe; every probe runs in a transaction that is rolled back.
+
+-- ===== seed.sql
+-- Two tenants, one row in every Vault table that carries tenant data. Run as the database owner.
+\set ON_ERROR_STOP on
+INSERT INTO organizations (id, name, slug, status) VALUES
+  (99101, 'iso-probe-a', 'iso-probe-a', 'pending_deletion'),
+  (99102, 'iso-probe-b', 'iso-probe-b', 'active');
+INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name) VALUES
+  ('99101000-0000-4000-8000-0000000000a1', 99101, 'iso A', 'ISO-A', 'IND', 'drug', 'FDA', 'product A'),
+  ('99102000-0000-4000-8000-0000000000b1', 99102, 'iso B', 'ISO-B', 'IND', 'drug', 'FDA', 'product B');
+INSERT INTO vault.documents (id, program_id, organization_id, content_hash, document_title, file_name, status, source_type) VALUES
+  ('99101000-0000-4000-8000-00000000d0a1', '99101000-0000-4000-8000-0000000000a1', 99101, repeat('a', 64), 'A doc', 'a.txt', 'completed', 'txt'),
+  ('99101000-0000-4000-8000-00000000d0a2', '99101000-0000-4000-8000-0000000000a1', 99101, repeat('c', 64), 'A doc 2', 'a2.txt', 'completed', 'txt'),
+  ('99102000-0000-4000-8000-00000000d0b1', '99102000-0000-4000-8000-0000000000b1', 99102, repeat('b', 64), 'B doc', 'b.txt', 'completed', 'txt');
+INSERT INTO vault.document_chunks (id, document_id, chunk_index, chunk_text) VALUES
+  ('99101000-0000-4000-8000-00000000c0a1', '99101000-0000-4000-8000-00000000d0a1', 0, 'A chunk'),
+  ('99102000-0000-4000-8000-00000000c0b1', '99102000-0000-4000-8000-00000000d0b1', 0, 'B chunk');
+INSERT INTO vault.document_catalog (document_id, content_hash, catalog_status) VALUES
+  ('99101000-0000-4000-8000-00000000d0a1', repeat('a', 64), 'cataloged'),
+  ('99102000-0000-4000-8000-00000000d0b1', repeat('b', 64), 'cataloged');
+INSERT INTO vault.document_read_receipts (document_id, content_hash, char_start, char_end) VALUES
+  ('99101000-0000-4000-8000-00000000d0a1', repeat('a', 64), 0, 1),
+  ('99102000-0000-4000-8000-00000000d0b1', repeat('b', 64), 0, 1);
+INSERT INTO vault.evidence_citations (id, source_document_id, evidence_document_id, claim_text) VALUES
+  ('99101000-0000-4000-8000-0000000ce0a1', '99101000-0000-4000-8000-00000000d0a1', '99101000-0000-4000-8000-00000000d0a2', 'A claim'),
+  ('99102000-0000-4000-8000-0000000ce0b1', '99102000-0000-4000-8000-00000000d0b1', '99102000-0000-4000-8000-00000000d0b1', 'B claim');
+INSERT INTO vault.document_archives (id, original_document_id, program_id, snapshot) VALUES
+  ('99101000-0000-4000-8000-0000000a00a1', '99101000-0000-4000-8000-00000000d0a1', '99101000-0000-4000-8000-0000000000a1', '{}'::jsonb),
+  ('99102000-0000-4000-8000-0000000a00b1', '99102000-0000-4000-8000-00000000d0b1', '99102000-0000-4000-8000-0000000000b1', '{}'::jsonb);
+
+-- ===== citation-probe.sql
+-- Tenant B's runtime session writes a citation whose source is B's document and whose evidence is A's.
+\set ON_ERROR_STOP off
+\pset footer off
+BEGIN;
+SET LOCAL ROLE app_service;
+SELECT set_config('app.rls_enforce', 'on', true), set_config('app.current_tenant_id', '99102', true),
+       set_config('app.current_org_id', (SELECT uuid::text FROM organizations WHERE id = 99102), true) \gset
+SELECT current_user AS role, (SELECT count(*) FROM vault.documents WHERE id = '99101000-0000-4000-8000-00000000d0a1') AS a_doc_visible_to_b;
+INSERT INTO vault.evidence_citations (source_document_id, evidence_document_id, claim_text)
+VALUES ('99102000-0000-4000-8000-00000000d0b1', '99101000-0000-4000-8000-00000000d0a1', 'B claim, A evidence')
+RETURNING 'inserted' AS outcome, source_document_id, evidence_document_id;
+ROLLBACK;
+
+-- ===== owner-probe.sql
+-- The table owner, as a NOSUPERUSER NOBYPASSRLS role (the shape of a managed-Postgres
+-- migration role), reads tenant B's row in each Vault table from tenant A's scope.
+-- Everything happens in one transaction and is rolled back.
+\set ON_ERROR_STOP on
+\pset footer off
+BEGIN;
+CREATE ROLE iso_owner_probe NOSUPERUSER NOBYPASSRLS NOLOGIN;
+DO $$ DECLARE t text; BEGIN
+  FOR t IN SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'vault' AND c.relkind = 'r' LOOP
+    EXECUTE format('ALTER TABLE vault.%I OWNER TO iso_owner_probe', t);
+  END LOOP; END $$;
+GRANT USAGE ON SCHEMA vault, core, identity TO iso_owner_probe;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA core, identity TO iso_owner_probe;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO iso_owner_probe;
+SET ROLE iso_owner_probe;
+SELECT set_config('app.rls_enforce', 'on', true), set_config('app.current_tenant_id', '99101', true),
+       set_config('app.current_org_id', (SELECT uuid::text FROM organizations WHERE id = 99101), true) \gset
+SELECT current_user AS role, current_setting('is_superuser') AS superuser,
+       (SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user) AS bypassrls;
+SELECT 'vault.' || c.relname AS "table", c.relforcerowsecurity AS forced,
+       pg_get_userbyid(c.relowner) = current_user AS caller_is_owner
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE n.nspname = 'vault' AND c.relrowsecurity ORDER BY 1;
+SELECT 'own row (A)' AS probe,
+  (SELECT count(*) FROM vault.documents WHERE id = '99101000-0000-4000-8000-00000000d0a1') AS documents,
+  (SELECT count(*) FROM vault.document_chunks WHERE id = '99101000-0000-4000-8000-00000000c0a1') AS document_chunks,
+  (SELECT count(*) FROM vault.document_catalog WHERE document_id = '99101000-0000-4000-8000-00000000d0a1') AS document_catalog,
+  (SELECT count(*) FROM vault.document_read_receipts WHERE document_id = '99101000-0000-4000-8000-00000000d0a1') AS document_read_receipts,
+  (SELECT count(*) FROM vault.evidence_citations WHERE id = '99101000-0000-4000-8000-0000000ce0a1') AS evidence_citations,
+  (SELECT count(*) FROM vault.document_archives WHERE id = '99101000-0000-4000-8000-0000000a00a1') AS document_archives
+UNION ALL
+SELECT 'other tenant''s row (B)',
+  (SELECT count(*) FROM vault.documents WHERE id = '99102000-0000-4000-8000-00000000d0b1'),
+  (SELECT count(*) FROM vault.document_chunks WHERE id = '99102000-0000-4000-8000-00000000c0b1'),
+  (SELECT count(*) FROM vault.document_catalog WHERE document_id = '99102000-0000-4000-8000-00000000d0b1'),
+  (SELECT count(*) FROM vault.document_read_receipts WHERE document_id = '99102000-0000-4000-8000-00000000d0b1'),
+  (SELECT count(*) FROM vault.evidence_citations WHERE id = '99102000-0000-4000-8000-0000000ce0b1'),
+  (SELECT count(*) FROM vault.document_archives WHERE id = '99102000-0000-4000-8000-0000000a00b1');
+RESET ROLE;
+ROLLBACK;
+
+-- ===== door-probe.sql
+-- The tenant purge's Vault door, owned (as on a managed Postgres) by a NOSUPERUSER
+-- NOBYPASSRLS migration role, called by the runtime role in the platform scope for
+-- tenant A. What of A's Vault rows is left, and is B untouched? Rolled back.
+\set ON_ERROR_STOP on
+\pset footer off
+BEGIN;
+CREATE ROLE iso_owner_probe NOSUPERUSER NOBYPASSRLS NOLOGIN;
+DO $$ DECLARE t text; BEGIN
+  FOR t IN SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'vault' AND c.relkind = 'r' LOOP
+    EXECUTE format('ALTER TABLE vault.%I OWNER TO iso_owner_probe', t);
+  END LOOP; END $$;
+ALTER FUNCTION public.purge_tenant_vault_records(integer) OWNER TO iso_owner_probe;
+GRANT USAGE ON SCHEMA vault, core, identity TO iso_owner_probe;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA core, identity TO iso_owner_probe;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO iso_owner_probe;
+SET ROLE app_service;
+SELECT set_config('app.rls_enforce', 'on', true), set_config('app.current_user_role', 'app_super_admin', true) \gset
+SELECT count(*) AS versions_returned_by_door FROM public.purge_tenant_vault_records(99101);
+RESET ROLE;
+SELECT o.label AS tenant,
+  (SELECT count(*) FROM vault.documents d WHERE d.organization_id = o.id) AS documents,
+  (SELECT count(*) FROM vault.document_chunks c JOIN vault.documents d ON d.id = c.document_id WHERE d.organization_id = o.id) AS chunks_of_live_docs,
+  (SELECT count(*) FROM vault.document_chunks c WHERE c.id::text LIKE o.id || '%') AS chunks,
+  (SELECT count(*) FROM vault.document_catalog x WHERE x.document_id::text LIKE o.id || '%') AS catalog,
+  (SELECT count(*) FROM vault.document_read_receipts x WHERE x.document_id::text LIKE o.id || '%') AS receipts,
+  (SELECT count(*) FROM vault.evidence_citations x WHERE x.id::text LIKE o.id || '%') AS citations,
+  (SELECT count(*) FROM vault.document_archives x WHERE x.id::text LIKE o.id || '%') AS archives
+FROM (VALUES (99101, 'A (purged)'), (99102, 'B')) AS o(id, label) ORDER BY 1;
+ROLLBACK;
